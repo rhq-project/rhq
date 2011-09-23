@@ -150,6 +150,8 @@ public class TestRemoteServiceStatisticsView extends Table {
 
                     new MessageWindow(extendLocatorId("csv"), "Export To CSV", "<pre>" + csv.toString() + "</pre>")
                         .show();
+
+                    refresh();
                 }
             });
 
@@ -206,6 +208,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                             refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
                             setTableTitle(TABLE_TITLE + " (refresh every " + timeout + "s)");
                         }
+                        refreshTableInfo();
                     }
                 });
         } else { // not in the standalone window
@@ -214,6 +217,7 @@ public class TestRemoteServiceStatisticsView extends Table {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new StatisticsWindow(extendLocatorId("statsWin")).show();
+                    refresh();
                 }
             });
         }
@@ -237,6 +241,7 @@ public class TestRemoteServiceStatisticsView extends Table {
         if (window != null) {
             window.blink();
         }
+        refreshTableInfo();
     }
 
     private ListGridRecord[] transform(List<Summary> stats) {

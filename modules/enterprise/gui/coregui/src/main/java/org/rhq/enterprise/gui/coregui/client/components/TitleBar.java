@@ -87,19 +87,10 @@ public class TitleBar extends LocatableToolStrip {
 
     private void refresh(String title) {
         setVisible(title != null);
-
-        String contents;
-        String windowTitle;
-        //spinder 9/15/11: Commenting out to let CoreGUI handle all title setting.         
-        //        if (title == null) {
-        //            contents = null;
-        //            windowTitle = "RHQ";
-        //        } else {
-        //            contents = "<span class='HeaderLabel'>" + title + "</span>";
-        //            windowTitle = "RHQ: " + title;
-        //        }
-        //        this.label.setContents(contents);
-        //        Window.setTitle(windowTitle);
+        if (title != null) {
+            String contents = "<span class='HeaderLabel'>" + title + "</span>";
+            this.label.setContents(contents);
+        }
     }
 
 }

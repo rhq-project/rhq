@@ -56,6 +56,11 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
             return query.asList();
         }
 
+        if (criteria.getFilterChangeSetId() != null && !criteria.getFilterChangeSetId().isEmpty()) {
+            query.field("id").equal(new ObjectId(criteria.getFilterChangeSetId()));
+            return query.asList();
+        }
+
         if (criteria.getFilterResourceIds() != null && criteria.getFilterResourceIds().length > 0) {
             query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
         }
@@ -70,6 +75,10 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
 
         if (criteria.getFilterEndTime() != null) {
             query.field("files.ctime").lessThanOrEq(criteria.getFilterEndTime());
+        }
+
+        if (criteria.getFilterPath() != null && !criteria.getFilterPath().isEmpty()) {
+            query.field("files.path").equal(criteria.getFilterPath());
         }
 
         return query.asList();

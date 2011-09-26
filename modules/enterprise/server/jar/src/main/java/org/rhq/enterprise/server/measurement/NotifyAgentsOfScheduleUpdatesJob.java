@@ -16,12 +16,12 @@ public class NotifyAgentsOfScheduleUpdatesJob extends AbstractStatefulJob {
         MeasurementScheduleManagerLocal scheduleManager = LookupUtil.getMeasurementScheduleManager();
 
         JobDataMap jobDataMap = context.getMergedJobDataMap();
-        String scheduleSubQuery = (String) jobDataMap.get("ScheduleSubQuery");
+        String scheduleSubQuery = (String) jobDataMap.get(MeasurementScheduleManagerBean.SCHEDULE_SUBQUERY);
         EntityContext entityContext = new EntityContext(
-            Integer.parseInt((String) jobDataMap.get("EntityContext.resourceId")),
-            Integer.parseInt((String) jobDataMap.get("EntityContext.groupId")),
-            Integer.parseInt((String) jobDataMap.get("EntityContext.parentResourceId")),
-            Integer.parseInt((String) jobDataMap.get("EntityContext.resourceTypeId"))
+            Integer.parseInt((String) jobDataMap.get(MeasurementScheduleManagerBean.ENTITYCONTEXT_RESOURCEID)),
+            Integer.parseInt((String) jobDataMap.get(MeasurementScheduleManagerBean.ENTITYCONTEXT_GROUPID)),
+            Integer.parseInt((String) jobDataMap.get(MeasurementScheduleManagerBean.ENTITYCONTEXT_PARENT_RESOURCEID)),
+            Integer.parseInt((String) jobDataMap.get(MeasurementScheduleManagerBean.ENTITYCONTEXT_RESOURCETYPEID))
         );
 
         scheduleManager.notifyAgentsOfScheduleUpdates(entityContext, scheduleSubQuery);

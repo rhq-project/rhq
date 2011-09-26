@@ -22,7 +22,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Date;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -615,6 +621,12 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return affectedRows;
     }
 
+    public static final String SCHEDULE_SUBQUERY = "ScheduleSubQuery";
+    public static final String ENTITYCONTEXT_RESOURCEID = "EntityContext.resourceId";
+    public static final String ENTITYCONTEXT_GROUPID = "EntityContext.groupId";
+    public static final String ENTITYCONTEXT_PARENT_RESOURCEID = "EntityContext.parentResourceId";
+    public static final String ENTITYCONTEXT_RESOURCETYPEID = "EntityContext.resourceTypeId";
+
     private void dispatchScheduleUpdatesToAgents(EntityContext entityContext, String scheduleSubQuery) {
         Scheduler scheduler;
         try {
@@ -635,11 +647,11 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 new Date());
 
             JobDataMap jobDataMap = simpleTrigger.getJobDataMap();
-            jobDataMap.put("ScheduleSubQuery", scheduleSubQuery);
-            jobDataMap.put("EntityContext.resourceId", Integer.toString(entityContext.getResourceId()));
-            jobDataMap.put("EntityContext.groupId", Integer.toString(entityContext.getGroupId()));
-            jobDataMap.put("EntityContext.parentResourceId", Integer.toString(entityContext.getParentResourceId()));
-            jobDataMap.put("EntityContext.resourceTypeId", Integer.toString(entityContext.getResourceTypeId()));
+            jobDataMap.put(SCHEDULE_SUBQUERY, scheduleSubQuery);
+            jobDataMap.put(ENTITYCONTEXT_RESOURCEID, Integer.toString(entityContext.getResourceId()));
+            jobDataMap.put(ENTITYCONTEXT_GROUPID, Integer.toString(entityContext.getGroupId()));
+            jobDataMap.put(ENTITYCONTEXT_PARENT_RESOURCEID, Integer.toString(entityContext.getParentResourceId()));
+            jobDataMap.put(ENTITYCONTEXT_RESOURCETYPEID, Integer.toString(entityContext.getResourceTypeId()));
 
             if (isJobScheduled(scheduler, DEFAULT_AGENT_JOB, DEFAULT_AGENT_GROUP)) {
                 simpleTrigger.setJobName(DEFAULT_AGENT_JOB);

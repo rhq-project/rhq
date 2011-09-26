@@ -46,7 +46,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.IgnoreDependency;
 
-import org.quartz.*;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.H2DatabaseType;
@@ -582,7 +581,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         query.setParameter("interval", collectionInterval);
         int affectedRows = query.executeUpdate();
 
-        dispatchScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
+        scheduleJobToPushScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
 
         return affectedRows;
     }
@@ -599,7 +598,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Query query = entityManager.createQuery(updateQuery);
         int affectedRows = query.executeUpdate();
 
-        dispatchScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
+        scheduleJobToPushScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
 
         return affectedRows;
     }
@@ -616,7 +615,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Query query = entityManager.createQuery(updateQuery);
         int affectedRows = query.executeUpdate();
 
-        dispatchScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
+        scheduleJobToPushScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
 
         return affectedRows;
     }
@@ -627,7 +626,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     public static final String ENTITYCONTEXT_PARENT_RESOURCEID = "EntityContext.parentResourceId";
     public static final String ENTITYCONTEXT_RESOURCETYPEID = "EntityContext.resourceTypeId";
 
-    private void dispatchScheduleUpdatesToAgents(EntityContext entityContext, String scheduleSubQuery) {
+    private void scheduleJobToPushScheduleUpdatesToAgents(EntityContext entityContext, String scheduleSubQuery) {
         Scheduler scheduler;
         try {
             scheduler = LookupUtil.getSchedulerBean();
@@ -667,6 +666,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         } catch (RuntimeException e) {
             // lookup wrapper throws runtime exceptions, no distinction between
             // types, so fallback and do the best we can.
+            log.error("Failed to schedule agents update notification.", e);
             notifyAgentsOfScheduleUpdates(entityContext, scheduleSubQuery);
         } catch (SchedulerException e) {
             // should never happen, but fallback gracefully...
@@ -753,7 +753,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     (Long) nextScheduleDataSet[3], // interval,
                     (Boolean) nextScheduleDataSet[4], // enabled,
                     (DataType) nextScheduleDataSet[5], // dataType,
-                    (NumericType) nextScheduleDataSet[6]); // awNumericType
+                    (NumericType) nextScheduleDataSet[6]); // rawNumericType
                 resourceRequest.addMeasurementScheduleRequest(requestData);
             }
 
@@ -784,6 +784,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
     }
 
+    /**
+     * The mtime on the Resources will tell the Agent it needs to pull down the
+     * latest schedules next time it performs an Agent-Server sync.
+     *
+     * @param context the entity context
+     * @param agentId the agent id
+     */
     private void markResources(EntityContext context, int agentId) {
         ResourceCriteria criteria = new ResourceCriteria();
         if (context.type == EntityContext.Type.Resource) {

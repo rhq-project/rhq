@@ -26,14 +26,11 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
-import org.testng.Assert;
-import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
-import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
@@ -49,13 +46,13 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.Assert.assertEquals;
 
 public class ChangeSetDAOTest {
 
     // Tests need to be disabled when committed/pushed to the remote repo until we get
     // mongodb installed on the hudson slave
-    static final boolean ENABLED = false;
+    static final boolean ENABLED = true;
 
     Mongo connection;
 
@@ -244,6 +241,23 @@ public class ChangeSetDAOTest {
     }
 
     @Test(enabled = ENABLED)
+    public void findEntriesWithIdFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c1.add(e1);
+        c1.add(e2);
+        dao.save(c1);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterId(e2.getId());
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEquals(entries.size(), 1, "Expected to get back one change set entry");
+        assertPropertiesMatch(e2, entries.get(0), "Failed to find change set entry with id filter");
+    }
+
+    @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithIdFilter() throws Exception {
         MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
         MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
@@ -261,8 +275,8 @@ public class ChangeSetDAOTest {
 
         List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
 
-        assertEquals("Expected to get back only one change set when searching by drift criteria with id filter.",
-            1, actual.size());
+        assertEquals(actual.size(), 1, "Expected to get back only one change set when searching by drift criteria " +
+            "with id filter.");
         assertChangeSetMatches("Failed to find change set by drift criteria with id filter.", c1, actual.get(0));
     }
 
@@ -291,7 +305,7 @@ public class ChangeSetDAOTest {
 
         List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
 
-        assertEquals("Expected to get back one change set", 1, actual.size());
+        assertEquals(actual.size(), 1, "Expected to get back one change set");
         MongoDBChangeSet actualChangeSet = actual.get(0);
 
         assertChangeSetMatches("Failed to find drift entries by drift criteria with start time filter",
@@ -323,7 +337,7 @@ public class ChangeSetDAOTest {
 
         List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
 
-        assertEquals("Expected to get back one change set", 1, actual.size());
+        assertEquals(actual.size(), 1, "Expected to get back one change set");
         MongoDBChangeSet actualChangeSet = actual.get(0);
 
         assertChangeSetMatches("Failed to find drift entries with end time filter", c1, actualChangeSet);

@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.google.code.morphia.annotations.Embedded;
@@ -68,7 +70,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     private int resourceId;
 
     @Embedded("files")
-    private Set<MongoDBChangeSetEntry> entries = new HashSet<MongoDBChangeSetEntry>();
+    private List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();
 
     public ObjectId getObjectId() {
         return id;
@@ -144,7 +146,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     @Override
     public Set<MongoDBChangeSetEntry> getDrifts() {
-        return entries;
+        return new LinkedHashSet(entries);
     }
 
     public MongoDBChangeSet add(MongoDBChangeSetEntry entry) {
@@ -156,7 +158,9 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     @Override
     public void setDrifts(Set<MongoDBChangeSetEntry> drifts) {
-        entries = drifts;
+        for (MongoDBChangeSetEntry entry : drifts) {
+            add(entry);
+        }
     }
 
     @PostLoad

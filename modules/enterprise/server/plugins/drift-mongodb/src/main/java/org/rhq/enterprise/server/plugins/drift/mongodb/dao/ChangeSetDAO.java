@@ -24,19 +24,25 @@ import java.util.List;
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.dao.BasicDAO;
 import com.google.code.morphia.query.Query;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 
 import org.bson.types.ObjectId;
 
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
+import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 
 import static java.util.Arrays.asList;
 
 public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
 
+    private Morphia morphia;
+
     public ChangeSetDAO(Morphia morphia, Mongo mongo, String db) {
         super(mongo, morphia, db);
+        this.morphia = morphia;
     }
 
     public List<MongoDBChangeSet> findByDriftCriteria(DriftCriteria criteria) {
@@ -82,6 +88,38 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         }
 
         return query.asList();
+    }
+
+    public List<MongoDBChangeSetEntry> findEntries(DriftCriteria criteria) {
+        Query<MongoDBChangeSet> query = createQuery();
+
+        if (criteria.getFilterId() != null) {
+            String[] ids = criteria.getFilterId().split(":");
+            ObjectId changeSetId = new ObjectId(ids[0]);
+            return asList(findEntryById(changeSetId, ids[1]));
+        }
+
+        return null;
+    }
+
+    public MongoDBChangeSetEntry findEntryById(ObjectId changeSetId, String entryId) {
+        BasicDBObject query = new BasicDBObject();
+        query.put("_id", changeSetId);
+
+        BasicDBObject keys = new BasicDBObject();
+        keys.put("files", new BasicDBObject().append("$slice", new Integer[] {Integer.valueOf(entryId), 1}));
+
+        DBObject result = getCollection().findOne(query, new BasicDBObject());
+
+        if (result == null) {
+            return null;
+        }
+
+        MongoDBChangeSet changeSet = morphia.fromDBObject(MongoDBChangeSet.class, result);
+        if (!changeSet.getDrifts().isEmpty()) {
+            return changeSet.getDrifts().iterator().next();
+        }
+        return null;
     }
 
 }

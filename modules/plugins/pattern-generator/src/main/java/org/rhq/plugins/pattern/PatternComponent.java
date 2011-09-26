@@ -1,7 +1,6 @@
 
 package org.rhq.plugins.pattern;
 
-import java.util.Date;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -19,14 +18,16 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 
 @SuppressWarnings("unused")
-public class PatternComponent implements ResourceComponent, MeasurementFacet
-{
+public class PatternComponent implements ResourceComponent, MeasurementFacet {
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     int count = 0;
     int traitCount = 0;
+
     int number = 0; // We start with returning zeros
-    int numerForTrait = 0;
+    int numberForTrait = 0;
+
     int[] wanted = new int[2];
 
     /**
@@ -68,43 +69,63 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet
     }
 
 
-
     /**
      * Gather "measurement" data - actually a series of 1s and 0s starting with 0.
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
-    public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+    public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
 
-         for (MeasurementScheduleRequest req : metrics) {
-            if (req.getName().equals("pattern1")) {
+         boolean flipMetrics = false;
+         boolean flipTraits = false;
+         for (MeasurementScheduleRequest request : requests) {
+             String metricName = request.getName();
 
-                double val;
+             if (metricName.startsWith("pattern")) {
 
-                val = (double) number;
+                double value;
+                if (metricName.equals("pattern1")) {
+                    value = number;
+                    flipMetrics = true;
 
-                count++;
-                // enough of this? Flip over to the other number and reset the series.
-                if (count>=wanted[number]) {
-                    number = 1-number;
-                    count=0;
+                } else {
+                    // pattern2
+                    value = 1 - number;
                 }
 
-                MeasurementDataNumeric res = new MeasurementDataNumeric(req, val);
-                report.addData(res);
-            }
-             else if (req.getName().equals("text1")) {
+                MeasurementDataNumeric datum = new MeasurementDataNumeric(request, value);
+                report.addData(datum);
+            } else if (metricName.startsWith("text")) {
 
-                String trait = "Trait_" + number;
-                traitCount++;
-                // enough of this? Flip over to the other number and reset the series.
-                if (traitCount>=wanted[number]) {
-                    number = 1-number;
-                    traitCount=0;
+                double value;
+                if (metricName.equals("text1")) {
+                     value = numberForTrait;
+                     flipTraits = true;
+                } else {
+                     // text2
+                     value = 1 - numberForTrait;
                 }
+                String traitValue = (value == 0) ? "red" : "green";
 
-                MeasurementDataTrait res = new MeasurementDataTrait(req,trait);
-                report.addData(res);
+                MeasurementDataTrait datum = new MeasurementDataTrait(request,traitValue);
+                report.addData(datum);
             }
-         }
+        }
+        if (flipMetrics) {
+            count++;
+            if (count >= wanted[number]) {
+                // Flip over to the other number and reset the series.
+                number = 1 - number;
+                count = 0;
+            }
+        }
+        if (flipTraits) {
+            traitCount++;
+            if (traitCount >= wanted[numberForTrait]) {
+                // Flip over to the other number and reset the series.
+                numberForTrait = 1 - numberForTrait;
+                traitCount = 0;
+            }
+        }
     }
+
 }

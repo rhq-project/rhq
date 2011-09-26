@@ -46,14 +46,19 @@ public class DataInserter {
         try {
             List<Integer> scheduleIds = new ArrayList<Integer>();
             Statement s = c.createStatement();
-            ResultSet rs = s.executeQuery("SELECT id FROM RHQ_MEASUREMENT_SCHED");
-
-            while (rs.next() && (numSchedules > 0)) {
-                scheduleIds.add(rs.getInt(1));
-                numSchedules--;
+            try {
+                ResultSet rs = s.executeQuery("SELECT id FROM RHQ_MEASUREMENT_SCHED");
+                try {
+                    while (rs.next() && (numSchedules > 0)) {
+                        scheduleIds.add(rs.getInt(1));
+                        numSchedules--;
+                    }
+                } finally {
+                    rs.close();
+                }
+            } finally {
+                s.close();
             }
-
-            JDBCUtil.safeClose(s, rs);
 
             System.out.println("INSERTING for " + scheduleIds.size() + " schedules starting at " + new Date(time));
 

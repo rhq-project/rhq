@@ -1081,28 +1081,32 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
             Map<Integer, ResourceMeasurementScheduleRequest> scheduleRequestMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
             ResultSet results = resultsStatement.executeQuery();
-            while (results.next()) {
-                Integer resourceId = (Integer) results.getInt(1);
-                Integer scheduleId = (Integer) results.getInt(2);
-                String definitionName = (String) results.getString(3);
-                Long interval = (Long) results.getLong(4);
-                Boolean enabled = (Boolean) results.getBoolean(5);
-                DataType dataType = DataType.values()[results.getInt(6)];
-                NumericType rawNumericType = NumericType.values()[results.getInt(7)];
-                if (results.wasNull()) {
-                    rawNumericType = null;
-                }
+            try {
+                while (results.next()) {
+                    Integer resourceId = (Integer) results.getInt(1);
+                    Integer scheduleId = (Integer) results.getInt(2);
+                    String definitionName = (String) results.getString(3);
+                    Long interval = (Long) results.getLong(4);
+                    Boolean enabled = (Boolean) results.getBoolean(5);
+                    DataType dataType = DataType.values()[results.getInt(6)];
+                    NumericType rawNumericType = NumericType.values()[results.getInt(7)];
+                    if (results.wasNull()) {
+                        rawNumericType = null;
+                    }
 
-                ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
-                if (scheduleRequest == null) {
-                    scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
-                    scheduleRequestMap.put(resourceId, scheduleRequest);
-                    allSchedules.add(scheduleRequest);
-                }
+                    ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
+                    if (scheduleRequest == null) {
+                        scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
+                        scheduleRequestMap.put(resourceId, scheduleRequest);
+                        allSchedules.add(scheduleRequest);
+                    }
 
-                MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
-                    interval, enabled, dataType, rawNumericType);
-                scheduleRequest.addMeasurementScheduleRequest(requestData);
+                    MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
+                        interval, enabled, dataType, rawNumericType);
+                    scheduleRequest.addMeasurementScheduleRequest(requestData);
+                }
+            } finally {
+                results.close();
             }
         } finally {
             if (resultsStatement != null) {

@@ -422,33 +422,33 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
 
             sql.replace(sql.length() - 4, sql.length(), "");
 
-            PreparedStatement st = null;
+            PreparedStatement st = connection.getConnection().prepareStatement(sql.toString());
             try {
-                st = connection.getConnection().prepareStatement(sql.toString());
                 int idx = 1;
                 for (ColumnValues.Column c : cols) {
                     st.setObject(idx++, c.getValue());
                 }
 
                 ResultSet rs = st.executeQuery();
+                try {
+                    ResultSetMetaData rsmd = rs.getMetaData();
 
-                ResultSetMetaData rsmd = rs.getMetaData();
+                    while (rs.next()) {
+                        ColumnValues vals = new ColumnValues();
 
-                while (rs.next()) {
-                    ColumnValues vals = new ColumnValues();
+                        for (int i = 1; i <= rsmd.getColumnCount(); ++i) {
+                            String columnName = rsmd.getColumnName(i);
+                            Object value = rs.getObject(i);
+                            vals.add(columnName, value);
+                        }
 
-                    for (int i = 1; i <= rsmd.getColumnCount(); ++i) {
-                        String columnName = rsmd.getColumnName(i);
-                        Object value = rs.getObject(i);
-                        vals.add(columnName, value);
+                        ret.add(vals);
                     }
-
-                    ret.add(vals);
+                } finally {
+                    rs.close();
                 }
             } finally {
-                if (st != null) {
-                    st.close();
-                }
+                st.close();
             }
         }
 

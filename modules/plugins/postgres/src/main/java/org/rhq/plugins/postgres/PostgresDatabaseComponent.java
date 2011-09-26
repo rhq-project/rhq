@@ -113,15 +113,18 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             statement.setString(1, this.resourceContext.getPluginConfiguration().getSimple("databaseName")
                 .getStringValue());
             ResultSet results = statement.executeQuery();
+            try {
+                if (!results.next()) {
+                    throw new RuntimeException("Couldn't get the data"); // TODO Error handling system
+                }
 
-            if (!results.next()) {
-                throw new RuntimeException("Couldn't get the data"); // TODO Error handling system
-            }
-
-            for (MeasurementScheduleRequest request : metrics) {
-                // Only size expected
-                double val = results.getDouble(request.getName());
-                report.addData(new MeasurementDataNumeric(request, val));
+                for (MeasurementScheduleRequest request : metrics) {
+                    // Only size expected
+                    double val = results.getDouble(request.getName());
+                    report.addData(new MeasurementDataNumeric(request, val));
+                }
+            } finally {
+                results.close();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

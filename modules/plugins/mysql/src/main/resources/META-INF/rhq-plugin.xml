@@ -361,21 +361,21 @@
                <c:simple-property name="tableName" readOnly="true" />
             </plugin-configuration>
             <!-- Summary Traits -->
-            <metric property="Engine" displayType="summary" dataType="trait" description="Database Engine that created the Table" defaultOn="true"/>
-            <metric property="Version" displayType="summary" dataType="trait" description="Version of the Table" defaultOn="true"/>
-            <metric property="Row_format" displayType="summary" dataType="trait" description="Row Format" defaultOn="true"/>
-            <metric property="Collation" displayType="summary" dataType="trait" description="Collation Character Set" defaultOn="true"/>
-            <metric property="Comment" displayType="summary" dataType="trait" description="Table Creation Comment" defaultOn="true"/>
-            <metric property="Create_options" displayType="summary" dataType="trait" description="Table Creation Options" defaultOn="true"/>
-            <metric property="Create_time" displayType="summary" dataType="trait" description="Table Creation Time" defaultOn="true"/>
+            <metric property="Engine" displayType="summary" dataType="trait" description="Database Engine that created the Table" />
+            <metric property="Version" displayType="summary" dataType="trait" description="Version of the Table" />
+            <metric property="Row_format" displayType="summary" dataType="trait" description="Row Format" />
+            <metric property="Collation" displayType="summary" dataType="trait" description="Collation Character Set" />
+            <metric property="Comment" displayType="summary" dataType="trait" description="Table Creation Comment" />
+            <metric property="Create_options" displayType="summary" dataType="trait" description="Table Creation Options" />
+            <metric property="Create_time" displayType="summary" dataType="trait" description="Table Creation Time" />
 
             <!-- Dynamic Metrics -->
-            <metric property="Rows" displayType="summary" measurementType="dynamic" description="Number of Rows in the Table" defaultOn="true"/>
-            <metric property="Avg_row_length" displayType="summary" measurementType="dynamic" units="bytes" description="Average Row Length(bytes)" defaultOn="true"/>
-            <metric property="Data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Data Size(bytes)" defaultOn="true"/>
-            <metric property="Max_data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Max Table Data Size(bytes)" defaultOn="true"/>
-            <metric property="Index_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Index Size(bytes)" defaultOn="true"/>
-            <metric property="Data_free" displayType="summary" measurementType="dynamic" units="bytes" description="Table Free Space(bytes)" defaultOn="true"/>
+            <metric property="Rows" displayType="summary" measurementType="dynamic" description="Number of Rows in the Table" />
+            <metric property="Avg_row_length" displayType="summary" measurementType="dynamic" units="bytes" description="Average Row Length(bytes)" />
+            <metric property="Data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Data Size(bytes)" />
+            <metric property="Max_data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Max Table Data Size(bytes)" />
+            <metric property="Index_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Index Size(bytes)" />
+            <metric property="Data_free" displayType="summary" measurementType="dynamic" units="bytes" description="Table Free Space(bytes)" />
          </service>
       </service>
       <service name="User" class="MySqlUserComponent" discovery="MySqlUserDiscoveryComponent"

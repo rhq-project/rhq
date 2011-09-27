@@ -54,34 +54,29 @@
               description="Name that this platform is known as"
               defaultOn="true"
               dataType="trait"
-              displayType="summary"
-              defaultOn="true" />
+              displayType="summary" />
       <metric displayName="OS Name"
               property="Trait.osname"
               description="Name that the operating system is known as"
               defaultOn="true"
               dataType="trait"
-              displayType="summary"
-              defaultOn="true" />
+              displayType="summary" />
       <metric displayName="OS Version"
               property="Trait.osversion"
               description="Version of the operating system"
               defaultOn="true"
               dataType="trait"
-              displayType="summary"
-              defaultOn="true" />
+              displayType="summary" />
       <metric displayName="Architecture"
               property="Trait.sysarch"
               description="Hardware architecture of the platform"
               defaultOn="true"
               dataType="trait"
-              displayType="summary"
-              defaultOn="true"/>
+              displayType="summary" />
 '>
  <!ENTITY nativeMetrics '      
       <metric displayName="Free Memory"
               property="Native.MemoryInfo.free"
-              defaultOn="true"
               displayType="summary"
               defaultOn="true"
               units="bytes"
@@ -89,7 +84,6 @@
               
       <metric displayName="Used Memory"
               property="Native.MemoryInfo.used"
-              defaultOn="true"
               displayType="summary"
               defaultOn="true"
               units="bytes"
@@ -97,29 +91,23 @@
               
       <metric displayName="Total Memory"
               property="Native.MemoryInfo.total"
-              defaultOn="true"
               units="bytes"
-              defaultInterval="1200000"
               description="The total system memory"/>
               
       <metric displayName="Free Swap Space"
               property="Native.SwapInfo.free"
-              defaultOn="true"
               units="bytes"
               description="The total free system swap"/>
               
       <metric displayName="Used Swap Space"
               property="Native.SwapInfo.used"
-              defaultOn="true"
               displayType="summary"
               units="bytes"
               description="The total used system swap"/>
               
       <metric displayName="Total Swap Space"
               property="Native.SwapInfo.total"
-              defaultOn="true"
               units="bytes"
-              defaultInterval="1200000"
               description="The total system swap"/>
 '>
 
@@ -151,29 +139,21 @@
               property="CpuTrait.vendor"
               defaultOn="true"
               dataType="trait"
-              defaultOn="true"
-              defaultInterval="3600000"
               description="Vendor of this CPU"/>
       <metric displayName="CPU Model"
               property="CpuTrait.model"
               defaultOn="true"
               dataType="trait"
-              defaultOn="true"
-              defaultInterval="3600000"
               description="Model of this CPU"/>
       <metric displayName="CPU Speed"
               property="CpuTrait.mhz"
               defaultOn="true"
               dataType="trait"
-              defaultOn="true"
-              defaultInterval="3600000"
               description="Speed of this CPU in Mhz"/>
       <metric displayName="Cache size"
               property="CpuTrait.cacheSize"
               defaultOn="true"
               dataType="trait"
-              defaultOn="true"
-              defaultInterval="3600000"
               description="Cache Size of this CPU"/>
 '>
 
@@ -348,15 +328,13 @@
               description="name of the Linux distribution"
               defaultOn="true"
               dataType="trait"
-              displayType="summary"
-              defaultOn="true" />
+              displayType="summary" />
       <metric displayName="Distribution Version"
               property="distro.version"
               description="version of the Linux distribution"
               defaultOn="true"
               dataType="trait"
-              displayType="summary"
-              defaultOn="true" />
+              displayType="summary" />
 
       &syslogEventDefinition;
 
@@ -538,29 +516,29 @@
               description="The total free bytes on filesystem"/>
       <metric property="fileSystemUsage.usePercent" displayName="Used Percentage" units="percentage" displayType="summary"
               description="The percentage of disk used"/>
-      <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait" defaultOn="true"
+      <metric property="fileSystemUsage.total" displayName="Capacity" units="kilobytes" dataType="trait" 
               description="The total size of the filesystem"/>
       <metric property="fileSystem.typeName" displayName="Volume Type" dataType="trait" displayType="summary"
               description="The filesystem's generic type name"/>
       <metric property="fileSystem.sysTypeName" displayName="Drive Type" dataType="trait" displayType="summary"
               description="The filesystem's operating system-specific type name"/>
-      <metric property="fileSystem.devName" displayName="name" dataType="trait" defaultOn="true"
+      <metric property="fileSystem.devName" displayName="name" dataType="trait" 
               description="The name of this device"/>
       <metric property="fileSystemUsage.freeFiles" displayName="Free Files"
               description="The number of free file nodes on the filesystem"/>
-      <metric property="fileSystem.flags" displayName="Flags" dataType="trait" defaultOn="true"
+      <metric property="fileSystem.flags" displayName="Flags" dataType="trait" 
               description="The filesystem's flags"/>
-      <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" defaultOn="true"
+      <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" 
               description="The total bytes used on the filesystem"/>
       <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup" displayType="summary"
               description="The number of physical disk reads"/>
       <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup" displayType="summary"
               description="The number of physical disk writes"/>
-      <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" defaultOn="true"
+      <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" 
               description="The number of physical disk bytes read"/>
-      <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup" units="bytes" defaultOn="true"
+      <metric property="fileSystemUsage.diskWriteBytes" displayName="Disk Write Bytes" measurementType="trendsup" units="bytes" 
               description="The number of physical disk bytes written"/>
-      <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue" defaultOn="true"
+      <metric property="fileSystemUsage.diskQueue" displayName="Disk Queue" 
               description="The number of I/Os currently in progress"/>
 
    </service>

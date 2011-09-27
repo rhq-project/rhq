@@ -85,32 +85,27 @@
                 displayName="Client Version"
                 description="The version of the client used by this plugin to talk to the Byteman agent."
                 category="utilization"
-                dataType="trait"
-                defaultOn="true" />
+                dataType="trait" />
 
         <metric property="totalNumberOfScripts"
                 description="The total number of scripts currently deployed in the Byteman agent. Scripts contain one or more rules."
                 category="utilization"
-                displayType="summary"
-                defaultOn="true" />
+                displayType="summary" />
 
         <metric property="totalNumberOfRules"
                 description="The total number of individual rules currently deployed in the Byteman agent"
                 category="utilization"
-                displayType="summary"
-                defaultOn="true" />
+                displayType="summary" />
 
         <metric property="totalNumberOfBootJars"
                 description="The total number of jar files that have been added to the Byteman agent's boot classpath"
                 category="utilization"
-                displayType="summary"
-                defaultOn="true" />
+                displayType="summary" />
 
         <metric property="totalNumberOfSystemJars"
                 description="The total number of jar files that have been added to the Byteman agent's system classpath"
                 category="utilization"
-                displayType="summary"
-                defaultOn="true" />
+                displayType="summary" />
 
         <!--
         bootJar/systemJar content allow users to push jar content to the RHQ agent machine and manage that content.

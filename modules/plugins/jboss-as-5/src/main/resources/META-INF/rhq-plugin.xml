@@ -4,7 +4,7 @@
 
 <!ENTITY managedObjectMetrics '
     <metric property="runState" displayType="summary"
-            defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+            dataType="trait" category="performance"/>
 '>
 
 <!ENTITY datasourceAndConnectionFactoryOperations '
@@ -49,42 +49,42 @@
 <!ENTITY datasourceMetrics '
     <!-- Traits -->
     <metric property="poolJndiName" displayType="summary" displayName="Pool JNDI Name"
-            defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+            dataType="trait" category="performance"
             description="the JNDI name of the connection pool for this datasource"/>
 
     <!-- Numerics -->
     <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"
+            dataType="measurement" category="performance"
             description="the maximum number of connections that are available"/>
 
     <metric property="connectionCount" measurementType="dynamic" displayType="summary"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"
+            dataType="measurement" category="performance"
             description="the number of connections that are currently in the pool"/>
 
     <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"
+            dataType="measurement" category="performance"
             description="the number of connections that have been created since the datasource was last started"/>
 
     <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"
+            dataType="measurement" category="performance"
             description="the number of connections that have been destroyed since the datasource was last started"/>
 
     <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"
+            dataType="measurement" category="performance"
             description="the number of connections that are currently in use"/>
 
     <metric property="local-transaction" displayType="summary"
-            defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+            dataType="trait" category="performance"/>
 
     <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"
+            dataType="measurement" category="performance"
             description="the most connections that have been simultaneously in use since this datasource was started"/>
 
     <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 '>
 
 <!-- NOTE: For Datasource ManagedProperty annotations, see:
@@ -593,39 +593,39 @@
 
 <!ENTITY connectionFactoryMetrics '
     <!-- Traits -->
-    <metric property="poolJndiName" displayType="summary" displayName="Pool JNDI Name" defaultOn="true"
-            defaultInterval="600000" dataType="trait" category="performance"/>
+    <metric property="poolJndiName" displayType="summary" displayName="Pool JNDI Name"
+            dataType="trait" category="performance"/>
 
     <!-- Numerics -->
     <metric property="availableConnectionCount" measurementType="dynamic" displayType="summary"
             displayName="Available Connection Count" description="Number of available connections."
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="connectionCount" measurementType="dynamic" displayType="summary"
-            displayName="Connection Count" defaultOn="true" defaultInterval="600000" dataType="measurement"
+            displayName="Connection Count" dataType="measurement"
             category="performance"/>
 
     <metric property="connectionCreatedCount" measurementType="dynamic" displayType="detail"
-            displayName="Connection Created Count" defaultOn="true" defaultInterval="600000"
+            displayName="Connection Created Count" 
             dataType="measurement" category="performance"/>
 
     <metric property="connectionDestroyedCount" measurementType="dynamic" displayType="detail"
-            displayName="Connection Destroyed Count" defaultOn="true" defaultInterval="600000"
+            displayName="Connection Destroyed Count" 
             dataType="measurement" category="performance"/>
 
     <metric property="inUseConnectionCount" measurementType="dynamic" displayType="detail"
             displayName="In Use Connection Count" description="Mumber of connections currently in use."
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="maxConnectionsInUseCount" measurementType="dynamic" displayType="detail"
             displayName="Max Connections In Use Count" description="Maximum number of maximum connections that have been in use."
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="maxSize" measurementType="dynamic" displayType="detail" displayName="Max Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="minSize" measurementType="dynamic" displayType="detail" displayName="Min Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 '>
 
 <!-- These are the operations that both Topics and Queues have. -->
@@ -672,14 +672,14 @@
 
 <!ENTITY webApplicationContextMetrics '
     <metric property="clustered" dataType="trait" displayType="summary"
-            description="True if this web application context is clustered" defaultOn="true" defaultInterval="3600000" />
+            description="True if this web application context is clustered" />
             
     <metric property="virtualHost"
             dataType="trait" displayType="summary"
             description="the virtual host with which this context is associated"/>
 
     <metric property="responseTime"
-            dataType="calltime" defaultOn="false" defaultInterval="600000" units="milliseconds" destinationType="URL"
+            dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
             description="the minimum, maximum, and average response times for requests serviced by this webapp"/>
 
     <metric property="activeSessions"
@@ -782,30 +782,30 @@
 
     <!-- default interval == 600000 ms == 10 min -->
     <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
-            defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+            defaultOn="false" destinationType="Method Name"
             description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 '>
 
 <!ENTITY ejb3StatefulSessionBeanMetrics '
     <metric property="cacheSize" measurementType="dynamic" displayType="detail" displayName="Cache Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="passivatedCount" measurementType="dynamic" displayType="detail" displayName="Passivated Count"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="totalSize" measurementType="dynamic" displayType="detail" displayName="Total Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 '>
 
 <!ENTITY ejb3MessageDrivenBeanMetrics '
     <metric property="minPoolSize" measurementType="dynamic" displayType="detail" displayName="Minimum Pool Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="maxPoolSize" measurementType="dynamic" displayType="detail" displayName="Maximum Pool Size"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 
     <metric property="maxMessages" measurementType="dynamic" displayType="detail" displayName="Maximum number of Messages"
-            defaultOn="true" defaultInterval="600000" dataType="measurement" category="performance"/>
+            dataType="measurement" category="performance"/>
 '>
 
 <!ENTITY ejb2PoolMetrics '
@@ -827,7 +827,7 @@
 <!ENTITY ejb2SessionBeanMetrics '
     <!-- default interval == 600000 ms == 10 min -->
     <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
-            defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+            defaultOn="false" destinationType="Method Name"
             description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
 '>
 
@@ -902,8 +902,7 @@
 <!ENTITY ejb2EntityBeanMetrics '
 	<metric property="CacheSize"
 	        displayName="Cache Size"
-	        displayType="summary"
-	        defaultOn="true"/>
+	        displayType="summary"/>
 '>
 
 <!ENTITY subscriptionsResultProperty '
@@ -1140,35 +1139,35 @@
 
           <metric displayName="Active Thread Count" property="MCBean|ServerInfo|*|activeThreadCount"
                   description="The current number of active threads for this app server instance"
-                  defaultInterval="300000" displayType="summary" category="throughput"/>
+                  displayType="summary" category="throughput"/>
 
           <metric displayName="Active Thread Group Count" property="MCBean|ServerInfo|*|activeThreadGroupCount"
                   description="The current number of active thread groups for this app server instance"
-                  defaultInterval="300000" defaultOn="true" category="throughput"/>
+                  category="throughput"/>
 
           <metric displayName="JVM Free Memory" property="MCBean|ServerInfo|*|freeMemory" displayType="summary"
                   defaultOn="true"
                   description="An approximation of the total amount of memory currently available in the app server JVM for future allocated objects, measured in bytes"
-                  defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
+                  category="utilization" units="bytes"/>
 
           <metric displayName="JVM Max Memory" property="MCBean|ServerInfo|*|maxMemory"
                   description="The maximum amount of memory that the app server JVM will attempt to use, measured in bytes; if there is no inherent limit then the value Long.MAX_VALUE will be returned"
-                  defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
+                  category="utilization" units="bytes"/>
 
           <metric displayName="JVM Total Memory" property="MCBean|ServerInfo|*|totalMemory" displayType="summary"
                   description="The total amount of memory currently available in the app server JVM for current and future objects, measured in bytes"
-                  defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
+                  category="utilization" units="bytes"/>
 
           <metric displayName="Total Transactions" property="MCBean|JTA|*|transactionCount" measurementType="trendsup"
-                  defaultInterval="300000" defaultOn="true" category="utilization"
+                  category="utilization"
                   description="Total number of transactions since last restart"/>
 
           <metric displayName="Transactions Committed" property="MCBean|JTA|*|commitCount" displayType="summary" measurementType="trendsup"
-                  defaultInterval="600000" defaultOn="true" category="utilization"
+                  category="utilization"
                   description="Number of transactions committed since last restart"/>
 
           <metric displayName="Transactions Rolled Back" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
-                  defaultInterval="600000" defaultOn="true" category="utilization"
+                  category="utilization"
                   description="Number of transactions rolled back since last restart"/>
 
           <event name="logEntry" description="an entry was appended to a log file"/>
@@ -1255,7 +1254,7 @@
                       displayName="Maximum Request Time"
                       description="the maximum time it took to process a request since the last restart"
                       units="milliseconds"
-                      defaultOn="true" category="performance"/>
+                      category="performance"/>
 
               <metric property="requestCount"
                       displayName="Request Count" description="the total number of requests processed since the last restart"
@@ -1263,16 +1262,16 @@
 
               <metric property="errorCount"
                       displayName="Error Count" description="the number of errors while processing requests since the last restart"
-                      defaultOn="true" category="utilization" measurementType="trendsup"/>
+                      category="utilization" measurementType="trendsup"/>
 
               <metric property="ThreadPool|currentThreadsBusy"
                       displayName="Current Active Threads"
-                      defaultOn="true" category="utilization" displayType="summary"
+                      category="utilization" displayType="summary"
                       description="the number of threads for this connector that are currently active"/>
 
               <metric property="ThreadPool|currentThreadCount"
                       displayName="Current Thread Count"
-                      defaultOn="true" category="utilization" displayType="summary"
+                      category="utilization" displayType="summary"
                       description="the number of threads for this connector that currently exist"/>
 
            </service>
@@ -1583,7 +1582,7 @@
 
             <metric property="custom.transactionType" displayName="Transaction Type" displayType="summary"
                     description="The type of transactions used by this connection factory - Local or XA"
-                    defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"/>
+                    dataType="trait" category="performance"/>
 
             &managedObjectMetrics;
             &connectionFactoryMetrics;
@@ -1762,54 +1761,54 @@
                 <!-- Traits -->
 
                 <metric property="createdProgrammatically" displayType="summary"
-                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        dataType="trait" category="performance"
                         description="Was this queue created programmatically? If Yes, the queue will not survive a restart of the application server. If No, the queue was created via a deployment XML file."/>
 
                 <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
                            (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
                 <metric property="messageCounterHistoryDayLimit"
-                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        dataType="trait" category="performance"
                         description="This queue's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
 
                 <!-- Numerics -->
 
                 <metric property="consumerCount" measurementType="dynamic" displayType="summary" displayName="Consumer Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The number of consumers on the queue"/>
 
                 <metric property="deliveringCount" measurementType="dynamic" displayType="detail" displayName="Delivering Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The number of messages currently being delivered"/>
 
                 <metric property="messageCount" measurementType="dynamic" displayType="summary" displayName="Message Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The number of messages in the queue"/>
 
                 <metric property="scheduledMessageCount" measurementType="dynamic" displayType="detail" displayName="Scheduled Message Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The number of scheduled messages in the queue"/>
 
                 <metric property="messageStatistics.count" measurementType="dynamic" displayType="detail" displayName="Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="utilization"
+                        dataType="measurement" category="utilization"
                         description="The total message count since startup or last counter reset"/>
 
                 <metric property="messageStatistics.countDelta" measurementType="dynamic" displayType="detail" displayName="Count Delta"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="utilization"
+                        dataType="measurement" category="utilization"
                         description="The message count delta since last method call"/>
 
                 <metric property="messageStatistics.depth" measurementType="dynamic" displayType="detail" displayName="Depth"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="utilization"
+                        dataType="measurement" category="utilization"
                         description="The current message count of pending messages within the queue waiting for dispatch"/>
 
                 <metric property="messageStatistics.depthDelta" measurementType="dynamic" displayType="detail" displayName="Depth Delta"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="utilization"
+                        dataType="measurement" category="utilization"
                         description="The message count delta of pending messages since last method call"/>
 
                 <metric property="messageStatistics.timeLastUpdate" measurementType="dynamic" displayType="detail" displayName="Time Last Update"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="utilization"
+                        dataType="measurement" category="utilization"
                         description="The timestamp of the last message add"/>
 
-                <metric property="clustered" dataType="trait" description="True if this queue is clustered, false otherwise" defaultInterval="3600000" defaultOn="true"/>
+                <metric property="clustered" dataType="trait" description="True if this queue is clustered, false otherwise" />
                 
                 <resource-configuration>
 
@@ -2113,42 +2112,42 @@
                 <!-- Traits -->
 
                 <metric property="createdProgrammatically" displayType="summary"
-                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        dataType="trait" category="performance"
                         description="Was this topic created programmatically? If Yes, the topic will not survive a restart of the application server. If No, the topic was created via a deployment XML file."/>
 
                 <!-- NOTE: We have to make this a trait rather than a resource config prop due to a bug in JBMESSAGING
                            (see https://jira.jboss.org/jira/browse/JBAS-6721). -->
                 <metric property="messageCounterHistoryDayLimit"
-                        defaultOn="true" defaultInterval="600000" dataType="trait" category="performance"
+                        dataType="trait" category="performance"
                         description="This topic's message counter history day limit - &lt;0: unlimited, =0: history disabled, &gt;0: maximum day count"/>
 
                 <!-- Numerics -->
 
                 <metric property="allMessageCount" measurementType="dynamic" displayType="summary" displayName="All Message Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The count of all messages in all subscriptions to this topic"/>
 
                 <metric property="allSubscriptionsCount" measurementType="dynamic" displayType="summary" displayName="All Subscriptions Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The count of all subscriptions to this topic"/>
 
                 <metric property="durableMessageCount" measurementType="dynamic" displayType="detail" displayName="Durable Message Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The count of all messages for all durable subscriptions to this topic"/>
 
                 <metric property="durableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Durable Subscriptions Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The count of all durable subscriptions to this topic"/>
 
                 <metric property="nonDurableMessageCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Message Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The count of all messages in all non durable subscriptions to this topic"/>
 
                 <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
-                        defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
+                        dataType="measurement" category="throughput"
                         description="The count of all non durable subscriptions to this topic"/>
 
-                <metric property="clustered" dataType="trait" description="True if this topic is clustered, false otherwise" defaultInterval="3600000" defaultOn="true"/>
+                <metric property="clustered" dataType="trait" description="True if this topic is clustered, false otherwise" />
 
                 <resource-configuration>
 
@@ -2569,7 +2568,7 @@
                  &ejb2StatelessSessionBeanMetrics;
 
                 <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
-                        defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                        defaultOn="false" destinationType="Method Name"
                         description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
             </service>
 
@@ -2585,7 +2584,7 @@
                  &ejb2StatefulSessionBeanMetrics;
 
                 <metric property="methodInvocationTime" dataType="calltime" units="milliseconds"
-                        defaultOn="false" defaultInterval="600000" destinationType="Method Name"
+                        defaultOn="false" destinationType="Method Name"
                         description="The minimum, maximum, and average invocation times for each of the methods exposed by this EJB"/>
             </service>
 

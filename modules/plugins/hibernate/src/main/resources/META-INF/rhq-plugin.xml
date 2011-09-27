@@ -91,7 +91,7 @@
 
       <metric displayName="Successful Transaction Count" property="SuccessfulTransactionCount"
               description="The global number of transactions known to have been successful since the statistics were reset"
-              category="throughput" defaultOn="true" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Query Cache Hit Count" property="QueryCacheHitCount"
               description="The global number of cached queries successfully retrieved from cache since the statistics were reset"
@@ -103,11 +103,11 @@
 
       <metric displayName="Connect Count" property="ConnectCount"
               description="The global number of connections asked by the sessions (the actual number of connections used may be much smaller depending whether you use a connection pool or not) since the statistics were reset"
-              category="throughput" defaultOn="true" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Start Time" property="StartTime" dataType="trait"
               description="The time when the statistics collection started or were last reset"
-              category="availability" defaultOn="true" units="epoch_milliseconds" measurementType="dynamic"/>
+              category="availability" units="epoch_milliseconds" measurementType="dynamic"/>
 
       <metric displayName="Second Level Cache Put Count" property="SecondLevelCachePutCount"
               description="The global number of cacheable entities/collections put in the cache since the statistics were reset"
@@ -119,11 +119,11 @@
 
       <metric displayName="Session Open Count" property="SessionOpenCount"
               description="The global number of sessions closed since the statistics were reset"
-              category="throughput" defaultOn="true" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Transaction Count" property="TransactionCount"
               description="The global number of transactions known to have completed since the statistics were reset"
-              category="throughput" defaultOn="true" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Collection Fetch Count" property="CollectionFetchCount"
               description="The global number of collections fetched since the statistics were reset"
@@ -131,11 +131,11 @@
 
       <metric displayName="Session Close Count" property="SessionCloseCount"
               description="The global number of sessions closed since the statistics were reset"
-              category="throughput" defaultOn="true" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Query Cache Miss Count" property="QueryCacheMissCount"
               description="The global number of cached queries *not* found in cache since the statistics were reset"
-              category="throughput" defaultOn="true" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Second Level Cache Miss Count" property="SecondLevelCacheMissCount"
               description="The global number of cacheable entities/collections not found in the cache and loaded from the database since the statistics were reset"

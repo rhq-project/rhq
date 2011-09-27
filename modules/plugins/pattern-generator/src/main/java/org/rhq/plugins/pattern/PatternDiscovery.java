@@ -25,7 +25,7 @@ public class PatternDiscovery implements ResourceDiscoveryComponent
             discoveryContext.getResourceType(), // ResourceType
                 "pattern",
                 "pattern",
-                "1.1",
+                "1.2",
                 "Generate metrics that follow a pattern",
                 discoveryContext.getDefaultPluginConfiguration(),
                 null

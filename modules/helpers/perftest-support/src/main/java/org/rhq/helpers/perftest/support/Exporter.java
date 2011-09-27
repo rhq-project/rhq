@@ -23,6 +23,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,6 +38,7 @@ import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.ReplacementDataSet;
 import org.dbunit.dataset.stream.DataSetProducerAdapter;
 import org.dbunit.dataset.stream.IDataSetConsumer;
+
 import org.rhq.helpers.perftest.support.config.Entity;
 import org.rhq.helpers.perftest.support.config.ExportConfiguration;
 import org.rhq.helpers.perftest.support.dbunit.DbUnitUtil;
@@ -104,15 +107,13 @@ public class Exporter {
 
         Set<ColumnValues> ret = new HashSet<ColumnValues>();
 
-        if (query == null) {
-            return null;
-        }
-
         IDataSet data = connection.createDataSet(new String[] { table });
-
         Column[] tablePks = data.getTableMetaData(table).getPrimaryKeys();
-
         String pkName = tablePks[0].getColumnName();
+
+        if (query == null) {
+            query = "SELECT " + pkName + " FROM " + table;
+        }
 
         //the connection shouldn't be closed here, because we're just reusing an already existing one.
         Connection jdbcConnection = connection.getConnection();

@@ -136,14 +136,17 @@ public class DbSetup {
     private void setup() throws Exception {
         DBSetup dbSetup = new DBSetup(connection);
 
-        File schema = getFileFromResource(MINIMAL_VERSION_OF_SCHEMA, getClass().getClassLoader());
-
+        File minimalSchema = getFileFromResource(MINIMAL_VERSION_OF_SCHEMA, getClass().getClassLoader());
+        File currentSchema = getFileFromDbUtils("db-schema-combined.xml");
+        
         try {
-            replaceTokensInFile(schema);
-            dbSetup.uninstall(schema.getAbsolutePath());
-            dbSetup.setup(schema.getAbsolutePath());
+            replaceTokensInFile(minimalSchema);
+            replaceTokensInFile(currentSchema);
+            dbSetup.uninstall(currentSchema.getAbsolutePath());
+            dbSetup.setup(minimalSchema.getAbsolutePath());
         } finally {
-            schema.delete();
+            minimalSchema.delete();
+            currentSchema.delete();
         }
 
         File data = getFileFromResource(MINIMAL_VERSION_OF_DATA, getClass().getClassLoader());

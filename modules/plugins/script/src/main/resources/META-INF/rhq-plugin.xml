@@ -80,9 +80,7 @@
               dataType="measurement"
               displayName="The Measurement Name"
               description="Describes what this measurement is actually telling you"
-              defaultOn="true"
               units="none"
-              defaultInterval="300000"
               displayType="summary"
               category="performance" />
       -->

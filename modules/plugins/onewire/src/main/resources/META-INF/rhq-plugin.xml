@@ -25,7 +25,7 @@
          discovery="DS1820Discovery"
          >     
          
-         <metric property="temperature" defaultOn="true" description="Temperature measured" 
+         <metric property="temperature" description="Temperature measured" 
                  displayType="summary" units="celsius"/>
          
       </service>

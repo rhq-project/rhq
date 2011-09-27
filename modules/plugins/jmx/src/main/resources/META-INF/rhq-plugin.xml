@@ -126,7 +126,6 @@
          </plugin-configuration>
 
          <metric displayName="Free Physical Memory"
-                 defaultOn="true"
                  displayType="summary"
                  category="performance"
                  property="FreePhysicalMemorySize"
@@ -147,7 +146,6 @@
                  measurementType="trendsup"
                  units="nanoseconds"/>
          <metric displayName="Committed Virtual Memory"
-                 defaultOn="true"
                  category="utilization"
                  property="CommittedVirtualMemorySize"
                  description="Size of virtual memory used by this process"
@@ -208,23 +206,19 @@
          </operation>
 
          <metric displayName="Thread Count"
-                 defaultOn="true"
                  displayType="summary"
                  category="performance"
                  property="ThreadCount"
                  description="Number of active threads in the system"/>
          <metric displayName="Peak Thread Count"
-                 defaultOn="true"
                  category="performance"
                  property="PeakThreadCount"
                  description="Peak count of active threads in the system"/>
          <metric displayName="Total Started Thread Count"
-                 defaultOn="true"
                  category="performance"
                  property="TotalStartedThreadCount"
                  description="Count of threads started since system start"/>
          <metric displayName="Daemon Thread Count"
-                 defaultOn="true"
                  category="performance"
                  property="DaemonThreadCount"
                  description="Count of threads marked as daemons in the system"/>

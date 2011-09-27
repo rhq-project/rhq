@@ -17,14 +17,14 @@
         <metric property="gpusAverageTemperature" units="celsius" displayName="Average GPU Temperature" displayType="summary"/>
         <metric property="fanAverageSpeed" displayName="Average Fan Speed" displayType="summary"/>
 
-        <metric property="smolt.System Memory" dataType="trait" displayType="summary" displayName="System Memory" defaultInterval="86400"/>
-        <metric property="smolt.System Swap" dataType="trait" displayType="summary" displayName="System Swap" defaultInterval="86400"/>
-        <metric property="smolt.Vendor" dataType="trait" displayType="summary" displayName="Vendor" defaultInterval="86400"/>
-        <metric property="smolt.System" dataType="trait" displayType="summary" displayName="System Model" defaultInterval="86400"/>
-        <metric property="smolt.Form factor" dataType="trait" displayType="summary" displayName="Form Factor" defaultInterval="86400"/>
-        <metric property="smolt.CPU Vendor" dataType="trait" displayType="summary" displayName="CPU Vendor" defaultInterval="86400"/>
-        <metric property="smolt.CPU Model" dataType="trait" displayType="summary" displayName="CPU Model" defaultInterval="86400"/>
-        <metric property="smolt.BogoMIPS" dataType="trait" displayType="summary" displayName="BogoMIPS" defaultInterval="86400"/>
+        <metric property="smolt.System Memory" dataType="trait" displayType="summary" displayName="System Memory"/>
+        <metric property="smolt.System Swap" dataType="trait" displayType="summary" displayName="System Swap"/>
+        <metric property="smolt.Vendor" dataType="trait" displayType="summary" displayName="Vendor"/>
+        <metric property="smolt.System" dataType="trait" displayType="summary" displayName="System Model"/>
+        <metric property="smolt.Form factor" dataType="trait" displayType="summary" displayName="Form Factor"/>
+        <metric property="smolt.CPU Vendor" dataType="trait" displayType="summary" displayName="CPU Vendor"/>
+        <metric property="smolt.CPU Model" dataType="trait" displayType="summary" displayName="CPU Model"/>
+        <metric property="smolt.BogoMIPS" dataType="trait" displayType="summary" displayName="BogoMIPS"/>
 
     </server>
 

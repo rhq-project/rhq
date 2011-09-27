@@ -45,11 +45,11 @@
         </operation>
 
         <metric property="tweetCount" displayName="Tweet count" category="utilization" dataType="measurement"
-                defaultOn="true" displayType="summary" measurementType="dynamic"
+                displayType="summary" measurementType="dynamic"
                 description="Number of new tweets since last poll"/>
 
         <metric property="followerCount" displayName="Follower count" dataType="measurement"
-                defaultOn="true" displayType="summary" measurementType="dynamic" defaultInterval="14400000"
+                displayType="summary" measurementType="dynamic" defaultInterval="14400000"
                 description="Number of followers" />
 
 
@@ -77,7 +77,7 @@
             </plugin-configuration>
 
             <metric property="tweetCount" displayName="Tweet count" category="utilization" dataType="measurement"
-                    defaultOn="true" displayType="summary" measurementType="dynamic"
+                    displayType="summary" measurementType="dynamic"
                     description="Number of new tweets since last poll"/>
 
             <event name="FeedEvent"/>

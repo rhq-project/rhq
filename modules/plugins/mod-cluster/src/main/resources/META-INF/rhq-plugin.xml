@@ -477,7 +477,7 @@
 
          <metric property="Load" displayName="Load" category="utilization" 
          description="The current load of this metric as a percent of the metric's capacity." dataType="measurement" 
-         defaultOn="true" displayType="summary"/>
+         displayType="summary"/>
 
          <resource-configuration>
             <c:simple-property name="weight" type="integer" description="The significance of this load metric compared to the other metrics." />

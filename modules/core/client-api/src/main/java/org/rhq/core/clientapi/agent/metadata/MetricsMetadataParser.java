@@ -44,10 +44,11 @@ import org.rhq.core.domain.util.StringUtils;
  * @author Greg Hinkle
  */
 public class MetricsMetadataParser {
-    public static final long MIN_1 = 1L * 60 * 1000L;
-    public static final long MIN_5 = 5L * MIN_1;
-    public static final long MIN_10 = 10L * MIN_1;
-    public static final long MIN_30 = 30L * MIN_1;
+    private static final long MIN_1 = 1L * 60 * 1000L;
+    private static final long MIN_10 = 10L * MIN_1;
+    private static final long MIN_20 = 20L * MIN_1;
+    private static final long MIN_30 = 30L * MIN_1;
+    private static final long MIN_60 = 60L * MIN_1;
 
     public static final long MINIMUM_INTERVAL = MeasurementSchedule.MINIMUM_INTERVAL;
 
@@ -58,39 +59,41 @@ public class MetricsMetadataParser {
         DataType dataType = DataType.valueOf(metricDescriptor.getDataType().toUpperCase());
         DisplayType displayType = DisplayType.valueOf(metricDescriptor.getDisplayType().toUpperCase());
 
-        long collectionInterval = MIN_10;
+        long collectionInterval = MIN_30;
         MeasurementUnits units = getMeasurementUnits(metricDescriptor.getUnits(), dataType);
 
         switch (dataType) {
         case MEASUREMENT: {
             switch (resourceType.getCategory()) {
             case PLATFORM: {
-                collectionInterval = MIN_1;
+                collectionInterval = MIN_10;
                 break;
             }
 
             case SERVER: {
-                collectionInterval = MIN_5;
+                collectionInterval = MIN_20;
                 break;
             }
 
             case SERVICE: {
-                collectionInterval = MIN_10;
+                collectionInterval = MIN_30;
                 break;
             }
             }
 
-            collectionInterval = (displayType == DisplayType.SUMMARY) ? collectionInterval : (collectionInterval * 2);
+            if (displayType != DisplayType.SUMMARY) {
+                collectionInterval *= 2;
+            }
             break;
         }
 
         case TRAIT: {
-            collectionInterval = (displayType == DisplayType.SUMMARY) ? MIN_10 : MIN_30;
+            collectionInterval = (displayType == DisplayType.SUMMARY) ? MIN_30 : MIN_60;
             break;
         }
 
         case CALLTIME: {
-            collectionInterval = MIN_1;
+            collectionInterval = MIN_10;
             if (units != MeasurementUnits.MILLISECONDS) {
                 throw new IllegalStateException("Units must always be set to 'milliseconds' for call-time metrics.");
             }
@@ -126,9 +129,11 @@ public class MetricsMetadataParser {
         definition.setDestinationType(metricDescriptor.getDestinationType());
 
         // Make sure that all summary properties are on by default.
-        if (definition.getDisplayType() == DisplayType.SUMMARY) {
-            definition.setDefaultOn(true);
-        }
+        // BZ 741331 - we no longer want to imply any metric should be on by default
+        //             let the plugin writer tell us explicitly if it should be on by default
+        // if (definition.getDisplayType() == DisplayType.SUMMARY) {
+        //     definition.setDefaultOn(true);
+        // }
 
         if ((definition.getNumericType() == NumericType.TRENDSUP)
             || (definition.getNumericType() == NumericType.TRENDSDOWN)) {

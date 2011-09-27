@@ -33,13 +33,13 @@
 
 
       <metric property="totalSize" displayType="summary" units="bytes"/>
-      <metric property="logons cumulative" defaultOn="true"/>
+      <metric property="logons cumulative" />
       <metric property="logons current" displayType="summary"/>
       <metric property="opened cursors cumulative"/>
-      <metric property="opened cursors current" defaultOn="true"/>
+      <metric property="opened cursors current" />
       <metric property="user commits" displayType="summary"/>
       <metric property="user rollbacks" displayType="summary"/>
-      <metric property="user calls" defaultOn="true"/>
+      <metric property="user calls" />
       <metric property="recursive calls"/>
       <metric property="recursive cpu usage"/>
       <metric property="session logical reads"/>
@@ -49,8 +49,8 @@
       <metric property="DB time"/>
       <metric property="cluster wait time"/>
       <metric property="concurrency wait time"/>
-      <metric property="application wait time" defaultOn="true"/>
-      <metric property="user I/O wait time" defaultOn="true"/>
+      <metric property="application wait time" />
+      <metric property="user I/O wait time" />
       <metric property="session connect time"/>
       <metric property="process last non-idle time"/>
       <!--<metric property="session uga memory" displayType="summary" units="bytes"/>
@@ -70,30 +70,30 @@
       <metric property="global enqueue gets async"/>
       <metric property="global enqueue get time"/>
       <metric property="global enqueue releases"/>
-      <metric property="physical read total IO requests" defaultOn="true"/>
+      <metric property="physical read total IO requests" />
       <metric property="physical read total multi block requests"/>
-      <metric property="physical read total bytes" defaultOn="true"/>
-      <metric property="physical write total IO requests" defaultOn="true"/>
+      <metric property="physical read total bytes" />
+      <metric property="physical write total IO requests" />
       <metric property="physical write total multi block requests"/>
-      <metric property="physical write total bytes" defaultOn="true"/>
+      <metric property="physical write total bytes" />
       <metric property="IPC CPU used by this session"/>
       <metric property="gcs messages sent"/>
       <metric property="ges messages sent"/>
       <metric property="global enqueue CPU used by this session"/>
-      <metric property="db block gets" defaultOn="true"/>
-      <metric property="db block gets from cache" defaultOn="true"/>
-      <metric property="db block gets direct" defaultOn="true"/>
+      <metric property="db block gets" />
+      <metric property="db block gets from cache" />
+      <metric property="db block gets direct" />
       <metric property="consistent gets"/>
       <metric property="consistent gets from cache"/>
       <metric property="consistent gets - examination"/>
       <metric property="consistent gets direct"/>
-      <metric property="physical reads" defaultOn="true"/>
+      <metric property="physical reads" />
       <metric property="physical reads cache"/>
       <metric property="physical reads direct"/>
-      <metric property="physical read IO requests" defaultOn="true"/>
+      <metric property="physical read IO requests" />
       <metric property="physical read bytes"/>
-      <metric property="db block changes" defaultOn="true"/>
-      <metric property="consistent changes" defaultOn="true"/>
+      <metric property="db block changes" />
+      <metric property="consistent changes" />
       <metric property="recovery blocks read"/>
       <metric property="physical writes"/>
       <metric property="physical writes direct"/>
@@ -367,15 +367,15 @@
       <metric property="parse count (hard)"/>
       <metric property="parse count (failures)"/>
       <metric property="frame signature mismatch"/>
-      <metric property="execute count" defaultOn="true"/>
+      <metric property="execute count" />
       <metric property="bytes sent via SQL*Net to client"/>
       <metric property="bytes received via SQL*Net from client"/>
       <metric property="SQL*Net roundtrips to/from client"/>
       <metric property="bytes sent via SQL*Net to dblink"/>
       <metric property="bytes received via SQL*Net from dblink"/>
       <metric property="SQL*Net roundtrips to/from dblink"/>
-      <metric property="sorts (memory)" defaultOn="true"/>
-      <metric property="sorts (disk)" defaultOn="true"/>
+      <metric property="sorts (memory)" />
+      <metric property="sorts (disk)" />
       <metric property="sorts (rows)"/>
       <metric property="OTC commit optimization attempts"/>
       <metric property="OTC commit optimization hits"/>

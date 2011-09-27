@@ -210,6 +210,7 @@
               defaultInterval="300000" defaultOn="true" category="throughput"/>
 
       <metric property="jboss.system:type=ServerInfo:FreeMemory" displayName="JVM Free Memory" displayType="summary"
+              defaultOn="true"
               description="An approximation of the total amount of memory currently available in the app server JVM for future allocated objects, measured in bytes"
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 

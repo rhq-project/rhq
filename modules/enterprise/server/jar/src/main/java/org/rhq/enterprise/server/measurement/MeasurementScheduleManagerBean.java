@@ -29,6 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Date;
+import java.util.UUID;
+
+import org.quartz.Trigger;
+import org.quartz.Scheduler;
+import org.quartz.JobDetail;
+import org.quartz.JobDataMap;
+import org.quartz.SimpleTrigger;
+import org.quartz.SchedulerException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -620,6 +628,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return affectedRows;
     }
 
+    public static final String TRIGGER_NAME = "TriggerName";
+    public static final String TRIGGER_GROUP_NAME = "TriggerGroupName";
     public static final String SCHEDULE_SUBQUERY = "ScheduleSubQuery";
     public static final String ENTITYCONTEXT_RESOURCEID = "EntityContext.resourceId";
     public static final String ENTITYCONTEXT_GROUPID = "EntityContext.groupId";
@@ -640,12 +650,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 DEFAULT_AGENT_GROUP,
                 NotifyAgentsOfScheduleUpdatesJob.class);
 
+            final String triggerName = UUID.randomUUID().toString();
             SimpleTrigger simpleTrigger = new SimpleTrigger(
-                DEFAULT_AGENT_TRIGGER,
+                triggerName,
                 DEFAULT_AGENT_GROUP,
                 new Date());
 
             JobDataMap jobDataMap = simpleTrigger.getJobDataMap();
+            jobDataMap.put(TRIGGER_NAME, triggerName);
+            jobDataMap.put(TRIGGER_GROUP_NAME, DEFAULT_AGENT_GROUP);
             jobDataMap.put(SCHEDULE_SUBQUERY, scheduleSubQuery);
             jobDataMap.put(ENTITYCONTEXT_RESOURCEID, Integer.toString(entityContext.getResourceId()));
             jobDataMap.put(ENTITYCONTEXT_GROUPID, Integer.toString(entityContext.getGroupId()));
@@ -655,11 +668,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             if (isJobScheduled(scheduler, DEFAULT_AGENT_JOB, DEFAULT_AGENT_GROUP)) {
                 simpleTrigger.setJobName(DEFAULT_AGENT_JOB);
                 simpleTrigger.setJobGroup(DEFAULT_AGENT_GROUP);
-                if (isTriggerScheduled(scheduler, DEFAULT_AGENT_TRIGGER, DEFAULT_AGENT_GROUP)) {
-                    scheduler.rescheduleJob(DEFAULT_AGENT_TRIGGER, DEFAULT_AGENT_GROUP, simpleTrigger);
-                } else {
-                    scheduler.scheduleJob(simpleTrigger);
-                }
+                scheduler.scheduleJob(simpleTrigger);
             } else {
                 scheduler.scheduleJob(jobDetail, simpleTrigger);
             }

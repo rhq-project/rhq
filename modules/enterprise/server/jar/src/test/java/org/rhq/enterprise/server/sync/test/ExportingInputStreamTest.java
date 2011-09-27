@@ -57,6 +57,7 @@ import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.sync.SynchronizationConstants;
 import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
@@ -207,9 +208,9 @@ public class ExportingInputStreamTest extends JMockTest {
         
         Element root = doc.getDocumentElement();
         
-        assertEquals(ExportingInputStream.CONFIGURATION_EXPORT_ELEMENT, root.getNodeName());
+        assertEquals(SynchronizationConstants.CONFIGURATION_EXPORT_ELEMENT, root.getNodeName());
         
-        NodeList entities = root.getElementsByTagName(ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
+        NodeList entities = root.getElementsByTagName(SynchronizationConstants.ENTITIES_EXPORT_ELEMENT);
         assertEquals(entities.getLength(), 2, "Unexpected number of entities elements");
         
         Element export1 = (Element) entities.item(0);
@@ -228,32 +229,32 @@ public class ExportingInputStreamTest extends JMockTest {
             
             Element entitiesElement = (Element) node;
             
-            assertEquals(entitiesElement.getNodeName(), ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
+            assertEquals(entitiesElement.getNodeName(), SynchronizationConstants.ENTITIES_EXPORT_ELEMENT);
             
-            NodeList errorMessages = entitiesElement.getElementsByTagName(ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+            NodeList errorMessages = entitiesElement.getElementsByTagName(SynchronizationConstants.ERROR_MESSAGE_ELEMENT);
             assertEquals(errorMessages.getLength(), 0, "Unexpected number of error message elements in an entities export.");
             
-            Node note = getDirectChildByTagName(entitiesElement, ExportingInputStream.NOTES_ELEMENT);
+            Node note = getDirectChildByTagName(entitiesElement, SynchronizationConstants.NOTES_ELEMENT);
             
             assertNotNull(note, "Couldn't find exporter notes.");
             
             String notesText = ((Element)note).getTextContent();
             assertEquals(notesText, expectedNotes[elementIndex], "Unexpected notes for entities.");
             
-            NodeList entityElements = entitiesElement.getElementsByTagName(ExportingInputStream.ENTITY_EXPORT_ELEMENT);
+            NodeList entityElements = entitiesElement.getElementsByTagName(SynchronizationConstants.ENTITY_EXPORT_ELEMENT);
             
             assertEquals(entityElements.getLength(), 3, "Unexpected number of exported entities.");
             
             for(int j = 0; j < entityElements.getLength(); ++j) {
                 Element entityElement = (Element) entityElements.item(j);
                 
-                errorMessages = entityElement.getElementsByTagName(ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+                errorMessages = entityElement.getElementsByTagName(SynchronizationConstants.ERROR_MESSAGE_ELEMENT);
                 assertEquals(errorMessages.getLength(), 0, "Unexpected number of error message elements in an entity.");
                 
-                note = getDirectChildByTagName(entityElement, ExportingInputStream.NOTES_ELEMENT);
+                note = getDirectChildByTagName(entityElement, SynchronizationConstants.NOTES_ELEMENT);
                 assertNotNull(note, "Could not find notes for an exported entity.");
                 
-                Node data = getDirectChildByTagName(entityElement, ExportingInputStream.DATA_ELEMENT);
+                Node data = getDirectChildByTagName(entityElement, SynchronizationConstants.DATA_ELEMENT);
                 assertNotNull(data, "Could not find data element in the entity.");
                 
                 String dataText = ((Element)data).getTextContent();                
@@ -404,13 +405,13 @@ public class ExportingInputStreamTest extends JMockTest {
         
         Element root = doc.getDocumentElement();
         
-        NodeList entities = root.getElementsByTagName(ExportingInputStream.ENTITY_EXPORT_ELEMENT);
+        NodeList entities = root.getElementsByTagName(SynchronizationConstants.ENTITY_EXPORT_ELEMENT);
         
         assertEquals(entities.getLength(), 2, "Unexpected number of exported elements");
         
         //get the entity with the error
         Element failedEntity = (Element) entities.item(1);
-        Node errorMessage = getDirectChildByTagName(failedEntity, ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+        Node errorMessage = getDirectChildByTagName(failedEntity, SynchronizationConstants.ERROR_MESSAGE_ELEMENT);
         assertNotNull(errorMessage, "Could not find the error-message element at the entity that failed to export.");
     }
 

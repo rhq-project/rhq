@@ -26,15 +26,11 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
-import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -65,20 +61,6 @@ import org.rhq.enterprise.server.xmlschema.ConfigurationInstanceDescriptorUtil;
 public class ExportingInputStream extends InputStream {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStream.class);
-
-    public static final String CONFIGURATION_NAMESPACE = "urn:xmlns:rhq-configuration";
-    public static final String EXPORT_NAMESPACE = "urn:xmlns:rhq-configuration-export";
-
-    public static final String CONFIGURATION_EXPORT_ELEMENT = "configuration-export";
-    public static final String ENTITIES_EXPORT_ELEMENT = "entities";
-    public static final String ENTITY_EXPORT_ELEMENT = "entity";
-    public static final String ERROR_MESSAGE_ELEMENT = "error-message";
-    public static final String NOTES_ELEMENT = "notes";
-    public static final String DATA_ELEMENT = "data";
-    public static final String VALIDATOR_ELEMENT = "validator";
-    public static final String DEFAULT_CONFIGURATION_ELEMENT = "default-configuration";
-    public static final String ID_ATTRIBUTE = "id";
-    public static final String CLASS_ATTRIBUTE = "class";
 
     private Set<Synchronizer<?, ?>> synchronizers;
     private Map<String, ExporterMessages> messagesPerExporter;
@@ -255,67 +237,19 @@ public class ExportingInputStream extends InputStream {
      * @throws XMLStreamException 
      */
     private void exportPrologue(XMLStreamWriter wrt) throws XMLStreamException {
-        wrt.setDefaultNamespace(EXPORT_NAMESPACE);
-        wrt.setPrefix(XMLConstants.DEFAULT_NS_PREFIX, EXPORT_NAMESPACE);
-        wrt.setPrefix("ci", ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
-        wrt.setPrefix("c", CONFIGURATION_NAMESPACE);
+        wrt.setDefaultNamespace(SynchronizationConstants.EXPORT_NAMESPACE);
+        wrt.setPrefix(SynchronizationConstants.EXPORT_NAMESPACE_PREFIX, SynchronizationConstants.EXPORT_NAMESPACE);
+        wrt.setPrefix(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE);
+        wrt.setPrefix(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_NAMESPACE);
         
-        NamespaceContext nsContext = new NamespaceContext() {
-
-            //this map has to correspond to the namespaces defined in the code above
-            private final Map<String, String> PREFIXES = new HashMap<String, String>();
-            {
-                PREFIXES.put(XMLConstants.DEFAULT_NS_PREFIX, EXPORT_NAMESPACE);
-                PREFIXES.put("ci", ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
-                PREFIXES.put("c", CONFIGURATION_NAMESPACE);
-            }
-
-            @Override
-            public Iterator<String> getPrefixes(String namespaceURI) {
-                String prefix = getPrefix(namespaceURI);
-                if (prefix == null) {
-                    return Collections.<String> emptySet().iterator();
-                } else {
-                    return Collections.singleton(prefix).iterator();
-                }
-            }
-
-            @Override
-            public String getPrefix(String namespaceURI) {
-                if (namespaceURI == null) {
-                    throw new IllegalArgumentException();
-                } else if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(namespaceURI)) {
-                    return XMLConstants.XMLNS_ATTRIBUTE;
-                } else if (XMLConstants.XML_NS_URI.equals(namespaceURI)) {
-                    return XMLConstants.XML_NS_PREFIX;
-                } else {
-                    String prefix = null;
-                    for (Map.Entry<String, String> e : PREFIXES.entrySet()) {
-                        String p = e.getKey();
-                        String namespace = e.getValue();
-
-                        if (namespaceURI.equals(namespace)) {
-                            prefix = p;
-                            break;
-                        }
-                    }
-
-                    return prefix;
-                }
-            }
-
-            @Override
-            public String getNamespaceURI(String prefix) {
-                return PREFIXES.get(prefix);
-            }
-        };
+        NamespaceContext nsContext = SynchronizationConstants.createConfigurationExportNamespaceContext();
 
         wrt.setNamespaceContext(nsContext);
         
         wrt.writeStartDocument();
-        wrt.writeStartElement(EXPORT_NAMESPACE, CONFIGURATION_EXPORT_ELEMENT);
-        wrt.writeNamespace("ci", ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
-        wrt.writeNamespace("c", CONFIGURATION_NAMESPACE);
+        wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.CONFIGURATION_EXPORT_ELEMENT);
+        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX, ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_NAMESPACE);
 
         writeValidators(wrt);
     }
@@ -331,8 +265,8 @@ public class ExportingInputStream extends InputStream {
         }
 
         for (ConsistencyValidator cv : allValidators) {
-            wrt.writeStartElement(VALIDATOR_ELEMENT);
-            wrt.writeAttribute(CLASS_ATTRIBUTE, cv.getClass().getName());
+            wrt.writeStartElement(SynchronizationConstants.VALIDATOR_ELEMENT);
+            wrt.writeAttribute(SynchronizationConstants.CLASS_ATTRIBUTE, cv.getClass().getName());
             cv.exportState(new ExportWriter(wrt));
             wrt.writeEndElement();
         }
@@ -357,8 +291,8 @@ public class ExportingInputStream extends InputStream {
 
         messagesPerExporter.put(syn.getClass().getName(), messages);
 
-        wrt.writeStartElement(EXPORT_NAMESPACE, ENTITIES_EXPORT_ELEMENT);
-        wrt.writeAttribute(ID_ATTRIBUTE, syn.getClass().getName());
+        wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.ENTITIES_EXPORT_ELEMENT);
+        wrt.writeAttribute(SynchronizationConstants.ID_ATTRIBUTE, syn.getClass().getName());
 
         Exporter<?, ?> exp = syn.getExporter();
         ExportingIterator<?> it = exp.getExportingIterator();
@@ -379,9 +313,9 @@ public class ExportingInputStream extends InputStream {
         while (it.hasNext()) {
             it.next();
 
-            wrt.writeStartElement(EXPORT_NAMESPACE, ENTITY_EXPORT_ELEMENT);
+            wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.ENTITY_EXPORT_ELEMENT);
 
-            wrt.writeStartElement(EXPORT_NAMESPACE, DATA_ELEMENT);
+            wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.DATA_ELEMENT);
 
             Exception exportError = null;
             try {
@@ -400,14 +334,14 @@ public class ExportingInputStream extends InputStream {
 
                 if (notes != null) {
                     messages.getPerEntityNotes().add(notes);
-                    wrt.writeStartElement(EXPORT_NAMESPACE, NOTES_ELEMENT);
+                    wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.NOTES_ELEMENT);
                     wrt.writeCharacters(notes);
                     wrt.writeEndElement();
                 }
             } else {
                 String message = ThrowableUtil.getStackAsString(exportError);
                 messages.getPerEntityErrorMessages().add(message);
-                wrt.writeStartElement(EXPORT_NAMESPACE, ERROR_MESSAGE_ELEMENT);
+                wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.ERROR_MESSAGE_ELEMENT);
                 wrt.writeCharacters(message);
                 wrt.writeEndElement();
             }
@@ -420,7 +354,7 @@ public class ExportingInputStream extends InputStream {
         messages.setExporterNotes(notes);
 
         if (notes != null) {
-            wrt.writeStartElement(EXPORT_NAMESPACE, NOTES_ELEMENT);
+            wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.NOTES_ELEMENT);
             wrt.writeCharacters(notes);
             wrt.writeEndElement();
         }

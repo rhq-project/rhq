@@ -150,14 +150,15 @@ public class JBossInstanceInfo {
 
             case 'P': // 'P' (--properties)
             {
-                // cwd can be null if native support is not able to determine CWD.
-                if (null == currentWorkingDir) {
-                    log.error("Could not determine CWD. Failed to parse argument to --properties option: "
+                String arg = options.getOptarg();
+
+                // cwd can be null if native support (i.e. SIGAR) is not able to determine it.
+                if (!new File(arg).isAbsolute() && currentWorkingDir == null) {
+                    log.error("Could not determine current working directory. Failed to parse relative path argument to --properties option: "
                         + options.getOptarg());
                     break;
                 }
 
-                String arg = options.getOptarg();
                 URL url;
                 try {
                     File workingDir = new File(currentWorkingDir);

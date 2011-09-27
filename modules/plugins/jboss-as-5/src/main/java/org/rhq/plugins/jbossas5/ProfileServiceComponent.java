@@ -33,7 +33,7 @@ import org.rhq.plugins.jmx.JMXComponent;
 /**
  * @author Ian Springer
  */
-public interface ProfileServiceComponent<T extends ResourceComponent> extends ResourceComponent<T>, JMXComponent<T> {
+public interface ProfileServiceComponent<T extends ResourceComponent<?>> extends ResourceComponent<T>, JMXComponent<T> {
     @Nullable
     ProfileServiceConnection getConnection();
 

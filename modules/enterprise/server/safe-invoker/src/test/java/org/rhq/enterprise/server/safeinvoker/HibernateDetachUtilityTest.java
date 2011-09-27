@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.enterprise.server.util;
+package org.rhq.enterprise.server.safeinvoker;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -29,7 +29,8 @@ import java.util.Arrays;
 
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 
 @Test
 public class HibernateDetachUtilityTest {

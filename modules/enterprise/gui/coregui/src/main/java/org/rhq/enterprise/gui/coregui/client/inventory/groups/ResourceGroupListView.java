@@ -65,7 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSource> {
 
-    private static final String DEFAULT_TITLE = MSG.view_inventory_groups_resourceGroups();
+    private static final String DEFAULT_TITLE = MSG.common_title_resourceGroups();
 
     // our static factory method will set this to a non-null resource ID if the user can modify that resource's group membership
     private Integer resourceIdToModify = null;
@@ -268,7 +268,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         boolean canModifyMembership) {
 
         ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
-            .valueOf(explicitResourceId)), MSG.view_inventory_groups_resourceGroups());
+            .valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);
         }

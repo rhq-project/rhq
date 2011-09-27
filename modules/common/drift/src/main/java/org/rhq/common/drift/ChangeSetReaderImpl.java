@@ -93,11 +93,18 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
 
     private void readHeaders() throws IOException {
         headers = new Headers();
-        headers.setResourceId(Integer.parseInt(reader.readLine()));
-        headers.setDriftCofigurationId(Integer.parseInt(reader.readLine()));
-        headers.setDriftConfigurationName(reader.readLine());
-        headers.setBasedir(reader.readLine());
-        headers.setType(DriftChangeSetCategory.fromCode(reader.readLine()));
+        try {
+            headers.setResourceId(Integer.parseInt(reader.readLine()));
+            headers.setDriftCofigurationId(Integer.parseInt(reader.readLine()));
+            headers.setDriftConfigurationName(reader.readLine());
+            headers.setBasedir(reader.readLine());
+            headers.setType(DriftChangeSetCategory.fromCode(reader.readLine()));
+            headers.setVersion(Integer.parseInt(reader.readLine()));
+        } catch (IOException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new IllegalStateException("Invalid changeset headers, could not parse: ", t);
+        }
     }
 
     @Override
@@ -113,25 +120,25 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
                 return null;
             }
 
-            if (line.charAt(0) == 'A') {  // file added
+            if (line.charAt(0) == 'A') { // file added
                 String sha = line.substring(2, 66);
                 String fileName = line.substring(69);
                 return addedFileEntry(fileName, sha);
             }
-            if (line.charAt(0) == 'C') {  // file modified
+            if (line.charAt(0) == 'C') { // file modified
                 String newSha = line.substring(2, 66);
                 String oldSha = line.substring(67, 131);
                 String fileName = line.substring(132);
                 return changedFileEntry(fileName, oldSha, newSha);
             }
-            if (line.charAt(0) == 'R') {  // file deleted
+            if (line.charAt(0) == 'R') { // file deleted
                 String sha = line.substring(4, 68);
                 String fileName = line.substring(69);
                 return removedFileEntry(fileName, sha);
             }
 
-            log.error("An error occurred while parsing " + metaDataFile.getAbsolutePath() + ": " +
-                line.charAt(0) + " is not a recognized drift change set category code.");
+            log.error("An error occurred while parsing " + metaDataFile.getAbsolutePath() + ": " + line.charAt(0)
+                + " is not a recognized drift change set category code.");
             throw new ChangeSetReaderException(line.charAt(0) + " is not a recognized drift change set category code.");
         } catch (IOException e) {
             log.error("An error ocurred while parsing " + metaDataFile.getAbsolutePath() + ": " + e.getMessage());
@@ -144,9 +151,11 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
         try {
             reader.close();
         } catch (IOException e) {
-            log.warn("An error ocurred while trying to close " + metaDataFile.getAbsolutePath() + ": " + e.getMessage());
-            throw new ChangeSetReaderException("An error ocurred while trying to close " +
-                metaDataFile.getAbsolutePath(), e);
+            log
+                .warn("An error ocurred while trying to close " + metaDataFile.getAbsolutePath() + ": "
+                    + e.getMessage());
+            throw new ChangeSetReaderException("An error ocurred while trying to close "
+                + metaDataFile.getAbsolutePath(), e);
         }
     }
 

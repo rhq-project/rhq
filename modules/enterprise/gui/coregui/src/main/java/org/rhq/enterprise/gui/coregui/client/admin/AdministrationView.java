@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
@@ -39,7 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -72,8 +70,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
     private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources", MSG
         .view_adminContent_contentSources());
-    private static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG
-        .view_adminContent_repositories());
+    private static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG.common_title_repositories());
 
     public AdministrationView() {
         // This is a top level view, so our locator id can simply be our view id.

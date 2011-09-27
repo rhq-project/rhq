@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -40,13 +42,16 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
+import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
@@ -56,14 +61,18 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+import org.rhq.enterprise.server.plugins.drift.mongodb.dao.FileDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
@@ -76,13 +85,14 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     private Datastore ds;
 
-    static int changeSetVersions = 0;
+    private FileDAO fileDAO;
 
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
         connection = new Mongo("localhost");
         morphia = new Morphia().map(MongoDBChangeSet.class).map(MongoDBChangeSetEntry.class).map(MongoDBFile.class);
         ds = morphia.createDatastore(connection, "rhq");
+        fileDAO = new FileDAO(ds.getDB());
     }
 
     @Override
@@ -101,36 +111,103 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public void saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip) throws Exception {
+    public DriftChangeSetSummary saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip)
+        throws Exception {
+
+        final DriftChangeSetSummary summary = new DriftChangeSetSummary();
+
         ZipUtil.walkZipFile(changeSetZip, new ZipUtil.ZipEntryVisitor() {
             @Override
             public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
                 ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(stream)));
-
                 Headers headers = reader.getHeaders();
+
+                List<DriftFileDTO> missingContent = new LinkedList<DriftFileDTO>();
+
                 MongoDBChangeSet changeSet = new MongoDBChangeSet();
                 changeSet.setCategory(headers.getType());
                 changeSet.setResourceId(resourceId);
-                // TODO Figure out how best to handle drift config reference
-                changeSet.setDriftConfigurationId(1);
-                changeSet.setVersion(changeSetVersions++);
+                changeSet.setDriftConfigurationId(headers.getDriftCofigurationId());
+                changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
+                changeSet.setVersion(headers.getVersion());
+
+                summary.setCategory(headers.getType());
+                summary.setResourceId(resourceId);
+                summary.setDriftConfigurationName(headers.getDriftConfigurationName());
+                summary.setCreatedTime(changeSet.getCtime());
 
                 for (FileEntry fileEntry : reader) {
                     String path = FileUtil.useForwardSlash(fileEntry.getFile());
                     MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
                     entry.setCategory(fileEntry.getType());
                     entry.setPath(path);
+
+                    switch (fileEntry.getType()) {
+                        case FILE_ADDED:
+                            entry.setNewFileHash(fileEntry.getNewSHA());
+                            if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
+                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                            }
+                            break;
+                        case FILE_CHANGED:
+                            entry.setOldFileHash(fileEntry.getOldSHA());
+                            entry.setNewFileHash(fileEntry.getNewSHA());
+                            if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
+                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                            }
+                            if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
+                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                            }
+                            break;
+                        default:  // FILE_REMOVED
+                            if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
+                                missingContent.add(newDriftFile(fileEntry.getOldSHA()));
+                }
+                    }
                     changeSet.add(entry);
+
+                    // we are taking advantage of the fact that we know the summary is only used by the server
+                    // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
+                    // not alert on coverage reports) - so don't waste memory by collecting all the paths
+                    // when we know they aren't going to be used anyway.
+                    if (headers.getType() == DriftChangeSetCategory.DRIFT) {
+                        summary.addDriftPathname(path);
+                    }
                 }
 
                 ds.save(changeSet);
+
+                if (!missingContent.isEmpty()) {
+                    AgentClient agent = getAgentManager().getAgentClient(subject, resourceId);
+                    DriftAgentService driftService = agent.getDriftAgentService();
+                    driftService.requestDriftFiles(resourceId, headers, missingContent);
+                }
+
                 return true;
             }
         });
+
+        return summary;
+    }
+
+    private DriftFileDTO newDriftFile(String hash) {
+        DriftFileDTO file = new DriftFileDTO();
+        file.setHashId(hash);
+        return file;
     }
 
     @Override
     public void saveChangeSetFiles(final Subject subject, final File changeSetFilesZip) throws Exception {
+        String zipFileName = changeSetFilesZip.getName();
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        File dir = new File(tmpDir, zipFileName.substring(0, zipFileName.indexOf(".")));
+        dir.mkdir();
+
+        ZipUtil.unzipFile(changeSetFilesZip, dir);
+        for (File file : dir.listFiles()) {
+            fileDAO.save(file);
+            file.delete();
+        }
 
     }
 

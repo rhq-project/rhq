@@ -40,15 +40,15 @@ import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class IISVHostComponent implements ResourceComponent<IISServerComponent>, MeasurementFacet {
+public class IISVHostComponent implements ResourceComponent<IISServerComponent<?>>, MeasurementFacet {
 
-    private ResourceContext<IISServerComponent> resourceContext;
+    private ResourceContext<IISServerComponent<?>> resourceContext;
     private IISResponseTimeDelegate responseTimeDelegate;
 
     private Log log = LogFactory.getLog(IISVHostComponent.class);
 
-    public void start(ResourceContext<IISServerComponent> resourceContext) throws InvalidPluginConfigurationException,
-        Exception {
+    public void start(ResourceContext<IISServerComponent<?>> resourceContext)
+        throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
 
         String logDirectory = getLogDirectory();
@@ -59,7 +59,7 @@ public class IISVHostComponent implements ResourceComponent<IISServerComponent>,
         if (logFormat == null) {
             throw new InvalidPluginConfigurationException("The 'responseTimeLogFormat' property must be specified.");
         }
-        
+
         responseTimeDelegate = new IISResponseTimeDelegate(logDirectory, logFormat, responseTimeConfiguration
         /*,collectionTZ.equals("true")*/);
     }

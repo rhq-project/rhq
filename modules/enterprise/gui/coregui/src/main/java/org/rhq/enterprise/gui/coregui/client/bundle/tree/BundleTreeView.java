@@ -24,7 +24,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.tree;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
@@ -33,6 +32,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -65,7 +65,7 @@ public class BundleTreeView extends LocatableTreeGrid {
             public void onNodeClick(NodeClickEvent event) {
                 TreeNode node = event.getNode();
                 String path = node.getAttribute("id").replaceAll("_", "/");
-                History.newItem("Bundles/Bundle/" + path);
+                CoreGUI.goToView("Bundles/Bundle/" + path);
             }
         });
     }

@@ -22,6 +22,8 @@
  */
 package org.rhq.core.pc.inventory;
 
+import java.io.File;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -30,6 +32,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -45,7 +48,13 @@ public class ResourceContainerTest {
 
     @BeforeClass
     public void beforeClass() {
-        PluginContainer.getInstance().initialize();
+        PluginContainerConfiguration config = new PluginContainerConfiguration();
+        File dataDir = new File("target/PluginContainerTest");
+        dataDir.mkdirs();
+        config.setDataDirectory(dataDir);
+        PluginContainer pc = PluginContainer.getInstance();
+        pc.setConfiguration(config);
+        pc.initialize();
         ResourceContainer.initialize();
     }
 

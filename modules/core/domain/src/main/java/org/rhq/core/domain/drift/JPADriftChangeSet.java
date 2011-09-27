@@ -44,6 +44,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -94,6 +95,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     private DriftConfiguration driftConfiguration;
 
+    // Note, this is mode at the time of the changeset processing. We cant use driftConfiguration.mode because
+    // that is the "live" setting.
+    @Column(name = "DRIFT_CONFIG_MODE", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DriftHandlingMode driftHandlingMode;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(optional = false)
     private Resource resource;
@@ -110,6 +117,7 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         this.version = version;
         this.category = category;
         this.driftConfiguration = driftConfiguration;
+        this.driftHandlingMode = driftConfiguration.getDriftHandlingMode();
     }
 
     @Override
@@ -171,6 +179,14 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     public void setDriftConfiguration(DriftConfiguration driftConfiguration) {
         this.driftConfiguration = driftConfiguration;
+    }
+
+    public DriftHandlingMode getDriftHandlingMode() {
+        return driftHandlingMode;
+    }
+
+    public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
+        this.driftHandlingMode = driftHandlingMode;
     }
 
     @Override

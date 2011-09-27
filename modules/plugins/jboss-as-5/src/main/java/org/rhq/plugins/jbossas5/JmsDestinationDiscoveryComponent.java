@@ -31,7 +31,7 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
  *
  * @author Ian Springer
  */
-public class JmsDestinationDiscoveryComponent extends ManagedComponentDiscoveryComponent<ApplicationServerComponent> {
+public class JmsDestinationDiscoveryComponent extends ManagedComponentDiscoveryComponent<ApplicationServerComponent<?>> {
     private static final String NAME_MANAGED_PROPERTY = "name";
 
     @Override

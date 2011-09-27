@@ -30,6 +30,7 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -57,7 +58,7 @@ public class ResourceTypeRepository {
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftConfigurationTemplates
     }
 
     public static class Cache {
@@ -245,6 +246,9 @@ public class ResourceTypeRepository {
                 case subCategory:
                     criteria.fetchSubCategory(true);
                     break;
+                case driftConfigurationTemplates:
+                    criteria.fetchDriftConfigurationTemplates(true);
+                    break;
                 default:
                     Log.error("ERROR: metadataType " + metadataType.name()
                         + " not incorporated into ResourceType criteria.");
@@ -254,11 +258,10 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        Log.info("Loading " + typesNeeded.size()
-            + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
+        Log.info("Loading " + typesNeeded.size() + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
 
-        if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null) &&
-                metadataTypes.contains(MetadataType.children)) {
+        if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null)
+            && metadataTypes.contains(MetadataType.children)) {
             // Perform a one-time load of server and service types with no parent types. These types are implicitly
             // children of all platform types, even though they are not included in the platform types'
             // childResourceTypes field.
@@ -269,9 +272,8 @@ public class ResourceTypeRepository {
     }
 
     private void loadTopLevelServerAndServiceTypes(final TypesLoadedCallback callback,
-                                                   final EnumSet<MetadataType> metadataTypes,
-                                                   final ResourceTypeCriteria criteria, final Map<Integer,
-            ResourceType> cachedTypes) {
+        final EnumSet<MetadataType> metadataTypes, final ResourceTypeCriteria criteria,
+        final Map<Integer, ResourceType> cachedTypes) {
         ResourceTypeCriteria topLevelCriteria = new ResourceTypeCriteria();
         topLevelCriteria.fetchParentResourceTypes(true);
         resourceTypeService.findResourceTypesByCriteria(topLevelCriteria, new AsyncCallback<PageList<ResourceType>>() {
@@ -283,8 +285,8 @@ public class ResourceTypeRepository {
             public void onSuccess(PageList<ResourceType> types) {
                 topLevelServerAndServiceTypes = new HashSet<ResourceType>();
                 for (ResourceType type : types) {
-                    if ((type.getCategory() != ResourceCategory.PLATFORM) &&
-                            (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
+                    if ((type.getCategory() != ResourceCategory.PLATFORM)
+                        && (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
                         topLevelServerAndServiceTypes.add(type);
                     }
                 }
@@ -293,7 +295,8 @@ public class ResourceTypeRepository {
         });
     }
 
-    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes, ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
+    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes,
+        ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
@@ -308,8 +311,8 @@ public class ResourceTypeRepository {
                                 switch (metadataType) {
                                 case children:
                                     Set<ResourceType> childTypes = type.getChildResourceTypes();
-                                    if (type.getCategory() == ResourceCategory.PLATFORM &&
-                                            topLevelServerAndServiceTypes != null) {
+                                    if (type.getCategory() == ResourceCategory.PLATFORM
+                                        && topLevelServerAndServiceTypes != null) {
                                         // Add server and service types with no parent types to the list of child types.
                                         // These types are implicitly children of all platform types, even though they
                                         // are not included in the platform types' childResourceTypes field.
@@ -349,9 +352,19 @@ public class ResourceTypeRepository {
                                 case subCategory:
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
+                                case driftConfigurationTemplates:
+                                    if (cachedType.getDriftConfigurationTemplates() != null) {
+                                        cachedType.getDriftConfigurationTemplates().clear(); // remove any old ones hanging around
+                                    }
+                                    if (type.getDriftConfigurationTemplates() != null) {
+                                        for (ConfigurationTemplate ct : type.getDriftConfigurationTemplates()) {
+                                            cachedType.addDriftConfigurationTemplate(ct);
+                                        }
+                                    }
+                                    break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()
-                                            + " not merged into cached ResourceType.");
+                                        + " not merged into cached ResourceType.");
                                 }
                             }
                         }

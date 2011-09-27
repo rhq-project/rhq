@@ -39,7 +39,7 @@ public class JBossMessagingDiscoveryComponent extends AbstractMessagingDiscovery
     private static final String DEFAULT_RESOURCE_DESCRIPTION = "JBoss Messaging subsystem";
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
         String objectNameQueryTemplate = "jboss.messaging:service=PostOffice";
         Set<DiscoveredResourceDetails> result = super.discoverResources(context, objectNameQueryTemplate,
                 DEFAULT_RESOURCE_NAME, DEFAULT_RESOURCE_DESCRIPTION,

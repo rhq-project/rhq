@@ -28,7 +28,7 @@ import org.jboss.remoting.callback.InvokerCallbackHandler;
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.core.server.ExternalizableStrategy;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 
 public class RemoteWsInvocationHandler implements ServerInvocationHandler {
 

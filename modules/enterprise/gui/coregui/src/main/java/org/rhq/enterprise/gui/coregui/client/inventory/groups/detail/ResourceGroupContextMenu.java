@@ -184,16 +184,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         if (pluginConfigEnabled) {
             pluginConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    if (isAutoGroup) {
-                        CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory",
-                            "ConnectionSettings"));
-                    } else if (isAutoCluster) {
-                        CoreGUI.goToView(LinkManager.getAutoClusterTabLink(group.getId(), "Inventory",
-                            "ConnectionSettings"));
-                    } else {
-                        CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
-                            "ConnectionSettings"));
-                    }
+                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group, "Inventory", "ConnectionSettings"));
                 }
             });
         }
@@ -207,14 +198,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         if (resourceConfigEnabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    if (isAutoGroup) {
-                        CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Configuration", "Current"));
-                    } else if (isAutoCluster) {
-                        CoreGUI.goToView(LinkManager.getAutoClusterTabLink(group.getId(), "Configuration", "Current"));
-                    } else {
-                        CoreGUI
-                            .goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Configuration", "Current"));
-                    }
+                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group, "Configuration", "Current"));
                 }
             });
         }
@@ -224,7 +208,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
+        MenuItem operations = new MenuItem(MSG.common_title_operations());
         boolean operationsEnabled = (groupComposite.getResourcePermission().isControl()
             && null != resourceType.getOperationDefinitions() && !resourceType.getOperationDefinitions().isEmpty());
         operations.setEnabled(operationsEnabled);

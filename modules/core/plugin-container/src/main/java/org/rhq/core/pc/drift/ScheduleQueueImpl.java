@@ -1,10 +1,14 @@
 package org.rhq.core.pc.drift;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
 
 public class ScheduleQueueImpl implements ScheduleQueue {
 
@@ -45,7 +49,17 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         } finally {
             lock.readLock().unlock();
         }
+    }
 
+    private boolean isActiveSchedule(int resourceId, DriftConfiguration config,
+        DriftConfigurationComparator comparator) {
+        try {
+            lock.readLock().lock();
+            return activeSchedule != null && activeSchedule.getResourceId() == resourceId
+                && comparator.compare(activeSchedule.getDriftConfiguration(), config) == 0;
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 
     @Override
@@ -82,13 +96,32 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     @Override
     public boolean contains(int resourceId, DriftConfiguration config) {
         if (isActiveSchedule(resourceId, config)) {
-                return true;
-            }
+            return true;
+        }
         try {
             lock.readLock().lock();
             for (DriftDetectionSchedule schedule : queue) {
                 if (schedule.getResourceId() == resourceId &&
                     schedule.getDriftConfiguration().getName().equals(config.getName())) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public boolean contains(int resourceId, DriftConfiguration config, DriftConfigurationComparator comparator) {
+        if (isActiveSchedule(resourceId, config, comparator)) {
+            return true;
+        }
+        try {
+            lock.readLock().lock();
+            for (DriftDetectionSchedule schedule : queue) {
+                if (schedule.getResourceId() == resourceId &&
+                    comparator.compare(schedule.getDriftConfiguration(), config) == 0) {
                     return true;
                 }
             }
@@ -167,15 +200,36 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         }
     }
 
+    /**
+     * Generates a string representation of the schedules in the queue. The schedules that
+     * appear in the string are in sorted order. If there is an active schedule it will
+     * appear first. This method can be useful for debugging since it shows the contents of
+     * the queue in sorted order. Use it cautiously however as writes to the queue are
+     * blocked until this method returns.
+     *
+     * @return A string representation of the queue with the schedules appearing in sorted
+     * order.
+     */
     @Override
     public String toString() {
         try {
             lock.readLock().lock();
-            if (queue.isEmpty()) {
+
+            if (activeSchedule == null && queue.isEmpty()) {
                 return "ScheduleQueue[]";
             }
+
+            DriftDetectionSchedule[] schedules = toArray();
+            Arrays.sort(schedules);
+
+            List<DriftDetectionSchedule> list = new ArrayList<DriftDetectionSchedule>(schedules.length + 1);
+            if (activeSchedule != null) {
+                list.add(activeSchedule);
+            }
+            list.addAll(Arrays.asList(schedules));
+
             StringBuilder buffer = new StringBuilder("ScheduleQueue[");
-            for (DriftDetectionSchedule schedule : queue) {
+            for (DriftDetectionSchedule schedule : list) {
                 buffer.append(schedule).append(", ");
             }
             int end = buffer.length();
@@ -183,6 +237,16 @@ public class ScheduleQueueImpl implements ScheduleQueue {
             buffer.append("]");
 
             return buffer.toString();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public DriftDetectionSchedule[] toArray() {
+        try {
+            lock.readLock().lock();
+            return queue.toArray(new DriftDetectionSchedule[queue.size()]);
         } finally {
             lock.readLock().unlock();
         }

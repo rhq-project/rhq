@@ -56,6 +56,7 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
@@ -64,9 +65,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
@@ -103,10 +107,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         binaryFileTypes.add("jar");
         binaryFileTypes.add("war");
         binaryFileTypes.add("ear");
-        binaryFileTypes.add("sar");    // jboss service
-        binaryFileTypes.add("har");    // hibernate archive
-        binaryFileTypes.add("rar");   // resource adapter
-        binaryFileTypes.add("wsr");   // jboss web service archive
+        binaryFileTypes.add("sar"); // jboss service
+        binaryFileTypes.add("har"); // hibernate archive
+        binaryFileTypes.add("rar"); // resource adapter
+        binaryFileTypes.add("wsr"); // jboss web service archive
         binaryFileTypes.add("zip");
         binaryFileTypes.add("tar");
         binaryFileTypes.add("bz2");
@@ -168,6 +172,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     // use a new transaction when putting things on the JMS queue. see 
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
@@ -293,6 +300,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId) {
         DriftConfiguration doomed = entityManager.getReference(DriftConfiguration.class, driftConfigId);
+        doomed.getResource().setAgentSynchronizationNeeded();
         entityManager.remove(doomed);
         return;
     }
@@ -355,9 +363,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
+    public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+        DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+        if (DriftHandlingMode.plannedChanges != summary.getDriftHandlingMode()) {
+            notifyAlertConditionCacheManager("saveChangeSet", summary);
+        }
+        return summary;
     }
 
     @Override
@@ -399,7 +411,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift drift) {
+    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) {
         log.debug("Generating diff for " + drift);
         String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
         List<String> oldList = asList(oldContent.split("\\n"));
@@ -413,7 +425,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift drift1, Drift drift2) {
+    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2) {
         String content1 = getDriftFileBits(drift1.getNewDriftFile().getHashId());
         List<String> content1List = asList(content1.split("\\n"));
 
@@ -421,8 +433,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         List<String> content2List = asList(content2.split("\\n"));
 
         Patch patch = DiffUtils.diff(content1List, content2List);
-        List<String> deltas = DiffUtils.generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch,
-            10);
+        List<String> deltas = DiffUtils
+            .generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch, 10);
 
         return new FileDiffReport(patch.getDeltas().size(), deltas);
     }
@@ -467,6 +479,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             if (!isUpdated) {
                 resource.addDriftConfiguration(driftConfig);
             }
+            resource.setAgentSynchronizationNeeded();
             resource = entityManager.merge(resource);
 
             // Do not pass attached entities to the following Agent call, which is outside Hibernate's control. Flush
@@ -490,7 +503,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public boolean isBinaryFile(Drift drift) {
+    public boolean isBinaryFile(Drift<?, ?> drift) {
         String path = drift.getPath();
         int index = path.lastIndexOf('.');
 
@@ -518,42 +531,50 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         PageList<? extends Drift<?, ?>> results = driftServerPlugin.findDriftsByCriteria(subject, criteria);
         if (results.size() == 0) {
-            log.warn("Unable to get the drift details for drift id " + driftId + ". No drift object found with that id.");
+            log.warn("Unable to get the drift details for drift id " + driftId
+                + ". No drift object found with that id.");
             return null;
         }
 
-        Drift drift = results.get(0);
+        Drift<?, ?> drift = results.get(0);
         driftDetails.setDrift(drift);
         try {
             switch (drift.getCategory()) {
-                case FILE_ADDED:
-                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
-                    driftDetails.setNewFileStatus(newFile.getStatus());
-                    break;
-                case FILE_CHANGED:
-                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
-                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+            case FILE_ADDED:
+                newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                driftDetails.setNewFileStatus(newFile.getStatus());
+                break;
+            case FILE_CHANGED:
+                newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
 
-                    driftDetails.setNewFileStatus(newFile.getStatus());
-                    driftDetails.setOldFileStatus(oldFile.getStatus());
+                driftDetails.setNewFileStatus(newFile.getStatus());
+                driftDetails.setOldFileStatus(oldFile.getStatus());
 
-                    driftDetails.setPreviousChangeSet(loadPreviousChangeSet(subject, drift));
-                    break;
-                case FILE_REMOVED:
-                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
-                    driftDetails.setOldFileStatus(oldFile.getStatus());
-                    break;
+                driftDetails.setPreviousChangeSet(loadPreviousChangeSet(subject, drift));
+                break;
+            case FILE_REMOVED:
+                oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+                driftDetails.setOldFileStatus(oldFile.getStatus());
+                break;
             }
         } catch (Exception e) {
-            log.error("An error occurred while loading the drift details for drift id " + driftId + ": " +
-                e.getMessage());
+            log.error("An error occurred while loading the drift details for drift id " + driftId + ": "
+                + e.getMessage());
             throw new RuntimeException("An error occurred while loading th drift details for drift id " + driftId, e);
         }
         driftDetails.setBinaryFile(isBinaryFile(drift));
         return driftDetails;
     }
 
-    private DriftChangeSet loadPreviousChangeSet(Subject subject, Drift drift) {
+    private void notifyAlertConditionCacheManager(String callingMethod, DriftChangeSetSummary summary) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(summary);
+        if (log.isDebugEnabled()) {
+            log.debug(callingMethod + ": " + stats.toString());
+        }
+    }
+
+    private DriftChangeSet<?> loadPreviousChangeSet(Subject subject, Drift<?, ?> drift) {
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
         criteria.addFilterDriftConfigurationId(drift.getChangeSet().getDriftConfigurationId());

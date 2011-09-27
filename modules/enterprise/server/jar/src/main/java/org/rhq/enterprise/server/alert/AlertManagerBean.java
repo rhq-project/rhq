@@ -60,7 +60,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -79,7 +78,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
-import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
@@ -620,7 +618,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          * flushing org.jboss.on.domain.event.alert.AlertConditionLog.alert -> org.jboss.on.domain.event.alert.Alert"
          */
         this.createAlert(newAlert);
-        log.debug("New alert identifier=" + newAlert.getId());
+        if (log.isDebugEnabled()) {
+            log.debug("New alert identifier=" + newAlert.getId());
+        }
 
         //        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);  TODO - is that all?
         //        entityManager.persist(alertNotifLog);
@@ -628,7 +628,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         List<AlertConditionLog> unmatchedConditionLogs = alertConditionLogManager
             .getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
         for (AlertConditionLog unmatchedLog : unmatchedConditionLogs) {
-            log.debug("Matched alert condition log for alertId=" + newAlert.getId() + ": " + unmatchedLog);
+            if (log.isDebugEnabled()) {
+                log.debug("Matched alert condition log for alertId=" + newAlert.getId() + ": " + unmatchedLog);
+            }
             newAlert.addConditionLog(unmatchedLog); // adds both relationships
         }
 
@@ -651,49 +653,52 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          * to give them some way to explicitly try to re-send the notification for some client-side auditing purposes
          */
         try {
-            log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+            if (log.isDebugEnabled()) {
+                log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+            }
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
-            //Set<String> emailAddresses = new LinkedHashSet<String>();
 
-            AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
+            if (alertNotifications != null && alertNotifications.size() > 0) {
+                AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
 
-            for (AlertNotification alertNotification : alertNotifications) {
-                AlertNotificationLog notificationLog = null;
+                for (AlertNotification alertNotification : alertNotifications) {
+                    AlertNotificationLog notificationLog = null;
 
-                String senderName = alertNotification.getSenderName();
-                if (senderName == null) {
-                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
-                        + senderName + "' is not defined");
-                } else {
-
-                    AlertSender<?> notificationSender = alertSenderPluginManager
-                        .getAlertSenderForNotification(alertNotification);
-                    if (notificationSender == null) {
-                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                            "Failed to obtain a sender with given name");
+                    String senderName = alertNotification.getSenderName();
+                    if (senderName == null) {
+                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
+                            + senderName + "' is not defined");
                     } else {
-                        try {
-                            SenderResult result = notificationSender.send(alert);
-                            if (log.isDebugEnabled()) {
-                                log.debug(result);
-                            }
 
-                            if (result == null) {
-                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
-                                    "Sender did not return any result");
-                            } else {
-                                notificationLog = new AlertNotificationLog(alert, senderName, result);
-                            }
-                        } catch (Throwable t) {
-                            log.error("Notification processing terminated abruptly" + t.getMessage());
+                        AlertSender<?> notificationSender = alertSenderPluginManager
+                            .getAlertSenderForNotification(alertNotification);
+                        if (notificationSender == null) {
                             notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                                "Notification processing terminated abruptly, cause: " + t.getMessage());
+                                "Failed to obtain a sender with given name");
+                        } else {
+                            try {
+                                SenderResult result = notificationSender.send(alert);
+                                if (log.isDebugEnabled()) {
+                                    log.debug(result);
+                                }
+
+                                if (result == null) {
+                                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
+                                        "Sender did not return any result");
+                                } else {
+                                    notificationLog = new AlertNotificationLog(alert, senderName, result);
+                                }
+                            } catch (Throwable t) {
+                                log.error("Notification processing terminated abruptly" + t.getMessage());
+                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                                    "Notification processing terminated abruptly, cause: " + t.getMessage());
+                            }
                         }
                     }
-                }
 
-                entityManager.persist(notificationLog);
-                alert.addAlertNotificatinLog(notificationLog);
+                    entityManager.persist(notificationLog);
+                    alert.addAlertNotificatinLog(notificationLog);
+                }
             }
         } catch (Throwable t) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), t);
@@ -721,7 +726,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     public Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses) {
-        log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+        }
 
         if (emailAddresses.size() == 0) {
             return new ArrayList<String>(0); // No email to send -> no bad addresses
@@ -805,91 +812,336 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     private String prettyPrintAlertCondition(AlertCondition condition, boolean shortVersion) {
-        StringBuilder builder = new StringBuilder();
+        StringBuilder str = new StringBuilder();
 
         AlertConditionCategory category = condition.getCategory();
+        switch (category) {
+        case AVAILABILITY: {
+            if ("up".equalsIgnoreCase(condition.getOption())) {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_UP_SHORT));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_UP));
+                }
+            } else {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_DOWN_SHORT));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_DOWN));
+                }
+            }
 
-        // first format the LHS of the operator
-        if (category == AlertConditionCategory.CONTROL) {
+            break;
+        }
+        case THRESHOLD: {
+            double value = condition.getThreshold();
+            MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
+            String formatted = MeasurementConverter.format(value, units, true);
+
+            if (condition.getOption() == null) {
+                String metricName = condition.getName();
+                String comparator = condition.getComparator();
+                str.append(metricName).append(' ').append(comparator).append(' ').append(formatted);
+            } else {
+                // this is a calltime threshold condition
+                String metricName = "";
+                if (condition.getMeasurementDefinition() != null) {
+                    metricName = condition.getMeasurementDefinition().getDisplayName();
+                }
+
+                String limit = condition.getOption(); // MIN, MAX, AVG (never null)
+                String comparator = condition.getComparator(); // <, >, =
+
+                if (condition.getName() != null && condition.getName().length() > 0) {
+                    String regex = condition.getName();
+                    if (shortVersion) {
+                        str.append(AlertI18NFactory.getMessage(
+                            AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR_SHORT, metricName, limit,
+                            comparator, formatted, regex));
+                    } else {
+                        str.append(AlertI18NFactory.getMessage(
+                            AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR, metricName, limit,
+                            comparator, formatted, regex));
+                    }
+                } else {
+                    if (shortVersion) {
+                        str.append(AlertI18NFactory.getMessage(
+                            AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_SHORT, metricName, limit, comparator,
+                            formatted));
+                    } else {
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD,
+                            metricName, limit, comparator, formatted));
+                    }
+                }
+            }
+            break;
+        }
+        case BASELINE: {
+            String metricName = condition.getName();
+            String comparator = condition.getComparator();
+            double value = condition.getThreshold();
+            MeasurementUnits units = MeasurementUnits.PERCENTAGE;
+            String percentage = MeasurementConverter.format(value, units, true);
+            String baselineThreshold = condition.getOption(); // mean, min, max
+
+            if (shortVersion) {
+                if (baselineThreshold.equalsIgnoreCase("min")) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MIN_SHORT, metricName,
+                        comparator, percentage));
+                } else if (baselineThreshold.equalsIgnoreCase("max")) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MAX_SHORT, metricName,
+                        comparator, percentage));
+                } else { // mean
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MEAN_SHORT, metricName,
+                        comparator, percentage));
+                }
+            } else {
+                if (baselineThreshold.equalsIgnoreCase("min")) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MIN, metricName,
+                        comparator, percentage));
+                } else if (baselineThreshold.equalsIgnoreCase("max")) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MAX, metricName,
+                        comparator, percentage));
+                } else { // mean
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MEAN, metricName,
+                        comparator, percentage));
+                }
+            }
+            break;
+        }
+        case CHANGE: {
+            if (condition.getOption() == null) {
+                String metricName = condition.getName();
+                if (shortVersion) {
+                    str.append(AlertI18NFactory
+                        .getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
+                }
+            } else {
+                // this is a calltime change condition
+                double value = condition.getThreshold();
+                MeasurementUnits units = MeasurementUnits.PERCENTAGE;
+                String formatted = MeasurementConverter.format(value, units, true);
+
+                String comparator;
+                if ("HI".equalsIgnoreCase(condition.getComparator())) {
+                    comparator = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_GROWS);
+                } else if ("LO".equalsIgnoreCase(condition.getComparator())) {
+                    comparator = AlertI18NFactory
+                        .getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHRINKS);
+                } else { // CH
+                    comparator = AlertI18NFactory
+                        .getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_CHANGES);
+                }
+
+                String metricName = "";
+                if (condition.getMeasurementDefinition() != null) {
+                    metricName = condition.getMeasurementDefinition().getDisplayName();
+                }
+
+                String limit = condition.getOption(); // MIN, MAX, AVG (never null)
+
+                if (condition.getName() != null && condition.getName().length() > 0) {
+                    String regex = condition.getName();
+                    if (shortVersion) {
+                        str.append(AlertI18NFactory.getMessage(
+                            AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_WITH_EXPR_SHORT, metricName, limit,
+                            comparator, formatted, regex));
+                    } else {
+                        str.append(AlertI18NFactory.getMessage(
+                            AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_WITH_EXPR, metricName, limit,
+                            comparator, formatted, regex));
+                    }
+                } else {
+                    if (shortVersion) {
+                        str.append(AlertI18NFactory.getMessage(
+                            AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHORT, metricName, limit, comparator,
+                            formatted));
+                    } else {
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE,
+                            metricName, limit, comparator, formatted));
+                    }
+                }
+            }
+            break;
+        }
+        case TRAIT: {
+            String metricName = condition.getName();
+            if (shortVersion) {
+                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
+            } else {
+                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
+            }
+            break;
+        }
+        case CONTROL: {
+            String opName;
             try {
                 Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
                 String operationName = condition.getName();
 
                 OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
                     resourceTypeId, operationName, false);
-                builder.append(definition.getDisplayName()).append(' ');
+                opName = definition.getDisplayName();
             } catch (Exception e) {
-                builder.append(condition.getName()).append(' ');
-            }
-        } else {
-            if (category.getName() != null) // this is null for e.g. availability
-                builder.append(condition.getName()).append(' ');
-        }
-
-        // next format the RHS
-        if (category == AlertConditionCategory.CONTROL) {
-            builder.append(condition.getOption());
-        } else if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)) {
-            builder.append(condition.getComparator());
-            builder.append(' ');
-
-            MeasurementSchedule schedule = null;
-
-            MeasurementUnits units;
-            double value = condition.getThreshold();
-            if (category == AlertConditionCategory.THRESHOLD) {
-                units = condition.getMeasurementDefinition().getUnits();
-            } else // ( category == AlertConditionCategory.BASELINE )
-            {
-                units = MeasurementUnits.PERCENTAGE;
+                opName = condition.getName(); // can't look up the op display name (are we in a test?), just use the op name
             }
 
-            String formatted = MeasurementConverter.format(value, units, true);
-            builder.append(formatted);
-
-            if (category == AlertConditionCategory.BASELINE) {
-                builder.append(" of ");
-                builder.append(MeasurementFormatter.getBaselineText(condition.getOption(), schedule));
-            }
-        } else if ((category == AlertConditionCategory.RESOURCE_CONFIG) || (category == AlertConditionCategory.CHANGE)
-            || (category == AlertConditionCategory.TRAIT)) {
-
-            if (shortVersion)
-                builder.append(AlertI18NFactory
-                    .getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT));
-            else
-                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED));
-
-        } else if (category == AlertConditionCategory.EVENT) {
-            if ((condition.getOption() != null) && (condition.getOption().length() > 0)) {
-                String propsCbEventSeverityRegexMatch;
-                if (shortVersion)
-                    propsCbEventSeverityRegexMatch = AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH_SHORT;
-                else
-                    propsCbEventSeverityRegexMatch = AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH;
-
-                builder.append(AlertI18NFactory.getMessage(propsCbEventSeverityRegexMatch, condition.getName(),
-                    condition.getOption()));
+            String status = condition.getOption();
+            if (shortVersion) {
+                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_OPERATION_SHORT, opName, status));
             } else {
-                if (shortVersion)
-                    builder.append(AlertI18NFactory.getMessage(
-                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT, condition.getName()));
-                else
-                    builder.append(AlertI18NFactory.getMessage(
-                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY, condition.getName()));
+                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_OPERATION, opName, status));
             }
-        } else if (category == AlertConditionCategory.AVAILABILITY) {
-            if (shortVersion)
-                builder.append(AlertI18NFactory.getMessage(
-                    AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT, condition.getOption()));
-            else
-                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY,
-                    condition.getOption()));
-        } else {
-            // do nothing
+
+            break;
+        }
+        case RESOURCE_CONFIG: {
+            if (shortVersion) {
+                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RESOURCECONFIGCHANGE_SHORT));
+            } else {
+                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RESOURCECONFIGCHANGE));
+            }
+            break;
+        }
+        case EVENT: {
+            String severity = condition.getName();
+            if (condition.getOption() != null && condition.getOption().length() > 0) {
+                String expression = condition.getOption();
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR_SHORT, severity,
+                        expression));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR, severity,
+                        expression));
+                }
+            } else {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_SHORT, severity));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT, severity));
+                }
+            }
+            break;
+        }
+        case DRIFT: {
+            String configNameRegex = condition.getName();
+            String pathNameRegex = condition.getOption();
+            if (shortVersion) {
+                if (configNameRegex == null || configNameRegex.length() == 0) {
+                    if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                        // neither a config name regex nor path regex was specified 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_SHORT));
+                    } else {
+                        // a path name regex was specified, but not a config name regex 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYPATHS_SHORT,
+                            pathNameRegex));
+                    }
+                } else {
+                    if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                        // a config name regex was specified, but not a path name regex 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYCONFIG_SHORT,
+                            configNameRegex));
+                    } else {
+                        // both a config name regex and a path regex was specified 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_CONFIGPATHS_SHORT,
+                            pathNameRegex, configNameRegex));
+                    }
+                }
+            } else {
+                if (configNameRegex == null || configNameRegex.length() == 0) {
+                    if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                        // neither a config name regex nor path regex was specified 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT));
+                    } else {
+                        // a path name regex was specified, but not a config name regex 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYPATHS,
+                            pathNameRegex));
+                    }
+                } else {
+                    if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                        // a config name regex was specified, but not a path name regex 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYCONFIG,
+                            configNameRegex));
+                    } else {
+                        // both a config name regex and a path regex was specified 
+                        str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_CONFIGPATHS,
+                            pathNameRegex, configNameRegex));
+                    }
+                }
+            }
+            break;
+        }
+        case RANGE: {
+            String metricName = condition.getName();
+            Double loValue = condition.getThreshold();
+            String hiValueStr = condition.getOption();
+
+            String loValueFormatted;
+            String hiValueFormatted;
+            MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
+            if (units == null) {
+                loValueFormatted = "" + loValue;
+                hiValueFormatted = hiValueStr;
+            } else {
+                loValueFormatted = MeasurementConverter.format(loValue, units, true);
+                try {
+                    hiValueFormatted = MeasurementConverter.format(Double.parseDouble(hiValueStr), units, true);
+                } catch (Exception e) {
+                    hiValueFormatted = "?[" + hiValueStr + "]?";
+                }
+            }
+
+            // < means "inside the range", > means "outside the range" - exclusive
+            // <= means "inside the range", >= means "outside the range" - inclusive
+
+            if ("<".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL_SHORT,
+                        metricName, loValueFormatted, hiValueFormatted));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL, metricName,
+                        loValueFormatted, hiValueFormatted));
+                }
+            } else if (">".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL_SHORT,
+                        metricName, loValueFormatted, hiValueFormatted));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL, metricName,
+                        loValueFormatted, hiValueFormatted));
+                }
+            } else if ("<=".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL_SHORT,
+                        metricName, loValueFormatted, hiValueFormatted));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL, metricName,
+                        loValueFormatted, hiValueFormatted));
+                }
+            } else if (">=".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL_SHORT,
+                        metricName, loValueFormatted, hiValueFormatted));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL, metricName,
+                        loValueFormatted, hiValueFormatted));
+                }
+            } else {
+                str.append("invalid range comparator [" + condition.getComparator() + "] (" + loValueFormatted + ","
+                    + hiValueFormatted + ")");
+            }
+
+            break;
+        }
+        default: {
+            str.append("unknown category [" + category.name() + "]");
+            break;
+        }
         }
 
-        return builder.toString();
+        return str.toString();
     }
 
     public String prettyPrintAlertURL(Alert alert) {
@@ -915,17 +1167,19 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         Integer recoveryDefinitionId = firedDefinition.getRecoveryId();
 
         if (recoveryDefinitionId != 0) {
-            log.debug("Processing recovery rules...");
-            log.debug("Found recoveryDefinitionId " + recoveryDefinitionId);
+            if (log.isDebugEnabled()) {
+                log.debug("Processing recovery rules... Found recoveryDefinitionId " + recoveryDefinitionId);
+            }
 
             AlertDefinition toBeRecoveredDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
                 recoveryDefinitionId);
             boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
 
-            log
-                .debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
+            if (log.isDebugEnabled()) {
+                log.debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
                     + toBeRecoveredDefinition
                     + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
+            }
 
             if (!wasEnabled) {
                 /*
@@ -941,7 +1195,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
              * update the cache indirectly via the status field on the owning agent and the periodic job that checks it.
              */
         } else if (firedDefinition.getWillRecover()) {
-            log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
+            if (log.isDebugEnabled()) {
+                log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
+            }
 
             /*
              * disable until recovered manually or by recovery definition

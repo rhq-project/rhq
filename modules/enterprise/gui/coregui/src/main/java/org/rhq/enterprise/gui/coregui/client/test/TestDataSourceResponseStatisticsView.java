@@ -166,6 +166,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
                     if (window != null) {
                         window.setTitle(getTableTitle());
                     }
+                    refresh();
                 }
             });
 
@@ -204,6 +205,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
 
                     new MessageWindow(extendLocatorId("csv"), "Export To CSV", "<pre>" + csv.toString() + "</pre>")
                         .show();
+                    refresh();
                 }
             });
 
@@ -265,6 +267,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
                         if (window != null) {
                             window.setTitle(getTableTitle());
                         }
+                        refreshTableInfo();
                     }
                 });
         } else { // not in the standalone window
@@ -273,6 +276,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new StatisticsWindow(extendLocatorId("responseStatsWin")).show();
+                    refresh();
                 }
             });
         }
@@ -296,6 +300,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
         if (window != null) {
             window.blink();
         }
+        refreshTableInfo();
     }
 
     private ListGridRecord[] transform(ArrayList<DataSourceResponseStatistics.Record> arrayList) {

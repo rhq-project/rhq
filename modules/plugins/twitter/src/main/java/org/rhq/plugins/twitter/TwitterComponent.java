@@ -54,7 +54,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  *
  * @author Heiko W. Rupp
  */
-public class TwitterComponent implements ResourceComponent, OperationFacet, MeasurementFacet
+public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>, OperationFacet, MeasurementFacet
 {
    private final Log log = LogFactory.getLog(this.getClass());
 

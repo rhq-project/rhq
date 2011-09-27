@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2010 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform;
 
 import java.util.LinkedHashSet;
@@ -40,8 +40,11 @@ import org.rhq.core.system.SystemInfo;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-@SuppressWarnings({"UnusedDeclaration"})
 public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
+
+    private static final String SYS_TYPE_NAME_LOFS = "lofs";
+    private static final String SYS_TYPE_NAME_TMPFS = "tmpfs";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
@@ -61,27 +64,30 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
             int fsType = fs.getType();
             // We only support local, network (nfs), lofs, or tmpfs filesystems - skip any other types.
             switch (fsType) {
-                case FileSystem.TYPE_LOCAL_DISK:
-                case FileSystem.TYPE_NETWORK:
-                    break;
-                default:
-                    if (!(fs.getDevName().equals("lofs") ||
-                          fs.getDevName().equals("tmpfs"))) {
-                       continue;
-                    }
+            case FileSystem.TYPE_LOCAL_DISK:
+            case FileSystem.TYPE_NETWORK:
+                break;
+            default:
+                String sysTypeName = fs.getSysTypeName();
+                if (!(SYS_TYPE_NAME_LOFS.equals(sysTypeName) || SYS_TYPE_NAME_TMPFS.equals(sysTypeName))) {
+                    continue;
+                }
             }
 
-            Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
             try {
                 String key = fsInfo.getMountPoint();
+                String name = fsInfo.getMountPoint();
+                String description = fsInfo.getFileSystem().getDevName() + ": " + fsInfo.getFileSystem().getDirName();
+                Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
                 DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    key, key, null, fsInfo.getFileSystem().getDevName() + ": "
-                        + fsInfo.getFileSystem().getDirName(), pluginConfig, null);
+                    key, name, null, description, pluginConfig, null);
                 results.add(details);
             } catch (Exception e) {
-                log.error("File system discovery failed for [" + fsInfo + "]: " + e);                
+                log.error("File system discovery failed for [" + fsInfo + "].", e);
             }
         }
+
         return results;
     }
+
 }

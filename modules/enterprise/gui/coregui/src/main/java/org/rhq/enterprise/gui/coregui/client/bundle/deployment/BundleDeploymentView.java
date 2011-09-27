@@ -197,8 +197,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             status.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"),
-                        MSG.common_title_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
+                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"), MSG
+                        .common_severity_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
                     win.show();
                 }
             });
@@ -334,6 +334,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
+        table.setShowFooterRefresh(false);
 
         table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 

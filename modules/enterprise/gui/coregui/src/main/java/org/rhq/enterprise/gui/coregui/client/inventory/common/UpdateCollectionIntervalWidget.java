@@ -55,9 +55,9 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     // Maps values to labels for the units select list.
     private static final LinkedHashMap<String, String> VALUE_MAP = new LinkedHashMap<String, String>();
     static {
-        VALUE_MAP.put(UNITS_SECONDS, MSG.common_label_seconds());
-        VALUE_MAP.put(UNITS_MINUTES, MSG.common_label_minutes());
-        VALUE_MAP.put(UNITS_HOURS, MSG.common_label_hours());
+        VALUE_MAP.put(UNITS_SECONDS, MSG.common_unit_seconds());
+        VALUE_MAP.put(UNITS_MINUTES, MSG.common_unit_minutes());
+        VALUE_MAP.put(UNITS_HOURS, MSG.common_unit_hours());
     }
 
     private AbstractMeasurementScheduleListView schedulesView;

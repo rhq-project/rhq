@@ -26,6 +26,7 @@ import java.util.Set;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 
@@ -33,11 +34,11 @@ import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
  * @author paji
  *
  */
-public class PostfixAccessDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<PostfixAccessComponent> {
+public class PostfixAccessDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<ResourceComponent<?>> {
     public static final String RESOURCE_KEY = "Access";
 
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<PostfixAccessComponent> discoveryContext) throws InvalidPluginConfigurationException,
+        ResourceDiscoveryContext<ResourceComponent<?>> discoveryContext) throws InvalidPluginConfigurationException,
         Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();

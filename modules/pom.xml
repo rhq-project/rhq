@@ -94,7 +94,27 @@
          </modules>
        </profile>
 
-
+      <profile>
+         <id>drift</id>
+         <activation>
+            <property>
+               <name>drift</name>
+            </property>
+         </activation>
+         <modules>
+            <!-- agent -->
+            <module>core</module>
+            <module>common/drift</module>            
+            <module>enterprise/comm</module>
+            <module>enterprise/agent</module>
+            <module>enterprise/agentupdate</module>
+            <!-- coregui -->
+            <module>enterprise/server/jar</module>
+            <module>enterprise/gui/coregui</module>            
+            <!-- server plugin -->
+            <module>enterprise/server/plugins/drift-rhq</module>
+         </modules>
+       </profile>
 
       <profile>
          <id>plugins</id>

@@ -51,7 +51,7 @@ import org.rhq.core.domain.resource.ResourceType;
  *
  * @author Heiko Rupp
  */
-public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateConfigurationSubsystemTest extends UpdatePluginMetadataTestBase {
 
     private static final boolean ENABLED = true;
 

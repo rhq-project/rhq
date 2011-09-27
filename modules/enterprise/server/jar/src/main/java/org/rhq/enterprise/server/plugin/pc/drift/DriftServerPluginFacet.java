@@ -72,7 +72,16 @@ public interface DriftServerPluginFacet {
      */
     DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
 
-    void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+    /**
+     * Parses the given change set file and persists its data.
+     * 
+     * @param subject
+     * @param resourceId
+     * @param changeSetZip
+     * @return a summary of what was in the change set file
+     * @throws Exception
+     */
+    DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
 
     void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 

@@ -50,7 +50,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author Greg Hinkle
  */
-public class MBeanResourceDiscoveryComponent<T extends JMXComponent> implements ResourceDiscoveryComponent<T> {
+public class MBeanResourceDiscoveryComponent<T extends JMXComponent<?>> implements ResourceDiscoveryComponent<T> {
     // Constants  --------------------------------------------
 
     /**
@@ -93,8 +93,8 @@ public class MBeanResourceDiscoveryComponent<T extends JMXComponent> implements 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
         boolean skipUnknownProps) {
         this.discoveryContext = context;
-        return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(), context
-            .getResourceType(), skipUnknownProps);
+        return performDiscovery(context.getDefaultPluginConfiguration(), context.getParentResourceComponent(),
+            context.getResourceType(), skipUnknownProps);
     }
 
     /**
@@ -161,12 +161,10 @@ public class MBeanResourceDiscoveryComponent<T extends JMXComponent> implements 
                     String resourceKey = bean.getBeanName().getCanonicalName(); // The detected object name
 
                     String nameTemplate = (pluginConfiguration.getSimple(PROPERTY_NAME_TEMPLATE) != null) ? pluginConfiguration
-                        .getSimple(PROPERTY_NAME_TEMPLATE).getStringValue()
-                        : null;
+                        .getSimple(PROPERTY_NAME_TEMPLATE).getStringValue() : null;
 
                     String descriptionTemplate = (pluginConfiguration.getSimple(PROPERTY_DESCRIPTION_TEMPLATE) != null) ? pluginConfiguration
-                        .getSimple(PROPERTY_DESCRIPTION_TEMPLATE).getStringValue()
-                        : null;
+                        .getSimple(PROPERTY_DESCRIPTION_TEMPLATE).getStringValue() : null;
 
                     String name = resourceKey;
                     if (nameTemplate != null) {

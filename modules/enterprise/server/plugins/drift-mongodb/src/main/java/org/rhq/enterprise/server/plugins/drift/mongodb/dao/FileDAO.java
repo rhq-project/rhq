@@ -17,47 +17,43 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugins.drift.mongodb;
+package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
-import com.mongodb.Mongo;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
 
-import org.bson.types.ObjectId;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+public class FileDAO {
 
-public class GridFSTest {
+    private DB db;
 
-    Mongo connection;
+    private GridFS gridFS;
 
-    DB db;
-
-    @BeforeClass
-    public void initDB() throws Exception {
-        connection = new Mongo("localhost");
-        connection.dropDatabase("rhqtest");
-        db = connection.getDB("rhqtest");
-
+    public FileDAO(DB db) {
+        this.db = db;
+        gridFS = new GridFS(this.db);
     }
 
-    @Test(enabled = false)
-    public void writeFile() throws Exception {
-        GridFS gridFS = new GridFS(db);
-        File file = new File("/home/jsanda/clojure-plugin.tar");
-        GridFSInputFile inputFile = gridFS.createFile(new FileInputStream(file), file.getName());
+    public InputStream findOne(String hash) {
+        GridFSDBFile dbFile = gridFS.findOne(new BasicDBObject("_id", hash));
+        if (dbFile == null) {
+            return null;
+        }
+        return dbFile.getInputStream();
+    }
 
+    public void save(File file) throws IOException {
+        GridFSInputFile inputFile = gridFS.createFile(new BufferedInputStream(new FileInputStream(file)));
+        inputFile.put("_id", file.getName());
         inputFile.save();
-
-        FileOutputStream stream = new FileOutputStream("/home/jsanda/gridfs-test.tar");
-        GridFSDBFile gridFSDBFile = gridFS.findOne((ObjectId) inputFile.getId());
-        gridFSDBFile.writeTo(stream);
     }
 
 }

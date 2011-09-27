@@ -70,7 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
+public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
         CreateChildResourceFacet, OperationFacet
 {
     private static final String INTERNAL = "_internal:";

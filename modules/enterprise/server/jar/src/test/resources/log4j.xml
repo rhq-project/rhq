@@ -49,6 +49,11 @@
       <priority value="ERROR"/>
    </category>
 
+   <!-- hides the TIMER SERVICE IS NOT INSTALLED warning - we know embedded EJB3 container doesn't support timers -->
+   <category name="org.jboss.ejb3.timerservice.jboss.JBossTimerServiceFactory">
+      <priority value="ERROR"/>
+   </category>
+
    <!-- Hibernate SQL logs -->
    <!-- 
    <category name="org.hibernate.SQL">

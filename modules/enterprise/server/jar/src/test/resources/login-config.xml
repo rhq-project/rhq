@@ -41,6 +41,15 @@ $Revision: 42748 $
     </authentication>
   </application-policy>
 
+    <application-policy name = "jbossmq">
+       <authentication>
+          <login-module code = "org.jboss.mq.sm.file.DynamicLoginModule" flag = "required">
+             <module-option name = "unauthenticatedIdentity">guest</module-option>
+             <module-option name = "sm.objectname">jboss.mq:service=StateManager</module-option>
+          </login-module>
+       </authentication>
+    </application-policy>
+
   <application-policy name="other">
     <!-- A simple server login module, which can be used when the number
     of users is relatively small. It uses two properties files:

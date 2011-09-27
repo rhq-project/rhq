@@ -37,12 +37,12 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Heiko W. Rupp
  *
  */
-public class JBossASTomcatVHostDiscoveryService extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class JBossASTomcatVHostDiscoveryService extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     static Pattern pattern = Pattern.compile(".*host=([\\w.]+).*");
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> discoveryContext) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> discoveryContext) {
 
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
 

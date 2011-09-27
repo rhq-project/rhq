@@ -19,12 +19,13 @@
 package org.rhq.plugins.database;
 
 import java.sql.Connection;
+
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
  * @author Greg Hinkle
  */
-public interface DatabaseComponent<T extends ResourceComponent> extends ResourceComponent<T> {
+public interface DatabaseComponent<T extends ResourceComponent<?>> extends ResourceComponent<T> {
     Connection getConnection();
 
     void removeConnection();

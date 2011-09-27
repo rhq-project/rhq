@@ -83,8 +83,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
                         + LinkManager.getBundleDeploymentLink(record
                             .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
                             .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">"
-                        + StringUtility.escapeHtml(String.valueOf(value))
-                        + "</a>";
+                        + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
                 }
             });
         } else {
@@ -119,7 +118,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
                 String err = event.getRecord().getAttribute(BundleDeploymentDataSource.FIELD_ERROR_MESSAGE);
                 if (err != null && err.length() > 0) {
                     err = "<pre>" + err + "</pre>";
-                    new ErrorMessageWindow(extendLocatorId("errWin"), MSG.common_title_error(), err).show();
+                    new ErrorMessageWindow(extendLocatorId("errWin"), MSG.common_severity_error(), err).show();
                 }
             }
         });

@@ -20,8 +20,13 @@
 package org.rhq.core.clientapi.server.drift;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
+import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftSnapshot;
 
 /**
  * @author Jay Shaughnessy
@@ -53,4 +58,8 @@ public interface DriftServerService {
      */
     @Asynchronous(guaranteedDelivery = true)
     void sendFilesZip(int resourceId, long zipSize, InputStream zipStream);
+
+    Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds);
+
+    DriftSnapshot getCurrentSnapshot(int driftConfigurationId);
 }

@@ -40,7 +40,7 @@ import org.rhq.core.clientapi.descriptor.DescriptorPackages;
  * @author Heiko W. Rupp
  * TODO get the plugins dynamically - see comment in {@link #testPluginDescriptors()}
  */
-public class PluginDescriptorValidationTest extends UpdateSubsytemTestBase {
+public class PluginDescriptorValidationTest extends UpdatePluginMetadataTestBase {
     // we stand in modules/enterprise/jar
     String BASE = "../../../plugins/";
     String EXT = "/src/main/resources/META-INF/rhq-plugin.xml";

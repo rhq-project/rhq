@@ -42,15 +42,15 @@ import org.rhq.core.system.SystemInfo;
  *
  * @author John Mazzitelli
  */
-public class AgentLauncherScriptComponent implements ResourceComponent<AgentServerComponent>, OperationFacet {
+public class AgentLauncherScriptComponent implements ResourceComponent<AgentServerComponent<?>>, OperationFacet {
 
     private Log log = LogFactory.getLog(AgentLauncherScriptComponent.class);
 
-    private ResourceContext<AgentServerComponent> resourceContext;
+    private ResourceContext<AgentServerComponent<?>> resourceContext;
 
     private File launcherScript;
 
-    public void start(ResourceContext<AgentServerComponent> rc) throws Exception {
+    public void start(ResourceContext<AgentServerComponent<?>> rc) throws Exception {
 
         this.resourceContext = rc;
         Configuration pc = this.resourceContext.getPluginConfiguration();

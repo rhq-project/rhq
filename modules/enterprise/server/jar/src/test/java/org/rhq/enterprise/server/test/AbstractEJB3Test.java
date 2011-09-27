@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.test;
 
+import static org.rhq.test.JPAUtils.clearDB;
+import static org.rhq.test.JPAUtils.lookupEntityManager;
+import static org.rhq.test.JPAUtils.lookupTransactionManager;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Hashtable;
@@ -57,16 +61,19 @@ import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import static org.rhq.test.JPAUtils.clearDB;
-import static org.rhq.test.JPAUtils.lookupEntityManager;
-import static org.rhq.test.JPAUtils.lookupTransactionManager;
-
 /**
  * This is the abstract test base for server jar tests.
  *
  * @author Greg Hinkle
  */
 public abstract class AbstractEJB3Test extends AssertJUnit {
+
+    private static EJB3StandaloneDeployer deployer;
+    private static Statistics stats;
+    private static long start; // see endTest() if you want to output this
+    private SchedulerService schedulerService;
+    private ServerPluginService serverPluginService;
+    private MBeanServer dummyJBossMBeanServer;
 
     @BeforeClass
     public void resetDB() throws Exception {
@@ -82,6 +89,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     //@BeforeSuite(groups = {"integration.ejb3","PERF"}) // TODO investigate again
     @BeforeSuite(alwaysRun = true)
     public static void startupEmbeddedJboss() throws Exception {
+
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
 
@@ -92,21 +100,27 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             EJB3StandaloneBootstrap.boot(null);
             //         EJB3StandaloneBootstrap.scanClasspath();
 
-            /*Properties p = System.getProperties();
-             * for (Object name : p.keySet()) { System.out.println(" " + name + " = " +
-             * p.getProperty((String)name));}*/
+            System.err.println("...... embedded container booted....");
 
-            System.err.println("...... embedded-jboss-beans deployed....");
-
-            // Add all EJBs found in the archive that has this file
-            EJB3StandaloneDeployer deployer = EJB3StandaloneBootstrap.createDeployer(); //new EJB3StandaloneDeployer();
+            deployer = EJB3StandaloneBootstrap.createDeployer();
 
             deployer.setClassLoader(AbstractEJB3Test.class.getClassLoader());
+            System.err.println("...... embedded container classloader set....");
+
             deployer.getArchivesByResource().add("META-INF/persistence.xml");
+            System.err.println("...... embedded container persistence xml deployed....");
+
             deployer.getArchivesByResource().add("META-INF/ejb-jar.xml");
+            System.err.println("...... embedded container ejb-jar xml deployed....");
+
+            EJB3StandaloneBootstrap.deployXmlResource("jboss-jms-beans.xml");
+            System.err.println("...... embedded container jboss-jms-beans xml deployed....");
+
+            EJB3StandaloneBootstrap.deployXmlResource("rhq-mdb-beans.xml");
+            System.err.println("...... embedded container rhq-mdb-beans xml deployed....");
 
             /*
-             *       File core = new File(deployDir, "on-core-domain-ejb.ejb3");      if (!core.exists())
+             * File core = new File(deployDir, "on-core-domain-ejb.ejb3");      if (!core.exists())
              * System.err.println("Deployment directory does not exist: " + core.getAbsolutePath());
              * deployer.getArchives().add(core.toURI().toURL());
              *
@@ -116,10 +130,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
              *
              */
 
-            System.err.println("...... deploying MM ejb3.....");
-            System.err.println("...... ejb3 deployed....");
-
-            // Deploy everything we got
             //deployer.setKernel(EJB3StandaloneBootstrap.getKernel());
             deployer.create();
             System.err.println("...... deployer created....");
@@ -133,6 +143,8 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             stats = sessionFactory.getStatistics();
             stats.setStatisticsEnabled(true);
 
+            System.err.println("...... embedded container initialized and ready for testing....");
+
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -142,12 +154,22 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     }
 
     //@Configuration(groups = "integration.ejb3", afterSuite = true)
-    @AfterSuite
+    @AfterSuite(alwaysRun = true)
     public static void shutdownEmbeddedJboss() {
+        System.err.println("!!! Any errors occurring after this point occurred during embedded server shutdown !!!\n"
+            + "!!! and is probably not a real problem. !!!");
+        if (deployer != null) {
+            try {
+                deployer.stop();
+                deployer.destroy();
+                deployer = null;
+            } catch (Throwable t) {
+                System.err.println("Failed to stop embedded deployer");
+                t.printStackTrace(System.err);
+            }
+        }
         EJB3StandaloneBootstrap.shutdown();
     }
-
-    private static long start;
 
     @BeforeMethod
     public static void startTest() {
@@ -175,10 +197,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public static void endTest() {
         //System.out.println("Connections used: " + (stats.getQueryExecutionCount() - start));
     }
-
-    private TransactionManager tm;
-    private MBeanServer dummyJBossMBeanServer;
-    private static Statistics stats;
 
     public TransactionManager getTransactionManager() {
         return lookupTransactionManager();
@@ -258,15 +276,14 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      */
     public void unprepareForTestAgents() {
         try {
-            if (dummyJBossMBeanServer != null) {
-                dummyJBossMBeanServer.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+            MBeanServer mbs = getJBossMBeanServer();
+            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-
-    private ServerPluginService serverPluginService;
 
     /**
      * If you need to test server plugins, you must first prepare the server plugin service.
@@ -297,8 +314,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             serverPluginService = null;
         }
     }
-
-    private SchedulerService schedulerService;
 
     public SchedulerService getSchedulerService() {
         return schedulerService;

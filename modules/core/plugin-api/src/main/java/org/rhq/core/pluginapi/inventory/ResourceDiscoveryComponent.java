@@ -38,7 +38,7 @@ import java.util.Set;
  * 
  * @see ClassLoaderFacet
  */
-public interface ResourceDiscoveryComponent<T extends ResourceComponent> {
+public interface ResourceDiscoveryComponent<T extends ResourceComponent<?>> {
     /**
      * <p>Asks the discovery component to discover all of its resources. The plugin container may or may not have already
      * {@link ResourceDiscoveryContext#getAutoDiscoveredProcesses() auto-discovered} some resources for this component

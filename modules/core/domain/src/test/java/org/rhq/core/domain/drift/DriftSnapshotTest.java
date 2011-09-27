@@ -1,5 +1,13 @@
 package org.rhq.core.domain.drift;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
@@ -10,14 +18,8 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
 @SuppressWarnings("unchecked")
-public class SnapshotTest {
+public class DriftSnapshotTest {
 
     @Test
     public void addChangeSetWithAddedFile() {
@@ -160,6 +162,7 @@ public class SnapshotTest {
         private int version;
         private DriftChangeSetCategory category;
         private int configId;
+        private DriftHandlingMode mode = DriftHandlingMode.normal;
         private Set<Drift> drifts = new HashSet<Drift>();
         private long ctime = System.currentTimeMillis();
 
@@ -235,6 +238,16 @@ public class SnapshotTest {
         public FakeDriftChangeSet add(Drift drift) {
             drifts.add(drift);
             return this;
+        }
+
+        @Override
+        public DriftHandlingMode getDriftHandlingMode() {
+            return this.mode;
+        }
+
+        @Override
+        public void setDriftHandlingMode(DriftHandlingMode mode) {
+            this.mode = mode;
         }
     }
 

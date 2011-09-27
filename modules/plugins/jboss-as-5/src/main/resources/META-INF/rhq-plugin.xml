@@ -671,6 +671,9 @@
 '>
 
 <!ENTITY webApplicationContextMetrics '
+    <metric property="clustered" dataType="trait" displayType="summary"
+            description="True if this web application context is clustered" defaultOn="true" defaultInterval="3600000" />
+            
     <metric property="virtualHost"
             dataType="trait" displayType="summary"
             description="the virtual host with which this context is associated"/>
@@ -1803,6 +1806,8 @@
                         defaultOn="true" defaultInterval="600000" dataType="measurement" category="utilization"
                         description="The timestamp of the last message add"/>
 
+                <metric property="clustered" dataType="trait" description="True if this queue is clustered, false otherwise" defaultInterval="3600000" defaultOn="true"/>
+                
                 <resource-configuration>
 
                     <!-- See: https://anonsvn.jboss.org/repos/jbossas/trunk/messaging/src/main/org/jboss/jms/server/destination/QueueServiceMO.java -->
@@ -2139,6 +2144,8 @@
                 <metric property="nonDurableSubscriptionsCount" measurementType="dynamic" displayType="detail" displayName="Non Durable Subscriptions Count"
                         defaultOn="true" defaultInterval="600000" dataType="measurement" category="throughput"
                         description="The count of all non durable subscriptions to this topic"/>
+
+                <metric property="clustered" dataType="trait" description="True if this topic is clustered, false otherwise" defaultInterval="3600000" defaultOn="true"/>
 
                 <resource-configuration>
 

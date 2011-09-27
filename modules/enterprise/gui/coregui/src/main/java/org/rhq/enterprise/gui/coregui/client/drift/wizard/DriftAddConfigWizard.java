@@ -55,11 +55,11 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
     }
 
     public String getWindowTitle() {
-        return MSG.view_drift_wizard_addConfig_windowTitle();
+        return MSG.view_drift_wizard_addDef_windowTitle();
     }
 
     public String getTitle() {
-        return MSG.view_drift_wizard_addConfig_title(getType().getName());
+        return MSG.view_drift_wizard_addDef_title(getType().getName());
     }
 
     public String getSubtitle() {
@@ -78,7 +78,7 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_drift_wizard_addConfig_success(getNewDriftConfiguration().getName()),
+                            new Message(MSG.view_drift_wizard_addDef_success(getNewDriftConfiguration().getName()),
                                 Message.Severity.Info));
                         getView().closeDialog();
                         DriftAddConfigWizard.this.table.refresh();
@@ -86,7 +86,7 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
 
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_drift_wizard_addConfig_failure(getNewDriftConfiguration().getName()), caught);
+                            MSG.view_drift_wizard_addDef_failure(getNewDriftConfiguration().getName()), caught);
                         getView().closeDialog();
                     }
                 });

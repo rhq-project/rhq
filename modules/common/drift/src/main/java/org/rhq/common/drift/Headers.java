@@ -42,6 +42,8 @@ public class Headers implements Serializable {
 
     private int resourceId;
 
+    private int version;
+
     /**
      * This is the id of the resource to which the change set belongs
      *
@@ -110,6 +112,20 @@ public class Headers implements Serializable {
      */
     public void setType(DriftChangeSetCategory type) {
         this.type = type;
+    }
+
+    /**
+     * @return The change set version
+     */
+    public int getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version The change set version
+     */
+    public void setVersion(int version) {
+        this.version = version;
     }
 
 }

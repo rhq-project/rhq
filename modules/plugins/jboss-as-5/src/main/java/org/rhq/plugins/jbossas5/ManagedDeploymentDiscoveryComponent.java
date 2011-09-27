@@ -45,12 +45,12 @@ import org.jboss.profileservice.spi.NoSuchDeploymentException;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public abstract class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent>
+public abstract class ManagedDeploymentDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent<?>>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
+            ResourceDiscoveryContext<ApplicationServerComponent<?>> discoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = discoveryContext.getResourceType();

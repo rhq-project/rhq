@@ -1146,6 +1146,7 @@
                   category="throughput"/>
 
           <metric displayName="JVM Free Memory" property="MCBean|ServerInfo|*|freeMemory" displayType="summary"
+                  defaultOn="true"
                   description="An approximation of the total amount of memory currently available in the app server JVM for future allocated objects, measured in bytes"
                   category="utilization" units="bytes"/>
 

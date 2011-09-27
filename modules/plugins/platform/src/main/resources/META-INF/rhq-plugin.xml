@@ -52,21 +52,25 @@
       <metric displayName="Hostname"
               property="Trait.hostname"
               description="Name that this platform is known as"
+              defaultOn="true"
               dataType="trait"
               displayType="summary" />
       <metric displayName="OS Name"
               property="Trait.osname"
               description="Name that the operating system is known as"
+              defaultOn="true"
               dataType="trait"
               displayType="summary" />
       <metric displayName="OS Version"
               property="Trait.osversion"
               description="Version of the operating system"
+              defaultOn="true"
               dataType="trait"
               displayType="summary" />
       <metric displayName="Architecture"
               property="Trait.sysarch"
               description="Hardware architecture of the platform"
+              defaultOn="true"
               dataType="trait"
               displayType="summary" />
 '>
@@ -74,12 +78,14 @@
       <metric displayName="Free Memory"
               property="Native.MemoryInfo.free"
               displayType="summary"
+              defaultOn="true"
               units="bytes"
               description="The total free system memory"/>
               
       <metric displayName="Used Memory"
               property="Native.MemoryInfo.used"
               displayType="summary"
+              defaultOn="true"
               units="bytes"
               description="The total used system memory"/>
               
@@ -90,11 +96,13 @@
               
       <metric displayName="Free Swap Space"
               property="Native.SwapInfo.free"
+              defaultOn="true"
               units="bytes"
               description="The total free system swap"/>
               
       <metric displayName="Used Swap Space"
               property="Native.SwapInfo.used"
+              defaultOn="true"
               displayType="summary"
               units="bytes"
               description="The total used system swap"/>
@@ -112,11 +120,13 @@
                description="Idle percentage of all CPUs"/>
       <metric displayName="System Load" 
                property="CpuPerc.sys" 
+               defaultOn="true"
                displayType="summary" 
                units="percentage" 
                description="Percentage of all CPUs running in system mode"/>
       <metric displayName="User Load" 
                property="CpuPerc.user" 
+               defaultOn="true"
                displayType="summary" 
                units="percentage" 
                description="Percentage of all CPUs running in user mode"/>
@@ -129,18 +139,22 @@
 <!ENTITY cpuDetail '
       <metric displayName="Vendor"
               property="CpuTrait.vendor"
+              defaultOn="true"
               dataType="trait"
               description="Vendor of this CPU"/>
       <metric displayName="CPU Model"
               property="CpuTrait.model"
+              defaultOn="true"
               dataType="trait"
               description="Model of this CPU"/>
       <metric displayName="CPU Speed"
               property="CpuTrait.mhz"
+              defaultOn="true"
               dataType="trait"
               description="Speed of this CPU in Mhz"/>
       <metric displayName="Cache size"
               property="CpuTrait.cacheSize"
+              defaultOn="true"
               dataType="trait"
               description="Cache Size of this CPU"/>
 '>
@@ -314,11 +328,13 @@
       <metric displayName="Distribution Name"
               property="distro.name"
               description="name of the Linux distribution"
+              defaultOn="true"
               dataType="trait"
               displayType="summary" />
       <metric displayName="Distribution Version"
               property="distro.version"
               description="version of the Linux distribution"
+              defaultOn="true"
               dataType="trait"
               displayType="summary" />
 
@@ -447,11 +463,12 @@
       </runs-inside>
       
       <metric displayName="Inet4Address"
+              defaultOn="true"
               property="Trait.net4.address" dataType="trait" displayType="summary"
-              description="IP address of the network adaptor"/>
+              description="IP address of the network adapter"/>
 
-      <metric property="Trait.interfaceFlags" displayName="Interface Flags" dataType="trait" displayType="summary"
-              description="Flag constants for network related ops"/>
+      <metric property="Trait.interfaceFlags" displayName="Interface Flags" dataType="trait"
+              description="Flag constants for network related operations"/>
       
       <metric property="rxBytes" displayName="Bytes Received" units="bytes" measurementType="trendsup" displayType="summary"
               description="The total number of bytes received across this network interface since it started"/>

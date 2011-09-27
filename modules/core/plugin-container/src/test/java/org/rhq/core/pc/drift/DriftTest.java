@@ -38,6 +38,7 @@ import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.write;
 import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
@@ -188,6 +189,19 @@ public class DriftTest {
      */
     protected File changeSet(String config, DriftChangeSetCategory type) throws IOException {
         return changeSetMgr.findChangeSet(resourceId(), config, type);
+    }
+
+    /**
+     * Returns the previous snapshot file for the specified drift configuration for the
+     * resource with the id that can be obtained from {@link #resourceId()}.
+     *
+     * @param config The drift configuration name
+     * @return The previous snapshot file
+     * @throws Exception
+     */
+    protected File previousChangeSet(String config) throws IOException {
+        File changeSet = changeSet(config, COVERAGE);
+        return new File(changeSet.getParentFile(), changeSet.getName() + ".previous");
     }
 
     protected File changeSetDir(String driftConfigName) throws Exception {

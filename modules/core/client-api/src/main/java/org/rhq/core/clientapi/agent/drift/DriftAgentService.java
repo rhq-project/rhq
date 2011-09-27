@@ -104,4 +104,5 @@ public interface DriftAgentService {
      */
     void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
 
+    void ackChangeSet(int resourceId, String driftConfigName);
 }

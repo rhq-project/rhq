@@ -438,7 +438,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
-            //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
@@ -447,6 +446,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        }
+
+        @Override
+        public void ackChangeSet(int resourceId, String driftConfigName) {
         }
     }
 }

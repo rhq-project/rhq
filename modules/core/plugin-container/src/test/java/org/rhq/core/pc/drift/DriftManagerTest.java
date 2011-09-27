@@ -75,6 +75,7 @@ public class DriftManagerTest extends DriftTest {
 
         driftMgr = new TestDriftManager();
         driftMgr.setConfiguration(pcConfig);
+        driftMgr.setChangeSetMgr(changeSetMgr);
     }
 
     @Test
@@ -93,9 +94,14 @@ public class DriftManagerTest extends DriftTest {
             }
         });
 
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+        DriftDetectionSummary detectionSummary = new DriftDetectionSummary();
+        detectionSummary.setSchedule(schedule);
+        detectionSummary.setType(COVERAGE);
+
         driftMgr.setChangeSetMgr(changeSetMgr);
-        driftMgr.getSchedulesQueue().addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftMgr.sendChangeSetToServer(resourceId(), config, COVERAGE);
+        driftMgr.getSchedulesQueue().addSchedule(schedule);
+        driftMgr.sendChangeSetToServer(detectionSummary);
     }
 
     @Test
@@ -111,32 +117,32 @@ public class DriftManagerTest extends DriftTest {
             }
         });
 
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+        DriftDetectionSummary detectionSummary = new DriftDetectionSummary();
+        detectionSummary.setSchedule(schedule);
+        detectionSummary.setType(COVERAGE);
+
         driftMgr.setChangeSetMgr(changeSetMgr);
         driftMgr.getSchedulesQueue().addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftMgr.sendChangeSetToServer(resourceId(), config, COVERAGE);
+        driftMgr.sendChangeSetToServer(detectionSummary);
     }
 
     @Test
-    public void cleanUpAfterSendingChangeSetToServer() throws Exception {
-        final DriftConfiguration config = driftConfiguration("send-changeset-in-zip", resourceDir.getAbsolutePath());
-        final File changeSetDir = changeSetDir(config.getName());
-        createRandomFile(changeSetDir, "changeset.txt");
+    public void cleanUpWhenServerAcksChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("clean-up-when-server-acks-changeset",
+            resourceDir.getAbsolutePath());
+        File changeSetDir = changeSetDir(config.getName());
+        File snapshotFile = createRandomFile(changeSetDir, "changeset.txt");
+        File previousSnapshotFile = createRandomFile(changeSetDir, "changeset.txt.previous");
+        File changeSetZipFile = createRandomFile(changeSetDir, "changeset_" + System.currentTimeMillis() + ".zip");
 
-        driftMgr.setChangeSetMgr(changeSetMgr);
-        driftMgr.getSchedulesQueue().addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftMgr.sendChangeSetToServer(resourceId(), config, COVERAGE);
+        driftMgr.ackChangeSet(resourceId(), config.getName());
 
-        // clean up should not happen until after the input stream is closed. The remote
-        // input stream is consumed asynchronously; so, we have to wait until the stream
-        // is closed. We could otherwise disrupt the transmission of bits.
-
-        File changeSetZip = assertThatZipFileExists(changeSetDir, "changeset_", "Expected to find change set zip " +
-            "zip file in " + changeSetDir.getPath() + ". The file name should follow the pattern " +
-            "changeset_<integer_timestamp>.zip");
-
-        driftServerService.inputStream.close();
-
-        assertFalse(changeSetZip.exists(), "The change set zip should be deleted when the remote input stream is closed.");
+        assertTrue(snapshotFile.exists(), "Snapshot file should exist after server acks change set");
+        assertFalse(previousSnapshotFile.exists(), "Previous version snapshot file should be deleted when server " +
+            "acks change set");
+        assertEquals(findChangeSetZipFiles(changeSetDir).size(), 0, "All change set zip files should be deleted when " +
+            "server acks change set");
     }
 
     @Test
@@ -264,6 +270,16 @@ public class DriftManagerTest extends DriftTest {
         driftMgr.getSchedulesQueue().deactivateSchedule();
         assertFalse(changeSetDir.exists(), "The change set directory should have been deleted after the schedule is " +
             "deactivated.");
+    }
+
+    private List<File> findChangeSetZipFiles(File dir) {
+        File[] files = dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith("changeset_") && name.endsWith(".zip");
+            }
+        });
+        return asList(files);
     }
 
     /**

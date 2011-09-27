@@ -97,6 +97,11 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     }
 
     @Override
+    public ChangeSetReader getChangeSetReader(File changeSetFile) throws IOException {
+        return new ChangeSetReaderImpl(changeSetFile);
+    }
+
+    @Override
     public ChangeSetWriter getChangeSetWriter(int resourceId, Headers headers) throws IOException {
         File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
         File changeSetDir = new File(resourceDir, headers.getDriftConfigurationName());
@@ -112,6 +117,11 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
             changeSet = new File(changeSetDir, "drift-changeset.txt");
         }
         return new ChangeSetWriterImpl(changeSet, headers);
+    }
+
+    @Override
+    public ChangeSetWriter getChangeSetWriter(File changeSetFile, Headers headers) throws IOException {
+        return new ChangeSetWriterImpl(changeSetFile, headers);
     }
 
     @Override

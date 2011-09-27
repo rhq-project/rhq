@@ -43,7 +43,6 @@ public interface DriftServerService {
      * @param zipSize
      * @param zipStream A RemoteStream
      */
-    @Asynchronous(guaranteedDelivery = true)
     void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream);
 
     // note that this guaranteed delivery is weak because most likely the stream will be dead if it

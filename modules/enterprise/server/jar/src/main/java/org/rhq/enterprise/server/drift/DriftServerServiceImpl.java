@@ -34,6 +34,7 @@ import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
@@ -85,6 +86,7 @@ public class DriftServerServiceImpl implements DriftServerService {
     public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterDriftConfigurationId(driftConfigurationId);
+        criteria.addSortVersion(PageOrdering.ASC);
 
         Subject overlord = getSubjectManager().getOverlord();
 

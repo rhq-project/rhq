@@ -177,13 +177,19 @@ public class DriftDetectorTest extends DriftTest {
         File changeSet = changeSet(config.getName(), COVERAGE);
         String originalHash = sha256(changeSet);
 
+        // Reset the schedule so that detection will run again the next time we call
+        // detection.run()
+        DriftDetectionSchedule schedule = scheduleQueue.remove(resourceId(), config);
+        schedule.resetSchedule();
+        scheduleQueue.addSchedule(schedule);
+
         // Run the detector again. Note that nothing has changed so the snapshot should
         // remain the same and no drift change set file should be generated.
         detector.run();
 
         String newHash = sha256(changeSet);
 
-        assertEquals(newHash, originalHash, "The snapshot file should not have changed since there was no drift.");
+        assertEquals(newHash, originalHash, "The snapshot file should not have changed since there was no drift. ");
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
 
@@ -193,15 +199,14 @@ public class DriftDetectorTest extends DriftTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void skipScheduledThatHasConfigDisabled() throws Exception {
+    public void skipDetectionForScheduledThatIsDisabled() throws Exception {
         detector.setDriftClient(new DriftClientTestStub() {
             {
                 setBaseDir(resourceDir);
             }
 
             @Override
-            public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
-                DriftChangeSetCategory type) {
+            public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
                 throw new RuntimeException("Should not invoke drift client when drift configuration is disabled");
             }
         });
@@ -215,6 +220,45 @@ public class DriftDetectorTest extends DriftTest {
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void skipDetectionWhenPreviousSnapshotFileExists() throws Exception {
+        // The presence of a previous snapshot file means that the server has
+        // not acknowledged that it has received and processed the change set.
+        DriftConfiguration config = driftConfiguration("previous-snapshot-test", resourceDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        createRandomFile(confDir, "server.conf");
+
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        // create some drift and generate a new snapshot
+        createRandomFile(confDir, "server-1.conf");
+        schedule.resetSchedule();
+        detector.run();
+
+        File snapshot = changeSet(config.getName(), COVERAGE);
+        String newHash = sha256(snapshot);
+        File previousSnapshot = previousChangeSet(config.getName());
+        String oldHash = sha256(previousSnapshot);
+
+        // create some drift and make sure drift detection does not run.
+        createRandomFile(confDir, "server-2.conf");
+        schedule.resetSchedule();
+        // Tell driftClient to throw an exception if detector attempts to send
+        // the change set report to the server. The detector should never call
+        // driftClient in this scenario.
+        driftClient.setFailingOnSendChangeSet(true);
+        detector.run();
+
+        assertEquals(sha256(snapshot), newHash, "The snapshot should not have changed since the previous snapshot " +
+            "is still on disk.");
+        assertEquals(sha256(previousSnapshot), oldHash, "The previous snapshot should not have changed since " +
+            "drift detection should not have run until the server acked the previous snapshot.");
     }
 
     @SuppressWarnings("unchecked")
@@ -404,6 +448,74 @@ public class DriftDetectorTest extends DriftTest {
         assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void revertToPreviousSnapshotWhenSendingChangeSetFails() throws Exception {
+        DriftConfiguration config = driftConfiguration("revert-snapshot-test", resourceDir.getAbsolutePath());
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server.conf");
+
+        scheduleQueue.addSchedule(schedule);
+        // generate the initial snapshot
+        detector.run();
+
+        // Now generate a drift change set
+        createRandomFile(confDir, "server-1.conf");
+        schedule.resetSchedule();
+        detector.run();
+
+        File changeSet = changeSet(config.getName(), COVERAGE);
+        String currentHash = sha256(changeSet);
+
+        // Need to delete the previous version snapshot file; otherwise, the
+        // next detection run will be skipped.
+        previousChangeSet(config.getName()).delete();
+
+        // generate some more drift, and fail on sending the change set
+        // to the server
+        createRandomFile(confDir, "server-2.conf");
+        schedule.resetSchedule();
+        driftClient.setFailingOnSendChangeSet(true);
+        try {
+            detector.run();
+        } catch (RuntimeException e) {}
+
+        String newHash = sha256(changeSet);
+
+        assertEquals(newHash, currentHash, "The snapshot file should be reverted if sending the new snapshot " +
+            "to the server fails.");
+        // The previous version file must be deleted on revert; otherwise, drift
+        // detection will not run for the schedule if the previous version file
+        // is found on disk.
+        assertFalse(previousChangeSet(config.getName()).exists(), "The copy of the previous version snapshot file " +
+            "should be deleted once we have reverted back to it and have a new, current snapsot file.");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void purgeSnapshotWhenSendingInitialChangeSetFails() throws Exception {
+        // If we have just generated the initial change set and sending it to
+        // the server fails, then there is no prior snapshot version to which
+        // we can revert. We therefore need to purge the snapshot file and
+        // allow DriftDetector to simply regenerate the initial change set again.
+
+        DriftConfiguration config = driftConfiguration("purge-snapshot-test", resourceDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        createRandomFile(confDir, "server.conf");
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        driftClient.setFailingOnSendChangeSet(true);
+        try {
+            detector.run();
+        } catch (RuntimeException e) {}
+
+        assertFalse(changeSet(config.getName(), COVERAGE).exists(), "Snapshot file should be deleted when " +
+            "only the initial change set has been generated and sending change send report to server fails");
     }
 
     void assertHeaderEquals(File changeSet, Headers expected) throws Exception {

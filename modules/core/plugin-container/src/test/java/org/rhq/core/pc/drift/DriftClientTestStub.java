@@ -2,17 +2,19 @@ package org.rhq.core.pc.drift;
 
 import java.io.File;
 
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 class DriftClientTestStub implements DriftClient {
 
     private File basedir;
 
-    @Override
-    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
-        DriftChangeSetCategory type) {
+    private boolean failingOnSendChangeSet;
 
+    @Override
+    public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
+        if (failingOnSendChangeSet) {
+            throw new RuntimeException("Failed to send change set to server");
+        }
     }
 
     @Override
@@ -26,5 +28,13 @@ class DriftClientTestStub implements DriftClient {
 
     public void setBaseDir(File basedir) {
         this.basedir = basedir;
+    }
+
+    public boolean isFailingOnSendChangeSet() {
+        return failingOnSendChangeSet;
+    }
+
+    public void setFailingOnSendChangeSet(boolean failing) {
+        failingOnSendChangeSet = failing;
     }
 }

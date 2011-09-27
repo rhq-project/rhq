@@ -225,7 +225,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public DriftChangeSetSummary storeChangeSet(Subject subject, final int resourceId, File changeSetZip)
+    public DriftChangeSetSummary storeChangeSet(Subject subject, final int resourceId, final File changeSetZip)
         throws Exception {
         final Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
@@ -295,12 +295,14 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                                 summary.addDriftPathname(path);
                             }
                         }
+
+                        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                        DriftAgentService service = agentClient.getDriftAgentService();
+
+                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftConfigurationName());
+
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {
-
-                            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(),
-                                resourceId);
-                            DriftAgentService service = agentClient.getDriftAgentService();
                             try {
                                 if (service.requestDriftFiles(resourceId, reader.getHeaders(), emptyDriftFiles)) {
                                     for (DriftFile driftFile : emptyDriftFiles) {

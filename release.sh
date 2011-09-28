@@ -18,45 +18,105 @@ usage()
    abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
 }
 
+set_variables()
+{
+   # Constants
+
+   PROJECT_NAME="rhq"
+   PROJECT_DISPLAY_NAME="RHQ"
+   PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
+   TAG_PREFIX="RHQ"
+   MINIMUM_MAVEN_VERSION="2.1.0"
+
+
+   # Process command line args.
+
+   EXE=`basename $0`
+   if [ "$#" -ne 6 ]; then
+      usage
+   fi  
+   RELEASE_TYPE="$1"
+   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+      usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
+   fi
+   RELEASE_VERSION="$2"
+   DEVELOPMENT_VERSION="$3"
+   RELEASE_BRANCH="$4"
+   GIT_USERNAME="$5"
+   MODE="$6"
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+      usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
+   fi
+
+   if [ "$MODE" = "production" ]; then
+      if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+         usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+      fi    
+   fi
+
+   # Set various environment variables.
+
+   MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
+   export MAVEN_OPTS
+
+
+   # Set various local variables.
+
+   if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
+      echo "We appear to be running in a Hudson job." 
+      WORKING_DIR="$WORKSPACE"
+      MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
+      MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
+   elif [ -z "$WORKING_DIR" ]; then
+      WORKING_DIR="$HOME/release/rhq"
+   #   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+      MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
+      MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
+   fi
+
+   PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
+
+   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
+   # TODO: We may eventually want to reenable tests for production releases.
+   #if [ "$MODE" = "test" ]; then
+   #   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
+   #fi
+   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
+   if [ "$RELEASE_TYPE" = "enterprise" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
+      #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
+   fi
+   if [ -n "$RELEASE_DEBUG" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS --debug"
+   fi
+   if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
+   fi
+
+   # TODO: We may eventually want to reenable publishing of enterprise artifacts.
+   #if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
+   #   MAVEN_RELEASE_PERFORM_GOAL="deploy"
+   #else   
+      MAVEN_RELEASE_PERFORM_GOAL="install"
+   #fi
+
+
+   TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
+   RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
+
+
+   # Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
+   # messages and writes its resource bundle properties files in that encoding, 
+   # since that is how the German and French I18NMessage annotation values are
+   # encoded and the encoding used by i18nlog to read in resource bundle
+   # property files.
+   LANG=en_US.iso8859
+   export LANG
+}
 
 if [ -n "$RELEASE_DEBUG" ]; then
    echo "Debug output is enabled."
    set -x
-fi
-
-
-# Constants
-
-PROJECT_NAME="rhq"
-PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
-TAG_PREFIX="RHQ"
-MINIMUM_MAVEN_VERSION="2.1.0"
-
-
-# Process command line args.
-
-EXE=`basename $0`
-if [ "$#" -ne 6 ]; then
-   usage
-fi  
-RELEASE_TYPE="$1"
-if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-   usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
-fi
-RELEASE_VERSION="$2"
-DEVELOPMENT_VERSION="$3"
-RELEASE_BRANCH="$4"
-GIT_USERNAME="$5"
-MODE="$6"
-if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
-   usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
-fi
-
-if [ "$MODE" = "production" ]; then
-   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
-      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
-   fi    
 fi
 
 # TODO: Check that JDK version is < 1.7.
@@ -69,66 +129,7 @@ validate_maven
 
 validate_git
 
-
-# Set various environment variables.
-
-MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
-export MAVEN_OPTS
-
-
-# Set various local variables.
-
-if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
-   echo "We appear to be running in a Hudson job." 
-   WORKING_DIR="$WORKSPACE"
-   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
-   MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
-elif [ -z "$WORKING_DIR" ]; then
-   WORKING_DIR="$HOME/release/rhq"
-#   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
-   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
-   MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
-fi
-
-PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
-
-MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
-# TODO: We may eventually want to reenable tests for production releases.
-#if [ "$MODE" = "test" ]; then
-#   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
-#fi
-MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
-if [ "$RELEASE_TYPE" = "enterprise" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
-   #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
-fi
-if [ -n "$RELEASE_DEBUG" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS --debug"
-fi
-if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
-fi
-
-# TODO: We may eventually want to reenable publishing of enterprise artifacts.
-#if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
-#   MAVEN_RELEASE_PERFORM_GOAL="deploy"
-#else   
-   MAVEN_RELEASE_PERFORM_GOAL="install"
-#fi
-
-
-TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
-RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
-
-
-# Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
-# messages and writes its resource bundle properties files in that encoding, 
-# since that is how the German and French I18NMessage annotation values are
-# encoded and the encoding used by i18nlog to read in resource bundle
-# property files.
-LANG=en_US.iso8859
-export LANG
-
+set_variables
 
 # Print out a summary of the environment.
 echo "========================== Environment Variables =============================="

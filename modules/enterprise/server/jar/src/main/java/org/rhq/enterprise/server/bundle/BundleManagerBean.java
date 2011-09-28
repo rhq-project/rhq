@@ -552,6 +552,23 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
+
+        File tmpFile = File.createTempFile("bundleDistroBits", ".zip");
+        try {
+            StreamUtil.copy(new ByteArrayInputStream(fileBytes), new FileOutputStream(tmpFile));
+            BundleVersion bundleVersion = createBundleVersionViaFile(subject, tmpFile);
+            return bundleVersion;
+        } finally {
+            if (tmpFile != null) {
+                tmpFile.delete();
+            }
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
 
         // validate by immediately creating a URL

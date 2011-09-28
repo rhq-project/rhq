@@ -163,7 +163,6 @@ public class DriftDetector implements Runnable {
         final Set<File> processedFiles = new HashSet<File>();
         final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>();
         final List<FileEntry> deltaEntries = new LinkedList<FileEntry>();
-        int currentVersion = coverageReader.getHeaders().getVersion();
         int newVersion = coverageReader.getHeaders().getVersion() + 1;
 
         // First look for files that have either been modified or deleted
@@ -171,16 +170,22 @@ public class DriftDetector implements Runnable {
             File file = new File(basedir, entry.getFile());
             if (!file.exists()) {
                 // The file has been deleted since the last scan
-                if (log.isInfoEnabled()) {
-                    log.info("Detected deleted file for " + schedule + " --> " + file.getAbsolutePath());
+                if (log.isDebugEnabled()) {
+                    log.debug("Detected deleted file for " + schedule + " --> " + file.getAbsolutePath());
+                }
+                deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
+            } else if (!file.canRead()) {
+                processedFiles.add(file);
+                if (log.isDebugEnabled()) {
+                    log.debug(file.getPath() + " is no longer readable. Treating it as a deleted file.");
                 }
                 deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
             } else {
                 processedFiles.add(file);
                 String currentSHA = sha256(file);
                 if (!currentSHA.equals(entry.getNewSHA())) {
-                    if (log.isInfoEnabled()) {
-                        log.info("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
+                    if (log.isDebugEnabled()) {
+                        log.debug("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
                     }
                     FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA);
                     deltaEntries.add(modifiedEntry);
@@ -202,6 +207,13 @@ public class DriftDetector implements Runnable {
                         try {
                             if (processedFiles.contains(file)) {
                                 return;
+                            }
+
+                            if (!file.canRead()) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("Skipping " + file.getPath() + " since it is not readable.");
+                                    return;
+                                }
                             }
 
                             if (log.isInfoEnabled()) {
@@ -274,8 +286,14 @@ public class DriftDetector implements Runnable {
                     @Override
                     public void visit(File file) {
                         try {
-                            if (log.isInfoEnabled()) {
-                                log.info("Adding " + file.getPath() + " to coverage change set for " + schedule);
+                            if (!file.canRead()) {
+                                if (log.isDebugEnabled()) {
+                                    log.debug("Skipping " + file.getPath() + " since it is not readable.");
+                                }
+                                return;
+                            }
+                            if (log.isDebugEnabled()) {
+                                log.debug("Adding " + file.getPath() + " to coverage change set for " + schedule);
                             }
                             writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
                         } catch (IOException e) {

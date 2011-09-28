@@ -518,6 +518,101 @@ public class DriftDetectorTest extends DriftTest {
             "only the initial change set has been generated and sending change send report to server fails");
     }
 
+    @Test
+    public void ignoreFilesThatAreNotReadableForCoverageChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("nonreadable-files-coverage", resourcesDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
+        assertTrue(server2Conf.setReadable(false), "Failed to make " + server2Conf.getPath() + " write only");
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File changeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> entries = asList(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
+
+        assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
+        assertFileEntriesMatch("Files that are non-readable should be skipped but other, readable file should still " +
+            "be included in the change set", entries, changeSet);
+    }
+
+    @Test
+    public void ignoreNewFilesThatAreNotReadableForDriftChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("nonreadable-files-drfit", resourceDir.getAbsolutePath());
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        String oldServer1Hash = sha256(server1Conf);
+
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        // create some drift that includes a new file that is not readable
+        server1Conf.delete();
+        server1Conf = createRandomFile(confDir, "server-1.conf");
+        String newServer1Hash = sha256(server1Conf);
+
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
+        assertTrue(server2Conf.setReadable(false), "Failed to make " + server2Conf.getPath() + " write only");
+
+        schedule.resetSchedule();
+        detector.run();
+
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+        List<FileEntry> driftEntries = asList(changedFileEntry("conf/server-1.conf",  oldServer1Hash, newServer1Hash));
+
+        // verify that the drift change set was generated
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
+
+        // verify that the coverage change set was updated
+        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = asList(changedFileEntry("conf/server-1.conf",  oldServer1Hash, newServer1Hash));
+
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
+    }
+
+    @Test
+    public void markFileUnderDriftDetectionAsRemovedWhenItIsMadeNonReadable() throws Exception {
+        DriftConfiguration config = driftConfiguration("file-made-nonreadable", resourceDir.getAbsolutePath());
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        String server1Hash = sha256(server1Conf);
+
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        // make the file non-readable and run the detector again
+        assertTrue(server1Conf.setReadable(false), "Failed to make " + server1Conf.getPath() + " write only");
+
+        schedule.resetSchedule();
+        detector.run();
+
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+        List<FileEntry> driftEntries = asList(removedFileEntry("conf/server-1.conf", server1Hash));
+
+        // verify that the drift change set was generated
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
+
+        // verify that the coverage change set was updated
+        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = emptyList();
+
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
+    }
+
     void assertHeaderEquals(File changeSet, Headers expected) throws Exception {
         ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new FileReader(changeSet)));
         Headers actual = reader.getHeaders();

@@ -179,7 +179,6 @@
             <c:simple-property name="proxyList" type="string" required="false" description="Comma separated list of address:port listing the httpd servers where mod_cluster is running." />
             <c:simple-property name="proxyURL" type="string" required="false" description="URL prefix to send with commands to mod_cluster.  Default is no prefix." />
             <c:simple-property name="socketTimeout" type="integer" required="false" description="Connection timeout for communication with the proxy." />
-            <c:simple-property name="ssl" type="boolean" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
             <c:simple-property name="excludedContexts" type="string" required="false" description="Comma delimited list of contexts that should *not* be auto-registered with httpd. Contexts may be qualified by host using a colon, e.g. host1:context1. If no host is defined, localhost is assumed." />
             <c:simple-property name="autoEnableContexts" type="boolean" required="false" default="true" description="Toggle for context auto-enable during mod_cluster startup." />
 
@@ -199,6 +198,24 @@
             <c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node." />
             <c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
             <c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server." />
+              
+            <!-- SSL Configuration -->
+            <c:simple-property name="ssl" type="boolean" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
+            <c:simple-property name="sslCiphers" type="string" required="false" description="SSL ciphers." />
+            <c:simple-property name="sslProtocol" type="string" required="false" description="SSL protocol." />
+            <c:simple-property name="sslCertificateEncodingAlgorithm" type="string" required="false" description="Certificate encoding algorithm." />
+            <c:simple-property name="sslKeyStore" type="string" required="false" description="SSL keystore." />
+            <c:simple-property name="sslKeyStorePassword" type="string" required="false" description="SSL keystore password." />
+            <c:simple-property name="sslKeyStoreType" type="string" required="false" description="SSL keystore type." />
+            <c:simple-property name="sslKeyStoreProvider" type="string" required="false" description="SSL keystore provider." />
+            <c:simple-property name="sslTrustAlgorithm" type="string" required="false" description="Truststore algorithm." />
+            <c:simple-property name="sslKeyAlias" type="string" required="false" description="Key alias." />
+            <c:simple-property name="sslCrlFile" type="string" required="false" description="Certificate revocation list." />
+            <c:simple-property name="sslTrustMaxCertLength" type="string" required="false" description="Trust max certificate length." />
+            <c:simple-property name="sslTrustStore" type="string" required="false" description="Trust store file." />
+            <c:simple-property name="sslTrustStorePassword" type="string" required="false" description="Trust store password." />
+            <c:simple-property name="sslTrustStoreType" type="string" required="false" description="Trust store type." />
+            <c:simple-property name="sslTrustStoreProvider" type="string" required="false" description="Trust store provider." />
          </resource-configuration>
       </service>
       <!-- End - Configuration for HAModClusterService -->
@@ -307,7 +324,6 @@
             <c:simple-property name="proxyList" type="string" required="false" description="Comma separated list of address:port listing the httpd servers where mod_cluster is running." />
             <c:simple-property name="proxyURL" type="string" required="false" description="URL prefix to send with commands to mod_cluster.  Default is no prefix." />
             <c:simple-property name="socketTimeout" type="integer" required="false" description="Connection timeout for communication with the proxy." />
-            <c:simple-property name="ssl" type="boolean" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
             <c:simple-property name="excludedContexts" type="string" required="false"
                description="Comma delimited list of contexts that should *not* be auto-registered with httpd. Contexts may be qualified by host using a colon, e.g. host1:context1. If no host is defined, localhost is assumed." />
             <c:simple-property name="autoEnableContexts" type="boolean" required="false" default="true" description="Toggle for context auto-enable during mod_cluster startup." />
@@ -328,6 +344,24 @@
             <c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node." />
             <c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
             <c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server." />
+                      
+            <!-- SSL Configuration -->
+            <c:simple-property name="ssl" type="boolean" description="Whether to use SSL to communicate with mod_cluster. Note this has nothing to do with handling of https requests by JBoss Web" />
+            <c:simple-property name="sslCiphers" type="string" required="false" description="SSL ciphers." />
+            <c:simple-property name="sslProtocol" type="string" required="false" description="SSL protocol." />
+            <c:simple-property name="sslCertificateEncodingAlgorithm" type="string" required="false" description="Certificate encoding algorithm." />
+            <c:simple-property name="sslKeyStore" type="string" required="false" description="SSL keystore." />
+            <c:simple-property name="sslKeyStorePassword" type="string" required="false" description="SSL keystore password." />
+            <c:simple-property name="sslKeyStoreType" type="string" required="false" description="SSL keystore type." />
+            <c:simple-property name="sslKeyStoreProvider" type="string" required="false" description="SSL keystore provider." />
+            <c:simple-property name="sslTrustAlgorithm" type="string" required="false" description="Truststore algorithm." />
+            <c:simple-property name="sslKeyAlias" type="string" required="false" description="Key alias." />
+            <c:simple-property name="sslCrlFile" type="string" required="false" description="Certificate revocation list." />
+            <c:simple-property name="sslTrustMaxCertLength" type="string" required="false" description="Trust max certificate length." />
+            <c:simple-property name="sslTrustStore" type="string" required="false" description="Trust store file." />
+            <c:simple-property name="sslTrustStorePassword" type="string" required="false" description="Trust store password." />
+            <c:simple-property name="sslTrustStoreType" type="string" required="false" description="Trust store type." />
+            <c:simple-property name="sslTrustStoreProvider" type="string" required="false" description="Trust store provider." />
          </resource-configuration>
       </service>
       <!-- End - Configuration for ModClusterService -->

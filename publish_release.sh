@@ -2,7 +2,6 @@
 
 source `dirname $0`/rhq_bash.lib
 
-
 # Functions
 
 abort()
@@ -181,17 +180,6 @@ if [ ! "$HUDSON_URL" ]; then
             rm -rf "$WORKING_DIR"
             [ "$?" -ne 0 ] && abort "Failed to remove bogus working directory ($WORKING_DIR)."
         fi
-    fi
-
-    if [ ! -d "$WORKING_DIR" ]; then
-        echo "Cloning the $PROJECT_NAME git repo (this will take about 10-15 minutes)..."
-        git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
-        [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
-        cd "$WORKING_DIR"
-        if [ "$RELEASE_BRANCH" != "master" ]; then
-            git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
-        fi
-        [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
     fi
 fi
 

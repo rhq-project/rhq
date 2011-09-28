@@ -28,7 +28,6 @@ set_variables()
    TAG_PREFIX="RHQ"
    MINIMUM_MAVEN_VERSION="2.1.0"
 
-
    # Process command line args.
 
    EXE=`basename $0`
@@ -183,17 +182,6 @@ if [ -d "$WORKING_DIR" ]; then
        [ "$?" -ne 0 ] && abort "Failed to remove bogus working directory ($WORKING_DIR)."
    fi
 fi
-if [ ! -d "$WORKING_DIR" ]; then
-   echo "Cloning the $PROJECT_NAME git repo (this will take about 10-15 minutes)..."
-   git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
-   [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
-   cd "$CLONE_DIR"
-   if [ "$RELEASE_BRANCH" != "master" ]; then
-       git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
-   fi
-   [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
-fi
-
 
 # if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
 # continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents

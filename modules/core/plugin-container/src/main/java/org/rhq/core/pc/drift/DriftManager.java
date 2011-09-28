@@ -222,7 +222,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
     }
 
-    private void scanForContentToResend() {
+    /**
+     * Scans the changesets directory for any change set content zip files. This method
+     * assumes that any content zip files found have not been received or persisted by the
+     * server. Each content zip file is resent to the server.
+     */
+    public void scanForContentToResend() {
         log.info("Scanning for change set content to resend...");
         for (File resourceDir : changeSetsDir.listFiles()) {
             for (File configDir : resourceDir.listFiles()) {

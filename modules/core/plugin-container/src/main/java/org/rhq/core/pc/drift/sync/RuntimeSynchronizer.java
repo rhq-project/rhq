@@ -121,6 +121,11 @@ class RuntimeSynchronizer implements DriftSynchronizer {
         }
     }
 
+    @Override
+    public void syncChangeSetContent() {
+        driftMgr.scanForContentToResend();
+    }
+
     private String toString(int rid, DriftConfiguration c) {
         return "DriftConfiguration[id: " + c.getId() + ", name: " + c.getName() + ", resourceId: " + rid + "]";
     }

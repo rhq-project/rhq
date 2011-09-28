@@ -33,7 +33,9 @@ public interface DriftSynchronizer {
     /**
      * Determines which drift configurations for a resource have been deleted on the server
      * and need to be purged from the local inventory. This method should not make any
-     * changes to the local inventory.
+     * changes to the local inventory. It also handles syncing content with the server. Any
+     * change set content found on the agent and that is not known to be on the server
+     * should be sent to the server.
      *
      * @param resourceId
      * @param configurationsFromServer A set of drift configurations belonging to the
@@ -81,4 +83,12 @@ public interface DriftSynchronizer {
      * @param configurations The drift configurations to add to the local inventory.
      */
     void addToLocalInventory(int resourceId, List<DriftConfiguration> configurations);
+
+    /**
+     * This is an optional operation as it can only be performed when
+     * {@link org.rhq.core.pc.drift.DriftManager DriftManager} is fully initialized.
+     * Implementations are responsible for detecting any change set content that may not be
+     * on the server and then sending that content to the server.
+     */
+    void syncChangeSetContent();
 }

@@ -131,6 +131,10 @@ class StartupSynchronizer implements DriftSynchronizer {
         }
     }
 
+    @Override
+    public void syncChangeSetContent() {
+    }
+
     private String toString(int rid, DriftConfiguration c) {
         return "DriftConfiguration[id: " + c.getId() + ", name: " + c.getName() + ", resourceId: " + rid + "]";
     }

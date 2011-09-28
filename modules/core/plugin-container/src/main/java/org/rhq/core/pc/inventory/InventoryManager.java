@@ -2036,7 +2036,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         DriftSyncManager driftSyncMgr = createDriftSyncManager();
-        driftSyncMgr.syncConfigsWithServer(resourceIds);
+        driftSyncMgr.syncWithServer(resourceIds);
     }
 
     private boolean supportsDriftManagement(Resource r) {
@@ -2083,7 +2083,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         DriftSyncManager driftSyncMgr = createDriftSyncManager();
-        driftSyncMgr.syncConfigsWithServer(committedResourceIds);
+        driftSyncMgr.syncWithServer(committedResourceIds);
     }
 
     private void postProcessNewlyCommittedResources(Set<Resource> resources) {

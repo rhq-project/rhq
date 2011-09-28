@@ -98,7 +98,7 @@ public class DriftDetailsView extends LocatableVLayout {
 
         DynamicForm driftForm = new LocatableDynamicForm(extendLocatorId("form"));
         driftForm.setIsGroup(true);
-        driftForm.setGroupTitle(MSG.view_drift());
+        driftForm.setGroupTitle(MSG.view_tabs_common_drift());
         driftForm.setWrapItemTitles(false);
         driftForm.setNumCols(4);
 
@@ -203,7 +203,7 @@ public class DriftDetailsView extends LocatableVLayout {
     private DynamicForm createChangeSetForm(Drift<?, ?> drift) {
         DynamicForm changeSetForm = new LocatableDynamicForm(extendLocatorId("changeSetForm"));
         changeSetForm.setIsGroup(true);
-        changeSetForm.setGroupTitle(MSG.view_drift_table_changeSet());
+        changeSetForm.setGroupTitle(MSG.view_drift_table_snapshot());
         changeSetForm.setWrapItemTitles(false);
 
         DriftChangeSet<?> changeSet = drift.getChangeSet();

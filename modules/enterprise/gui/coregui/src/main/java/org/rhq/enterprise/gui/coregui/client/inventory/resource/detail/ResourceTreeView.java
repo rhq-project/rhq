@@ -460,7 +460,7 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
+        MenuItem operations = new MenuItem(MSG.common_title_operations());
         boolean operationsEnabled = (resourcePermission.isControl() && (resourceType.getOperationDefinitions() != null) && !resourceType
             .getOperationDefinitions().isEmpty());
         operations.setEnabled(operationsEnabled);

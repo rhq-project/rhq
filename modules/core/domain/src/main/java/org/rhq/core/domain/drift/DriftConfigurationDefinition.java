@@ -87,14 +87,14 @@ public class DriftConfigurationDefinition implements Serializable {
     }
 
     private static final ConfigurationDefinition INSTANCE = new ConfigurationDefinition("GLOBAL_DRIFT_CONFIG_DEF",
-        "The drift configuration definition");
+        "The drift detection definition");
 
     /**
-     * For drift configurations that have already been created, this definition can be used for editing those existing configuration.
-     * Existing drift configurations cannot have their name changed nor can their base directory or includes/excludes be altered.
+     * For drift definitions that have already been created, this definition can be used for editing those existing configuration.
+     * Existing drift definitions cannot have their name changed nor can their base directory or includes/excludes be altered.
      */
     private static final ConfigurationDefinition INSTANCE_FOR_EXISTING_CONFIGS = new ConfigurationDefinition(
-        "GLOBAL_DRIFT_CONFIG_DEF", "The drift configuration definition");
+        "GLOBAL_DRIFT_CONFIG_DEF", "The drift detection definition");
 
     /**
      * Returns a configuration definition suitable for showing a new configuration form - that is,
@@ -142,12 +142,12 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createName(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_NAME;
-        String description = "The drift configuration name";
+        String description = "The drift detection definition name";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setDisplayName("Drift Configuration Name");
+        pd.setDisplayName("Drift Definition Name");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
@@ -163,7 +163,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createEnabled(ConfigurationDefinition configDef) {
         String name = PROP_ENABLED;
-        String description = "Enables or disables the drift configuration";
+        String description = "Enables or disables the drift definition";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.BOOLEAN;
 
@@ -181,13 +181,13 @@ public class DriftConfigurationDefinition implements Serializable {
     private static PropertyDefinitionSimple createDriftHandlingMode(ConfigurationDefinition configDef) {
         String name = PROP_DRIFT_HANDLING_MODE;
         String description = "" //
-            + "Specifies the way in which drift occurrences will be handled when reported. Normal " //
+            + "Specifies the way in which drift instances will be handled when reported. Normal " //
             + "handling implies the reported drift is unexpected and as such can trigger alerts, " //
             + "will be present in recent drift reports, etc.  Setting to 'Planned Changes' implies " //
             + "that the reported drift is happening at a time when drift is expected due to " //
             + "planned changes in the monitored environment, such as an application deployment, a " //
             + "configuration change, or something similar.  With this setting drift is only reported " //
-            + " for inspection, in the drift history view.";
+            + " for inspection, in drift snapshot views.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -217,7 +217,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createInterval(ConfigurationDefinition configDef) {
         String name = PROP_INTERVAL;
-        String description = "The frequency in seconds in which drift monitoring should run. Defaults to 1800 seconds (i.e. 30 minutes)";
+        String description = "The frequency in seconds in which drift detection should run. Defaults to 1800 seconds (i.e. 30 minutes)";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.LONG;
 
@@ -337,7 +337,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createIncludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.";
+        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift definition.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -399,7 +399,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createExcludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.";
+        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift definition.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 

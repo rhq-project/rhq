@@ -76,7 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * Right panel of the Resource Group view (#ResourceGroup/*).
+ * The right panel of a Resource Group view (#ResourceGroup/* or #Resource/AutoGroup/*).
  *
  * @author Jay Shaughnessy
  * @author Ian Springer
@@ -163,7 +163,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
         summaryTab = new TwoLevelTab(getTabSet().extendLocatorId("Summary"), new ViewName("Summary", MSG
-            .view_tabs_common_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
+            .common_title_summary()), ImageManager.getResourceIcon(ResourceCategory.SERVICE, Boolean.TRUE));
         summaryActivity = new SubTab(summaryTab.extendLocatorId("Activity"), new ViewName("Activity", MSG
             .view_tabs_common_activity()), null);
         summaryTimeline = new SubTab(summaryTab.extendLocatorId("Timeline"), new ViewName("Timeline", MSG
@@ -183,11 +183,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
-            .view_tabs_common_alerts()), "/images/icons/Alert_grey_16.png");
+            .common_title_alerts()), "/images/icons/Alert_grey_16.png");
         this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
         this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
-            .view_tabs_common_definitions()), null);
+            .common_title_definitions()), null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
         tabs.add(alertsTab);
 
@@ -215,7 +215,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(eventsTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId("Operations"), new ViewName("Operations", MSG
-            .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
+            .common_title_operations()), "/images/icons/Operation_grey_16.png");
         this.operationsSchedules = new SubTab(operationsTab.extendLocatorId("Schedules"), new ViewName("Schedules", MSG
             .view_tabs_common_schedules()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId("History"), new ViewName("History", MSG
@@ -224,7 +224,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId("Configuration"), new ViewName("Configuration",
-            MSG.view_tabs_common_configuration()), "/images/icons/Configure_grey_16.png");
+            MSG.common_title_configuration()), "/images/icons/Configure_grey_16.png");
         this.configCurrent = new SubTab(configurationTab.extendLocatorId("Current"), new ViewName("Current", MSG
             .view_tabs_common_current()), null);
         this.configHistory = new SubTab(configurationTab.extendLocatorId("History"), new ViewName("History", MSG
@@ -236,8 +236,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
         this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
             MSG.view_tabs_common_history()), null);
-        this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.CONFIGURATION), new ViewName(
-            DriftSubTab.CONFIGURATION, MSG.view_tabs_common_configuration()), null);
+        this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
+            DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
         driftTab.registerSubTabs(driftHistory, driftConfig);
         tabs.add(driftTab);
 
@@ -247,8 +247,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     protected void updateTabContent(ResourceGroupComposite groupComposite) {
         try {
             this.groupComposite = groupComposite;
-            ResourceGroup group = groupComposite.getResourceGroup();
-            int groupId = group.getId();
             getTitleBar().setGroup(groupComposite);
 
             // wipe the canvas views for the current set of subtabs.
@@ -258,13 +256,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
 
             updateSummaryTab();
-            updateMonitoringTab(groupId, groupCategory, facets);
-            updateInventoryTab(groupId, facets);
+            updateInventoryTab(facets);
+            updateAlertsTab(groupCategory);
+            updateMonitoringTab(facets);
+            updateEventsTab(groupCategory, facets);
             updateOperationsTab(groupCategory, facets);
-            updateAlertsTab(groupComposite, groupCategory);
-            updateConfigurationTab(groupId, groupCategory, facets);
-            updateDriftTab(groupComposite, groupCategory, facets);
-            updateEventsTab(groupComposite, groupCategory, facets);
+            updateConfigurationTab(groupCategory, facets);
+            updateDriftTab(groupCategory, facets);
 
             this.show();
             markForRedraw();
@@ -285,12 +283,13 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         // TODO (ips): Add Timeline subtab?
     }
 
-    private void updateMonitoringTab(final int groupId, GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+    private void updateMonitoringTab(Set<ResourceTypeFacet> facets) {
         ViewFactory viewFactory;
         // TODO: Once we add an Availability subtab, the Monitoring tab will always be visible, even for groups with
         //       no metrics.
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
+            final int groupId = groupComposite.getResourceGroup().getId();
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
@@ -352,14 +351,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
     }
 
-    private void updateInventoryTab(final int groupId, Set<ResourceTypeFacet> facets) {
+    private void updateInventoryTab(Set<ResourceTypeFacet> facets) {
         // Inventory tab is always visible and enabled.
         final boolean canModifyMembers = (!isAutoGroup() && !isAutoCluster() && globalPermissions
             .contains(Permission.MANAGE_INVENTORY));
         updateSubTab(this.inventoryTab, this.inventoryMembers, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MembersView(inventoryMembers.extendLocatorId("View"), groupId, canModifyMembers);
+                return new MembersView(inventoryMembers.extendLocatorId("View"),
+                    groupComposite.getResourceGroup().getId(), canModifyMembers);
             }
         });
         updateSubTab(this.inventoryTab, this.inventoryConn, facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION),
@@ -398,7 +398,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
     }
 
-    private void updateAlertsTab(final ResourceGroupComposite groupComposite, GroupCategory groupCategory) {
+    private void updateAlertsTab(GroupCategory groupCategory) {
         // alerts tab is always visible, even for mixed groups
         if (updateTab(this.alertsTab, true, true)) {
             // alert history is always available
@@ -420,7 +420,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
     }
 
-    private void updateConfigurationTab(final int groupId, GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+    private void updateConfigurationTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets
             .contains(ResourceTypeFacet.CONFIGURATION));
         Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
@@ -434,15 +434,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new HistoryGroupResourceConfigurationView(inventoryConnHistory.extendLocatorId("View"),
+                    return new HistoryGroupResourceConfigurationView(configHistory.extendLocatorId("View"),
                         groupComposite);
                 }
             });
         }
     }
 
-    private void updateEventsTab(final ResourceGroupComposite groupComposite, GroupCategory groupCategory,
-        Set<ResourceTypeFacet> facets) {
+    private void updateEventsTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         // allow mixed groups to show events from supporting resources
         boolean visible = (groupCategory == GroupCategory.MIXED || (groupCategory == GroupCategory.COMPATIBLE && facets
             .contains(ResourceTypeFacet.EVENT)));
@@ -456,12 +455,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
     }
 
-    private void updateDriftTab(final ResourceGroupComposite resourceComposite, GroupCategory groupCategory,
-        Set<ResourceTypeFacet> facets) {
+    private void updateDriftTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
         boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.DRIFT));
         Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
 
-        if (updateTab(this.configurationTab, visible, visible && groupPermissions.contains(Permission.MANAGE_DRIFT))) {
+        if (updateTab(this.driftTab, visible, visible && groupPermissions.contains(Permission.MANAGE_DRIFT))) {
 
             updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
                 @Override

@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class UsersView extends TableSection<UsersDataSource> {
 
-    public static final ViewName VIEW_ID = new ViewName("Users", MSG.view_adminSecurity_users());
+    public static final ViewName VIEW_ID = new ViewName("Users", MSG.common_title_users());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
@@ -64,7 +64,7 @@ public class UsersView extends TableSection<UsersDataSource> {
     private boolean initialized;
 
     public UsersView(String locatorId) {
-        super(locatorId, MSG.view_adminSecurity_users());
+        super(locatorId, MSG.common_title_users());
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
 

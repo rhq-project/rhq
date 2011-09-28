@@ -590,8 +590,12 @@
          <xs:enumeration value="megabytes"/>
          <xs:enumeration value="gigabytes"/>
          <xs:enumeration value="terabytes"/>
+         <xs:enumeration value="petabytes" />
          <xs:enumeration value="epoch_milliseconds"/>
+         <xs:enumeration value="epoch_seconds"/>
+         <xs:enumeration value="jiffys"/>
          <xs:enumeration value="nanoseconds"/>
+         <xs:enumeration value="microseconds"/>
          <xs:enumeration value="milliseconds"/>
          <xs:enumeration value="seconds"/>
          <xs:enumeration value="minutes"/>

@@ -34,6 +34,7 @@ import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
@@ -50,10 +51,11 @@ public class DriftServerServiceImpl implements DriftServerService {
     }
 
     @Override
-    public void sendFilesZip(int resourceId, long zipSize, InputStream zipStream) {
+    public void sendFilesZip(int resourceId, String driftConfigName, String token, long zipSize,
+        InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addFiles(resourceId, zipSize, zipStream);
+            driftManager.addFiles(resourceId, driftConfigName, token, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -85,6 +87,7 @@ public class DriftServerServiceImpl implements DriftServerService {
     public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterDriftConfigurationId(driftConfigurationId);
+        criteria.addSortVersion(PageOrdering.ASC);
 
         Subject overlord = getSubjectManager().getOverlord();
 

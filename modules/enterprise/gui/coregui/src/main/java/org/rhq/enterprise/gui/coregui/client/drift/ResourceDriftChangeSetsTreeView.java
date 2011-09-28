@@ -76,7 +76,7 @@ public class ResourceDriftChangeSetsTreeView extends AbstractDriftChangeSetsTree
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteConfigs(), caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteDefs(), caught);
                 }
             });
     }

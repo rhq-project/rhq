@@ -7,6 +7,10 @@ import com.google.code.morphia.annotations.Embedded;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 
+/**
+ * Note that this class might go away. I am not certain that it is needed. Files are
+ * stored in fs.files collection when using the GridFS API as we are.
+ */
 @Embedded
 public class MongoDBFile implements Serializable, DriftFile {
 
@@ -19,6 +23,13 @@ public class MongoDBFile implements Serializable, DriftFile {
     private Long size;
 
     private DriftFileStatus status;
+
+    public MongoDBFile() {
+    }
+
+    public MongoDBFile(String hash) {
+        this.hash = hash;
+    }
 
     @Override
     public String getHashId() {
@@ -54,4 +65,5 @@ public class MongoDBFile implements Serializable, DriftFile {
     public void setStatus(DriftFileStatus status) {
         this.status = status;
     }
+
 }

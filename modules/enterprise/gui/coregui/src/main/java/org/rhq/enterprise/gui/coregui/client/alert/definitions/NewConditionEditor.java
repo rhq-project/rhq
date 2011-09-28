@@ -790,8 +790,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             ops.put(opDef.getName(), opDef.getDisplayName());
         }
 
-        SelectItem opSelection = new SelectItem(OPERATION_NAME_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_operation_value());
+        SelectItem opSelection = new SelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
         opSelection.setValueMap(ops);
         opSelection.setDefaultValue(ops.keySet().iterator().next()); // just use the first one
         opSelection.setWidth("*");
@@ -799,17 +798,12 @@ public class NewConditionEditor extends LocatableDynamicForm {
         opSelection.setShowIfCondition(ifFunc);
         formItems.add(opSelection);
 
-        SelectItem opResultsSelection = new SelectItem(OPERATION_RESULTS_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_operation_status());
+        SelectItem opResultsSelection = new SelectItem(OPERATION_RESULTS_ITEMNAME, MSG.common_title_status());
         LinkedHashMap<String, String> operationStatuses = new LinkedHashMap<String, String>(4);
-        operationStatuses.put(OperationRequestStatus.INPROGRESS.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_inprogress());
-        operationStatuses.put(OperationRequestStatus.SUCCESS.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_success());
-        operationStatuses.put(OperationRequestStatus.FAILURE.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_failure());
-        operationStatuses.put(OperationRequestStatus.CANCELED.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_canceled());
+        operationStatuses.put(OperationRequestStatus.INPROGRESS.name(), MSG.common_status_inprogress());
+        operationStatuses.put(OperationRequestStatus.SUCCESS.name(), MSG.common_status_success());
+        operationStatuses.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
+        operationStatuses.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
         opResultsSelection.setValueMap(operationStatuses);
         opResultsSelection.setDefaultValue(OperationRequestStatus.FAILURE.name());
         opResultsSelection.setWrapTitle(false);
@@ -831,11 +825,11 @@ public class NewConditionEditor extends LocatableDynamicForm {
         SelectItem eventSeveritySelection = new SelectItem(EVENT_SEVERITY_ITEMNAME, MSG
             .view_alert_definition_condition_editor_event_severity());
         LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
-        severities.put(EventSeverity.DEBUG.name(), MSG.view_alert_definition_condition_editor_event_severity_debug());
-        severities.put(EventSeverity.INFO.name(), MSG.view_alert_definition_condition_editor_event_severity_info());
-        severities.put(EventSeverity.WARN.name(), MSG.view_alert_definition_condition_editor_event_severity_warn());
-        severities.put(EventSeverity.ERROR.name(), MSG.view_alert_definition_condition_editor_event_severity_error());
-        severities.put(EventSeverity.FATAL.name(), MSG.view_alert_definition_condition_editor_event_severity_fatal());
+        severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
+        severities.put(EventSeverity.INFO.name(), MSG.common_severity_info());
+        severities.put(EventSeverity.WARN.name(), MSG.common_severity_warn());
+        severities.put(EventSeverity.ERROR.name(), MSG.common_severity_error());
+        severities.put(EventSeverity.FATAL.name(), MSG.common_severity_fatal());
         eventSeveritySelection.setValueMap(severities);
         eventSeveritySelection.setDefaultValue(EventSeverity.ERROR.name());
         eventSeveritySelection.setWrapTitle(false);

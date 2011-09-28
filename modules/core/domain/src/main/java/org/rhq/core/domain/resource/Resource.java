@@ -291,13 +291,14 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "   AND res.resourceType.category = :category " + "   AND res.inventoryStatus = :status "),
+        + "   AND res.inventoryStatus = :status " //
+        + "   AND (res.resourceType.category = :category OR :category is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent " //
         + "   AND res.inventoryStatus = :status " //
-        + "   AND res.resourceType.category = :category "),
+        + "   AND (res.resourceType.category = :category OR :category is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //

@@ -100,6 +100,8 @@ public interface BundleManagerRemote {
 
     /**
      * A convenience method taking a byte array as opposed to a stream for the file bits.
+     * WARNING: obviously, this requires the entire bundle file to have been loaded fully in memory.
+     * For very large files, this could cause OutOfMemoryErrors.
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
@@ -218,6 +220,23 @@ public interface BundleManagerRemote {
     BundleVersion createBundleVersionViaFile( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFile") File distributionFile) throws Exception;
+
+    /**
+     * Creates a bundle version based on the actual bytes of a Bundle Distribution file. This is essentially
+     * the same as {@link #createBundleVersionViaFile(Subject, File)} but the caller is providing the actual
+     * bytes of the file as opposed to the file itself.
+     * WARNING: obviously, this requires the entire distribution file to have been loaded fully in memory.
+     * For very large distribution files, this could cause OutOfMemoryErrors.
+     * 
+     * @param subject
+     * @param fileBytes the file bits that make up the entire bundle distribution file
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
+     */
+    @WebMethod
+    BundleVersion createBundleVersionViaByteArray( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "fileBytes") byte[] fileBytes) throws Exception;
 
     /**
      * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution

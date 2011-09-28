@@ -61,7 +61,11 @@ public interface ChangeSetManager {
      */
     ChangeSetReader getChangeSetReader(int resourceId, String driftConfigurationName) throws IOException;
 
+    ChangeSetReader getChangeSetReader(File changeSetFile) throws IOException;
+
     ChangeSetWriter getChangeSetWriter(int resourceId, Headers headers) throws IOException;
+
+    ChangeSetWriter getChangeSetWriter(File changeSetFile, Headers headers) throws IOException;
 
     ChangeSetWriter getChangeSetWriterForUpdate(int resourceId, Headers headers) throws IOException;
 

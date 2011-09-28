@@ -56,12 +56,12 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
     private static Messages MSG = CoreGUI.getMessages();
 
-    public static final String NEW = MSG.view_autoDiscoveryQ_new();
+    public static final String NEW = MSG.common_button_new();
     public static final String IGNORED = MSG.view_autoDiscoveryQ_ignored();
     public static final String NEW_AND_IGNORED = MSG.view_autoDiscoveryQ_newAndIgnored();
 
     private static final String NO_MANAGE_INVENTORY_PERMS_EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noperm();
-    private static final String EMPTY_MESSAGE = MSG.view_autoDiscoveryQ_noItems();
+    private static final String EMPTY_MESSAGE = MSG.common_msg_noItemsToShow();
 
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
@@ -86,12 +86,11 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             .view_autoDiscoveryQ_field_parentId());
         parentIdField.setForeignKey("id");
 
-        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.view_autoDiscoveryQ_field_name());
+        DataSourceTextField resourceNameField = new DataSourceTextField("name", MSG.common_title_resource_name());
 
-        DataSourceTextField resourceKeyField = new DataSourceTextField("resourceKey", MSG
-            .view_autoDiscoveryQ_field_key());
+        DataSourceTextField resourceKeyField = new DataSourceTextField("resourceKey", MSG.common_title_resource_key());
 
-        DataSourceTextField resourceTypeField = new DataSourceTextField("typeName", MSG.common_title_type());
+        DataSourceTextField resourceTypeField = new DataSourceTextField("typeName", MSG.common_title_resource_type());
 
         DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
 
@@ -253,7 +252,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
             setAttribute("status", resource.getInventoryStatus().name());
             switch (resource.getInventoryStatus()) {
             case NEW:
-                setAttribute("statusLabel", MSG.view_autoDiscoveryQ_new());
+                setAttribute("statusLabel", MSG.common_button_new());
                 break;
             case COMMITTED:
                 setAttribute("statusLabel", MSG.view_autoDiscoveryQ_committed());

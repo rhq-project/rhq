@@ -76,6 +76,7 @@ public class AboutModalWindow extends LocatableWindow {
         LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
         contentPane.setPadding(10);
 
+        // TODO (ips, 09/06/11): Convert this raw HTML to SmartGWT widgets.
         HTMLPane htmlPane = new HTMLPane();
         String html = "<span class=\"DisplaySubhead\">\n" + "  <a href=\"" + productInfo.getUrl() + "\" title=\""
             + productInfo.getFullName() + " " + productInfo.getUrl() + "\" target=\"_blank\">"

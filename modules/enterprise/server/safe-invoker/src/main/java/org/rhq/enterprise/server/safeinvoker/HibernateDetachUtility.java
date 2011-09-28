@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.util;
+package org.rhq.enterprise.server.safeinvoker;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -89,6 +89,11 @@ public class HibernateDetachUtility {
     private static final String THROW_EXCEPTION_ON_DEPTH_LIMIT_SYSPROP = "rhq.server.hibernate-detach-utility.throw-exception-on-depth-limit";
     private static final int depthAllowed;
     private static final boolean throwExceptionOnDepthLimit;
+    private static final String DUMP_STACK_THRESHOLDS_SYSPROP = "rhq.server.hibernate-detach-utility.dump-stack-thresholds"; // e.g. "5000:10000" (millis:num-objects)
+    private static final boolean dumpStackOnThresholdLimit;
+    private static final long millisThresholdLimit;
+    private static final int sizeThresholdLimit;
+
     static {
         int value;
         try {
@@ -107,6 +112,32 @@ public class HibernateDetachUtility {
             booleanValue = true;
         }
         throwExceptionOnDepthLimit = booleanValue;
+
+        boolean tmp_dumpStackOnThresholdLimit;
+        long tmp_millisThresholdLimit;
+        int tmp_sizeThresholdLimit;
+        String prop = null;
+        try {
+            prop = System.getProperty(DUMP_STACK_THRESHOLDS_SYSPROP);
+            if (prop != null) {
+                String[] nums = prop.split(":");
+                tmp_dumpStackOnThresholdLimit = true;
+                tmp_millisThresholdLimit = Long.parseLong(nums[0]);
+                tmp_sizeThresholdLimit = Integer.parseInt(nums[1]);
+            } else {
+                tmp_dumpStackOnThresholdLimit = false;
+                tmp_millisThresholdLimit = Long.MAX_VALUE;
+                tmp_sizeThresholdLimit = Integer.MAX_VALUE;
+            }
+        } catch (Throwable t) {
+            LOG.warn("Bad value for [" + DUMP_STACK_THRESHOLDS_SYSPROP + "]=[" + prop + "]: " + t.toString());
+            tmp_dumpStackOnThresholdLimit = true; // they wanted to set it to something, so give them some defaults
+            tmp_millisThresholdLimit = 5000L; // 5 seconds
+            tmp_sizeThresholdLimit = 10000; // 10K objects
+        }
+        dumpStackOnThresholdLimit = tmp_dumpStackOnThresholdLimit;
+        millisThresholdLimit = tmp_millisThresholdLimit;
+        sizeThresholdLimit = tmp_sizeThresholdLimit;
     }
 
     public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
@@ -115,11 +146,21 @@ public class HibernateDetachUtility {
         Map<Integer, List<Object>> checkedObjectCollisionMap = new HashMap<Integer, List<Object>>();
         nullOutUninitializedFields(value, checkedObjectMap, checkedObjectCollisionMap, 0, serializationType);
         long duration = System.currentTimeMillis() - start;
-        if (duration > 1000) {
-            LOG.info("Detached [" + checkedObjectMap.size() + "] objects in [" + duration + "]ms");
+
+        if (dumpStackOnThresholdLimit) {
+            int numObjectsProcessed = checkedObjectMap.size();
+            if (duration > millisThresholdLimit || numObjectsProcessed > sizeThresholdLimit) {
+                String rootObjectString = (value != null) ? value.getClass().toString() : "null";
+                LOG.warn("Detached [" + numObjectsProcessed + "] objects in [" + duration + "]ms from root object ["
+                    + rootObjectString + "]", new Throwable("HIBERNATE DETACH UTILITY STACK TRACE"));
+            }
         } else {
-            LOG.debug("Detached [" + checkedObjectMap.size() + "] objects in [" + duration + "]ms");
+            // 10s is really long, log SOMETHING
+            if (duration > 10000L && LOG.isDebugEnabled()) {
+                LOG.debug("Detached [" + checkedObjectMap.size() + "] objects in [" + duration + "]ms");
+            }
         }
+
         // help the garbage collector be clearing these before we leave
         checkedObjectMap.clear();
         checkedObjectCollisionMap.clear();

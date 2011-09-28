@@ -22,9 +22,6 @@
  */
 package org.rhq.core.pc.inventory;
 
-import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
-import static org.rhq.core.util.file.FileUtil.purge;
-
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -39,7 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -69,8 +65,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -91,9 +85,7 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.content.ContentContextImpl;
-import org.rhq.core.pc.drift.DriftDetectionSchedule;
-import org.rhq.core.pc.drift.DriftManager;
-import org.rhq.core.pc.drift.ScheduleQueue;
+import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.operation.OperationContextImpl;
@@ -2042,9 +2034,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 resources.push(child);
             }
         }
-        Map<Integer, List<DriftConfiguration>> configs = configuration.getServerServices().getDriftServerService()
-            .getDriftConfigurations(resourceIds);
-        installDriftConfigurations(configs);
+
+        DriftSyncManager driftSyncMgr = createDriftSyncManager();
+        driftSyncMgr.syncWithServer(resourceIds);
     }
 
     private boolean supportsDriftManagement(Resource r) {
@@ -2090,9 +2082,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         }
 
-        Map<Integer, List<DriftConfiguration>> driftConfigs = configuration.getServerServices().getDriftServerService()
-            .getDriftConfigurations(committedResourceIds);
-        installDriftConfigurations(driftConfigs);
+        DriftSyncManager driftSyncMgr = createDriftSyncManager();
+        driftSyncMgr.syncWithServer(committedResourceIds);
     }
 
     private void postProcessNewlyCommittedResources(Set<Resource> resources) {
@@ -2133,108 +2124,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void installDriftConfigurations(Map<Integer, List<DriftConfiguration>> configsFromServer) {
-        log.info("Syncing drift configurations from server with local inventory...");
-        DriftManager driftMgr = PluginContainer.getInstance().getDriftManager();
-        if (driftMgr != null && driftMgr.isInitialized()) {
-            DriftConfigurationComparator comparator = new DriftConfigurationComparator(
-                BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
-            ScheduleQueue queue = driftMgr.getSchedulesQueue();
-
-            // First check for drift configurations that have been deleted
-            log.info("Checking for drift configurations that have been deleted on the server");
-            for (Integer resourceId : configsFromServer.keySet()) {
-                Set<DriftConfiguration> configsFromServerSet = new TreeSet<DriftConfiguration>(comparator);
-                configsFromServerSet.addAll(configsFromServer.get(resourceId));
-
-                List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
-
-                for (DriftDetectionSchedule schedule : getSchedulesForResource(resourceId, queue.toArray())) {
-                    if (!configsFromServerSet.contains(schedule.getDriftConfiguration())) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Detected stale drift configuration. Preparing to unschedule " + schedule);
-                        }
-                        deleted.add(schedule.getDriftConfiguration());
-                    }
-                }
-                for (DriftConfiguration c : deleted) {
-                    driftMgr.unscheduleDriftDetection(resourceId, c);
-                }
-            }
-
-            // add new drift configurations received from the server
-            log.info("Checking for new drift configurations");
-            for (Integer resourceId : configsFromServer.keySet()) {
-                for (DriftConfiguration c : configsFromServer.get(resourceId)) {
-                    if (!queue.contains(resourceId, c, comparator)) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Detected new drift configuration. Creating new schedule for "
-                                + "DriftConfiguration[name: " + c.getName() + ", resourceId: " + resourceId + "]");
-                        }
-                        driftMgr.scheduleDriftDetection(resourceId, c);
-                    }
-                }
-            }
-        } else {
-            log.info("DriftManager is not available. Drift configurations will be persisted but detection will not "
-                + "be scheduled.");
-
-            // First check for drift configurations that have been deleted
-            log.debug("Checking for stale drift configurations that need to be purged from inventory");
-            File changeSetsDir = new File(configuration.getDataDirectory(), "changesets");
-            for (Integer resourceId : configsFromServer.keySet()) {
-                File resourceDir = new File(changeSetsDir, resourceId.toString());
-                ResourceContainer container = getResourceContainer(resourceId);
-                Set<DriftConfiguration> resourceConfigs = new TreeSet<DriftConfiguration>(
-                    new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS));
-                resourceConfigs.addAll(configsFromServer.get(resourceId));
-
-                List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
-
-                for (DriftConfiguration c : container.getDriftConfigurations()) {
-                    if (!resourceConfigs.contains(c)) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Detected stale drift configuration. Preparing to delete DriftConfiguration["
-                                + "name: " + c.getName() + ", resourceId: " + resourceId + "]");
-                        }
-                        deleted.add(c);
-                    }
-                }
-
-                for (DriftConfiguration c : deleted) {
-                    container.removeDriftConfiguration(c);
-                    File changeSetDir = new File(resourceDir, c.getName());
-                    if (changeSetDir.exists()) {
-                        log.debug("Purging " + changeSetDir.getPath());
-                        purge(changeSetDir, true);
-                    }
-                }
-            }
-
-            // Now add any any drift configurations received from the server. These
-            // could be new or updated configurations.
-            log.debug("Checking for new drift configurations");
-            for (Integer resourceId : configsFromServer.keySet()) {
-                ResourceContainer container = getResourceContainer(resourceId);
-                for (DriftConfiguration c : configsFromServer.get(resourceId)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Adding DriftConfiguration[name: " + c.getName() + ", resourceId: " + resourceId
-                            + "]");
-                    }
-                    container.addDriftConfiguration(c);
-                }
-            }
-        }
-    }
-
-    private List<DriftDetectionSchedule> getSchedulesForResource(int resourceId, DriftDetectionSchedule[] schedules) {
-        List<DriftDetectionSchedule> resourceSchedules = new LinkedList<DriftDetectionSchedule>();
-        for (DriftDetectionSchedule s : schedules) {
-            if (s.getResourceId() == resourceId) {
-                resourceSchedules.add(s);
-            }
-        }
-        return resourceSchedules;
+    private DriftSyncManager createDriftSyncManager() {
+        DriftSyncManager mgr = new DriftSyncManager();
+        mgr.setDriftServer(configuration.getServerServices().getDriftServerService());
+        mgr.setDataDirectory(configuration.getDataDirectory());
+        mgr.setDriftManager(PluginContainer.getInstance().getDriftManager());
+        mgr.setInventoryManager(this);
+        return mgr;
     }
 
     /**

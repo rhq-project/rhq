@@ -304,8 +304,8 @@ public class MappingTranslator {
                 }
             } else if (refCol.isEmpty()) {
                 //bidirectional with no referenced column definition.
-                //the fkey is in the target table
-                tCols[i] = fkey;
+                //the fkey is in the from table, referencing the pk in the target table
+                fCols[i] = fkey;
             } else {
                 //bidirectional with referenced column definition.
                 //the fkey is in the from table, referencing the refCol

@@ -138,7 +138,7 @@ public class LoginView extends LocatableCanvas {
             user.setRequired(true);
             user.setAttribute("autoComplete", "native");
 
-            final PasswordItem password = new PasswordItem("password", MSG.dataSource_users_field_password());
+            final PasswordItem password = new PasswordItem("password", MSG.common_title_password());
             password.setRequired(true);
             password.setAttribute("autoComplete", "native");
 

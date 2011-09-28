@@ -251,6 +251,12 @@ public class ResourceContainer implements Serializable {
         }
     }
 
+    public boolean containsDriftConfiguration(DriftConfiguration c) {
+        synchronized (this) {
+            return driftConfigurations.containsKey(c.getName());
+        }
+    }
+
     public void addDriftConfiguration(DriftConfiguration c) {
         synchronized (this) {
             driftConfigurations.put(c.getName(), c);

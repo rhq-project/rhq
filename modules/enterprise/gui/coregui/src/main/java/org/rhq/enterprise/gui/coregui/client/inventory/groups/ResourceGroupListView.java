@@ -18,12 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
@@ -59,13 +53,15 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.*;
+
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
 public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSource> {
 
-    private static final String DEFAULT_TITLE = MSG.view_inventory_groups_resourceGroups();
+    private static final String DEFAULT_TITLE = MSG.common_title_resourceGroups();
 
     // our static factory method will set this to a non-null resource ID if the user can modify that resource's group membership
     private Integer resourceIdToModify = null;
@@ -105,8 +101,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
         idField.setWidth(50);
 
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName());
-        categoryField.setTitle("&nbsp;");
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
         categoryField.setWidth(25);
         categoryField.setAlign(Alignment.CENTER);
         categoryField.setCellFormatter(new CellFormatter() {
@@ -121,7 +116,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         categoryField.setHoverCustomizer(new HoverCustomizer() {
             @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String categoryName = record.getAttribute(CATEGORY.propertyName());
+                String categoryName = record.getAttribute(CATEGORY.name());
                 GroupCategory category = GroupCategory.valueOf(categoryName);
                 String displayName = null;
                 switch (category) {
@@ -148,21 +143,25 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         });
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        descriptionField.setWidth("30%");
+        descriptionField.setWidth("28%");
 
         ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-        typeNameField.setWidth("10%");
+        typeNameField.setWidth("14%");
 
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-        pluginNameField.setWidth("10%");
+        pluginNameField.setWidth("8%");
 
-        ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
-            .view_inventory_groups_children(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        ListGridField availabilityChildrenField = new ListGridField(AVAIL_CHILDREN.propertyName(),
+            AVAIL_CHILDREN.title(), 110); // 110 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        availabilityChildrenField.setCanSortClientOnly(true);
+        availabilityChildrenField.setCanGroupBy(false);
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
-        ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", MSG
-            .view_inventory_groups_descendants(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        ListGridField availabilityDescendantsField = new ListGridField(AVAIL_DESCENDANTS.propertyName(),
+            AVAIL_DESCENDANTS.title(), 110); // 110 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        availabilityDescendantsField.setCanSortClientOnly(true);
+        availabilityDescendantsField.setCanGroupBy(false);
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
@@ -268,7 +267,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         boolean canModifyMembership) {
 
         ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
-            .valueOf(explicitResourceId)), MSG.view_inventory_groups_resourceGroups());
+            .valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);
         }

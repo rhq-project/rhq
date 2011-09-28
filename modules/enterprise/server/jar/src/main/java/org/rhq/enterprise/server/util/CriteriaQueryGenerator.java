@@ -370,7 +370,7 @@ public final class CriteriaQueryGenerator {
             /*
              * do not prefix the alias when:
              * 
-             *    1) if the suffix is numerical, which allows usto sort by column ordinal
+             *    1) if the suffix is numerical, which allows us to sort by column ordinal
              *    2) if the user wants full control and has explicitly chosen to disable alias prepending
              */
             boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();

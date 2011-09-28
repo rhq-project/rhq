@@ -27,7 +27,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
  */
 public class ResourceDriftConfigurationView extends DriftConfigurationView {
     public static ResourceDriftConfigurationView get(String locatorId, ResourceComposite composite) {
-        String tableTitle = MSG.view_drift_table_resourceConfig();
+        String tableTitle = MSG.view_drift_table_resourceDef();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isDrift();
         return new ResourceDriftConfigurationView(locatorId, tableTitle, context, hasWriteAccess);

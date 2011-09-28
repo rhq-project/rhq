@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import java.io.File;
 import java.io.InputStream;
 
 import javax.ejb.Local;
@@ -57,7 +58,11 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The drift files zip file stream
      * @throws Exception
      */
-    void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    void addFiles(int resourceId, String driftConfigName, String token, long zipSize, InputStream zipStream)
+        throws Exception;
+
+    void saveChangeSetContent(Subject subject, int resourceId, String driftConfigName, String token,
+        File changeSetFilesZip) throws Exception;
 
     /**
      * Remove the provided driftConfig (identified by name) on the specified entityContext.

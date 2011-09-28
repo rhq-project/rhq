@@ -80,8 +80,6 @@ import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
@@ -98,9 +96,6 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -218,7 +213,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private SynchronizationManagerLocal synchronizationManager = LookupUtil.getSynchronizationManager();
-    
+
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
         return alertManager.findAlertsByCriteria(subject, criteria);
@@ -329,6 +324,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
         return bundleManager.createBundleVersionViaFile(subject, distributionFile);
+    }
+
+    public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
+        return bundleManager.createBundleVersionViaByteArray(subject, fileBytes);
     }
 
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
@@ -1197,28 +1196,28 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SYSTEMMANAGER: END ------------------------------------
 
     //SYNCHRONIZATIONMANANGER: BEGIN -------------------------
-    
+
     public ExportReport exportAllSubsystems(Subject subject) {
         return synchronizationManager.exportAllSubsystems(subject);
     }
-    
+
     public void validate(Subject subject, byte[] exportFile) throws ValidationException {
         synchronizationManager.validate(subject, exportFile);
     }
-    
+
     public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
         return synchronizationManager.getImportConfigurationDefinitionOfAllSynchronizers();
     }
-    
+
     public ImportConfigurationDefinition getImportConfigurationDefinition(String importerClass) {
         return synchronizationManager.getImportConfigurationDefinition(importerClass);
     }
-    
-    public void importAllSubsystems(Subject subject, byte[] exportFile,
-        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException {
+
+    public void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations)
+        throws ValidationException, ImportException {
         synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
-    
+
     //SYNCHRONIZATIONMANANGER: END -------------------------
     private void checkParametersPassedIn(Subject subject, Criteria criteria) {
         if (subject == null) {

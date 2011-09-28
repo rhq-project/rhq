@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class DriftConfigurationView extends TableSection<DriftConfigurationDataSource> {
 
-    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("DriftConfigs", MSG.common_title_configuration());
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("DriftDefs", MSG.common_title_definitions());
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftConfigurationDataSource.ATTR_NAME,
         SortDirection.ASCENDING);
@@ -210,7 +210,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteConfigs(), caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteDefs(), caught);
                 }
             });
     }

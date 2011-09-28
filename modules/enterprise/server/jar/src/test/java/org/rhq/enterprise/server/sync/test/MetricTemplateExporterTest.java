@@ -60,6 +60,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.MetricTemplateSynchronizer;
+import org.rhq.enterprise.server.sync.SynchronizationConstants;
 import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.test.JMockTest;
@@ -131,14 +132,14 @@ public class MetricTemplateExporterTest extends JMockTest {
 
         Element root = doc.getDocumentElement();
 
-        List<Node> validators = getDirectChildrenByTagName(root, ExportingInputStream.VALIDATOR_ELEMENT);
+        List<Node> validators = getDirectChildrenByTagName(root, SynchronizationConstants.VALIDATOR_ELEMENT);
         Set<ConsistencyValidator> declaredValidators = exporter.getRequiredValidators();
         assertEquals(validators.size(), declaredValidators.size(), "Unexpected number of validators in the export xml");
 
         for (Node v : validators) {
             Element validator = (Element) v;
 
-            String cls = validator.getAttribute(ExportingInputStream.CLASS_ATTRIBUTE);
+            String cls = validator.getAttribute(SynchronizationConstants.CLASS_ATTRIBUTE);
 
             boolean found = false;
             for (ConsistencyValidator dv : declaredValidators) {
@@ -152,9 +153,9 @@ public class MetricTemplateExporterTest extends JMockTest {
                 + ", but one such appeared in the export");
         }
 
-        Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
+        Element entities = (Element) getFirstDirectChildByTagName(root, SynchronizationConstants.ENTITIES_EXPORT_ELEMENT);
         
-        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), MetricTemplateSynchronizer.class.getName(), "Unexpected id of the entities element.");
+        assertEquals(entities.getAttribute(SynchronizationConstants.ID_ATTRIBUTE), MetricTemplateSynchronizer.class.getName(), "Unexpected id of the entities element.");
         
         NodeList metricTemplates = entities.getElementsByTagName("metricTemplate");
         

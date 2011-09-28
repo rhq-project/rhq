@@ -645,12 +645,15 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             final String DEFAULT_AGENT_GROUP = "AGENT NOTIFICATION GROUP";
             final String DEFAULT_AGENT_TRIGGER = "AGENT NOTIFICATION TRIGGER";
 
+            final String randomSuffix = UUID.randomUUID().toString();
+
+            final String jobName = DEFAULT_AGENT_JOB + " - " + randomSuffix;
             JobDetail jobDetail = new JobDetail(
-                DEFAULT_AGENT_JOB,
+                jobName,
                 DEFAULT_AGENT_GROUP,
                 NotifyAgentsOfScheduleUpdatesJob.class);
 
-            final String triggerName = UUID.randomUUID().toString();
+            final String triggerName = DEFAULT_AGENT_TRIGGER + " - " + randomSuffix;
             SimpleTrigger simpleTrigger = new SimpleTrigger(
                 triggerName,
                 DEFAULT_AGENT_GROUP,

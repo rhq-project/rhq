@@ -354,4 +354,8 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     @Override
     public void ackChangeSet(int resourceId, String driftConfigName) {
     }
+
+    @Override
+    public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
+    }
 }

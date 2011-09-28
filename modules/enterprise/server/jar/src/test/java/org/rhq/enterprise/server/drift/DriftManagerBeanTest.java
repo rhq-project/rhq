@@ -451,5 +451,9 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         @Override
         public void ackChangeSet(int resourceId, String driftConfigName) {
         }
+
+        @Override
+        public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
+        }
     }
 }

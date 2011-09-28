@@ -104,5 +104,32 @@ public interface DriftAgentService {
      */
     void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
 
+    /**
+     * This method is invoked to inform the agent that the server has successfully
+     * persisted the last change set sent to the server for the specified drift
+     * configuration. The agent will proceed to purge the older, previous snapshot
+     * as well as the the change set zip file.
+     * <br/><br/>
+     * <strong>Note:</strong> The agent will not resume drift detection for this drift
+     * configuration until the server has acknowledged the last change set sent.
+     *
+     * @param resourceId The id of the resource to which the acknowledged change set
+     * belongs.
+     * @param driftConfigName The name of the drift configuration to which the change set
+     * belongs.
+     */
     void ackChangeSet(int resourceId, String driftConfigName);
+
+    /**
+     * This method is invoked to inform the agent that the server has successfully
+     * persisted change set content that was previously sent to the server. The agent
+     * will proceed to purge the referenced content zip file.
+     *
+     * @param resourceId The id of the resource to which the referenced drift configuration
+     * belongs.
+     * @param driftConfigName The name of the drift configuration to which the content
+     * belongs.
+     * @param token A token that is used to identify the content zip file
+     */
+    void ackChangeSetContent(int resourceId, String driftConfigName, String token);
 }

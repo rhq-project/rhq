@@ -325,7 +325,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, final File contentDir) {
         try {
-            String contentFileName = "content_" + System.currentTimeMillis() + ".zip";
+            String timestamp = Long.toString(System.currentTimeMillis());
+            String contentFileName = "content_" + timestamp + ".zip";
             final File zipFile = new File(contentDir.getParentFile(), contentFileName);
             ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
@@ -337,19 +338,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
             stream.close();
 
-            // We want to clean up after we send the zip file to the server. We do this by
-            // deleting the files in the content directory and the content zip itself. They
-            // are no longer needed after being sent to the server. We cannot immediately
-            // delete the content zip file though because it is sent asynchronously, and we
-            // wind up deleting it before it is sent. The following approach allows us to
-            // safely delete it when the comm layer closes the remote input stream.
-            //
-            // jsanda
-            DriftInputStream inputStream = new DriftInputStream(new BufferedInputStream(new FileInputStream(zipFile)),
-                new DeleteFile(zipFile));
-
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
-            driftServer.sendFilesZip(resourceId, zipFile.length(), remoteInputStream(inputStream));
+            driftServer.sendFilesZip(resourceId, driftConfigurationName, timestamp, zipFile.length(),
+                remoteInputStream(new BufferedInputStream(new FileInputStream(zipFile))));
         } catch (IOException e) {
             log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
                 + ", driftConfiguration: " + driftConfigurationName + "]", e);
@@ -503,7 +494,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         File changeSetDir = new File(resourceDir, driftConfigName);
 
         if (!changeSetDir.exists()) {
-            log.warn("Cannot ack change set. Change set directory " + changeSetDir.getPath() +
+            log.warn("Cannot complete acknowledgement. Change set directory " + changeSetDir.getPath() +
                 " does not exist.");
             return;
         }
@@ -512,14 +503,31 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         File previousSnapshot = new File(snapshot.getParentFile(), snapshot.getName() + ".previous");
 
         previousSnapshot.delete();
-        deleteZipFiles(changeSetDir);
+        deleteZipFiles(changeSetDir, "changeset_");
     }
 
-    private void deleteZipFiles(File dir) {
+    @Override
+    public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
+        log.info("Received server change set content ack for [resourceId: " + resourceId +
+            ", driftConfigurationName: " + driftConfigName + "]");
+
+        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+        File changeSetDir = new File(resourceDir, driftConfigName);
+
+        if (!changeSetDir.exists()) {
+            log.warn("Cannot complete acknowledgement. Change set directory " + changeSetDir.getPath() +
+                " does not exist.");
+            return;
+        }
+
+        deleteZipFiles(changeSetDir, "content_" + token);
+    }
+
+    private void deleteZipFiles(File dir, final String prefix) {
         File[] files = dir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return name.endsWith(".zip");
+                return name.startsWith(prefix) && name.endsWith(".zip");
             }
         });
         for (File file : files) {

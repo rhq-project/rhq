@@ -51,10 +51,11 @@ public class DriftServerServiceImpl implements DriftServerService {
     }
 
     @Override
-    public void sendFilesZip(int resourceId, long zipSize, InputStream zipStream) {
+    public void sendFilesZip(int resourceId, String driftConfigName, String token, long zipSize,
+        InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addFiles(resourceId, zipSize, zipStream);
+            driftManager.addFiles(resourceId, driftConfigName, token, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

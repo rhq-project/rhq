@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
@@ -194,14 +195,27 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception {
+    public void addFiles(int resourceId, String driftConfigName, String token, long zipSize, InputStream zipStream)
+        throws Exception {
 
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         MessageProducer producer = session.createProducer(fileQueue);
-        ObjectMessage msg = session.createObjectMessage(new DriftUploadRequest(resourceId, zipSize, zipStream));
+        ObjectMessage msg = session.createObjectMessage(new DriftUploadRequest(resourceId, driftConfigName, token,
+            zipSize, zipStream));
         producer.send(msg);
         connection.close();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void saveChangeSetContent(Subject subject, int resourceId, String driftConfigName, String token,
+        File changeSetFilesZip) throws Exception {
+        saveChangeSetFiles(subject, changeSetFilesZip);
+
+        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+        DriftAgentService driftService = agent.getDriftAgentService();
+        driftService.ackChangeSetContent(resourceId, driftConfigName, token);
     }
 
     @Override

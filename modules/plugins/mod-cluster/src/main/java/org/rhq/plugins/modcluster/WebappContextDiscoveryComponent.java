@@ -73,10 +73,17 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
      */
     private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
         Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
-        String engineObjectName = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue();
-        EmsBean engineBean = this.loadBean(engineObjectName, context.getParentResourceComponent());
 
-        return (String) engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
+        String[] engineObjectNames = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue().split("\\|");
+
+        for (String engineObjectName : engineObjectNames) {
+            EmsBean engineBean = this.loadBean(engineObjectName, context.getParentResourceComponent());
+            if (engineBean != null) {
+                return engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -87,7 +94,7 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
      * @param objectName the name of the bean to load
      * @return the bean that is loaded
      */
-    protected EmsBean loadBean(String objectName, MBeanResourceComponent context) {
+    protected EmsBean loadBean(String objectName, MBeanResourceComponent<?> context) {
         EmsConnection emsConnection = context.getEmsConnection();
         EmsBean bean = emsConnection.getBean(objectName);
         if (bean == null) {

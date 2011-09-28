@@ -23,6 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -42,7 +43,6 @@ import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
@@ -59,7 +59,6 @@ import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
@@ -95,6 +94,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void initialize() {
+        long initStartTime = System.currentTimeMillis();
         changeSetsDir.mkdir();
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
 
@@ -107,8 +107,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         long startTime = System.currentTimeMillis();
         initSchedules(inventoryMgr.getPlatform(), inventoryMgr);
         long endTime = System.currentTimeMillis();
-        log.info("Finished initializing drift detection schedules in " + (endTime - startTime) + " ms");
 
+        if (log.isInfoEnabled()) {
+            log.info("Finished initializing drift detection schedules in " + (endTime - startTime) + " ms");
+        }
+
+        scanForContentToResend();
         purgeDeletedDriftConfigDirs();
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
@@ -123,6 +127,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         initialized = true;
+        long initEndTime = System.currentTimeMillis();
+        if (log.isInfoEnabled()) {
+            log.info("Finished initialization in " + (initEndTime - initStartTime) + " ms");
+        }
     }
 
     private void initSchedules(Resource r, InventoryManager inventoryMgr) {
@@ -199,8 +207,6 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     private void purgeDeletedDriftConfigDirs() {
         log.info("Checking for deleted drift configurations");
-        DriftConfigurationComparator comparator = new DriftConfigurationComparator(
-            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
         for (File resourceDir : changeSetsDir.listFiles()) {
             int resourceId = Integer.parseInt(resourceDir.getName());
             for (File configDir : resourceDir.listFiles()) {
@@ -211,6 +217,20 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                         ", resourceId: " + resourceId + "]");
                     log.info("Deleting drift configuration directory " + configDir.getPath());
                     purge(configDir, true);
+                }
+            }
+        }
+    }
+
+    private void scanForContentToResend() {
+        log.info("Scanning for change set content to resend...");
+        for (File resourceDir : changeSetsDir.listFiles()) {
+            for (File configDir : resourceDir.listFiles()) {
+                for (File contentZipFile : configDir.listFiles(new ZipFileNameFilter("content_"))) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Resending " + contentZipFile.getPath());
+                    }
+                    sendContentZipFile(Integer.parseInt(resourceDir.getName()), configDir.getName(), contentZipFile);
                 }
             }
         }
@@ -338,9 +358,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
             stream.close();
 
-            DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
-            driftServer.sendFilesZip(resourceId, driftConfigurationName, timestamp, zipFile.length(),
-                remoteInputStream(new BufferedInputStream(new FileInputStream(zipFile))));
+//            DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+//            driftServer.sendFilesZip(resourceId, driftConfigurationName, timestamp, zipFile.length(),
+//                remoteInputStream(new BufferedInputStream(new FileInputStream(zipFile))));
+            sendContentZipFile(resourceId, driftConfigurationName, zipFile);
         } catch (IOException e) {
             log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
                 + ", driftConfiguration: " + driftConfigurationName + "]", e);
@@ -350,6 +371,21 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             if (!file.delete()) {
                 log.warn("Unable to clean up content directory. Failed to delete " + file.getPath());
             }
+        }
+    }
+
+    private void sendContentZipFile(int resourceId, String driftConfigName, File contentZipFile) {
+        try {
+            int startIndex = "content_".length();
+            int endIndex = contentZipFile.getName().indexOf(".");
+            String token = contentZipFile.getName().substring(startIndex, endIndex);
+
+            DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+            driftServer.sendFilesZip(resourceId, driftConfigName, token, contentZipFile.length(),
+                remoteInputStream(new BufferedInputStream(new FileInputStream(contentZipFile))));
+        } catch (FileNotFoundException e) {
+            log.error("An error occurred while trying to send change set content zip file " +
+                contentZipFile.getPath() + " to server.", e);
         }
     }
 
@@ -524,13 +560,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     private void deleteZipFiles(File dir, final String prefix) {
-        File[] files = dir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return name.startsWith(prefix) && name.endsWith(".zip");
-            }
-        });
-        for (File file : files) {
+        for (File file : dir.listFiles(new ZipFileNameFilter(prefix))) {
             file.delete();
         }
     }
@@ -629,17 +659,16 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         return PluginContainer.getInstance().getMeasurementManager();
     }
 
-    private static class DeleteFile implements Runnable {
+    private static class ZipFileNameFilter implements FilenameFilter {
+        private String prefix;
 
-        private File file;
-
-        public DeleteFile(File file) {
-            this.file = file;
+        public ZipFileNameFilter(String prefix) {
+            this.prefix = prefix;
         }
 
         @Override
-        public void run() {
-            file.delete();
+        public boolean accept(File dir, String name) {
+            return name.startsWith(prefix) && name.endsWith(".zip");
         }
     }
 }

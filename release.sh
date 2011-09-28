@@ -1,8 +1,6 @@
 #!/bin/sh
 
-
 source `dirname $0`/rhq_bash.lib
-
 
 # Functions
 
@@ -152,54 +150,6 @@ program_versions=("git --version" "java -version" "mvn --version")
 print_program_versions "${program_versions[@]}"
 
 echo "==============================================================================="
-
-
-# Create the Maven settings file.
-cat <<EOF >"${MAVEN_SETTINGS_FILE}"
-<settings>
-   <localRepository>$MAVEN_LOCAL_REPO_DIR</localRepository>
-   
-   <profiles>
-
-      <profile>
-         <id>release</id>
-         <properties>
-            <rhq.test.ds.server-name>hudson-qe.rhq.rdu.redhat.com</rhq.test.ds.server-name>
-            <rhq.test.ds.port>5432</rhq.test.ds.port>
-            <rhq.test.ds.db-name>rhq_release_tag</rhq.test.ds.db-name>
-            <rhq.test.ds.connection-url>jdbc:postgresql://hudson-qe.rhq.rdu.redhat.com:5432/rhq_release_tag</rhq.test.ds.connection-url>
-            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
-            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
-            <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
-            <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
-            <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
-            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
-            <!-- quartz properties -->
-            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
-            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
-            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
-
-            <DatabaseTest.nofail>true</DatabaseTest.nofail>
-
-            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
-
-            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M -Djava.io.tmpdir=gwt-tmp</gwt-plugin.extraJvmArgs>
-         </properties>
-      </profile>
-
-   </profiles>
-
-   <!-- This is used by the deploy plugin to publish release artifacts to the jboss.org Nexus repo. -->
-   <servers>
-      <server>
-         <id>jboss-releases-repository</id>
-         <username>$JBOSS_ORG_USERNAME</username>
-         <password>$JBOSS_ORG_PASSWORD</password>
-      </server>
-   </servers>
- 
-</settings>
-EOF
 
 # Clone and/or checkout the source from git.
 

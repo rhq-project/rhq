@@ -145,26 +145,55 @@ set_variables()
 #===================================================================================
 run_versioning_process()
 {
-   # Clean up the snapshot jars produced by the test build from module target dirs.
-   echo "Cleaning up snapshot jars produced by test build from module target dirs..."
+   # 1) Cleanup before doing anything
+   echo "Cleaning up module target dirs"
    mvn clean $MAVEN_ARGS
-   [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
+   [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
+   # 2) Perform a test build before changing version
    mvn install $MAVEN_ARGS -Ddbreset
    [ "$?" -ne 0 ] && abort "Test build failed. Please see output for details, fix any issues, then try again."
 
+   # 3) Run another cleanup
+   echo "Cleaning up module target dirs..."
+   mvn clean $MAVEN_ARGS
+   [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
+
+   # 4) Increment version on all poms
    mvn versions:set versions:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
+   # 5) Perform a test build with the new version   
    mvn install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
    [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."
 
-   mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
-   [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
-
+   # 6) Publish release artifacts
    #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
    #mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
    #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+
+   # 7) Cleanup after this test build
+   echo "Cleaning up module target dirs..."
+   mvn clean $MAVEN_ARGS
+   [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
+
+   # 8) Commit the change in version (if everything went well so far then this is a good tag
+   git add -u
+   git commit -m "tag RHQ_$RELEASE_VERSION"
+   
+   # 9) Tag the current source
+   git tag "RHQ_$RELEASE_VERSION"
+
+   # 10) Set version to the current development version
+   mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
+   [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
+
+   # 11) Commit the change in version (if everything went well so far then this is a good tag
+   git add -u
+   git commit -m "development RHQ_$DEVELOPMENT_VERSION"
+
+   # 12) If everything went well so far than means all the changes can be pushed!!!
+   git push origin $RELEASE_BRANCH
 }
 
 if [ -n "$RELEASE_DEBUG" ]; then

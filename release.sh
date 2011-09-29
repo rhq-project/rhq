@@ -31,7 +31,40 @@ abort()
 #===================================================================================
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
+   abort "$@" "Usage:   $EXE branch|tag community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
+}
+
+
+validate_arguments()
+{
+   # Process command line args.
+
+   EXE=`basename $0`
+   if [ "$#" -ne 7 ]; then
+      usage
+   fi
+
+   SCRIPT_MODE="$1"
+
+   RELEASE_TYPE="$2"
+   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+      usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
+   fi
+   RELEASE_VERSION="$3"
+   DEVELOPMENT_VERSION="$4"
+   RELEASE_BRANCH="$5"
+   GIT_USERNAME="$6"
+   MODE="$7"
+
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+      usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
+   fi
+
+   if [ "$MODE" = "production" ]; then
+      if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+         usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+      fi    
+   fi
 }
 
 #===================================================================================
@@ -47,36 +80,10 @@ set_variables()
    TAG_PREFIX="RHQ"
    MINIMUM_MAVEN_VERSION="2.1.0"
 
-   # Process command line args.
-
-   EXE=`basename $0`
-   if [ "$#" -ne 6 ]; then
-      usage
-   fi  
-   RELEASE_TYPE="$1"
-   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-      usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
-   fi
-   RELEASE_VERSION="$2"
-   DEVELOPMENT_VERSION="$3"
-   RELEASE_BRANCH="$4"
-   GIT_USERNAME="$5"
-   MODE="$6"
-   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
-      usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
-   fi
-
-   if [ "$MODE" = "production" ]; then
-      if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
-         usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
-      fi    
-   fi
-
    # Set various environment variables.
 
    MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
    export MAVEN_OPTS
-
 
    # Set various local variables.
 
@@ -167,6 +174,8 @@ fi
 
 # TODO: Check that JDK version is < 1.7.
 
+validate_arguments $@
+
 validate_java_6
 
 validate_java_5
@@ -175,7 +184,7 @@ validate_maven
 
 validate_git
 
-set_variables $@
+set_variables
 
 # Print out a summary of the environment.
 print_centered "Environment Variables"

@@ -1,9 +1,22 @@
-#!/bin/sh
+#!/bin/bash
+#===================================================================================
+#
+# Usage: release.sh community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production
+#
+# Description: 
+# Add description here
+#
+# Options: 
+# Add option description here
+#===================================================================================
 
+#include the utility library
 source `dirname $0`/rhq_bash.lib
 
-# Functions
 
+#===================================================================================
+# Description: Display an error message and abort the script.
+#===================================================================================
 abort()
 {
    echo >&2
@@ -13,11 +26,17 @@ abort()
    exit 1
 }
 
+#===================================================================================
+# Description: Display usage information then abort the script.
+#===================================================================================
 usage() 
 {   
    abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
 }
 
+#===================================================================================
+# Description: Set all the local and environment variables required by the script.
+#===================================================================================
 set_variables()
 {
    # Constants
@@ -113,6 +132,10 @@ set_variables()
    export LANG
 }
 
+#===================================================================================
+# Description: Perform version update process and test the outcome by building 
+#              from source.
+#===================================================================================
 run_versioning_process()
 {
    # Clean up the snapshot jars produced by the test build from module target dirs.
@@ -152,15 +175,15 @@ validate_maven
 
 validate_git
 
-set_variables
+set_variables $@
 
 # Print out a summary of the environment.
-echo "========================== Environment Variables =============================="
+print_centered "Environment Variables"
 environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
 print_variables "${environment_variables[@]}"
 
 
-echo "============================= Local Variables ================================="
+print_centered "Local Variables"
 local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
                   "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
                   "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
@@ -168,11 +191,13 @@ local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "
 print_variables "${local_variables[@]}"
 
 
-echo "============================= Program Versions ================================"
+print_centered "Program Versions"
 program_versions=("git --version" "java -version" "mvn --version")
 print_program_versions "${program_versions[@]}"
 
-echo "==============================================================================="
+print_centered "="
+
+exit
 
 # Checkout the source from git, assume that the git repo is already cloned
 git status >/dev/null 2>&1
@@ -221,14 +246,9 @@ else
     git pull origin "$BUILD_BRANCH"
     git push origin "$BUILD_BRANCH"    
 fi
-             
-             
-# We should now have the build_branch checked out
-echo "Current Branch is $BUILD_BRANCH"
 
 # If the specified tag already exists remotely and we're in production mode, then abort. If it exists and 
 # we're in test mode, delete it
-
 EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
 if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "production" ]; then
    abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..." 
@@ -239,7 +259,6 @@ if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "test" ]; then
    git push origin ":refs/tags/$RELEASE_TAG"
    [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
 fi   
-
 
 # See if the specified tag already exists locally - if so, delete it (even if in production mode).
 EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`

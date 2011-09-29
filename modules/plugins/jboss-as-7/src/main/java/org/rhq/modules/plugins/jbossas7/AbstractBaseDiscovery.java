@@ -197,7 +197,8 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         if (hostXml==null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
-        return hostXml.getDocumentElement().getAttribute("name");
+        String hostName = hostXml.getDocumentElement().getAttribute("name");
+        return hostName;
     }
 
     /**

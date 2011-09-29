@@ -281,7 +281,8 @@ public class CreateNewPackageChildResourceUIBean {
             resourceType = lookupResourceType();
         }
         ContentManagerLocal contentManager = LookupUtil.getContentManager();
-        return contentManager.getResourceCreationPackageType(this.resourceType.getId());
+        PackageType packageType = contentManager.getResourceCreationPackageType(this.resourceType.getId());
+        return packageType;
     }
 
     protected ConfigurationDefinition lookupConfigurationDefinition() {

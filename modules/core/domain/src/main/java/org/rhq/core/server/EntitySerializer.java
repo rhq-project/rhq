@@ -98,7 +98,8 @@ public class EntitySerializer {
 
         Collections.sort(serializableFields, fieldComparator);
 
-        return serializableFields.toArray(new Field[serializableFields.size()]);
+        Field[] results = serializableFields.toArray(new Field[serializableFields.size()]);
+        return results;
     }
 
     private static List<Field> getNonEntityFieldList(Object object) {

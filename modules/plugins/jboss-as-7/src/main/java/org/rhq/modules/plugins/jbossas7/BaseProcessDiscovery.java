@@ -74,7 +74,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String psName = psr.getProcessScan().getName();
             String description = discoveryContext.getResourceType().getDescription();
             String homeDir = getHomeDirFromCommandLine(commandLine);
-            String version;
+            String version = null;
 
             //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
             String bootLogFile = getLogFileFromCommandLine(commandLine);
@@ -164,7 +164,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                 serverNameFull, // key TODO distinguish per domain?
                 serverName, // Name
-                version, // TODO get via API ?�
+                version, // TODO get via API ?
                 description, // Description
                 config, psr.getProcessInfo());
 

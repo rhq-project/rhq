@@ -57,7 +57,8 @@ public class DownloadsUIBean implements Serializable {
 
     public List<File> getConnectorDownloadFiles() throws Exception {
         File downloadDir = getConnectorDownloadsDir();
-        return getFiles(downloadDir);
+        List<File> files = getFiles(downloadDir);
+        return files;
     }
 
     private File getConnectorDownloadsDir() throws Exception {

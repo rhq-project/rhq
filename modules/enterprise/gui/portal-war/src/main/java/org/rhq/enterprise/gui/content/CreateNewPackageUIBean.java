@@ -132,7 +132,8 @@ public class CreateNewPackageUIBean {
             selectedArchitectureId = getBackingPackageArchitectureId();
             selectedPackageTypeId = getBackingPackageTypeId();
         }
-        return createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);
+        String response = createNewPackage(packageName, version, selectedArchitectureId, selectedPackageTypeId);
+        return response;
     }
 
     public String createNewPackage(String packageName, String version, int architectureId, int packageTypeId) {

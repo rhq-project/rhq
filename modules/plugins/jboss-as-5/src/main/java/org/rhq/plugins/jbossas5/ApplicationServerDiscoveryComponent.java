@@ -146,7 +146,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         } catch (IOException e) {
             throw new InvalidPluginConfigurationException(e);
         }
-        return createResourceDetails(discoveryContext, pluginConfig, processInfo, installInfo);
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo, installInfo);
+        return resourceDetails;
     }
 
     @SuppressWarnings("unchecked")

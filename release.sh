@@ -113,6 +113,30 @@ set_variables()
    export LANG
 }
 
+run_versioning_process()
+{
+   # Clean up the snapshot jars produced by the test build from module target dirs.
+   echo "Cleaning up snapshot jars produced by test build from module target dirs..."
+   mvn clean $MAVEN_ARGS
+   [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
+
+   mvn install $MAVEN_ARGS -Ddbreset
+   [ "$?" -ne 0 ] && abort "Test build failed. Please see output for details, fix any issues, then try again."
+
+   mvn versions:set versions:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
+   [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
+
+   mvn install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
+   [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."
+
+   mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
+   [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
+
+   #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+   #mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+   #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+}
+
 if [ -n "$RELEASE_DEBUG" ]; then
    echo "Debug output is enabled."
    set -x
@@ -142,7 +166,6 @@ local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "
                   "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
                   "RELEASE_VERSION" "RELEASE_TAG")
 print_variables "${local_variables[@]}"
-
 
 
 echo "============================= Program Versions ================================"
@@ -219,67 +242,14 @@ fi
 
 
 # See if the specified tag already exists locally - if so, delete it (even if in production mode).
-
 EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
 if [ -n "$EXISTING_LOCAL_TAG" ]; then
    echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
    git tag -d "$RELEASE_TAG"
    [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
 fi 
- 
-# Run a test build before tagging. This will publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 
-#echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
-# NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
-#mvn install $MAVEN_ARGS -Ddbreset
-#[ "$?" -ne 0 ] && abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
-#echo
-#echo "Test build succeeded!"
-
-
-# Clean up the snapshot jars produced by the test build from module target dirs.
-
-echo "Cleaning up snapshot jars produced by test build from module target dirs..."
-mvn clean $MAVEN_ARGS
-[ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
-
-
-# If this is a production build perform a dry run of tagging the release. Skip this for test builds to reduce the
-# build time 
-
-if [ "$MODE" = "todo" ]; then
-    echo "Doing a dry run of tagging the release..."
-    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
-    [ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
-    mvn release:clean $MAVEN_ARGS
-    [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
-    echo
-    echo "Tagging dry run succeeded!"
-fi
-
-
-# If the dry run was skipped or succeeded, tag it for real.
-
-echo "Tagging the release..."
-mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME
-[ "$?" -ne 0 ] && abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Tagging succeeded!"
-
-
-# Checkout the tag and build it. If in production mode, publish the Maven artifacts.
-
-#echo "Checking out release tag $RELEASE_TAG..."
-#git checkout "$RELEASE_TAG"
-#[ "$?" -ne 0 ] && abort "Checkout of release tag ($RELEASE_TAG) failed. Please see above git output for details, fix any issues, then try again."
-#git clean -dxf
-#[ "$?" -ne 0 ] && abort "Failed to cleanup unversioned files. Please see above git output for details, fix any issues, then try again."
-#echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-#mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-#[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-#echo
-#echo "Release build succeeded!"
-
+run_versioning_process
 
 echo
 echo "=============================== Release Info =================================="

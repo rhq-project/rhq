@@ -259,22 +259,14 @@ fi
 # If the specified tag already exists remotely and we're in production mode, then abort. If it exists and 
 # we're in test mode, delete it
 EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
-if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "production" ]; then
-   abort "A remote tag named $RELEASE_TAG already exists - aborting, since we are in production mode..." 
-fi   
-
-if [ -n "$EXISTING_REMOTE_TAG" ] && [ "$MODE" = "test" ]; then
-   echo "A remote tag named $RELEASE_TAG already exists - deleting it, since we are in test mode..."      
-   git push origin ":refs/tags/$RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "Failed to delete remote tag ($RELEASE_TAG)."
+if [ -n "$EXISTING_REMOTE_TAG" ] then
+   abort "A remote tag named $RELEASE_TAG already exists - aborting" 
 fi   
 
 # See if the specified tag already exists locally - if so, delete it (even if in production mode).
 EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
 if [ -n "$EXISTING_LOCAL_TAG" ]; then
-   echo "A local tag named $RELEASE_TAG already exists - deleting it..."      
-   git tag -d "$RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+   abort "A local tag named $RELEASE_TAG already exists - aborting" 
 fi 
 
 run_versioning_process

@@ -125,7 +125,6 @@ set_variables()
       MAVEN_RELEASE_PERFORM_GOAL="install"
    #fi
 
-
    TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
    RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
@@ -143,7 +142,7 @@ set_variables()
 # Description: Perform version update process and test the outcome by building 
 #              from source.
 #===================================================================================
-run_versioning_process()
+run_tag_version_process()
 {
    # 1) Cleanup before doing anything
    echo "Cleaning up module target dirs"
@@ -179,10 +178,10 @@ run_versioning_process()
 
    # 8) Commit the change in version (if everything went well so far then this is a good tag
    git add -u
-   git commit -m "tag RHQ_$RELEASE_VERSION"
+   git commit -m "tag $RELEASE_TAG"
    
    # 9) Tag the current source
-   git tag "RHQ_$RELEASE_VERSION"
+   git tag "$RELEASE_TAG"
 
    # 10) Set version to the current development version
    mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
@@ -234,8 +233,6 @@ program_versions=("git --version" "java -version" "mvn --version")
 print_program_versions "${program_versions[@]}"
 
 print_centered "="
-
-exit
 
 # Checkout the source from git, assume that the git repo is already cloned
 git status >/dev/null 2>&1
@@ -298,7 +295,7 @@ if [ -n "$EXISTING_LOCAL_TAG" ]; then
    abort "A local tag named $RELEASE_TAG already exists - aborting" 
 fi 
 
-run_versioning_process
+run_tag_version_process
 
 echo
 echo "=============================== Release Info =================================="

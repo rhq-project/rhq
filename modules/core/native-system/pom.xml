@@ -104,9 +104,67 @@
         </configuration>
       </plugin>
 
+       <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+
+          <executions>
+             <execution>
+                <id>system-api</id>
+                <phase>compile</phase>
+                <goals>
+                   <goal>javadoc</goal>
+                </goals>
+                <configuration>
+                   <doctitle>RHQ ${project.version} System API</doctitle>
+                   <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
+                   <author>false</author>
+                   <breakiterator>true</breakiterator>
+                </configuration>
+             </execution>
+          </executions>
+       </plugin>
+
     </plugins>
   </build>
+
   <profiles>
+
+      <profile>
+         <id>javadoc</id>
+         <activation>
+            <property>
+               <name>javadoc.outputDirectory</name>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+
+                  <executions>
+                     <execution>
+                        <id>system-api</id>
+                        <phase>compile</phase>
+                        <goals>
+                           <goal>javadoc</goal>
+                        </goals>
+                        <configuration>
+                           <doctitle>RHQ ${project.version} System API</doctitle>
+                           <windowtitle>RHQ ${project.version} System API</windowtitle>
+                           <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
+                           <destDir>system</destDir>
+                           <author>false</author>
+                           <breakiterator>true</breakiterator>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
     <profile>
       <id>cobertura</id>
       <activation>

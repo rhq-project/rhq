@@ -300,9 +300,10 @@ public class CreateNewPackageChildResourceUIBean {
             deployTimeConfigurationTemplates = configDef.getDefaultTemplate();
         }
 
-        return (deployTimeConfigurationTemplates != null) ? deployTimeConfigurationTemplates
+        Configuration deployTimeConfiguration = (deployTimeConfigurationTemplates != null) ? deployTimeConfigurationTemplates
             .createConfiguration()
             : new Configuration();
+        return deployTimeConfiguration;
     }
 
     // Accessors  --------------------------------------------
@@ -331,7 +332,8 @@ public class CreateNewPackageChildResourceUIBean {
             }
         }
 
-        return selectItemsList.toArray(new SelectItem[selectItemsList.size()]);
+        SelectItem[] items = selectItemsList.toArray(new SelectItem[selectItemsList.size()]);
+        return items;
     }
 
     public CreateResourceHistory getRetryCreateItem() {

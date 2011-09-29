@@ -1901,7 +1901,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ? FOR UPDATE");
             ps.setInt(1, bits.getId());
             ResultSet rs = ps.executeQuery();
-            if (rs != null) {
+            try {
                 while (rs.next()) {
 
                     //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
@@ -1924,6 +1924,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     }
                     ps2.close();
                 }
+            } finally {
+                rs.close();
             }
             ps.close();
             conn.close();
@@ -2048,15 +2050,22 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             Connection conn = dataSource.getConnection();
 
             //prepared statement for retrieval of Blob.bits
-            PreparedStatement ps = conn
-                .prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
-            ps.setInt(1, bits.getId());
-            ResultSet results = ps.executeQuery();
-            if (results.next()) {
-                //retrieve the Blob
-                Blob blob = results.getBlob(1);
-                //now copy the contents to the stream passed in
-                StreamUtil.copy(blob.getBinaryStream(), stream, closeStreams);
+            PreparedStatement ps = conn.prepareStatement("SELECT BITS FROM " + PackageBits.TABLE_NAME + " WHERE ID = ?");
+            try {
+                ps.setInt(1, bits.getId());
+                ResultSet results = ps.executeQuery();
+                try {
+                    if (results.next()) {
+                        //retrieve the Blob
+                        Blob blob = results.getBlob(1);
+                        //now copy the contents to the stream passed in
+                        StreamUtil.copy(blob.getBinaryStream(), stream, closeStreams);
+                    }
+                } finally {
+                    results.close();
+                }
+            } finally {
+                ps.close();
             }
         } catch (Exception ex) {
             log.error("An error occurred while writing Blob contents out to stream :" + ex.getMessage());

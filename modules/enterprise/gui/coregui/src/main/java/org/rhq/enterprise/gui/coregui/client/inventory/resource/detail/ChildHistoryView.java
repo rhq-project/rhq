@@ -52,6 +52,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -65,8 +66,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
 
     public static final ViewName VIEW_ID = new ViewName("ChildHistory", MSG.view_tabs_common_child_history());
-    public static final String CHILD_CREATED_ICON = "[skin]/images/MultiUploadItem/icon_add_files.png";
-    public static final String CHILD_DELETED_ICON = "[skin]/images/MultiUploadItem/icon_remove_files.png";
+    public static final String CHILD_CREATED_ICON = ImageManager.getChildCreateIcon();
+    public static final String CHILD_DELETED_ICON = ImageManager.getChildDeleteIcon();
 
     private final ResourceComposite resourceComposite;
     private FormItem dateRangeItem;

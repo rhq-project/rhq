@@ -22,11 +22,22 @@ import static java.util.Collections.emptyList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -34,6 +45,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -45,14 +57,163 @@ import org.rhq.core.domain.resource.Resource;
  * 
  * This object also has an optional relationship with a Resource.
  *
- * TODO: this is missing setters for includes/excludes filters. We should add those.
- *
  * @author John Sanda
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
+@Entity
+@Table(name = "RHQ_DRIFT_CONFIG")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CONFIG_ID_SEQ")
 public class DriftConfiguration implements Serializable {
-
     private static final long serialVersionUID = 1L;
+
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Id
+    private int id;
+
+    @Column(name = "CTIME", nullable = false)
+    private Long ctime = -1L;
+
+    @Column(name = "NAME", nullable = false)
+    private String name;
+
+    @Column(name = "IS_ENABLED", nullable = false)
+    private boolean isEnabled;
+
+    @Column(name = "DRIFT_HANDLING_MODE", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DriftHandlingMode driftHandlingMode;
+
+    // unit = millis
+    @Column(name = "INTERVAL", nullable = false)
+    private long interval;
+
+    @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    private Configuration configuration;
+
+    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(optional = true)
+    private Resource resource = null;
+
+    // required for jaxb/web services stuff
+    protected DriftConfiguration() {
+    }
+
+    public DriftConfiguration(Configuration c) {
+        this.setConfiguration(c);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Long getCtime() {
+        return ctime;
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.ctime = System.currentTimeMillis();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        if (null == name) {
+            throw new IllegalArgumentException("Drift congig name can not be null");
+        }
+
+        this.name = name;
+        this.setNameProperty(name);
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    /**
+     * If null set to default
+     * @param isEnabled
+     */
+    public void setEnabled(Boolean isEnabled) {
+        if (isEnabled == null) {
+            isEnabled = DriftConfigurationDefinition.DEFAULT_ENABLED;
+        }
+
+        this.isEnabled = isEnabled;
+        this.setEnabledProperty(isEnabled);
+    }
+
+    public DriftHandlingMode getDriftHandlingMode() {
+        return driftHandlingMode;
+    }
+
+    public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
+        if (null == driftHandlingMode) {
+            driftHandlingMode = DriftConfigurationDefinition.DEFAULT_DRIFT_HANDLING_MODE;
+        }
+
+        this.driftHandlingMode = driftHandlingMode;
+        this.setDriftHandlingModeProperty(driftHandlingMode);
+    }
+
+    public long getInterval() {
+        return interval;
+    }
+
+    /**
+     * If null, set to default.
+     * @param interval
+     */
+    public void setInterval(Long interval) {
+        if (interval == null) {
+            interval = DriftConfigurationDefinition.DEFAULT_INTERVAL;
+        }
+
+        this.interval = interval;
+        this.setIntervalProperty(interval);
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+        this.name = this.getNameProperty();
+        this.isEnabled = this.getIsEnabledProperty();
+        this.interval = this.getIntervalProperty();
+        this.driftHandlingMode = this.getDriftHandlingModeProperty();
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
+        if (this.resource != null) {
+            this.resource.getDriftConfigurations().add(this);
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("DriftConfiguration [id=").append(id).append(", name=").append(name).append(", enabled=")
+            .append(isEnabled).append(", interval=").append(interval).append(", resource=").append(resource).append(
+                ", basedir=").append(getBasedir()).append(", includes=").append(getIncludes()).append(", excludes=")
+            .append(getExcludes()).append("]");
+        return builder.toString();
+    }
 
     public static class BaseDirectory implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -118,101 +279,23 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
-    public static class Filter implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        private String path;
-        private String pattern;
-
-        public Filter(String path, String pattern) {
-            setPath(path);
-            setPattern(pattern);
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public void setPath(String path) {
-            if (path == null) {
-                this.path = "";
-            } else {
-                this.path = path;
-            }
-        }
-
-        public String getPattern() {
-            return pattern;
-        }
-
-        public void setPattern(String pattern) {
-            if (pattern == null) {
-                this.pattern = "";
-            } else {
-                this.pattern = pattern;
-            }
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-
-            if (obj instanceof Filter) {
-                Filter that = (Filter) obj;
-                return this.path.equals(that.path) && this.pattern.equals(that.pattern);
-            }
-
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return 13 * (path.hashCode() + pattern.hashCode());
-        }
-
-        @Override
-        public String toString() {
-            return "Filter[path: " + path + ", pattern: " + pattern + "]";
-        }
+    private String getNameProperty() {
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_NAME, null);
     }
 
-    private Configuration configuration;
-
-    // required for jaxb/web services stuff
-    protected DriftConfiguration() {
-    }
-
-    public DriftConfiguration(Configuration c) {
-        this.configuration = c;
-    }
-
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public int getId() {
-        return configuration.getId();
-    }
-
-    public void setId(int id) {
-        configuration.setId(id);
-    }
-
-    public String getName() {
-        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_NAME, "");
-    }
-
-    public void setName(String name) {
+    private void setNameProperty(String name) {
         if (name == null) {
-            throw new NullPointerException("name is null");
+            throw new IllegalArgumentException("name is null");
         }
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_NAME, name));
     }
 
     public BaseDirectory getBasedir() {
         PropertyMap map = configuration.getMap(DriftConfigurationDefinition.PROP_BASEDIR);
+        if (map == null) {
+            return null;
+        }
+
         String valueContext = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT, null);
         String valueName = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, null);
 
@@ -256,25 +339,31 @@ public class DriftConfiguration implements Serializable {
         configuration.put(basedirMap);
     }
 
-    public Long getInterval() {
+    private Long getIntervalProperty() {
         return Long.parseLong(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_INTERVAL, String
             .valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL)));
     }
 
-    public void setInterval(Long interval) {
-        if (interval == null) {
-            configuration.remove(DriftConfigurationDefinition.PROP_INTERVAL);
-        } else {
-            configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
-        }
+    private void setIntervalProperty(Long interval) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
     }
 
-    public boolean getEnabled() {
+    private DriftHandlingMode getDriftHandlingModeProperty() {
+        return DriftHandlingMode.valueOf(configuration.getSimpleValue(
+            DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE,
+            DriftConfigurationDefinition.DEFAULT_DRIFT_HANDLING_MODE.name()));
+    }
+
+    private void setDriftHandlingModeProperty(DriftHandlingMode mode) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE, mode.name()));
+    }
+
+    private boolean getIsEnabledProperty() {
         return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_ENABLED,
             String.valueOf(DriftConfigurationDefinition.DEFAULT_ENABLED)).equals("true");
     }
 
-    public void setEnabled(boolean enabled) {
+    private void setEnabledProperty(boolean enabled) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED, String.valueOf(enabled)));
     }
 
@@ -284,6 +373,34 @@ public class DriftConfiguration implements Serializable {
 
     public List<Filter> getExcludes() {
         return getFilters(DriftConfigurationDefinition.PROP_EXCLUDES);
+    }
+
+    public void addInclude(Filter filter) {
+        PropertyList filtersList = configuration.getList(DriftConfigurationDefinition.PROP_INCLUDES);
+        if (filtersList == null) {
+            // this is going to be our first include filter - make sure we create an initial list and put it in the config
+            filtersList = new PropertyList(DriftConfigurationDefinition.PROP_INCLUDES);
+            configuration.put(filtersList);
+        }
+
+        PropertyMap filterMap = new PropertyMap(DriftConfigurationDefinition.PROP_INCLUDES_INCLUDE);
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, filter.getPath()));
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATTERN, filter.getPattern()));
+        filtersList.add(filterMap);
+    }
+
+    public void addExclude(Filter filter) {
+        PropertyList filtersList = configuration.getList(DriftConfigurationDefinition.PROP_EXCLUDES);
+        if (filtersList == null) {
+            // this is going to be our first include filter - make sure we create an initial list and put it in the config
+            filtersList = new PropertyList(DriftConfigurationDefinition.PROP_EXCLUDES);
+            configuration.put(filtersList);
+        }
+
+        PropertyMap filterMap = new PropertyMap(DriftConfigurationDefinition.PROP_EXCLUDES_EXCLUDE);
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, filter.getPath()));
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATTERN, filter.getPattern()));
+        filtersList.add(filterMap);
     }
 
     private List<Filter> getFilters(String type) {
@@ -301,38 +418,4 @@ public class DriftConfiguration implements Serializable {
 
         return filters;
     }
-
-    public static Set<DriftConfiguration> valueOf(Resource resource) {
-        if (null == resource) {
-            return new HashSet<DriftConfiguration>(0);
-        }
-
-        Set<Configuration> configs = resource.getDriftConfigurations();
-        if (null == configs) {
-            return new HashSet<DriftConfiguration>(0);
-        }
-
-        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
-
-        for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
-            result.add(new DriftConfiguration(i.next()));
-        }
-
-        return result;
-    }
-
-    public static <T extends Collection<Configuration>> Set<DriftConfiguration> valueOf(T configs) {
-        if (null == configs) {
-            return new HashSet<DriftConfiguration>(0);
-        }
-
-        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
-
-        for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
-            result.add(new DriftConfiguration(i.next()));
-        }
-
-        return result;
-    }
-
 }

@@ -121,7 +121,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
-            fieldCategory.setWidth("25");
+            fieldCategory.setWidth("55");
             fieldVersion.setWidth("*");
             fieldCount.setWidth("10%");
 

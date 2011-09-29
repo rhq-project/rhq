@@ -14,20 +14,20 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 
-public class DiscComponent implements ResourceDiscoveryComponent<ResourceComponent>,
-    ResourceUpgradeFacet<ResourceComponent> {
+public class DiscComponent<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T>,
+    ResourceUpgradeFacet<T> {
     private static final String V1_RESOURCE_KEY = "resource-key-v1";
     private static final String RESOURCE_KEY = "resource-key-v2";
     private static final String RESOURCE_NAME = "resource-name-v2";
     private static final String RESOURCE_DESCRIPTION = "resource-description-v2";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context)
         throws InvalidPluginConfigurationException, Exception {
         return Collections.singleton(new DiscoveredResourceDetails(context.getResourceType(), RESOURCE_KEY,
             RESOURCE_NAME, null, RESOURCE_DESCRIPTION, context.getDefaultPluginConfiguration(), null));
     }
 
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ResourceComponent> inventoriedResource) {
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource) {
         if (V1_RESOURCE_KEY.equals(inventoriedResource.getResourceKey())) {
             ResourceUpgradeReport report = new ResourceUpgradeReport();
             report.setNewResourceKey(RESOURCE_KEY);

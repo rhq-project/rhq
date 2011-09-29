@@ -637,6 +637,30 @@ Embedded RHQ Agent Configuration
 
                <!--
                _______________________________________________________________
+               rhq.agent.plugins.drift-detection.initial-delay-secs
+
+               Defines the delay before the first drift detection scan is
+               run. The value is specified in seconds.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.drift-detection.initial-delay-secs" value="30"/>
+               -->
+
+               <!--
+               _______________________________________________________________
+               rhq.agent.plugins.drift-detection.period-secs
+
+               Defines how often a drift detection scan is run.  This type
+               of scan is used to determine what, if any, file changes (such
+               as additions, deletions, modifications) occurred within
+               specific file system locations that are being monitored.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.drift-detection.period-secs" value="60"/>
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.agent.plugins.content-discovery.threadpool-size
 
                When plugins are scheduled to discover content, the discovery

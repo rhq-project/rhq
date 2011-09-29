@@ -144,7 +144,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         // Type
         StaticTextItem typeItem = new StaticTextItem("type", MSG.view_summaryOverviewForm_field_type());
         typeItem.setTooltip(MSG.view_summaryOverviewForm_label_plugin() + type.getPlugin() + "\n<br>"
-            + MSG.view_summaryOverviewForm_label_type() + type.getName());
+            + MSG.common_title_type() + type.getName());
         typeItem.setValue(AncestryUtil.getFormattedType(type));
         formItems.add(typeItem);
 
@@ -152,7 +152,7 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         // Key
         StaticTextItem keyItem = new StaticTextItem(ResourceDataSourceField.KEY.propertyName(),
-                ResourceDataSourceField.KEY.title());
+            ResourceDataSourceField.KEY.title());
         keyItem.setValue(resource.getResourceKey());
         formItems.add(keyItem);
 
@@ -287,32 +287,33 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         // Timestamps
         StaticTextItem ctimeItem = new StaticTextItem(ResourceDataSourceField.CTIME.propertyName(),
-                ResourceDataSourceField.CTIME.title());
+            ResourceDataSourceField.CTIME.title());
         String ctime = TimestampCellFormatter.format(resource.getCtime());
         ctimeItem.setValue(ctime);
         formItems.add(ctimeItem);
 
         StaticTextItem itimeItem = new StaticTextItem(ResourceDataSourceField.ITIME.propertyName(),
-                ResourceDataSourceField.ITIME.title());
+            ResourceDataSourceField.ITIME.title());
         String itime = TimestampCellFormatter.format(resource.getItime());
         itimeItem.setValue(itime);
         formItems.add(itimeItem);
 
         StaticTextItem mtimeItem = new StaticTextItem(ResourceDataSourceField.MTIME.propertyName(),
-                ResourceDataSourceField.MTIME.title());
+            ResourceDataSourceField.MTIME.title());
         String mtime = TimestampCellFormatter.format(resource.getMtime());
         mtimeItem.setValue(mtime);
         formItems.add(mtimeItem);
 
         StaticTextItem modifierItem = new StaticTextItem(ResourceDataSourceField.MODIFIER.propertyName(),
-                ResourceDataSourceField.MODIFIER.title());
+            ResourceDataSourceField.MODIFIER.title());
         modifierItem.setValue(resource.getModifiedBy());
         formItems.add(modifierItem);
 
         // Traits
         List<MeasurementDefinition> summaryTraitDefs = new ArrayList<MeasurementDefinition>();
         for (MeasurementDefinition measurementDef : type.getMetricDefinitions()) {
-            if (measurementDef.getDataType() == DataType.TRAIT && measurementDef.getDisplayType() == DisplayType.SUMMARY) {
+            if (measurementDef.getDataType() == DataType.TRAIT
+                && measurementDef.getDisplayType() == DisplayType.SUMMARY) {
                 summaryTraitDefs.add(measurementDef);
             }
         }

@@ -89,8 +89,7 @@ public class FlexSearchBar extends AbstractSearchBar {
     private final PopupPanel savedSearchesPanel = new PopupPanel(true);
     private SavedSearchGrid savedSearchesGrid;
 
-    private Integer currentSearchId = 0;
-    private long lastNameFieldBlurTime = 0;
+    private int currentSearchId = 0;
 
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
@@ -103,7 +102,6 @@ public class FlexSearchBar extends AbstractSearchBar {
     HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_aic;
     HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_sic;
     HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_pnfc;
-    HorizontalPanel sbc_sbbgc_sbcc_sbcrhs;
     HorizontalPanel sbc_sbbgc_sbcc_sbcrhs_pnlc;
     HorizontalPanel sbc_sbbc;
     HorizontalPanel sbc_pfsc;
@@ -142,18 +140,16 @@ public class FlexSearchBar extends AbstractSearchBar {
         sbc_sbbgc_sbcc_sbclhs_pfc = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentLHS", "patternFieldContainer");
         sbc_sbbgc_sbcc_sbcrhs_aic = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "arrowImageContainer");
         sbc_sbbgc_sbcc_sbcrhs_sic = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "starImageContainer");
-        sbc_sbbgc_sbcc_sbcrhs_pnfc = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "starImageContainer");
-        sbc_sbbgc_sbcc_sbcrhs = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", null);
-        sbc_sbbgc_sbcc_sbcrhs_pnlc = createHPanel(sbc_sbbgc_sbcc_sbcrhs, "rounded", "patternNameLabelContainer");
-        sbc_sbbc = createHPanel(sbc, "searchBarButtonContainer", "searchButtonContainer");
+        sbc_sbbgc_sbcc_sbcrhs_pnfc = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "patternNameFieldContainer");
+        sbc_sbbgc_sbcc_sbcrhs_pnlc = createHPanel(sbc_sbbgc_sbcc, "searchBarComponentRHS", "patternNameLabelContainer");
         sbc_pfsc = createHPanel(sbc, null, "patternFieldSuggestionsContainer");
         sbc_ssc = createHPanel(sbc, null, "savedSearchesContainer");
 
         sbc_sbbgc_sbcc_sbclhs_pfc.add(autoCompletePatternField);
-        sbc_sbbgc_sbcc_sbcrhs_pnfc.add(patternNameField);
-        sbc_sbbgc_sbcc_sbcrhs_pnlc.add(patternNameLabel);
         sbc_sbbgc_sbcc_sbcrhs_sic.add(starImage);
         sbc_sbbgc_sbcc_sbcrhs_aic.add(arrowImage);
+        sbc_sbbgc_sbcc_sbcrhs_pnfc.add(patternNameField);
+        sbc_sbbgc_sbcc_sbcrhs_pnlc.add(patternNameLabel);
         sbc_ssc.add(savedSearchesPanel);
 
         initWidget(sbc);
@@ -173,7 +169,8 @@ public class FlexSearchBar extends AbstractSearchBar {
                 Integer savedSearchId = Integer.valueOf(getDefaultSavedSearchPatternId());
                 activateSavedSearch(savedSearchId);
             } catch (Exception e) {
-                this.autoCompletePatternField.setText(MSG.view_searchBar_error_selectSavedSearch());
+                this.autoCompletePatternField.setText(MSG
+                    .view_searchBar_savedSearch_failFind(getDefaultSavedSearchPatternId()));
             }
         }
     }
@@ -252,7 +249,7 @@ public class FlexSearchBar extends AbstractSearchBar {
         savedSearchesGrid.addStyleName("savedSearchesPanel");
 
         // panel position will be re-calculated on down-arrow click
-        savedSearchesPanel.show();
+        //savedSearchesPanel.show();
         savedSearchesPanel.hide();
 
         SavedSearchesEventHandler handler = new SavedSearchesEventHandler();
@@ -270,32 +267,21 @@ public class FlexSearchBar extends AbstractSearchBar {
         arrowImage.setVisible(true);
         patternNameField.setVisible(false);
 
-        if (name.equals("")) {
-            GWTServiceLookup.getSearchService().deleteSavedSearch(currentSearchId, new AsyncCallback<Void>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Saved search removal failed", caught);
-                }
-
-                @Override
-                public void onSuccess(Void result) {
-                    CoreGUI.getMessageCenter().notify(new Message("Removed saved search successfully", Severity.Info));
-                    currentSearchId = 0;
-                }
-            });
-
+        if ("".equals(name)) {
             starImage.setUrl(STAR_OFF_URL);
         } else {
             // NOTE: currently do not support updated a saved search pattern
-            if (currentSearchId == 0) {
+            if (0 == currentSearchId) {
                 String pattern = autoCompletePatternField.getText();
                 createSavedSearch(name, pattern);
             } else if (nameJustUpdated) {
                 updateSavedSearchName(currentSearchId, name);
             }
+
+            starImage.setUrl(STAR_ON_URL);
             patternNameLabel.setText(elipse(name));
             patternNameLabel.setVisible(true);
-            starImage.setUrl(STAR_ON_URL);
+            autoCompletePatternField.setFocus(true);
         }
     }
 
@@ -308,7 +294,7 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     private String elipse(String data) {
         if (data.length() > 14) {
-            return data.substring(0, 14) + "...";
+            return data.substring(0, 20) + "...";
         }
         return data;
     }
@@ -319,13 +305,14 @@ public class FlexSearchBar extends AbstractSearchBar {
         GWTServiceLookup.getSearchService().createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
             @Override
             public void onSuccess(Integer newSavedSearchId) {
-                CoreGUI.getMessageCenter().notify(new Message("Saved search created successfully", Severity.Info));
+                CoreGUI.getMessageCenter()
+                    .notify(new Message(MSG.view_searchBar_savedSearch_save(name), Severity.Info));
                 currentSearchId = newSavedSearchId;
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Saved search creation failed", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failSave(name), caught);
             }
         });
     }
@@ -335,13 +322,14 @@ public class FlexSearchBar extends AbstractSearchBar {
             @Override
             public void onSuccess(Boolean hadUpdates) {
                 if (hadUpdates) {
-                    CoreGUI.getMessageCenter().notify(new Message("Saved search successfully renamed", Severity.Info));
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_searchBar_savedSearch_rename(newName), Severity.Info));
                 }
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Saved search rename failed", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failRename(newName), caught);
             }
         });
     }
@@ -395,8 +383,16 @@ public class FlexSearchBar extends AbstractSearchBar {
         }
 
         public void onBlur(BlurEvent event) {
-            lastNameFieldBlurTime = System.currentTimeMillis();
-            turnNameFieldIntoLabel(true);
+            // If this is a name change update (star on) then return to displaying the unchanged label.
+            // otherwise, abort the creation of the new saved search.
+            if (starImage.getUrl().endsWith(STAR_ON_URL)) {
+                patternNameField.setVisible(false);
+                patternNameLabel.setVisible(true);
+
+            } else {
+                patternNameField.setVisible(false);
+                patternNameLabel.setVisible(false);
+            }
         }
     }
 
@@ -408,50 +404,31 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     class StarImageEventHandler implements ClickHandler, MouseOverHandler, MouseOutHandler {
         public void onClick(ClickEvent event) {
-            long diff = System.currentTimeMillis() - lastNameFieldBlurTime;
-            if (Math.abs(diff) < 750) {
-                /*
-                 * This event propagation is annoying.  If the threshold is set too low, then both
-                 * the name field blur event and this star image click event fire...but the blur
-                 * event fires first, which turns the star white.  Then a click on a white star
-                 * triggers edit mode, re-enabling the name field.  However, setting the threshold
-                 * too high will prevent the click event from being handled when the user naturally
-                 * wants to click on the star in rapid succession within the threshold time frame.
-                 * It is hoped that 750ms will strike a nice balance, and that most users will never
-                 * experienced any oddities from this trade-off.
-                 */
-                return;
-            }
 
+            // note - since hover changes off to active, we never have the star off case here 
             if (starImage.getUrl().endsWith(STAR_ACTIVE_URL)) {
-                patternNameField.setText(DEFAULT_PATTERN_NAME);
-                patternNameField.setVisible(true);
-                patternNameField.selectAll();
-                patternNameField.setFocus(true);
-                patternNameLabel.setVisible(false);
+                if (patternNameField.isVisible()) {
+                    patternNameField.setVisible(false);
+
+                } else {
+                    patternNameField.setText(DEFAULT_PATTERN_NAME);
+                    patternNameField.setVisible(true);
+                    patternNameField.selectAll();
+                    patternNameField.setFocus(true);
+                    patternNameLabel.setVisible(false);
+
+                }
             } else if (starImage.getUrl().endsWith(STAR_ON_URL)) {
                 starImage.setUrl(STAR_ACTIVE_URL);
                 patternNameField.setVisible(false);
                 patternNameLabel.setVisible(false);
-                GWTServiceLookup.getSearchService().deleteSavedSearch(currentSearchId, new AsyncCallback<Void>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Saved search deletion failure", caught);
-                    }
-
-                    @Override
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(new Message("Saved search deletion success", Severity.Info));
-                        currentSearchId = 0;
-                    }
-                });
             }
         }
 
         public void onMouseOver(MouseOverEvent event) {
-            if (starImage.getUrl().endsWith(STAR_OFF_URL)) {
-                starImage.setUrl(STAR_ACTIVE_URL);
+            if (starImage.getUrl().endsWith(STAR_OFF_URL) && !"".equals(getValue().trim())) {
 
+                starImage.setUrl(STAR_ACTIVE_URL);
             }
         }
 
@@ -494,11 +471,13 @@ public class FlexSearchBar extends AbstractSearchBar {
                 GWTServiceLookup.getSearchService().deleteSavedSearch(savedSearch.getId(), new AsyncCallback<Void>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Saved search deletion failure", caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_searchBar_savedSearch_failDelete(savedSearch.getName()), caught);
                     }
 
                     @Override
                     public void onSuccess(Void result) {
+                        // handle deletion of current saved search
                         if (currentSearchId == savedSearch.getId()) {
                             currentSearchId = 0;
                             patternNameField.setValue("", true);
@@ -510,11 +489,15 @@ public class FlexSearchBar extends AbstractSearchBar {
                             savedSearchesPanel.hide();
                         }
 
-                        // is user deleting the one and only element in the list?
+                        // handle deletion of the one and only element in the list
                         if (savedSearchesGrid.size() == 1) {
                             savedSearchesPanel.hide();
                         }
+
                         savedSearchesGrid.removeRow(rowIndex);
+
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_searchBar_savedSearch_delete(savedSearch.getName()), Severity.Info));
                     }
                 });
             } else {
@@ -543,21 +526,16 @@ public class FlexSearchBar extends AbstractSearchBar {
             new AsyncCallback<List<SavedSearch>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failure to select saved search", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failFind(savedSearchName),
+                        caught);
                 }
 
                 @Override
                 public void onSuccess(List<SavedSearch> results) {
                     if (results.size() == 0) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message("Could not find saved search with name [" + savedSearchName + "]",
-                                Severity.Error));
+                            new Message(MSG.view_searchBar_savedSearch_failFind(savedSearchName), Severity.Error));
                     } else {
-                        if (results.size() > 1) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message("Found multiple saves searched with name [" + savedSearchName
-                                    + "], loaded the first one", Severity.Warning));
-                        }
                         SavedSearch savedSearch = results.get(0);
                         activateSavedSearch(savedSearch);
                     }

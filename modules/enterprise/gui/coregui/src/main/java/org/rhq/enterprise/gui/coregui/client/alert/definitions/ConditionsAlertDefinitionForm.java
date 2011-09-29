@@ -23,16 +23,24 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -44,7 +52,7 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
     private final ResourceType resourceType;
     private AlertDefinition alertDefinition;
 
-    private SelectItem conditionExpression;
+    private SelectItem conditionExpression; // this is the GWT menu where the user selects ALL or ANY conjunction
     private ConditionsEditor conditionsEditor;
 
     private StaticTextItem conditionExpressionStatic;
@@ -153,7 +161,38 @@ public class ConditionsAlertDefinitionForm extends LocatableVLayout implements E
 
             conditionExpressionForm.setFields(conditionExpression, conditionExpressionStatic);
 
-            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), resourceType, null);
+            conditionsEditor = new ConditionsEditor(this.extendLocatorId("conditionsEditor"), conditionExpression,
+                resourceType, null);
+
+            conditionExpression.addChangeHandler(new ChangeHandler() {
+                @Override
+                public void onChange(ChangeEvent event) {
+                    // Find out if this is using the ALL conjunction - if it is, we can't have more than one conditional use the same metric.
+                    // If we do, immediately abort and warn the user. See BZ 737565
+                    if ((BooleanExpression.ALL.name().equals(event.getValue().toString()))
+                        && (resourceType != null && resourceType.getMetricDefinitions() != null)) {
+
+                        HashSet<AlertCondition> conditions = conditionsEditor.getConditions();
+                        Map<Integer, String> metricIdsUsed = new HashMap<Integer, String>();
+                        for (AlertCondition condition : conditions) {
+                            if (condition.getMeasurementDefinition() != null) {
+                                Integer id = Integer.valueOf(condition.getMeasurementDefinition().getId());
+                                if (metricIdsUsed.containsKey(id)) {
+                                    String msg = MSG
+                                        .view_alert_definition_condition_editor_metricswarning(metricIdsUsed.get(id));
+                                    Message warning = new Message(msg, Severity.Warning, EnumSet
+                                        .of(Message.Option.Transient));
+                                    CoreGUI.getMessageCenter().notify(warning);
+                                    event.cancel(); // multiple conditions used the same metric with ALL conjunction, this doesn't work - abort (BZ 737565)
+                                    break;
+                                }
+                                metricIdsUsed.put(id, condition.getMeasurementDefinition().getDisplayName());
+                            }
+                        }
+                    }
+                    return;
+                }
+            });
 
             setMembers(conditionExpressionForm, conditionsEditor);
             formBuilt = true;

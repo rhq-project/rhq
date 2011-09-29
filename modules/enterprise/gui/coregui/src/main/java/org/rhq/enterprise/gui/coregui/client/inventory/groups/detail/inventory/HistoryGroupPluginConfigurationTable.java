@@ -104,7 +104,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {
-                new ErrorMessageWindow("errWin", MSG.common_title_error(), getStatusHtmlString(event.getRecord()))
+                new ErrorMessageWindow("errWin", MSG.common_severity_error(), getStatusHtmlString(event.getRecord()))
                     .show();
             }
         });

@@ -4,18 +4,18 @@
           xmlns="urn:xmlns:jboss.org:rhq-perftest">
 
    <!--
-        This scenario will create one server with a service that has 5 summary measurements in them.
-        To create 10 servers, each with 170 services, the following should be passed to the agent:
+        This scenario will create n servers each with m services each defining 5 numeric metrics and 3 traits.
+        To create 2 servers per platform, each with 100 services, the following should be passed to the Agent:
 
-        -Drhq.perftest.scenario=configurable-5 -Drhq.perftest.server-d-count=10 -Drhq.perftest.service-d-metrics-count=170
+        -Drhq.perftest.scenario=configurable-5 -Drhq.perftest.server-d-count=2 -Drhq.perftest.service-d-metrics-count=100
 
-        This collects, on average, 170 measurements per minute (assuming summary measurement collection interval is 5 mins)
+        This results in 200 service-d-metrics Resources per platform, which collectively collect on average 100 numeric
+        metrics per minute and 10 traits per minute, assuming rhq-plugin.xml configures schedules of 0.5 numeric metrics
+        per minute and 0.05 traits per minute, per Resource.
    -->
-
 
    <resource type="server-d">
       <simpleResourceGenerator property="rhq.perftest.server-d-count"/>
-      <simpleNumericMeasurementGenerator/>
    </resource>
 
    <resource type="service-d-metrics">

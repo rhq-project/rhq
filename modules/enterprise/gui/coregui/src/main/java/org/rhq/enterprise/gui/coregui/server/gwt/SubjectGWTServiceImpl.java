@@ -24,6 +24,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -88,8 +89,12 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     public Subject updateSubject(Subject subjectToModify) throws RuntimeException {
         try {
-            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
-                "SubjectManager.updateSubject");
+            Subject subject = SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
+                    "SubjectManager.updateSubject");
+            // Clear the prefs for this subject from the user prefs cache that portal-war uses, in case we just
+            // changed any prefs; otherwise the cache would contain stale prefs.
+            SubjectPreferencesCache.getInstance().clearConfiguration(subject.getId());
+            return subject;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

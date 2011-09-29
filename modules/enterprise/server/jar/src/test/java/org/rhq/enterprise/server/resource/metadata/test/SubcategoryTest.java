@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  *
  * @author Heiko W. Rupp
  */
-public class SubcategoryTest extends UpdateSubsytemTestBase {
+public class SubcategoryTest extends UpdatePluginMetadataTestBase {
 
     @Override
     protected String getSubsystemDirectory() {

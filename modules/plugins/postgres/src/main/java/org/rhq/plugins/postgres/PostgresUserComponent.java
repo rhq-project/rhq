@@ -44,11 +44,11 @@ import org.rhq.plugins.database.DatabaseQueryUtility;
 /**
  * @author Greg Hinkle
  */
-public class PostgresUserComponent implements DatabaseComponent<PostgresServerComponent>, MeasurementFacet,
+public class PostgresUserComponent implements DatabaseComponent<PostgresServerComponent<?>>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet {
-    private ResourceContext<PostgresServerComponent> resourceContext;
+    private ResourceContext<PostgresServerComponent<?>> resourceContext;
 
-    public void start(ResourceContext<PostgresServerComponent> resourceContext) {
+    public void start(ResourceContext<PostgresServerComponent<?>> resourceContext) {
         this.resourceContext = resourceContext;
     }
 

@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -41,13 +42,13 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableComponent implements DatabaseComponent<DatabaseComponent>, MeasurementFacet {
-    private ResourceContext<DatabaseComponent> context;
+public class CustomTableComponent implements DatabaseComponent<DatabaseComponent<?>>, MeasurementFacet {
+    private ResourceContext<DatabaseComponent<?>> context;
 
     private static final Log log = LogFactory.getLog(CustomTableComponent.class);
-    
-    public void start(ResourceContext<DatabaseComponent> resourceContext) throws InvalidPluginConfigurationException,
-        Exception {
+
+    public void start(ResourceContext<DatabaseComponent<?>> resourceContext)
+        throws InvalidPluginConfigurationException, Exception {
         this.context = resourceContext;
     }
 
@@ -73,16 +74,22 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         String query = this.context.getPluginConfiguration().getSimpleValue("metricQuery", null);
-        
+
         if (query == null) {
             ResourceType type = this.context.getResourceType();
             String resourceKey = this.context.getResourceKey();
-            log.info("Resource " + resourceKey + " (" + type.getName() + ", plugin " + type.getPlugin()
+            log.info("Resource "
+                + resourceKey
+                + " ("
+                + type.getName()
+                + ", plugin "
+                + type.getPlugin()
                 + "): The plugin configuration doesn't specify 'metricQuery' property. Ignoring the measurement request.");
             return;
         }
-        
-        query = CustomTableRowDiscoveryComponent.formatMessage(query, this.context.getPluginConfiguration().getSimpleValue("key",null));
+
+        query = CustomTableRowDiscoveryComponent.formatMessage(query, this.context.getPluginConfiguration()
+            .getSimpleValue("key", null));
 
         Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValues(this, query);
         for (MeasurementScheduleRequest request : metrics) {

@@ -30,7 +30,6 @@ public class MeasurementNumericCacheElement extends NumericDoubleCacheElement {
 
     public MeasurementNumericCacheElement(AlertConditionOperator operator, Double value, int conditionTriggerId) {
         super(operator, value, conditionTriggerId);
-        // TODO Auto-generated constructor stub
     }
 
 }

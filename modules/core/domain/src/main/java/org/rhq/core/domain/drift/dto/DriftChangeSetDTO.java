@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 
 public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable {
 
@@ -20,6 +21,8 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable
     private DriftChangeSetCategory category;
 
     private int configId;
+
+    private DriftHandlingMode driftHandlingMode;
 
     private int resourceId;
 
@@ -87,5 +90,15 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable
     @Override
     public void setDrifts(Set<DriftDTO> drifts) {
         this.drifts = drifts;
+    }
+
+    @Override
+    public DriftHandlingMode getDriftHandlingMode() {
+        return this.driftHandlingMode;
+    }
+
+    @Override
+    public void setDriftHandlingMode(DriftHandlingMode mode) {
+        this.driftHandlingMode = mode;
     }
 }

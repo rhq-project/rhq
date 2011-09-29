@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -240,7 +241,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_HRS);
         maximumTimeProblemResourcesComboBox.setTitle(MSG.common_title_over() + " ");
-        maximumTimeProblemResourcesComboBox.setHint("<nobr><b> " + MSG.common_label_hours() + " </b></nobr>");
+        maximumTimeProblemResourcesComboBox.setHint("<nobr><b> " + MSG.common_unit_hours() + " </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount
@@ -291,7 +292,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new ProblemResourcesPortlet(locatorId);
         }
@@ -309,7 +310,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         return definition;
     }
 
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         if (isShowFooter()) {
             long begin = 0;
             List<Long> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()

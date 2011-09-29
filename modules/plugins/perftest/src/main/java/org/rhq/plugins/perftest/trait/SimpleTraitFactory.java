@@ -18,28 +18,24 @@
  */
 package org.rhq.plugins.perftest.trait;
 
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.plugins.perftest.trait.TraitFactory;
 
-import java.util.Date;
+import java.util.Random;
 
 /**
- * Create trait data
+ * Create mock trait data.
  *
- * @author Heiko W. Rupp
+ * @author Ian Springer
  */
 public class SimpleTraitFactory implements TraitFactory {
 
+    private static final Random RANDOM = new Random();
+
     public MeasurementDataTrait nextValue(MeasurementScheduleRequest request) {
+        // generate "red" roughly 10% of the time, and "green" the rest of the time
+        String value = (RANDOM.nextInt(10) % 9) == 0 ? "red" : "green";
 
-        String name = request.getName();
-        Date date = new Date();
-
-        MeasurementDataTrait data = new MeasurementDataTrait(request,name + ", " + date);
-
-        return data;
-
+        return new MeasurementDataTrait(request, value);
     }
 }

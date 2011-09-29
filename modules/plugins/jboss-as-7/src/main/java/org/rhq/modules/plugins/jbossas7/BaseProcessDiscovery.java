@@ -52,11 +52,7 @@ import org.rhq.core.system.ProcessInfo;
 public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
 
 {
-
-    static final String DJBOSS_HOME_DIR = "-Djboss.home.dir=";
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
-    static final String DLOGGING_CONFIGURATION = "-Dlogging.configuration=";
-    static final String DASH_DASH_SERVER_CONFIG = "--server-config=";
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
@@ -77,6 +73,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String serverName;
             String psName = psr.getProcessScan().getName();
             String description = discoveryContext.getResourceType().getDescription();
+            String homeDir = getHomeDirFromCommandLine(commandLine);
             String version;
 
             //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
@@ -96,9 +93,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     serverName = "HostController"; // TODO make more unique
                     serverNameFull = "HostController";
                 }
-                String homeDir = getHomeDirFromCommandLine(psr.getProcessInfo().getCommandLine());
+
                 config.put(new PropertySimple("baseDir", homeDir));
-                version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
                 config.put(new PropertySimple("startScript", AS7Mode.DOMAIN.getStartScript()));
                 String host = findHost(psr.getProcessInfo(), true);
                 config.put(new PropertySimple("domainHost", host));
@@ -112,9 +108,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 config.put(new PropertySimple("hostConfig",hostConfig));
 
             } else { // Standalone server
-                serverNameFull = getHomeDirFromCommandLine(commandLine);
+                serverNameFull = homeDir;
                 readStandaloneOrHostXml(psr.getProcessInfo(), false);
-                if (serverNameFull == null || serverNameFull.isEmpty()) {
+                if ( serverNameFull.isEmpty()) {
                     // Try to obtain the server name
                     //  -Dorg.jboss.boot.log.file=domain/servers/server-one/log/boot.log
                     // This is a hack until I know a better way to do so.
@@ -125,7 +121,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     serverNameFull = tmp;
 
                 }
-                String host = findHost(psr.getProcessInfo(), true);
+                String host = findHost(psr.getProcessInfo(), false);
                 config.put(new PropertySimple("domainHost", host));
 
                 config.put(new PropertySimple("baseDir", serverNameFull));
@@ -134,7 +130,6 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 if (serverName.isEmpty())
                     serverName = serverNameFull;
 
-                version = serverName.substring(serverName.lastIndexOf("-") + 1);
 
                 String serverConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.STANDALONE);
                 config.put(new PropertySimple("config",serverConfig));

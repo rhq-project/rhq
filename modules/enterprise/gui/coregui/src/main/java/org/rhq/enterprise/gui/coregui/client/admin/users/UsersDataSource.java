@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A DataSource for RHQ {@link Subject user}s.
@@ -116,8 +115,8 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         ldapField.setCanEdit(false); // read-only
         fields.add(ldapField);
 
-        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, MSG
-            .dataSource_users_field_password(), 100, true);
+        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD,
+            MSG.common_title_password(), 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
         passwordValidator.setMin(6);
         passwordValidator.setMax(100);
@@ -252,26 +251,6 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         });
     }
 
-    @Override
-    protected void executeRemove(final Record userRecordToRemove, final DSRequest request, final DSResponse response) {
-        final Subject subjectToRemove = copyValues(userRecordToRemove);
-
-        final String username = subjectToRemove.getName();
-        subjectService.deleteSubjects(new int[] { subjectToRemove.getId() }, new AsyncCallback<Void>() {
-            public void onFailure(Throwable caught) {
-                String message = MSG.dataSource_users_deleteFailed(username);
-                sendFailureResponse(request, response, message, caught);
-            }
-
-            public void onSuccess(Void result) {
-                Message message = new Message(MSG.dataSource_users_delete(username));
-                sendSuccessResponse(request, response, subjectToRemove, message, UsersView.VIEW_PATH);
-            }
-        });
-
-    }
-
-    @SuppressWarnings("unchecked")
     public Subject copyValues(Record from) {
         Subject to = new Subject();
 

@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.server.resource.metadata.test;
 
-public class UpdateContentSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateContentSubsystemTest extends UpdatePluginMetadataTestBase {
     @Override
     protected String getSubsystemDirectory() {
         return "content";

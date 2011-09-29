@@ -32,7 +32,6 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -58,11 +57,12 @@ import org.rhq.plugins.perftest.trait.TraitFactory;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.Arrays;
 
 /**
- * RHQ resource component for handling resources defined in the performance test scenario.
+ * RHQ resource component for handling resources defined in a performance test scenario.
  *
  * @author Jason Dobies
  */
@@ -71,9 +71,12 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
     // Attributes  --------------------------------------------
     private Log log = LogFactory.getLog(PerfTestComponent.class);
 
+    private static final Random RANDOM = new Random();
+
     private ResourceContext resourceContext;
     private EventPoller eventPoller;
     private Configuration resourceConfiguration;
+
 
     // ResourceComponent Implementation  --------------------------------------------
 
@@ -187,9 +190,17 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
 
         if (name.equals("createEvents")) {
             return createEvents(parameters);
+        } else {
+            // Sleep for a bit to simulate actually doing something.
+            Thread.sleep(500);
+            // Make roughly 1 out of 10 invocations fail.
+            if ((RANDOM.nextInt(10) % 9) == 0) {
+                throw new Exception("Operation failed!");
+            } else {
+                // Assume the operation returns an empty result config.
+                return new OperationResult();
+            }
         }
-
-        return null;
     }
 
     private OperationResult createEvents(Configuration params) {

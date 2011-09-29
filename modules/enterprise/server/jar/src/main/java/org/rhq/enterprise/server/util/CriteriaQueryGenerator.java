@@ -262,7 +262,7 @@ public final class CriteriaQueryGenerator {
     }
 
     private String getParameterReplacedValue(Object value) {
-        String returnValue = null;
+        String returnValue;
         if (value instanceof String) {
             returnValue = "'" + prepareStringBindValue((String) value) + "'";
         } else if (value instanceof Enum<?>) {
@@ -370,7 +370,7 @@ public final class CriteriaQueryGenerator {
             /*
              * do not prefix the alias when:
              * 
-             *    1) if the suffix is numerical, which allows usto sort by column ordinal
+             *    1) if the suffix is numerical, which allows us to sort by column ordinal
              *    2) if the user wants full control and has explicitly chosen to disable alias prepending
              */
             boolean doNotPrefixAlias = isNumber(suffix) || criteria.hasCustomizedSorting();
@@ -401,7 +401,7 @@ public final class CriteriaQueryGenerator {
             String expressionLeaf = sortFragment.substring(lastDelimiterIndex + 1);
             int expressionRootIndex = orderingFieldRequiredJoins.indexOf(expressionRoot);
 
-            String joinAlias = null;
+            String joinAlias;
             if (expressionRootIndex == -1) {
                 // new join
                 joinAlias = "orderingField" + orderingFieldRequiredJoins.size();
@@ -443,7 +443,7 @@ public final class CriteriaQueryGenerator {
             }
             String fieldName = filterField.getKey();
             String override = criteria.getJPQLFilterOverride(fieldName);
-            String fragment = null;
+            String fragment;
             if (override != null) {
                 fragment = fixFilterOverride(override, fieldName);
             } else {
@@ -476,7 +476,7 @@ public final class CriteriaQueryGenerator {
                 // always want AND for security, regardless of conjunctiveFragment
                 results.append(NL).append(" AND ");
             }
-            results.append(this.authorizationPermsFragment + " ");
+            results.append(this.authorizationPermsFragment).append(" ");
         }
 
         if (authorizationCustomConditionFragment != null) {
@@ -544,7 +544,7 @@ public final class CriteriaQueryGenerator {
     public List<String> getFetchFields(Criteria criteria) {
         List<String> results = new ArrayList<String>();
         for (Field fetchField : getFields(criteria, Criteria.Type.FETCH)) {
-            Object fetchFieldValue = null;
+            Object fetchFieldValue;
             try {
                 fetchField.setAccessible(true);
                 fetchFieldValue = fetchField.get(criteria);
@@ -591,7 +591,7 @@ public final class CriteriaQueryGenerator {
     public Map<String, Object> getFilterFields(Criteria criteria) {
         Map<String, Object> results = new HashMap<String, Object>();
         for (Field filterField : getFields(criteria, Criteria.Type.FILTER)) {
-            Object filterFieldValue = null;
+            Object filterFieldValue;
             try {
                 filterFieldValue = filterField.get(criteria);
             } catch (IllegalAccessException iae) {
@@ -741,7 +741,7 @@ public final class CriteriaQueryGenerator {
     public Query getQuery(EntityManager em) {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
-        setBindValues(query, false);
+        setBindValues(query);
         PersistenceUtility.setDataPage(query, getPageControl(criteria));
         return query;
     }
@@ -749,11 +749,11 @@ public final class CriteriaQueryGenerator {
     public Query getCountQuery(EntityManager em) {
         String countQueryString = getQueryString(true);
         Query query = em.createQuery(countQueryString);
-        setBindValues(query, false);
+        setBindValues(query);
         return query;
     }
 
-    private void setBindValues(Query query, boolean countQuery) {
+    private void setBindValues(Query query) {
         for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
 
@@ -886,7 +886,7 @@ public final class CriteriaQueryGenerator {
     }
 
     public static PageControl getPageControl(Criteria criteria) {
-        PageControl pc = null;
+        PageControl pc;
 
         if (criteria.getPageControlOverrides() != null) {
             pc = criteria.getPageControlOverrides();
@@ -901,7 +901,7 @@ public final class CriteriaQueryGenerator {
                     if (sortField.getName().equals(fieldName) == false) {
                         continue;
                     }
-                    Object sortFieldValue = null;
+                    Object sortFieldValue;
                     try {
                         sortFieldValue = sortField.get(criteria);
                     } catch (IllegalAccessException iae) {
@@ -916,4 +916,5 @@ public final class CriteriaQueryGenerator {
         }
         return pc;
     }
+
 }

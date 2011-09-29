@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
-import com.google.gwt.user.client.History;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -55,25 +53,13 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        /* (non-Javadoc)
-         * TODO:  This factory ASSUMES the user is currently navigated to a group detail view, and generates a portlet
-         *        for that group.  It will fail in other scenarios.  This mechanism should be improved such that the
-         *        factory method can take an EntityContext explicitly indicating, in this case, the group. 
-         * @see org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory#getInstance(java.lang.String)
-         */
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
-            String currentPage = History.getToken();
-            int groupId = -1;
-            String[] elements = currentPage.split("/");
-            // process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
-            try {
-                groupId = Integer.valueOf(elements[1]);
-            } catch (NumberFormatException nfe) {
-                groupId = Integer.valueOf(elements[2]);
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupAlertsPortlet(locatorId, groupId);
+            return new GroupAlertsPortlet(locatorId, context.getGroupId());
         }
     }
 

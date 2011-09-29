@@ -15,7 +15,7 @@
    <description>A template for building a custom generic RHQ Server plugin</description>
 
    <properties>
-      <rhq.version>3.0.0.B05</rhq.version>
+      <rhq.version>4.0.1</rhq.version>
    </properties>
 
    <dependencies>
@@ -24,6 +24,13 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
+         <version>${rhq.version}</version>
+         <scope>provided</scope> <!-- provided by the server/plugin-container -->
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
          <version>${rhq.version}</version>
          <scope>provided</scope> <!-- provided by the server/plugin-container -->
       </dependency>

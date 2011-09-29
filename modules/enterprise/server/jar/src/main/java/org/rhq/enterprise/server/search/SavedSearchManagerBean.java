@@ -63,7 +63,7 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
         // this needs to prevent certains types of updates, be more sophisticated, etc
         validateManipulatePermission(subject, savedSearch);
         SavedSearch oldSavedSearch = entityManager.find(SavedSearch.class, savedSearch.getId());
-        if (oldSavedSearch.equals(savedSearch)) {
+        if (null == oldSavedSearch || oldSavedSearch.equals(savedSearch)) {
             return false;
         } else {
             entityManager.merge(savedSearch);
@@ -76,8 +76,10 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
      */
     public void deleteSavedSearch(Subject subject, int savedSearchId) {
         SavedSearch savedSearch = entityManager.find(SavedSearch.class, savedSearchId);
-        validateManipulatePermission(subject, savedSearch);
-        entityManager.remove(savedSearch);
+        if (null != savedSearch) {
+            validateManipulatePermission(subject, savedSearch);
+            entityManager.remove(savedSearch);
+        }
     }
 
     /**

@@ -31,6 +31,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
@@ -50,18 +51,18 @@ import org.rhq.plugins.jbossas5.ApplicationServerComponent;
  * 
  * @author Ian Springer
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent>,
-        ManualAddFacet<ApplicationServerComponent>, ResourceUpgradeFacet<ApplicationServerComponent> {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<ApplicationServerComponent<?>>,
+    ManualAddFacet<ApplicationServerComponent<?>>, ResourceUpgradeFacet<ApplicationServerComponent<?>> {
 
     private final Log log = LogFactory.getLog(this.getClass());
     static final String SERVER_HOME_DIR = "homeDir";
 
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
+        ResourceDiscoveryContext<ApplicationServerComponent<?>> discoveryContext)
         throws InvalidPluginConfigurationException {
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
 
-        ResourceContext parentResourceContext = discoveryContext.getParentResourceContext();
+        ResourceContext<?> parentResourceContext = discoveryContext.getParentResourceContext();
         File binDir = getServerBinDirectory(parentResourceContext);
         log.debug("Searching for scripts beneath JBossAS server bin directory (" + binDir + ")...");
         ScriptFileFinder scriptFileFinder = new ScriptFileFinder(discoveryContext.getSystemInformation(), binDir);
@@ -81,8 +82,8 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-        ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
-            throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext<ApplicationServerComponent<?>> discoveryContext)
+        throws InvalidPluginConfigurationException {
 
         File path = new File(pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue());
         validatePath(path);
@@ -90,12 +91,12 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
         File binDir = getServerBinDirectory(parentResourceContext);
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig, binDir);
         log.debug("Manually added script service: " + resource);
-        
+
         return resource;
     }
 
     @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ApplicationServerComponent> upgradeContext) {
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ApplicationServerComponent<?>> upgradeContext) {
         String inventoriedResourceKey = upgradeContext.getResourceKey();
 
         ResourceContext<?> parentResourceContext = upgradeContext.getParentResourceContext();
@@ -124,8 +125,8 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
     }
 
     private static String buildResourceKey(String scriptPath, File binDir) {
-        return (scriptPath.startsWith(binDir.getPath())) ? scriptPath.substring(binDir.getPath().length() + 1) :
-                scriptPath;
+        return (scriptPath.startsWith(binDir.getPath())) ? scriptPath.substring(binDir.getPath().length() + 1)
+            : scriptPath;
     }
 
     private void validatePath(File path) {
@@ -164,7 +165,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<Appl
     }
 
     private DiscoveredResourceDetails createResourceDetails(
-        ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext, Configuration pluginConfig,
+        ResourceDiscoveryContext<ApplicationServerComponent<?>> discoveryContext, Configuration pluginConfig,
         File binDir) {
         String path = pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue();
         String key = buildResourceKey(path, binDir);

@@ -19,10 +19,21 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import java.util.Set;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 
 /**
  * @author John Mazzitelli
@@ -30,6 +41,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSetsTreeDataSource {
 
     private final EntityContext context;
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     public ResourceDriftChangeSetsTreeDataSource(boolean canManageDrift, EntityContext context) {
         super(canManageDrift);
@@ -42,8 +54,29 @@ public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSe
     }
 
     @Override
-    protected DriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
-        DriftChangeSetCriteria criteria = super.getDriftChangeSetCriteria(request);
+    protected void fetchDriftConfigurations(final DSRequest request, final DSResponse response) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterId(context.getResourceId());
+        criteria.fetchDriftConfigurations(true);
+        this.resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
+            public void onSuccess(PageList<Resource> result) {
+                Set<DriftConfiguration> driftConfigs = result.get(0).getDriftConfigurations();
+                response.setData(buildRecords(driftConfigs));
+                response.setTotalRows(result.getTotalSize());
+                processResponse(request.getRequestId(), response);
+            }
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+        });
+    }
+
+    @Override
+    protected GenericDriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
+        GenericDriftChangeSetCriteria criteria = super.getDriftChangeSetCriteria(request);
         criteria.addFilterResourceId(this.context.resourceId);
         return criteria;
     }

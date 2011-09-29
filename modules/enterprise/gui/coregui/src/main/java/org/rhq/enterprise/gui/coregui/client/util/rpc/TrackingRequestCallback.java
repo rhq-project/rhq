@@ -23,6 +23,7 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
@@ -36,6 +37,8 @@ public class TrackingRequestCallback implements RequestCallback {
     private long start = System.currentTimeMillis();
 
     private static final int STATUS_CODE_OK = 200;
+    private static final int STATUS_CODE_ERROR_INTERNET_CANNOT_CONNECT = 12029;
+    private static final int STATUS_CODE_ERROR_INTERNET_CONNECTION_ABORTED = 12030;
 
     private RequestCallback callback;
 
@@ -58,17 +61,48 @@ public class TrackingRequestCallback implements RequestCallback {
     }
 
     public void onResponseReceived(Request request, Response response) {
+        int statusCode;
+        String statusText;
+
+        try {
+            statusCode = response.getStatusCode();
+            statusText = response.getStatusText();
+        } catch (Throwable t) {
+            // If the server is unreachable or has terminated firefox will generate a JavaScript exception
+            // when trying to read the response object. Let the user know the server is unreachable.
+            // (http://helpful.knobs-dials.com/index.php/0x80004005_%28NS_ERROR_FAILURE%29_and_other_firefox_errors)) 
+            if (UserSessionManager.isLoggedIn()) {
+                CoreGUI.getErrorHandler().handleError(CoreGUI.getMessages().view_core_serverUnreachable(), t);
+            }
+            return;
+        }
+
         if (Log.isTraceEnabled()) {
-            Log.trace(toString() + ": " + response.getStatusCode() + "/" + response.getStatusText());
+            Log.trace(toString() + ": " + statusCode + "/" + statusText);
         }
 
         RemoteServiceStatistics.record(getName(), getAge());
-        if (STATUS_CODE_OK == response.getStatusCode()) {
+
+        switch (statusCode) {
+        case STATUS_CODE_OK:
             RPCTracker.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
-        } else {
+            break;
+
+        case STATUS_CODE_ERROR_INTERNET_CANNOT_CONNECT:
+        case STATUS_CODE_ERROR_INTERNET_CONNECTION_ABORTED:
             RPCTracker.getInstance().failCall(this);
-            if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
+            // If the server is unreachable or has terminated, and the user is still logged in,
+            // let them know the server is now unreachable. 
+            if (UserSessionManager.isLoggedIn()) {
+                CoreGUI.getErrorHandler().handleError("Server unreachable and may be down");
+            }
+            break;
+
+        default:
+            RPCTracker.getInstance().failCall(this);
+            // process the failure only if the user still logged in
+            if (UserSessionManager.isLoggedIn()) {
                 callback.onResponseReceived(request, response);
             }
         }

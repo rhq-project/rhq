@@ -49,7 +49,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * 
  * @author Heiko W. Rupp
  */
-public class JBossCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class JBossCacheDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     private static final Log log = LogFactory.getLog(JBossCacheDiscoveryComponent.class);
 
@@ -57,10 +57,10 @@ public class JBossCacheDiscoveryComponent extends MBeanResourceDiscoveryComponen
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
 
         ResourceContext parentCtx = context.getParentResourceContext();
-        JMXComponent<JBossASServerComponent> gparentComponent = (JMXComponent<JBossASServerComponent>) parentCtx.getParentResourceComponent();
+        JMXComponent<JBossASServerComponent<?>> gparentComponent = (JMXComponent<JBossASServerComponent<?>>) parentCtx.getParentResourceComponent();
 
         Set<DiscoveredResourceDetails> discovered = super.performDiscovery(context.getDefaultPluginConfiguration(), gparentComponent, context.getResourceType(), false);
 

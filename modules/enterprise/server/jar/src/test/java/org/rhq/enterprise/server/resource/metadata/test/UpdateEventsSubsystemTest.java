@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Note, plugins are registered in new transactions. for tests, this means
  * you can't do everything in a trans and roll back at the end. You must clean up manually.
  */
-public class UpdateEventsSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateEventsSubsystemTest extends UpdatePluginMetadataTestBase {
 
     static final boolean ENABLED = true;
 

@@ -25,13 +25,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -39,11 +42,15 @@ import javax.xml.stream.XMLStreamWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.util.IndentingXMLStreamWriter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.xmlschema.ConfigurationInstanceDescriptorUtil;
 
 /**
  * Reading from this input stream produces the export file in a lazy (and therefore memory efficient)
@@ -55,24 +62,16 @@ public class ExportingInputStream extends InputStream {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStream.class);
 
-    public static final String CONFIGURATION_EXPORT_ELEMENT = "configuration-export";
-    public static final String ENTITIES_EXPORT_ELEMENT = "entities";
-    public static final String ENTITY_EXPORT_ELEMENT = "entity";
-    public static final String ERROR_MESSAGE_ELEMENT = "error-message";
-    public static final String NOTES_ELEMENT = "notes";
-    public static final String DATA_ELEMENT = "data";
-    public static final String VALIDATOR_ELEMENT = "validator";
-    public static final String ID_ATTRIBUTE = "id";
-    public static final String CLASS_ATTRIBUTE = "class";
-    
     private Set<Synchronizer<?, ?>> synchronizers;
     private Map<String, ExporterMessages> messagesPerExporter;
     private PipedInputStream inputStream;
     private PipedOutputStream exportOutput;
     private Thread exportRunner;
-    private Throwable uncaughtExporterException;
+    private Throwable unexpectedExporterException;
     private boolean zipOutput;
-    
+
+    private Marshaller configurationMarshaller;
+
     /**
      * Constructs a new exporting input stream with the default buffer size of 64KB that zips up
      * the results.
@@ -93,13 +92,25 @@ public class ExportingInputStream extends InputStream {
      * @param zip whether to zip the export data
      * @throws IOException on failure
      */
-    public ExportingInputStream(Set<Synchronizer<?, ?>> synchronizers, Map<String, ExporterMessages> messagesPerExporter,
-        int size, boolean zip) throws IOException {
+    public ExportingInputStream(Set<Synchronizer<?, ?>> synchronizers,
+        Map<String, ExporterMessages> messagesPerExporter, int size, boolean zip) throws IOException {
         this.synchronizers = synchronizers;
         this.messagesPerExporter = messagesPerExporter;
         inputStream = new PipedInputStream(size);
         exportOutput = new PipedOutputStream(inputStream);
         zipOutput = zip;
+
+        try {
+            JAXBContext context = JAXBContext.newInstance(DefaultImportConfigurationDescriptor.class);
+
+            configurationMarshaller = context.createMarshaller();
+            configurationMarshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+            configurationMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            configurationMarshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+
+        } catch (JAXBException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
@@ -167,21 +178,14 @@ public class ExportingInputStream extends InputStream {
 
             exportRunner.setDaemon(true);
             exportRunner.setName("Configuration Export Thread");
-            exportRunner.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
-                @Override
-                public void uncaughtException(Thread t, Throwable e) {
-                    uncaughtExporterException = e;
-                }
-            });
-            
             exportRunner.setContextClassLoader(Thread.currentThread().getContextClassLoader());
-            
+
             exportRunner.start();
         }
 
-        if (uncaughtExporterException != null) {
-            throw new IOException("The exporter thread failed with an uncaught exception.", uncaughtExporterException);
+        if (unexpectedExporterException != null) {
+            throw new IOException("The exporter thread failed with an uncaught exception.", unexpectedExporterException);
         }
     }
 
@@ -190,30 +194,32 @@ public class ExportingInputStream extends InputStream {
         OutputStream out = null;
         try {
             XMLOutputFactory ofactory = XMLOutputFactory.newInstance();
-
+            ofactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
+            
             try {
                 out = exportOutput;
-                if (zipOutput) {                    
+                if (zipOutput) {
                     out = new GZIPOutputStream(out);
                 }
-                wrt = ofactory.createXMLStreamWriter(out, "UTF-8");
+                wrt = new IndentingXMLStreamWriter(ofactory.createXMLStreamWriter(out, "UTF-8"));
+                //wrt = ofactory.createXMLStreamWriter(out, "UTF-8");
             } catch (XMLStreamException e) {
                 LOG.error("Failed to create the XML stream writer to output the export file to.", e);
                 return;
             }
 
             exportPrologue(wrt);
-            
+
             for (Synchronizer<?, ?> exp : synchronizers) {
                 exportSingle(wrt, exp);
             }
-            
-            exportEpilogue(wrt);         
-            
+
+            exportEpilogue(wrt);
+
             wrt.flush();
         } catch (Exception e) {
             LOG.error("Error while exporting.", e);
-            throw new RuntimeException(e);
+            unexpectedExporterException = e;
         } finally {
             if (wrt != null) {
                 try {
@@ -231,9 +237,20 @@ public class ExportingInputStream extends InputStream {
      * @throws XMLStreamException 
      */
     private void exportPrologue(XMLStreamWriter wrt) throws XMLStreamException {
-        wrt.setDefaultNamespace("urn:xmlns:rhq-configuration-export");
+        wrt.setDefaultNamespace(SynchronizationConstants.EXPORT_NAMESPACE);
+        wrt.setPrefix(SynchronizationConstants.EXPORT_NAMESPACE_PREFIX, SynchronizationConstants.EXPORT_NAMESPACE);
+        wrt.setPrefix(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE);
+        wrt.setPrefix(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_NAMESPACE);
+        
+        NamespaceContext nsContext = SynchronizationConstants.createConfigurationExportNamespaceContext();
+
+        wrt.setNamespaceContext(nsContext);
+        
         wrt.writeStartDocument();
-        wrt.writeStartElement(CONFIGURATION_EXPORT_ELEMENT);
+        wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.CONFIGURATION_EXPORT_ELEMENT);
+        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_INSTANCE_NAMESPACE_PREFIX, ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.writeNamespace(SynchronizationConstants.CONFIGURATION_NAMESPACE_PREFIX, SynchronizationConstants.CONFIGURATION_NAMESPACE);
+
         writeValidators(wrt);
     }
 
@@ -242,14 +259,14 @@ public class ExportingInputStream extends InputStream {
      */
     private void writeValidators(XMLStreamWriter wrt) throws XMLStreamException {
         Set<ConsistencyValidator> allValidators = new HashSet<ConsistencyValidator>();
-        
-        for(Synchronizer<?, ?> syn : synchronizers) {
+
+        for (Synchronizer<?, ?> syn : synchronizers) {
             allValidators.addAll(syn.getRequiredValidators());
         }
-        
-        for(ConsistencyValidator cv : allValidators) {
-            wrt.writeStartElement(VALIDATOR_ELEMENT);
-            wrt.writeAttribute(CLASS_ATTRIBUTE, cv.getClass().getName());
+
+        for (ConsistencyValidator cv : allValidators) {
+            wrt.writeStartElement(SynchronizationConstants.VALIDATOR_ELEMENT);
+            wrt.writeAttribute(SynchronizationConstants.CLASS_ATTRIBUTE, cv.getClass().getName());
             cv.exportState(new ExportWriter(wrt));
             wrt.writeEndElement();
         }
@@ -262,7 +279,7 @@ public class ExportingInputStream extends InputStream {
     private void exportEpilogue(XMLStreamWriter wrt) throws XMLStreamException {
         wrt.writeEndDocument();
     }
-    
+
     /**
      * @param wrt
      * @param syn
@@ -273,12 +290,22 @@ public class ExportingInputStream extends InputStream {
         ExporterMessages messages = new ExporterMessages();
 
         messagesPerExporter.put(syn.getClass().getName(), messages);
-        
-        wrt.writeStartElement(ENTITIES_EXPORT_ELEMENT);
-        wrt.writeAttribute(ID_ATTRIBUTE, syn.getClass().getName());
-        
+
+        wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.ENTITIES_EXPORT_ELEMENT);
+        wrt.writeAttribute(SynchronizationConstants.ID_ATTRIBUTE, syn.getClass().getName());
+
         Exporter<?, ?> exp = syn.getExporter();
         ExportingIterator<?> it = exp.getExportingIterator();
+
+        DefaultImportConfigurationDescriptor importConfig = getDefaultImportConfiguraton(syn);
+
+        if (importConfig != null) {
+            try {
+                configurationMarshaller.marshal(importConfig, wrt);
+            } catch (JAXBException e) {
+                throw new XMLStreamException(e);
+            }
+        }
 
         messages.setPerEntityErrorMessages(new ArrayList<String>());
         messages.setPerEntityNotes(new ArrayList<String>());
@@ -286,45 +313,52 @@ public class ExportingInputStream extends InputStream {
         while (it.hasNext()) {
             it.next();
 
-            wrt.writeStartElement(ENTITY_EXPORT_ELEMENT);
-            
+            wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.ENTITY_EXPORT_ELEMENT);
+
+            wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.DATA_ELEMENT);
+
+            Exception exportError = null;
             try {
-                wrt.writeStartElement(DATA_ELEMENT);
                 it.export(new ExportWriter(wrt));
-                wrt.writeEndElement();
-                
-                String notes = it.getNotes();
-                
-                if (notes != null) {
-                    messages.getPerEntityNotes().add(notes);
-                    wrt.writeStartElement(NOTES_ELEMENT);
-                    wrt.writeCharacters(notes);
-                    wrt.writeEndElement();
-                }
             } catch (XMLStreamException e) {
                 //there's not much we can do about these but to give up.
                 throw e;
             } catch (Exception e) {
-                String message = ThrowableUtil.getStackAsString(e);
+                exportError = e;
+            }
+
+            wrt.writeEndElement(); //data
+
+            if (exportError == null) {
+                String notes = it.getNotes();
+
+                if (notes != null) {
+                    messages.getPerEntityNotes().add(notes);
+                    wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.NOTES_ELEMENT);
+                    wrt.writeCharacters(notes);
+                    wrt.writeEndElement();
+                }
+            } else {
+                String message = ThrowableUtil.getStackAsString(exportError);
                 messages.getPerEntityErrorMessages().add(message);
-                wrt.writeStartElement(ERROR_MESSAGE_ELEMENT);
+                wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.ERROR_MESSAGE_ELEMENT);
                 wrt.writeCharacters(message);
                 wrt.writeEndElement();
             }
-            
+
             wrt.writeEndElement(); //entity
         }
-        
+
         String notes = exp.getNotes();
-        
+
         messages.setExporterNotes(notes);
-        
+
         if (notes != null) {
-            wrt.writeStartElement(NOTES_ELEMENT);
+            wrt.writeStartElement(SynchronizationConstants.EXPORT_NAMESPACE, SynchronizationConstants.NOTES_ELEMENT);
             wrt.writeCharacters(notes);
             wrt.writeEndElement();
         }
-        
+
         wrt.writeEndElement(); //entities
     }
 
@@ -336,5 +370,21 @@ public class ExportingInputStream extends InputStream {
         } catch (IOException e) {
             LOG.error("Failed to close an output stream. This shouldn't happen.", e);
         }
+    }
+
+    private DefaultImportConfigurationDescriptor getDefaultImportConfiguraton(Synchronizer<?, ?> synchronizer) {
+        DefaultImportConfigurationDescriptor ret = null;
+
+        ConfigurationDefinition def = synchronizer.getImporter().getImportConfigurationDefinition();
+
+        if (def != null) {
+            ConfigurationTemplate template = def.getDefaultTemplate();
+            if (template != null) {
+                ret = DefaultImportConfigurationDescriptor.create(ConfigurationInstanceDescriptorUtil
+                    .createConfigurationInstance(def, template.getConfiguration()));
+            }
+        }
+
+        return ret;
     }
 }

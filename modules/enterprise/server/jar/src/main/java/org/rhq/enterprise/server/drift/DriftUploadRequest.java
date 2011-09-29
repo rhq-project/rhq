@@ -27,18 +27,37 @@ public class DriftUploadRequest implements Serializable {
 
     private int resourceId;
 
+    private String driftConfigName;
+
+    private String token;
+
     private long dataSize;
 
     private InputStream dataStream;
 
     public DriftUploadRequest(int resourceId, long dataSize, InputStream dataStream) {
+        this(resourceId, null, null, dataSize, dataStream);
+    }
+
+    public DriftUploadRequest(int resourceId, String driftConfigName, String token, long dataSize,
+        InputStream dataStream) {
         this.resourceId = resourceId;
+        this.driftConfigName = driftConfigName;
+        this.token = token;
         this.dataSize = dataSize;
         this.dataStream = dataStream;
     }
 
     public int getResourceId() {
         return resourceId;
+    }
+
+    public String getDriftConfigName() {
+        return driftConfigName;
+    }
+
+    public String getToken() {
+        return token;
     }
 
     public long getDataSize() {

@@ -194,7 +194,8 @@ public class SearchBar extends AbstractSearchBar {
                 Integer savedSearchId = Integer.valueOf(defaultSavedSearchPatternId);
                 activateSavedSearch(savedSearchId);
             } catch (Exception e) {
-                this.autoCompletePatternField.setText(MSG.view_searchBar_error_selectSavedSearch());
+                this.autoCompletePatternField.setText(MSG
+                    .view_searchBar_savedSearch_failFind(defaultSavedSearchPatternId));
                 click(searchButton); // execute the search, which will help to further highlight the error
             }
         }

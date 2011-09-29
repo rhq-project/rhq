@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
@@ -133,6 +134,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         final TreeGrid treeGrid = new LocatableTreeGrid(navigationSection.getName());
         treeGrid.setLeaveScrollbarGap(false);
         treeGrid.setShowHeader(false);
+        treeGrid.setSelectionType(SelectionStyle.SINGLE);
 
         List<NavigationItem> navigationItems = navigationSection.getNavigationItems();
         TreeNode[] treeNodes = new TreeNode[navigationItems.size()];

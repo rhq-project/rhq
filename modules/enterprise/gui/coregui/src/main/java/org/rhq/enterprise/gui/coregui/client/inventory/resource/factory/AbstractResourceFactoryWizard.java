@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
@@ -104,8 +105,9 @@ public abstract class AbstractResourceFactoryWizard extends AbstractWizard {
             || !this.newResourceConfigurationDefinition.equals(newResourceConfigurationDefinition)) {
             this.newResourceConfigurationDefinition = newResourceConfigurationDefinition;
             if (newResourceConfigurationDefinition != null) {
-                this.newResourceStartingConfiguration = this.newResourceConfigurationDefinition.getDefaultTemplate()
-                    .createConfiguration();
+                ConfigurationTemplate defaultTemplate = this.newResourceConfigurationDefinition.getDefaultTemplate();
+                this.newResourceStartingConfiguration = (defaultTemplate != null) ?
+                        defaultTemplate.createConfiguration() : new Configuration();
             }
         }
     }

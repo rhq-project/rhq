@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author John Mazzitelli
  */
+@SuppressWarnings("unchecked")
 public abstract class StringIDTableSection<DS extends RPCDataSource> extends AbstractTableSection<DS, String> {
 
     public StringIDTableSection(String locatorId, String tableTitle, boolean autoFetchData) {
@@ -93,7 +93,7 @@ public abstract class StringIDTableSection<DS extends RPCDataSource> extends Abs
     @Override
     public void showDetails(String id) {
         if (id != null && id.length() > 0) {
-            History.newItem(getBasePath() + "/" + convertIDToCurrentViewPath(id));
+            CoreGUI.goToView(getBasePath() + "/" + convertIDToCurrentViewPath(id));
         } else {
             String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), (id == null) ? "null" : id
                 .toString());

@@ -19,7 +19,7 @@
 package org.rhq.core.db;
 
 /**
- * Postgres 9.1 database which extends the Postgres 8.4 database.
+ * Postgres 9.1 database which extends the Postgres database.
  * It is important to extend 8.3+ and not any previous version as the
  * code will enable async commit in some place for instanceof 8.3
  *
@@ -43,4 +43,18 @@ public class Postgresql91DatabaseType extends Postgresql90DatabaseType {
     public String getVersion() {
         return "9.1";
     }
+
+    /**
+     * Postgres 9.1 is using a standard conforming escape character out of the box
+     * unlike earlier versions of Postgres, which means we need to follow this convention
+     * here.
+     * @return escape char
+     */
+    @Override
+    public String getEscapeCharacter() {
+        String result = System.getProperty("rhq.server.database.escape-character");
+
+        return (null == result) ? "\\" : result;
+    }
+
 }

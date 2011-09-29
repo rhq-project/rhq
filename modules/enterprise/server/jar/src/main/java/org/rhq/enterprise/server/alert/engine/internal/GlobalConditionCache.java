@@ -57,9 +57,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 class GlobalConditionCache extends AbstractConditionCache {
 
-    private Map<Integer, Map<Integer, List<ResourceOperationCacheElement>>> resourceOperationCache;
-    private Map<Integer, List<AvailabilityCacheElement>> availabilityCache;
-    private Map<Integer, List<ResourceConfigurationCacheElement>> resourceConfigurationCache;
+    private Map<Integer, Map<Integer, List<ResourceOperationCacheElement>>> resourceOperationCache; // key: resource ID, inner key: operation def ID
+    private Map<Integer, List<AvailabilityCacheElement>> availabilityCache; // key: resource ID
+    private Map<Integer, List<ResourceConfigurationCacheElement>> resourceConfigurationCache; // key: resource ID
 
     private AlertConditionManagerLocal alertConditionManager;
     private SubjectManagerLocal subjectManager;

@@ -70,14 +70,15 @@ public class GroupActivationContext extends AbstractResourceOrGroupActivationCon
         if (this.resourcePermissions == null) {
             Set<Permission> perms = this.authorizationManager.getImplicitGroupPermissions(getSubject(), this.group
                 .getId());
-            this.resourcePermissions = EnumSet.copyOf(perms);
+            this.resourcePermissions = EnumSet.noneOf(Permission.class);
+            this.resourcePermissions.addAll(perms);
         }
         return this.resourcePermissions;
     }
 
     public Set<Resource> getResources() {
         // lazy load
-        if (null == this.group.getExplicitResources()) {
+        if (this.group.getExplicitResources() == null) {
             ResourceGroupCriteria criteria = new ResourceGroupCriteria();
             criteria.addFilterId(this.group.getId());
             criteria.fetchExplicitResources(true);

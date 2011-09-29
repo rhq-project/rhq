@@ -37,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
@@ -51,11 +52,18 @@ public class DriftChangesetBean implements MessageListener {
     private final Log log = LogFactory.getLog(DriftChangesetBean.class);
 
     @EJB
-    private DriftServerLocal driftServer;
+    private DriftManagerLocal driftManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @Override
     public void onMessage(Message message) {
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Received drift change set message");
+            }
+
             ObjectMessage msg = (ObjectMessage) message;
             DriftUploadRequest request = (DriftUploadRequest) msg.getObject();
 
@@ -76,7 +84,7 @@ public class DriftChangesetBean implements MessageListener {
                         + "]");
                 }
 
-                driftServer.saveChangeSet(request.getResourceId(), tempFile);
+                driftManager.saveChangeSet(subjectManager.getOverlord(), request.getResourceId(), tempFile);
 
             } catch (IOException e) {
                 log.error(e);
@@ -91,7 +99,7 @@ public class DriftChangesetBean implements MessageListener {
 
         } catch (Throwable t) {
             // catch Throwable here, don't let anything escape as bad things can happen wrt XA/2PhaseCommit  
-            log.error(t);
+            log.error("Error processing drift changeset message", t);
         }
     }
 

@@ -96,7 +96,6 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -214,7 +213,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private SynchronizationManagerLocal synchronizationManager = LookupUtil.getSynchronizationManager();
-    
+
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
         return alertManager.findAlertsByCriteria(subject, criteria);
@@ -325,6 +324,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
         return bundleManager.createBundleVersionViaFile(subject, distributionFile);
+    }
+
+    public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
+        return bundleManager.createBundleVersionViaByteArray(subject, fileBytes);
     }
 
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
@@ -593,16 +596,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
-
-    // DRIFTMANAGER: BEGIN ----------------------------------
-
-    @Override
-    public void detectDrift(Subject subject, EntityContext entityContext, DriftConfiguration driftConfiguration)
-        throws Exception {
-        driftManager.detectDrift(subject, entityContext, driftConfiguration);
-    }
-
-    // DRIFTMANAGER: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -1203,28 +1196,28 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SYSTEMMANAGER: END ------------------------------------
 
     //SYNCHRONIZATIONMANANGER: BEGIN -------------------------
-    
+
     public ExportReport exportAllSubsystems(Subject subject) {
         return synchronizationManager.exportAllSubsystems(subject);
     }
-    
+
     public void validate(Subject subject, byte[] exportFile) throws ValidationException {
         synchronizationManager.validate(subject, exportFile);
     }
-    
+
     public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
         return synchronizationManager.getImportConfigurationDefinitionOfAllSynchronizers();
     }
-    
+
     public ImportConfigurationDefinition getImportConfigurationDefinition(String importerClass) {
         return synchronizationManager.getImportConfigurationDefinition(importerClass);
     }
-    
-    public void importAllSubsystems(Subject subject, byte[] exportFile,
-        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException {
+
+    public void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations)
+        throws ValidationException, ImportException {
         synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
-    
+
     //SYNCHRONIZATIONMANANGER: END -------------------------
     private void checkParametersPassedIn(Subject subject, Criteria criteria) {
         if (subject == null) {

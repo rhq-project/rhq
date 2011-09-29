@@ -121,23 +121,26 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
         DatabaseMetaData dmd = connection.getMetaData();
         ResultSet rs = dmd.getColumns("", "", getTableName(), "");
+        try {
+            PropertyList columnList = new PropertyList("columns");
 
-        PropertyList columnList = new PropertyList("columns");
+            while (rs.next()) {
+                PropertyMap col = new PropertyMap("columnDefinition");
 
-        while (rs.next()) {
-            PropertyMap col = new PropertyMap("columnDefinition");
+                col.put(new PropertySimple("columnName", rs.getString("COLUMN_NAME")));
+                col.put(new PropertySimple("columnType", rs.getString("TYPE_NAME")));
+                col.put(new PropertySimple("columnLength", rs.getInt("COLUMN_SIZE")));
+                col.put(new PropertySimple("columnPrecision", rs.getInt("DECIMAL_DIGITS")));
+                col.put(new PropertySimple("columnDefault", rs.getString("COLUMN_DEF")));
+                col.put(new PropertySimple("columnNullable", rs.getBoolean("IS_NULLABLE")));
 
-            col.put(new PropertySimple("columnName", rs.getString("COLUMN_NAME")));
-            col.put(new PropertySimple("columnType", rs.getString("TYPE_NAME")));
-            col.put(new PropertySimple("columnLength", rs.getInt("COLUMN_SIZE")));
-            col.put(new PropertySimple("columnPrecision", rs.getInt("DECIMAL_DIGITS")));
-            col.put(new PropertySimple("columnDefault", rs.getString("COLUMN_DEF")));
-            col.put(new PropertySimple("columnNullable", rs.getBoolean("IS_NULLABLE")));
+                columnList.add(col);
+            }
 
-            columnList.add(col);
+            config.put(columnList);
+        } finally {
+            rs.close();
         }
-
-        config.put(columnList);
 
         return config;
     }
@@ -151,11 +154,14 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
             DatabaseMetaData dmd = connection.getMetaData();
             ResultSet rs = dmd.getColumns("", "", getTableName(), "");
-
             Map<String, ColumnDefinition> existingDefs = new HashMap<String, ColumnDefinition>();
-            while (rs.next()) {
-                ColumnDefinition def = new ColumnDefinition(rs);
-                existingDefs.put(def.columnName, def);
+            try {
+                while (rs.next()) {
+                    ColumnDefinition def = new ColumnDefinition(rs);
+                    existingDefs.put(def.columnName, def);
+                }
+            } finally {
+                rs.close();
             }
 
             for (Property newColumnDefinition : updatedColumns.getList()) {

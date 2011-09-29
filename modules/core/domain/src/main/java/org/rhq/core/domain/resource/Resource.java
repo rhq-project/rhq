@@ -39,7 +39,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -70,6 +69,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -80,7 +80,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.Summary;
 
 /**
- * Represents a JON managed resource (i.e. a platform, server, or service).
+ * Represents an RHQ managed resource (i.e. a platform, server, or service).
  */
 @Entity
 @NamedQueries( {
@@ -291,13 +291,14 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "   AND res.resourceType.category = :category " + "   AND res.inventoryStatus = :status "),
+        + "   AND res.inventoryStatus = :status " //
+        + "   AND (res.resourceType.category = :category OR :category is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent " //
         + "   AND res.inventoryStatus = :status " //
-        + "   AND res.resourceType.category = :category "),
+        + "   AND (res.resourceType.category = :category OR :category is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
@@ -1074,11 +1075,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    @JoinTable(name = "RHQ_DRIFT_CONFIG_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_ID", nullable = false) },
-        inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID", nullable = false)})
-    @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    private Set<Configuration> driftConfigurations = null;
+    private Set<DriftConfiguration> driftConfigurations = null;
 
     public Resource() {
     }
@@ -1087,7 +1086,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
      *
-     * @param id
+     * @param id the Resource's id
      */
     public Resource(int id) {
         this.id = id;
@@ -1095,7 +1094,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public Resource( //
         @NotNull String resourceKey, //
-        @NotNull String name, //
+        String name, //
         @NotNull ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
@@ -1135,12 +1134,11 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.uuid = uuid;
     }
 
-    @NotNull
     public String getName() {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -1149,8 +1147,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     /**
-     * In general this method should not be called by application code. At least not for any Resource that will be
-     * persisted or merged.  The ancestry string is maintained internally. {@link #updateAncestryForResource()}.
+     * In general this method should not be called by application code, at least not for any Resource that will be
+     * persisted or merged.  The ancestry string is maintained internally (see {@link #updateAncestryForResource()}).
      * 
      * @param ancestry
      */
@@ -1749,12 +1747,21 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.dashboards = dashboards;
     }
 
-    public Set<Configuration> getDriftConfigurations() {
+    public Set<DriftConfiguration> getDriftConfigurations() {
+        if (this.driftConfigurations == null) {
+            this.driftConfigurations = new LinkedHashSet<DriftConfiguration>();
+        }
+
         return driftConfigurations;
     }
 
-    public void setDriftConfigurations(Set<Configuration> driftConfigurations) {
+    public void setDriftConfigurations(Set<DriftConfiguration> driftConfigurations) {
         this.driftConfigurations = driftConfigurations;
+    }
+
+    public void addDriftConfiguration(DriftConfiguration driftConfiguration) {
+        getDriftConfigurations().add(driftConfiguration);
+        driftConfiguration.setResource(this);
     }
 
     public int compareTo(Resource that) {

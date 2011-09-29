@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
@@ -186,7 +187,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new AutodiscoveryPortlet(locatorId);
         }
@@ -214,10 +215,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     @Override
     public void refresh() {
         if (!isRefreshing()) {
-            if (null != dataSource) {
-                dataSource.invalidateCache();
-            }
-            markForRedraw();
+            super.refresh();
         }
     }
 }

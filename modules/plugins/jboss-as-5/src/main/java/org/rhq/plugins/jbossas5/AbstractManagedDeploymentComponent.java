@@ -83,7 +83,7 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
 
     // ----------- ResourceComponent Implementation ------------
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         this.deploymentName = pluginConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
@@ -96,10 +96,9 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
         try {
             getManagedDeployment();
         } catch (Exception e) {
-            log
-                .warn("The underlying file ["
-                    + this.deploymentFile
-                    + "] no longer exists. It may have been deleted from the filesystem external to RHQ. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource.");
+            log.warn("The underlying file ["
+                + this.deploymentFile
+                + "] no longer exists. It may have been deleted from the filesystem external to RHQ. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource.");
         }
     }
 
@@ -112,16 +111,16 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
                 + e.getLocalizedMessage());
             return AvailabilityType.DOWN;
         } catch (Throwable t) {
-            log.debug("Could not get deployment state for " + this.deploymentType + " deployment '" 
-                    + this.deploymentName + "', cause: ", t);
+            log.debug("Could not get deployment state for " + this.deploymentType + " deployment '"
+                + this.deploymentName + "', cause: ", t);
             return AvailabilityType.DOWN;
         }
 
         if (deploymentState == DeploymentState.STARTED) {
             return AvailabilityType.UP;
         } else {
-            log.debug(this.deploymentType + " deployment '" + this.deploymentName + 
-                    "' was not running, state was: " + deploymentState); 
+            log.debug(this.deploymentType + " deployment '" + this.deploymentName + "' was not running, state was: "
+                + deploymentState);
             return AvailabilityType.DOWN;
         }
     }

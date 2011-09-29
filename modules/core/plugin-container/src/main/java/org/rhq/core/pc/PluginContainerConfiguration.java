@@ -86,6 +86,13 @@ public class PluginContainerConfiguration {
         + "measurement-collection-threadpoolsize";
     public static final int MEASUREMENT_COLLECTION_THREADCOUNT_DEFAULT = 5;
 
+    // Drift ----------
+
+    private static final String DRIFT_DETECTION_INITIAL_DELAY_PROP = PROP_PREFIX + "drift-detection-initial-delay";
+    public static final long DRIFT_DETECTION_INITIAL_DELAY_DEFAULT = 30L; // in seconds
+    private static final String DRIFT_DETECTION_PERIOD_PROP = PROP_PREFIX + "drift-detection-period";
+    public static final long DRIFT_DETECTION_PERIOD_DEFAULT = 60L; // in seconds
+
     // Content ----------
 
     private static final String CONTENT_DISCOVERY_INITIAL_DELAY_PROP = PROP_PREFIX + "content-discovery-initial-delay";
@@ -467,6 +474,47 @@ public class PluginContainerConfiguration {
     }
 
     /**
+     * Returns the length of time, in seconds, before drift detection first begins.
+     *
+     * @return initial delay in seconds
+     */
+    public long getDriftDetectionInitialDelay() {
+        Long delay = (Long) configuration.get(DRIFT_DETECTION_INITIAL_DELAY_PROP);
+        return (delay == null) ? DRIFT_DETECTION_INITIAL_DELAY_DEFAULT : delay.longValue();
+    }
+
+    /**
+     * Sets the length of time, in seconds, before drift detection first begins.
+     *
+     * @param delay time in seconds before first drift detection
+     */
+    public void setDriftDetectionInitialDelay(long delay) {
+        configuration.put(DRIFT_DETECTION_INITIAL_DELAY_PROP, delay);
+    }
+
+    /**
+     * Returns the length of time, in seconds, between each drift detection scan. In other words, a drift detection scan
+     * will run every X seconds, where X is this method's return value. If this value was never set via
+     * {@link #setDriftDetectionPeriod}, the default will be {@link #DRIFT_DETECTION_PERIOD_DEFAULT}.
+     *
+     * @return time in seconds between drift detection scans
+     */
+    public long getDriftDetectionPeriod() {
+        Long period = (Long) configuration.get(DRIFT_DETECTION_PERIOD_PROP);
+        return (period == null) ? DRIFT_DETECTION_PERIOD_DEFAULT : period.longValue();
+    }
+
+    /**
+     * Sets the length of time, in seconds, between each drift detection scan. In other words, a drift detection
+     * scan should be run every <code>period</code> seconds.
+     *
+     * @param period time in seconds between drift detection scans
+     */
+    public void setDriftDetectionPeriod(long period) {
+        configuration.put(DRIFT_DETECTION_PERIOD_PROP, period);
+    }
+
+    /**
      * Returns the length of time, in seconds, before auto-discovery of content first begins.
      *
      * @return initial delay in seconds
@@ -789,7 +837,6 @@ public class PluginContainerConfiguration {
     public String toString() {
         return configuration.toString();
     }
-
 
     /**
      * Returns the default filter for class loading that is used to prevent leaking

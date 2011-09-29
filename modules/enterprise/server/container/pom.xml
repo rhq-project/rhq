@@ -8,7 +8,7 @@
     <version>4.1.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
-
+  
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-server-container</artifactId>
   <packaging>pom</packaging>
@@ -204,7 +204,7 @@
                   <property name="rhq.server.enable.ws" value="${rhq.server.enable.ws}" />
                   <property name="jbossws-native-dist.version" value="${jbossws-native-dist.version}" />
 
-                  <property name="rhq.sync.endpoint-address" value="${rhq.sync.endpoint-address}"/>
+                  <property name="rhq.sync.endpoint-address" value="${rhq.sync.endpoint-address}" />
                 </ant>
               </tasks>
             </configuration>
@@ -250,6 +250,11 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
+          <archiverConfig>
+            <!-- permissions for archiver configuration are in decimal (not octal) -->
+            <!-- 493 (decimal) = 755 (octal)-->
+            <defaultDirectoryMode>493</defaultDirectoryMode>
+          </archiverConfig>
           <descriptors>
             <descriptor>src/main/scripts/rhq-container.assembly.xml</descriptor>
           </descriptors>

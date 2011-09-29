@@ -1,127 +1,370 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
 package org.rhq.enterprise.server.alert.test;
 
-import java.sql.Connection;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.dbunit.database.DatabaseConnection;
-import org.dbunit.database.IDatabaseConnection;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.FlatXmlDataSet;
-import org.dbunit.dataset.xml.FlatXmlProducer;
-import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.xml.sax.InputSource;
 
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.alert.AlertManagerBean;
 
-/**
- * Test for {@link AlertManagerLocal} SLSB.
- */
-@Test(enabled = false)
-public class AlertManagerBeanTest extends AbstractEJB3Test {
-    private AlertManagerLocal alertManager;
-    private Subject superuser;
-    private Resource newResource;
+@Test
+public class AlertManagerBeanTest {
 
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
-        alertManager = LookupUtil.getAlertManager();
-        superuser = LookupUtil.getSubjectManager().getOverlord();
+    private String pretty;
 
-        Connection connection = null;
+    public void testPrettyPrintAVAILABILITY() {
+        AlertCondition condition = createCondition(AlertConditionCategory.AVAILABILITY, null, null, null,
+            AvailabilityType.UP.name(), null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Availability goes UP".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Avail goes UP".equals(pretty) : pretty;
 
-        try {
-            connection = getConnection();
-            IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
-            DatabaseOperation.CLEAN_INSERT.execute(dbUnitConnection, getDataSet());
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-        }
-
-        newResource = getEntityManager().find(Resource.class, 1);
+        condition = createCondition(AlertConditionCategory.AVAILABILITY, null, null, null,
+            AvailabilityType.DOWN.name(), null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Availability goes DOWN".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Avail goes DOWN".equals(pretty) : pretty;
     }
 
-    @AfterClass
-    public void cleanupDB() throws Exception {
-        if ("true".equals(System.getProperty("clean.db"))) {
-            Connection connection = null;
-
-            try {
-                connection = getConnection();
-                IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
-                DatabaseOperation.DELETE_ALL.execute(dbUnitConnection, getDataSet());
-            } finally {
-                if (connection != null) {
-                    connection.close();
-                }
-            }
-        }
+    public void testPrettyPrintTHRESHOLD() {
+        MeasurementDefinition md = createDynamicMeasurementDefinition();
+        AlertCondition condition = createCondition(AlertConditionCategory.THRESHOLD, md.getDisplayName(), ">", 12.5d,
+            null, md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop > 12.5B".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop > 12.5B".equals(pretty) : pretty;
     }
 
-    IDataSet getDataSet() throws Exception {
-        FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass()
-            .getResourceAsStream("AlertManagerBeanTest.xml")));
-        xmlProducer.setColumnSensing(true);
-        return new FlatXmlDataSet(xmlProducer);
+    public void testPrettyPrintTHRESHOLD_Calltime() {
+        MeasurementDefinition md = createCalltimeMeasurementDefinition();
+        String regex = "some.*(reg)?ex$"; // this is the "name" of the condition
+
+        AlertCondition condition = createCondition(AlertConditionCategory.THRESHOLD, regex, ">", 12.5d, "MAX", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MAX > 12.5B with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MAX > 12.5B matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        // no regex
+        condition = createCondition(AlertConditionCategory.THRESHOLD, null, ">", 12.5d, "MAX", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MAX > 12.5B".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MAX > 12.5B".equals(pretty) : pretty;
     }
 
-    public void deleteAlertsForResource() {
-        assert 1 == alertManager.deleteAlertsByContext(superuser, EntityContext.forResource(newResource.getId()));
+    public void testPrettyPrintBASELINE() {
+        MeasurementDefinition md = createDynamicMeasurementDefinition();
+        AlertCondition condition = createCondition(AlertConditionCategory.BASELINE, md.getDisplayName(), ">", 0.10d,
+            "mean", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop > 10.0% of Baseline Mean Value".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop > 10.0% bl mean".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.BASELINE, md.getDisplayName(), ">", 0.10d, "min", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop > 10.0% of Baseline Minimum Value".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop > 10.0% bl min".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.BASELINE, md.getDisplayName(), ">", 0.10d, "max", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop > 10.0% of Baseline Maximum Value".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop > 10.0% bl max".equals(pretty) : pretty;
     }
 
-    @SuppressWarnings("unchecked")
-    public void deleteAlertsForResourceTemplate() {
-        int resourceTypeId = 1;
-        int deletedCount = alertManager.deleteAlertsByContext(superuser, EntityContext.forTemplate(resourceTypeId));
-
-        List<AlertConditionLog> alertConditionLogs = getEntityManager().createQuery(
-            "from AlertConditionLog log where log.id = :id")
-            .setParameter("id", 2)
-            .getResultList();
-
-        List<AlertNotificationLog> notificationLogs = getEntityManager().createQuery(
-            "from AlertNotificationLog log where log.id = :id")
-            .setParameter("id", 2)
-            .getResultList();
-
-        assertEquals("Failed to delete alerts by template", 1, deletedCount);
-        assertEquals("Failed to delete alert condition logs when deleting alerts by template", 0,
-            alertConditionLogs.size());
-        assertEquals("Failed to delete alert notification logs when deleting alerts by template", 0,
-            notificationLogs.size());
+    public void testPrettyPrintCHANGE() {
+        MeasurementDefinition md = createDynamicMeasurementDefinition();
+        AlertCondition condition = createCondition(AlertConditionCategory.CHANGE, md.getDisplayName(), null, null,
+            null, md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop Value Changed".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop Val Chg".equals(pretty) : pretty;
     }
 
-    public void testAlertDeleteInRange() {
-        assert 2 == alertManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L); // go out into the future to make sure we get our alert
+    public void testPrettyPrintCHANGE_Calltime() {
+        MeasurementDefinition md = createCalltimeMeasurementDefinition();
+        String regex = "some.*(reg)?ex$"; // this is the "name" of the condition
+
+        AlertCondition condition = createCondition(AlertConditionCategory.CHANGE, regex, "LO", 0.10d, "MIN", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MIN shrinks by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MIN shrinks by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "CH", 0.10d, "MIN", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MIN changes by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MIN changes by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "HI", 0.10d, "MIN", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MIN grows by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MIN grows by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "LO", 0.10d, "MAX", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MAX shrinks by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MAX shrinks by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "CH", 0.10d, "MAX", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MAX changes by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MAX changes by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "HI", 0.10d, "MAX", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop MAX grows by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop MAX grows by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "LO", 0.10d, "AVG", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop AVG shrinks by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop AVG shrinks by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "CH", 0.10d, "AVG", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop AVG changes by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop AVG changes by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, regex, "HI", 0.10d, "AVG", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop AVG grows by at least 10.0% with calltime destination matching \"some.*(reg)?ex$\""
+            .equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop AVG grows by 10.0% matching \"some.*(reg)?ex$\"".equals(pretty) : pretty;
+
+        // no regex
+        condition = createCondition(AlertConditionCategory.CHANGE, null, "LO", 0.10d, "AVG", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop AVG shrinks by at least 10.0%".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop AVG shrinks by 10.0%".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, null, "CH", 0.10d, "AVG", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop AVG changes by at least 10.0%".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop AVG changes by 10.0%".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CHANGE, null, "HI", 0.10d, "AVG", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Calltime Metric CT Prop AVG grows by at least 10.0%".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "CT Prop AVG grows by 10.0%".equals(pretty) : pretty;
     }
 
+    public void testPrettyPrintTRAIT() {
+        MeasurementDefinition md = createTraitMeasurementDefinition();
+        AlertCondition condition = createCondition(AlertConditionCategory.TRAIT, md.getDisplayName(), null, null, null,
+            md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Blah Trait Value Changed".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Blah Trait Val Chg".equals(pretty) : pretty;
+    }
+
+    public void testPrettyPrintCONTROL() {
+        AlertCondition condition = createCondition(AlertConditionCategory.CONTROL, "opNameHere", null, null,
+            OperationRequestStatus.FAILURE.name(), null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Operation [opNameHere] has status=[FAILURE]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Op [opNameHere]=FAILURE".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.CONTROL, "opNameHere", null, null,
+            OperationRequestStatus.SUCCESS.name(), null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Operation [opNameHere] has status=[SUCCESS]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Op [opNameHere]=SUCCESS".equals(pretty) : pretty;
+    }
+
+    public void testPrettyPrintEVENT() {
+        String regex = "some.*(reg)?ex$";
+
+        AlertCondition condition = createCondition(AlertConditionCategory.EVENT, EventSeverity.WARN.name(), null, null,
+            regex, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert ("Event With Severity [WARN] Matching Expression \"" + regex + "\"").equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert ("[WARN] Event Matching \"" + regex + "\"").equals(pretty) : pretty;
+
+        // no regex
+        condition = createCondition(AlertConditionCategory.EVENT, EventSeverity.WARN.name(), null, null, null, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Event With Severity [WARN]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "[WARN] Event".equals(pretty) : pretty;
+    }
+
+    public void testPrettyPrintRESOURCECONFIG() {
+        AlertCondition condition = createCondition(AlertConditionCategory.RESOURCE_CONFIG, null, null, null, null, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Resource Configuration Changed".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Res Config Chg".equals(pretty) : pretty;
+    }
+
+    public void testPrettyPrintDRIFT() {
+        AlertCondition condition = createCondition(AlertConditionCategory.DRIFT, "?riftName", null, null, "fil.*", null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Drift detected for files that match \"fil.*\" and for drift configuration [?riftName]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Drift matching \"fil.*\", config=[?riftName]".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.DRIFT, null, null, null, "fil.*", null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Drift detected for files that match \"fil.*\"".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Drift matching \"fil.*\"".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.DRIFT, "?riftName", null, null, null, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Drift detected for drift configuration [?riftName]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Drift! config=[?riftName]".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.DRIFT, null, null, null, null, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Drift Detected".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Drift!".equals(pretty) : pretty;
+    }
+
+    public void testPrettyPrintRANGE() {
+        MeasurementDefinition md = createDynamicMeasurementDefinition();
+        AlertCondition condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), "<=", 1.0,
+            "22.2", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop Value is Between 1.0B and 22.2B, Inclusive".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop Between 1.0B - 22.2B, incl".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), ">=", 1.0, "22.2", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop Value is Outside 1.0B and 22.2B, Inclusive".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop Outside 1.0B - 22.2B, incl".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), "<", 1.0, "22.2", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop Value is Between 1.0B and 22.2B, Exclusive".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop Between 1.0B - 22.2B, excl".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), ">", 1.0, "22.2", md);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Foo Prop Value is Outside 1.0B and 22.2B, Exclusive".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Foo Prop Outside 1.0B - 22.2B, excl".equals(pretty) : pretty;
+    }
+
+    private String getPrettyAlertConditionString(AlertCondition condition) {
+        AlertManagerBean pojo = new AlertManagerBean();
+        String s = extractCondition(pojo.prettyPrintAlertConditions(createAlert(condition), false));
+        System.out.println("long===>" + s);
+        return s;
+    }
+
+    private String getShortPrettyAlertConditionString(AlertCondition condition) {
+        AlertManagerBean pojo = new AlertManagerBean();
+        String s = extractCondition(pojo.prettyPrintAlertConditions(createAlert(condition), true));
+        System.out.println("short-->" + s);
+        return s;
+    }
+
+    private MeasurementDefinition createDynamicMeasurementDefinition() {
+        ResourceType resourceType = new ResourceType("testType", "testPlugin", ResourceCategory.PLATFORM, null);
+        MeasurementDefinition md = new MeasurementDefinition(resourceType, "fooMetric");
+        md.setDataType(DataType.MEASUREMENT);
+        md.setDisplayName("Foo Prop");
+        md.setMeasurementType(NumericType.DYNAMIC);
+        md.setRawNumericType(NumericType.DYNAMIC);
+        md.setUnits(MeasurementUnits.BYTES);
+        return md;
+    }
+
+    private MeasurementDefinition createCalltimeMeasurementDefinition() {
+        ResourceType resourceType = new ResourceType("testType", "testPlugin", ResourceCategory.PLATFORM, null);
+        MeasurementDefinition md = new MeasurementDefinition(resourceType, "ctMetric");
+        md.setDataType(DataType.CALLTIME);
+        md.setDisplayName("CT Prop");
+        md.setMeasurementType(NumericType.DYNAMIC);
+        md.setRawNumericType(NumericType.DYNAMIC);
+        md.setUnits(MeasurementUnits.BYTES);
+        md.setDestinationType("/wot gorilla");
+        return md;
+    }
+
+    private MeasurementDefinition createTraitMeasurementDefinition() {
+        ResourceType resourceType = new ResourceType("testType", "testPlugin", ResourceCategory.PLATFORM, null);
+        MeasurementDefinition md = new MeasurementDefinition(resourceType, "traitMetric");
+        md.setDataType(DataType.TRAIT);
+        md.setDisplayName("Blah Trait");
+        md.setUnits(MeasurementUnits.BYTES);
+        return md;
+    }
+
+    private Alert createAlert(AlertCondition condition) {
+        Alert alert = new Alert();
+        AlertConditionLog conditionLog = new AlertConditionLog(condition, System.currentTimeMillis());
+        alert.addConditionLog(conditionLog);
+        return alert;
+    }
+
+    private AlertCondition createCondition(AlertConditionCategory category, String name, String comparator,
+        Double threshold, String option, MeasurementDefinition measDef) {
+        AlertCondition condition = new AlertCondition();
+        condition.setCategory(category);
+        condition.setName(name);
+        condition.setComparator(comparator);
+        condition.setThreshold(threshold);
+        condition.setOption(option);
+        condition.setMeasurementDefinition(measDef);
+        return condition;
+    }
+
+    private String extractCondition(String prettyString) {
+        //System.out.println(prettyString);
+        Pattern pattern = Pattern.compile(" - Cond(?:ition)? 1: (.*)\n"); // short form has " - Cond 1: ...", long form has " - Condition 1: ..."
+        Matcher matcher = pattern.matcher(prettyString);
+        assert matcher.find() : "could not find the condition string";
+        return matcher.group(1);
+    }
 }

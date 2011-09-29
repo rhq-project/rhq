@@ -268,12 +268,6 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         }
         membersForm.setItems(items.toArray(new FormItem[items.size()]));
 
-        for (FormItem valueItem : valueItems) {
-            String defaultValue = valueItem.getAttribute("defaultValue");
-            setValue(valueItem, defaultValue);
-            valueItem.setDisabled(false);
-        }
-
         // TODO: Anchor the button bar at the bottom of the modal window, so it's always visible.
         HLayout buttonBar = new HLayout();
         buttonBar.setAlign(Alignment.CENTER);

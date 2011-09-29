@@ -97,7 +97,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         action.setAutoFitWidth(true);
         action.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
-        ListGridField message = new ListGridField("info", MSG.common_title_info());
+        ListGridField message = new ListGridField("info", MSG.common_severity_info());
         message.setWidth("60%");
 
         ListGridField user = new ListGridField("user", MSG.common_title_user());
@@ -163,7 +163,7 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         timestamp.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
 
         StaticTextItem action = new StaticTextItem("action", MSG.view_bundle_deploy_action());
-        StaticTextItem info = new StaticTextItem("info", MSG.common_title_info());
+        StaticTextItem info = new StaticTextItem("info", MSG.common_severity_info());
         StaticTextItem category = new StaticTextItem("category", MSG.common_title_category());
 
         StaticTextItem message = new StaticTextItem("message", MSG.common_title_message());

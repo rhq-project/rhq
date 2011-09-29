@@ -853,7 +853,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         + " WHERE ID = ? FOR UPDATE");
                     ps.setInt(1, packageBits.getId());
                     ResultSet rs = ps.executeQuery();
-                    if (rs != null) {
+                    try {
                         while (rs.next()) {
                             //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
                             //for oracle and Connection.createBlob is not working on postgres.
@@ -870,6 +870,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                             }
                             ps2.close();
                         }
+                    } finally {
+                        rs.close();
                     }
                     ps.close();
                     conn.close();
@@ -1088,7 +1090,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         + " WHERE ID = ? FOR UPDATE");
                     ps.setInt(1, packageBits.getId());
                     ResultSet rs = ps.executeQuery();
-                    if (rs != null) {
+                    try {
                         while (rs.next()) {
 
                             //We can not create a blob directly because BlobImpl from Hibernate is not acceptable
@@ -1107,6 +1109,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                             }
                             ps2.close();
                         }
+                    } finally {
+                        rs.close();
                     }
                     ps.close();
                     conn.close();

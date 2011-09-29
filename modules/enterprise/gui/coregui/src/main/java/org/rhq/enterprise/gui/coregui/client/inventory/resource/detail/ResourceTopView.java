@@ -27,6 +27,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
 public class ResourceTopView extends LocatableHLayout implements BookmarkableView {
@@ -34,7 +35,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
 
     private Canvas contentCanvas;
     private ResourceTreeView treeView;
-    private ResourceDetailView detailView = new ResourceDetailView(extendLocatorId("Detail"));
+    private ResourceDetailView detailView;
     private ResourceGroupDetailView autoGroupDetailView;
 
     public ResourceTopView(String locatorId) {
@@ -49,7 +50,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
         contentCanvas = new Canvas();
         addMember(contentCanvas);
 
-        setContent(detailView);
+        setToDetailView();
     }
 
     public void setContent(Canvas newContent) {
@@ -60,27 +61,54 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
         this.contentCanvas.markForRedraw();
     }
 
+    private void setToDetailView() {
+
+        this.detailView = new ResourceDetailView(extendLocatorId("Detail"));
+        this.detailView.addViewRenderedListener(new ResourceDetailView.ViewRenderedListener() {
+
+            public void onViewRendered() {
+                // re-enable the tree, the detail view has (hopefully) been safely rendered
+                treeView.enable();
+            }
+        });
+        this.setContent(detailView);
+        this.autoGroupDetailView = null;
+    }
+
+    private void setToAutoGroupView() {
+        this.autoGroupDetailView = new ResourceGroupDetailView(this.extendLocatorId("AutoGroupDetail"),
+            ResourceGroupDetailView.AUTO_GROUP_VIEW);
+        this.autoGroupDetailView.addViewRenderedListener(new ResourceGroupDetailView.ViewRenderedListener() {
+
+            public void onViewRendered() {
+                // re-enable the tree, the autogroup view has (hopefully) been safely rendered
+                treeView.enable();
+            }
+        });
+
+        this.setContent(this.autoGroupDetailView);
+        this.detailView = null;
+    }
+
     public void renderView(ViewPath viewPath) {
+        // disable the tree until it's safe to click a new node to prevent fast-click issues
+        this.treeView.disable();
+
         if ("AutoGroup".equals(viewPath.getCurrent().getPath())) {
             if (null == autoGroupDetailView) {
-                this.autoGroupDetailView = new ResourceGroupDetailView(this.extendLocatorId("AutoGroupDetail"),
-                    ResourceGroupDetailView.AUTO_GROUP_VIEW);
-                this.setContent(this.autoGroupDetailView);
-                this.detailView = null;
+                setToAutoGroupView();
             }
+
             this.treeView.renderView(viewPath);
             this.autoGroupDetailView.renderView(viewPath.next());
         } else {
-            // Resource
             if (null == detailView) {
-                this.detailView = new ResourceDetailView(extendLocatorId("Detail"));
-                this.setContent(this.detailView);
-                this.autoGroupDetailView = null;
+                setToDetailView();
             }
+
             this.treeView.renderView(viewPath);
             this.detailView.renderView(viewPath);
         }
 
     }
-
 }

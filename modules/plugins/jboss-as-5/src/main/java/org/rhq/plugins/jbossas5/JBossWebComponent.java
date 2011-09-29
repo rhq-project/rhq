@@ -23,42 +23,38 @@
 package org.rhq.plugins.jbossas5;
 
 import org.jetbrains.annotations.NotNull;
+import org.mc4j.ems.connection.EmsConnection;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
-import org.mc4j.ems.connection.EmsConnection;
 
 /**
  * A ResourceComponent for managing the JBoss Web servlet container within a JBoss AS instance.
  *
  * @author Ian Springer
  */
-public class JBossWebComponent implements ProfileServiceComponent<ProfileServiceComponent>
-{
-    private ResourceContext<ProfileServiceComponent> resourceContext;
+public class JBossWebComponent implements ProfileServiceComponent<ProfileServiceComponent<?>> {
+    private ResourceContext<ProfileServiceComponent<?>> resourceContext;
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
-    {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
     }
 
-    public void stop()
-    {
+    public void stop() {
         return;
     }
 
-    public AvailabilityType getAvailability()
-    {
+    public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
     }
 
     @NotNull
-    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+    public ResourceContext<ProfileServiceComponent<?>> getResourceContext() {
         return this.resourceContext;
     }
 
-    public ProfileServiceConnection getConnection()
-    {
+    public ProfileServiceConnection getConnection() {
         return this.resourceContext.getParentResourceComponent().getConnection();
     }
 

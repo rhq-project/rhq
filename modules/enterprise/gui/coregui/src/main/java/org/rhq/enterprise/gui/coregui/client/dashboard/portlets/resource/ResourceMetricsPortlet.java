@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,6 +37,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -75,21 +75,21 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
     private int resourceId = -1;
 
-    public ResourceMetricsPortlet(String locatorId) {
-        super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        int currentResourceIdentifier = Integer.valueOf(elements[1]);
-        this.resourceId = currentResourceIdentifier;
-        baseViewPath = elements[0];
+    public ResourceMetricsPortlet(String locatorId, int resourceId) {
+        super(locatorId, -1);
+        this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new ResourceMetricsPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.Resource != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new ResourceMetricsPortlet(locatorId, context.getResourceId());
         }
     }
 

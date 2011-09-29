@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -66,7 +67,8 @@ public final class AlertConditionCacheCoordinator {
         ResourceOperationCache(Type.Global), //
         AvailabilityCache(Type.Global), //
         EventsCache(Type.Agent), //
-        ResourceConfigurationCache(Type.Global);
+        ResourceConfigurationCache(Type.Global), //
+        DriftCache(Type.Agent);
 
         public enum Type {
             Global, //
@@ -298,6 +300,35 @@ public final class AlertConditionCacheCoordinator {
         return stats;
     }
 
+    public AlertConditionCacheStats checkConditions(DriftChangeSetSummary driftChangeSetSummary) {
+        if (driftChangeSetSummary == null) {
+            return new AlertConditionCacheStats();
+        }
+
+        Integer agentId = getAgentId(driftChangeSetSummary);
+        if (agentId == null) {
+            log.error("Could not find agent for resourceId = " + driftChangeSetSummary.getResourceId());
+            return new AlertConditionCacheStats();
+        }
+
+        AlertConditionCacheStats stats = null;
+        AgentConditionCache agentCache = null;
+        agentReadWriteLock.readLock().lock();
+        try {
+            agentCache = agentCaches.get(agentId);
+        } catch (Throwable t) {
+            log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
+        } finally {
+            agentReadWriteLock.readLock().unlock();
+        }
+        if (agentCache != null) {
+            stats = agentCache.checkConditions(driftChangeSetSummary);
+        } else {
+            stats = new AlertConditionCacheStats();
+        }
+        return stats;
+    }
+
     public AlertConditionCacheStats checkConditions(Availability... availabilities) {
         AlertConditionCacheStats stats = null;
         try {
@@ -309,6 +340,17 @@ public final class AlertConditionCacheCoordinator {
             stats = new AlertConditionCacheStats();
         }
         return stats;
+    }
+
+    private Integer getAgentId(DriftChangeSetSummary driftChangeSetSummary) {
+        try {
+            int resourceId = driftChangeSetSummary.getResourceId();
+            Integer agentId = agentManager.getAgentIdByResourceId(resourceId);
+            return agentId;
+        } catch (Throwable t) {
+            log.error("Error looking up agent by DriftChangeSet", t);
+        }
+        return null;
     }
 
     private Integer getAgentId(EventSource source) {

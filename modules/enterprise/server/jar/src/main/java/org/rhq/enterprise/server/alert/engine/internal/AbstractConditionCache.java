@@ -66,8 +66,8 @@ abstract class AbstractConditionCache {
                      */
                     cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
                     cachedConditionProducer.sendActivateAlertConditionMessage(
-                        cacheElement.getAlertConditionTriggerId(), timestamp,
-                        cacheElement.convertValueToString(providedValue), extraParams);
+                        cacheElement.getAlertConditionTriggerId(), timestamp, cacheElement
+                            .convertValueToString(providedValue), extraParams);
 
                     stats.matched++;
                 } catch (Exception e) {
@@ -120,14 +120,21 @@ abstract class AbstractConditionCache {
             cache.put(key, cacheElements);
         }
 
-        if (log.isTraceEnabled()) {
-            log.trace("Inserted '" + mapName + "' element: " + "key=" + key + ", " + "value=" + cacheElement);
-        }
+        boolean success;
 
-        // and finally update stats and return whether it was success
-        boolean success = cacheElements.add(cacheElement);
-        if (success) {
-            stats.created++;
+        if (cacheElement != null) {
+            if (log.isTraceEnabled()) {
+                log.trace("Inserting '" + mapName + "' element: " + "key=" + key + ", " + "value=" + cacheElement);
+            }
+
+            // and finally update stats and return whether it was success
+            success = (cacheElement != null) ? cacheElements.add(cacheElement) : false;
+            if (success) {
+                stats.created++;
+            }
+        } else {
+            success = false;
+            log.warn("Cannot insert null cache element in '" + mapName + "' element: " + "key=" + key);
         }
 
         return success;

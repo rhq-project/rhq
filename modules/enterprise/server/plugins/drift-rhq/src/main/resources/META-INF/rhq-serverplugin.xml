@@ -3,9 +3,9 @@
 <drift-plugin
    version="1.0"
    apiVersion="1.0"
-   description="The Drift Management RHQ Persistence Store (the default backend)"
-   displayName="Drift:RHQ"
-   name="drift-rhq"
+   description="The JPA Drift Management Backend (the RHQ default backend)"
+   displayName="Drift:JPA (RHQ default)"
+   name="drift-jpa"
    package="org.rhq.enterprise.server.plugins.drift"
    xmlns="urn:xmlns:rhq-serverplugin.drift"
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
@@ -15,7 +15,7 @@
         Provides back-end store and retrieve for drift files.
     ]]></serverplugin:help>
     
-    <serverplugin:plugin-component class="DriftServerPluginComponent">
+    <serverplugin:plugin-component class="JPADriftServerPluginComponent">
     <!-- 
         <serverplugin:control name="testControl" description="A test control operation">
         </serverplugin:control>

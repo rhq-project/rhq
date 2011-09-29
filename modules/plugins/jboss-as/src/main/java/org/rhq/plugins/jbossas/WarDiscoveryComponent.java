@@ -36,7 +36,7 @@ import org.rhq.plugins.jmx.JMXComponent;
  */
 public class WarDiscoveryComponent extends ApplicationDiscoveryComponent {
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> discoveryContext) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> discoveryContext) {
         Set<DiscoveredResourceDetails> resources = super.discoverResources(discoveryContext);
         JBossASServerComponent parentJBossASComponent = (JBossASServerComponent) discoveryContext
             .getParentResourceComponent();

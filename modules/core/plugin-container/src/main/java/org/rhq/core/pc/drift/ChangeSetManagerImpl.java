@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.BufferedInputStream;
@@ -27,7 +46,7 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     }
 
     @Override
-    public boolean changeSetExists(int resourceId, Headers headers) throws IOException {
+    public boolean changeSetExists(int resourceId, Headers headers) {
         File changeSetDir = findChangeSetDir(resourceId, headers.getDriftConfigurationName());
         if (changeSetDir == null || !changeSetDir.exists()) {
             return false;
@@ -78,6 +97,11 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     }
 
     @Override
+    public ChangeSetReader getChangeSetReader(File changeSetFile) throws IOException {
+        return new ChangeSetReaderImpl(changeSetFile);
+    }
+
+    @Override
     public ChangeSetWriter getChangeSetWriter(int resourceId, Headers headers) throws IOException {
         File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
         File changeSetDir = new File(resourceDir, headers.getDriftConfigurationName());
@@ -93,6 +117,11 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
             changeSet = new File(changeSetDir, "drift-changeset.txt");
         }
         return new ChangeSetWriterImpl(changeSet, headers);
+    }
+
+    @Override
+    public ChangeSetWriter getChangeSetWriter(File changeSetFile, Headers headers) throws IOException {
+        return new ChangeSetWriterImpl(changeSetFile, headers);
     }
 
     @Override

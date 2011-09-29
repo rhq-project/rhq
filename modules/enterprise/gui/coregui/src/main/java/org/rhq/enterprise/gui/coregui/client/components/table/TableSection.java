@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.Canvas;
@@ -87,7 +86,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends AbstractTab
     @Override
     public void showDetails(Integer id) {
         if (id != null && id.intValue() > 0) {
-            History.newItem(getBasePath() + "/" + id);
+            CoreGUI.goToView(getBasePath() + "/" + id);
         } else {
             String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), (id == null) ? "null" : id
                 .toString());

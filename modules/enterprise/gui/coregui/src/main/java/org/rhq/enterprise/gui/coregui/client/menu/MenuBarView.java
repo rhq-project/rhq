@@ -22,6 +22,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ImageStyle;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Img;
@@ -99,13 +101,22 @@ public class MenuBarView extends LocatableVLayout {
 
     private Canvas getLogoSection() {
         final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
-        Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
+        HLayout logoSection = new HLayout();
+        logoSection.setOverflow(Overflow.VISIBLE);
+
+        // NOTE: This image will either be an RHQ logo or a JON logo.
+        Img logo = new Img("header/rhq_logo_28px.png");
+        // NOTE: Don't explicitly specify a width, so the width will be scaled proportionally to the height.
+        logo.setImageType(ImageStyle.NORMAL);
+        logo.setImageHeight(28);
         logo.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 aboutModalWindow.show();
             }
         });
-        return logo;
+
+        logoSection.addMember(logo);
+        return logoSection;
     }
 
     private Canvas getLinksSection() {

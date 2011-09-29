@@ -84,35 +84,36 @@ fi
 # TODO: Check that JDK version is < 1.7.
 
 
+# spinder 8/30/11: commenting out the JAVA5 support, but leaving logic in place for when we need the same backwards 
+# compatibility logic for JD6 vs. JDK7 support.
 # If this is an enterprise release, make sure JAVA5_HOME points to a valid JDK 1.5 install. 
 # We need this to validate only Java 5 or earlier APIs are used in all modules, except the CLI, which requires Java 6.
-
-if [ "$RELEASE_TYPE" = "enterprise" ]; then
-    if [ -z "$JAVA5_HOME" ]; then
-       abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-    fi
-
-    if [ ! -d "$JAVA5_HOME" ]; then
-       abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-    fi
-
-    if [ ! -x "$JAVA5_HOME/bin/java" ]; then
-       abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-    fi
-
-    if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
-       abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-    fi
-
-    if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
-       abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
-    fi
-
-    if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
-       abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
-    fi
-fi
-
+#
+#if [ "$RELEASE_TYPE" = "enterprise" ]; then
+#    if [ -z "$JAVA5_HOME" ]; then
+#       abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+#    fi
+#
+#    if [ ! -d "$JAVA5_HOME" ]; then
+#       abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+#    fi
+#
+#    if [ ! -x "$JAVA5_HOME/bin/java" ]; then
+#       abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+#    fi
+#
+#    if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
+#       abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+#    fi
+#
+#    if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
+#       abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
+#    fi
+#
+#    if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
+#       abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
+#    fi
+#fi
 
 # Make sure M2_HOME points to a valid Maven 2.1.x or 2.2.x install.
 
@@ -184,7 +185,8 @@ if [ "$MODE" = "test" ]; then
 fi
 
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
+   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
+   #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
 if [ -n "$RELEASE_DEBUG" ]; then
    MAVEN_ARGS="$MAVEN_ARGS --debug"
@@ -217,7 +219,8 @@ export LANG
 echo
 echo "========================== Environment Variables =============================="
 echo "JAVA_HOME=$JAVA_HOME"
-[ "$RELEASE_TYPE" = "enterprise" ] && echo "JAVA5_HOME=$JAVA5_HOME"
+[ "$RELEASE_TYPE" = "enterprise" ]
+#[ "$RELEASE_TYPE" = "enterprise" ] && echo "JAVA5_HOME=$JAVA5_HOME"
 echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"
 echo "PATH=$PATH"

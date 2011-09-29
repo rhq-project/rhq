@@ -26,7 +26,7 @@
                                description="Indicates when the reports should be generated">
                 <c:property-options>
                     <c:option value="periodic"/>
-                    <c:option value="cron" default="true" />
+                    <c:option value="cron" />
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/5 * * * ?" summary="true"
@@ -50,7 +50,7 @@
             <c:simple-property name="scheduleType" type="string" required="true" default="periodic" summary="true"
                                description="Indicates when the report should be generated">
                 <c:property-options>
-                    <c:option value="periodic" default="true" />
+                    <c:option value="periodic" />
                     <c:option value="cron" />
                 </c:property-options>
             </c:simple-property>

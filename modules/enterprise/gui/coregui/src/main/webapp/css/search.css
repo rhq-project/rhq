@@ -8,58 +8,12 @@ div {
   margin-left: auto;
 }
 
-.searchButton {
-  display: block;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-
-/* 
- *
- * pattern field items 
- *
- */
-
-.patternField {
-  font-size: 13px;
-  font-family: arial, sans-serif;
-  width: 675px;
-  padding: 0;
-  margin: 0;
-  border-color: white;
-  border-style: none;
-  outline: none;
-  z-index: 999999;
-}
-
-.patternNameLabel {
-  background-color: rgb(192, 236, 207);
-  color: rgb(51, 106, 63);
-  font-weight: bold;
-  white-space: nowrap;
-  text-align: center;
-  border-style: none;
-  font-size: 11px;
-  width: 125px;
-  z-index: 999999;
-}
-
-.patternNameField {
-  font-size: 11px;
-  color: green;
-  width: 125px;
-  white-space: no-wrap;
-  border-color: gray;
-  border-style: dotted;
-  border-width: thin;
-  outline: none;
-  z-index: 999999;
-}
-
-
 /*
+ *
  * search container elements
+ * searchBarContainer width is the total width of the search bar.
+ * searchBarBackgroundContainer is the available width for the components inside (takes into consideration RHS padding)
+ *
  */
  
 .searchBarContainer {
@@ -93,21 +47,67 @@ div {
 .searchBarComponentLHS {
   background-color: white;
   float: left;
-  width: 200px;
+  /* width: 200px; */
 }
 
 .searchBarComponentRHS {
   background-color: white;
   float: right;
-  padding-right: 5px;
+  padding-right: 4px;
   padding-top: 2px;
 }
 
-.searchBarButtonContainer {
-  float: right;
-  padding: 5px 5px 0 0;
+
+/* 
+ *
+ * pattern field items 
+ * patternField is the current pattern, its width is the max visible portion
+ * patternNameField is the the edit box when naming a saved search, its width is the max visible portion (less the border)
+ * patternNameLabel is for displaying the saved search name when a saved search is selected
+ *
+ * - the combined width of patternField + patternNameField + all other RHS components (the star and
+ *   arrow images) must equal the width of searchBarBackgroundContainer in order for everything to be seen when 
+ *   patternNameField (or patternNameLabel) are being shown.
+ * - the width of patternNameField and patternNameLabel must be the same.
+ *
+ */
+
+.patternField {
+  font-size: 13px;
+  font-family: arial, sans-serif;
+  width: 600px;
+  padding: 0;
   margin: 0;
+  border-color: white;
+  border-style: none;
+  outline: none;
+  z-index: 999999;
 }
+
+.patternNameField {
+  font-size: 11px;
+  color: green;
+  width: 150px;
+  white-space: no-wrap;
+  border-color: gray;
+  border-style: dotted;
+  border-width: thin;
+  outline: none;
+  z-index: 999999;
+}
+
+.patternNameLabel {
+  background-color: rgb(192, 236, 207);
+  color: rgb(51, 106, 63);
+  font-weight: bold;
+  white-space: nowrap;
+  text-align: left;
+  border-style: none;
+  font-size: 11px;
+  width: 150px;
+  z-index: 999999;
+}
+
 
 /*
  *
@@ -153,7 +153,8 @@ div {
 }
 
 .savedSearchesPanel-top {
-  color: green;
+  color: green;	
+  font-size: 12px;      
   position: relative;
   padding: 0;
   margin: 0;
@@ -161,10 +162,10 @@ div {
 }
 
 .savedSearchesPanel-bottom {
-  font-size: 16px;
+  font-size: 10px;	
   position: relative;
   padding: 0;
-  margin: 0;
+  margin: 3px;
   bottom: 1px;
 }
 
@@ -172,6 +173,7 @@ div {
 /* 
  *
  * suggest items
+ * suggestPanel spans the width of the container, all of the relevant widths must equal that of .searchBarBackgroundContainer
  * 
  */
  
@@ -216,13 +218,15 @@ div {
 /*
  * Rounded Corners
  * http://articles.sitepoint.com/article/rounded-corners-css-javascript
+ *
+ * Applied to the patternNameLabel, so the width should be set the same
  */
  
 div.rounded {
   /* just a container for rounded2 div replacement algorithm */
 }
 div.rounded2 {
-  width: 125px;
+  width: 150px;
   z-index: 999999;
   background: rgb(192, 236, 207) url(/coregui/images/search/corner-upper-right-8.png) no-repeat top right;
 }

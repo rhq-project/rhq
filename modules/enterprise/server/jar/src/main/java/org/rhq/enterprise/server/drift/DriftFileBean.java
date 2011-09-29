@@ -37,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
@@ -50,11 +51,18 @@ public class DriftFileBean implements MessageListener {
     private final Log log = LogFactory.getLog(DriftFileBean.class);
 
     @EJB
-    private DriftServerLocal driftServer;
+    private DriftManagerLocal driftManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @Override
     public void onMessage(Message message) {
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Received drift file message");
+            }
+
             ObjectMessage msg = (ObjectMessage) message;
             DriftUploadRequest request = (DriftUploadRequest) msg.getObject();
 
@@ -76,8 +84,8 @@ public class DriftFileBean implements MessageListener {
                         + "]");
                 }
 
-                driftServer.saveChangeSetFiles(tempFile);
-
+                driftManager.saveChangeSetContent(subjectManager.getOverlord(), request.getResourceId(),
+                    request.getDriftConfigName(), request.getToken(), tempFile);
             } catch (IOException e) {
                 log.error(e);
 
@@ -91,7 +99,7 @@ public class DriftFileBean implements MessageListener {
 
         } catch (Throwable t) {
             // catch Throwable here, don't let anything escape as bad things can happen wrt XA/2PhaseCommit  
-            log.error(t);
+            log.error("Error processing drift file message", t);
         }
     }
 

@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -33,54 +32,72 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.common.drift.ChangeSetWriter;
+import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.RhqDrift;
-import org.rhq.core.domain.drift.RhqDriftChangeSet;
-import org.rhq.core.domain.drift.RhqDriftFile;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.ZipUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.toFile;
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+
 /**
  * Test for {@link DriftManagerBean} SLSB.
+ * 
+ * !!! Actually, this is really testing only the JPA impl, it does not actually go through the
+ * !!! configured drift server plugin.  To enhance this to do that then you may need to model this
+ * !!! mode like BundleManagerBeanTest 
  */
 @Test(groups = "drift-manager")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
-    private static final boolean ENABLE_TESTS = false;
+    private static final boolean ENABLE_TESTS = true;
 
+    private JPADriftServerLocal jpaDriftServer;
     private DriftManagerLocal driftManager;
     private Subject overlord;
     private Resource newResource;
+    @SuppressWarnings("unused")
     private DriftServerService driftServerService;
+
+    MessageDigestGenerator digestGenerator;
 
     /**
      * Prepares things for the entire test class.
      */
     @BeforeClass
-    public void beforeClass() {
+    public void beforeClass() throws Exception {
+        digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+        jpaDriftServer = LookupUtil.getJPADriftServer();
         driftManager = LookupUtil.getDriftManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -116,57 +133,91 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLE_TESTS)
     public void testStoreChangeSet() throws Exception {
-        File changeset1 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-1.zip");
-        assertTrue(changeset1.exists());
-        driftManager.storeChangeSet(newResource.getId(), changeset1);
+        File rootDir = toFile(getClass().getResource("."));
+        deleteDirectory(rootDir);
 
-        DriftChangeSetJPACriteria c = new DriftChangeSetJPACriteria();
+        File changeSetsDir = new File(rootDir, "changesets");
+        changeSetsDir.mkdirs();
+
+        Headers headers = new Headers();
+        headers.setResourceId(newResource.getId());
+        headers.setDriftCofigurationId(1);
+        headers.setDriftConfigurationName("test-1");
+        headers.setBasedir(rootDir.getAbsolutePath());
+        headers.setType(COVERAGE);
+        headers.setVersion(0);
+
+        String file1Hash = sha256("test-1-file-1");
+
+        File changeSet1 = new File(changeSetsDir, "changeset-1.txt");
+        ChangeSetWriter writer = new ChangeSetWriterImpl(changeSet1, headers);
+        writer.write(addedFileEntry("test/file-1", file1Hash));
+        writer.close();
+
+        File changeSet1Zip = new File(changeSetsDir, "changeset-1.zip");
+        ZipUtil.zipFileOrDirectory(changeSet1, changeSet1Zip);
+
+        assertTrue("Expected to find change set zip file: " + changeSet1Zip.getPath(), changeSet1Zip.exists());
+
+        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeSet1Zip);
+
+        JPADriftChangeSetCriteria c = new JPADriftChangeSetCriteria();
         c.addFilterResourceId(newResource.getId());
         c.fetchDrifts(true);
-        List<RhqDriftChangeSet> changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
+        List<? extends DriftChangeSet<?>> changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(1, changeSets.size());
-        RhqDriftChangeSet changeSet = changeSets.get(0);
+        DriftChangeSet<?> changeSet = changeSets.get(0);
         assertEquals(0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
 
-        RhqDriftFile driftFile = driftManager.getDriftFile(overlord, "aaaaa");
+        DriftFile driftFile = jpaDriftServer.getDriftFile(overlord, file1Hash);
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
 
         // the second change set should report drift
-        File changeset2 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-2.zip");
-        assertTrue(changeset2.exists());
-        driftManager.storeChangeSet(newResource.getId(), changeset2);
+        String modifiedFile1Hash = sha256("test-2-file-1-modified");
+        headers.setType(DRIFT);
+        headers.setVersion(1);
+        File changeSet2 = new File(changeSetsDir, "changeset-2.txt");
+
+        writer = new ChangeSetWriterImpl(changeSet2, headers);
+        writer.write(changedFileEntry("test/file-1", file1Hash, modifiedFile1Hash));
+        writer.close();
+
+        File changeSet2Zip = new File(changeSetsDir, "changeset-2.zip");
+        ZipUtil.zipFileOrDirectory(changeSet2, changeSet2Zip);
+
+        assertTrue("Expected to find change set file: " + changeSet2Zip.getPath(), changeSet2Zip.exists());
+
+        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeSet2Zip);
         c.addSortVersion(PageOrdering.ASC);
-        changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
-        assertEquals(2, changeSets.size());
+        c.addFilterCategory(DRIFT);
+        changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(overlord, c);
+        assertEquals(1, changeSets.size());
         changeSet = changeSets.get(0);
-        assertEquals(0, changeSet.getVersion());
+        assertEquals("The change set version is wrong", 1, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
-        changeSet = changeSets.get(1);
+        changeSet = changeSets.get(0);
         assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
-        RhqDrift drift = changeSet.getDrifts().iterator().next();
-        assertEquals("dir/filename.ext", drift.getPath());
-        assertEquals("aaaaa", drift.getOldDriftFile().getHashId());
-        assertEquals("bbbbb", drift.getNewDriftFile().getHashId());
+        Drift<?, ?> drift = changeSet.getDrifts().iterator().next();
+        assertEquals("test/file-1", drift.getPath());
+        assertEquals(file1Hash, drift.getOldDriftFile().getHashId());
+        assertEquals(modifiedFile1Hash, drift.getNewDriftFile().getHashId());
         assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
 
-        driftFile = driftManager.getDriftFile(overlord, "bbbbb");
+        driftFile = jpaDriftServer.getDriftFile(overlord, modifiedFile1Hash);
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLE_TESTS)
     public void testDriftConfig() throws Exception {
         Configuration config = new Configuration();
-        config.put(new PropertySimple("name", "testDriftConfig"));
-        config.put(new PropertySimple("interval", "60"));
-        PropertyMap basedirMap = new PropertyMap("basedir");
-        basedirMap.put(new PropertySimple("valueContext", BaseDirValueContext.fileSystem));
-        basedirMap.put(new PropertySimple("valueName", "foo/bar"));
-        config.put(basedirMap);
         DriftConfiguration driftConfigPojo = new DriftConfiguration(config);
+        driftConfigPojo.setName("testDriftConfig");
+        driftConfigPojo.setInterval(60L);
+        driftConfigPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/bar"));
 
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
@@ -177,16 +228,21 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         c.fetchDriftConfigurations(true);
         List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, c);
         assertEquals(1, resources.size());
-        Set<Configuration> driftConfigs = resources.get(0).getDriftConfigurations();
+        Set<DriftConfiguration> driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(1, driftConfigs.size());
-        DriftConfiguration driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
+        assertEquals(3, driftConfigs.size());
+        DriftConfiguration driftConfig = null;
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
+            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+                break;
+        }
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
         assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
         assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
 
-        driftConfigPojo.getConfiguration().put(new PropertySimple("interval", "120"));
+        driftConfigPojo.setInterval(120L);
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
 
@@ -194,20 +250,21 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(1, driftConfigs.size());
-        driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
-        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
+        assertEquals(3, driftConfigs.size());
+        driftConfig = null;
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
+            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+                break;
+        }
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
+        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
-        assertEquals(new Long(120), driftConfig.getInterval());
+        assertEquals(120L, driftConfig.getInterval());
 
-        config = driftConfigPojo.getConfiguration();
-        config.put(new PropertySimple("name", "testDriftConfig-2"));
-        config.put(new PropertySimple("interval", "30"));
-        basedirMap = new PropertyMap("basedir");
-        basedirMap.put(new PropertySimple("valueContext", BaseDirValueContext.fileSystem));
-        basedirMap.put(new PropertySimple("valueName", "foo/baz"));
-        config.put(basedirMap);
+        driftConfigPojo.setName("testDriftConfig-2");
+        driftConfigPojo.setInterval(30L);
+        driftConfigPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/baz"));
 
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
@@ -216,19 +273,19 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(2, driftConfigs.size());
-        for (Iterator<Configuration> i = driftConfigs.iterator(); i.hasNext();) {
-            driftConfig = new DriftConfiguration(i.next());
+        assertEquals(4, driftConfigs.size());
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
             if ("testDriftConfig".equals(driftConfig.getName())) {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
                 assertEquals("foo/bar", driftConfig.getBasedir().getValueName());
                 assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
-                assertEquals(new Long(120), driftConfig.getInterval());
+                assertEquals(120L, driftConfig.getInterval());
             } else if ("testDriftConfig-2".equals(driftConfig.getName())) {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
                 assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
                 assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
-            } else {
+            } else if (!"test-1".equals(driftConfig.getName()) && !"test-2".equals(driftConfig.getName())) {
                 fail("Unexpected drift config name: " + driftConfig.getName());
             }
         }
@@ -239,8 +296,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(1, driftConfigs.size());
-        driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
+        assertEquals(3, driftConfigs.size());
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
+            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+                break;
+        }
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
         assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
@@ -255,7 +316,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             try {
                 // wipe out any test DriftFiles (the test files have sha256 0,1,...)
                 for (int i = 0, numDeleted = 1; (numDeleted > 0); ++i) {
-                    numDeleted = getEntityManager().createQuery("delete from RhqDriftFile where hash_id = '" + i + "'")
+                    numDeleted = getEntityManager().createQuery("delete from JPADriftFile where hash_id = '" + i + "'")
                         .executeUpdate();
                 }
             } catch (Exception e) {
@@ -294,16 +355,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 DriftConfiguration test2Config = new DriftConfiguration(new Configuration());
                 test2Config.setName("test-2");
 
-                Set<Configuration> driftConfigs = new HashSet<Configuration>();
-                driftConfigs.add(test1Config.getConfiguration());
-                driftConfigs.add(test2Config.getConfiguration());
-
-
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
                 resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                resource.setDriftConfigurations(driftConfigs);
+                resource.addDriftConfiguration(test1Config);
+                resource.addDriftConfiguration(test2Config);
                 em.persist(resource);
 
             } catch (Exception e) {
@@ -363,10 +420,14 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    String sha256(String s) throws Exception {
+        return digestGenerator.calcDigestString(s);
+    }
+
     private class TestConfigService implements DriftAgentService {
 
         @Override
-        public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
+        public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
             return true;
         }
 
@@ -377,7 +438,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
-            //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
@@ -386,6 +446,14 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        }
+
+        @Override
+        public void ackChangeSet(int resourceId, String driftConfigName) {
+        }
+
+        @Override
+        public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
         }
     }
 }

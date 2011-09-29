@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -37,6 +36,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -87,11 +87,8 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupOobsPortlet(String locatorId) {
+    public GroupOobsPortlet(String locatorId, int groupId) {
         super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        int groupId = AbstractActivityView.groupIdLookup(currentPage);
         this.groupId = groupId;
     }
 
@@ -139,8 +136,13 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new GroupOobsPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new GroupOobsPortlet(locatorId, context.getGroupId());
         }
     }
 

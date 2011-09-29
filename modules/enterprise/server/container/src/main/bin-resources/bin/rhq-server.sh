@@ -54,7 +54,13 @@
 #                                      is mainly used to augment the Server's
 #                                      default set of options. This can be
 #                                      left unset if it is not needed.
-#RHQ_SERVER_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
+# Enable remote debugging
+#RHQ_SERVER_ADDITIONAL_JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n"
+# Enable JProfiler
+#JPROFILER_HOME="/opt/jprofiler6"
+#RHQ_SERVER_ADDITIONAL_JAVA_OPTS="$RHQ_SERVER_ADDITIONAL_JAVA_OPTS -agentlib:jprofilerti=port=8849 -Xbootclasspath/a:$JPROFILER_HOME/bin/agent.jar"
+#export PATH="$PATH:$JPROFILER_HOME/bin"
+#export LD_LIBRARY_PATH="$JPROFILER_HOME/bin/linux-x64"
 #
 #    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
 #                              arguments that will be passed to the RHQ Server

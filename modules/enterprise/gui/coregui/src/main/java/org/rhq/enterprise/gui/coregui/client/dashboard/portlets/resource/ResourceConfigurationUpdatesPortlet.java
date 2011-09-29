@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 import java.util.ArrayList;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -29,6 +28,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -69,31 +69,20 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
     private ResourceConfigurationHistoryCriteriaView resourceHistoryTable;
 
     public ResourceConfigurationUpdatesPortlet(String locatorId, int resourceId) {
-        super(locatorId);
+        super(locatorId, null);
         this.resourceId = resourceId;
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        baseViewPath = elements[0];
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        /* (non-Javadoc)
-         * TODO:  This factory ASSUMES the user is currently navigated to a group detail view, and generates a portlet
-         *        for that group.  It will fail in other scenarios.  This mechanism should be improved such that the
-         *        factory method can take an EntityContext explicitly indicating, in this case, the group.
-         * @see org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory#getInstance(java.lang.String)
-         */
-        public final Portlet getInstance(String locatorId) {
-            //figure out which page we're loading
-            String currentPage = History.getToken();
-            String[] elements = currentPage.split("/");
-            int currentResourceIdentifier = Integer.valueOf(elements[1]);
-            int resourceId = currentResourceIdentifier;
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
-            return new ResourceConfigurationUpdatesPortlet(locatorId, resourceId);
+            if (EntityContext.Type.Resource != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new ResourceConfigurationUpdatesPortlet(locatorId, context.getResourceId());
         }
     }
 
@@ -159,7 +148,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
         }
 
         @Override
-        protected void refreshTableInfo() {
+        public void refreshTableInfo() {
             super.refreshTableInfo();
             if (getTableInfo() != null) {
                 int count = getListGrid().getSelection().length;
@@ -251,56 +240,51 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 //            }
                 //result timeframe if enabled
                 PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-                if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-
-                    boolean isAdvanced = false;
+                if (property != null && property.getBooleanValue()) {//then proceed setting
                     //detect type of widget[Simple|Advanced]
                     property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-                    if (property != null) {
-                        isAdvanced = property.getBooleanValue();
-                    }
+                    boolean isAdvanced = (property != null) && property.getBooleanValue();
                     if (isAdvanced) {
                         //Advanced time settings
-                        property = portletConfig.getSimple(Constant.METRIC_RANGE);
-                        if (property != null) {
-                            String currentSetting = property.getStringValue();
-                            String[] range = currentSetting.split(",");
+                        String metricRange = portletConfig.getSimpleValue(Constant.METRIC_RANGE, null);
+                        if (metricRange != null) {
+                            String[] range = metricRange.split(",");
                             criteria.addFilterStartTime(Long.valueOf(range[0]));
                             criteria.addFilterEndTime(Long.valueOf(range[1]));
                         }
                     } else {
                         //Simple time settings
                         property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
-                        if (property != null) {
+                        if (property != null && property.getIntegerValue() != null) {
                             int lastN = property.getIntegerValue();
                             property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                            int lastUnits = property.getIntegerValue();
-                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                                .valueOf(lastUnits));
-                            criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
-                            criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                            if (property != null && property.getIntegerValue() != null) {
+                                int lastUnits = property.getIntegerValue();
+                                ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
+                                    .valueOf(lastUnits));
+                                criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                                criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                            }
                         }
                     }
                 }
 
                 //result count
-                property = portletConfig.getSimple(Constant.RESULT_COUNT);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
+                String resultCount = portletConfig.getSimpleValue(Constant.RESULT_COUNT, null);
+                if (resultCount != null) {
+                    if (resultCount.trim().isEmpty() || resultCount.equals("5")) {
                         pageControl.setPageSize(5);
                     } else {
-                        pageControl = new PageControl(0, Integer.valueOf(currentSetting));
+                        pageControl = new PageControl(0, Integer.valueOf(resultCount));
                     }
                 }
                 criteria.setPageControl(pageControl);
 
                 //detect operation status filter
-                property = portletConfig.getSimple(Constant.CONFIG_UPDATE_STATUS);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] parsedValues = currentSetting.trim().split(",");
-                    if (currentSetting.trim().isEmpty()
+                String configUpdateStatus = portletConfig.getSimpleValue(Constant.CONFIG_UPDATE_STATUS, null);
+                if (configUpdateStatus != null) {
+                    String[] parsedValues = configUpdateStatus.trim().split(",");
+                    if (configUpdateStatus.trim().isEmpty()
                         || parsedValues.length == ConfigurationUpdateStatus.values().length) {
                         //all operation stati assumed
                     } else {

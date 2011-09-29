@@ -269,8 +269,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             existingConfigMap.put(config.getPropertyKey(), config);
         }
 
-        Properties newCacheProperties = new Properties(); // create our own object - we don't want to reuse the caller's
-
         // verify each new setting and persist them to the database
         // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
         for (Object key : properties.keySet()) {
@@ -280,8 +278,6 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             if (skipValidation == false) {
                 verifyNewSystemConfigurationProperty(name, value, properties);
             }
-
-            newCacheProperties.setProperty(name, value);
 
             SystemConfiguration existingConfig = existingConfigMap.get(name);
             if (existingConfig == null) {
@@ -301,7 +297,11 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             }
         }
 
-        systemConfigurationCache = newCacheProperties;
+        //let the cache be reloaded once it's needed.
+        //we can't assume that the caller provided the full set of properties we
+        //have in the database, so let's just make sure we reinit the cache
+        //from there...
+        systemConfigurationCache = null;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

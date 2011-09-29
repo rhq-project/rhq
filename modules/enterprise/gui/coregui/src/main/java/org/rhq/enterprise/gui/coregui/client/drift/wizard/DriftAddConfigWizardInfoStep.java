@@ -63,12 +63,12 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
 
-            SelectItem templateSelect = new SelectItem("template", MSG.view_drift_wizard_addConfig_templatePrompt());
+            SelectItem templateSelect = new SelectItem("template", MSG.view_drift_wizard_addDef_templatePrompt());
             templateSelect.setTitleOrientation(TitleOrientation.TOP);
             templateSelect.setAlign(Alignment.LEFT);
             templateSelect.setWidth(300);
             templateSelect.setRequired(true);
-            FormUtility.addContextualHelp(templateSelect, MSG.view_drift_wizard_addConfig_templateHelp());
+            FormUtility.addContextualHelp(templateSelect, MSG.view_drift_wizard_addDef_templateHelp());
 
             Set<ConfigurationTemplate> templates = wizard.getType().getDriftConfigurationTemplates();
             final HashMap<String, ConfigurationTemplate> templatesMap = new HashMap<String, ConfigurationTemplate>(
@@ -115,7 +115,7 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return MSG.view_drift_wizard_addConfig_infoStepName();
+        return MSG.view_drift_wizard_addDef_infoStepName();
     }
 
     public Configuration getStartingConfiguration() {

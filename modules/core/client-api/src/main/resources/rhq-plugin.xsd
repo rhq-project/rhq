@@ -202,8 +202,16 @@
             <xs:annotation>
                <xs:documentation>
                   The default collection interval, in milliseconds. The metric is not necessarily
-                  enabled - see the defaultOn attribute for that. The minimum allowed value is
-                  30000 (30 seconds).
+                  enabled by default - see the defaultOn attribute for that. The minimum allowed
+                  value is 30000 (30 seconds). If unspecified, the default collection interval is
+                  set according to the Resource category, metric data type, and metric display
+                  type, as follows:
+
+                      platform numeric metrics: summary - 1m, detail - 2m
+                      server numeric metrics: summary - 5m, detail - 10m
+                      service numeric metrics: summary - 10m, detail - 20m
+                      traits: summary - 10m, detail - 30m
+                      call-time metrics: 1m
                </xs:documentation>
             </xs:annotation>
             <xs:simpleType>
@@ -592,6 +600,25 @@
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="drift-handling-mode" minOccurs="0" maxOccurs="1" default="normal">
+                <xs:annotation>
+                    <xs:documentation>
+                        Specifies the way in which drift occurrences will be handled when reported. Normal
+                        handling implies the reported drift is unexpected and as such can trigger alerts,
+                        will be present in recent drift reports, etc.  Setting to "Planned Changes" implies
+                        that the reported drift is happening at a time when drift is expected due to
+                        planned changes in the monitored environment, such as an application deployment, a
+                        configuration change, or something similar.  With this setting drift is only reported
+                        for inspection, in the drift history view.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="normal"/>
+                        <xs:enumeration value="plannedChange"/>
+                    </xs:restriction>
+            </xs:simpleType>                    
+            </xs:element>            
             <xs:element name="includes" type="rhq:DriftIncludes" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>

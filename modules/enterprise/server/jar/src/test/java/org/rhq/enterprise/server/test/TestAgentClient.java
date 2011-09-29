@@ -331,7 +331,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
         return false;
     }
 
@@ -349,5 +349,13 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
 
     @Override
     public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    }
+
+    @Override
+    public void ackChangeSet(int resourceId, String driftConfigName) {
+    }
+
+    @Override
+    public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
     }
 }

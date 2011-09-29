@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,6 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
 
     private final Log log = LogFactory.getLog(AsyncResourceDeleteJob.class);
 
-    Subject overlord = LookupUtil.getSubjectManager().getOverlord();
     ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     private class AsyncDeletionStats {
@@ -53,22 +52,26 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
 
     @Override
     public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         List<Integer> toBeRemovedIds = resourceManager.findResourcesMarkedForAsyncDeletion(overlord);
 
         AsyncDeletionStats stats = new AsyncDeletionStats();
         for (Integer doomedResourceId : toBeRemovedIds) {
             try {
+                // Lookup a new overlord subject for each iteration to ensure the overlord session does not timeout
+                // when a large number of Resources are being deleted.
+                overlord = LookupUtil.getSubjectManager().getOverlord();
                 // do not recurse
                 uninventoryResource(overlord, doomedResourceId, stats, false);
             } catch (Throwable t) {
-                log.debug("Simple asynchronous deletion of resource[id=" + doomedResourceId + "] failed, "
-                    + "trying more robust yet expensive removal method, cause: " + ThrowableUtil.getAllMessages(t));
+                log.debug("Simple asynchronous deletion of resource[id=" + doomedResourceId + "] failed; "
+                    + "trying more robust yet expensive removal method - cause: " + ThrowableUtil.getAllMessages(t));
                 try {
                     // try more robust yet expensive recursive delete
                     uninventoryResource(overlord, doomedResourceId, stats, true);
-                } catch (Throwable tt) {
+                } catch (RuntimeException re) {
                     log.debug("Error during asynchronous deletion of resource[id=" + doomedResourceId + "], cause: "
-                        + ThrowableUtil.getAllMessages(tt));
+                        + ThrowableUtil.getAllMessages(re));
                     stats.deletedWithFailure++;
                 }
             }
@@ -116,9 +119,9 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
                      * unscheduleResourceOperation already takes care of ignoring requests to delete unknown schedules,
                      * which would happen if the following sequence occurs:
                      *
-                     * - a user tries to delete a resource, gets the list of resource operation schedules - just then, one
-                     * or more of the schedules completes it's last scheduled firing, and is removed - then we try to
-                     * unschedule it here, except that the jobid will no longer be known
+                     * - a user tries to delete a resource, gets the list of resource operation schedules - just then,
+                     * one or more of the schedules completes it's last scheduled firing, and is removed - then we try
+                     * to unschedule it here, except that the jobid will no longer be known
                      */
                     operationManager.unscheduleResourceOperation(overlord, schedule.getJobId().toString(), resourceId);
                 } catch (UnscheduleException ise) {
@@ -131,4 +134,5 @@ public class AsyncResourceDeleteJob extends AbstractStatefulJob {
                 + "]; will not attempt to unschedule anything", t);
         }
     }
+
 }

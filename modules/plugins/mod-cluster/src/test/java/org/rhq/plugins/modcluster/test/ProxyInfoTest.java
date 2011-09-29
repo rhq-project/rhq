@@ -23,7 +23,7 @@ import java.io.InputStream;
 
 import org.testng.annotations.Test;
 
-import org.rhq.plugins.modcluster.ProxyInfo;
+import org.rhq.plugins.modcluster.model.ProxyInfo;
 
 /**
  * @author Stefan Negrea

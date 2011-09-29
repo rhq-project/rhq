@@ -42,7 +42,7 @@
         ]>
 
 <plugin name="jboss-as-7"
-        displayName="JBoss-AS-7-Plugin"
+        displayName="JBoss Application Server 7.x"
         description="Management of JBossAS 7"
         package="org.rhq.modules.plugins.jbossas7"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -75,7 +75,7 @@
 
     </server>
     -->
-    <server name="HostController"
+    <server name="JBossAS7 Host Controller"
             discovery="BaseProcessDiscovery"
             class="HostControllerComponent"
             description="Domain controller (delegate) for this host"
@@ -195,6 +195,7 @@
         <event name="logEntry" description="an entry in a log file"/>
 
         <resource-configuration>
+<!--
             <c:group name="attribute:schema-locations" displayName="Schema locations">
 
                 <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
@@ -203,11 +204,12 @@
                     </c:map-property>
                 </c:list-property>
             </c:group>
+-->
 
             <c:group name="children:extension" displayName="Installed extensions">
 
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
-                    <c:map-property name="*" displayName="Name">
+                    <c:map-property name="*" displayName="Name" readOnly="true">
                         <c:simple-property name="module" displayName="Module name"/>
                     </c:map-property>
                 </c:list-property>
@@ -418,6 +420,7 @@
 
         <resource-configuration>
 
+<!--
             <c:group name="attribute:schema-locations" displayName="Schema locations">
 
                 <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
@@ -426,11 +429,12 @@
                     </c:map-property>
                 </c:list-property>
             </c:group>
+-->
 
             <c:group name="children:extension" displayName="Installed extensions">
 
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
-                    <c:map-property name="*" displayName="Name">
+                    <c:map-property name="*" displayName="Name" readOnly="true">
                         <c:simple-property name="module" displayName="Module name"/>
                     </c:map-property>
                 </c:list-property>
@@ -733,9 +737,9 @@
                 <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
                 <c:simple-property name="socket-binding" required="true" type="string" readOnly="true"
                                    description="The web connector socket-binding reference, this connector should be bound to.">
-                    <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
+                    <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/> <!-- TODO different for Domain vs standalone -->
                 </c:simple-property>
-                <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme."/>
+                <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme." required="true"/>
                 <c:simple-property name="executor" type="string" readOnly="true" required="false"
                                    description="The name of the executor that should be used for the processing threads of this connector. Defaults to using an internal pool."/>
                 <c:simple-property name="enabled" type="boolean" readOnly="true" defaultValue="true"
@@ -760,19 +764,24 @@
                     <c:simple-property name="virtual-server" />
                 </c:list-property>
                 <c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
-                    <c:simple-property name="name" type="string" readOnly="true" description="The configuration name."/>
-                    <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias."/>
-                    <c:simple-property name="password" type="string" readOnly="true" description="Password."/>
-                    <c:simple-property name="certificate-key-file" type="string" readOnly="true" description="Key file for the certificate."/>
-                    <c:simple-property name="cipher-suite" type="string" readOnly="true" description="The allowed cipher suite."/>
-                    <c:simple-property name="protocol" type="string" readOnly="true" description="The SSL protocols that are enabled."/>
-                    <c:simple-property name="verify-client" type="string" readOnly="true" description="Enable client certificate verification."/>
-                    <c:simple-property name="verify-depth" type="integer" readOnly="true" description="Limit certificate nesting."/>
-                    <c:simple-property name="certificate-file" type="string" readOnly="true" description="Server certificate file."/>
-                    <c:simple-property name="ca-certificate-file" type="string" readOnly="true" description="Certificate authority."/>
-                    <c:simple-property name="ca-revocation-url" type="string" readOnly="true" description="Certificate authority revocation list."/>
-                    <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache."/>
-                    <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout."/>
+                    <c:simple-property name="name" type="string" readOnly="true" description="The configuration name." required="false"/>
+                    <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias." required="false"/>
+                    <c:simple-property name="password" type="password" readOnly="true" description="Password." required="false"/>
+                    <c:simple-property name="certificate-key-file" type="string" readOnly="true" description="Key file for the certificate." required="false"/>
+                    <c:simple-property name="cipher-suite" type="string" readOnly="true" description="The allowed cipher suite." required="false"/>
+                    <c:simple-property name="protocol" type="string" readOnly="true" description="The SSL protocols that are enabled." required="false"/>
+                    <c:simple-property name="verify-client" type="string" readOnly="true" required="false"
+                                       description="Enable client certificate verification."/>
+                    <c:simple-property name="verify-depth" type="integer" readOnly="true" required="false"
+                                       description="Limit certificate nesting."/>
+                    <c:simple-property name="certificate-file" type="string" readOnly="true" required="false"
+                                       description="Server certificate file."/>
+                    <c:simple-property name="ca-certificate-file" type="string" readOnly="true"
+                                       required="false" description="Certificate authority."/>
+                    <c:simple-property name="ca-revocation-url" type="string" readOnly="true"
+                                       required="false" description="Certificate authority revocation list."/>
+                    <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache." required="false"/>
+                    <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout." required="false"/>
                 </c:map-property>
             </resource-configuration>
 
@@ -894,7 +903,7 @@
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=^Deployment$"/>
+                    <c:option-source target="resource" expression="type=^Deployment$" filter="sameHierarchy"/>
                 </c:simple-property>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
@@ -1674,6 +1683,53 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     </server>
 
+    <server name="Infinispan"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true"
+    >
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+                <c:simple-property name="default-cache-container" readOnly="true"/>
+        </resource-configuration>
+
+        <service name="Cache Container"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            >
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="cache-container"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="default-cache" readOnly="true"/>
+                <c:list-property name="cache" readOnly="true">
+                    <c:map-property name="*">
+                        <c:simple-property name="name" />
+                        <c:simple-property name="mode" />
+<!--
+                        <c:map-property name="eviction">
+                            <c:simple-property name="strategy"/>
+                            <c:simple-property name="max-entries" required="false"/>
+                        </c:map-property>
+-->
+                        <c:simple-property name="eviction" required="false" readOnly="true"/>
+                        <c:simple-property name="expiration" required="false" readOnly="true"/>
+                    </c:map-property>
+                </c:list-property>
+            </resource-configuration>
+        </service>
+
+    </server>
+
     <server name="Threads"
         discovery="SubsystemDiscovery"
         class="BaseComponent"
@@ -1847,7 +1903,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
 
         <runs-inside>
-            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
             <parent-resource-type name="Host"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
         </runs-inside>
@@ -1904,7 +1960,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              class="BaseComponent"
             >
         <runs-inside>
-            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
         </runs-inside>
 
 
@@ -1964,6 +2020,47 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                </c:group>
             </configuration>
         </content>
+
+    </service>
+
+    <service name="DeploymentScanner"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Management of the deployment scanner"
+             singleton="true"
+             >
+        <runs-inside>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=deployment-scanner" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <!--<c:simple-property name="default" readOnly="false" required="true" description="Scanner policy to use"/>-->
+            <c:group name="children:scanner:name" displayName="Available scanners">
+                <c:list-property name="*" description="List of scanners" >
+                    <c:map-property name="scanner">
+                        <c:simple-property name="name" required="true" type="string" readOnly="true" description="The name of the scanner"/>
+                        <c:simple-property name="path" required="true" type="string" readOnly="false"
+                                           description="The actual filesystem path to be scanned. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
+                        <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
+                                           description="Reference to a filesystem path defined in the 'paths' section of the server configuration."/>
+                        <c:simple-property name="scan-enabled" required="false" type="boolean" readOnly="false"
+                                           defaultValue="true" description="Flag indicating that all scanning (including initial scanning at startup) should be disabled."/>
+                        <c:simple-property name="scan-interval" required="false" type="integer" readOnly="false"
+                                           defaultValue="5000" description="Periodic interval, in milliseconds, at which the repository should be scanned for changes. A value of less than 1 indicates the repository should only be scanned at initial startup."/>
+                        <c:simple-property name="auto-deploy-zipped" required="false" type="boolean" readOnly="false"
+                                           defaultValue="true" description="Controls whether zipped deployment content should be automatically deployed by the scanner without requiring the user to add a .dodeploy marker file."/>
+                        <c:simple-property name="auto-deploy-exploded" required="false" type="boolean" readOnly="false"
+                                           defaultValue="false" description="Controls whether zipped deployment content should be automatically deployed by the scanner without requiring the user to add a .dodeploy marker file. Setting this to 'true' is not recommended for anything but basic development scenarios,  as there is no way to ensure that deployment will not occur in the middle of changes to the content."/>
+                        <c:simple-property name="deployment-timeout" required="false" type="long" readOnly="false"
+                                           defaultValue="60" description="Timeout, in seconds, a deployment is allows to execute before being canceled.  The default is 60 seconds."/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+
+        </resource-configuration>
 
     </service>
 

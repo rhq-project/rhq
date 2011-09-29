@@ -48,6 +48,7 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -60,8 +61,8 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  *
  * @author Jay Shaughnessy
  */
-@SuppressWarnings("unchecked")
-public class TomcatServerComponent implements JMXComponent, MeasurementFacet, OperationFacet {
+public class TomcatServerComponent<T extends ResourceComponent<?>> implements JMXComponent<T>, MeasurementFacet,
+    OperationFacet {
 
     public enum SupportedOperations {
         /**
@@ -251,14 +252,15 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
                 // Since the connection is attempted each time it's used, failure to connect could result in log
                 // file spamming. Log it once for every 10 consecutive times it's encountered. 
                 if (consecutiveConnectionErrors % 10 == 0) {
-                    log.warn("Could not establish connection to the Tomcat instance ["
-                        + (consecutiveConnectionErrors + 1) + "] times for resource ["
-                        + resourceContext.getResourceKey() + "]", e);
+                    log.warn(
+                        "Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1)
+                            + "] times for resource [" + resourceContext.getResourceKey() + "]", e);
                 }
 
                 if (log.isDebugEnabled())
-                    log.debug("Could not connect to the Tomcat instance for resource ["
-                        + resourceContext.getResourceKey() + "]", e);
+                    log.debug(
+                        "Could not connect to the Tomcat instance for resource [" + resourceContext.getResourceKey()
+                            + "]", e);
 
                 consecutiveConnectionErrors++;
 

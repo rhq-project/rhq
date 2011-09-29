@@ -78,7 +78,9 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
         public static final String RESOURCE_ID = "resourceId";
     }
 
-    private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+    // Specify 60s timeout to compensate for Configurations being fetched for all of the config updates.
+    // TODO (ips, 08/31/11): Remove this once fetching of Configurations has been disabled.
+    private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService(60 * 1000);
 
     protected ConfigurationGWTServiceAsync getConfigurationService() {
         return this.configurationService;
@@ -186,7 +188,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
                 String err = event.getRecord().getAttribute(Field.ERROR_MESSAGE);
                 if (err != null && err.length() > 0) {
                     err = "<pre>" + err + "</pre>";
-                    new ErrorMessageWindow("errWin", MSG.common_title_error(), err).show();
+                    new ErrorMessageWindow("errWin", MSG.common_severity_error(), err).show();
                 }
             }
         });

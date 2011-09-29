@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.domain.auth.Subject;
@@ -51,6 +52,7 @@ import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -72,6 +74,7 @@ import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -209,6 +212,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         ensureControlPermission(subject, resource);
 
+        validateOperationNameAndParameters(resource.getResourceType(), operationName, parameters);
+
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
         JobDataMap jobDataMap = new JobDataMap();
@@ -255,7 +260,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Date next = scheduler.scheduleJob(jobDetail, trigger);
         ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
 
-        LOG.debug("Scheduled resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
+        LOG.debug("Scheduled Resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
 
         return newSchedule;
     }
@@ -276,6 +281,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
 
         ensureControlPermission(subject, group);
+
+        validateOperationNameAndParameters(group.getResourceType(), operationName, parameters);
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
@@ -400,11 +407,15 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public void deleteOperationScheduleEntity(ScheduleJobId jobId) {
-        OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
-        if (doomed != null) {
-            LOG.debug("Deleting schedule entity: " + jobId);
-            entityManager.remove(doomed);
-        } else {
+        try {
+            OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
+            if (doomed != null) {
+                LOG.debug("Deleting schedule entity: " + jobId);
+                entityManager.remove(doomed);
+            } else {
+                LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
+            }
+        } catch (NoResultException nre) {
             LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
         }
 
@@ -432,12 +443,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
             ResourceOperationSchedule sched = getResourceOperationSchedule(subject, jobDetail);
 
-            if (resourceId != sched.getResource().getId()) {
-                throw new IllegalStateException("Somehow a different resource [" + sched.getResource()
-                    + "] was scheduled in the same job group as resource [" + resource + "]");
-            }
+            if (sched != null) {
+                if (resourceId != sched.getResource().getId()) {
+                    throw new IllegalStateException("Somehow a different resource [" + sched.getResource()
+                        + "] was scheduled in the same job group as resource [" + resource + "]");
+                }
 
-            operationSchedules.add(sched);
+                operationSchedules.add(sched);
+            }
         }
 
         return operationSchedules;
@@ -455,12 +468,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
             GroupOperationSchedule sched = getGroupOperationSchedule(subject, jobDetail);
 
-            if (groupId != sched.getGroup().getId()) {
-                throw new IllegalStateException("Somehow a different group [" + sched.getGroup()
-                    + "] was scheduled in the same job group as group [" + group + "]");
-            }
+            if (sched != null) {
+                if (groupId != sched.getGroup().getId()) {
+                    throw new IllegalStateException("Somehow a different group [" + sched.getGroup()
+                        + "] was scheduled in the same job group as group [" + group + "]");
+                }
 
-            operationSchedules.add(sched);
+                operationSchedules.add(sched);
+            }
         }
 
         return operationSchedules;
@@ -526,7 +541,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setSubject(subject);
         sched.setParameters(parameters);
         sched.setDescription(description);
+
         Trigger trigger = getTriggerOfJob(jobDetail);
+        if (trigger == null) {
+            // The job must have run for the last time - return null to inform the user the job is defunct.
+            return null;
+        }
+
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
         sched.setNextFireTime(trigger.getNextFireTime());
@@ -557,7 +578,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         throws SchedulerException {
         JobId jobIdObject = new JobId(jobId);
         JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
-        return getResourceOperationSchedule(subject, jobDetail);
+        ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(subject, jobDetail);
+        if (resourceOperationSchedule == null) {
+            throw new SchedulerException("The job with ID [" + jobId + "] is no longer scheduled.");
+        }
+        return resourceOperationSchedule;
     }
 
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, JobDetail jobDetail) {
@@ -619,7 +644,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
         sched.setHaltOnFailure(haltOnFailure);
+
         Trigger trigger = getTriggerOfJob(jobDetail);
+        if (trigger == null) {
+            // The job must have run for the last time - return null to inform the user the job is defunct.
+            return null;
+        }
+
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
         sched.setNextFireTime(trigger.getNextFireTime());
@@ -630,7 +661,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, String jobId) throws SchedulerException {
         JobId jobIdObject = new JobId(jobId);
         JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
-        return getGroupOperationSchedule(subject, jobDetail);
+        GroupOperationSchedule groupOperationSchedule = getGroupOperationSchedule(subject, jobDetail);
+        if (groupOperationSchedule == null) {
+            throw new SchedulerException("The job with ID [" + jobId + "] is no longer scheduled.");
+        }
+        return groupOperationSchedule;
     }
 
     public OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) {
@@ -1961,6 +1996,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return queryRunner.execute();
     }
 
+    @Nullable
     private Trigger getTriggerOfJob(JobDetail jobDetail) {
         Trigger[] triggers;
         try {
@@ -1968,12 +2004,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (SchedulerException e) {
             throw new RuntimeException("Failed to lookup trigger for job [" + jobDetail.getFullName() + "].", e);
         }
-        if (triggers.length == 0) {
-            throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has no triggers.");
-        }
         if (triggers.length > 1) {
             throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has more than one trigger: "
                 + Arrays.asList(triggers));
+        }
+        if (triggers.length == 0) {
+            return null;
         }
         return triggers[0];
     }
@@ -2071,6 +2107,29 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         return trigger;
+    }
+
+    private static void validateOperationNameAndParameters(ResourceType resourceType, String operationName,
+        Configuration parameters) {
+        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
+        OperationDefinition matchingOperationDefinition = null;
+        for (OperationDefinition operationDefinition : operationDefinitions) {
+            if (operationDefinition.getName().equals(operationName)) {
+                matchingOperationDefinition = operationDefinition;
+                break;
+            }
+        }
+        if (matchingOperationDefinition == null) {
+            throw new IllegalArgumentException("[" + operationName
+                + "] is not a valid operation name for Resources of type [" + resourceType.getName() + "].");
+        }
+        ConfigurationDefinition parametersDefinition = matchingOperationDefinition
+            .getParametersConfigurationDefinition();
+        List<String> errors = ConfigurationUtility.validateConfiguration(parameters, parametersDefinition);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException("Parameters for [" + operationName + "] on Resource of type ["
+                + resourceType.getName() + "] are not valid: " + errors);
+        }
     }
 
 }

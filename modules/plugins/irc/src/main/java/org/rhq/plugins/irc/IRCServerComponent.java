@@ -24,7 +24,7 @@ import org.jibble.pircbot.PircBot;
 /**
  * @author Greg Hinkle
  */
-public class IRCServerComponent implements ResourceComponent, OperationFacet {
+public class IRCServerComponent implements ResourceComponent<ResourceComponent<?>>, OperationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private Bot bot;

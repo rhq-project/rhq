@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 
 import com.smartgwt.client.widgets.Label;
@@ -41,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -96,20 +94,8 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
                     final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
-                    if (PRODUCT_INFO == null) {
-                        GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
-                            }
-
-                            public void onSuccess(ProductInfo result) {
-                                PRODUCT_INFO = result;
-                                aboutModalWindow.setTitle(MSG.view_aboutBox_title(PRODUCT_INFO.getFullName()));
-                            }
-                        });
-                    } else {
-                        aboutModalWindow.setTitle(MSG.view_aboutBox_title(PRODUCT_INFO.getFullName()));
-                    }
+                    ProductInfo productInfo = CoreGUI.get().getProductInfo();
+                    aboutModalWindow.setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
                     aboutModalWindow.show();
                     return aboutModalWindow;
                 }

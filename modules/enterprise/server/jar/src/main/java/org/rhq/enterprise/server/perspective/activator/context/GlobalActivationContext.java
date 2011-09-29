@@ -79,7 +79,8 @@ public class GlobalActivationContext implements ActivationContext {
         if (this.globalPermissions == null) {
             AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
             Set<Permission> perms = authorizationManager.getExplicitGlobalPermissions(this.subject);
-            this.globalPermissions = EnumSet.copyOf(perms);
+            this.globalPermissions = EnumSet.noneOf(Permission.class);
+            this.globalPermissions.addAll(perms);
         }
         return this.globalPermissions;
     }

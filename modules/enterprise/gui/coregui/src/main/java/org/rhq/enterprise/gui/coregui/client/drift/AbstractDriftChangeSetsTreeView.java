@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
@@ -50,6 +51,8 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
@@ -308,6 +311,29 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         MenuItem idItem = new MenuItem(MSG.common_title_id() + "=" + node.getChangeSetId());
         idItem.setEnabled(false);
         contextMenu.addItem(idItem);
+
+        MenuItem pinSnapshotItem = new MenuItem("Pin Snapshot");
+        pinSnapshotItem.setEnabled(true);
+        contextMenu.addItem(pinSnapshotItem);
+        pinSnapshotItem.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                String changeSetId = node.getChangeSetId();
+                GWTServiceLookup.getDriftService().pinSnapshot(changeSetId, new AsyncCallback<Void>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to pin change set: " + caught.getMessage(),
+                            caught);
+                    }
+
+                    @Override
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(new Message("Sent request to agent to pin snapshot",
+                            Message.Severity.Info));
+                    }
+                });
+            }
+        });
 
         return contextMenu;
     }

@@ -562,7 +562,7 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
-        List<FileEntry> driftEntries = asList(changedFileEntry("conf/server-1.conf",  oldServer1Hash, newServer1Hash));
+        List<FileEntry> driftEntries = asList(changedFileEntry("conf/server-1.conf", oldServer1Hash, newServer1Hash));
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
@@ -571,7 +571,7 @@ public class DriftDetectorTest extends DriftTest {
 
         // verify that the coverage change set was updated
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
-        List<FileEntry> coverageEntries = asList(changedFileEntry("conf/server-1.conf",  oldServer1Hash, newServer1Hash));
+        List<FileEntry> coverageEntries = asList(changedFileEntry("conf/server-1.conf", oldServer1Hash, newServer1Hash));
 
         assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
@@ -611,6 +611,120 @@ public class DriftDetectorTest extends DriftTest {
         assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
+    }
+
+    @Test
+    public void doNotModifyPinnedSnapshotWhenDriftIsDetected() throws Exception {
+        DriftConfiguration config = driftConfiguration("do-not-modify-pinned-snapshot", resourceDir.getAbsolutePath());
+        config.setPinned(true);
+        config.setPinnedVersion(0);
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server1.conf");
+
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        // When the initial snapshot is pinned, we need to generate it; otherwise, it should
+        // be provided by the server.
+        File currentSnapshot = changeSet(config.getName(), COVERAGE);
+        File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+        String originalPinnedHash = sha256(pinnedSnapshot);
+
+        // generate some drift
+        File server2Conf = createRandomFile(confDir, "server2.conf");
+        schedule.resetSchedule();
+        detector.run();
+
+        String newPinnedHash = sha256(pinnedSnapshot);
+
+        assertEquals(newPinnedHash, originalPinnedHash, "When a snapshot is pinned, it should not get updated during " +
+            "drift detection");
+
+        // We always generate/update the current snapshot so we still need to verify that it
+        // was generated/updated correctly
+        List<FileEntry> fileEntries = asList(
+            addedFileEntry("conf/server1.conf", sha256(server1Conf)),
+            addedFileEntry("conf/server2.conf", sha256(server2Conf)));
+
+        assertHeaderEquals(currentSnapshot, createHeaders(config, COVERAGE, 1));
+        assertFileEntriesMatch("The current snapshot file should still get updated even when using a pinned snapshot",
+            fileEntries, currentSnapshot);
+    }
+
+    @Test
+    public void updateCurrentSnapshotVersionNumberWhenUsingPinnedSnapshot() throws Exception {
+        DriftConfiguration config = driftConfiguration("update-snapshot-version-pinned", resourceDir.getAbsolutePath());
+        config.setPinned(true);
+        config.setPinnedVersion(0);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server1.conf");
+
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        // create some drift which should result in version 1
+        File server2Conf = createRandomFile(confDir, "server2.conf");
+        schedule.resetSchedule();
+        detector.run();
+
+        File currentSnapshot = changeSet(config.getName(), COVERAGE);
+        File previousSnapshot = new File(currentSnapshot.getParentFile(), "changeset.txt.previous");
+        previousSnapshot.delete();
+
+        // create some more drift which should result in version 2
+        File server3Conf = createRandomFile(confDir, "server3.conf");
+        schedule.resetSchedule();
+        detector.run();
+
+        // verify that the current snapshot was updated
+        List<FileEntry> currentSnapshotEntries = asList(
+            addedFileEntry("conf/server1.conf", sha256(server1Conf)),
+            addedFileEntry("conf/server2.conf", sha256(server2Conf)),
+            addedFileEntry("conf/server3.conf", sha256(server3Conf)));
+
+        assertHeaderEquals(currentSnapshot, createHeaders(config, COVERAGE, 2));
+        assertFileEntriesMatch("The current snapshot file should still get updated even when using a pinned snapshot",
+            currentSnapshotEntries, currentSnapshot);
+
+        // verify that the the drift/deleta change set was generated
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+        List<FileEntry> driftEntries = asList(
+            addedFileEntry("conf/server2.conf", sha256(server2Conf)),
+            addedFileEntry("conf/server3.conf", sha256(server3Conf)));
+
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 2));
+        assertFileEntriesMatch("The drift change set was not generated correctly when using a pinned snapshot",
+            driftEntries, driftChangeSet);
+
+    }
+
+    @Test
+    public void generatePinnedSnapshotFileWhenInitialVersionIsPinned() throws Exception {
+        DriftConfiguration config = driftConfiguration("initial-snapshot-pinned-test", resourceDir.getAbsolutePath());
+        config.setPinned(true);
+        config.setPinnedVersion(0);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File changeSet = changeSet(config.getName(), COVERAGE);
+        File pinnedSnapshot = new File(changeSet.getParentFile(), "snapshot.pinned");
+        List<FileEntry> entries = asList(addedFileEntry("conf/server.conf", sha256(serverConf)));
+
+        assertTrue(changeSet.exists(), "An initial snapshot file should be generated even when it is pinned");
+        assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
+        assertFileEntriesMatch("Initial snapshot entries are wrong for pinned snapshot", entries, changeSet);
+
+        assertTrue(pinnedSnapshot.exists(), "Pinned snapshot file should be generated when initial version is pinned");
+        assertEquals(sha256(changeSet), sha256(pinnedSnapshot), "The contents of the pinned snapshot file and the " +
+            "initial snapshot should be identical");
     }
 
     void assertHeaderEquals(File changeSet, Headers expected) throws Exception {

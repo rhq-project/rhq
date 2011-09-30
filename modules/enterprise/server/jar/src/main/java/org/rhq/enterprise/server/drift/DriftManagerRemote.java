@@ -21,16 +21,24 @@ package org.rhq.enterprise.server.drift;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 @Remote
 public interface DriftManagerRemote {
+
+    PageList<DriftConfiguration> findDriftConfigurationsByCriteria(Subject subject,
+        DriftConfigurationCriteria criteria);
+
+    void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
 
     DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) throws Exception;
 

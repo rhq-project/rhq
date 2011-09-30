@@ -28,6 +28,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.FileDiffReport;
@@ -146,4 +147,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
     boolean isBinaryFile(Drift<?, ?> drift);
+
+    void pinSnapshot(Subject subject, String changeSetId);
 }

@@ -59,6 +59,7 @@ import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.util.file.FileUtil.copyFile;
 import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
@@ -162,7 +163,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     private void syncWithServer(Resource resource, DriftConfiguration configuration) throws IOException {
-        Headers headers = createHeaders(resource, configuration);
+        Headers headers = createHeaders(resource.getId(), configuration);
         if (!changeSetMgr.changeSetExists(resource.getId(), headers)) {
             log.info("No snapshot found for " + toString(resource, configuration) + ". Downloading snapshot from " +
                 "server");
@@ -186,22 +187,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
             log.info("Preparing to write snapshot at version " + snapshot.getVersion() + " to disk for " +
                 toString(resource, configuration));
-            ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resource.getId(), headers);
-
-            for (Drift drift : snapshot.getEntries()) {
-                switch (drift.getCategory()) {
-                    case FILE_ADDED:
-                        writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
-                        break;
-                    case FILE_CHANGED:
-                        writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
-                            drift.getNewDriftFile().getHashId()));
-                        break;
-                    default:  // FILE_REMOVED
-                        writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));
-                }
-            }
-            writer.close();
+            writeSnapshotToFile(headers, snapshot);
         }
     }
 
@@ -239,24 +225,6 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 }
             }
         }
-    }
-
-    private String toString(Resource r, DriftConfiguration c) {
-        return toString(r.getId(), c);
-    }
-
-    private String toString(int resourceId, DriftConfiguration c) {
-        return "DriftConfiguration[id: " + c.getId() + ", resourceId: " + resourceId + ", name: " + c.getName() + "]";
-    }
-
-    private Headers createHeaders(Resource resource, DriftConfiguration configuration) {
-        Headers headers = new Headers();
-        headers.setResourceId(resource.getId());
-        headers.setDriftCofigurationId(configuration.getId());
-        headers.setType(COVERAGE);
-        headers.setDriftConfigurationName(configuration.getName());
-        headers.setBasedir(getAbsoluteBaseDirectory(resource.getId(), configuration).getAbsolutePath());
-        return headers;
     }
 
     /**
@@ -527,6 +495,38 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
+    public void pinSnapshot(final int resourceId, final String configName, final DriftSnapshot snapshot) {
+        if (log.isInfoEnabled()) {
+            log.info("Pinning snapshot version " + snapshot.getVersion() + " for " + toString(resourceId, configName));
+        }
+        final DriftDetectionSchedule schedule = schedulesQueue.find(resourceId, configName);
+        if (schedule == null) {
+            return;
+        }
+
+        schedule.getDriftConfiguration().setPinned(true);
+        schedule.getDriftConfiguration().setPinnedVersion(snapshot.getVersion());
+
+        schedulesQueue.removeAndExecute(resourceId, configName, new Runnable() {
+            @Override
+            public void run() {
+                File snapshotFile = changeSetMgr.findChangeSet(resourceId, configName, COVERAGE);
+                snapshotFile.delete();
+                try {
+                    // Replace the current snapshot and then create/copy it to the pinned
+                    // snapshot file
+                    writeSnapshotToFile(createHeaders(resourceId, schedule.getDriftConfiguration()), snapshot);
+                    schedulesQueue.addSchedule(schedule);
+                    copyFile(snapshotFile, new File(snapshotFile.getParentFile(), "snapshot.pinned"));
+                } catch (IOException e) {
+                    log.error("An error occurred while writing the pinned snapshot to disk. Drift detection will " +
+                        "not be rescheduled for " + schedule);
+                }
+            }
+        });
+    }
+
+    @Override
     public void ackChangeSet(int resourceId, String driftConfigName) {
         log.info("Received server change set ack for [resourceId: " + resourceId + ", driftConfiguration:" +
             driftConfigName + "]");
@@ -662,6 +662,46 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
      */
     protected MeasurementManager getMeasurementManager() {
         return PluginContainer.getInstance().getMeasurementManager();
+    }
+
+    private void writeSnapshotToFile(Headers headers, DriftSnapshot snapshot) throws IOException {
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(headers.getResourceId(), headers);
+        for (Drift drift : snapshot.getEntries()) {
+            switch (drift.getCategory()) {
+            case FILE_ADDED:
+                writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
+                break;
+            case FILE_CHANGED:
+                writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
+                    drift.getNewDriftFile().getHashId()));
+                break;
+            default:  // FILE_REMOVED
+                writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));
+            }
+        }
+        writer.close();
+    }
+
+    private String toString(Resource r, DriftConfiguration c) {
+        return toString(r.getId(), c);
+    }
+
+    private String toString(int resourceId, DriftConfiguration c) {
+        return "DriftConfiguration[id: " + c.getId() + ", resourceId: " + resourceId + ", name: " + c.getName() + "]";
+    }
+
+    private String toString(int resourceId, String configName) {
+        return "[resourceId: " + resourceId + ", driftConfigurationName: " + configName + "]";
+    }
+
+    private Headers createHeaders(int resourceId, DriftConfiguration configuration) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId);
+        headers.setDriftCofigurationId(configuration.getId());
+        headers.setType(COVERAGE);
+        headers.setDriftConfigurationName(configuration.getName());
+        headers.setBasedir(getAbsoluteBaseDirectory(resourceId, configuration).getAbsolutePath());
+        return headers;
     }
 
     private static class ZipFileNameFilter implements FilenameFilter {

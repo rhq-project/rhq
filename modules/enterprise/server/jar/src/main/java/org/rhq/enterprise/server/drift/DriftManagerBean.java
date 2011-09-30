@@ -417,6 +417,35 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    public void pinSnapshot(Subject subject, String changeSetId) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterId(changeSetId);
+        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+        DriftChangeSet<?> changeSet = changeSets.get(0);
+
+        DriftConfiguration config = entityManager.find(DriftConfiguration.class, changeSet.getDriftConfigurationId());
+        config.setPinned(true);
+        config.setPinnedVersion(changeSet.getVersion());
+
+        // TODO is this merge call needed? - jsanda
+        config = entityManager.merge(config);
+
+        GenericDriftChangeSetCriteria snapshotCriteria = new GenericDriftChangeSetCriteria();
+        snapshotCriteria.addFilterDriftConfigurationId(config.getId());
+        snapshotCriteria.addFilterEndVersion(Integer.toString(changeSet.getVersion()));
+        DriftSnapshot snapshot = createSnapshot(subject, snapshotCriteria);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), changeSet.getResourceId());
+        DriftAgentService driftService = agent.getDriftAgentService();
+        driftService.pinSnapshot(changeSet.getResourceId(), config.getName(), snapshot);
+    }
+
+    @Override
     @TransactionAttribute(NOT_SUPPORTED)
     public String getDriftFileBits(String hash) {
         log.debug("Retrieving drift file content for " + hash);

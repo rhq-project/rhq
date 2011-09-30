@@ -118,4 +118,6 @@ public interface DriftGWTService extends RemoteService {
 
     DriftDetails getDriftDetails(String driftId) throws RuntimeException;
 
+    void pinSnapshot(String changeSetId) throws RuntimeException;
+
 }

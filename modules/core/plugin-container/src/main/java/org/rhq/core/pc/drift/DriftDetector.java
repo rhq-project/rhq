@@ -156,14 +156,29 @@ public class DriftDetector implements Runnable {
 
         log.debug("Generating drift change set for " + schedule);
 
-        final File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
         File currentSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
             schedule.getDriftConfiguration().getName(), COVERAGE);
-        final ChangeSetReader coverageReader = changeSetMgr.getChangeSetReader(currentSnapshot);
+        File snapshotFile = currentSnapshot;
+
+        if (schedule.getDriftConfiguration().isPinned()) {
+            snapshotFile = new File(snapshotFile.getParentFile(), "snapshot.pinned");
+
+        }
+
+        final File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
         final Set<File> processedFiles = new HashSet<File>();
         final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>();
         final List<FileEntry> deltaEntries = new LinkedList<FileEntry>();
-        int newVersion = coverageReader.getHeaders().getVersion() + 1;
+        final ChangeSetReader coverageReader = changeSetMgr.getChangeSetReader(snapshotFile);
+
+        int newVersion;
+        if (schedule.getDriftConfiguration().isPinned()) {
+            ChangeSetReader snapshotReader = changeSetMgr.getChangeSetReader(currentSnapshot);
+            newVersion = snapshotReader.getHeaders().getVersion() + 1;
+            snapshotReader.close();
+        } else {
+            newVersion = coverageReader.getHeaders().getVersion() + 1;
+        }
 
         // First look for files that have either been modified or deleted
         for (FileEntry entry : coverageReader) {
@@ -237,22 +252,25 @@ public class DriftDetector implements Runnable {
             // If nothing has changed, there is no need to add/update any files
             summary.setNewSnapshot(currentSnapshot);
         } else {
-            File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() +
-                ".previous");
+            File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() + ".previous");
             copyFile(currentSnapshot, oldSnapshot);
             currentSnapshot.delete();
 
-            Headers deltaHeaders = createHeaders(schedule, DRIFT, newVersion);
             Headers snapshotHeaders = createHeaders(schedule, COVERAGE, newVersion);
-
-            File driftChangeSet = changeSetMgr.findChangeSet(schedule.getResourceId(),
-                schedule.getDriftConfiguration().getName(), DRIFT);
-            ChangeSetWriter deltaWriter = changeSetMgr.getChangeSetWriter(driftChangeSet, deltaHeaders);
-
             File newSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
                 schedule.getDriftConfiguration().getName(), COVERAGE);
             ChangeSetWriter newSnapshotWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
                 snapshotHeaders);
+
+            for (FileEntry entry : snapshotEntries) {
+                newSnapshotWriter.write(entry);
+            }
+            newSnapshotWriter.close();
+            Headers deltaHeaders = createHeaders(schedule, DRIFT, newVersion);
+
+            File driftChangeSet = changeSetMgr.findChangeSet(schedule.getResourceId(),
+                schedule.getDriftConfiguration().getName(), DRIFT);
+            ChangeSetWriter deltaWriter = changeSetMgr.getChangeSetWriter(driftChangeSet, deltaHeaders);
 
             summary.setDriftChangeSet(driftChangeSet);
             summary.setNewSnapshot(newSnapshot);
@@ -262,11 +280,6 @@ public class DriftDetector implements Runnable {
                 deltaWriter.write(entry);
             }
             deltaWriter.close();
-
-            for (FileEntry entry : snapshotEntries) {
-                newSnapshotWriter.write(entry);
-            }
-            newSnapshotWriter.close();
         }
     }
 
@@ -306,6 +319,9 @@ public class DriftDetector implements Runnable {
                 }));
         }
         writer.close();
+        if (schedule.getDriftConfiguration().isPinned()) {
+            copyFile(snapshot, new File(snapshot.getParentFile(), "snapshot.pinned"));
+        }
         summary.setNewSnapshot(snapshot);
     }
 

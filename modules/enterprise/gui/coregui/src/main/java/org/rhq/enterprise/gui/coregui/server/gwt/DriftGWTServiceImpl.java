@@ -178,4 +178,13 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public void pinSnapshot(String changeSetId) throws RuntimeException {
+        try {
+            driftManager.pinSnapshot(getSessionSubject(), changeSetId);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

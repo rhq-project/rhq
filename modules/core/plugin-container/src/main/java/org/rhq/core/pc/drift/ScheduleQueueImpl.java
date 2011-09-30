@@ -42,10 +42,14 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     private boolean isActiveSchedule(int resourceId, DriftConfiguration config) {
+        return isActiveSchedule(resourceId, config.getName());
+    }
+
+    private boolean isActiveSchedule(int resourceId, String configName) {
         try {
             lock.readLock().lock();
             return activeSchedule != null && activeSchedule.getResourceId() == resourceId
-                && activeSchedule.getDriftConfiguration().getName().equals(config.getName());
+                && activeSchedule.getDriftConfiguration().getName().equals(configName);
         } finally {
             lock.readLock().unlock();
         }
@@ -95,21 +99,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
 
     @Override
     public boolean contains(int resourceId, DriftConfiguration config) {
-        if (isActiveSchedule(resourceId, config)) {
-            return true;
-        }
-        try {
-            lock.readLock().lock();
-            for (DriftDetectionSchedule schedule : queue) {
-                if (schedule.getResourceId() == resourceId &&
-                    schedule.getDriftConfiguration().getName().equals(config.getName())) {
-                    return true;
-                }
-            }
-            return false;
-        } finally {
-            lock.readLock().unlock();
-        }
+        return find(resourceId, config.getName()) != null;
     }
 
     @Override
@@ -132,15 +122,44 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     @Override
+    public DriftDetectionSchedule find(int resourceId, String configName) {
+        if (isActiveSchedule(resourceId, configName)) {
+            return activeSchedule.copy();
+        }
+        try {
+            lock.readLock().lock();
+            for (DriftDetectionSchedule schedule : queue) {
+                if (schedule.getResourceId() == resourceId
+                    && schedule.getDriftConfiguration().getName().equals(configName)) {
+                    return schedule.copy();
+                }
+            }
+            return null;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
     public DriftDetectionSchedule remove(int resourceId, DriftConfiguration config) {
-        return removeAndExecute(resourceId, config, NO_OP);
+        return remove(resourceId, config.getName());
+    }
+
+    @Override
+    public DriftDetectionSchedule remove(int resourceId, String configName) {
+        return removeAndExecute(resourceId, configName, NO_OP);
     }
 
     @Override
     public DriftDetectionSchedule removeAndExecute(int resourceId, DriftConfiguration config, Runnable task) {
+        return removeAndExecute(resourceId, config.getName(), task);
+    }
+
+    @Override
+    public DriftDetectionSchedule removeAndExecute(int resourceId, String configName, Runnable task) {
         try {
             lock.writeLock().lock();
-            if (isActiveSchedule(resourceId, config)) {
+            if (isActiveSchedule(resourceId, configName)) {
                 deactivationTask = task;
                 DriftDetectionSchedule removedSchedule = activeSchedule;
                 activeSchedule = null;
@@ -151,7 +170,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
             while (iterator.hasNext()) {
                 DriftDetectionSchedule schedule = iterator.next();
                 if (schedule.getResourceId() == resourceId
-                    && schedule.getDriftConfiguration().getName().equals(config.getName())) {
+                    && schedule.getDriftConfiguration().getName().equals(configName)) {
                     iterator.remove();
                     task.run();
                     return schedule;
@@ -187,6 +206,9 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     private void update(DriftDetectionSchedule schedule, DriftConfiguration config) {
         schedule.getDriftConfiguration().setEnabled(config.isEnabled());
         schedule.getDriftConfiguration().setInterval(config.getInterval());
+        schedule.getDriftConfiguration().setDriftHandlingMode(config.getDriftHandlingMode());
+        schedule.getDriftConfiguration().setPinned(config.isPinned());
+        schedule.getDriftConfiguration().setPinnedVersion(config.getPinnedVersion());
     }
 
     @Override

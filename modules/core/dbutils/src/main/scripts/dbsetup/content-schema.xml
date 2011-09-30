@@ -674,6 +674,8 @@
         <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>        
         <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
         <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="PINNED" type="BOOLEAN" required="true"/>
+        <column name="PINNED_VERSION" type="INTEGER" required="false"/>
     </table>
 
     <!--  A drift change-set report for a resource -->

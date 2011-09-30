@@ -97,6 +97,12 @@ public class DriftConfiguration implements Serializable {
     @ManyToOne(optional = true)
     private Resource resource = null;
 
+    @Column(name = "PINNED", nullable = false)
+    private boolean pinned;
+
+    @Column(name = "PINNED_VERSION", nullable = true)
+    private Integer pinnedVersion;
+
     // required for jaxb/web services stuff
     protected DriftConfiguration() {
     }
@@ -182,16 +188,36 @@ public class DriftConfiguration implements Serializable {
         this.setIntervalProperty(interval);
     }
 
+    public boolean isPinned() {
+        return pinned;
+    }
+
+    public void setPinned(boolean pinned) {
+        this.pinned = pinned;
+        setPinnedProperty(pinned);
+    }
+
+    public int getPinnedVersion() {
+        return pinnedVersion;
+    }
+
+    public void setPinnedVersion(Integer version) {
+        pinnedVersion = version;
+        setPinnedVersionProperty(version);
+    }
+
     public Configuration getConfiguration() {
         return configuration;
     }
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
-        this.name = this.getNameProperty();
-        this.isEnabled = this.getIsEnabledProperty();
-        this.interval = this.getIntervalProperty();
-        this.driftHandlingMode = this.getDriftHandlingModeProperty();
+        name = getNameProperty();
+        isEnabled = getIsEnabledProperty();
+        interval = getIntervalProperty();
+        driftHandlingMode = getDriftHandlingModeProperty();
+        pinned = getPinnedProperty();
+        pinnedVersion = getPinnedVersionProperty();
     }
 
     public Resource getResource() {
@@ -346,6 +372,26 @@ public class DriftConfiguration implements Serializable {
 
     private void setIntervalProperty(Long interval) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
+    }
+
+    private boolean getPinnedProperty() {
+        return Boolean.valueOf(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_PINNED, "false"));
+    }
+
+    private void setPinnedProperty(boolean pinned) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED, pinned));
+    }
+
+    private Integer getPinnedVersionProperty() {
+        String value = configuration.getSimpleValue(DriftConfigurationDefinition.PROP_PINNED_VERSION, null);
+        if (value == null) {
+            return null;
+        }
+        return Integer.valueOf(value);
+    }
+
+    private void setPinnedVersionProperty(Integer version) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED_VERSION, version));
     }
 
     private DriftHandlingMode getDriftHandlingModeProperty() {

@@ -60,6 +60,7 @@ import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
@@ -357,5 +358,9 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
 
     @Override
     public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
+    }
+
+    @Override
+    public void pinSnapshot(int resourceId, String configName, DriftSnapshot snapshot) {
     }
 }

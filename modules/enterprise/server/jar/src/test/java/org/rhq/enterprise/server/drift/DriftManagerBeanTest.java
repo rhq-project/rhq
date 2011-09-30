@@ -50,6 +50,7 @@ import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -454,6 +455,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
+        }
+
+        @Override
+        public void pinSnapshot(int resourceId, String configName, DriftSnapshot snapshot) {
         }
     }
 }

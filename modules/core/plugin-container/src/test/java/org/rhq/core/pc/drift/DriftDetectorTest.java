@@ -49,6 +49,8 @@ import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.SystemInfoFactory;
 
 public class DriftDetectorTest extends DriftTest {
 
@@ -57,6 +59,8 @@ public class DriftDetectorTest extends DriftTest {
     DriftClientTestStub driftClient;
 
     DriftDetector detector;
+
+    boolean isWindows = (SystemInfoFactory.createSystemInfo().getOperatingSystemType() == OperatingSystemType.WINDOWS);
 
     @BeforeMethod
     public void initDetector() {
@@ -517,12 +521,21 @@ public class DriftDetectorTest extends DriftTest {
 
     @Test
     public void ignoreFilesThatAreNotReadableForCoverageChangeSet() throws Exception {
+
         DriftDefinition def = driftDefinition("nonreadable-files-coverage", resourcesDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
         File server2Conf = createRandomFile(confDir, "server-2.conf");
-        assertTrue(server2Conf.setReadable(false), "Failed to make " + server2Conf.getPath() + " write only");
+        boolean setToReadable = server2Conf.setReadable(false);
+        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
+        if (!setToReadable) {
+            if (isWindows) {
+                server2Conf.delete();
+            } else {
+                assertTrue(setToReadable, "Failed to make " + server2Conf.getPath() + " write only");
+            }
+        }
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), def));
         detector.run();
@@ -553,7 +566,15 @@ public class DriftDetectorTest extends DriftTest {
         String newServer1Hash = sha256(server1Conf);
 
         File server2Conf = createRandomFile(confDir, "server-2.conf");
-        assertTrue(server2Conf.setReadable(false), "Failed to make " + server2Conf.getPath() + " write only");
+        boolean setToReadable = server2Conf.setReadable(false);
+        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
+        if (!setToReadable) {
+            if (isWindows) {
+                server2Conf.delete();
+            } else {
+                assertTrue(setToReadable, "Failed to make " + server2Conf.getPath() + " write only");
+            }
+        }
 
         schedule.resetSchedule();
         detector.run();
@@ -588,7 +609,15 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         // make the file non-readable and run the detector again
-        assertTrue(server1Conf.setReadable(false), "Failed to make " + server1Conf.getPath() + " write only");
+        boolean setToReadable = server1Conf.setReadable(false);
+        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
+        if (!setToReadable) {
+            if (isWindows) {
+                server1Conf.delete();
+            } else {
+                assertTrue(setToReadable, "Failed to make " + server1Conf.getPath() + " write only");
+            }
+        }
 
         schedule.resetSchedule();
         detector.run();

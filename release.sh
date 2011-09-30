@@ -295,10 +295,13 @@ then
 fi   
 
 # See if the specified tag already exists locally - if so, delete it (even if in production mode).
+# If the tag is just local then there were errors during the last run; no harm in removing it.
 EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
 if [ -n "$EXISTING_LOCAL_TAG" ]; 
 then
-   abort "A local tag named $RELEASE_TAG already exists - aborting" 
+   echo "A local tag named $RELEASE_TAG already exists - deleting it..."
+   git tag -d "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
 fi 
 
 run_tag_version_process

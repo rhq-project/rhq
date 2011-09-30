@@ -269,7 +269,8 @@ else
     BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
 #   delete the branch if it exists, so we can recreate it fresh     
     EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
-    if [ -n "$EXISTING_BUILD_BRANCH" ]; then
+    if [ -n "$EXISTING_BUILD_BRANCH" ]; 
+    then
         echo "Deleting remote branch origin/$BUILD_BRANCH"    
         git branch -D -r "origin/$BUILD_BRANCH"
         echo "Deleting local branch $BUILD_BRANCH"        
@@ -285,13 +286,15 @@ fi
 # If the specified tag already exists remotely and we're in production mode, then abort. If it exists and 
 # we're in test mode, delete it
 EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
-if [ -n "$EXISTING_REMOTE_TAG" ] then
+if [ -n "$EXISTING_REMOTE_TAG" ];
+then
    abort "A remote tag named $RELEASE_TAG already exists - aborting" 
 fi   
 
 # See if the specified tag already exists locally - if so, delete it (even if in production mode).
 EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
-if [ -n "$EXISTING_LOCAL_TAG" ]; then
+if [ -n "$EXISTING_LOCAL_TAG" ]; 
+then
    abort "A local tag named $RELEASE_TAG already exists - aborting" 
 fi 
 

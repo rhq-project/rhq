@@ -191,7 +191,8 @@ run_tag_version_process()
    git commit -m "development RHQ_$DEVELOPMENT_VERSION"
 
    # 12) If everything went well so far than means all the changes can be pushed!!!
-   git push origin $BUILD_BRANCH
+   git push origin "$BUILD_BRANCH"
+   git push origin "$RELEASE_TAG"
 }
 
 if [ -n "$RELEASE_DEBUG" ];

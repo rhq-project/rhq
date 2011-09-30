@@ -162,7 +162,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
                         timerTitleString = null;
                     }
 
-                    setTableTitle(getTableTitle());
+                    updateTitleCanvas(getTableTitle());
                     if (window != null) {
                         window.setTitle(getTableTitle());
                     }
@@ -263,7 +263,7 @@ public class TestDataSourceResponseStatisticsView extends Table {
                             timerTitleString = " (refresh every " + timeout + "s)";
                         }
 
-                        setTableTitle(getTableTitle());
+                        updateTitleCanvas(getTableTitle());
                         if (window != null) {
                             window.setTitle(getTableTitle());
                         }

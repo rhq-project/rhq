@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
@@ -471,7 +471,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateSubTab(this.driftTab, this.driftConfig, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftConfigurationView.get(driftConfig.extendLocatorId("View"), null);
+                    return ResourceDriftDefinitionsView.get(driftConfig.extendLocatorId("View"), null);
                 }
             });
         }

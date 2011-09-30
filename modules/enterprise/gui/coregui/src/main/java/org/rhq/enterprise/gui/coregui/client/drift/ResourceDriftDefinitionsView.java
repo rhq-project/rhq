@@ -25,15 +25,15 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 /**
  * @author Jay Shaughnessy
  */
-public class ResourceDriftConfigurationView extends DriftConfigurationView {
-    public static ResourceDriftConfigurationView get(String locatorId, ResourceComposite composite) {
+public class ResourceDriftDefinitionsView extends DriftDefinitionsView {
+    public static ResourceDriftDefinitionsView get(String locatorId, ResourceComposite composite) {
         String tableTitle = MSG.view_drift_table_resourceDef();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isDrift();
-        return new ResourceDriftConfigurationView(locatorId, tableTitle, context, hasWriteAccess);
+        return new ResourceDriftDefinitionsView(locatorId, tableTitle, context, hasWriteAccess);
     }
 
-    private ResourceDriftConfigurationView(String locatorId, String tableTitle, EntityContext context,
+    private ResourceDriftDefinitionsView(String locatorId, String tableTitle, EntityContext context,
         boolean hasWriteAccess) {
         super(locatorId, tableTitle, context, hasWriteAccess);
     }

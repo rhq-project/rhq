@@ -32,13 +32,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Jay Shaughnessy
  */
-public class DriftAddConfigWizardConfigStep extends AbstractWizardStep {
+public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
 
     private LocatableVLayout vLayout;
     private ConfigurationEditor editor;
-    AbstractDriftAddConfigWizard wizard;
+    AbstractDriftAddDefinitionWizard wizard;
 
-    public DriftAddConfigWizardConfigStep(AbstractDriftAddConfigWizard wizard) {
+    public DriftAddDefinitionWizardConfigStep(AbstractDriftAddDefinitionWizard wizard) {
         this.wizard = wizard;
     }
 
@@ -46,7 +46,7 @@ public class DriftAddConfigWizardConfigStep extends AbstractWizardStep {
         // This VLayout allows us to set overflow on it and be able to scroll the config editor but always
         // be able to see the wizard's next/cancel buttons. This vlayout also provides for easier expansion if we add more items.
         if (vLayout == null) {
-            String locatorId = (null == parent) ? "DriftConfig" : parent.extendLocatorId("DriftConfig");
+            String locatorId = (null == parent) ? "DriftDefConfig" : parent.extendLocatorId("DriftDefConfig");
             vLayout = new LocatableVLayout(locatorId);
 
             vLayout.setOverflow(Overflow.AUTO);

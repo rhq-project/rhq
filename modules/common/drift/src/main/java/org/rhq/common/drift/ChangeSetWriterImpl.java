@@ -47,8 +47,8 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
 
     private void writeHeaders(Headers headers) throws IOException {
         writer.write(headers.getResourceId() + "\n");
-        writer.write(headers.getDriftCofigurationId() + "\n");
-        writer.write(headers.getDriftConfigurationName() + "\n");
+        writer.write(headers.getDriftDefinitionId() + "\n");
+        writer.write(headers.getDriftDefinitionName() + "\n");
         writer.write(headers.getBasedir() + "\n");
         writer.write(headers.getType().code() + "\n");
         writer.write(headers.getVersion() + "\n");

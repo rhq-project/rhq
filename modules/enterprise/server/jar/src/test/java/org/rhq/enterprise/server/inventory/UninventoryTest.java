@@ -30,9 +30,9 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -57,45 +57,45 @@ public class UninventoryTest extends AbstractEJB3Test {
         }
     }
 
-    public void testDriftConfigRemoval() throws Exception {
+    public void testDriftDefRemoval() throws Exception {
         ResourceTypeCreator rtCreator = new ResourceTypeCreator() {
             public void modifyResourceTypeToPersist(ResourceType resourceType, EntityManager em) {
-                ConfigurationTemplate template = new ConfigurationTemplate("drift1", "drift config template");
+                ConfigurationTemplate template = new ConfigurationTemplate("drift1", "drift def template");
                 Configuration config = new Configuration();
-                DriftConfiguration driftConfig = new DriftConfiguration(config);
-                driftConfig.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/"));
-                driftConfig.setName("drift1");
-                template.setConfiguration(driftConfig.getConfiguration());
-                resourceType.addDriftConfigurationTemplate(template);
+                DriftDefinition driftDef = new DriftDefinition(config);
+                driftDef.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/"));
+                driftDef.setName("drift1");
+                template.setConfiguration(driftDef.getConfiguration());
+                resourceType.addDriftDefinitionTemplate(template);
             }
         };
         ResourceCreator rCreator = new ResourceCreator() {
             public void modifyResourceToPersist(Resource resource, EntityManager em) {
                 Configuration config = new Configuration();
-                DriftConfiguration driftConfig = new DriftConfiguration(config);
-                driftConfig.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/boo"));
-                driftConfig.setName("drift-config-name");
-                resource.addDriftConfiguration(driftConfig);
+                DriftDefinition driftDef = new DriftDefinition(config);
+                driftDef.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/boo"));
+                driftDef.setName("drift-def-name");
+                resource.addDriftDefinition(driftDef);
             }
         };
 
         Resource resource = createNewResource(rtCreator, rCreator);
 
-        int templateId = resource.getResourceType().getDriftConfigurationTemplates().iterator().next().getId();
-        int driftConfigId = resource.getDriftConfigurations().iterator().next().getId();
+        int templateId = resource.getResourceType().getDriftDefinitionTemplates().iterator().next().getId();
+        int driftDefId = resource.getDriftDefinitions().iterator().next().getId();
 
         // sanity check, make sure things are in the DB now
         Query qTemplate;
-        Query qConfig;
+        Query qDef;
         String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
-        String qConfigString = "select dc from DriftConfiguration dc where dc.id = :id";
+        String qDefString = "select dc from DriftDefinition dc where dc.id = :id";
 
         getTransactionManager().begin();
         try {
             qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", templateId);
-            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfigId);
+            qDef = getEntityManager().createQuery(qDefString).setParameter("id", driftDefId);
             assertEquals("drift template didn't get added", 1, qTemplate.getResultList().size());
-            assertEquals("drift template config didn't get added", 1, qConfig.getResultList().size());
+            assertEquals("drift template def didn't get added", 1, qDef.getResultList().size());
         } finally {
             getTransactionManager().commit();
         }
@@ -107,9 +107,9 @@ public class UninventoryTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", templateId);
-            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfigId);
+            qDef = getEntityManager().createQuery(qDefString).setParameter("id", driftDefId);
             assertEquals("drift template didn't get purged", 0, qTemplate.getResultList().size());
-            assertEquals("drift template config didn't get purged", 0, qConfig.getResultList().size());
+            assertEquals("drift template def didn't get purged", 0, qDef.getResultList().size());
         } finally {
             getTransactionManager().commit();
         }

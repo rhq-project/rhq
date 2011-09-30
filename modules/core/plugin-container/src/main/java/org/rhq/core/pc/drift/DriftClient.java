@@ -2,7 +2,7 @@ package org.rhq.core.pc.drift;
 
 import java.io.File;
 
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 
 /**
  * This is a client interface to the server that drift-related tasks call to interact with
@@ -18,11 +18,11 @@ public interface DriftClient {
      * server, the content directory is purged.
      *
      * @param resourceId
-     * @param driftConfigurationName
+     * @param driftDefinitionName
      * @param contentDir
      */
-    void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir);
+    void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir);
 
-    File getAbsoluteBaseDirectory(int resourceId, DriftConfiguration driftConfiguration);
+    File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition);
 
 }

@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 
 /**
@@ -117,7 +117,7 @@ public interface DriftServerService {
     @Asynchronous(guaranteedDelivery = true)
     void sendFilesZip(int resourceId, String driftConfigName, String token, long zipSize, InputStream zipStream);
 
-    Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds);
+    Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds);
 
     DriftSnapshot getCurrentSnapshot(int driftConfigurationId);
 }

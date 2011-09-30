@@ -32,9 +32,9 @@ public class Headers implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int driftCofigurationId;
+    private int driftDefinitionId;
 
-    private String driftConfigurationName;
+    private String driftDefinitionName;
 
     private String basedir;
 
@@ -59,31 +59,31 @@ public class Headers implements Serializable {
     }
 
     /**
-     * @return The id of the drift configuration to which the change set belongs.
+     * @return The id of the drift definition to which the change set belongs.
      */
-    public int getDriftCofigurationId() {
-        return driftCofigurationId;
+    public int getDriftDefinitionId() {
+        return driftDefinitionId;
     }
 
     /**
-     * @param driftCofigurationId The id of the drift configuration to which the change set belongs
+     * @param driftDefinitionId The id of the drift def to which the change set belongs
      */
-    public void setDriftCofigurationId(int driftCofigurationId) {
-        this.driftCofigurationId = driftCofigurationId;
+    public void setDriftDefinitionId(int driftDefinitionId) {
+        this.driftDefinitionId = driftDefinitionId;
     }
 
     /**
-     * @return The name of the drift configuration to which the change set belongs
+     * @return The name of the drift def to which the change set belongs
      */
-    public String getDriftConfigurationName() {
-        return driftConfigurationName;
+    public String getDriftDefinitionName() {
+        return driftDefinitionName;
     }
 
     /**
-     * @param name The name of the drift configuration to which the change set belongs
+     * @param name The name of the drift def to which the change set belongs
      */
-    public void setDriftConfigurationName(String name) {
-        driftConfigurationName = name;
+    public void setDriftDefinitionName(String name) {
+        driftDefinitionName = name;
     }
 
     /**

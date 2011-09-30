@@ -22,7 +22,7 @@ package org.rhq.core.clientapi.agent.drift;
 import java.util.List;
 
 import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 
 /**
@@ -67,7 +67,7 @@ public interface DriftAgentService {
      * @param driftConfiguration Specifies how the detection should be carried out. This
      * includes any filtering rules that should be applied.
      */
-    void detectDrift(int resourceId, DriftConfiguration driftConfiguration);
+    void detectDrift(int resourceId, DriftDefinition driftConfiguration);
 
     /**
      * Requests that the agent start performing drift detection for a resource with the
@@ -80,9 +80,9 @@ public interface DriftAgentService {
      *
      * @param resourceId The id of the resource for which the request is being made
      * @param driftConfiguration Specifies how and when the detection should be carried out
-     * @see DriftConfiguration
+     * @see DriftDefinition
      */
-    void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+    void scheduleDriftDetection(int resourceId, DriftDefinition driftConfiguration);
 
     /**
      * Requests that the agent stop performing the specified drift detection for the resource. (In
@@ -90,9 +90,9 @@ public interface DriftAgentService {
      *
      * @param resourceId The id of the resource for which the request is being made
      * @param driftConfiguration The doomed drift config
-     * @see DriftConfiguration
+     * @see DriftDefinition
      */
-    void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+    void unscheduleDriftDetection(int resourceId, DriftDefinition driftConfiguration);
 
     /**
      * Requests that the agent update its processing of the specified driftConfiguration.  The filters
@@ -100,9 +100,9 @@ public interface DriftAgentService {
      *
      * @param resourceId The id of the resource for which the request is being made
      * @param driftConfiguration The updated driftConfiguration.
-     * @see DriftConfiguration
+     * @see DriftDefinition
      */
-    void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+    void updateDriftDetection(int resourceId, DriftDefinition driftConfiguration);
 
     /**
      * This method is invoked to inform the agent that the server has successfully

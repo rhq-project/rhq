@@ -163,13 +163,13 @@ public class ConditionsEditor extends LocatableVLayout {
                                 // the drift config.
                                 if (type != resourceType) {
                                     // paranoia, unsure if this is needed but clear out any old drift config still hanging around
-                                    if (resourceType.getDriftConfigurationTemplates() != null) {
-                                        resourceType.getDriftConfigurationTemplates().clear();
+                                    if (resourceType.getDriftDefinitionTemplates() != null) {
+                                        resourceType.getDriftDefinitionTemplates().clear();
                                     }
                                     // if the newly loaded resource type supports drift, put it in our type object
-                                    if (type.getDriftConfigurationTemplates() != null) {
-                                        for (ConfigurationTemplate ct : type.getDriftConfigurationTemplates()) {
-                                            resourceType.addDriftConfigurationTemplate(ct);
+                                    if (type.getDriftDefinitionTemplates() != null) {
+                                        for (ConfigurationTemplate ct : type.getDriftDefinitionTemplates()) {
+                                            resourceType.addDriftDefinitionTemplate(ct);
                                         }
                                     }
                                 }

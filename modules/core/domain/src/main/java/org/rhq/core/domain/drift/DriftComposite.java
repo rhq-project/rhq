@@ -39,7 +39,7 @@ public class DriftComposite implements Serializable {
         this.resource = resource;
     }
 
-    public String getDriftConfigName() {
+    public String getDriftDefinitionName() {
         return driftConfigName;
     }
 

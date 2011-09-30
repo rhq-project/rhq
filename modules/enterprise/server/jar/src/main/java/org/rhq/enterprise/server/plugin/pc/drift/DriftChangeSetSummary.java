@@ -39,7 +39,7 @@ public class DriftChangeSetSummary {
     private long createdTime;
     private DriftChangeSetCategory category;
     private int resourceId;
-    private String driftConfigurationName;
+    private String driftDefinitionName;
     private DriftHandlingMode driftHandlingMode;
     private List<String> driftPathnames;
 
@@ -51,11 +51,10 @@ public class DriftChangeSetSummary {
     public String toString() {
         if (category == DriftChangeSetCategory.COVERAGE) {
             return "[" + new Date(createdTime) + "] Initial drift coverage includes ["
-                + obtainDriftPathnamesList().size() + "] files using drift configuration [" + driftConfigurationName
-                + "]";
+                + obtainDriftPathnamesList().size() + "] files using drift definition [" + driftDefinitionName + "]";
         } else {
             return "[" + new Date(createdTime) + "] Drift detected in [" + obtainDriftPathnamesList().size()
-                + "] files using drift configuration [" + driftConfigurationName + "]";
+                + "] files using drift definition [" + driftDefinitionName + "]";
         }
     }
 
@@ -83,12 +82,12 @@ public class DriftChangeSetSummary {
         this.resourceId = resourceId;
     }
 
-    public String getDriftConfigurationName() {
-        return driftConfigurationName;
+    public String getDriftDefinitionName() {
+        return driftDefinitionName;
     }
 
-    public void setDriftConfigurationName(String driftConfigurationName) {
-        this.driftConfigurationName = driftConfigurationName;
+    public void setDriftDefinitionName(String driftDefinitionName) {
+        this.driftDefinitionName = driftDefinitionName;
     }
 
     public List<String> getDriftPathnames() {

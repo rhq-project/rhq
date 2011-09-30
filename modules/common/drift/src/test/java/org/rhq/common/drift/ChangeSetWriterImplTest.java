@@ -63,8 +63,8 @@ public class ChangeSetWriterImplTest {
 
         Headers headers = new Headers();
         headers.setResourceId(1);
-        headers.setDriftCofigurationId(2);
-        headers.setDriftConfigurationName("add-file-test");
+        headers.setDriftDefinitionId(2);
+        headers.setDriftDefinitionName("add-file-test");
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(1);
@@ -91,8 +91,8 @@ public class ChangeSetWriterImplTest {
         File changeSetFile = new File(changeSetsDir, "removed-file-test");
         Headers headers = new Headers();
         headers.setResourceId(1);
-        headers.setDriftCofigurationId(2);
-        headers.setDriftConfigurationName("removed-file-test");
+        headers.setDriftDefinitionId(2);
+        headers.setDriftDefinitionName("removed-file-test");
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(1);
@@ -119,8 +119,8 @@ public class ChangeSetWriterImplTest {
         File changeSetFile = new File(changeSetsDir, "changed-file-test");
         Headers headers = new Headers();
         headers.setResourceId(1);
-        headers.setDriftCofigurationId(2);
-        headers.setDriftConfigurationName("changed-file-test");
+        headers.setDriftDefinitionId(2);
+        headers.setDriftDefinitionName("changed-file-test");
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(1);
@@ -149,9 +149,9 @@ public class ChangeSetWriterImplTest {
     void assertHeadersEquals(List<String> lines, Headers headers) {
         assertEquals(lines.get(0), Integer.toString(headers.getResourceId()), "The first header entry should be the " +
             "resurce id.");
-        assertEquals(lines.get(1), Integer.toString(headers.getDriftCofigurationId()), "The second header entry " +
+        assertEquals(lines.get(1), Integer.toString(headers.getDriftDefinitionId()), "The second header entry " +
             "should be the drift configuration id.");
-        assertEquals(lines.get(2), headers.getDriftConfigurationName(), "The third header entry should be the drift " +
+        assertEquals(lines.get(2), headers.getDriftDefinitionName(), "The third header entry should be the drift " +
             "configuration name.");
         assertEquals(lines.get(3), headers.getBasedir(), "The fourth header entry should be the drift configuration " +
             "base directory.");

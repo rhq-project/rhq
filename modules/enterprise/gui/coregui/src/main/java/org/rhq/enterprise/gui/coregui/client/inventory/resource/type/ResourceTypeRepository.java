@@ -247,7 +247,7 @@ public class ResourceTypeRepository {
                     criteria.fetchSubCategory(true);
                     break;
                 case driftConfigurationTemplates:
-                    criteria.fetchDriftConfigurationTemplates(true);
+                    criteria.fetchDriftDefinitionTemplates(true);
                     break;
                 default:
                     Log.error("ERROR: metadataType " + metadataType.name()
@@ -353,12 +353,12 @@ public class ResourceTypeRepository {
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
                                 case driftConfigurationTemplates:
-                                    if (cachedType.getDriftConfigurationTemplates() != null) {
-                                        cachedType.getDriftConfigurationTemplates().clear(); // remove any old ones hanging around
+                                    if (cachedType.getDriftDefinitionTemplates() != null) {
+                                        cachedType.getDriftDefinitionTemplates().clear(); // remove any old ones hanging around
                                     }
-                                    if (type.getDriftConfigurationTemplates() != null) {
-                                        for (ConfigurationTemplate ct : type.getDriftConfigurationTemplates()) {
-                                            cachedType.addDriftConfigurationTemplate(ct);
+                                    if (type.getDriftDefinitionTemplates() != null) {
+                                        for (ConfigurationTemplate ct : type.getDriftDefinitionTemplates()) {
+                                            cachedType.addDriftDefinitionTemplate(ct);
                                         }
                                     }
                                     break;

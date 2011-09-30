@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.util.Arrays.asList;
@@ -243,7 +243,7 @@ public class DriftTest {
     }
 
     /**
-     * Creates a {@link DriftConfiguration} with the specified basedir. The file system is
+     * Creates a {@link DriftDefinition} with the specified basedir. The file system is
      * used as the context for the basedir which means the path specified is used as is.
      * The interval property is set to {@link #defaultInterval}.
      *
@@ -251,10 +251,10 @@ public class DriftTest {
      * @param basedir An absolute path of the base directory
      * @return The drift configuration object
      */
-    protected DriftConfiguration driftConfiguration(String name, String basedir) {
-        DriftConfiguration config = new DriftConfiguration(new Configuration());
+    protected DriftDefinition driftConfiguration(String name, String basedir) {
+        DriftDefinition config = new DriftDefinition(new Configuration());
         config.setName(name);
-        config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
+        config.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, basedir));
         config.setEnabled(true);
         config.setInterval(defaultInterval);
 

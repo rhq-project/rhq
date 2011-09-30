@@ -2,7 +2,7 @@ package org.rhq.core.pc.drift;
 
 import java.io.Serializable;
 
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 
 public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule>, Serializable {
 
@@ -10,13 +10,13 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
 
     private int resourceId;
 
-    private DriftConfiguration driftConfig;
+    private DriftDefinition driftDef;
 
     private long nextScan;
 
-    public DriftDetectionSchedule(int resourceId, DriftConfiguration configuration) {
+    public DriftDetectionSchedule(int resourceId, DriftDefinition definition) {
         this.resourceId = resourceId;
-        driftConfig = configuration;
+        this.driftDef = definition;
         nextScan = -1;
     }
 
@@ -24,8 +24,8 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
         return resourceId;
     }
 
-    public DriftConfiguration getDriftConfiguration() {
-        return driftConfig;
+    public DriftDefinition getDriftDefinition() {
+        return driftDef;
     }
 
     public long getNextScan() {
@@ -33,7 +33,7 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
     }
 
     public void updateShedule() {
-        nextScan = System.currentTimeMillis() + (driftConfig.getInterval() * 1000);
+        nextScan = System.currentTimeMillis() + (driftDef.getInterval() * 1000);
     }
 
     public void resetSchedule() {
@@ -41,8 +41,8 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
     }
 
     public DriftDetectionSchedule copy() {
-        DriftDetectionSchedule copy = new DriftDetectionSchedule(resourceId,
-            new DriftConfiguration(driftConfig.getConfiguration().deepCopyWithoutProxies()));
+        DriftDetectionSchedule copy = new DriftDetectionSchedule(resourceId, new DriftDefinition(driftDef
+            .getConfiguration().deepCopyWithoutProxies()));
         copy.nextScan = nextScan;
         return copy;
     }
@@ -85,7 +85,7 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[resourceId: " + resourceId + ", driftConfigurationId: " +
-            driftConfig.getId() + ", driftConfigurationName: " + driftConfig.getName() + "]";
+        return getClass().getSimpleName() + "[resourceId: " + resourceId + ", driftDefinitionId: " + driftDef.getId()
+            + ", driftDefinitionName: " + driftDef.getName() + "]";
     }
 }

@@ -31,10 +31,10 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
  * the contract required for defining and persisting a DriftChangeSet. Drift server plugins
  * are responsible for managing persistence.
  * <p/>
- * Each DriftChangeSet belongs to a particular {@link DriftConfiguration} which specifies
- * the rules for how drift detection is performed (by the agent). A DriftConfiguration is
+ * Each DriftChangeSet belongs to a particular {@link DriftDefinition} which specifies
+ * the rules for how drift detection is performed (by the agent). A DriftDefinition is
  * in turn owned by a {@link org.rhq.core.domain.resource.Resource Resource} and a resource
- * can have multiple drift configurations.
+ * can have multiple drift definitions.
  *
  * @param <D> A server plugin's Drift implementation
  *  
@@ -64,18 +64,18 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
 
     /**
      * Every change set must be assigned a version that is unique within the context of the
-     * owning {@link DriftConfiguration}. This is analgous to a revision number in a
+     * owning {@link DriftDefinition}. This is analgous to a revision number in a
      * version control system like SVN.
      *
      * @return The change set version number that is unique within the context of its
-     * owning {@link DriftConfiguration}.
+     * owning {@link DriftDefinition}.
      */
     int getVersion();
 
     /**
      * Sets the change set version number. Note that change set version numbers
      * <strong>must</strong> be unique within the context of the owning
-     * {@link DriftConfiguration}. Change sets should be assigned version numbers in
+     * {@link DriftDefinition}. Change sets should be assigned version numbers in
      * increasing order. The first change set saved should have a version of N, the second
      * should have a value of N + 1, etc.
      *
@@ -99,49 +99,49 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
     void setCategory(DriftChangeSetCategory category);
 
     /**
-     * Returns the drift handling mode of the owning drift configuration at the time of change
-     * set creation.  Because the value set on the owning drift configuration can change, the 
+     * Returns the drift handling mode of the owning drift definition at the time of change
+     * set creation.  Because the value set on the owning drift definition can change, the 
      * value must be stored with the change set such that it can be applied consistently when 
      * handling the associated drift.
      *
-     * @return The {@link DriftConfiguration.DriftHandlingMode} mode
+     * @return The {@link DriftDefinition.DriftHandlingMode} mode
      */
     DriftHandlingMode getDriftHandlingMode();
 
     /**
      * Sets the drift handling mode for the change set. It should be set to the owning drift
-     * configuration's drift handling mode at the time of change set creation. Because the 
-     * value set on the owning drift configuration can change, the value must be stored with 
+     * definition's drift handling mode at the time of change set creation. Because the 
+     * value set on the owning drift definition can change, the value must be stored with 
      * the change set such that it can be applied consistently when handling the associated drift.
      *
-     * @param driftHandlingMode The {@link DriftConfiguration.DriftHandlingMode} mode
+     * @param driftHandlingMode The {@link DriftDefinition.DriftHandlingMode} mode
      */
     void setDriftHandlingMode(DriftHandlingMode driftHandlingMode);
 
     /**
-     * Returns the id of the owning drift configuration. Note that while server plugins are
+     * Returns the id of the owning drift definition. Note that while server plugins are
      * responsible for managing the persistence of change sets, the RHQ server manages the
-     * persistence of the owning drift configuration.
+     * persistence of the owning drift definition.
      *
-     * @return The {@link DriftConfiguration} id
+     * @return The {@link DriftDefinition} id
      */
-    int getDriftConfigurationId();
+    int getDriftDefinitionId();
 
     /**
-     * Sets the id of the owning drift configuration. Note that while server plugins are
+     * Sets the id of the owning drift definition. Note that while server plugins are
      * responsible for managing the persistence of change sets, the RHQ server manages the
-     * persistence of the drift configuration.
+     * persistence of the drift definition.
      *
-     * @param id The {@link DriftConfiguration} id
+     * @param id The {@link DriftDefinition} id
      */
-    void setDriftConfigurationId(int id);
+    void setDriftDefinitionId(int id);
 
     /**
-     * Returns the id of the resource to which the drift configuration is assigned. Note
+     * Returns the id of the resource to which the drift definition is assigned. Note
      * that the RHQ server and not drift server plugins manage the persistence of the
      * resource.
      *
-     * @return The id of the resource to which the drift configuration belongs
+     * @return The id of the resource to which the drift definition belongs
      */
     int getResourceId();
 

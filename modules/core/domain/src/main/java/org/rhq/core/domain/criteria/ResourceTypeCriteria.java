@@ -74,7 +74,7 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchProductVersions;
     private boolean fetchBundleType;
     private boolean fetchResources;
-    private boolean fetchDriftConfigurationTemplates;
+    private boolean fetchDriftDefinitionTemplates;
     private boolean fetchBundleConfiguration;
 
     private PageOrdering sortName;
@@ -204,8 +204,8 @@ public class ResourceTypeCriteria extends Criteria {
         this.fetchResources = fetchResources;
     }
 
-    public void fetchDriftConfigurationTemplates(boolean fetchDriftConfigurationTemplates) {
-        this.fetchDriftConfigurationTemplates = fetchDriftConfigurationTemplates;
+    public void fetchDriftDefinitionTemplates(boolean fetchDriftDefinitionTemplates) {
+        this.fetchDriftDefinitionTemplates = fetchDriftDefinitionTemplates;
     }
 
     public void fetchBundleConfiguration(boolean fetchBundleConfiguration) {

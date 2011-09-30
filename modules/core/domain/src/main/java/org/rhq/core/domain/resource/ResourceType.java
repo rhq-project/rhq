@@ -177,7 +177,7 @@ import org.rhq.core.domain.util.Summary;
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
         + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')," //
-        + "         (SELECT COUNT(driftConfig) FROM rt.driftConfigurationTemplates driftConfig)," // drift
+        + "         (SELECT COUNT(driftDef) FROM rt.driftDefinitionTemplates driftDef)," // drift
         + "         (SELECT COUNT(bundleConfig) FROM rt.bundleConfiguration bundleConfig)" // bundle        
         + "       ) " //
         + "  FROM ResourceType rt " //
@@ -400,7 +400,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinTable(name = "RHQ_DRIFT_TEMPLATE_MAP", joinColumns = @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "CONFIG_TEMPLATE_ID", nullable = false))
-    private Set<ConfigurationTemplate> driftConfigurationTemplates = new HashSet<ConfigurationTemplate>();
+    private Set<ConfigurationTemplate> driftDefinitionTemplates = new HashSet<ConfigurationTemplate>();
 
     // note that this is mapped to a Configuration entity, which is what it really is. However, our getter/setter
     // only provides access to this via ResourceTypeBundleConfiguration to encapsulate the innards of this implementation
@@ -829,15 +829,15 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     // this must return the actual set, not a copy - see the metadata manager SLSB for when we update plugin metadata
-    public Set<ConfigurationTemplate> getDriftConfigurationTemplates() {
-        return driftConfigurationTemplates;
+    public Set<ConfigurationTemplate> getDriftDefinitionTemplates() {
+        return driftDefinitionTemplates;
     }
 
-    public void addDriftConfigurationTemplate(ConfigurationTemplate template) {
-        if (driftConfigurationTemplates == null) {
-            driftConfigurationTemplates = new HashSet<ConfigurationTemplate>(1);
+    public void addDriftDefinitionTemplate(ConfigurationTemplate template) {
+        if (driftDefinitionTemplates == null) {
+            driftDefinitionTemplates = new HashSet<ConfigurationTemplate>(1);
         }
-        driftConfigurationTemplates.add(template);
+        driftDefinitionTemplates.add(template);
     }
 
     @Override

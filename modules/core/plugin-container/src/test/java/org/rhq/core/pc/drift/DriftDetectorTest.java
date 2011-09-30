@@ -34,7 +34,7 @@ import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -80,7 +80,7 @@ public class DriftDetectorTest extends DriftTest {
         // create an empty directory
         File libDir = mkdir(resourceDir, "lib");
 
-        DriftConfiguration driftConfig = driftConfiguration("coverage-test", resourceDir.getAbsolutePath());
+        DriftDefinition driftConfig = driftConfiguration("coverage-test", resourceDir.getAbsolutePath());
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
@@ -100,7 +100,7 @@ public class DriftDetectorTest extends DriftTest {
         File server1Conf = createRandomFile(confDir, "server-1.conf");
         File server2Conf = createRandomFile(confDir, "server-2.conf");
 
-        DriftConfiguration config = driftConfiguration("multiple-files-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("multiple-files-test", resourceDir.getAbsolutePath());
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
@@ -124,7 +124,7 @@ public class DriftDetectorTest extends DriftTest {
         File libDir = mkdir(resourceDir, "lib");
         File serverLib = createRandomFile(libDir, "server.jar");
 
-        DriftConfiguration config = driftConfiguration("sibling-dirs-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("sibling-dirs-test", resourceDir.getAbsolutePath());
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
@@ -148,7 +148,7 @@ public class DriftDetectorTest extends DriftTest {
         File subConfDir = mkdir(confDir, "subconf");
         File server2Conf = createRandomFile(subConfDir, "server-2.conf");
 
-        DriftConfiguration config = driftConfiguration("nested-dirs-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("nested-dirs-test", resourceDir.getAbsolutePath());
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
@@ -169,7 +169,7 @@ public class DriftDetectorTest extends DriftTest {
         File confDir = mkdir(resourceDir, "conf");
         File serverConf = createRandomFile(confDir, "server.conf");
 
-        DriftConfiguration config = driftConfiguration("nothing-to-update", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("nothing-to-update", resourceDir.getAbsolutePath());
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
@@ -177,19 +177,13 @@ public class DriftDetectorTest extends DriftTest {
         File changeSet = changeSet(config.getName(), COVERAGE);
         String originalHash = sha256(changeSet);
 
-        // Reset the schedule so that detection will run again the next time we call
-        // detection.run()
-        DriftDetectionSchedule schedule = scheduleQueue.remove(resourceId(), config);
-        schedule.resetSchedule();
-        scheduleQueue.addSchedule(schedule);
-
         // Run the detector again. Note that nothing has changed so the snapshot should
         // remain the same and no drift change set file should be generated.
         detector.run();
 
         String newHash = sha256(changeSet);
 
-        assertEquals(newHash, originalHash, "The snapshot file should not have changed since there was no drift. ");
+        assertEquals(newHash, originalHash, "The snapshot file should not have changed since there was no drift.");
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
 
@@ -199,19 +193,20 @@ public class DriftDetectorTest extends DriftTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void skipDetectionForScheduledThatIsDisabled() throws Exception {
+    public void skipScheduledThatHasConfigDisabled() throws Exception {
         detector.setDriftClient(new DriftClientTestStub() {
             {
                 setBaseDir(resourceDir);
             }
 
             @Override
-            public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
+            public void sendChangeSetToServer(int resourceId, DriftDefinition driftConfiguration,
+                DriftChangeSetCategory type) {
                 throw new RuntimeException("Should not invoke drift client when drift configuration is disabled");
             }
         });
 
-        DriftConfiguration config = driftConfiguration("disabled-config-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("disabled-config-test", resourceDir.getAbsolutePath());
         config.setEnabled(false);
 
         File confDir = mkdir(resourceDir, "conf");
@@ -224,47 +219,8 @@ public class DriftDetectorTest extends DriftTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void skipDetectionWhenPreviousSnapshotFileExists() throws Exception {
-        // The presence of a previous snapshot file means that the server has
-        // not acknowledged that it has received and processed the change set.
-        DriftConfiguration config = driftConfiguration("previous-snapshot-test", resourceDir.getAbsolutePath());
-
-        File confDir = mkdir(resourceDir, "conf");
-        createRandomFile(confDir, "server.conf");
-
-        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
-        scheduleQueue.addSchedule(schedule);
-        detector.run();
-
-        // create some drift and generate a new snapshot
-        createRandomFile(confDir, "server-1.conf");
-        schedule.resetSchedule();
-        detector.run();
-
-        File snapshot = changeSet(config.getName(), COVERAGE);
-        String newHash = sha256(snapshot);
-        File previousSnapshot = previousChangeSet(config.getName());
-        String oldHash = sha256(previousSnapshot);
-
-        // create some drift and make sure drift detection does not run.
-        createRandomFile(confDir, "server-2.conf");
-        schedule.resetSchedule();
-        // Tell driftClient to throw an exception if detector attempts to send
-        // the change set report to the server. The detector should never call
-        // driftClient in this scenario.
-        driftClient.setFailingOnSendChangeSet(true);
-        detector.run();
-
-        assertEquals(sha256(snapshot), newHash, "The snapshot should not have changed since the previous snapshot " +
-            "is still on disk.");
-        assertEquals(sha256(previousSnapshot), oldHash, "The previous snapshot should not have changed since " +
-            "drift detection should not have run until the server acked the previous snapshot.");
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
     public void includeAddedFileInDriftChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("file-added-drift-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("file-added-drift-test", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -301,7 +257,7 @@ public class DriftDetectorTest extends DriftTest {
     @SuppressWarnings("unchecked")
     @Test
     public void includeModifiedFileInDriftChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("file-modified-drift-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("file-modified-drift-test", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -339,7 +295,7 @@ public class DriftDetectorTest extends DriftTest {
     @SuppressWarnings("unchecked")
     @Test(enabled = false)
     public void includeFiledAddedInNewDirectoryInDriftChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("file-added-in-new-dir", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("file-added-in-new-dir", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -377,7 +333,7 @@ public class DriftDetectorTest extends DriftTest {
     @SuppressWarnings("unchecked")
     @Test
     public void includeRemovedFileInDriftChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("file-removed-drift-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("file-removed-drift-test", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -416,7 +372,7 @@ public class DriftDetectorTest extends DriftTest {
     @SuppressWarnings("unchecked")
     @Test
     public void includeFilesInRemovedDirectoryInDriftChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("dir-removed-test", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftConfiguration("dir-removed-test", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -431,169 +387,6 @@ public class DriftDetectorTest extends DriftTest {
         confDir.delete();
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        detector.run();
-
-        File driftChangeSet = changeSet(config.getName(), DRIFT);
-        List<FileEntry> driftEntries = asList(removedFileEntry("conf/server-1.conf", server1Hash));
-
-        // verify that the drift change set was generated
-        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
-        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
-
-        // verify that the coverage change set was updated
-        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
-        List<FileEntry> coverageEntries = emptyList();
-
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
-        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
-            coverageChangeSet);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void revertToPreviousSnapshotWhenSendingChangeSetFails() throws Exception {
-        DriftConfiguration config = driftConfiguration("revert-snapshot-test", resourceDir.getAbsolutePath());
-        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
-
-        File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = createRandomFile(confDir, "server.conf");
-
-        scheduleQueue.addSchedule(schedule);
-        // generate the initial snapshot
-        detector.run();
-
-        // Now generate a drift change set
-        createRandomFile(confDir, "server-1.conf");
-        schedule.resetSchedule();
-        detector.run();
-
-        File changeSet = changeSet(config.getName(), COVERAGE);
-        String currentHash = sha256(changeSet);
-
-        // Need to delete the previous version snapshot file; otherwise, the
-        // next detection run will be skipped.
-        previousChangeSet(config.getName()).delete();
-
-        // generate some more drift, and fail on sending the change set
-        // to the server
-        createRandomFile(confDir, "server-2.conf");
-        schedule.resetSchedule();
-        driftClient.setFailingOnSendChangeSet(true);
-        try {
-            detector.run();
-        } catch (RuntimeException e) {}
-
-        String newHash = sha256(changeSet);
-
-        assertEquals(newHash, currentHash, "The snapshot file should be reverted if sending the new snapshot " +
-            "to the server fails.");
-        // The previous version file must be deleted on revert; otherwise, drift
-        // detection will not run for the schedule if the previous version file
-        // is found on disk.
-        assertFalse(previousChangeSet(config.getName()).exists(), "The copy of the previous version snapshot file " +
-            "should be deleted once we have reverted back to it and have a new, current snapsot file.");
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void purgeSnapshotWhenSendingInitialChangeSetFails() throws Exception {
-        // If we have just generated the initial change set and sending it to
-        // the server fails, then there is no prior snapshot version to which
-        // we can revert. We therefore need to purge the snapshot file and
-        // allow DriftDetector to simply regenerate the initial change set again.
-
-        DriftConfiguration config = driftConfiguration("purge-snapshot-test", resourceDir.getAbsolutePath());
-
-        File confDir = mkdir(resourceDir, "conf");
-        createRandomFile(confDir, "server.conf");
-
-        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftClient.setFailingOnSendChangeSet(true);
-        try {
-            detector.run();
-        } catch (RuntimeException e) {}
-
-        assertFalse(changeSet(config.getName(), COVERAGE).exists(), "Snapshot file should be deleted when " +
-            "only the initial change set has been generated and sending change send report to server fails");
-    }
-
-    @Test
-    public void ignoreFilesThatAreNotReadableForCoverageChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("nonreadable-files-coverage", resourcesDir.getAbsolutePath());
-
-        File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = createRandomFile(confDir, "server-1.conf");
-        File server2Conf = createRandomFile(confDir, "server-2.conf");
-        assertTrue(server2Conf.setReadable(false), "Failed to make " + server2Conf.getPath() + " write only");
-
-        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        detector.run();
-
-        File changeSet = changeSet(config.getName(), COVERAGE);
-        List<FileEntry> entries = asList(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
-
-        assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
-        assertFileEntriesMatch("Files that are non-readable should be skipped but other, readable file should still " +
-            "be included in the change set", entries, changeSet);
-    }
-
-    @Test
-    public void ignoreNewFilesThatAreNotReadableForDriftChangeSet() throws Exception {
-        DriftConfiguration config = driftConfiguration("nonreadable-files-drfit", resourceDir.getAbsolutePath());
-        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
-
-        File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = createRandomFile(confDir, "server-1.conf");
-        String oldServer1Hash = sha256(server1Conf);
-
-        scheduleQueue.addSchedule(schedule);
-        detector.run();
-
-        // create some drift that includes a new file that is not readable
-        server1Conf.delete();
-        server1Conf = createRandomFile(confDir, "server-1.conf");
-        String newServer1Hash = sha256(server1Conf);
-
-        File server2Conf = createRandomFile(confDir, "server-2.conf");
-        assertTrue(server2Conf.setReadable(false), "Failed to make " + server2Conf.getPath() + " write only");
-
-        schedule.resetSchedule();
-        detector.run();
-
-        File driftChangeSet = changeSet(config.getName(), DRIFT);
-        List<FileEntry> driftEntries = asList(changedFileEntry("conf/server-1.conf",  oldServer1Hash, newServer1Hash));
-
-        // verify that the drift change set was generated
-        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
-        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
-
-        // verify that the coverage change set was updated
-        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
-        List<FileEntry> coverageEntries = asList(changedFileEntry("conf/server-1.conf",  oldServer1Hash, newServer1Hash));
-
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
-        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
-            coverageChangeSet);
-    }
-
-    @Test
-    public void markFileUnderDriftDetectionAsRemovedWhenItIsMadeNonReadable() throws Exception {
-        DriftConfiguration config = driftConfiguration("file-made-nonreadable", resourceDir.getAbsolutePath());
-        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
-
-        File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = createRandomFile(confDir, "server-1.conf");
-        String server1Hash = sha256(server1Conf);
-
-        scheduleQueue.addSchedule(schedule);
-        detector.run();
-
-        // make the file non-readable and run the detector again
-        assertTrue(server1Conf.setReadable(false), "Failed to make " + server1Conf.getPath() + " write only");
-
-        schedule.resetSchedule();
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
@@ -631,15 +424,15 @@ public class DriftDetectorTest extends DriftTest {
         assertCollectionMatchesNoOrder(msg, expected, actual);
     }
 
-    Headers createHeaders(DriftConfiguration driftConfig, DriftChangeSetCategory type) {
+    Headers createHeaders(DriftDefinition driftConfig, DriftChangeSetCategory type) {
         return createHeaders(driftConfig, type, 0);
     }
 
-    Headers createHeaders(DriftConfiguration driftConfig, DriftChangeSetCategory type, int version) {
+    Headers createHeaders(DriftDefinition driftConfig, DriftChangeSetCategory type, int version) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
-        headers.setDriftCofigurationId(driftConfig.getId());
-        headers.setDriftConfigurationName(driftConfig.getName());
+        headers.setDriftDefinitionId(driftConfig.getId());
+        headers.setDriftDefinitionName(driftConfig.getName());
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
         headers.setVersion(version);

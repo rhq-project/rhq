@@ -90,7 +90,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private boolean fetchResourceErrors;
     private boolean fetchEventSources;
     private boolean fetchProductVersion;
-    private boolean fetchDriftConfigurations;
+    private boolean fetchDriftDefinitions;
 
     private PageOrdering sortName;
     private PageOrdering sortInventoryStatus;
@@ -331,8 +331,8 @@ public class ResourceCriteria extends TaggedCriteria {
         this.fetchProductVersion = fetchProductVersion;
     }
 
-    public void fetchDriftConfigurations(boolean fetchDriftConfigurations) {
-        this.fetchDriftConfigurations = fetchDriftConfigurations;
+    public void fetchDriftDefinitions(boolean fetchDriftDefinitions) {
+        this.fetchDriftDefinitions = fetchDriftDefinitions;
     }
 
     public void addSortName(PageOrdering sortName) {

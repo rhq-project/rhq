@@ -16,28 +16,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components.table;
+package org.rhq.enterprise.gui.coregui.client.components.carousel;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -50,7 +42,6 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
@@ -60,12 +51,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
-import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
@@ -76,109 +61,114 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * A tabular view of set of data records from an {@link RPCDataSource}.
- *
- * WARNING! If you make _any_ changes to this class, no matter how seemingly
- * trivial, you must get it peer reviewed. Send out your proposed changes
- * to the dev mailing list and ask for comments. Any problems introduced to
- * this class are magnified because it is used in so many UI views and problems
- * are hard to detect due to the various ways it is used.
- *
- * @author Greg Hinkle
- * @author Ian Springer
+ * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
+ * @{link CarouselMember}s, offering horizontal presentation of the member canvases, high level filtering, and
+ * other member-wide handling. 
+ * 
+ * @author Jay Shaughnessy
  */
 @SuppressWarnings("unchecked")
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
+public abstract class Carousel extends LocatableHLayout implements RefreshableView {
 
-    protected static final String FIELD_ID = "id";
-    protected static final String FIELD_NAME = "name";
+    private static final String FILTER_CAROUSEL_START = "CarouselStart";
+    private static final String FILTER_CAROUSEL_SIZE = "CarouselSize";
 
     private LocatableVLayout contents;
 
-    private HTMLFlow titleCanvas;
-
     private HLayout titleLayout;
     private Canvas titleComponent;
+    private HTMLFlow titleCanvas;
+    private String titleString;
+    private List<String> titleIcons = new ArrayList<String>();
 
-    private TableFilter filterForm;
-    private ListGrid listGrid;
-    private Label tableInfo;
+    private Canvas carouselDetails;
 
-    private List<String> headerIcons = new ArrayList<String>();
+    private CarouselFilter filterForm;
 
-    private boolean showHeader = true;
+    private LocatableHLayout carouselHolder;
+
+    private Label carouselInfo;
+
+    private boolean showTitle = true;
     private boolean showFooter = true;
     private boolean showFooterRefresh = true;
     private boolean showFilterForm = true;
 
-    private String titleString;
     private Criteria initialCriteria;
     private boolean initialCriteriaFixed = true;
+    @SuppressWarnings("unused")
     private SortSpecifier[] sortSpecifiers;
+    @SuppressWarnings("unused")
     private String[] excludedFieldNames;
+    @SuppressWarnings("unused")
     private boolean autoFetchData;
+    @SuppressWarnings("unused")
     private boolean flexRowDisplay = true;
     private boolean hideSearchBar = false;
     private String initialSearchBarSearchText = null;
 
-    private DS dataSource;
-
-    private DoubleClickHandler doubleClickHandler;
-    private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
-    private boolean tableActionDisableOverride = false;
+    private List<CarouselActionInfo> carouselActions = new ArrayList<CarouselActionInfo>();
+    private boolean carouselActionDisableOverride = false;
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
     private LocatableToolStrip footer;
     private LocatableToolStrip footerExtraWidgets;
     private LocatableIButton refreshButton;
+    private LocatableIButton nextButton;
+    private LocatableIButton previousButton;
+    private LocatableIButton widthButton;
 
-    public Table(String locatorId) {
+    // null indicates filtering on the member number
+    private Integer carouselStartFilter = null;
+    // null indicates no  limit to the carousel size. This can be dangerous.
+    private Integer carouselSizeFilter = null;
+    private boolean carouselDirty = false;
+    private boolean carouselUsingFixedWidths = false;
+
+    public Carousel(String locatorId) {
         this(locatorId, null, null, null, null, true);
     }
 
-    public Table(String locatorId, String tableTitle) {
-        this(locatorId, tableTitle, null, null, null, true);
+    public Carousel(String locatorId, String titleString) {
+        this(locatorId, titleString, null, null, null, true);
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, null, null, true);
+    public Carousel(String locatorId, String titleString, Criteria criteria) {
+        this(locatorId, titleString, criteria, null, null, true);
     }
 
-    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(locatorId, tableTitle, null, sortSpecifiers, null, true);
+    public Carousel(String locatorId, String titleString, SortSpecifier[] sortSpecifiers) {
+        this(locatorId, titleString, null, sortSpecifiers, null, true);
     }
 
-    protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, null, true);
+    protected Carousel(String locatorId, String titleString, SortSpecifier[] sortSpecifiers, Criteria criteria) {
+        this(locatorId, titleString, criteria, sortSpecifiers, null, true);
     }
 
-    public Table(String locatorId, String tableTitle, boolean autoFetchData) {
-        this(locatorId, tableTitle, null, null, null, autoFetchData);
+    public Carousel(String locatorId, String titleString, boolean autoFetchData) {
+        this(locatorId, titleString, null, null, null, autoFetchData);
     }
 
-    public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, true);
+    public Carousel(String locatorId, String titleString, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
+        this(locatorId, titleString, null, sortSpecifiers, excludedFieldNames, true);
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+    public Carousel(String locatorId, String titleString, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);
+        this(locatorId, titleString, criteria, sortSpecifiers, excludedFieldNames, true);
     }
 
-    public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
+    public Carousel(String locatorId, String titleString, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames, boolean autoFetchData) {
         super(locatorId);
 
@@ -186,7 +176,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setHeight100();
         setOverflow(Overflow.HIDDEN);
 
-        this.titleString = tableTitle;
+        this.titleString = titleString;
         this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
@@ -195,7 +185,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     /**
      * If this returns true, then even if a {@link #getSearchSubsystem() search subsystem}
-     * is defined by the table class, the search bar will not be shown.
+     * is defined by the class, the search bar will not be shown.
      * 
      * @return true if the search bar is to be hidden (default is false)
      */
@@ -229,14 +219,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         //contents.setOverflow(Overflow.AUTO);
         addMember(contents);
 
-        filterForm = new TableFilter(this);
+        filterForm = new CarouselFilter(this);
 
         /*
-         * table filters and search bar are currently mutually exclusive
+         * carousel filters and search bar are currently mutually exclusive
          */
 
         if (getSearchSubsystem() == null) {
-            configureTableFilters();
+            configureCarouselFilters();
+
         } else {
             if (!this.hideSearchBar) {
                 final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
@@ -245,41 +236,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
-        listGrid.setAutoFetchData(autoFetchData);
-
-        if (initialCriteria != null) {
-            listGrid.setInitialCriteria(initialCriteria);
-        }
-        if (sortSpecifiers != null) {
-            listGrid.setInitialSort(sortSpecifiers);
-        }
-        listGrid.setWidth100();
-        listGrid.setHeight100();
-        listGrid.setAlternateRecordStyles(true);
-        listGrid.setResizeFieldsInRealTime(false);
-        listGrid.setSelectionType(getDefaultSelectionStyle());
-
-        if (flexRowDisplay) {
-            //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
-            listGrid.setWrapCells(true);
-            listGrid.setFixedRecordHeights(false);
-        }
-
-        // By default, SmartGWT will disable any rows that have a record named "enabled" with a value of false - setting
-        // these fields to a bogus field name will disable this behavior. Note, setting them to null does *not* disable
-        // the behavior.
-        listGrid.setRecordEnabledProperty("foobar");
-        listGrid.setRecordEditProperty("foobar");
-
-        // TODO: Uncomment the below line once we've upgraded to SmartGWT 2.3.
-        //listGrid.setRecordCanSelectProperty("foobar");
-
-        if (dataSource != null) {
-            listGrid.setDataSource(dataSource);
-        }
-
-        contents.addMember(listGrid);
+        carouselHolder = new LocatableHLayout(extendLocatorId("Holder"));
+        carouselHolder.setOverflow(Overflow.AUTO);
+        carouselHolder.setWidth100();
+        contents.addMember(carouselHolder);
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
@@ -297,25 +257,29 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             // Title
             this.titleCanvas = new HTMLFlow();
-            updateTitleCanvas(this.titleString);
+            setTitleString(this.titleString);
 
-            if (showHeader) {
+            if (showTitle) {
                 titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
             }
 
+            if (null != carouselDetails) {
+                contents.addMember(carouselDetails);
+            }
+
             if (filterForm.hasContent()) {
                 contents.addMember(filterForm);
             }
 
-            contents.addMember(listGrid);
+            contents.addMember(carouselHolder);
 
             // Footer
 
             // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
-            // This is hidden from view unless extra widgets are actually added to the table above the main footer.
+            // This is hidden from view unless extra widgets are actually added to the carousel above the main footer.
             this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
             footerExtraWidgets.setPadding(5);
             footerExtraWidgets.setWidth100();
@@ -330,34 +294,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             contents.addMember(footer);
 
             // The ListGrid has been created and configured
-            // Now give subclasses a chance to configure the table
-            configureTable();
+            // Now give subclasses a chance to configure the carousel
+            configureCarousel();
 
-            listGrid.addDoubleClickHandler(new DoubleClickHandler() {
-                @Override
-                public void onDoubleClick(DoubleClickEvent event) {
-                    if (doubleClickHandler != null && !getTableActionDisableOverride()) {
-                        doubleClickHandler.onDoubleClick(event);
-                    }
-                }
-            });
-
-            Label tableInfo = new Label();
-            tableInfo.setWrap(false);
-            setTableInfo(tableInfo);
+            Label carouselInfo = new Label();
+            carouselInfo.setWrap(false);
+            setCarouselInfo(carouselInfo);
             refreshRowCount();
 
-            // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
-            //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
-            //       the underlying datasource).
-            if (this.excludedFieldNames != null) {
-                for (String excludedFieldName : excludedFieldNames) {
-                    this.listGrid.hideField(excludedFieldName);
-                }
-            }
-
-            if (showHeader) {
-                drawHeader();
+            if (showTitle) {
+                drawTitle();
             }
 
             if (showFooter) {
@@ -369,45 +315,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     private void refreshRowCount() {
-        Label tableInfo = getTableInfo();
-        if (tableInfo != null) {
-            boolean lengthIsKnown = false;
-            if (listGrid != null) {
-                ResultSet results = listGrid.getResultSet();
-                if (results != null) {
-                    Boolean flag = results.lengthIsKnown();
-                    if (flag != null) {
-                        lengthIsKnown = flag.booleanValue();
-                    }
-                } else {
-                    lengthIsKnown = (listGrid.getDataSource() == null); // not bound by a datasource, assume we know
-                }
-            }
-
-            String contents;
-            if (lengthIsKnown) {
-                int totalRows = this.listGrid.getTotalRows();
-                int selectedRows = this.listGrid.getSelection().length;
-                contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
-            } else {
-                contents = MSG.view_table_totalRowsUnknown();
-            }
-            tableInfo.setContents(contents);
-        }
     }
 
     @Override
     public void destroy() {
-        // immediately null out the listGrid to stop async refresh requests from executing during the destroy
-        // logic. This happens in selenium testing or when a user navs away prior to the refresh.
-        this.listGrid = null;
-
         SeleniumUtility.destroyMembers(contents);
         super.destroy();
     }
 
-    private void drawHeader() {
-        for (String headerIcon : headerIcons) {
+    private void drawTitle() {
+        for (String headerIcon : titleIcons) {
             Img img = new Img(headerIcon, 24, 24);
             img.setPadding(4);
             titleLayout.addMember(img);
@@ -433,61 +350,61 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         footer.removeMembers(footer.getMembers());
 
-        for (final TableActionInfo tableAction : tableActions) {
+        for (final CarouselActionInfo carouselAction : carouselActions) {
 
-            if (null == tableAction.getValueMap()) {
+            if (null == carouselAction.getValueMap()) {
                 // button action
-                IButton button = new LocatableIButton(tableAction.getLocatorId(), tableAction.getTitle());
+                IButton button = new LocatableIButton(carouselAction.getLocatorId(), carouselAction.getTitle());
                 button.setDisabled(true);
                 button.setOverflow(Overflow.VISIBLE);
                 button.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
                         disableAllFooterControls();
-                        if (tableAction.confirmMessage != null) {
-                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                .getSelection().length));
+                        if (carouselAction.confirmMessage != null) {
+                            String message = carouselAction.confirmMessage.replaceAll("\\#", "TODO:");
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
                                     if (confirmed) {
-                                        tableAction.action.executeAction(listGrid.getSelection(), null);
+                                        carouselAction.action.executeAction(null);
                                     } else {
-                                        refreshTableInfo();
+                                        refreshCarouselInfo();
                                     }
                                 }
                             });
                         } else {
-                            tableAction.action.executeAction(listGrid.getSelection(), null);
+                            carouselAction.action.executeAction(null);
                         }
                     }
                 });
 
-                tableAction.actionCanvas = button;
+                carouselAction.actionCanvas = button;
                 footer.addMember(button);
 
             } else {
                 // menu action
-                LocatableMenu menu = new LocatableMenu(tableAction.getLocatorId() + "Menu");
-                final Map<String, ? extends Object> menuEntries = tableAction.getValueMap();
+                LocatableMenu menu = new LocatableMenu(carouselAction.getLocatorId() + "Menu");
+                final Map<String, ? extends Object> menuEntries = carouselAction.getValueMap();
                 for (final String key : menuEntries.keySet()) {
                     MenuItem item = new MenuItem(key);
                     item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                         public void onClick(MenuItemClickEvent event) {
                             disableAllFooterControls();
-                            tableAction.getAction().executeAction(listGrid.getSelection(), menuEntries.get(key));
+                            carouselAction.getAction().executeAction(menuEntries.get(key));
                         }
                     });
                     menu.addItem(item);
                 }
 
-                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle());
+                IMenuButton menuButton = new LocatableIMenuButton(carouselAction.getLocatorId(), carouselAction
+                    .getTitle());
                 menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
                 menuButton.setAutoFit(true); // this makes it pretty tight, but maybe better than the default, which is pretty wide
                 menuButton.setOverflow(Overflow.VISIBLE);
                 menuButton.setShowMenuBelow(false);
 
-                tableAction.actionCanvas = menuButton;
+                carouselAction.actionCanvas = menuButton;
                 footer.addMember(menuButton);
             }
         }
@@ -497,6 +414,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
 
         footer.addMember(new LayoutSpacer());
+
+        widthButton = new LocatableIButton(extendLocatorId("Width"), MSG.common_button_fixedWidth());
+        widthButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                carouselUsingFixedWidths = !carouselUsingFixedWidths;
+                widthButton.setTitle(carouselUsingFixedWidths ? MSG.common_button_scaleToFit() : MSG
+                    .common_button_fixedWidth());
+                buildCarousel(true);
+            }
+        });
+        footer.addMember(widthButton);
 
         if (isShowFooterRefresh()) {
             this.refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
@@ -509,30 +437,65 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             footer.addMember(refreshButton);
         }
 
-        footer.addMember(tableInfo);
-
-        // Manages enable/disable buttons for the grid
-        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                refreshTableInfo();
+        previousButton = new LocatableIButton(extendLocatorId("Previous"), MSG.common_button_previous());
+        previousButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                disableAllFooterControls();
+                previous();
             }
         });
+        footer.addMember(previousButton);
 
-        listGrid.addDataArrivedHandler(new DataArrivedHandler() {
-            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                if (null != listGrid) {
-                    refreshTableInfo();
-                }
+        nextButton = new LocatableIButton(extendLocatorId("Next"), MSG.common_button_next());
+        nextButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                disableAllFooterControls();
+                next();
             }
         });
+        footer.addMember(nextButton);
+
+        footer.addMember(carouselInfo);
 
         // Ensure buttons are initially set correctly.
-        refreshTableInfo();
+        refreshCarouselInfo();
     }
 
-    public void disableAllFooterControls() {
-        for (TableActionInfo tableAction : tableActions) {
-            tableAction.actionCanvas.disable();
+    private void previous() {
+        if (null == carouselSizeFilter) {
+            carouselSizeFilter = getDefaultCarouselSize();
+        }
+        if (null != carouselStartFilter) {
+            int newStart = carouselStartFilter + carouselSizeFilter;
+            setCarouselStartFilter(newStart);
+        }
+        buildCarousel(true);
+    }
+
+    private void next() {
+        if (null == carouselSizeFilter) {
+            carouselSizeFilter = getDefaultCarouselSize();
+        }
+
+        if (null != carouselStartFilter) {
+            int newStart = carouselStartFilter - carouselSizeFilter;
+            newStart = (newStart < carouselSizeFilter) ? carouselSizeFilter : newStart;
+            setCarouselStartFilter(newStart);
+        }
+        buildCarousel(true);
+    }
+
+    protected abstract int getDefaultCarouselSize();
+
+    protected abstract String getCarouselMemberFixedWidth();
+
+    protected abstract String getCarouselStartFilterLabel();
+
+    protected abstract String getCarouselSizeFilterLabel();
+
+    private void disableAllFooterControls() {
+        for (CarouselActionInfo action : carouselActions) {
+            action.actionCanvas.disable();
         }
         for (Canvas extraWidget : extraWidgetsAboveFooter) {
             extraWidget.disable();
@@ -547,33 +510,47 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     /**
      * Subclasses can use this as a chance to configure the list grid after it has been
-     * created but before it has been drawn to the DOM. This is also the proper place to add table
+     * created but before it has been drawn to the DOM. This is also the proper place to add
      * actions so that they're rendered in the footer.
      */
-    protected void configureTable() {
+    protected void configureCarousel() {
         return;
     }
 
+    /**
+     * If not overriden this will append the standard carousel filters to those already supplied. To ensure
+     * the supplied form items end a row, call {@link FormItem#setEndRow(Boolean)} as needed. The filter form is 
+     * set to use 6 columns, which allows the carousle filters to fit on one row.
+     * @param formItems
+     */
     public void setFilterFormItems(FormItem... formItems) {
-        setShowHeader(false);
-        this.filterForm.setItems(formItems);
+        // since Arrays.copyOf is unsupported...
+        FormItem[] carouselFormItems = new FormItem[2 + formItems.length];
+        int i = 0;
+        for (FormItem item : formItems) {
+            carouselFormItems[i++] = item;
+        }
+
+        // drift file path filter
+        TextItem startFilter = new TextItem(FILTER_CAROUSEL_START, getCarouselStartFilterLabel());
+        TextItem numFilter = new TextItem(FILTER_CAROUSEL_SIZE, getCarouselSizeFilterLabel());
+        carouselFormItems[i++] = startFilter;
+        carouselFormItems[i++] = numFilter;
+
         this.filterForm.setNumCols(4);
+        this.filterForm.setItems(carouselFormItems);
     }
 
     /**
      * Overriding components can use this as a chance to add {@link FormItem}s which will filter
-     * the table that displays their data.
+     * the carousel members that display their data. If not overriden the standard carousel filters are applied.
      */
-    protected void configureTableFilters() {
-
-    }
-
-    public String getTitleString() {
-        return this.titleString;
+    protected void configureCarouselFilters() {
+        setFilterFormItems();
     }
 
     /**
-     * Set the Table's title string. This will subsequently call {@link #updateTitleCanvas(String)}.
+     * Set the Carousel's title string. This will subsequently call {@link #updateTitleCanvas(String)}.
      * @param titleString
      */
     public void setTitleString(String titleString) {
@@ -588,7 +565,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     /**
-     * To set the Table's title, call {@link #setTitleString(String)}. This is primarily declared for purposes of
+     * To set the Carousel's title, call {@link #setTitleString(String)}. This is primarily declared for purposes of
      * override.
      * @param titleString
      */
@@ -614,19 +591,19 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     /**
-     * Returns the encompassing canvas that contains all content for this table component.
-     * This content includes the list grid, the buttons, etc.
+     * Returns the encompassing canvas that contains all content for this component.
+     * This content includes the carousel members, the buttons, etc.
      */
-    public Canvas getTableContents() {
+    public Canvas getCarouselContents() {
         return this.contents;
     }
 
-    public boolean isShowHeader() {
-        return showHeader;
+    public boolean isShowTitle() {
+        return showTitle;
     }
 
-    public void setShowHeader(boolean showHeader) {
-        this.showHeader = showHeader;
+    public void setShowTitle(boolean showTitle) {
+        this.showTitle = showTitle;
     }
 
     public boolean isShowFooter() {
@@ -635,30 +612,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public void setShowFooter(boolean showFooter) {
         this.showFooter = showFooter;
-    }
-
-    /**
-     * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
-     */
-    public void refresh() {
-        if (this.listGrid != null) {
-            Criteria criteria = getCurrentCriteria();
-            this.listGrid.setCriteria(criteria);
-            this.listGrid.invalidateCache();
-            this.listGrid.markForRedraw();
-        }
-    }
-
-    protected Criteria getInitialCriteria() {
-        return initialCriteria;
-    }
-
-    /**
-     * Can be called in constructor to reset initialCriteria.
-     * @param initialCriteria
-     */
-    protected void setInitialCriteria(Criteria initialCriteria) {
-        this.initialCriteria = initialCriteria;
     }
 
     protected boolean isInitialCriteriaFixed() {
@@ -681,7 +634,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected Criteria getCurrentCriteria() {
         Criteria criteria = null;
 
-        // If this table has a filter form (table filters OR search bar),
+        // If this carousel has a filter form (filters OR search bar),
         // we need to refresh it as per the filtering, combined with any fixed criteria.
         if (this.filterForm != null && this.filterForm.hasContent()) {
 
@@ -739,87 +692,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
-    public DS getDataSource() {
-        return dataSource;
+    public void setCarouselDetails(Canvas carouselDetails) {
+        this.carouselDetails = carouselDetails;
     }
 
-    public void setDataSource(DS dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public ListGrid getListGrid() {
-        return listGrid;
-    }
-
-    /**
-     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling. Equivalent to calling:
-     * <pre>
-     * setFields( false, fields );
-     * </pre>
-     * 
-     * @param fields the fields
-     */
-    public void setListGridFields(ListGridField... fields) {
-        setListGridFields(false, fields);
-    }
-
-    /**
-     * Wraps ListGrid.setFields(...) but takes care of "id" field display handling.
-     *
-     * @param forceIdField if true, and "id" is a defined field, then display it. If false, it is displayed
-     *        only in debug mode.  
-     * @param fields the fields
-     */
-    public void setListGridFields(boolean forceIdField, ListGridField... fields) {
-        String[] dataSourceFieldNames = this.dataSource.getFieldNames();
-        Set<String> dataSourceFieldNamesSet = new LinkedHashSet<String>();
-        dataSourceFieldNamesSet.addAll(Arrays.asList(dataSourceFieldNames));
-        Map<String, ListGridField> listGridFieldsMap = new LinkedHashMap<String, ListGridField>();
-        for (ListGridField listGridField : fields) {
-            listGridFieldsMap.put(listGridField.getName(), listGridField);
-        }
-        dataSourceFieldNamesSet.removeAll(listGridFieldsMap.keySet());
-
-        DataSourceField dataSourceIdField = this.dataSource.getField(FIELD_ID);
-        boolean hideIdField = (!CoreGUI.isDebugMode() && !forceIdField);
-        if (dataSourceIdField != null && hideIdField) {
-            // setHidden() will not work on the DataSource field - use the listGrid.hideField() instead.
-            this.listGrid.hideField(FIELD_ID);
-        }
-
-        ListGridField listGridIdField = listGridFieldsMap.get(FIELD_ID);
-        if (listGridIdField != null) {
-            listGridIdField.setHidden(hideIdField);
-        }
-
-        if (!dataSourceFieldNamesSet.isEmpty()) {
-            ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
-            int destIndex = 0;
-            if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                String datasourceFieldTitle = this.dataSource.getField(FIELD_ID).getTitle();
-                String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG
-                    .common_title_id();
-                listGridIdField = new ListGridField(FIELD_ID, listGridFieldTitle, 55);
-                // Override the DataSource id field metadata for consistent display across all Tables.
-                listGridIdField.setType(ListGridFieldType.INTEGER);
-                listGridIdField.setCanEdit(false);
-                listGridIdField.setHidden(hideIdField);
-                newFields[destIndex++] = listGridIdField;
-                dataSourceFieldNamesSet.remove(FIELD_ID);
-            }
-            System.arraycopy(fields, 0, newFields, destIndex, fields.length);
-            destIndex += fields.length;
-            for (String dataSourceFieldName : dataSourceFieldNamesSet) {
-                DataSourceField dataSourceField = this.dataSource.getField(dataSourceFieldName);
-                ListGridField listGridField = new ListGridField(dataSourceField.getName());
-                this.listGrid.hideField(dataSourceFieldName);
-                listGridField.setHidden(true);
-                newFields[destIndex++] = listGridField;
-            }
-            this.listGrid.setFields(newFields);
-        } else {
-            this.listGrid.setFields(fields);
-        }
+    public Canvas getCarouselDetails() {
+        return carouselDetails;
     }
 
     public void setTitleComponent(Canvas canvas) {
@@ -829,31 +707,31 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     /**
      * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
      * when footer actions take place, typically a button click.  It is up to the action to ensure the page
-     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String locatorId, String title, TableAction tableAction) {
-        this.addTableAction(locatorId, title, null, null, tableAction);
+    public void addCarouselAction(String locatorId, String title, CarouselAction action) {
+        this.addCarouselAction(locatorId, title, null, null, action);
     }
 
     /**
      * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
      * when footer actions take place, typically a button click.  It is up to the action to ensure the page
-     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
-        this.addTableAction(locatorId, title, confirmation, null, tableAction);
+    public void addCarouselAction(String locatorId, String title, String confirmation, CarouselAction action) {
+        this.addCarouselAction(locatorId, title, confirmation, null, action);
     }
 
     /**
      * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
      * when footer actions take place, typically a button click.  It is up to the action to ensure the page
-     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      */
-    public void addTableAction(String locatorId, String title, String confirmation,
-        LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
+    public void addCarouselAction(String locatorId, String title, String confirmation,
+        LinkedHashMap<String, ? extends Object> valueMap, CarouselAction action) {
         // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
         // extends the footer's locator ID as it should.
         int underscoreIndex = locatorId.lastIndexOf('_');
@@ -863,24 +741,29 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         } else {
             unqualifiedLocatorId = locatorId;
         }
-        TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
-            confirmation, valueMap, tableAction);
-        tableActions.add(info);
+        CarouselActionInfo info = new CarouselActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
+            confirmation, valueMap, action);
+        carouselActions.add(info);
+    }
+
+    public void addCarouselMember(Canvas member) {
+        member.setWidth(carouselUsingFixedWidths ? getCarouselMemberFixedWidth() : "*");
+        this.carouselHolder.addMember(member);
     }
 
     public void setListGridDoubleClickHandler(DoubleClickHandler handler) {
-        doubleClickHandler = handler;
+        //doubleClickHandler = handler;
     }
 
     /**
-     * Adds extra widgets to the bottom of the table view.
+     * Adds extra widgets to the bottom of the carousel view.
      * <br/><br/>
      * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
      * when footer actions take place, typically a button click.  It is up to the action to ensure the page
-     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshCarouselActions) are refreshed as needed at action
      * completion. Failure to do so may leave the widgets disabled.
      *
-     * @param widget the new widget to add to the table view
+     * @param widget the new widget to add to the view
      * @param aboveFooter if true, the widget will be placed in a second toolstrip just above the main footer.
      *                    if false, the widget will be placed in the main footer toolstrip itself. This is
      *                    useful if the widget is really big and won't fit in the main footer along with the
@@ -895,65 +778,118 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public void setHeaderIcon(String headerIcon) {
-        if (this.headerIcons.size() > 0) {
-            this.headerIcons.clear();
+        if (this.titleIcons.size() > 0) {
+            this.titleIcons.clear();
         }
         addHeaderIcon(headerIcon);
     }
 
     public void addHeaderIcon(String headerIcon) {
-        this.headerIcons.add(headerIcon);
+        this.titleIcons.add(headerIcon);
     }
 
     /**
-     * By default, all table actions have buttons that are enabled or
+     * By default, all actions have buttons that are enabled or
      * disabled based on if and how many rows are selected. There are
-     * times when you don't want the user to be able to press table action
+     * times when you don't want the user to be able to press action
      * buttons regardless of which rows are selected. This method let's
      * you set this override-disable flag.
      * 
      * Note: this also effects the double-click handler - if this disable override
      * is on, the double-click handler is not called.
      * 
-     * @param disabled if true, all table action buttons will be disabled
-     *                 if false, table action buttons will be enabled based on their predefined
+     * @param disabled if true, all action buttons will be disabled
+     *                 if false, action buttons will be enabled based on their predefined
      *                 selection enablement rule.
      */
-    public void setTableActionDisableOverride(boolean disabled) {
-        this.tableActionDisableOverride = disabled;
-        refreshTableInfo();
+    public void setCarouselActionDisableOverride(boolean disabled) {
+        this.carouselActionDisableOverride = disabled;
+        refreshCarouselInfo();
     }
 
-    public boolean getTableActionDisableOverride() {
-        return this.tableActionDisableOverride;
+    public boolean getCarouselActionDisableOverride() {
+        return this.carouselActionDisableOverride;
     }
 
-    public void refreshTableInfo() {
-        if (this.showFooter && (this.listGrid != null)) {
-            if (this.tableActionDisableOverride) {
-                this.listGrid.setSelectionType(SelectionStyle.NONE);
+    /**
+     * Refreshes the members, filtered by any fixed criteria, as well as any user-specified filters.
+     */
+    public void refresh() {
+        Criteria criteria = getCurrentCriteria();
+
+        Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() : Collections
+            .<String, Object> emptyMap();
+        Integer carouselStart;
+        Integer carouselSize;
+        try {
+            carouselSize = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_SIZE));
+        } catch (Exception e) {
+            carouselSize = null;
+        }
+        try {
+            carouselStart = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_START));
+        } catch (Exception e) {
+            carouselStart = null;
+        }
+        if (carouselStartFilter != carouselStart) {
+            if (null == carouselStartFilter || !carouselStartFilter.equals(carouselStart)) {
+                carouselStartFilter = carouselStart;
+                carouselDirty = true;
+            }
+        }
+        if (carouselSizeFilter != carouselSize) {
+            if (null == carouselSizeFilter || !carouselSizeFilter.equals(carouselSize)) {
+                carouselSizeFilter = carouselSize;
+                carouselDirty = true;
+            }
+        }
+
+        // if we're channging the entire carousel then rebuild, otherwise, just refresh the members
+        if (carouselDirty) {
+            buildCarousel(true);
+
+        } else {
+            for (Canvas member : carouselHolder.getMembers()) {
+                CarouselMember carouselMember = (CarouselMember) member;
+                carouselMember.refresh(criteria);
+            }
+        }
+
+        // TODO: it would be best if this was actually called after the async return of the member refreshes
+        refreshCarouselInfo();
+    }
+
+    protected void buildCarousel(boolean isRefresh) {
+        if (null != carouselHolder) {
+            carouselHolder.destroyMembers();
+        }
+    }
+
+    public void refreshCarouselInfo() {
+        if (this.showFooter && (this.carouselHolder != null)) {
+            if (this.carouselActionDisableOverride) {
+                //this.listGrid.setSelectionType(SelectionStyle.NONE);
             } else {
-                this.listGrid.setSelectionType(getDefaultSelectionStyle());
+                //this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
             //int selectionCount = this.listGrid.getSelection().length;
-            for (TableActionInfo tableAction : this.tableActions) {
-                if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
-                    boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
-                        .getSelection()));
-                    tableAction.actionCanvas.setDisabled(!enabled);
+            for (CarouselActionInfo carouselAction : this.carouselActions) {
+                if (carouselAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
+                    boolean enabled = (!this.carouselActionDisableOverride && carouselAction.action.isEnabled());
+                    carouselAction.actionCanvas.setDisabled(!enabled);
                 }
             }
             for (Canvas extraWidget : this.extraWidgetsAboveFooter) {
                 extraWidget.enable();
-                if (extraWidget instanceof TableWidget) {
-                    ((TableWidget) extraWidget).refresh(this.listGrid);
+                if (extraWidget instanceof CarouselWidget) {
+                    ((CarouselWidget) extraWidget).refresh(carouselHolder.getMembers());
                 }
             }
             for (Canvas extraWidget : this.extraWidgetsInMainFooter) {
                 extraWidget.enable();
-                if (extraWidget instanceof TableWidget) {
-                    ((TableWidget) extraWidget).refresh(this.listGrid);
+                if (extraWidget instanceof CarouselWidget) {
+                    ((CarouselWidget) extraWidget).refresh(carouselHolder.getMembers());
                 }
             }
             refreshRowCount();
@@ -961,37 +897,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 this.refreshButton.enable();
             }
         }
-    }
-
-    protected void deleteSelectedRecords() {
-        deleteSelectedRecords(null);
-    }
-
-    protected void deleteSelectedRecords(DSRequest requestProperties) {
-        ListGrid listGrid = getListGrid();
-        final int selectedRecordCount = listGrid.getSelection().length;
-        final List<String> deletedRecordNames = new ArrayList<String>(selectedRecordCount);
-        listGrid.removeSelectedData(new DSCallback() {
-            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
-                    Record[] deletedRecords = response.getData();
-                    for (Record deletedRecord : deletedRecords) {
-                        String name = deletedRecord.getAttribute(getTitleFieldName());
-                        deletedRecordNames.add(name);
-                    }
-                    if (deletedRecordNames.size() == selectedRecordCount) {
-                        // all selected schedules were successfully deleted.
-                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
-                            .valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
-                            .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
-                                getDataTypeNamePlural(), deletedRecordNames.toString()));
-                        CoreGUI.getMessageCenter().notify(message);
-                        refresh();
-                    }
-                }
-                // TODO: Print error messages for failures or partial failures.
-            }
-        }, requestProperties);
     }
 
     protected String getDataTypeName() {
@@ -1002,40 +907,32 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return "items";
     }
 
-    protected String getTitleFieldName() {
-        return FIELD_NAME;
-    }
-
     protected String getDeleteConfirmMessage() {
         return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
-    }
-
-    protected void hideField(ListGridField field) {
-        getListGrid().hideField(field.getName());
-        field.setHidden(true);
     }
 
     // -------------- Inner utility classes ------------- //
 
     /**
-     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a {@link Table} 
-     * of results.
+     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a 
+     * {@link Carousel} of data.
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
+    private static class CarouselFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
         com.google.gwt.event.dom.client.KeyPressHandler {
 
-        private Table<?> table;
+        private Carousel carousel;
         private SearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
 
-        public TableFilter(Table<?> table) {
-            super(table.extendLocatorId("TableFilter"));
+        public CarouselFilter(Carousel carousel) {
+            super(carousel.extendLocatorId("CarouselFilter"));
+            setIsGroup(true);
+            setGroupTitle(MSG.common_label_filters());
             setWidth100();
             setPadding(5);
-            this.table = table;
-            //this.table.setTableTitle(null);
+            this.carousel = carousel;
         }
 
         @Override
@@ -1067,19 +964,19 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             super.setItems(items);
         }
 
-        private void fetchFilteredTableData() {
-            table.refresh();
+        private void fetchFilteredCarouselData() {
+            carousel.refresh();
         }
 
         public void onKeyPress(KeyPressEvent event) {
             if (event.getKeyName().equals("Enter") == false) {
                 return;
             }
-            fetchFilteredTableData();
+            fetchFilteredCarouselData();
         }
 
         public void onChanged(ChangedEvent event) {
-            fetchFilteredTableData();
+            fetchFilteredCarouselData();
         }
 
         public boolean hasContent() {
@@ -1093,20 +990,20 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
             // TODO: figure out why this event is being sent twice
             hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
-            fetchFilteredTableData();
+            fetchFilteredCarouselData();
         }
     }
 
-    public static class TableActionInfo {
+    public static class CarouselActionInfo {
         private String locatorId;
         private String title;
         private String confirmMessage;
         private LinkedHashMap<String, ? extends Object> valueMap;
-        private TableAction action;
+        private CarouselAction action;
         private Canvas actionCanvas;
 
-        protected TableActionInfo(String locatorId, String title, String confirmMessage,
-            LinkedHashMap<String, ? extends Object> valueMap, TableAction action) {
+        protected CarouselActionInfo(String locatorId, String title, String confirmMessage,
+            LinkedHashMap<String, ? extends Object> valueMap, CarouselAction action) {
             this.locatorId = locatorId;
             this.title = title;
             this.confirmMessage = confirmMessage;
@@ -1138,11 +1035,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             this.actionCanvas = actionCanvas;
         }
 
-        public TableAction getAction() {
+        public CarouselAction getAction() {
             return action;
         }
 
-        public void setAction(TableAction action) {
+        public void setAction(CarouselAction action) {
             this.action = action;
         }
 
@@ -1156,12 +1053,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.showFooterRefresh = showFooterRefresh;
     }
 
-    public Label getTableInfo() {
-        return tableInfo;
+    public Label getCarouselInfo() {
+        return carouselInfo;
     }
 
-    public void setTableInfo(Label tableInfo) {
-        this.tableInfo = tableInfo;
+    public void setCarouselInfo(Label carouselInfo) {
+        this.carouselInfo = carouselInfo;
     }
 
     public boolean isShowFilterForm() {
@@ -1173,11 +1070,66 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     /*
-     * by default, no search bar is shown above this table.  if this table represents a subsystem that is capable
+     * by default, no search bar is shown above this.  if this represents a subsystem that is capable
      * of search, return the specific object here.
      */
     protected SearchSubsystem getSearchSubsystem() {
         return null;
     }
 
+    protected Integer getCarouselStartFilter() {
+        return carouselStartFilter;
+    }
+
+    protected void setCarouselStartFilter(Integer carouselStartFilter) {
+        this.carouselStartFilter = carouselStartFilter;
+        this.filterForm.getItem(FILTER_CAROUSEL_START).setValue(carouselStartFilter);
+        this.filterForm.getItem(FILTER_CAROUSEL_START).redraw();
+    }
+
+    protected Integer getCarouselSizeFilter() {
+        return carouselSizeFilter;
+    }
+
+    protected void setCarouselSizeFilter(Integer carouselSizeFilter) {
+        this.carouselSizeFilter = carouselSizeFilter;
+        this.filterForm.getItem(FILTER_CAROUSEL_SIZE).setValue(carouselSizeFilter);
+        this.filterForm.getItem(FILTER_CAROUSEL_SIZE).redraw();
+    }
+
+    protected boolean isCarouselDirty() {
+        return carouselDirty;
+    }
+
+    protected void setCarouselDirty(boolean carouselDirty) {
+        this.carouselDirty = carouselDirty;
+    }
+
+    protected boolean isCarouselUsingFixedWidths() {
+        return carouselUsingFixedWidths;
+    }
+
+    protected void setCarouselUsingFixedWidths(boolean carouselUsingFixedWidths) {
+        this.carouselUsingFixedWidths = carouselUsingFixedWidths;
+    }
+
+    private interface CarouselAction {
+
+        /**
+         * Returns true if the action should be enabled based on the currently selected record(s).
+         *
+         * @param selection the currently selected record(s)
+         *
+         * @return true if the action should be enabled based on the currently selected record(s)
+         */
+        boolean isEnabled(); //TODO add arg
+
+        /**
+         * Execute the action with the currently selected record(s) as the target(s).
+         *
+         * @param selection the currently selected record(s)
+         * @param actionValue a value optionally supplied by the action (for example, a menuItem action's selection) 
+         */
+        void executeAction(Object actionValue); //TODO add arg
+    }
 }

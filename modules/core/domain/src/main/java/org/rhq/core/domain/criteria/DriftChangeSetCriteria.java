@@ -58,9 +58,9 @@ public interface DriftChangeSetCriteria extends BaseCriteria {
 
     Integer getFilterResourceId();
 
-    void addFilterDriftConfigurationId(Integer filterDriftConfigId);
+    void addFilterDriftDefinitionId(Integer filterDriftDefId);
 
-    Integer getFilterDriftConfigurationId();
+    Integer getFilterDriftDefintionId();
 
     void addFilterCategory(DriftChangeSetCategory filterCategory);
 

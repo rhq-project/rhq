@@ -51,7 +51,7 @@ public class DriftFilesSender implements Runnable {
     @Override
     public void run() {
         try {
-            File changeSet = changeSetMgr.findChangeSet(resourceId, headers.getDriftConfigurationName());
+            File changeSet = changeSetMgr.findChangeSet(resourceId, headers.getDriftDefinitionName());
             File contentDir = new File(changeSet.getParentFile(), "content");
             contentDir.mkdir();
 
@@ -63,14 +63,14 @@ public class DriftFilesSender implements Runnable {
                     copyFile(file, new File(contentDir, driftFile.getHashId()));
                 }
             }
-            driftClient.sendChangeSetContentToServer(resourceId, headers.getDriftConfigurationName(), contentDir);
+            driftClient.sendChangeSetContentToServer(resourceId, headers.getDriftDefinitionName(), contentDir);
         } catch (IOException e) {
             log.error("Failed to send drift files.", e);
         }
     }
 
     private File find(DriftFile driftFile) throws IOException {
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, headers.getDriftConfigurationName());
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, headers.getDriftDefinitionName());
 
         for (FileEntry entry : reader) {
             if (entry.getNewSHA().equals(driftFile.getHashId())) {

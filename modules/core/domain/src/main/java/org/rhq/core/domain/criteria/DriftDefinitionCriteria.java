@@ -24,20 +24,20 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
- * RHQ Criteria query support for DriftConfiguration.  This is not drift server plugin supported, DriftConfiguration
- * is a native entity.
+ * RHQ Criteria query support for @{link DriftDefinition}.  This is not drift server plugin supported,
+ * DriftDefintition is a native entity.
  * 
  * @author Jay Shaughnessy
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class DriftConfigurationCriteria extends Criteria {
+public class DriftDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -49,19 +49,17 @@ public class DriftConfigurationCriteria extends Criteria {
 
     private PageOrdering sortName;
 
-    public DriftConfigurationCriteria() {
+    public DriftDefinitionCriteria() {
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
     }
 
     @Override
-    public Class<DriftConfiguration> getPersistentClass() {
-        return DriftConfiguration.class;
+    public Class<DriftDefinition> getPersistentClass() {
+        return DriftDefinition.class;
     }
 
-    public void addFilterId(String filterId) {
-        if (filterId != null) {
-            this.filterId = Integer.parseInt(filterId);
-        }
+    public void addFilterId(Integer filterId) {
+        this.filterId = filterId;
     }
 
     public void addFilterName(String name) {

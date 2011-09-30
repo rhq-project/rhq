@@ -94,8 +94,8 @@ public class ChangeSetManagerImplTest extends DriftTest {
     Headers createHeaders(String driftConfigName, DriftChangeSetCategory type) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
-        headers.setDriftCofigurationId(1);
-        headers.setDriftConfigurationName(driftConfigName);
+        headers.setDriftDefinitionId(1);
+        headers.setDriftDefinitionName(driftConfigName);
         headers.setBasedir(resourceDir.getPath());
         headers.setType(type);
 

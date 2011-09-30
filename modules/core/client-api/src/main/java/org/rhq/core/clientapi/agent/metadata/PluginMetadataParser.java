@@ -499,7 +499,7 @@ public class PluginMetadataParser {
                         + descriptor.getName() + "]");
                 }
                 driftConfigNames.add(descriptor.getName());
-                resourceType.addDriftConfigurationTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
+                resourceType.addDriftDefinitionTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
             }
             driftConfigNames = null; // don't need this anymore
 

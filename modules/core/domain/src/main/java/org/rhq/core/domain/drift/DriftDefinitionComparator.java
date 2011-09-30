@@ -23,13 +23,13 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Compares two {@link DriftConfiguration} objects. The comparison can either
+ * Compares two {@link DriftDefinition} objects. The comparison can either
  * compare basedir/includes-excludes filters or ignore them. Will also compare
  * name, interval, enabled flag.
  * 
  * @author John Mazzitelli
  */
-public class DriftConfigurationComparator implements Comparator<DriftConfiguration> {
+public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
 
     public enum CompareMode {
         /**
@@ -53,12 +53,12 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
 
     private final CompareMode compareMode;
 
-    public DriftConfigurationComparator(CompareMode mode) {
+    public DriftDefinitionComparator(CompareMode mode) {
         this.compareMode = mode;
     }
 
     @Override
-    public int compare(DriftConfiguration dc1, DriftConfiguration dc2) {
+    public int compare(DriftDefinition dc1, DriftDefinition dc2) {
         if (compareMode != CompareMode.ONLY_DIRECTORY_SPECIFICATIONS) {
             if (dc1.getName() != null) {
                 if (dc2.getName() != null) {

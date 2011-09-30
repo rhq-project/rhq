@@ -459,8 +459,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // are different do we have to do anything to the persisted metadata.
         //
 
-        Set<ConfigurationTemplate> existingDriftTemplates = existingType.getDriftConfigurationTemplates();
-        Set<ConfigurationTemplate> newDriftTemplates = resourceType.getDriftConfigurationTemplates();
+        Set<ConfigurationTemplate> existingDriftTemplates = existingType.getDriftDefinitionTemplates();
+        Set<ConfigurationTemplate> newDriftTemplates = resourceType.getDriftDefinitionTemplates();
         if (existingDriftTemplates.size() != newDriftTemplates.size()) {
             isSame = false;
         } else {
@@ -508,11 +508,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             for (ConfigurationTemplate doomed : existingDriftTemplates) {
                 entityManager.remove(doomed);
             }
-            existingType.getDriftConfigurationTemplates().clear();
+            existingType.getDriftDefinitionTemplates().clear();
 
             for (ConfigurationTemplate toPersist : newDriftTemplates) {
                 entityManager.persist(toPersist);
-                existingType.addDriftConfigurationTemplate(toPersist);
+                existingType.addDriftDefinitionTemplate(toPersist);
             }
         }
 

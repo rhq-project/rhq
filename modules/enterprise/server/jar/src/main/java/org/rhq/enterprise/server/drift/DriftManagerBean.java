@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static java.util.Arrays.asList;
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 import java.io.File;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -37,6 +41,9 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -46,22 +53,22 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfigurationComparator;
-import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -78,13 +85,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import difflib.DiffUtils;
-import difflib.Patch;
-
-import static java.util.Arrays.asList;
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -226,7 +226,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void detectDrift(Subject subject, EntityContext context, DriftConfiguration driftConfig) {
+    public void detectDrift(Subject subject, EntityContext context, DriftDefinition driftDef) {
         switch (context.getType()) {
         case Resource:
             int resourceId = context.getResourceId();
@@ -240,11 +240,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             // this is a one-time on-demand call. If it fails throw an exception to make sure the user knows it
             // did not happen. But clean it up a bit if it's a connect exception
             try {
-                service.detectDrift(resourceId, driftConfig);
+                service.detectDrift(resourceId, driftDef);
             } catch (CannotConnectException e) {
                 throw new IllegalStateException(
                     "Agent could not be reached and may be down (see server logs for more). Could not perform drift detection request ["
-                        + driftConfig + "]");
+                        + driftDef + "]");
             }
 
             break;
@@ -256,52 +256,52 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
+    public void deleteDriftDefinition(Subject subject, EntityContext entityContext, String driftDefName) {
 
         switch (entityContext.getType()) {
         case Resource:
             int resourceId = entityContext.getResourceId();
-            DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
-            criteria.addFilterName(driftConfigName);
+            DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+            criteria.addFilterName(driftDefName);
             criteria.addFilterResourceIds(resourceId);
             criteria.setStrict(true);
-            PageList<DriftConfiguration> results = driftManager.findDriftConfigurationsByCriteria(subject, criteria);
-            DriftConfiguration doomedDriftConfig = null;
+            PageList<DriftDefinition> results = driftManager.findDriftDefinitionsByCriteria(subject, criteria);
+            DriftDefinition doomedDriftDef = null;
             if (results != null && results.size() == 1) {
-                doomedDriftConfig = results.get(0);
+                doomedDriftDef = results.get(0);
             }
 
-            if (doomedDriftConfig != null) {
+            if (doomedDriftDef != null) {
 
                 // TODO security check!
 
-                // tell the agent first - we don't want the agent reporting on the drift config after we delete it
+                // tell the agent first - we don't want the agent reporting on the drift def after we delete it
                 boolean unscheduledOnAgent = false;
                 try {
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                     DriftAgentService service = agentClient.getDriftAgentService();
-                    service.unscheduleDriftDetection(resourceId, doomedDriftConfig);
+                    service.unscheduleDriftDetection(resourceId, doomedDriftDef);
                     unscheduledOnAgent = true;
                 } catch (Exception e) {
-                    log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftConfig + "]", e);
+                    log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftDef + "]", e);
                 }
 
-                // purge all data related to this drift configuration
+                // purge all data related to this drift definition
                 try {
-                    driftManager.purgeByDriftConfigurationName(subject, resourceId, doomedDriftConfig.getName());
+                    driftManager.purgeByDriftDefinitionName(subject, resourceId, doomedDriftDef.getName());
                 } catch (Exception e) {
-                    String warnMessage = "Failed to purge data for drift configuration [" + driftConfigName
+                    String warnMessage = "Failed to purge data for drift definition [" + driftDefName
                         + "] for resource [" + resourceId + "].";
                     if (unscheduledOnAgent) {
-                        warnMessage += " The agent was told to stop detecting drift for that configuration.";
+                        warnMessage += " The agent was told to stop detecting drift for that definition.";
                     }
                     log.warn(warnMessage, e);
                 }
 
-                // now purge the drift config itself
-                driftManager.deleteResourceDriftConfiguration(subject, resourceId, doomedDriftConfig.getId());
+                // now purge the drift def itself
+                driftManager.deleteResourceDriftDefinition(subject, resourceId, doomedDriftDef.getId());
             } else {
-                throw new IllegalArgumentException("Resource does not have drift config named [" + driftConfigName
+                throw new IllegalArgumentException("Resource does not have drift definition named [" + driftDefName
                     + "]");
             }
             break;
@@ -312,8 +312,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId) {
-        DriftConfiguration doomed = entityManager.getReference(DriftConfiguration.class, driftConfigId);
+    public void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId) {
+        DriftDefinition doomed = entityManager.getReference(DriftDefinition.class, driftDefId);
         doomed.getResource().setAgentSynchronizationNeeded();
         entityManager.remove(doomed);
         return;
@@ -335,13 +335,12 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public PageList<DriftConfiguration> findDriftConfigurationsByCriteria(Subject subject,
-        DriftConfigurationCriteria criteria) {
+    public PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        CriteriaQueryRunner<DriftConfiguration> queryRunner = new CriteriaQueryRunner<DriftConfiguration>(criteria,
+        CriteriaQueryRunner<DriftDefinition> queryRunner = new CriteriaQueryRunner<DriftDefinition>(criteria,
             generator, entityManager);
-        PageList<DriftConfiguration> result = queryRunner.execute();
+        PageList<DriftDefinition> result = queryRunner.execute();
 
         return result;
     }
@@ -354,11 +353,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public DriftConfiguration getDriftConfiguration(Subject subject, int driftConfigId) {
-        DriftConfiguration result = entityManager.find(DriftConfiguration.class, driftConfigId);
+    public DriftDefinition getDriftDefinition(Subject subject, int driftDefId) {
+        DriftDefinition result = entityManager.find(DriftDefinition.class, driftDefId);
 
         if (null == result) {
-            throw new IllegalArgumentException("Drift Configuration Id [" + driftConfigId + "] not found.");
+            throw new IllegalArgumentException("Drift Definition Id [" + driftDefId + "] not found.");
         }
 
         // force lazy loads
@@ -394,19 +393,19 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     /**
-     * This purges the persisted data related to drift configuration, but it does NOT talk to the agent to tell the agent
-     * about this nor does it actually delete the drift config itself.
+     * This purges the persisted data related to drift definition, but it does NOT talk to the agent to tell the agent
+     * about this nor does it actually delete the drift def itself.
      * 
-     * If you want to delete a drift configuration and all that that entails, you must use
-     * {@link #deleteDriftConfiguration(Subject, EntityContext, String)} instead.
+     * If you want to delete a drift definition and all that that entails, you must use
+     * {@link #deleteDriftDefinition(Subject, EntityContext, String)} instead.
      * 
      * This method is really for internal use only.
      */
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+    public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        driftServerPlugin.purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+        driftServerPlugin.purgeByDriftDefinitionName(subject, resourceId, driftDefName);
     }
 
     @Override
@@ -454,12 +453,12 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig) {
+    public void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef) {
 
-        // before we do anything, make sure the drift config name is valid
-        if (!driftConfig.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
+        // before we do anything, make sure the drift def name is valid
+        if (!driftDef.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
             throw new IllegalArgumentException("Drift configuration name contains invalid characters: "
-                + driftConfig.getName());
+                + driftDef.getName());
         }
 
         switch (entityContext.getType()) {
@@ -470,28 +469,28 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                 throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
-            // Update or add the driftConfig as necessary
-            DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+            // Update or add the driftDef as necessary
+            DriftDefinitionComparator comparator = new DriftDefinitionComparator(
                 CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
             boolean isUpdated = false;
-            for (DriftConfiguration dc : resource.getDriftConfigurations()) {
-                if (dc.getName().equals(driftConfig.getName())) {
+            for (DriftDefinition dc : resource.getDriftDefinitions()) {
+                if (dc.getName().equals(driftDef.getName())) {
                     // compare the directory specs (basedir/includes-excludes filters only - if they are different, abort.
-                    // you cannot update drift config that changes basedir/includes/excludes from the original.
-                    // the user must delete the drift config and create a new one, as opposed to trying to update the existing one.
-                    if (comparator.compare(driftConfig, dc) == 0) {
-                        dc.setConfiguration(driftConfig.getConfiguration());
+                    // you cannot update drift def that changes basedir/includes/excludes from the original.
+                    // the user must delete the drift def and create a new one, as opposed to trying to update the existing one.
+                    if (comparator.compare(driftDef, dc) == 0) {
+                        dc.setConfiguration(driftDef.getConfiguration());
                         isUpdated = true;
                         break;
                     } else {
                         throw new IllegalArgumentException(
-                            "You cannot change an existing drift configuration's base directory or includes/excludes filters.");
+                            "You cannot change an existing drift definition's base directory or includes/excludes filters.");
                     }
                 }
             }
 
             if (!isUpdated) {
-                resource.addDriftConfiguration(driftConfig);
+                resource.addDriftDefinition(driftDef);
             }
             resource.setAgentSynchronizationNeeded();
             resource = entityManager.merge(resource);
@@ -504,9 +503,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();
             try {
-                service.updateDriftDetection(resourceId, driftConfig);
+                service.updateDriftDetection(resourceId, driftDef);
             } catch (Exception e) {
-                log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftConfig + "]", e);
+                log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftDef + "]", e);
             }
 
             break;
@@ -591,7 +590,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     private DriftChangeSet<?> loadPreviousChangeSet(Subject subject, Drift<?, ?> drift) {
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
-        criteria.addFilterDriftConfigurationId(drift.getChangeSet().getDriftConfigurationId());
+        criteria.addFilterDriftDefinitionId(drift.getChangeSet().getDriftDefinitionId());
         criteria.addFilterVersion(Integer.toString(drift.getChangeSet().getVersion() - 1));
 
         PageList<? extends DriftChangeSet<?>> results = findDriftChangeSetsByCriteria(subject, criteria);

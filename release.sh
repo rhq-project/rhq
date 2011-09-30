@@ -254,7 +254,7 @@ if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then
     [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
     git clean -dxf
     [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
-    git pull
+    git pull origin $RELEASE_BRANCH
     [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
 else
     echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."

@@ -102,7 +102,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     @Override
-    public boolean contains(int resourceId, DriftDefinition driftDef, DriftConfigurationComparator comparator) {
+    public boolean contains(int resourceId, DriftDefinition driftDef, DriftDefinitionComparator comparator) {
         if (isActiveSchedule(resourceId, driftDef, comparator)) {
             return true;
         }
@@ -129,7 +129,6 @@ public class ScheduleQueueImpl implements ScheduleQueue {
             lock.readLock().lock();
             for (DriftDetectionSchedule schedule : queue) {
                 if (schedule.getResourceId() == resourceId
-<<<<<<< HEAD
                     && schedule.getDriftDefinition().getName().equals(defName)) {
                     return schedule.copy();
                 }

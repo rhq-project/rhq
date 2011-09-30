@@ -59,6 +59,7 @@ import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
@@ -208,7 +209,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     log.info("Detected deleted drift definition, DriftDefinition[name: " + driftDef.getName()
                         + ", resourceId: " + resourceId + "]");
                     log.info("Deleting drift definition directory " + defDir.getPath());
-                    purge(defDir, true);
+                    FileUtil.purge(defDir, true);
                 }
             }
         }
@@ -231,14 +232,6 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 }
             }
         }
-    }
-
-    private String toString(Resource r, DriftDefinition c) {
-        return toString(r.getId(), c);
-    }
-
-    private String toString(int resourceId, DriftDefinition c) {
-        return "DriftDefinition[id: " + c.getId() + ", resourceId: " + resourceId + ", name: " + c.getName() + "]";
     }
 
     private Headers createHeaders(Resource resource, DriftDefinition driftDefinition) {
@@ -463,7 +456,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             public void run() {
                 File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
                 File changeSetDir = new File(resourceDir, driftDefinition.getName());
-                purge(changeSetDir, true);
+                FileUtil.purge(changeSetDir, true);
 
                 log.debug("Removed change set directory " + changeSetDir.getAbsolutePath());
             }
@@ -536,7 +529,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 try {
                     // Replace the current snapshot and then create/copy it to the pinned
                     // snapshot file
-                    writeSnapshotToFile(createHeaders(resourceId, schedule.getDriftDefintion()), snapshot);
+                    writeSnapshotToFile(createHeaders(resourceId, schedule.getDriftDefinition()), snapshot);
                     schedulesQueue.addSchedule(schedule);
                     copyFile(snapshotFile, new File(snapshotFile.getParentFile(), "snapshot.pinned"));
                 } catch (IOException e) {
@@ -553,7 +546,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             defName + "]");
 
         File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
-        File changeSetDir = new File(resourceDir, driftDefName);
+        File changeSetDir = new File(resourceDir, defName);
 
         if (!changeSetDir.exists()) {
             log.warn("Cannot complete acknowledgement. Change set directory " + changeSetDir.getPath()
@@ -561,7 +554,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             return;
         }
 
-        File snapshot = changeSetMgr.findChangeSet(resourceId, driftDefName, COVERAGE);
+        File snapshot = changeSetMgr.findChangeSet(resourceId, defName, COVERAGE);
         File previousSnapshot = new File(snapshot.getParentFile(), snapshot.getName() + ".previous");
 
         previousSnapshot.delete();
@@ -707,15 +700,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         return toString(r.getId(), d);
     }
 
-    private String toString(int resourceId, DriftDefintion d) {
-        return "DriftDefinition[id: " + c.getId() + ", resourceId: " + resourceId + ", name: " + d.getName() + "]";
+    private String toString(int resourceId, DriftDefinition d) {
+        return "DriftDefinition[id: " + d.getId() + ", resourceId: " + resourceId + ", name: " + d.getName() + "]";
     }
 
     private String toString(int resourceId, String defName) {
         return "[resourceId: " + resourceId + ", driftDefintionName: " + defName + "]";
     }
 
-    private Headers createHeaders(int resourceId, DriftDefintion driftDef) {
+    private Headers createHeaders(int resourceId, DriftDefinition driftDef) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId);
         headers.setDriftDefinitionId(driftDef.getId());

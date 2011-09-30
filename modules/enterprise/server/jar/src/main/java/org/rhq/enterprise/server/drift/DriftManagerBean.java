@@ -424,7 +424,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
         DriftChangeSet<?> changeSet = changeSets.get(0);
 
-        DriftConfiguration config = entityManager.find(DriftConfiguration.class, changeSet.getDriftConfigurationId());
+        DriftDefinition config = entityManager.find(DriftDefinition.class, changeSet.getDriftDefinitionId());
         config.setPinned(true);
         config.setPinnedVersion(changeSet.getVersion());
 
@@ -432,7 +432,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         config = entityManager.merge(config);
 
         GenericDriftChangeSetCriteria snapshotCriteria = new GenericDriftChangeSetCriteria();
-        snapshotCriteria.addFilterDriftConfigurationId(config.getId());
+        snapshotCriteria.addFilterDriftDefinitionId(config.getId());
         snapshotCriteria.addFilterEndVersion(Integer.toString(changeSet.getVersion()));
         DriftSnapshot snapshot = createSnapshot(subject, snapshotCriteria);
 

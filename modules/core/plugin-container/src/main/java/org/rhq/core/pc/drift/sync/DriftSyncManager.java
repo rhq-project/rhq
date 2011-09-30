@@ -37,9 +37,9 @@ import org.rhq.core.pc.drift.DriftManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 
 /**
- * This class handles syncing drift definitions during inventory sync. This class is
- * intended to server as the public interface (so to speak) to {@link InventoryManager} for
- * syncing drift definitions.
+ * This class handles syncing drift definitions and drift content during inventory sync.
+ * This class is intended to server as the public interface (so to speak) to
+ * {@link InventoryManager} for syncing drift definitions and content.
  * <br/><br/>
  * Please review the docs for each of the setter methods to determine which properties
  * should be set before invoking any business logic methods.
@@ -89,13 +89,19 @@ public class DriftSyncManager {
         dataDir = dataDirectory;
     }
 
-    public void syncDefsWithServer(Set<Integer> resourceIds) {
-        log.info("Starting server sync for drift definitions...");
-        long startTime = System.currentTimeMillis();
-
-        Map<Integer, List<DriftDefinition>> defs = driftServer.getDriftDefinitions(resourceIds);
-        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
-            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+    /**
+     * Synchronized both drift definitions and drift content with the server. The drift
+     * definition sync goes from server to agent in that the drift definitions in the
+     * local inventory are updated to match the drift definitions on the server
+     * inventory.
+     * <br/><br/>
+     * The content sync works as follows. Any change set content zip files found locally
+     * resent to the server under the assumption that the content has not been persisted on
+     * the server.
+     *
+     * @param resourceIds The ids of resources that need to be synced.
+     */
+    public void syncWithServer(Set<Integer> resourceIds) {
         DriftSynchronizerFactory synchronizerFactory = new DriftSynchronizerFactory();
         DriftSynchronizer synchronizer;
 
@@ -105,18 +111,31 @@ public class DriftSyncManager {
             synchronizer = synchronizerFactory.getRuntimeSynchronizer(driftMgr);
         }
 
+        syncConfigs(synchronizer, resourceIds);
+        syncContent(synchronizer);
+    }
+
+    private void syncConfigs(DriftSynchronizer synchronizer, Set<Integer> resourceIds) {
+        log.info("Starting server sync for drift definitions...");
+        long startTime = System.currentTimeMillis();
+
+        Map<Integer, List<DriftDefinition>> driftDefs = driftServer.getDriftDefinitions(resourceIds);
+        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
+            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+
         int totalDeleted = 0;
         int totalAdded = 0;
 
-        for (Integer resourceId : defs.keySet()) {
-            Set<DriftDefinition> resourceDefsOnServer = new TreeSet<DriftDefinition>(comparator);
-            resourceDefsOnServer.addAll(defs.get(resourceId));
+        for (Integer resourceId : driftDefs.keySet()) {
+            Set<DriftDefinition> resourceConfigsOnServer = new TreeSet<DriftDefinition>(comparator);
+            resourceConfigsOnServer.addAll(driftDefs.get(resourceId));
 
-            List<DriftDefinition> deletedDefs = synchronizer.getDeletedDefinitions(resourceId, resourceDefsOnServer);
+            List<DriftDefinition> deletedDefs = synchronizer.getDeletedDefinitions(resourceId,
+                resourceConfigsOnServer);
             totalDeleted += deletedDefs.size();
             synchronizer.purgeFromLocalInventory(resourceId, deletedDefs);
 
-            List<DriftDefinition> addedDefs = synchronizer.getAddedDefinitions(resourceId, resourceDefsOnServer);
+            List<DriftDefinition> addedDefs = synchronizer.getAddedDefinitions(resourceId, resourceConfigsOnServer);
             totalAdded += addedDefs.size();
             synchronizer.addToLocalInventory(resourceId, addedDefs);
         }
@@ -125,6 +144,16 @@ public class DriftSyncManager {
         if (log.isInfoEnabled()) {
             log.info("Finished server sync for drift definitions. " + totalAdded + " added and " + totalDeleted
                 + " deleted in " + (endTime - startTime) + " ms");
+        }
+    }
+
+    private void syncContent(DriftSynchronizer synchronizer) {
+        log.info("Starting drift content sync...");
+        long startTime = System.currentTimeMillis();
+        synchronizer.syncChangeSetContent();
+        long endTime = System.currentTimeMillis();
+        if (log.isInfoEnabled()) {
+            log.info("Finished drift content sync in " + (endTime - startTime) + " ms");
         }
     }
 

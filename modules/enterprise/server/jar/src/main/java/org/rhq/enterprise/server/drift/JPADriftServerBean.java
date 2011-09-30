@@ -299,7 +299,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                         DriftAgentService service = agentClient.getDriftAgentService();
 
-                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftConfigurationName());
+                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftDefinitionName());
 
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {

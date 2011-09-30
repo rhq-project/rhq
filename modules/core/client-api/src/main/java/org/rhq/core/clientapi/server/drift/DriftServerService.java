@@ -107,7 +107,7 @@ public interface DriftServerService {
      * for the acknowledgement step.
      * 
      * @param resourceId The id of the resource to which the change set content belongs
-     * @param driftConfigName The drift configuration name. This is needed for the
+     * @param driftDefName The drift definition name. This is needed for the
      * acknowledgement step.
      * @param token A token needed for the acknowledgement step that allows the agent to
      * uniquely identify the zip file that was sent.
@@ -115,9 +115,9 @@ public interface DriftServerService {
      * @param zipStream A RemoteStream
      */
     @Asynchronous(guaranteedDelivery = true)
-    void sendFilesZip(int resourceId, String driftConfigName, String token, long zipSize, InputStream zipStream);
+    void sendFilesZip(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream);
 
     Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds);
 
-    DriftSnapshot getCurrentSnapshot(int driftConfigurationId);
+    DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
 }

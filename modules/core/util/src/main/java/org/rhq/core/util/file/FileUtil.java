@@ -313,13 +313,13 @@ public class FileUtil {
     }
 
     /**
-     * Ensure that the path uses only forward slash
-     * Like java.io.File(String,String) but just 
+     * Ensure that the path uses only forward slash like @{link java.io.File(String,String)} 
      * @param path
-     * @return
+     * @return forward-slashed path, or null if path is null
      */
     public static String useForwardSlash(String path) {
-        return path.replace('\\', '/');
+
+        return (null != path) ? path.replace('\\', '/') : null;
     }
 
     /**
@@ -335,7 +335,7 @@ public class FileUtil {
         Deque<File> directories = new LinkedList<File>();
         directories.push(directory);
 
-        while(!directories.isEmpty()) {
+        while (!directories.isEmpty()) {
             File dir = directories.pop();
             for (File file : dir.listFiles()) {
                 if (file.isDirectory()) {

@@ -89,7 +89,7 @@ public interface DriftAgentService {
      * effect, a remove operation).
      *
      * @param resourceId The id of the resource for which the request is being made
-     * @param driftDefinition The doomed drift config
+     * @param driftDefinition The doomed drift definition
      * @see DriftDefinition
      */
     void unscheduleDriftDetection(int resourceId, DriftDefinition driftDefinition);

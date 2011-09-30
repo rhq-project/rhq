@@ -84,13 +84,13 @@ public class DriftDetectorTest extends DriftTest {
         // create an empty directory
         File libDir = mkdir(resourceDir, "lib");
 
-        DriftDefinition driftConfig = driftDefinition("coverage-test", resourceDir.getAbsolutePath());
+        DriftDefinition driftDef = driftDefinition("coverage-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftDef));
         detector.run();
 
-        File changeSet = changeSet(driftConfig.getName(), COVERAGE);
-        Headers headers = createHeaders(driftConfig, COVERAGE);
+        File changeSet = changeSet(driftDef.getName(), COVERAGE);
+        Headers headers = createHeaders(driftDef, COVERAGE);
         List<FileEntry> expected = asList(addedFileEntry("conf/server.conf", sha256(serverConf)));
 
         assertHeaderEquals(changeSet, headers);
@@ -208,7 +208,7 @@ public class DriftDetectorTest extends DriftTest {
 
             @Override
             public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
-                throw new RuntimeException("Should not invoke drift client when drift configuration is disabled");
+                throw new RuntimeException("Should not invoke drift client when drift definition is disabled");
             }
         });
 
@@ -657,15 +657,15 @@ public class DriftDetectorTest extends DriftTest {
         assertCollectionMatchesNoOrder(msg, expected, actual);
     }
 
-    Headers createHeaders(DriftDefinition driftConfig, DriftChangeSetCategory type) {
-        return createHeaders(driftConfig, type, 0);
+    Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type) {
+        return createHeaders(driftDef, type, 0);
     }
 
-    Headers createHeaders(DriftDefinition driftConfig, DriftChangeSetCategory type, int version) {
+    Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
-        headers.setDriftDefinitionId(driftConfig.getId());
-        headers.setDriftDefinitionName(driftConfig.getName());
+        headers.setDriftDefinitionId(driftDef.getId());
+        headers.setDriftDefinitionName(driftDef.getName());
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
         headers.setVersion(version);

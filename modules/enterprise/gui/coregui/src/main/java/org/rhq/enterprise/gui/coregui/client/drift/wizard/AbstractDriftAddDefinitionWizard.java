@@ -82,8 +82,8 @@ public abstract class AbstractDriftAddDefinitionWizard extends AbstractWizard {
         return newDriftDefinition;
     }
 
-    public void setNewConfiguration(Configuration newDriftConfiguration) {
-        this.newDriftDefinition = new DriftDefinition(newDriftConfiguration);
+    public void setNewConfiguration(Configuration newDriftDefinitionConfig) {
+        this.newDriftDefinition = new DriftDefinition(newDriftDefinitionConfig);
     }
 
     public void cancel() {

@@ -58,7 +58,7 @@ public class ResourceTypeRepository {
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftConfigurationTemplates
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates
     }
 
     public static class Cache {
@@ -246,7 +246,7 @@ public class ResourceTypeRepository {
                 case subCategory:
                     criteria.fetchSubCategory(true);
                     break;
-                case driftConfigurationTemplates:
+                case driftDefinitionTemplates:
                     criteria.fetchDriftDefinitionTemplates(true);
                     break;
                 default:
@@ -352,7 +352,7 @@ public class ResourceTypeRepository {
                                 case subCategory:
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
-                                case driftConfigurationTemplates:
+                                case driftDefinitionTemplates:
                                     if (cachedType.getDriftDefinitionTemplates() != null) {
                                         cachedType.getDriftDefinitionTemplates().clear(); // remove any old ones hanging around
                                     }

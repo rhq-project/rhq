@@ -55,7 +55,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     /**
      * Each change set is assigned a version number that is unique across change sets
-     * belonging to a given drift configuration (and corresponding resource).
+     * belonging to a given drift definition (and corresponding resource).
      */
     private int version;
 

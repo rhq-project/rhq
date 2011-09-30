@@ -58,10 +58,10 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The drift files zip file stream
      * @throws Exception
      */
-    void addFiles(int resourceId, String driftConfigName, String token, long zipSize, InputStream zipStream)
+    void addFiles(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream)
         throws Exception;
 
-    void saveChangeSetContent(Subject subject, int resourceId, String driftConfigName, String token,
+    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
         File changeSetFilesZip) throws Exception;
 
     /**

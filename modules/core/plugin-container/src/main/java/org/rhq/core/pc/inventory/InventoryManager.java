@@ -2016,7 +2016,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void syncDriftConfigurationsRecursively(Resource resource) {
+    private void syncDriftDefinitionsRecursively(Resource resource) {
         if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
             return;
         }
@@ -2067,9 +2067,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         installSchedules(scheduleRequests);
     }
 
-    private void syncDriftConfigurations(Set<Resource> resources) {
+    private void syncDriftDefinitions(Set<Resource> resources) {
         if (log.isDebugEnabled()) {
-            log.debug("Syncing drift configurations for " + resources);
+            log.debug("Syncing drift definitions for " + resources);
         }
 
         if (resources.isEmpty()) {
@@ -2545,7 +2545,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService().getResources(
             modifiedResourceIds, false);
         syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
-        syncDriftConfigurations(modifiedResources);
+        syncDriftDefinitions(modifiedResources);
         for (Resource modifiedResource : modifiedResources) {
             mergeResource(modifiedResource);
         }
@@ -2570,7 +2570,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (resourceType != null) {
                     mergeResource(unknownResource);
                     syncSchedulesRecursively(unknownResource);
-                    syncDriftConfigurationsRecursively(unknownResource);
+                    syncDriftDefinitionsRecursively(unknownResource);
                 } else {
                     toBeIgnored.add(unknownResource.getId());
                     if (log.isDebugEnabled()) {

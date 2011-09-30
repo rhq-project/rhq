@@ -214,18 +214,18 @@ public class DriftManagerTest extends DriftTest {
     }
 
     @Test
-    public void unschedulingDetectionRemovesDriftConfigFromResourceContainer() throws Exception {
-        DriftDefinition config = driftDefinition("remove-from-queue", resourceDir.getAbsolutePath());
-        DriftDefinition config2 = driftDefinition("do-not-remove", resourceDir.getAbsolutePath());
+    public void unschedulingDetectionRemovesDriftDefFromResourceContainer() throws Exception {
+        DriftDefinition def = driftDefinition("remove-from-queue", resourceDir.getAbsolutePath());
+        DriftDefinition def2 = driftDefinition("do-not-remove", resourceDir.getAbsolutePath());
 
-        driftMgr.scheduleDriftDetection(resourceId(), config);
-        driftMgr.scheduleDriftDetection(resourceId(), config2);
-        driftMgr.unscheduleDriftDetection(resourceId(), config);
+        driftMgr.scheduleDriftDetection(resourceId(), def);
+        driftMgr.scheduleDriftDetection(resourceId(), def2);
+        driftMgr.unscheduleDriftDetection(resourceId(), def);
 
         ResourceContainer container = driftMgr.getInventoryManager().getResourceContainer(resourceId());
 
-        assertCollectionMatchesNoOrder(config + " should have been removed from the resource container ",
-            asList(config2), container.getDriftDefinitions());
+        assertCollectionMatchesNoOrder(def + " should have been removed from the resource container ",
+            asList(def2), container.getDriftDefinitions());
     }
 
     @Test
@@ -359,7 +359,7 @@ public class DriftManagerTest extends DriftTest {
     private static class TestDriftServerService implements DriftServerService {
 
         public int resourceId;
-        public String driftConfigName;
+        public String driftDefName;
         public String token;
         public long fileSize;
         public InputStream inputStream;
@@ -378,10 +378,10 @@ public class DriftManagerTest extends DriftTest {
         }
 
         @Override
-        public void sendFilesZip(int resourceId, String driftConfigName, String token, long zipSize,
+        public void sendFilesZip(int resourceId, String driftDefName, String token, long zipSize,
             InputStream zipStream) {
             this.resourceId = resourceId;
-            this.driftConfigName = driftConfigName;
+            this.driftDefName = driftDefName;
             this.token = token;
             fileSize = zipSize;
             inputStream = zipStream;

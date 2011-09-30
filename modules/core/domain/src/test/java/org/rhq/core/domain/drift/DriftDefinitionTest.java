@@ -15,11 +15,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 
-public class DriftConfigurationTest {
+public class DriftDefinitionTest {
     @Test
     public void getCompareIgnoreIncludesExcludes() {
         DriftDefinitionComparator comparator = new DriftDefinitionComparator(CompareMode.ONLY_BASE_INFO);
@@ -104,8 +104,7 @@ public class DriftConfigurationTest {
 
     @Test
     public void getCompareOnlyIncludesExcludes() {
-        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
-            CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
+        DriftDefinitionComparator comparator = new DriftDefinitionComparator(CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
 
         DriftDefinition dc1 = new DriftDefinition(new Configuration());
         DriftDefinition dc2 = new DriftDefinition(new Configuration());
@@ -132,8 +131,8 @@ public class DriftConfigurationTest {
      * Note that when first called, comparator is assumed to see that dc1 and dc2 are the same.
      *
      * @param comparator used to test changes in filters
-     * @param dc1 the initial drift config1 to test
-     * @param dc2 the initial drift config2 to test
+     * @param dc1 the initial drift definition1 to test
+     * @param dc2 the initial drift definition2 to test
      */
     private void getCompareBaseInfoAndIncludesExcludes(DriftDefinitionComparator comparator, DriftDefinition dc1,
         DriftDefinition dc2) {
@@ -200,7 +199,7 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        // we don't provide an API to clear filters, so just create new drift configs and test different excludes
+        // we don't provide an API to clear filters, so just create new drift definitions and test different excludes
         dc1 = new DriftDefinition(new Configuration());
         dc2 = new DriftDefinition(new Configuration());
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check
@@ -216,9 +215,9 @@ public class DriftConfigurationTest {
         Configuration config = new Configuration();
         config.put(new PropertySimple("name", name));
 
-        DriftDefinition driftConfig = new DriftDefinition(config);
+        DriftDefinition driftDef = new DriftDefinition(config);
 
-        assertEquals(driftConfig.getName(), name, "Failed to get drift configuration name");
+        assertEquals(driftDef.getName(), name, "Failed to get drift definition name");
     }
 
     @Test
@@ -232,10 +231,9 @@ public class DriftConfigurationTest {
 
         config.put(map);
 
-        DriftDefinition driftConfig = new DriftDefinition(config);
+        DriftDefinition driftDef = new DriftDefinition(config);
 
-        assertEquals(driftConfig.getBasedir().getValueName(), basedir,
-            "Failed to get drift configuration base directory");
+        assertEquals(driftDef.getBasedir().getValueName(), basedir, "Failed to get drift definition base directory");
     }
 
     @Test
@@ -244,9 +242,9 @@ public class DriftConfigurationTest {
         Configuration config = new Configuration();
         config.put(new PropertySimple("interval", interval));
 
-        DriftDefinition driftConfig = new DriftDefinition(config);
+        DriftDefinition driftDef = new DriftDefinition(config);
 
-        assertEquals(driftConfig.getInterval(), interval, "Failed to get drift configuration interval");
+        assertEquals(driftDef.getInterval(), interval, "Failed to get drift definition interval");
     }
 
     @Test
@@ -254,12 +252,12 @@ public class DriftConfigurationTest {
         DriftHandlingMode mode = DriftHandlingMode.normal;
         Configuration config = new Configuration();
         config.put(new PropertySimple(DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE, mode.name()));
-        DriftDefinition driftConfig = new DriftDefinition(config);
-        assertEquals(driftConfig.getDriftHandlingMode(), mode, "Failed to get drift configuration drift handling mode");
+        DriftDefinition driftDef = new DriftDefinition(config);
+        assertEquals(driftDef.getDriftHandlingMode(), mode, "Failed to get drift definition drift handling mode");
 
         mode = DriftHandlingMode.plannedChanges;
-        driftConfig.setDriftHandlingMode(mode);
-        assertEquals(driftConfig.getDriftHandlingMode(), mode, "Failed to get drift configuration drift handling mode");
+        driftDef.setDriftHandlingMode(mode);
+        assertEquals(driftDef.getDriftHandlingMode(), mode, "Failed to get drift definition drift handling mode");
     }
 
     @Test
@@ -278,13 +276,13 @@ public class DriftConfigurationTest {
 
         config.put(includes);
 
-        DriftDefinition driftConfig = new DriftDefinition(config);
-        List<Filter> actual = driftConfig.getIncludes();
+        DriftDefinition driftDef = new DriftDefinition(config);
+        List<Filter> actual = driftDef.getIncludes();
 
         List<Filter> expected = asList(new Filter(path1, pattern1), new Filter(path2, pattern2));
 
         assertEquals(actual.size(), 2, "Expected to find two includes filters");
-        assertEquals(actual, expected, "Failed to get drift configuration includes filters");
+        assertEquals(actual, expected, "Failed to get drift definition includes filters");
     }
 
     @Test
@@ -303,13 +301,13 @@ public class DriftConfigurationTest {
 
         config.put(excludes);
 
-        DriftDefinition driftConfig = new DriftDefinition(config);
-        List<Filter> actual = driftConfig.getExcludes();
+        DriftDefinition driftDef = new DriftDefinition(config);
+        List<Filter> actual = driftDef.getExcludes();
 
         List<Filter> expected = asList(new Filter(path1, pattern1), new Filter(path2, pattern2));
 
         assertEquals(actual.size(), 2, "Expected to find two excludes filters");
-        assertEquals(actual, expected, "Failed to get drift configuration excludes filters");
+        assertEquals(actual, expected, "Failed to get drift definition excludes filters");
     }
 
     private PropertyMap newInclude(String path, String pattern) {

@@ -244,7 +244,7 @@ public class AlertManagerBeanTest {
     public void testPrettyPrintDRIFT() {
         AlertCondition condition = createCondition(AlertConditionCategory.DRIFT, "?riftName", null, null, "fil.*", null);
         pretty = getPrettyAlertConditionString(condition);
-        assert "Drift detected for files that match \"fil.*\" and for drift configuration [?riftName]".equals(pretty) : pretty;
+        assert "Drift detected for files that match \"fil.*\" and for drift definition [?riftName]".equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
         assert "Drift matching \"fil.*\", config=[?riftName]".equals(pretty) : pretty;
 
@@ -256,7 +256,7 @@ public class AlertManagerBeanTest {
 
         condition = createCondition(AlertConditionCategory.DRIFT, "?riftName", null, null, null, null);
         pretty = getPrettyAlertConditionString(condition);
-        assert "Drift detected for drift configuration [?riftName]".equals(pretty) : pretty;
+        assert "Drift detected for drift definition [?riftName]".equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
         assert "Drift! config=[?riftName]".equals(pretty) : pretty;
 

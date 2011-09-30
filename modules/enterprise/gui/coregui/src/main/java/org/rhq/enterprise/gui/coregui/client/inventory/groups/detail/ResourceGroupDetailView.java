@@ -114,7 +114,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
-    private SubTab driftConfig;
+    private SubTab driftDefinition;
     private SubTab driftHistory;
     private SubTab configCurrent;
     private SubTab configHistory;
@@ -236,9 +236,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
         this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
             MSG.view_tabs_common_history()), null);
-        this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
+        this.driftDefinition = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
             DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        driftTab.registerSubTabs(driftHistory, driftConfig);
+        driftTab.registerSubTabs(driftHistory, driftDefinition);
         tabs.add(driftTab);
 
         return tabs;
@@ -468,10 +468,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 }
             });
 
-            updateSubTab(this.driftTab, this.driftConfig, true, true, new ViewFactory() {
+            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftDefinitionsView.get(driftConfig.extendLocatorId("View"), null);
+                    return ResourceDriftDefinitionsView.get(driftDefinition.extendLocatorId("View"), null);
                 }
             });
         }

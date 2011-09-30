@@ -454,8 +454,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         existingType = entityManager.find(ResourceType.class, existingType.getId());
 
         //
-        // First, we need to see if the drift configs have changed. If the existing and new drift configs
-        // are the same, then we can skip the update and do nothing. Only if one or more drift configs
+        // First, we need to see if the drift definitions have changed. If the existing and new drift definitions
+        // are the same, then we can skip the update and do nothing. Only if one or more drift definitions
         // are different do we have to do anything to the persisted metadata.
         //
 
@@ -500,8 +500,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         //
-        // If one or more drift configs are different between new and existing,
-        // then we need to remove the old drift config and persist the new drift config.
+        // If one or more drift definitions are different between new and existing,
+        // then we need to remove the old drift definition and persist the new drift definition.
         //
 
         if (!isSame) {

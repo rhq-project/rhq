@@ -417,8 +417,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         // our unidirectional one-to-many mapping of drift config makes it not possible to easily bulk delete drift config
         // so remove them here and let cascading of delete_orphan do the work
-        if (attachedResource.getDriftConfigurations() != null) {
-            attachedResource.getDriftConfigurations().clear();
+        if (attachedResource.getDriftDefinitions() != null) {
+            attachedResource.getDriftDefinitions().clear();
         }
 
         // one more thing, delete any autogroup backing groups

@@ -215,7 +215,7 @@ public class DriftDetailsView extends LocatableVLayout {
         changeSetVersion.setValue(changeSet.getVersion());
         StaticTextItem changeSetDriftHandling = new StaticTextItem("changeSetDriftHandling", MSG
             .view_drift_table_driftHandlingMode());
-        changeSetDriftHandling.setValue(DriftConfigurationDataSource.getDriftHandlingModeDisplayName(changeSet
+        changeSetDriftHandling.setValue(DriftDefinitionDataSource.getDriftHandlingModeDisplayName(changeSet
             .getDriftHandlingMode()));
 
         changeSetForm.setItems(changeSetId, changeSetCategory, changeSetVersion, changeSetDriftHandling);

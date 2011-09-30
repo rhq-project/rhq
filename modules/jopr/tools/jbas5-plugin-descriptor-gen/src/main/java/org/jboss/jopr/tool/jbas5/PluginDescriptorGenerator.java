@@ -371,12 +371,15 @@ public class PluginDescriptorGenerator
     {
         LOG.info("Writing plugin descriptor to [" + file + "]...");
         OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(file));
-        JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-        Marshaller marshaller = jaxbContext.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new RhqNamespacePrefixMapper());
-        marshaller.marshal(pluginDescriptor, outputStream);
-        outputStream.close();
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new RhqNamespacePrefixMapper());
+            marshaller.marshal(pluginDescriptor, outputStream);
+        } finally {
+            outputStream.close();
+        }
     }
 }

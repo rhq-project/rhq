@@ -42,13 +42,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 /**
  * @author Jay Shaughnessy
  */
-public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
+public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
 
     private LocatableDynamicForm form;
-    private AbstractDriftAddConfigWizard wizard;
+    private AbstractDriftAddDefinitionWizard wizard;
     private Map<String, ConfigurationTemplate> templates;
 
-    public DriftAddConfigWizardInfoStep(AbstractDriftAddConfigWizard wizard) {
+    public DriftAddDefinitionWizardInfoStep(AbstractDriftAddDefinitionWizard wizard) {
         this.wizard = wizard;
     }
 
@@ -56,9 +56,9 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
         if (form == null) {
 
             if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("DriftAddConfigInfo"));
+                form = new LocatableDynamicForm(parent.extendLocatorId("DriftAddDefInfo"));
             } else {
-                form = new LocatableDynamicForm("DriftAddConfigInfo");
+                form = new LocatableDynamicForm("DriftAddDefInfo");
             }
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
@@ -70,7 +70,7 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
             templateSelect.setRequired(true);
             FormUtility.addContextualHelp(templateSelect, MSG.view_drift_wizard_addDef_templateHelp());
 
-            Set<ConfigurationTemplate> templates = wizard.getType().getDriftConfigurationTemplates();
+            Set<ConfigurationTemplate> templates = wizard.getType().getDriftDefinitionTemplates();
             final HashMap<String, ConfigurationTemplate> templatesMap = new HashMap<String, ConfigurationTemplate>(
                 templates.size());
             if (!templates.isEmpty()) {
@@ -80,7 +80,7 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
             } else {
                 // there should be at least one template for any resource type that supports drift monitoring
                 throw new IllegalStateException(
-                    "At least one drift configuration template should exist for the resource type");
+                    "At least one drift definition template should exist for the resource type");
             }
 
             Set<String> templatesMapKeySet = templatesMap.keySet();

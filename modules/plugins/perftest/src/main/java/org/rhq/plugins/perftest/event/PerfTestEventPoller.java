@@ -11,9 +11,9 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 /**
  * Emits events when polled. Set the following system properties to define behavior:
  *
+ * rhq.perftest.events.polling-interval (in seconds; if this is not set, this poller object will never be created)
  * rhq.perftest.events.count (default is "1")
  * rhq.perftest.events.severity (default is "INFO")
- * rhq.perftest.events.polling-interval (in seconds; if this is not set, this poller object will never be created)
  */
 public class PerfTestEventPoller implements EventPoller {
 

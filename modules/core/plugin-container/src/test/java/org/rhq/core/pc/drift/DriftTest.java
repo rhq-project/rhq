@@ -19,6 +19,13 @@
 
 package org.rhq.core.pc.drift;
 
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,15 +38,8 @@ import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
-
-import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.IOUtils.write;
-import static org.apache.commons.io.IOUtils.writeLines;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
  * A base test class that provides a framework for drift related tests. DriftTest sets up
@@ -104,10 +104,10 @@ public class DriftTest {
     protected File resourceDir;
 
     /**
-     * The default interval assigned to drift configurations created using
-     * {@link #driftConfiguration(String, String)}
+     * The default interval assigned to drift definitions created using
+     * {@link #driftDefinition(String, String)}
      */
-    protected long defaultInterval = 1800L;  // 30 minutes;
+    protected long defaultInterval = 1800L; // 30 minutes;
 
     private MessageDigestGenerator digestGenerator;
 
@@ -178,11 +178,11 @@ public class DriftTest {
     }
 
     /**
-     * Returns the change set file for the specified drift configuration for the resource
+     * Returns the change set file for the specified drift definition for the resource
      * with the id that can be obtained from {@link #resourceId}. The type argument
      * determines whether a coverage or drift change set file is returned.
      *
-     * @param config The drift configuration name
+     * @param config The drift definition name
      * @param type Determines whether a coverage or drift change set file is to be returned
      * @return The change set file
      * @throws IOException
@@ -192,10 +192,10 @@ public class DriftTest {
     }
 
     /**
-     * Returns the previous snapshot file for the specified drift configuration for the
+     * Returns the previous snapshot file for the specified drift definition for the
      * resource with the id that can be obtained from {@link #resourceId()}.
      *
-     * @param config The drift configuration name
+     * @param config The drift definition name
      * @return The previous snapshot file
      * @throws Exception
      */
@@ -243,18 +243,18 @@ public class DriftTest {
     }
 
     /**
-     * Creates a {@link DriftConfiguration} with the specified basedir. The file system is
+     * Creates a {@link DriftDefinition} with the specified basedir. The file system is
      * used as the context for the basedir which means the path specified is used as is.
      * The interval property is set to {@link #defaultInterval}.
      *
-     * @param name The configuration name
+     * @param name The definition name
      * @param basedir An absolute path of the base directory
-     * @return The drift configuration object
+     * @return The drift definition object
      */
-    protected DriftConfiguration driftConfiguration(String name, String basedir) {
-        DriftConfiguration config = new DriftConfiguration(new Configuration());
+    protected DriftDefinition driftDefinition(String name, String basedir) {
+        DriftDefinition config = new DriftDefinition(new Configuration());
         config.setName(name);
-        config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
+        config.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, basedir));
         config.setEnabled(true);
         config.setInterval(defaultInterval);
 

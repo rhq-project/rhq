@@ -65,7 +65,7 @@ public class DriftCacheElement extends AbstractCacheElement<Object> {
             }
 
             if (driftConfigNameRegex != null) {
-                if (!driftConfigNameRegex.matcher(summary.getDriftConfigurationName()).matches()) {
+                if (!driftConfigNameRegex.matcher(summary.getDriftDefinitionName()).matches()) {
                     return false; // drift config name did not match, our condition is false so don't alert
                 }
             }

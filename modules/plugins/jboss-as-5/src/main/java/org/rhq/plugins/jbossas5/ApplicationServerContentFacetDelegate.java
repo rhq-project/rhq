@@ -185,7 +185,6 @@ public class ApplicationServerContentFacetDelegate extends AbstractJBossASConten
         // Request the bits from the server
         try {
             contentServices.downloadPackageBits(contentContext, key, bufferedOutput, true);
-            bufferedOutput.close();
 
             // Verify the file was created correctly
             File downloadedFile = new File(destinationFileLocation);

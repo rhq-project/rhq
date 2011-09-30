@@ -373,4 +373,10 @@ public interface MeasurementScheduleManagerLocal {
      */
     PageList<MeasurementSchedule> findSchedulesByCriteria(Subject subject, MeasurementScheduleCriteria criteria);
 
+    /**
+     * Notifies all agents of measurement schedule changes.
+     * @param entityContext the context.
+     * @param scheduleSubQuery the subquery indicating which schedules changed
+     */
+    void notifyAgentsOfScheduleUpdates(EntityContext entityContext, String scheduleSubQuery);
 }

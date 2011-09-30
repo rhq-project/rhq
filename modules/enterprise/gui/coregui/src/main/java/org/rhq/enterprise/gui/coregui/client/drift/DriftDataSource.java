@@ -73,7 +73,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
     public static final String ATTR_CTIME = "ctime";
     public static final String ATTR_CATEGORY = "category";
     public static final String ATTR_CHANGESET_VERSION = "changeSetVersion";
-    public static final String ATTR_CHANGESET_CONFIG = "changSetConfig";
+    public static final String ATTR_CHANGESET_DEF_NAME = "changSetDef";
     public static final String ATTR_PATH = "path";
 
     public static final String FILTER_CATEGORIES = "categories";
@@ -83,7 +83,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
-    private EntityContext entityContext;
+    protected EntityContext entityContext;
 
     public DriftDataSource() {
         this(EntityContext.forSubsystemView());
@@ -109,8 +109,8 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CTIME));
         fields.add(ctimeField);
 
-        ListGridField changeSetConfigField = new ListGridField(ATTR_CHANGESET_CONFIG, MSG.common_title_definition());
-        fields.add(changeSetConfigField);
+        ListGridField changeSetDefField = new ListGridField(ATTR_CHANGESET_DEF_NAME, MSG.common_title_definition());
+        fields.add(changeSetDefField);
 
         ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG.view_drift_table_snapshot());
         fields.add(changeSetVersionField);
@@ -195,15 +195,15 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
             }
 
             public void onSuccess(PageList<DriftComposite> result) {
-                // only get the desired config names (substring match)
+                // only get the desired def names (substring match)
                 // note - this does not alter the PageList row count, which, I think, makes this
                 //        ok without messing up paging.
-                String configFilter = getFilter(request, FILTER_DEFINITION, String.class);
-                if (null != configFilter && !configFilter.isEmpty()) {
-                    configFilter = configFilter.toLowerCase();
+                String defFilter = getFilter(request, FILTER_DEFINITION, String.class);
+                if (null != defFilter && !defFilter.isEmpty()) {
+                    defFilter = defFilter.toLowerCase();
                     for (Iterator<DriftComposite> i = result.getValues().iterator(); i.hasNext();) {
                         DriftComposite composite = i.next();
-                        if (!composite.getDriftConfigName().toLowerCase().contains(configFilter)) {
+                        if (!composite.getDriftDefinitionName().toLowerCase().contains(defFilter)) {
                             i.remove();
                         }
                     }
@@ -284,12 +284,13 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         DriftCategory[] categoriesFilter = getArrayFilter(request, FILTER_CATEGORIES, DriftCategory.class);
 
         if (categoriesFilter == null || categoriesFilter.length == 0) {
-            return null; // user didn't select any priorities - return null to indicate no data should be displayed
+            return null; // user didn't select any categories - return null to indicate no data should be displayed
         }
 
         String changeSetFilter = getFilter(request, FILTER_SNAPSHOT, String.class);
         String pathFilter = getFilter(request, FILTER_PATH, String.class);
-        // note, this criteria does not allow for query-time config name filtering. That filter is applied lazily
+
+        // NOTE! This criteria does not allow for query-time definition name filtering. That filter is applied lazily
         // to the query results.
 
         GenericDriftCriteria criteria = new GenericDriftCriteria();
@@ -369,7 +370,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
             break;
         }
         record.setAttribute(ATTR_PATH, drift.getPath());
-        record.setAttribute(ATTR_CHANGESET_CONFIG, from.getDriftConfigName());
+        record.setAttribute(ATTR_CHANGESET_DEF_NAME, from.getDriftDefinitionName());
         record.setAttribute(ATTR_CHANGESET_VERSION, drift.getChangeSet().getVersion());
 
         // for ancestry handling     

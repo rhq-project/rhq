@@ -40,9 +40,9 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.ResourceType;
@@ -379,7 +379,7 @@ public class PluginMetadataParserTest {
         verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
-                DriftConfiguration dc = new DriftConfiguration(driftTemplate.getConfiguration());
+                DriftDefinition dc = new DriftDefinition(driftTemplate.getConfiguration());
                 BaseDirectory basedir = dc.getBasedir();
                 assertEquals(basedir.getValueContext(), BaseDirValueContext.pluginConfiguration, "Bad value context");
                 assertEquals(basedir.getValueName(), "var.lib.test1", "Bad value name");
@@ -638,7 +638,7 @@ public class PluginMetadataParserTest {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
                 assertEquals(dconfig.getInterval(), 11111L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.pluginConfiguration);
@@ -678,7 +678,7 @@ public class PluginMetadataParserTest {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
                 assertEquals(dconfig.getInterval(), 22222L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.resourceConfiguration);
@@ -718,7 +718,7 @@ public class PluginMetadataParserTest {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
                 assertEquals(dconfig.getInterval(), 33333L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.measurementTrait);
@@ -780,7 +780,7 @@ public class PluginMetadataParserTest {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
                 assertEquals(dconfig.getInterval(), 44444L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.fileSystem);
@@ -805,7 +805,7 @@ public class PluginMetadataParserTest {
         Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>(0);
         PluginMetadataParser parser = new PluginMetadataParser(descriptor, parsersByPlugin);
         ResourceType resourceType = findResourceType(parser, resourceTypeName);
-        Set<ConfigurationTemplate> driftTemplates = resourceType.getDriftConfigurationTemplates();
+        Set<ConfigurationTemplate> driftTemplates = resourceType.getDriftDefinitionTemplates();
         ConfigurationTemplate driftTemplate = null;
         for (ConfigurationTemplate template : driftTemplates) {
             if (template.getName().equals(driftConfigName)) {

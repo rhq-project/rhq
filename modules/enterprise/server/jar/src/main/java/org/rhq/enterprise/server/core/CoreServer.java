@@ -133,30 +133,35 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
     public ProductInfo getProductInfo() {
         ClassLoader classLoader = this.getClass().getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(PRODUCT_INFO_PROPERTIES_RESOURCE_PATH);
-        if (inputStream == null) {
+        if (inputStream != null) {
+            Properties props = new Properties();
+            try {
+                try {
+                    props.load(inputStream);
+                } finally {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException("Failed to load product info properties from class loader resource ["
+                        + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
+            }
+            ProductInfo productInfo = new ProductInfo();
+            // TODO: Using reflection below might be nicer.
+            productInfo.setBuildNumber(props.getProperty("buildNumber"));
+            productInfo.setFullName(props.getProperty("fullName"));
+            productInfo.setHelpDocRoot(props.getProperty("helpDocRoot"));
+            productInfo.setName(props.getProperty("name"));
+            productInfo.setSalesEmail(props.getProperty("salesEmail"));
+            productInfo.setShortName(props.getProperty("shortName"));
+            productInfo.setSupportEmail(props.getProperty("supportEmail"));
+            productInfo.setUrlDomain(props.getProperty("urlDomain"));
+            productInfo.setUrl(props.getProperty("url"));
+            productInfo.setVersion(props.getProperty("version"));
+            return productInfo;
+        } else {
             throw new IllegalStateException("Failed to find class loader resource ["
                     + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
         }
-        Properties props = new Properties();
-        try {
-            props.load(inputStream);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load product info properties from class loader resource ["
-                    + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
-        }
-        ProductInfo productInfo = new ProductInfo();
-        // TODO: Using reflection below might be nicer.       
-        productInfo.setBuildNumber(props.getProperty("buildNumber"));
-        productInfo.setFullName(props.getProperty("fullName"));
-        productInfo.setHelpDocRoot(props.getProperty("helpDocRoot"));
-        productInfo.setName(props.getProperty("name"));
-        productInfo.setSalesEmail(props.getProperty("salesEmail"));
-        productInfo.setShortName(props.getProperty("shortName"));
-        productInfo.setSupportEmail(props.getProperty("supportEmail"));
-        productInfo.setUrlDomain(props.getProperty("urlDomain"));
-        productInfo.setUrl(props.getProperty("url"));
-        productInfo.setVersion(props.getProperty("version"));
-        return productInfo;
     }
 
     private MBeanServer getMBeanServer() {
@@ -168,8 +173,11 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
         ClassLoader classLoader = this.getClass().getClassLoader();
         try {
             InputStream stream = classLoader.getResourceAsStream(VERSION_FILE);
-            buildProps.load(stream);
-            stream.close();
+            try {
+                buildProps.load(stream);
+            } finally {
+                stream.close();
+            }
         } catch (Exception e) {
             log.fatal("Failed to load [" + VERSION_FILE + "] via class loader [" + classLoader + "]");
         }

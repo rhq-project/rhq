@@ -71,7 +71,7 @@ public class FileContentDelegate {
      * Creates a new package described by the specified details. The destination of the content in the provided input
      * stream will be determined by the package name.
      *
-     * @param  details  describes the package being created
+     * @param  contentFile  the file to write the content to
      * @param  content  content to be written for the package. NOTE this Stream will be closed by this method.
      * @param  unzip    if <code>true</code>, the content stream will be treated like a ZIP file and be unzipped as
      *                  it is written, using the package name as the base directory; if <code>false</code> the

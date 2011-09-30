@@ -22,7 +22,7 @@ package org.rhq.core.clientapi.agent.drift;
 import java.util.List;
 
 import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 
@@ -53,7 +53,7 @@ public interface DriftAgentService {
      * Because the drift detection happens asynchronously, it cannot be guaranteed that the
      * drift detection will actually happen immediately. Drift detection schedules are
      * maintained by a priority queue and are ordered by their next scan time. The schedule
-     * corresponding to <code>resourceId</code> and <code>driftConfiguration</code> has its
+     * corresponding to <code>resourceId</code> and <code>driftDefinition</code> has its
      * next scan time reset in order to move the schedule to the front of the queue.
      * <p/>
      * Note that when the drift detection occurs is largely dependent on a couple of
@@ -65,74 +65,74 @@ public interface DriftAgentService {
      * finish plus the time period between executions of the drift detector task.
      *
      * @param resourceId The id of the resource for which the request is being made
-     * @param driftConfiguration Specifies how the detection should be carried out. This
+     * @param driftDefinition Specifies how the detection should be carried out. This
      * includes any filtering rules that should be applied.
      */
-    void detectDrift(int resourceId, DriftConfiguration driftConfiguration);
+    void detectDrift(int resourceId, DriftDefinition driftDefinition);
 
     /**
      * Requests that the agent start performing drift detection for a resource with the
-     * specified drift configuration. The interval at which the drift detection occurs is
-     * specified by the drift configuration.
+     * specified drift definition. The interval at which the drift detection occurs is
+     * specified by the drift definition.
      * <p/>
      * Note that drift detection occurs asynchronously which means that this method should
-     * return very quickly which could be before the drift detection for this configuration
+     * return very quickly which could be before the drift detection for this definition
      * has actually started.
      *
      * @param resourceId The id of the resource for which the request is being made
-     * @param driftConfiguration Specifies how and when the detection should be carried out
-     * @see DriftConfiguration
+     * @param driftDefinition Specifies how and when the detection should be carried out
+     * @see DriftDefinition
      */
-    void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+    void scheduleDriftDetection(int resourceId, DriftDefinition driftDefinition);
 
     /**
      * Requests that the agent stop performing the specified drift detection for the resource. (In
      * effect, a remove operation).
      *
      * @param resourceId The id of the resource for which the request is being made
-     * @param driftConfiguration The doomed drift config
-     * @see DriftConfiguration
+     * @param driftDefinition The doomed drift config
+     * @see DriftDefinition
      */
-    void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+    void unscheduleDriftDetection(int resourceId, DriftDefinition driftDefinition);
 
     /**
-     * Requests that the agent update its processing of the specified driftConfiguration.  The filters
+     * Requests that the agent update its processing of the specified driftDefinition.  The filters
      * are unchanged, but something else may have changed (enablement/interval, etc).
      *
      * @param resourceId The id of the resource for which the request is being made
-     * @param driftConfiguration The updated driftConfiguration.
-     * @see DriftConfiguration
+     * @param driftDefinition The updated driftDefinition.
+     * @see DriftDefinition
      */
-    void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+    void updateDriftDetection(int resourceId, DriftDefinition driftDefinition);
 
     /**
      * This method is invoked to inform the agent that the server has successfully
      * persisted the last change set sent to the server for the specified drift
-     * configuration. The agent will proceed to purge the older, previous snapshot
+     * definition. The agent will proceed to purge the older, previous snapshot
      * as well as the the change set zip file.
      * <br/><br/>
      * <strong>Note:</strong> The agent will not resume drift detection for this drift
-     * configuration until the server has acknowledged the last change set sent.
+     * definition until the server has acknowledged the last change set sent.
      *
      * @param resourceId The id of the resource to which the acknowledged change set
      * belongs.
-     * @param driftConfigName The name of the drift configuration to which the change set
+     * @param driftDefName The name of the drift definition to which the change set
      * belongs.
      */
-    void ackChangeSet(int resourceId, String driftConfigName);
+    void ackChangeSet(int resourceId, String driftDefName);
 
     /**
      * This method is invoked to inform the agent that the server has successfully
      * persisted change set content that was previously sent to the server. The agent
      * will proceed to purge the referenced content zip file.
      *
-     * @param resourceId The id of the resource to which the referenced drift configuration
+     * @param resourceId The id of the resource to which the referenced drift definition
      * belongs.
-     * @param driftConfigName The name of the drift configuration to which the content
+     * @param defName The name of the drift definition to which the content
      * belongs.
      * @param token A token that is used to identify the content zip file
      */
-    void ackChangeSetContent(int resourceId, String driftConfigName, String token);
+    void ackChangeSetContent(int resourceId, String defName, String token);
 
-    void pinSnapshot(int resourceId, String configName, DriftSnapshot snapshot);
+    void pinSnapshot(int resourceId, String defName, DriftSnapshot snapshot);
 }

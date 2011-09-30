@@ -114,12 +114,12 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     }
 
     @Override
-    public int getDriftConfigurationId() {
+    public int getDriftDefinitionId() {
         return configId;
     }
 
     @Override
-    public void setDriftConfigurationId(int id) {
+    public void setDriftDefinitionId(int id) {
         configId = id;
     }
 

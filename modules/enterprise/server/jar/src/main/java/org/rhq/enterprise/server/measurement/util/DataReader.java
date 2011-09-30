@@ -61,9 +61,25 @@ public class DataReader {
         StringBuilder fullSql = new StringBuilder(sql);
 
         PreparedStatement ps = c.prepareStatement(sql);
+        try {
+            int i = 1;
+            for (String table : tables) {
+                ps.setLong(i++, beginTime); //  1) begin
+                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(beginTime));
 
-        int i = 1;
-        for (String table : tables) {
+                ps.setLong(i++, interval); //  2) interval
+                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
+
+                ps.setLong(i++, numberOfDataPoints); //  3) points
+                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numberOfDataPoints));
+
+                ps.setLong(i++, interval); //  4) interval
+                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
+
+                ps.setInt(i++, 0); // schedule_id
+                fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(0));
+            }
+
             ps.setLong(i++, beginTime); //  1) begin
             fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(beginTime));
 
@@ -73,45 +89,35 @@ public class DataReader {
             ps.setLong(i++, numberOfDataPoints); //  3) points
             fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numberOfDataPoints));
 
-            ps.setLong(i++, interval); //  4) interval
-            fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
+            System.out.println("-------------------------------------");
+            System.out.println("\n\n\nFinal sql was:\n" + fullSql.toString());
+            System.out.println("-------------------------------------");
 
-            ps.setInt(i++, 0); // schedule_id
-            fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(0));
-        }
+            long timingStart = System.currentTimeMillis();
+            ResultSet rs = ps.executeQuery();
+            try {
+                System.out.println("Executed query in: " + (System.currentTimeMillis() - timingStart) + "ms");
 
-        ps.setLong(i++, beginTime); //  1) begin
-        fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(beginTime));
+                int count = 0;
+                long lastStart = 0;
+                while (rs.next()) {
+                    count++;
+                    if (lastStart != 0) {
+                        System.out.println(Arrays.deepToString(MeasurementDataManagerUtility
+                            .getTables(lastStart, rs.getLong(1))));
+                    }
 
-        ps.setLong(i++, interval); //  2) interval
-        fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(interval));
-
-        ps.setLong(i++, numberOfDataPoints); //  3) points
-        fullSql.replace(fullSql.indexOf("?"), fullSql.indexOf("?") + 1, String.valueOf(numberOfDataPoints));
-
-        System.out.println("-------------------------------------");
-        System.out.println("\n\n\nFinal sql was:\n" + fullSql.toString());
-        System.out.println("-------------------------------------");
-
-        long timingStart = System.currentTimeMillis();
-        ResultSet rs = ps.executeQuery();
-        System.out.println("Executed query in: " + (System.currentTimeMillis() - timingStart) + "ms");
-
-        int count = 0;
-        long lastStart = 0;
-        while (rs.next()) {
-            count++;
-            if (lastStart != 0) {
-                System.out.println(Arrays.deepToString(MeasurementDataManagerUtility
-                    .getTables(lastStart, rs.getLong(1))));
+                    lastStart = rs.getLong(1);
+                    System.out.println(new Date(rs.getLong(1)) + " - avg: " + rs.getDouble(2) + " - max: " + rs.getDouble(3)
+                        + " - min: " + rs.getDouble(4));
+                }
+                System.out.println("Count: " + count);
+            } finally {
+                rs.close();
             }
-
-            lastStart = rs.getLong(1);
-            System.out.println(new Date(rs.getLong(1)) + " - avg: " + rs.getDouble(2) + " - max: " + rs.getDouble(3)
-                + " - min: " + rs.getDouble(4));
+        } finally {
+            ps.close();
         }
-
-        System.out.println("Count: " + count);
     }
 
     public static String getTableString(String table) {

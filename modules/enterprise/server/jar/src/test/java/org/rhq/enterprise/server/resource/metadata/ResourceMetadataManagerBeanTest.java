@@ -30,7 +30,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
@@ -66,7 +66,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         Query qConfig;
         String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
         String qConfigString = "select c from Configuration c where c.id = :id";
-        ConfigurationTemplate driftTemplate = type1.getDriftConfigurationTemplates().iterator().next();
+        ConfigurationTemplate driftTemplate = type1.getDriftDefinitionTemplates().iterator().next();
         Configuration bundleConfig = type1.getResourceTypeBundleConfiguration().getBundleConfiguration();
         Configuration driftConfig = driftTemplate.getConfiguration();
 
@@ -163,11 +163,11 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftConfigurationTemplates",
             asList("drift-pc", "drift-fs"));
 
-        DriftConfiguration driftConfig = null;
-        Set<ConfigurationTemplate> drifts = type.getDriftConfigurationTemplates();
+        DriftDefinition driftConfig = null;
+        Set<ConfigurationTemplate> drifts = type.getDriftDefinitionTemplates();
         for (ConfigurationTemplate drift : drifts) {
             if (drift.getName().equals("drift-pc")) {
-                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                driftConfig = new DriftDefinition(drift.getConfiguration());
                 assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.pluginConfiguration, driftConfig.getBasedir().getValueContext());
                 assertEquals("connectionPropertyX", driftConfig.getBasedir().getValueName());
@@ -184,7 +184,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
                 assertEquals("/hello", filter.getPath());
                 assertEquals("", filter.getPattern());
             } else if (drift.getName().equals("drift-fs")) {
-                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                driftConfig = new DriftDefinition(drift.getConfiguration());
                 assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
                 assertEquals("/", driftConfig.getBasedir().getValueName());
@@ -285,11 +285,11 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftConfigurationTemplates",
             asList("drift-rc", "drift-mt"));
 
-        DriftConfiguration driftConfig = null;
-        Set<ConfigurationTemplate> drifts = type.getDriftConfigurationTemplates();
+        DriftDefinition driftConfig = null;
+        Set<ConfigurationTemplate> drifts = type.getDriftDefinitionTemplates();
         for (ConfigurationTemplate drift : drifts) {
             if (drift.getName().equals("drift-rc")) {
-                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                driftConfig = new DriftDefinition(drift.getConfiguration());
                 assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.resourceConfiguration, driftConfig.getBasedir().getValueContext());
                 assertEquals("resourceConfig1", driftConfig.getBasedir().getValueName());
@@ -297,7 +297,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
                 assertEquals(0, driftConfig.getIncludes().size());
                 assertEquals(0, driftConfig.getExcludes().size());
             } else if (drift.getName().equals("drift-mt")) {
-                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                driftConfig = new DriftDefinition(drift.getConfiguration());
                 assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.measurementTrait, driftConfig.getBasedir().getValueContext());
                 assertEquals("trait1", driftConfig.getBasedir().getValueName());

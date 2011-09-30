@@ -350,47 +350,30 @@ public class ApacheDeploymentUtil {
         Map<String, String> replacements = config.getTokenReplacements();
 
         for (File file : configFiles) {
-            Reader rdr = null;
-            FileWriter wrt = null;
-
             try {
-                rdr = new TokenReplacingReader(new FileReader(file), replacements);
-
                 File tmp = File.createTempFile("apache-deployment-util", null);
 
-                wrt = new FileWriter(tmp);
-
-                int cnt = -1;
-
-                while ((cnt = rdr.read(buffer)) != -1) {
-                    wrt.write(buffer, 0, cnt);
+                FileWriter wrt = new FileWriter(tmp);
+                try {
+                    Reader rdr = new TokenReplacingReader(new FileReader(file), replacements);
+                    try {
+                        int cnt = -1;
+                        while ((cnt = rdr.read(buffer)) != -1) {
+                            wrt.write(buffer, 0, cnt);
+                        }
+                    } finally {
+                        rdr.close();
+                    }
+                } finally {
+                    wrt.close();
                 }
 
-                rdr.close();
-                wrt.close();
-                
                 //now overwrite the contents of the original file with the new one.
                 //we don't just move the new file to the location of the original one
                 //here to preserve the file permissions and file mode on the original.
                 FileUtil.copyFile(tmp, file);
             } catch (IOException e) {
                 LOG.error("Error while replacing the tokens in file '" + file + "'.", e);
-                
-                if (rdr != null) {
-                    try {
-                        rdr.close();
-                    } catch (IOException ioe) {
-                        
-                    }
-                }
-                
-                if (wrt != null) {
-                    try {
-                        wrt.close();
-                    } catch (IOException ioe) {
-                        
-                    }
-                }
             }
         }
     }

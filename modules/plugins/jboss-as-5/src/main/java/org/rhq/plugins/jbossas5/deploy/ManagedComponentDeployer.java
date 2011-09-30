@@ -146,8 +146,11 @@ public class ManagedComponentDeployer implements Deployer {
                     Manifest manifest;
                     if (manifestFile.exists()) {
                         FileInputStream inputStream = new FileInputStream(manifestFile);
-                        manifest = new Manifest(inputStream);
-                        inputStream.close();
+                        try {
+                            manifest = new Manifest(inputStream);
+                        } finally {
+                            inputStream.close();
+                        }
                     } else {
                         File metaInf = new File(deploymentFile, "META-INF");
                         if (!metaInf.exists())
@@ -160,8 +163,11 @@ public class ManagedComponentDeployer implements Deployer {
                     Attributes attribs = manifest.getMainAttributes();
                     attribs.putValue("RHQ-Sha256", shaString);
                     FileOutputStream outputStream = new FileOutputStream(manifestFile);
-                    manifest.write(outputStream);
-                    outputStream.close();
+                    try {
+                        manifest.write(outputStream);
+                    } finally {
+                        outputStream.close();
+                    }
                 } else {
                     LOG.error("Exploded deployment '" + deploymentFile
                             + "' does not exist or is not a directory - unable to add RHQ versioning metadata to META-INF/MANIFEST.MF.");

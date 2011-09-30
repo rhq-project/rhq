@@ -90,7 +90,7 @@ public class ChangeSetDAOTest {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setCategory(COVERAGE);
         expected.setVersion(1);
-        expected.setDriftConfigurationId(1);
+        expected.setDriftDefinitionId(1);
         expected.setResourceId(1);
         expected.setDriftHandlingMode(normal);
 
@@ -105,7 +105,7 @@ public class ChangeSetDAOTest {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setCategory(DRIFT);
         expected.setResourceId(1);
-        expected.setDriftConfigurationId(1);
+        expected.setDriftDefinitionId(1);
         expected.setVersion(1);
 
         MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
@@ -137,7 +137,7 @@ public class ChangeSetDAOTest {
         expected.setCategory(DRIFT);
         expected.setVersion(1);
         expected.setResourceId(1);
-        expected.setDriftConfigurationId(1);
+        expected.setDriftDefinitionId(1);
         expected.add(new MongoDBChangeSetEntry("foo", FILE_ADDED)).add(new MongoDBChangeSetEntry("bar", FILE_ADDED));
 
         dao.save(expected);
@@ -153,14 +153,14 @@ public class ChangeSetDAOTest {
         c1.setCategory(DRIFT);
         c1.setVersion(1);
         c1.setResourceId(1);
-        c1.setDriftConfigurationId(1);
+        c1.setDriftDefinitionId(1);
         dao.save(c1);
 
         MongoDBChangeSet c2 = new MongoDBChangeSet();
         c2.setCategory(DRIFT);
         c2.setVersion(1);
         c2.setResourceId(2);
-        c2.setDriftConfigurationId(2);
+        c2.setDriftDefinitionId(2);
 
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.addFilterResourceIds(1);
@@ -427,7 +427,7 @@ public class ChangeSetDAOTest {
         changeSet.setCategory(category);
         changeSet.setVersion(version);
         changeSet.setResourceId(resourceId);
-        changeSet.setDriftConfigurationId(driftConfigId);
+        changeSet.setDriftDefinitionId(driftConfigId);
 
         return changeSet;
     }

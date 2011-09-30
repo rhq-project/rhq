@@ -89,7 +89,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
     public void findDriftConfigurationTemplates() {
         ResourceType type = entityMgr.find(ResourceType.class, -8);
 
-        assertEquals(type.getDriftConfigurationTemplates().size(), 2);
+        assertEquals(type.getDriftDefinitionTemplates().size(), 2);
     }
 
     void assertDeletedTypesIgnored(List<ResourceType> types) {

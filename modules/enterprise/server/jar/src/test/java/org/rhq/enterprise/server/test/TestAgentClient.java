@@ -58,7 +58,7 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.measurement.Availability;
@@ -337,19 +337,19 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    public void scheduleDriftDetection(int resourceId, DriftDefinition driftConfiguration) {
     }
 
     @Override
-    public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
+    public void detectDrift(int resourceId, DriftDefinition driftConfiguration) {
     }
 
     @Override
-    public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    public void unscheduleDriftDetection(int resourceId, DriftDefinition driftConfiguration) {
     }
 
     @Override
-    public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    public void updateDriftDetection(int resourceId, DriftDefinition driftConfiguration) {
     }
 
     @Override

@@ -127,13 +127,13 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 MongoDBChangeSet changeSet = new MongoDBChangeSet();
                 changeSet.setCategory(headers.getType());
                 changeSet.setResourceId(resourceId);
-                changeSet.setDriftConfigurationId(headers.getDriftCofigurationId());
+                changeSet.setDriftDefinitionId(headers.getDriftDefinitionId());
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
                 changeSet.setVersion(headers.getVersion());
 
                 summary.setCategory(headers.getType());
                 summary.setResourceId(resourceId);
-                summary.setDriftConfigurationName(headers.getDriftConfigurationName());
+                summary.setDriftDefinitionName(headers.getDriftDefinitionName());
                 summary.setCreatedTime(changeSet.getCtime());
 
                 for (FileEntry fileEntry : reader) {
@@ -294,7 +294,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+    public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
         // TODO implement me!        
     }
 
@@ -328,7 +328,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         DriftChangeSetDTO dto = new DriftChangeSetDTO();
         dto.setId(changeSet.getId());
         // TODO copy resource id
-        dto.setDriftConfigurationId(changeSet.getDriftConfigurationId());
+        dto.setDriftDefinitionId(changeSet.getDriftDefinitionId());
         dto.setVersion(changeSet.getVersion());
         dto.setCtime(changeSet.getCtime());
         dto.setCategory(changeSet.getCategory());

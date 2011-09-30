@@ -104,34 +104,34 @@ public class LinkManager {
     public static String getEntityTabLink(EntityContext entityContext, String tabName, String subTabName) {
         String link;
         switch (entityContext.getType()) {
-            case Resource:
-                link = getResourceTabLink(entityContext.getResourceId(), tabName, subTabName);
-                break;
-            case ResourceGroup:
-                if (entityContext.isAutoGroup()) {
-                    link = getAutoGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
-                } else if (entityContext.isAutoCluster()) {
-                    link = getAutoClusterTabLink(entityContext.getGroupId(), tabName, subTabName);
-                } else {
-                    link = getResourceGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
-                }
-                break;
-            case SubsystemView:
-                if (tabName.equals("Alerts") && subTabName.equals("Definitions")) {
-                    link = "#Reports/Subsystems/AlertDefinitions";
-                } else if (tabName.equals("Alerts") && subTabName.equals("History")) {
-                    link = "#Reports/Subsystems/RecentAlerts";
-                } else if (tabName.equals("Operations") && subTabName.equals("History")) {
-                    link = "#Reports/Subsystems/RecentOperations";
-                } else if (tabName.equals("Configuration") && subTabName.equals("History")) {
-                    link = "#Reports/Subsystems/ConfigurationHistoryView";
-                } else {
-                    throw new IllegalArgumentException("Subsystem link not supported for tab " + tabName + ">"
-                            + subTabName + ".");
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported entity context type: " + entityContext.getType());
+        case Resource:
+            link = getResourceTabLink(entityContext.getResourceId(), tabName, subTabName);
+            break;
+        case ResourceGroup:
+            if (entityContext.isAutoGroup()) {
+                link = getAutoGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
+            } else if (entityContext.isAutoCluster()) {
+                link = getAutoClusterTabLink(entityContext.getGroupId(), tabName, subTabName);
+            } else {
+                link = getResourceGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
+            }
+            break;
+        case SubsystemView:
+            if (tabName.equals("Alerts") && subTabName.equals("Definitions")) {
+                link = "#Reports/Subsystems/AlertDefinitions";
+            } else if (tabName.equals("Alerts") && subTabName.equals("History")) {
+                link = "#Reports/Subsystems/RecentAlerts";
+            } else if (tabName.equals("Operations") && subTabName.equals("History")) {
+                link = "#Reports/Subsystems/RecentOperations";
+            } else if (tabName.equals("Configuration") && subTabName.equals("History")) {
+                link = "#Reports/Subsystems/ConfigurationHistoryView";
+            } else {
+                throw new IllegalArgumentException("Subsystem link not supported for tab " + tabName + ">" + subTabName
+                    + ".");
+            }
+            break;
+        default:
+            throw new IllegalArgumentException("Unsupported entity context type: " + entityContext.getType());
         }
         return link;
     }
@@ -491,8 +491,8 @@ public class LinkManager {
         return "#Resource/" + resourceId + "/Drift/History/" + driftId;
     }
 
-    public static String getDriftConfigurationLink(int resourceId, int driftConfigId) {
-        return "#Resource/" + resourceId + "/Drift/Configuration/" + driftConfigId;
+    public static String getDriftDefinitionEditLink(int resourceId, int driftDefId) {
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Edit";
     }
 
 }

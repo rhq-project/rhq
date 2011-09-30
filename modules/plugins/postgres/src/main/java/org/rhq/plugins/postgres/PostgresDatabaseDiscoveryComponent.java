@@ -51,7 +51,7 @@ public class PostgresDatabaseDiscoveryComponent implements ResourceDiscoveryComp
                 databases.add(database);
             }
         } finally {
-            JDBCUtil.safeClose(statement);
+            JDBCUtil.safeClose(statement, resultSet);
         }
 
         return databases;

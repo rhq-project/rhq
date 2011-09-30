@@ -64,7 +64,7 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @Table(name = "RHQ_DRIFT_CONFIG")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CONFIG_ID_SEQ")
-public class DriftConfiguration implements Serializable {
+public class DriftDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "ID", nullable = false)
@@ -104,10 +104,10 @@ public class DriftConfiguration implements Serializable {
     private Integer pinnedVersion;
 
     // required for jaxb/web services stuff
-    protected DriftConfiguration() {
+    protected DriftDefinition() {
     }
 
-    public DriftConfiguration(Configuration c) {
+    public DriftDefinition(Configuration c) {
         this.setConfiguration(c);
     }
 
@@ -227,16 +227,16 @@ public class DriftConfiguration implements Serializable {
     public void setResource(Resource resource) {
         this.resource = resource;
         if (this.resource != null) {
-            this.resource.getDriftConfigurations().add(this);
+            this.resource.getDriftDefinitions().add(this);
         }
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("DriftConfiguration [id=").append(id).append(", name=").append(name).append(", enabled=")
-            .append(isEnabled).append(", interval=").append(interval).append(", resource=").append(resource).append(
-                ", basedir=").append(getBasedir()).append(", includes=").append(getIncludes()).append(", excludes=")
+        builder.append("DriftDefinition [id=").append(id).append(", name=").append(name).append(", enabled=").append(
+            isEnabled).append(", interval=").append(interval).append(", resource=").append(resource).append(
+            ", basedir=").append(getBasedir()).append(", includes=").append(getIncludes()).append(", excludes=")
             .append(getExcludes()).append("]");
         return builder.toString();
     }

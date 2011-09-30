@@ -19,6 +19,9 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -55,7 +58,7 @@ import org.rhq.core.domain.criteria.JPADriftCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.DriftSnapshot;
@@ -76,9 +79,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -114,26 +114,26 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+    public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
 
         int driftsDeleted;
         int changeSetsDeleted;
         StopWatch timer = new StopWatch();
 
         // purge all drift entities first
-        Query q = entityManager.createNamedQuery(JPADrift.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        Query q = entityManager.createNamedQuery(JPADrift.QUERY_DELETE_BY_DRIFTDEF_RESOURCE);
         q.setParameter("resourceId", resourceId);
-        q.setParameter("driftConfigurationName", driftConfigName);
+        q.setParameter("driftDefinitionName", driftDefName);
         driftsDeleted = q.executeUpdate();
 
         // now purge all changesets
-        q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTDEF_RESOURCE);
         q.setParameter("resourceId", resourceId);
-        q.setParameter("driftConfigurationName", driftConfigName);
+        q.setParameter("driftDefinitionName", driftDefName);
         changeSetsDeleted = q.executeUpdate();
 
         log.info("Purged [" + driftsDeleted + "] drift items and [" + changeSetsDeleted
-            + "] changesets associated with drift config [" + driftConfigName + "] from resource [" + resourceId
+            + "] changesets associated with drift def [" + driftDefName + "] from resource [" + resourceId
             + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
         return;
     }
@@ -176,8 +176,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         PageList<DriftComposite> result = new PageList<DriftComposite>();
         for (JPADrift drift : drifts) {
             JPADriftChangeSet changeSet = drift.getChangeSet();
-            DriftConfiguration driftConfig = changeSet.getDriftConfiguration();
-            result.add(new DriftComposite(drift, changeSet.getResource(), driftConfig.getName()));
+            DriftDefinition driftDef = changeSet.getDriftDefinition();
+            result.add(new DriftComposite(drift, changeSet.getResource(), driftDef.getName()));
         }
 
         return result;
@@ -247,9 +247,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             stream)), false);
 
                         // store the new change set info (not the actual blob)
-                        DriftConfiguration config = findDriftConfiguration(resource, reader.getHeaders());
-                        if (config == null) {
-                            log.error("Unable to locate DriftConfiguration for Resource [" + resource
+                        DriftDefinition driftDef = findDriftDefinition(resource, reader.getHeaders());
+                        if (driftDef == null) {
+                            log.error("Unable to locate DriftDefinition for Resource [" + resource
                                 + "]. Change set cannot be saved.");
                             return false;
                         }
@@ -262,13 +262,13 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         int version = reader.getHeaders().getVersion();
 
                         DriftChangeSetCategory category = reader.getHeaders().getType();
-                        driftChangeSet = new JPADriftChangeSet(resource, version, category, config);
+                        driftChangeSet = new JPADriftChangeSet(resource, version, category, driftDef);
                         entityManager.persist(driftChangeSet);
 
                         summary.setCategory(category);
                         summary.setResourceId(resourceId);
-                        summary.setDriftConfigurationName(reader.getHeaders().getDriftConfigurationName());
-                        summary.setDriftHandlingMode(config.getDriftHandlingMode());
+                        summary.setDriftDefinitionName(reader.getHeaders().getDriftDefinitionName());
+                        summary.setDriftHandlingMode(driftDef.getDriftHandlingMode());
                         summary.setCreatedTime(driftChangeSet.getCtime());
 
                         for (FileEntry entry : reader) {
@@ -299,7 +299,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                         DriftAgentService service = agentClient.getDriftAgentService();
 
-                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftConfigurationName());
+                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftDefinitionName());
 
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {
@@ -357,29 +357,10 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         return result;
     }
 
-    /**
-     * This method only exists temporarily until the version header is added to the change
-     * set meta data file. This method determines the version by looking at the number of
-     * change sets in the database.
-     *
-     * @param r The resource
-     * @param c The drift configuration
-     * @return The next change set version number
-     */
-    private int getChangeSetVersion(Resource r, DriftConfiguration c) {
-        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
-        criteria.addFilterResourceId(r.getId());
-        criteria.addFilterDriftConfigurationId(c.getId());
-        List<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(),
-            criteria);
-
-        return changeSets.size();
-    }
-
-    private DriftConfiguration findDriftConfiguration(Resource resource, Headers headers) {
-        for (DriftConfiguration driftConfig : resource.getDriftConfigurations()) {
-            if (driftConfig.getName().equals(headers.getDriftConfigurationName())) {
-                return driftConfig;
+    private DriftDefinition findDriftDefinition(Resource resource, Headers headers) {
+        for (DriftDefinition driftDef : resource.getDriftDefinitions()) {
+            if (driftDef.getName().equals(headers.getDriftDefinitionName())) {
+                return driftDef;
             }
         }
         return null;

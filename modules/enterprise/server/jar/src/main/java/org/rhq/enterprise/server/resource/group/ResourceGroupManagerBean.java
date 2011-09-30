@@ -1150,14 +1150,18 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             }
 
             ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                long explicitCount = rs.getLong(1);
-                double explicitAvail = rs.getDouble(2);
-                long implicitCount = rs.getLong(3);
-                double implicitAvail = rs.getDouble(4);
-                int groupKey = rs.getInt(5);
-                Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey };
-                rawResults.add(next);
+            try {
+                while (rs.next()) {
+                    long explicitCount = rs.getLong(1);
+                    double explicitAvail = rs.getDouble(2);
+                    long implicitCount = rs.getLong(3);
+                    double implicitAvail = rs.getDouble(4);
+                    int groupKey = rs.getInt(5);
+                    Object[] next = new Object[]{explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey};
+                    rawResults.add(next);
+                }
+            } finally {
+                rs.close();
             }
         } catch (Throwable t) {
             log.error("Could not execute groups query [ " + query + " ]: ", t);

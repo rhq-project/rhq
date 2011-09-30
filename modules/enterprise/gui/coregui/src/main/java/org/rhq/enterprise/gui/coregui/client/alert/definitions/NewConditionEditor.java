@@ -133,7 +133,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
         this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
-        this.supportsDrift = (rtype.getDriftConfigurationTemplates() != null && rtype.getDriftConfigurationTemplates()
+        this.supportsDrift = (rtype.getDriftDefinitionTemplates() != null && rtype.getDriftDefinitionTemplates()
             .size() > 0);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();

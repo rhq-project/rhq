@@ -35,7 +35,7 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     /**
      * This is the path relative to the base directory defined in the
-     * {@link org.rhq.core.domain.drift.DriftConfiguration}
+     * {@link org.rhq.core.domain.drift.DriftDefinition}
      */
     private String path;
 

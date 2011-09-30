@@ -505,6 +505,17 @@
             <xs:restriction base="xs:string"/>
          </xs:simpleType>
       </xs:attribute>
+      <xs:attribute name="default" default="false" use="optional">
+         <xs:annotation>
+            <xs:documentation>Was supposed to indicate that this item is the default item in the list.
+                This does not work and will be deprecated in later versions.
+                Please use the 'default' attribute on the parents simple-property.
+            </xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:boolean"/>
+         </xs:simpleType>
+      </xs:attribute>
    </xs:complexType>
 
    <!-- == Property Constraints ================= -->

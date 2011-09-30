@@ -49,11 +49,12 @@ public class PrintTokens {
             out = new BufferedOutputStream(new FileOutputStream(file));
         }
 
-        String text = createTokenDescription();
-
-        out.write(text.getBytes());
-        out.flush();
-        out.close();
+        try {
+            String text = createTokenDescription();
+            out.write(text.getBytes());
+        } finally {
+            out.close();
+        }
     }
 
     /**

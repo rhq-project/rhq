@@ -273,16 +273,25 @@ public class PostgresServerComponent<T extends ResourceComponent<?>> implements 
              try {
                 if (property.endsWith("startTime")) {
                    // db start time
-                   ResultSet rs = getConnection().createStatement().executeQuery("SELECT pg_postmaster_start_time()");
-                   if (rs.next())
-                     report.addData(new MeasurementDataTrait(request, rs.getTimestamp(1).toString()));
-
+                    ResultSet rs = getConnection().createStatement().executeQuery("SELECT pg_postmaster_start_time()");
+                    try {
+                        if (rs.next()) {
+                            report.addData(new MeasurementDataTrait(request, rs.getTimestamp(1).toString()));
+                        }
+                    } finally {
+                        rs.close();
+                    }
                 }
                 else if (property.endsWith("backends")) {
-                   // number of connected backends
-                   ResultSet rs = getConnection().createStatement().executeQuery("select count(*) from pg_stat_activity");
-                   if (rs.next())
-                     report.addData(new MeasurementDataNumeric(request, (double)rs.getLong(1)));
+                    // number of connected backends
+                    ResultSet rs = getConnection().createStatement().executeQuery("select count(*) from pg_stat_activity");
+                    try {
+                        if (rs.next()) {
+                            report.addData(new MeasurementDataNumeric(request, (double) rs.getLong(1)));
+                        }
+                    } finally {
+                        rs.close();
+                    }
                 }
 
              }

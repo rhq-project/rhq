@@ -47,16 +47,20 @@ public class ApacheConfigWriter {
     }
     
     public void saveFile(String file,ApacheDirective dir) throws Exception{
-        
         File fl = new File(file);
-        if (!fl.exists())
+        if (!fl.exists()) {
             fl.createNewFile();
+        }
         
         OutputStream str = new FileOutputStream(fl);
-        for (ApacheDirective d : dir.getChildDirectives()){
-            if (dir.getFile().equals(file)){
-                writeToFile(str,dir,file);
+        try {
+            for (ApacheDirective d : dir.getChildDirectives()){
+                if (dir.getFile().equals(file)){
+                    writeToFile(str,dir,file);
+                }
             }
+        } finally {
+            str.close();
         }
     }
     

@@ -179,8 +179,8 @@ public class DriftFilesSenderTest extends DriftTest {
     Headers createHeaders(String configName, DriftChangeSetCategory type) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
-        headers.setDriftCofigurationId(0);
-        headers.setDriftConfigurationName(configName);
+        headers.setDriftDefinitionId(0);
+        headers.setDriftDefinitionName(configName);
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
 

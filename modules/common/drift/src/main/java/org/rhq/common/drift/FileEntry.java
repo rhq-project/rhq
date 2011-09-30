@@ -19,13 +19,14 @@
 
 package org.rhq.common.drift;
 
+import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
+
 import java.io.Serializable;
 
 import org.rhq.core.domain.drift.DriftCategory;
-
-import static org.rhq.core.domain.drift.DriftCategory.*;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
+import org.rhq.core.util.file.FileUtil;
 
 public class FileEntry implements Serializable {
 
@@ -33,7 +34,7 @@ public class FileEntry implements Serializable {
 
     public static FileEntry removedFileEntry(String file, String sha) {
         FileEntry entry = new FileEntry();
-        entry.file = file;
+        entry.file = FileUtil.useForwardSlash(file);
         entry.oldSHA = sha;
         entry.newSHA = "0";
         entry.type = FILE_REMOVED;
@@ -43,7 +44,7 @@ public class FileEntry implements Serializable {
 
     public static FileEntry addedFileEntry(String file, String sha) {
         FileEntry entry = new FileEntry();
-        entry.file = file;
+        entry.file = FileUtil.useForwardSlash(file);
         entry.oldSHA = "0";
         entry.newSHA = sha;
         entry.type = FILE_ADDED;
@@ -53,7 +54,7 @@ public class FileEntry implements Serializable {
 
     public static FileEntry changedFileEntry(String file, String oldSHA, String newSHA) {
         FileEntry entry = new FileEntry();
-        entry.file = file;
+        entry.file = FileUtil.useForwardSlash(file);
         entry.oldSHA = oldSHA;
         entry.newSHA = newSHA;
         entry.type = FILE_CHANGED;
@@ -97,7 +98,7 @@ public class FileEntry implements Serializable {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[newSHA: " + newSHA + ", oldSHA: " + oldSHA + ", file: " + file +
-            ", type: " + type.code() + "]";
+        return getClass().getSimpleName() + "[newSHA: " + newSHA + ", oldSHA: " + oldSHA + ", file: " + file
+            + ", type: " + type.code() + "]";
     }
 }

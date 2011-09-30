@@ -122,9 +122,11 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         this.setButton.setDisabled(true);
         this.setButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                form.validate();
-                UpdateCollectionIntervalWidget.this.schedulesView.getDataSource().updateSchedules(
-                    UpdateCollectionIntervalWidget.this.schedulesView, getInterval());
+                if (form.validate()) {
+                    UpdateCollectionIntervalWidget.this.schedulesView.disableAllFooterControls();
+                    UpdateCollectionIntervalWidget.this.schedulesView.getDataSource().updateSchedules(
+                        UpdateCollectionIntervalWidget.this.schedulesView, getInterval());
+                }
             }
         });
         this.setButton.setOverflow(Overflow.VISIBLE);

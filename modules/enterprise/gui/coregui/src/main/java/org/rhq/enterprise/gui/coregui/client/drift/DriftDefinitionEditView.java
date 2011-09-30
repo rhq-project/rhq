@@ -30,8 +30,8 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
@@ -50,11 +50,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Jay Shaughnessy
  */
-public class DriftConfigurationEditView extends LocatableVLayout implements PropertyValueChangeListener,
-    RefreshableView {
+public class DriftDefinitionEditView extends LocatableVLayout implements PropertyValueChangeListener, RefreshableView {
 
     private EntityContext context;
-    private int driftConfigId;
+    private int driftDefId;
     private boolean hasWriteAccess;
     private ConfigurationEditor editor;
     private ToolStrip buttonbar;
@@ -62,11 +61,11 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
 
     private boolean refreshing = false;
 
-    public DriftConfigurationEditView(String locatorId, EntityContext context, int driftConfigId, boolean hasWriteAccess) {
+    public DriftDefinitionEditView(String locatorId, EntityContext context, int driftDefId, boolean hasWriteAccess) {
         super(locatorId);
 
         this.context = context;
-        this.driftConfigId = driftConfigId;
+        this.driftDefId = driftDefId;
         this.hasWriteAccess = hasWriteAccess;
     }
 
@@ -87,7 +86,7 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
             }
         });
         buttonbar.addMember(saveButton);
-        // The button bar will remain hidden until the configuration has been successfully loaded.
+        // The button bar will remain hidden until the definition has been successfully loaded.
         buttonbar.setVisible(false);
         addMember(buttonbar);
 
@@ -114,37 +113,36 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
             removeMember(editor);
         }
 
-        GWTServiceLookup.getDriftService().getDriftConfiguration(driftConfigId,
-            new AsyncCallback<DriftConfiguration>() {
-                @Override
-                public void onSuccess(final DriftConfiguration result) {
+        GWTServiceLookup.getDriftService().getDriftDefinition(driftDefId, new AsyncCallback<DriftDefinition>() {
+            @Override
+            public void onSuccess(final DriftDefinition result) {
 
-                    editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
-                        .getInstanceForExistingConfiguration(), result.getConfiguration());
-                    editor.setOverflow(Overflow.AUTO);
-                    editor.addPropertyValueChangeListener(DriftConfigurationEditView.this);
-                    editor.setReadOnly(!hasWriteAccess);
-                    addMember(editor);
+                editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
+                    .getInstanceForExistingConfiguration(), result.getConfiguration());
+                editor.setOverflow(Overflow.AUTO);
+                editor.addPropertyValueChangeListener(DriftDefinitionEditView.this);
+                editor.setReadOnly(!hasWriteAccess);
+                addMember(editor);
 
-                    saveButton.disable();
-                    buttonbar.setVisible(true);
-                    markForRedraw();
-                    refreshing = false;
-                }
+                saveButton.disable();
+                buttonbar.setVisible(true);
+                markForRedraw();
+                refreshing = false;
+            }
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    refreshing = false;
-                    CoreGUI.getErrorHandler().handleError("Failed to load configuration.", caught);
-                }
-            });
+            @Override
+            public void onFailure(Throwable caught) {
+                refreshing = false;
+                CoreGUI.getErrorHandler().handleError("Failed to load definition.", caught);
+            }
+        });
     }
 
     private void save() {
         Configuration updatedConfiguration = editor.getConfiguration();
 
-        GWTServiceLookup.getDriftService().updateDriftConfiguration(context,
-            new DriftConfiguration(updatedConfiguration), new AsyncCallback<Void>() {
+        GWTServiceLookup.getDriftService().updateDriftDefinition(context, new DriftDefinition(updatedConfiguration),
+            new AsyncCallback<Void>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_configurationDetails_error_updateFailure(), caught);
                 }

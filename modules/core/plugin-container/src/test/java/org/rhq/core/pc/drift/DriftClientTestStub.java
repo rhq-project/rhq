@@ -2,7 +2,7 @@ package org.rhq.core.pc.drift;
 
 import java.io.File;
 
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 
 class DriftClientTestStub implements DriftClient {
 
@@ -18,11 +18,11 @@ class DriftClientTestStub implements DriftClient {
     }
 
     @Override
-    public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir) {
+    public void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir) {
     }
 
     @Override
-    public File getAbsoluteBaseDirectory(int resourceId, DriftConfiguration driftConfiguration) {
+    public File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition) {
         return basedir;
     }
 

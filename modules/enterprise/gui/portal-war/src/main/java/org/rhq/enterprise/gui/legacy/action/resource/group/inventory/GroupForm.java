@@ -59,10 +59,10 @@ public class GroupForm extends BaseValidatorForm {
      */
     public Integer getCompatibleCount() {
         if ((platformTypes == null) || (serverTypes == null) || (serviceTypes == null)) {
-            return new Integer(0);
+            return 0;
         }
 
-        return new Integer(platformTypes.size() + serverTypes.size() + serviceTypes.size());
+        return platformTypes.size() + serverTypes.size() + serviceTypes.size();
     }
 
     /**
@@ -70,10 +70,10 @@ public class GroupForm extends BaseValidatorForm {
      */
     public Integer getClusterCount() {
         if (serviceTypes == null) {
-            return new Integer(0);
+            return 0;
         }
 
-        return new Integer(serviceTypes.size());
+        return serviceTypes.size();
     }
 
     /**
@@ -92,10 +92,10 @@ public class GroupForm extends BaseValidatorForm {
      */
     public Integer getPlatformTypeCount() {
         if (platformTypes == null) {
-            return new Integer(0);
+            return 0;
         }
 
-        return new Integer(platformTypes.size());
+        return platformTypes.size();
     }
 
     /**
@@ -114,10 +114,10 @@ public class GroupForm extends BaseValidatorForm {
      */
     public Integer getServerTypeCount() {
         if (serverTypes == null) {
-            return new Integer(0);
+            return 0;
         }
 
-        return new Integer(serverTypes.size());
+        return serverTypes.size();
     }
 
     /**
@@ -136,10 +136,10 @@ public class GroupForm extends BaseValidatorForm {
      */
     public Integer getServiceTypeCount() {
         if (serviceTypes == null) {
-            return new Integer(0);
+            return 0;
         }
 
-        return new Integer(serviceTypes.size());
+        return serviceTypes.size();
     }
 
     /**
@@ -170,17 +170,16 @@ public class GroupForm extends BaseValidatorForm {
     }
 
     private List<Map<String, Object>> getOptionListItemsWithDashes(List<ResourceType> types) {
-        Map<String, Integer> typeNameCounts = new HashMap<String, Integer>();
-        for (ResourceType type : types) {
-            if (typeNameCounts.containsKey(type.getName()) == false) {
-                typeNameCounts.put(type.getName(), 1);
-            } else {
-                typeNameCounts.put(type.getName(), typeNameCounts.get(type.getName()) + 1);
-            }
-        }
-
         List<Map<String, Object>> items = new ArrayList<Map<String, Object>>();
         if (types != null) {
+            Map<String, Integer> typeNameCounts = new HashMap<String, Integer>();
+            for (ResourceType type : types) {
+                if (!typeNameCounts.containsKey(type.getName())) {
+                    typeNameCounts.put(type.getName(), 1);
+                } else {
+                    typeNameCounts.put(type.getName(), typeNameCounts.get(type.getName()) + 1);
+                }
+            }
             for (ResourceType type : types) {
                 // GroupTypeForm needs this data format - a map with "value" and "label" keys
                 Map<String, Object> map = new HashMap<String, Object>(2);
@@ -190,7 +189,6 @@ public class GroupForm extends BaseValidatorForm {
                 items.add(map);
             }
         }
-
         return items;
     }
 

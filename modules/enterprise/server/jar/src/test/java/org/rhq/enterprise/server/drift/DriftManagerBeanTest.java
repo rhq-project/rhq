@@ -18,6 +18,13 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.toFile;
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+
 import java.io.File;
 import java.util.Iterator;
 import java.util.List;
@@ -45,12 +52,12 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -63,13 +70,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.FileUtils.toFile;
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 /**
  * Test for {@link DriftManagerBean} SLSB.
@@ -105,7 +105,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         driftServerService = new DriftServerServiceImpl();
 
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.driftService = new TestConfigService();
+        agentServiceContainer.driftService = new TestDefService();
     }
 
     @AfterClass
@@ -142,8 +142,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         Headers headers = new Headers();
         headers.setResourceId(newResource.getId());
-        headers.setDriftCofigurationId(1);
-        headers.setDriftConfigurationName("test-1");
+        headers.setDriftDefinitionId(1);
+        headers.setDriftDefinitionName("test-1");
         headers.setBasedir(rootDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(0);
@@ -213,100 +213,96 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
-    public void testDriftConfig() throws Exception {
+    public void testDriftDef() throws Exception {
         Configuration config = new Configuration();
-        DriftConfiguration driftConfigPojo = new DriftConfiguration(config);
-        driftConfigPojo.setName("testDriftConfig");
-        driftConfigPojo.setInterval(60L);
-        driftConfigPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/bar"));
+        DriftDefinition driftDefPojo = new DriftDefinition(config);
+        driftDefPojo.setName("testDriftDef");
+        driftDefPojo.setInterval(60L);
+        driftDefPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/bar"));
 
-        driftManager
-            .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
+        driftManager.updateDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), driftDefPojo);
 
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         ResourceCriteria c = new ResourceCriteria();
         c.addFilterId(newResource.getId());
-        c.fetchDriftConfigurations(true);
+        c.fetchDriftDefinitions(true);
         List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, c);
         assertEquals(1, resources.size());
-        Set<DriftConfiguration> driftConfigs = resources.get(0).getDriftConfigurations();
-        assertNotNull(driftConfigs);
-        assertEquals(3, driftConfigs.size());
-        DriftConfiguration driftConfig = null;
-        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
-            driftConfig = i.next();
-            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+        Set<DriftDefinition> driftDefs = resources.get(0).getDriftDefinitions();
+        assertNotNull(driftDefs);
+        assertEquals(3, driftDefs.size());
+        DriftDefinition driftDef = null;
+        for (Iterator<DriftDefinition> i = driftDefs.iterator(); i.hasNext();) {
+            driftDef = i.next();
+            if (driftDefPojo.getName().equals(driftDef.getName()))
                 break;
         }
-        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
-        assertEquals(driftConfigPojo.getName(), driftConfig.getName());
-        assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
-        assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
+        assertTrue(driftDef.getConfiguration().getId() > 0); // persisted
+        assertEquals(driftDefPojo.getName(), driftDef.getName());
+        assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
+        assertEquals(driftDefPojo.getInterval(), driftDef.getInterval());
 
-        driftConfigPojo.setInterval(120L);
-        driftManager
-            .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
+        driftDefPojo.setInterval(120L);
+        driftManager.updateDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), driftDefPojo);
 
         resources = resourceManager.findResourcesByCriteria(overlord, c);
         assertEquals(1, resources.size());
-        driftConfigs = resources.get(0).getDriftConfigurations();
-        assertNotNull(driftConfigs);
-        assertEquals(3, driftConfigs.size());
-        driftConfig = null;
-        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
-            driftConfig = i.next();
-            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+        driftDefs = resources.get(0).getDriftDefinitions();
+        assertNotNull(driftDefs);
+        assertEquals(3, driftDefs.size());
+        driftDef = null;
+        for (Iterator<DriftDefinition> i = driftDefs.iterator(); i.hasNext();) {
+            driftDef = i.next();
+            if (driftDefPojo.getName().equals(driftDef.getName()))
                 break;
         }
-        assertEquals(driftConfigPojo.getName(), driftConfig.getName());
-        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
-        assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
-        assertEquals(120L, driftConfig.getInterval());
+        assertEquals(driftDefPojo.getName(), driftDef.getName());
+        assertTrue(driftDef.getConfiguration().getId() > 0); // persisted
+        assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
+        assertEquals(120L, driftDef.getInterval());
 
-        driftConfigPojo.setName("testDriftConfig-2");
-        driftConfigPojo.setInterval(30L);
-        driftConfigPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/baz"));
+        driftDefPojo.setName("testDriftDef-2");
+        driftDefPojo.setInterval(30L);
+        driftDefPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/baz"));
 
-        driftManager
-            .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
+        driftManager.updateDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), driftDefPojo);
 
         resources = resourceManager.findResourcesByCriteria(overlord, c);
         assertEquals(1, resources.size());
-        driftConfigs = resources.get(0).getDriftConfigurations();
-        assertNotNull(driftConfigs);
-        assertEquals(4, driftConfigs.size());
-        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
-            driftConfig = i.next();
-            if ("testDriftConfig".equals(driftConfig.getName())) {
-                assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
-                assertEquals("foo/bar", driftConfig.getBasedir().getValueName());
-                assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
-                assertEquals(120L, driftConfig.getInterval());
-            } else if ("testDriftConfig-2".equals(driftConfig.getName())) {
-                assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
-                assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
-                assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
-            } else if (!"test-1".equals(driftConfig.getName()) && !"test-2".equals(driftConfig.getName())) {
-                fail("Unexpected drift config name: " + driftConfig.getName());
+        driftDefs = resources.get(0).getDriftDefinitions();
+        assertNotNull(driftDefs);
+        assertEquals(4, driftDefs.size());
+        for (Iterator<DriftDefinition> i = driftDefs.iterator(); i.hasNext();) {
+            driftDef = i.next();
+            if ("testDriftDef".equals(driftDef.getName())) {
+                assertTrue(driftDef.getConfiguration().getId() > 0); // persisted
+                assertEquals("foo/bar", driftDef.getBasedir().getValueName());
+                assertEquals(BaseDirValueContext.fileSystem, driftDef.getBasedir().getValueContext());
+                assertEquals(120L, driftDef.getInterval());
+            } else if ("testDriftDef-2".equals(driftDef.getName())) {
+                assertTrue(driftDef.getConfiguration().getId() > 0); // persisted
+                assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
+                assertEquals(driftDefPojo.getInterval(), driftDef.getInterval());
+            } else if (!"test-1".equals(driftDef.getName()) && !"test-2".equals(driftDef.getName())) {
+                fail("Unexpected drift def name: " + driftDef.getName());
             }
         }
 
-        driftManager.deleteDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()),
-            "testDriftConfig");
+        driftManager.deleteDriftDefinition(overlord, EntityContext.forResource(newResource.getId()), "testDriftDef");
         resources = resourceManager.findResourcesByCriteria(overlord, c);
         assertEquals(1, resources.size());
-        driftConfigs = resources.get(0).getDriftConfigurations();
-        assertNotNull(driftConfigs);
-        assertEquals(3, driftConfigs.size());
-        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
-            driftConfig = i.next();
-            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+        driftDefs = resources.get(0).getDriftDefinitions();
+        assertNotNull(driftDefs);
+        assertEquals(3, driftDefs.size());
+        for (Iterator<DriftDefinition> i = driftDefs.iterator(); i.hasNext();) {
+            driftDef = i.next();
+            if (driftDefPojo.getName().equals(driftDef.getName()))
                 break;
         }
-        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
-        assertEquals(driftConfigPojo.getName(), driftConfig.getName());
-        assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
-        assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
+        assertTrue(driftDef.getConfiguration().getId() > 0); // persisted
+        assertEquals(driftDefPojo.getName(), driftDef.getName());
+        assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
+        assertEquals(driftDefPojo.getInterval(), driftDef.getInterval());
     }
 
     private void deleteDriftFiles() throws Exception {
@@ -350,18 +346,18 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 em.persist(agent);
                 em.flush();
 
-                DriftConfiguration test1Config = new DriftConfiguration(new Configuration());
-                test1Config.setName("test-1");
+                DriftDefinition test1Def = new DriftDefinition(new Configuration());
+                test1Def.setName("test-1");
 
-                DriftConfiguration test2Config = new DriftConfiguration(new Configuration());
-                test2Config.setName("test-2");
+                DriftDefinition test2Def = new DriftDefinition(new Configuration());
+                test2Def.setName("test-2");
 
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
                 resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                resource.addDriftConfiguration(test1Config);
-                resource.addDriftConfiguration(test2Config);
+                resource.addDriftDefinition(test1Def);
+                resource.addDriftDefinition(test2Def);
                 em.persist(resource);
 
             } catch (Exception e) {
@@ -425,7 +421,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         return digestGenerator.calcDigestString(s);
     }
 
-    private class TestConfigService implements DriftAgentService {
+    private class TestDefService implements DriftAgentService {
 
         @Override
         public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
@@ -433,20 +429,20 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         }
 
         @Override
-        public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        public void scheduleDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
 
         }
 
         @Override
-        public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
+        public void detectDrift(int resourceId, DriftDefinition DriftDefinition) {
         }
 
         @Override
-        public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        public void unscheduleDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
         }
 
         @Override
-        public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        public void updateDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
         }
 
         @Override

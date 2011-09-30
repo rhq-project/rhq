@@ -42,8 +42,6 @@ import org.rhq.plugins.apache.util.HttpdConfParser;
  */
 public class ModJKComponent implements ResourceComponent<ApacheServerComponent> {
 
-    private static final Log log = LogFactory.getLog(ModJKComponent.class);
-
     private static final String OUTPUT_RESULT_PROP = "output";
 
     public void start(ResourceContext<ApacheServerComponent> parentResourceContext)
@@ -64,12 +62,12 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
      * @param serverComponent The parents server component with the configuration
      * @param params Params we got passed from the GUI
      * @return The outcome of the operation
+     * @throws Exception see thrown exception for details; thrown exception summarizes error
      */
     public static OperationResult installModJk(ApacheServerComponent serverComponent, Configuration params)
         throws Exception {
 
         StringBuilder builder = new StringBuilder();
-        boolean errorSeen = false;
         boolean needWorkersProps = false;
         boolean needUriWorkers = false;
 
@@ -86,44 +84,48 @@ public class ModJKComponent implements ResourceComponent<ApacheServerComponent> 
         cparser.parse(confPath);
         // TODO back up original file
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(httpdConf, true));
+            BufferedWriter writer = null;
+            try {
+                writer = new BufferedWriter(new FileWriter(httpdConf, true));
+                if (cparser.isModJkInstalled()) {
+                    builder.append("Mod_jk is already installed\n");
+                    if (cparser.getWorkerPropertiesFile() != null) {
+                        builder.append("Found a worker.properties file at ").append(cparser.getWorkerPropertiesFile());
+                        builder.append("\n");
+                    } else
+                        needWorkersProps = true;
 
-            if (cparser.isModJkInstalled()) {
-                builder.append("Mod_jk is already installed\n");
-                if (cparser.getWorkerPropertiesFile() != null) {
-                    builder.append("Found a worker.properties file at ").append(cparser.getWorkerPropertiesFile());
-                    builder.append("\n");
-                } else
+                    if (cparser.getUriWorkerLocation() != null) {
+                        builder.append("Found a urimap file at ").append(cparser.getUriWorkerLocation());
+                    } else
+                        needUriWorkers = true;
+                } else {
+                    builder.append("No mod_jk installed yet at ").append(confPath).append("\n");
+
+                    writer.append("LoadModule jk_module modules/mod_jk.so"); // TODO obtain modules location
+                    writer.newLine();
+
+                    builder.append(".. written a LoadModule line \n");
                     needWorkersProps = true;
-
-                if (cparser.getUriWorkerLocation() != null) {
-                    builder.append("Found a urimap file at ").append(cparser.getUriWorkerLocation());
-                } else
                     needUriWorkers = true;
-            } else {
-                builder.append("No mod_jk installed yet at ").append(confPath).append("\n");
+                }
 
-                writer.append("LoadModule jk_module modules/mod_jk.so"); // TODO obtain modules location
-                writer.newLine();
-
-                builder.append(".. written a LoadModule line \n");
-                needWorkersProps = true;
-                needUriWorkers = true;
+                if (needWorkersProps) {
+                    writer.append("JkWorkersFile ").append("conf/workers.properties");
+                    writer.newLine();
+                    builder.append(".. installed worker.properties");
+                }
+                if (needUriWorkers) {
+                    writer.append("JkMountFile ").append("conf/uriworkermap");
+                    writer.newLine();
+                    builder.append(".. installed uriworkermap");
+                }
+            } finally {
+                if (writer != null) {
+                    // close automatically flushes!
+                    writer.close();
+                }
             }
-
-            if (needWorkersProps) {
-                writer.append("JkWorkersFile ").append("conf/workers.properties");
-                writer.newLine();
-                builder.append(".. installed worker.properties");
-            }
-            if (needUriWorkers) {
-                writer.append("JkMountFile ").append("conf/uriworkermap");
-                writer.newLine();
-                builder.append(".. installed uriworkermap");
-            }
-            writer.flush();
-            writer.close();
-
         } catch (IOException e) {
             builder.append("Error when installing mod_jk: \n");
             builder.append(e.fillInStackTrace());

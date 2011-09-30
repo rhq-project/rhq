@@ -1,5 +1,5 @@
 #!/bin/bash
-#===================================================================================
+#========================================================================================
 #
 # Usage: release.sh community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production
 #
@@ -8,15 +8,15 @@
 #
 # Options: 
 # Add option description here
-#===================================================================================
+#========================================================================================
 
 #include the utility library
 source `dirname $0`/rhq_bash.lib
 
 
-#===================================================================================
+#========================================================================================
 # Description: Display an error message and abort the script.
-#===================================================================================
+#========================================================================================
 abort()
 {
    echo >&2
@@ -26,15 +26,18 @@ abort()
    exit 1
 }
 
-#===================================================================================
+#========================================================================================
 # Description: Display usage information then abort the script.
-#===================================================================================
+#========================================================================================
 usage() 
 {   
    abort "$@" "Usage:   $EXE branch|tag community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
 }
 
 
+#========================================================================================
+# Description: Validate and parse input arguments
+#========================================================================================
 validate_arguments()
 {
    # Process command line args.
@@ -67,9 +70,9 @@ validate_arguments()
    fi
 }
 
-#===================================================================================
+#========================================================================================
 # Description: Set all the local and environment variables required by the script.
-#===================================================================================
+#========================================================================================
 set_variables()
 {
    # Constants
@@ -134,10 +137,10 @@ set_variables()
    export LANG
 }
 
-#===================================================================================
+#========================================================================================
 # Description: Perform version update process and test the outcome by building 
 #              from source.
-#===================================================================================
+#========================================================================================
 run_tag_version_process()
 {
    # 1) Cleanup before doing anything
@@ -188,10 +191,11 @@ run_tag_version_process()
    git commit -m "development RHQ_$DEVELOPMENT_VERSION"
 
    # 12) If everything went well so far than means all the changes can be pushed!!!
-   git push origin $RELEASE_BRANCH
+   git push origin $BUILD_BRANCH
 }
 
-if [ -n "$RELEASE_DEBUG" ]; then
+if [ -n "$RELEASE_DEBUG" ];
+then
    echo "Debug output is enabled."
    set -x
 fi
@@ -236,15 +240,18 @@ GIT_STATUS_EXIT_CODE=$?
 # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
 # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if current folder
 # is truly a git working copy.
-if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
+if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; 
+then
     echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
     git fetch origin "$RELEASE_BRANCH"
     [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
 
     git checkout "$RELEASE_BRANCH" 2>/dev/null
-    if [ "$?" -ne 0 ]; then
+    if [ "$?" -ne 0 ]; 
+    then
         git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
     fi
+
     [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
     git reset --hard "origin/$RELEASE_BRANCH"
     [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."

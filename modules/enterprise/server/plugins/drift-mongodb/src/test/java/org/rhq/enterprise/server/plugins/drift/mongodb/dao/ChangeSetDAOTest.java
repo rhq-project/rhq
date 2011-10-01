@@ -324,6 +324,34 @@ public class ChangeSetDAOTest {
         assertEntriesMatch("Failed to find change set entries with resource id filter", asList(e1), entries);
     }
 
+    @Test(enabled = ENABLED)
+    public void findEntriesWithResourceIdAndCategoryFilters() {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-2.txt", FILE_ADDED);
+        c1.add(e1).add(e2);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 1, 2, 1);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c2.add(e3);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = createChangeSet(DRIFT, 2, 1, 1);
+        MongoDBChangeSetEntry e4 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        MongoDBChangeSetEntry e5 = new MongoDBChangeSetEntry("c1-2.txt", FILE_REMOVED);
+        c3.add(e4).add(e5);
+        dao.save(c3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterResourceIds(1);
+        criteria.addFilterCategories(FILE_ADDED, FILE_CHANGED);
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with resource id and category filters",
+            asList(e1, e2, e4), entries);
+    }
+
 //    @Test(enabled = ENABLED)
 //    public void findEntriesWithResourceIdAndStartTimeFilters() throws Exception {
 //        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);

@@ -105,6 +105,7 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         boolean changeSetsFiltered = false;
         boolean entriesFiltered = false;
         boolean filterOnResourceId = false;
+        boolean filterOnCategory = false;
 
         Set<DriftCategory> categories = new TreeSet<DriftCategory>();
 
@@ -115,22 +116,25 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         }
 
         if (criteria.getFilterCategories().length > 0) {
-            query.field("files.category").in(asList(criteria.getFilterCategories()));
-            categories.addAll(asList(criteria.getFilterCategories()));
+            List<DriftCategory> list = asList(criteria.getFilterCategories());
+            query.field("files.category").in(list);
+            entriesFiltered = true;
+            filterOnCategory = true;
+            categories = new TreeSet<DriftCategory>(list);
         }
 
         List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();
 
-        // If the query only filters on change set fields, we do not need to do any
-        // additional filtering since it was already done by the database.
         if (changeSetsFiltered && !entriesFiltered) {
+            // If the query only filters on change set fields, we do not need to do any
+            // additional filtering since it was already done by the database.
             for (MongoDBChangeSet c : query.asList()) {
                 entries.addAll(c.getDrifts());
             }
         } else {
             for (MongoDBChangeSet c : query.asList()) {
                 for (MongoDBChangeSetEntry e : c.getDrifts()) {
-                    if (categories.contains(e.getCategory())) {
+                    if (filterOnCategory && categories.contains(e.getCategory())) {
                         entries.add(e);
                     }
                 }

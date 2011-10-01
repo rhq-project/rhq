@@ -19,7 +19,10 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.dao.BasicDAO;
@@ -31,6 +34,7 @@ import com.mongodb.Mongo;
 import org.bson.types.ObjectId;
 
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 
@@ -91,15 +95,49 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     }
 
     public List<MongoDBChangeSetEntry> findEntries(DriftCriteria criteria) {
-        Query<MongoDBChangeSet> query = createQuery();
-
         if (criteria.getFilterId() != null) {
             String[] ids = criteria.getFilterId().split(":");
             ObjectId changeSetId = new ObjectId(ids[0]);
             return asList(findEntryById(changeSetId, ids[1]));
         }
 
-        return null;
+        Query<MongoDBChangeSet> query = createQuery();
+        boolean changeSetsFiltered = false;
+        boolean entriesFiltered = false;
+        boolean filterOnResourceId = false;
+
+        Set<DriftCategory> categories = new TreeSet<DriftCategory>();
+
+        if (criteria.getFilterResourceIds().length > 0) {
+            query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
+            changeSetsFiltered = true;
+            filterOnResourceId = true;
+        }
+
+        if (criteria.getFilterCategories().length > 0) {
+            query.field("files.category").in(asList(criteria.getFilterCategories()));
+            categories.addAll(asList(criteria.getFilterCategories()));
+        }
+
+        List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();
+
+        // If the query only filters on change set fields, we do not need to do any
+        // additional filtering since it was already done by the database.
+        if (changeSetsFiltered && !entriesFiltered) {
+            for (MongoDBChangeSet c : query.asList()) {
+                entries.addAll(c.getDrifts());
+            }
+        } else {
+            for (MongoDBChangeSet c : query.asList()) {
+                for (MongoDBChangeSetEntry e : c.getDrifts()) {
+                    if (categories.contains(e.getCategory())) {
+                        entries.add(e);
+                    }
+                }
+            }
+        }
+
+        return entries;
     }
 
     public MongoDBChangeSetEntry findEntryById(ObjectId changeSetId, String entryId) {

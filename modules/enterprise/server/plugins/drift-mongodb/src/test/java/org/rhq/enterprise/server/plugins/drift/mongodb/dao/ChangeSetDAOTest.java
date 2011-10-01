@@ -248,32 +248,29 @@ public class ChangeSetDAOTest {
         criteria.addFilterId(e2.getId());
 
         List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
-        assertEquals(entries.size(), 1, "Expected to get back one change set entry");
-        String ignoredProperties = "changeSet";
-        assertPropertiesMatch("Failed to find change set entry with id filter", e2, entries.get(0), ignoredProperties);
+        assertEntriesMatch("Failed to find change set entries with id filter", asList(e2), entries);
     }
 
     @Test(enabled = ENABLED)
-    public void findByDriftCriteriaWithIdFilter() throws Exception {
+    public void findEntriesWithCategoriesFilter() throws Exception {
         MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
-        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
-        c1.add(entry);
-
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-2.txt", FILE_ADDED);
+        c1.add(e1).add(e2);
         dao.save(c1);
 
-        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 2, 1, 1);
-        c2.add(new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED));
-
+        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, 1, 1);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        MongoDBChangeSetEntry e4 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        MongoDBChangeSetEntry e5 = new MongoDBChangeSetEntry("c1-2.txt", FILE_REMOVED);
+        c2.add(e3).add(e4).add(e5);
         dao.save(c2);
 
         GenericDriftCriteria criteria = new GenericDriftCriteria();
-        criteria.addFilterId(entry.getId());
+        criteria.addFilterCategories(FILE_CHANGED, FILE_REMOVED);
 
-        List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
-
-        assertEquals(actual.size(), 1, "Expected to get back only one change set when searching by drift criteria " +
-            "with id filter.");
-        assertChangeSetMatches("Failed to find change set by drift criteria with id filter.", c1, actual.get(0));
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with category filter", asList(e4, e5), entries);
     }
 
     @Test(enabled = ENABLED)
@@ -307,6 +304,44 @@ public class ChangeSetDAOTest {
         assertChangeSetMatches("Failed to find drift entries by drift criteria with start time filter", c2,
             actualChangeSet);
     }
+
+    @Test(enabled = ENABLED)
+    public void findEntriesWithResourceIdFilters() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 1, 2, 1);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c2.add(e2);
+        dao.save(c2);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterResourceIds(1);
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with resource id filter", asList(e1), entries);
+    }
+
+//    @Test(enabled = ENABLED)
+//    public void findEntriesWithResourceIdAndStartTimeFilters() throws Exception {
+//        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+//        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+//        c1.add(e1);
+//        dao.save(c1);
+//
+//        long startTime = System.currentTimeMillis();
+//        Thread.sleep(10);
+//
+//        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, 2, 1);
+//        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+//        c2.add(e2);
+//        dao.save(c2);
+//
+//        GenericDriftCriteria criteria = new GenericDriftCriteria();
+//        criteria.addFilterResourceIds(resourceId);
+//    }
 
     @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithEndTimeFilter() throws Exception {
@@ -386,7 +421,7 @@ public class ChangeSetDAOTest {
     }
 
     private void assertChangeSetsMatch(String msg, List<MongoDBChangeSet> expected, List<MongoDBChangeSet> actual) {
-        org.testng.Assert.assertEquals(actual.size(), expected.size(), "The number of change sets differ: " + msg);
+        assertEquals(actual.size(), expected.size(), "The number of change sets differ: " + msg);
         for (MongoDBChangeSet expectedChangeSet : expected) {
             MongoDBChangeSet actualChangeSet = null;
             for (MongoDBChangeSet changeSet : actual) {
@@ -398,6 +433,12 @@ public class ChangeSetDAOTest {
             assertNotNull(actualChangeSet, msg + ": expected to find change set " + expectedChangeSet);
             assertChangeSetMatches(msg, expectedChangeSet, actualChangeSet);
         }
+    }
+
+    private void assertEntriesMatch(String msg, List<MongoDBChangeSetEntry> expected,
+        List<MongoDBChangeSetEntry> actual) {
+        assertEquals(actual.size(), expected.size(), "The number of entries differ: " + msg);
+        assertCollectionMatchesNoOrder(msg, expected, actual, "changeSet");
     }
 
     /**

@@ -48,17 +48,17 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
     private Criteria carouselCriteria;
 
     public static DriftCarouselMemberView get(String locatorId, ResourceComposite composite,
-        DriftChangeSet driftChangeSet) {
-        //String tableTitle = MSG.view_drift_table_resourceHistory();
+        DriftChangeSet driftChangeSet, Criteria initialCriteria) {
+
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isDrift();
-        return new DriftCarouselMemberView(locatorId, context, driftChangeSet, hasWriteAccess);
+        return new DriftCarouselMemberView(locatorId, context, driftChangeSet, hasWriteAccess, initialCriteria);
     }
 
     public DriftCarouselMemberView(String locatorId, EntityContext context, DriftChangeSet driftChangeSet,
-        boolean hasWriteAccess) {
+        boolean hasWriteAccess, Criteria initialCriteria) {
 
-        super(locatorId, null, context, hasWriteAccess);
+        super(locatorId, null, context, hasWriteAccess, initialCriteria);
 
         this.changeSet = driftChangeSet;
         ((DriftCarouselDataSource) getDataSource()).setChangeSetId(this.changeSet.getId());

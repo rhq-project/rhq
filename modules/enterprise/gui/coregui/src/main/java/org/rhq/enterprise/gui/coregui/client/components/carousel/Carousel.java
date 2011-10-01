@@ -662,7 +662,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.
-    private static void addCriteria(Criteria dest, Criteria src) {
+    protected static void addCriteria(Criteria dest, Criteria src) {
         Map otherMap = src.getValues();
         Set otherKeys = otherMap.keySet();
         for (Iterator i = otherKeys.iterator(); i.hasNext();) {
@@ -1083,7 +1083,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     protected void setCarouselStartFilter(Integer carouselStartFilter) {
         this.carouselStartFilter = carouselStartFilter;
-        this.filterForm.getItem(FILTER_CAROUSEL_START).setValue(carouselStartFilter);
+        this.filterForm.getItem(FILTER_CAROUSEL_START).setValue(String.valueOf(carouselStartFilter));
         this.filterForm.getItem(FILTER_CAROUSEL_START).redraw();
     }
 
@@ -1093,7 +1093,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     protected void setCarouselSizeFilter(Integer carouselSizeFilter) {
         this.carouselSizeFilter = carouselSizeFilter;
-        this.filterForm.getItem(FILTER_CAROUSEL_SIZE).setValue(carouselSizeFilter);
+        this.filterForm.getItem(FILTER_CAROUSEL_SIZE).setValue(String.valueOf(carouselSizeFilter));
         this.filterForm.getItem(FILTER_CAROUSEL_SIZE).redraw();
     }
 

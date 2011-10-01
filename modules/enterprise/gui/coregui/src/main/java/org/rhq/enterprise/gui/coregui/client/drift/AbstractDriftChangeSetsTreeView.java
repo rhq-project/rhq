@@ -43,7 +43,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -102,8 +102,8 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
                 TreeNode eventNode = event.getNode();
 
                 Menu menu = null;
-                if (eventNode instanceof DriftConfigurationTreeNode) {
-                    menu = buildDriftConfigurationTreeNodeContextMenu((DriftConfigurationTreeNode) eventNode);
+                if (eventNode instanceof DriftDefinitionTreeNode) {
+                    menu = buildDriftConfigurationTreeNodeContextMenu((DriftDefinitionTreeNode) eventNode);
                 } else if (eventNode instanceof ChangeSetTreeNode) {
                     menu = buildChangeSetTreeNodeContextMenu((ChangeSetTreeNode) eventNode);
                 } else if (eventNode instanceof DriftTreeNode) {
@@ -182,21 +182,21 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
      * 
      * @param doomedDriftConfig the drift config to remove
      */
-    protected abstract void deleteDriftConfiguration(DriftConfiguration doomedDriftConfig);
+    protected abstract void deleteDriftDefinition(DriftDefinition doomedDriftConfig);
 
     /**
      * Immediately asks for a drift detection scan to be run.
      * 
      * @param driftConfiguration identifies the drift whose detection scan should be initiated.
      */
-    protected abstract void detectDrift(DriftConfiguration driftConfiguration);
+    protected abstract void detectDrift(DriftDefinition driftConfiguration);
 
     /**
      * Builds the right-mouse-click context menu for the given drift configuration node
      * @param node the drift configuration node whose menu is to be displayed
      * @return the context menu to display
      */
-    protected Menu buildDriftConfigurationTreeNodeContextMenu(final DriftConfigurationTreeNode node) {
+    protected Menu buildDriftConfigurationTreeNodeContextMenu(final DriftDefinitionTreeNode node) {
 
         Menu contextMenu = new Menu();
 
@@ -218,8 +218,8 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         deleteItem.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
         deleteItem.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
-                DriftConfiguration driftConfig = node.getDriftConfiguration();
-                deleteDriftConfiguration(driftConfig);
+                DriftDefinition driftConfig = node.getDriftConfiguration();
+                deleteDriftDefinition(driftConfig);
             }
         });
         contextMenu.addItem(deleteItem);
@@ -228,7 +228,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         MenuItem detectNowItem = new MenuItem(MSG.view_drift_button_detectNow());
         detectNowItem.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
-                DriftConfiguration driftConfig = node.getDriftConfiguration();
+                DriftDefinition driftConfig = node.getDriftConfiguration();
                 detectDrift(driftConfig);
             }
         });
@@ -323,10 +323,10 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         return ((TreeNode) node).getTitle();
     }
 
-    static class DriftConfigurationTreeNode extends TreeNode {
+    static class DriftDefinitionTreeNode extends TreeNode {
         public static final String ATTR_DRIFT_CONFIG_OBJECT = "object";
 
-        public DriftConfigurationTreeNode(DriftConfiguration driftConfig) {
+        public DriftDefinitionTreeNode(DriftDefinition driftConfig) {
             setIsFolder(true);
             if (driftConfig.isEnabled()) {
                 setIcon("subsystems/drift/DriftConfig_Folder_16.png");
@@ -339,13 +339,13 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             setAttribute(ATTR_DRIFT_CONFIG_OBJECT, driftConfig);
         }
 
-        public int getDriftConfigurationId() {
+        public int getDriftDefinitionId() {
             String idAttrib = getAttribute("id");
             return Integer.parseInt(idAttrib);
         }
 
-        public DriftConfiguration getDriftConfiguration() {
-            return (DriftConfiguration) getAttributeAsObject(ATTR_DRIFT_CONFIG_OBJECT);
+        public DriftDefinition getDriftConfiguration() {
+            return (DriftDefinition) getAttributeAsObject(ATTR_DRIFT_CONFIG_OBJECT);
         }
 
         @Override
@@ -353,7 +353,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             return super.getName();
         }
 
-        private String buildNodeName(DriftConfiguration driftConfig) {
+        private String buildNodeName(DriftDefinition driftConfig) {
             return driftConfig.getName();
         }
     }
@@ -362,7 +362,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         public ChangeSetTreeNode(DriftChangeSet<?> changeset) {
             setIsFolder(true);
             setShowOpenIcon(true);
-            String parentID = String.valueOf(changeset.getDriftConfigurationId());
+            String parentID = String.valueOf(changeset.getDriftDefinitionId());
             setParentID(parentID);
             setID(parentID + "_" + changeset.getId());
             setName(padWithZeroes(changeset.getVersion())); // we sort on this column, hence we make sure the version # is padded
@@ -405,7 +405,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             setIsFolder(false);
             setIcon(ImageManager.getDriftCategoryIcon(drift.getCategory()));
             DriftChangeSet<?> changeset = drift.getChangeSet();
-            setParentID(String.valueOf(changeset.getDriftConfigurationId()) + "_" + changeset.getId());
+            setParentID(String.valueOf(changeset.getDriftDefinitionId()) + "_" + changeset.getId());
             setID('D' + drift.getId()); // prefix with a 'D' so it doesn't conflict with driftConfig node IDs
             setName(drift.getPath()); // we sort on this column
         }

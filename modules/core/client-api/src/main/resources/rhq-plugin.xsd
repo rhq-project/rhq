@@ -202,8 +202,16 @@
             <xs:annotation>
                <xs:documentation>
                   The default collection interval, in milliseconds. The metric is not necessarily
-                  enabled - see the defaultOn attribute for that. The minimum allowed value is
-                  30000 (30 seconds).
+                  enabled by default - see the defaultOn attribute for that. The minimum allowed
+                  value is 30000 (30 seconds). If unspecified, the default collection interval is
+                  set according to the Resource category, metric data type, and metric display
+                  type, as follows:
+
+                      platform numeric metrics: summary - 1m, detail - 2m
+                      server numeric metrics: summary - 5m, detail - 10m
+                      service numeric metrics: summary - 10m, detail - 20m
+                      traits: summary - 10m, detail - 30m
+                      call-time metrics: 1m
                </xs:documentation>
             </xs:annotation>
             <xs:simpleType>
@@ -561,7 +569,7 @@
                 <xs:complexType>
                     <xs:annotation>
                         <xs:documentation>
-                            The root directory from which snapshots will be generated during drift monitoring.
+                            The root directory from which snapshots will be generated during drift detection.
                             Each base directory's value is obtained from a particular context (e.g. in the
                             resource's plugin configuration or its resource configuration).
                             Within that context, the base directory value is obtained by looking up the named value in the given context.
@@ -744,7 +752,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
-         <xs:element name="drift-configuration" type="rhq:Drift" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="drift-definition" type="rhq:Drift" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:bundle-target" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
       </xs:sequence>

@@ -22,63 +22,71 @@ package org.rhq.core.pc.drift.sync;
 import java.util.List;
 import java.util.Set;
 
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 
 /**
- * A DriftSynchronizer is responsible for sycning {@link DriftConfiguration}s in the
+ * A DriftSynchronizer is responsible for sycning {@link DriftDefinition}s in the
  * server's with those in the local inventory.
  */
 public interface DriftSynchronizer {
 
     /**
-     * Determines which drift configurations for a resource have been deleted on the server
+     * Determines which drift definitions for a resource have been deleted on the server
      * and need to be purged from the local inventory. This method should not make any
-     * changes to the local inventory.
+     * changes to the local inventory. It also handles syncing content with the server. Any
+     * change set content found on the agent and that is not known to be on the server
+     * should be sent to the server.
      *
      * @param resourceId
-     * @param configurationsFromServer A set of drift configurations belonging to the
-     * resource with the specified id. The set uses a {@link org.rhq.core.domain.drift.DriftConfigurationComparator DriftConfigurationComparator}
-     * with the compare mode set to {@link org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode#BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS}.
-     * @return A list of drift configurations that need to be purged from the local inventory.
+     * @param definitionsFromServer A set of drift definitions belonging to the
+     * resource with the specified id. The set uses a {@link org.rhq.core.domain.drift.DriftDefinitionComparator driftDefinitionComparator}
+     * with the compare mode set to {@link org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode#BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS}.
+     * @return A list of drift definitions that need to be purged from the local inventory.
      */
-    List<DriftConfiguration> getDeletedConfigurations(int resourceId,
-        Set<DriftConfiguration> configurationsFromServer);
-
+    List<DriftDefinition> getDeletedDefinitions(int resourceId, Set<DriftDefinition> definitionsFromServer);
 
     /**
-     * Removes the drift configurations from local inventory. Implementations are responsible
+     * Removes the drift definitions from local inventory. Implementations are responsible
      * for deciding how that is to be done. For example, if the plugin container is not
-     * fully initialized, then purging will involve removing configurations from the
+     * fully initialized, then purging will involve removing definitions from the
      * {@link org.rhq.core.pc.inventory.ResourceContainer ResourceContainer}. But if the
      * plugin container is initialized, then drift detection will have to be unscheduled.
      *
      * @param resourceId
-     * @param configurations The drift configurations to purge from local inventory
+     * @param definitions The drift definitions to purge from local inventory
      */
-    void purgeFromLocalInventory(int resourceId, List<DriftConfiguration> configurations);
+    void purgeFromLocalInventory(int resourceId, List<DriftDefinition> definitions);
 
     /**
-     * Determines which drift configurations for a resource have been added on the server
+     * Determines which drift definitions for a resource have been added on the server
      * and need to be added to the local inventory. This method should not make any changes
      * to the local inventory.
      *
      * @param resourceId
-     * @param configurationsFromServer A set of drift configurations belonging to the
-     * resource with the specified id. The set uses a {@link org.rhq.core.domain.drift.DriftConfigurationComparator DriftConfigurationComparator}
-     * with the compare mode set to {@link org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode#BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS}.
-     * @return A list of drift configurations that need to be purged from the local inventory.
+     * @param definitionsFromServer A set of drift definitions belonging to the
+     * resource with the specified id. The set uses a {@link org.rhq.core.domain.drift.DriftDefinitionComparator driftDefinitionComparator}
+     * with the compare mode set to {@link org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode#BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS}.
+     * @return A list of drift definitions that need to be purged from the local inventory.
      */
-    List<DriftConfiguration> getAddedConfigurations(int resourceId, Set<DriftConfiguration> configurationsFromServer);
+    List<DriftDefinition> getAddedDefinitions(int resourceId, Set<DriftDefinition> definitionsFromServer);
 
     /**
-     * Adds the drift configurations to the local inventory. Implementations are responsible
+     * Adds the drift definitions to the local inventory. Implementations are responsible
      * for deciding how that is to be done. For example, if the plugin container is not
-     * fully initialized, then adding a configuration will involve adding it to the
+     * fully initialized, then adding a definition will involve adding it to the
      * {@link org.rhq.core.pc.inventory.ResourceContainer ResourceContainer}. But if the
      * plugin container is initialized, drift detection will have to be scheduled.
      *
      * @param resourceId
-     * @param configurations The drift configurations to add to the local inventory.
+     * @param definitions The drift definitions to add to the local inventory.
      */
-    void addToLocalInventory(int resourceId, List<DriftConfiguration> configurations);
+    void addToLocalInventory(int resourceId, List<DriftDefinition> definitions);
+
+    /**
+     * This is an optional operation as it can only be performed when
+     * {@link org.rhq.core.pc.drift.DriftManager DriftManager} is fully initialized.
+     * Implementations are responsible for detecting any change set content that may not be
+     * on the server and then sending that content to the server.
+     */
+    void syncChangeSetContent();
 }

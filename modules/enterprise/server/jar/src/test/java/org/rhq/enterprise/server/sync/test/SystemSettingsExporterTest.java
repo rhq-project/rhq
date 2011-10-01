@@ -49,6 +49,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
+import org.rhq.enterprise.server.sync.SynchronizationConstants;
 import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.SystemSettingsSynchronizer;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -105,9 +106,9 @@ public class SystemSettingsExporterTest extends JMockTest {
 
         Element root = doc.getDocumentElement();
 
-        Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
+        Element entities = (Element) getFirstDirectChildByTagName(root, SynchronizationConstants.ENTITIES_EXPORT_ELEMENT);
 
-        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), SystemSettingsSynchronizer.class.getName(),
+        assertEquals(entities.getAttribute(SynchronizationConstants.ID_ATTRIBUTE), SystemSettingsSynchronizer.class.getName(),
             "Unexpected id of the entities element.");
 
         NodeList systemSettings = entities.getElementsByTagName("systemSettings");

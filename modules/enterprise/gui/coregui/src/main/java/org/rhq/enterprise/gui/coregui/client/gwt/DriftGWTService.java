@@ -22,13 +22,13 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
@@ -42,24 +42,23 @@ public interface DriftGWTService extends RemoteService {
     DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) throws RuntimeException;
 
     /**
-     * Delete all named drift configurations for the specified context if the current user has permission to do so (i.e. either
+     * Delete all named drift definitions for the specified context if the current user has permission to do so (i.e. either
      * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
      *
      * @param entityContext the context for deletion
-     * @param driftConfigNames the names of the configs to delete
-     * @return the number of drift configs deleted
+     * @param driftDefNames the names of the definitions to delete
+     * @return the number of drift definisions deleted
      */
-    int deleteDriftConfigurationsByContext(EntityContext entityContext, String[] driftConfigNames)
-        throws RuntimeException;
+    int deleteDriftDefinitionsByContext(EntityContext entityContext, String[] driftDefNames) throws RuntimeException;
 
     /**
-     * One time on-demand request to detect drift on the specified entities, using the supplied config.
+     * One time on-demand request to detect drift on the specified entities, using the supplied def.
      * 
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      * @throws RuntimeException
      */
-    void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
+    void detectDrift(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException;
 
     /**
      * Find all drift changesets that match the specified criteria.
@@ -74,14 +73,13 @@ public interface DriftGWTService extends RemoteService {
     PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria) throws RuntimeException;
 
     /**
-     * Find all drift configurations that match the specified criteria.
+     * Find all drift definitions that match the specified criteria.
      *
      * @param criteria the criteria
      *
-     * @return all drift configurations that matches the specified criteria
+     * @return all drift definitions that matches the specified criteria
      */
-    PageList<DriftConfiguration> findDriftConfigurationsByCriteria(DriftConfigurationCriteria criteria)
-        throws RuntimeException;
+    PageList<DriftDefinition> findDriftDefinitionsByCriteria(DriftDefinitionCriteria criteria) throws RuntimeException;
 
     /**
      * Find all drifts that match the specified criteria.
@@ -93,28 +91,28 @@ public interface DriftGWTService extends RemoteService {
     PageList<? extends Drift<?, ?>> findDriftsByCriteria(GenericDriftCriteria criteria) throws RuntimeException;
 
     /**
-     * Get the specified drift configuration.
+     * Get the specified drift definition.
      * 
-     * @param driftConfigId
+     * @param driftDefId
      * @return
      * @throws RuntimeException
      */
-    DriftConfiguration getDriftConfiguration(int driftConfigId) throws RuntimeException;
+    DriftDefinition getDriftDefinition(int driftDefId) throws RuntimeException;
 
     /**
-     * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
+     * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
      * 
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      */
-    void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
+    void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException;
 
     String getDriftFileBits(String hash) throws RuntimeException;
 
-    FileDiffReport generateUnifiedDiff(Drift drift) throws RuntimeException;
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException;
 
-    boolean isBinaryFile(Drift drift) throws RuntimeException;
+    boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException;
 
     DriftDetails getDriftDetails(String driftId) throws RuntimeException;
 

@@ -32,12 +32,14 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -52,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftConfigurationDataSource extends RPCDataSource<DriftConfiguration, DriftConfigurationCriteria> {
+public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, DriftDefinitionCriteria> {
 
     public static final String ATTR_ENTITY = "object";
     public static final String ATTR_ID = "id";
@@ -61,6 +63,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_ENABLED = "enabled";
+    public static final String ATTR_EDIT = "edit";
 
     public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
     public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
@@ -68,11 +71,11 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private EntityContext entityContext;
 
-    public DriftConfigurationDataSource() {
+    public DriftDefinitionDataSource() {
         this(EntityContext.forSubsystemView());
     }
 
-    public DriftConfigurationDataSource(EntityContext context) {
+    public DriftDefinitionDataSource(EntityContext context) {
         this.entityContext = context;
         addDataSourceFields();
     }
@@ -106,6 +109,24 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         baseDirField.setCanSort(false);
         fields.add(baseDirField);
 
+        ListGridField editField = new ListGridField(ATTR_EDIT, "Edit?"); //TODO I18N
+        editField.setType(ListGridFieldType.IMAGE);
+        editField.setAlign(Alignment.CENTER);
+        editField.addRecordClickHandler(new RecordClickHandler() {
+
+            public void onRecordClick(RecordClickEvent event) {
+                switch (entityContext.getType()) {
+                case Resource:
+                    CoreGUI.goToView(LinkManager.getDriftDefinitionEditLink(entityContext.getResourceId(), event
+                        .getRecord().getAttributeAsInt(ATTR_ID)));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Entity Type not supported");
+                }
+            }
+        });
+        fields.add(editField);
+
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
@@ -131,6 +152,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
             driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
             baseDirField.setWidth("*");
+            editField.setWidth(70);
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
@@ -139,6 +161,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
             driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
             baseDirField.setWidth("*");
+            editField.setWidth(70);
         }
 
         return fields;
@@ -146,29 +169,28 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response,
-        final DriftConfigurationCriteria criteria) {
-        this.driftService.findDriftConfigurationsByCriteria(criteria,
-            new AsyncCallback<PageList<DriftConfiguration>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
-                    response.setStatus(RPCResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
+        final DriftDefinitionCriteria criteria) {
+        this.driftService.findDriftDefinitionsByCriteria(criteria, new AsyncCallback<PageList<DriftDefinition>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                response.setStatus(RPCResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
-                public void onSuccess(PageList<DriftConfiguration> result) {
-                    dataRetrieved(result, response, request);
-                }
-            });
+            public void onSuccess(PageList<DriftDefinition> result) {
+                dataRetrieved(result, response, request);
+            }
+        });
     }
 
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<DriftConfiguration> result, final DSResponse response,
+    protected void dataRetrieved(final PageList<DriftDefinition> result, final DSResponse response,
         final DSRequest request) {
         switch (entityContext.type) {
 
-        // no need to disambiguate, the drift configs are for a single resource
+        // no need to disambiguate, the drift defs are for a single resource
         case Resource:
             response.setData(buildRecords(result));
             // for paging to work we have to specify size of full result set
@@ -194,15 +216,15 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
      * 
      * @return should not exceed result.size(). 
      */
-    protected int getTotalRows(final Collection<DriftConfiguration> result, final DSResponse response,
+    protected int getTotalRows(final Collection<DriftDefinition> result, final DSResponse response,
         final DSRequest request) {
         return result.size();
     }
 
     @Override
-    protected DriftConfigurationCriteria getFetchCriteria(DSRequest request) {
+    protected DriftDefinitionCriteria getFetchCriteria(DSRequest request) {
 
-        DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         switch (entityContext.getType()) {
         case Resource:
             criteria.addFilterResourceIds(entityContext.getResourceId());
@@ -233,16 +255,16 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     */
 
     @Override
-    public DriftConfiguration copyValues(Record from) {
-        return (DriftConfiguration) from.getAttributeAsObject(ATTR_ENTITY);
+    public DriftDefinition copyValues(Record from) {
+        return (DriftDefinition) from.getAttributeAsObject(ATTR_ENTITY);
     }
 
     @Override
-    public ListGridRecord copyValues(DriftConfiguration from) {
+    public ListGridRecord copyValues(DriftDefinition from) {
         return convert(from);
     }
 
-    public static ListGridRecord convert(DriftConfiguration from) {
+    public static ListGridRecord convert(DriftDefinition from) {
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(ATTR_ENTITY, from);
@@ -253,6 +275,8 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
         record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
+        // fixed value, just the edit icon
+        record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
 
         // // for ancestry handling       
         // Resource resource = ...

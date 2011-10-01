@@ -488,16 +488,20 @@ public class JnpConfig {
                     + "jboss-system.jar");
                 if (systemJar.exists()) {
                     JarFile j = new JarFile(systemJar);
-                    JarEntry entry = j.getJarEntry("dtd/" + dtdName);
-                    if (entry == null) {
-                        entry = j.getJarEntry("org/jboss/metadata/" + dtdName);
-                    }
+                    try {
+                        JarEntry entry = j.getJarEntry("dtd/" + dtdName);
+                        if (entry == null) {
+                            entry = j.getJarEntry("org/jboss/metadata/" + dtdName);
+                        }
 
-                    if (entry != null) {
-                        if (log.isDebugEnabled())
-                            log.debug("Found DTD locally: " + entry.getName());
+                        if (entry != null) {
+                            if (log.isDebugEnabled())
+                                log.debug("Found DTD locally: " + entry.getName());
 
-                        return new InputSource(j.getInputStream(entry));
+                            return new InputSource(j.getInputStream(entry));
+                        }
+                    } finally {
+                        j.close();
                     }
                 }
             }

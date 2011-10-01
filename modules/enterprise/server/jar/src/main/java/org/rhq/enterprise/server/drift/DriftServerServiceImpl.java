@@ -19,6 +19,9 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,14 +32,12 @@ import java.util.Set;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+import org.rhq.core.domain.util.PageOrdering;
 
 public class DriftServerServiceImpl implements DriftServerService {
     @Override
@@ -50,30 +51,31 @@ public class DriftServerServiceImpl implements DriftServerService {
     }
 
     @Override
-    public void sendFilesZip(int resourceId, long zipSize, InputStream zipStream) {
+    public void sendFilesZip(int resourceId, String driftDefinitionName, String token, long zipSize,
+        InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addFiles(resourceId, zipSize, zipStream);
+            driftManager.addFiles(resourceId, driftDefinitionName, token, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds) {
-        DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
+    public Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds) {
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterResourceIds(resourceIds.toArray(new Integer[resourceIds.size()]));
         criteria.fetchConfiguration(true);
 
         Subject overlord = getSubjectManager().getOverlord();
-        PageList<DriftConfiguration> configs = getDriftManager().findDriftConfigurationsByCriteria(overlord, criteria);
+        PageList<DriftDefinition> definitions = getDriftManager().findDriftDefinitionsByCriteria(overlord, criteria);
 
-        Map<Integer, List<DriftConfiguration>> map = new HashMap<Integer, List<DriftConfiguration>>();
+        Map<Integer, List<DriftDefinition>> map = new HashMap<Integer, List<DriftDefinition>>();
         for (Integer resourceId : resourceIds) {
-            map.put(resourceId, new ArrayList<DriftConfiguration>());
+            map.put(resourceId, new ArrayList<DriftDefinition>());
         }
-        for (DriftConfiguration c : configs) {
-            List<DriftConfiguration> list = map.get(c.getResource().getId());
+        for (DriftDefinition c : definitions) {
+            List<DriftDefinition> list = map.get(c.getResource().getId());
             list.add(c);
             map.put(c.getResource().getId(), list);
         }
@@ -82,9 +84,10 @@ public class DriftServerServiceImpl implements DriftServerService {
     }
 
     @Override
-    public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
+    public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterDriftConfigurationId(driftConfigurationId);
+        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+        criteria.addSortVersion(PageOrdering.ASC);
 
         Subject overlord = getSubjectManager().getOverlord();
 

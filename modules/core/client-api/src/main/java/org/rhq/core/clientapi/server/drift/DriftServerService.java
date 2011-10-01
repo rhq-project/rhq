@@ -25,10 +25,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 
 /**
+ * This class defines the drift server API that the agent uses for things like sending
+ * change set reports, sending change set content, and performing inventory sync.
+ *
  * @author Jay Shaughnessy
  * @author John Sanda
  */
@@ -37,29 +40,84 @@ public interface DriftServerService {
     // note that this guaranteed delivery is weak because most likely the stream will be dead if it
     // doesn't work the first time.
     /**
-     * The ChangeSet file is of the format described in ChangeSetReader.
+     * The agent invokes this method to send a change set in a zip file. The agent will call
+     * this method to report the initial change set when starting drift detection and
+     * subsequently whenever drift is detected. The format of the change set report is
+     * described in {@link org.rhq.common.drift.ChangeSetWriter ChangeSetWriter}. This
+     * method starts the following work flow:
+     * <ul>
+     *   <li>
+     *     A request is sent to JMS queue so that the change set can be processed
+     *     asynchronously allowing control to return back to the agent as quickly as
+     *     possible. It also allows the server to be able to more quickly service other
+     *     agent and/or web requests.
+     *   </li>
+     *   <li>The server streams and persists the change set.</li>
+     *   <li>
+     *     The server sends an acknowledgement to the agent to let it know that the change
+     *     set was successfully persisted. The agent will refrain from sending any more
+     *     change sets until this step has completed.
+     *   </li>
+     *   <li>
+     *     The server sends a request to the agent for any content referenced in the change
+     *     set that is not yet in the database.
+     *   </li>
+     * </ul>
+     *
+     * Note that because the change set bits are streamed out of band, if any errors occur
+     * during the streaming, exception will not be propagated back up the call stack on the
+     * agent side in the thread that initiated the call. This is the reason for the
+     * acknowledgement step.
      * 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream A RemoteStream
+     * @param resourceId The id of the resource to which this change set belongs. This
+     * parameter may obsolete since the resource id is specified in the change set headers.
+     * @param zipSize The total number of bytes to be streamed
+     * @param zipStream A RemoteInputStream
      */
-    @Asynchronous(guaranteedDelivery = true)
+    // TODO is the resourceId param needed since it is also included in the change set headers?
     void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream);
 
     // note that this guaranteed delivery is weak because most likely the stream will be dead if it
     // doesn't work the first time.
     /**
-     * The name of each zip entry should be the sha256. The filenames and paths are not relevant as this
-     * is only a store of content and the content is identified ony by the sha.
+     * The agent invokes this method to send change set content to the server. The content
+     * are files referenced in a change set that the agent previously sent to the server.
+     * The zip file is assumed to be flat, that is it contains only files, no directories.
+     * The name of each file should be the SHA hash of the file contents. File names and
+     * paths are not relevant as the server only stores content which is identified by the
+     * SHA hashes. This method starts the following work flow:
+     * <ul>
+     *   <li>
+     *     A request is sent to a JMS queue so that the work can be performed asynchronously
+     *     allowing control to return back to the agent as quickly as possible. It also
+     *     allows the server to more quickly service other agent and/or web requests.
+     *   </li>
+     *   <li>The server streams and persists each file.</li>
+     *   <li>
+     *     The server sends an acknowledgement to the agent to let it know that the content
+     *     has been successfully persisted.
+     *   </li>
+     * </ul>
+     *
+     * Note that that the guaranteed delivery on this method is weak due to the streaming
+     * being done asynchronously. If the first attempt at streaming fails the stream will
+     * likey be dead and subsequent retries will fail as well. Because the streaming is
+     * done out of band, any network IO errors will not be propagated back up the call stack
+     * on the agent side in the thread that initiated this method call. This is the reaosn
+     * for the acknowledgement step.
      * 
-     * @param resourceId
-     * @param zipSize
+     * @param resourceId The id of the resource to which the change set content belongs
+     * @param driftDefName The drift definition name. This is needed for the
+     * acknowledgement step.
+     * @param token A token needed for the acknowledgement step that allows the agent to
+     * uniquely identify the zip file that was sent.
+     * @param zipSize The total number of bytes to be streamed.
      * @param zipStream A RemoteStream
      */
     @Asynchronous(guaranteedDelivery = true)
-    void sendFilesZip(int resourceId, long zipSize, InputStream zipStream);
+    void sendFilesZip(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream);
 
-    Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds);
+    Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds);
 
-    DriftSnapshot getCurrentSnapshot(int driftConfigurationId);
+    DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
 }

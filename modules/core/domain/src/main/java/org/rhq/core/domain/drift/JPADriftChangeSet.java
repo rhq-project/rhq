@@ -57,13 +57,13 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( { @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
     + "DELETE FROM JPADriftChangeSet dcs " //
     + " WHERE dcs.resource.id IN ( :resourceIds )"), //
-    @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE, query = "" //
+    @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_DRIFTDEF_RESOURCE, query = "" //
         + "DELETE FROM JPADriftChangeSet dcs " //
         + " WHERE dcs.resource.id = :resourceId " //
-        + "   AND dcs.driftConfiguration.id IN " //
+        + "   AND dcs.driftDefinition.id IN " //
         + "       (SELECT dc.id " //
-        + "          FROM DriftConfiguration dc " //
-        + "         WHERE dc.resource.id = :resourceId AND dc.name = :driftConfigurationName)" //
+        + "          FROM DriftDefinition dc " //
+        + "         WHERE dc.resource.id = :resourceId AND dc.name = :driftDefinitionName)" //
     ) })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
@@ -71,7 +71,7 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "JPADriftChangeSet.deleteByResources";
-    public static final String QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE = "JPADriftChangeSet.deleteByDriftConfigResource";
+    public static final String QUERY_DELETE_BY_DRIFTDEF_RESOURCE = "JPADriftChangeSet.deleteByDriftDefResource";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -93,9 +93,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     // @ManyToOne(optional = false)
     // TODO: remove this eager load, the drift tree build should be written to not need this
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    private DriftConfiguration driftConfiguration;
+    private DriftDefinition driftDefinition;
 
-    // Note, this is mode at the time of the changeset processing. We cant use driftConfiguration.mode because
+    // Note, this is mode at the time of the changeset processing. We cant use driftDefinition.mode because
     // that is the "live" setting.
     @Column(name = "DRIFT_CONFIG_MODE", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -112,12 +112,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     }
 
     public JPADriftChangeSet(Resource resource, int version, DriftChangeSetCategory category,
-        DriftConfiguration driftConfiguration) {
+        DriftDefinition driftDefinition) {
         this.resource = resource;
         this.version = version;
         this.category = category;
-        this.driftConfiguration = driftConfiguration;
-        this.driftHandlingMode = driftConfiguration.getDriftHandlingMode();
+        this.driftDefinition = driftDefinition;
+        this.driftHandlingMode = driftDefinition.getDriftHandlingMode();
     }
 
     @Override
@@ -173,12 +173,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         this.resource = resource;
     }
 
-    public DriftConfiguration getDriftConfiguration() {
-        return driftConfiguration;
+    public DriftDefinition getDriftDefinition() {
+        return driftDefinition;
     }
 
-    public void setDriftConfiguration(DriftConfiguration driftConfiguration) {
-        this.driftConfiguration = driftConfiguration;
+    public void setDriftDefinition(DriftDefinition driftDefinition) {
+        this.driftDefinition = driftDefinition;
     }
 
     public DriftHandlingMode getDriftHandlingMode() {
@@ -190,13 +190,13 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     }
 
     @Override
-    public int getDriftConfigurationId() {
-        return this.driftConfiguration.getId();
+    public int getDriftDefinitionId() {
+        return this.driftDefinition.getId();
     }
 
     @Override
-    public void setDriftConfigurationId(int id) {
-        this.driftConfiguration.setId(id);
+    public void setDriftDefinitionId(int id) {
+        this.driftDefinition.setId(id);
     }
 
     @Override

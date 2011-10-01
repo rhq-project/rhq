@@ -108,7 +108,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     private LocatableVLayout contents;
 
-    private HTMLFlow title;
+    private HTMLFlow titleCanvas;
 
     private HLayout titleLayout;
     private Canvas titleComponent;
@@ -124,7 +124,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showFooterRefresh = true;
     private boolean showFilterForm = true;
 
-    private String tableTitle;
+    private String titleString;
     private Criteria initialCriteria;
     private boolean initialCriteriaFixed = true;
     private SortSpecifier[] sortSpecifiers;
@@ -186,7 +186,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setHeight100();
         setOverflow(Overflow.HIDDEN);
 
-        this.tableTitle = tableTitle;
+        this.titleString = tableTitle;
         this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
@@ -296,8 +296,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
 
             // Title
-            this.title = new HTMLFlow();
-            setTableTitle(this.tableTitle);
+            this.titleCanvas = new HTMLFlow();
+            updateTitleCanvas(this.titleString);
 
             if (showHeader) {
                 titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
@@ -413,7 +413,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             titleLayout.addMember(img);
         }
 
-        titleLayout.addMember(title);
+        titleLayout.addMember(titleCanvas);
 
         if (titleComponent != null) {
             titleLayout.addMember(new LayoutSpacer());
@@ -530,7 +530,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         refreshTableInfo();
     }
 
-    private void disableAllFooterControls() {
+    public void disableAllFooterControls() {
         for (TableActionInfo tableAction : tableActions) {
             tableAction.actionCanvas.disable();
         }
@@ -568,15 +568,49 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     }
 
-    public String getTitle() {
-        return this.tableTitle;
+    public String getTitleString() {
+        return this.titleString;
     }
 
-    public void setTitle(String title) {
-        this.tableTitle = title;
-        if (this.title != null) {
-            setTableTitle(title);
+    /**
+     * Set the Table's title string. This will subsequently call {@link #updateTitleCanvas(String)}.
+     * @param titleString
+     */
+    public void setTitleString(String titleString) {
+        this.titleString = titleString;
+        if (this.titleCanvas != null) {
+            updateTitleCanvas(titleString);
         }
+    }
+
+    public Canvas getTitleCanvas() {
+        return this.titleCanvas;
+    }
+
+    /**
+     * To set the Table's title, call {@link #setTitleString(String)}. This is primarily declared for purposes of
+     * override.
+     * @param titleString
+     */
+    public void updateTitleCanvas(String titleString) {
+        if (titleString == null) {
+            titleString = "";
+        }
+        if (titleString.length() > 0) {
+            titleCanvas.setWidth100();
+            titleCanvas.setHeight(35);
+            titleCanvas.setContents(titleString);
+            titleCanvas.setPadding(4);
+            titleCanvas.setStyleName("HeaderLabel");
+        } else {
+            titleCanvas.setWidth100();
+            titleCanvas.setHeight(0);
+            titleCanvas.setContents(null);
+            titleCanvas.setPadding(0);
+            titleCanvas.setStyleName("normal");
+        }
+
+        titleCanvas.markForRedraw();
     }
 
     /**
@@ -613,6 +647,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
+    }
+
+    protected Criteria getInitialCriteria() {
+        return initialCriteria;
+    }
+
+    /**
+     * Can be called in constructor to reset initialCriteria.
+     * @param initialCriteria
+     */
+    protected void setInitialCriteria(Criteria initialCriteria) {
+        this.initialCriteria = initialCriteria;
     }
 
     protected boolean isInitialCriteriaFixed() {
@@ -691,27 +737,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 dest.setAttribute(field, src.getAttributeAsObject(field));
             }
         }
-    }
-
-    public void setTableTitle(String titleString) {
-        if (titleString == null) {
-            titleString = "";
-        }
-        if (titleString.length() > 0) {
-            title.setWidth100();
-            title.setHeight(35);
-            title.setContents(titleString);
-            title.setPadding(4);
-            title.setStyleName("HeaderLabel");
-        } else {
-            title.setWidth100();
-            title.setHeight(0);
-            title.setContents(null);
-            title.setPadding(0);
-            title.setStyleName("normal");
-        }
-
-        title.markForRedraw();
     }
 
     public DS getDataSource() {

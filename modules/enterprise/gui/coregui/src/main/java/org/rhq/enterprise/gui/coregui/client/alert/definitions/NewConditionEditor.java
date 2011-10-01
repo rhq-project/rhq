@@ -101,7 +101,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
-    private static final String DRIFT_CONFIGNAME_REGEX_ITEMNAME = "driftConfigNameRegex";
+    private static final String DRIFT_DEFNAME_REGEX_ITEMNAME = "driftDefNameRegex";
     private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
     private static final String RANGE_METRIC_ITEMNAME = "rangeMetric";
     private static final String RANGE_COMPARATOR_ITEMNAME = "rangeComparator";
@@ -133,8 +133,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
         this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
-        this.supportsDrift = (rtype.getDriftConfigurationTemplates() != null && rtype.getDriftConfigurationTemplates()
-            .size() > 0);
+        this.supportsDrift = (rtype.getDriftDefinitionTemplates() != null && rtype.getDriftDefinitionTemplates().size() > 0);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {
@@ -428,7 +427,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             }
 
             case DRIFT: {
-                newCondition.setName(getValueAsString(DRIFT_CONFIGNAME_REGEX_ITEMNAME));
+                newCondition.setName(getValueAsString(DRIFT_DEFNAME_REGEX_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
                 newCondition.setOption(getValueAsString(DRIFT_PATHNAME_REGEX_ITEMNAME));
@@ -869,14 +868,14 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("driftHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        TextItem driftConfigNameRegex = new TextItem(DRIFT_CONFIGNAME_REGEX_ITEMNAME, MSG
+        TextItem driftDefNameRegex = new TextItem(DRIFT_DEFNAME_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_drift_configname_regex());
-        driftConfigNameRegex.setRequired(false);
-        driftConfigNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
-        driftConfigNameRegex.setHoverWidth(200);
-        driftConfigNameRegex.setWrapTitle(false);
-        driftConfigNameRegex.setShowIfCondition(ifFunc);
-        formItems.add(driftConfigNameRegex);
+        driftDefNameRegex.setRequired(false);
+        driftDefNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
+        driftDefNameRegex.setHoverWidth(200);
+        driftDefNameRegex.setWrapTitle(false);
+        driftDefNameRegex.setShowIfCondition(ifFunc);
+        formItems.add(driftDefNameRegex);
 
         TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_drift_pathname_regex());

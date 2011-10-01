@@ -35,39 +35,40 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftAddConfigWizard;
+import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftAddDefinitionWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * A view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftConfiguration}s, along with the
- * ability to filter (maybe) those drift configs, sort those drift configs, double-click a row to view/edit the
- * drift config, and perform various actionns: add/delete, etc.
- * This view full respects the user's authorization, and will not allow actions on the drifts unless the user is
- * either the inventory manager or has MANAGE_DRIFT permission on every resource corresponding to the drift configs
- * being operated on.
+ * A list view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftDefinition}s. It has offers various
+ * options on the list like filtering (maybe) and sorting, add new/delete. Double-click drills down to the carousel view for
+ * inspecting drift for the definition. Also, allows an edit view for the def's underlying Config. This view full respects 
+ * the user's authorization, and will not allow actions on the drift defs unless the user is either the inventory 
+ * manager or has MANAGE_DRIFT permission on every resource corresponding to the drift defs being operated on.
  *
  * @author Jay Shaughnessy
  */
-public class DriftConfigurationView extends TableSection<DriftConfigurationDataSource> {
+public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource> {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("DriftDefs", MSG.common_title_definitions());
 
-    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftConfigurationDataSource.ATTR_NAME,
+    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftDefinitionDataSource.ATTR_NAME,
         SortDirection.ASCENDING);
 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     private EntityContext context;
     private boolean hasWriteAccess;
-    private DriftConfigurationDataSource dataSource;
+    private DriftDefinitionDataSource dataSource;
+    private boolean useCarouselDetailsView;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -81,19 +82,19 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     // for subsystem views
-    public DriftConfigurationView(String locatorId) {
+    public DriftDefinitionsView(String locatorId) {
         this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
-    public DriftConfigurationView(String locatorId, EntityContext entityContext) {
+    public DriftDefinitionsView(String locatorId, EntityContext entityContext) {
         this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
     }
 
-    public DriftConfigurationView(String locatorId, String tableTitle, EntityContext entityContext) {
+    public DriftDefinitionsView(String locatorId, String tableTitle, EntityContext entityContext) {
         this(locatorId, tableTitle, entityContext, false);
     }
 
-    protected DriftConfigurationView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
+    protected DriftDefinitionsView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
@@ -103,9 +104,9 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     @Override
-    public DriftConfigurationDataSource getDataSource() {
+    public DriftDefinitionDataSource getDataSource() {
         if (null == this.dataSource) {
-            this.dataSource = new DriftConfigurationDataSource(context);
+            this.dataSource = new DriftDefinitionDataSource(context);
         }
         return this.dataSource;
     }
@@ -140,14 +141,14 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_configConfirm(),
+        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_defConfirm(),
             new AbstractTableAction(deleteEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     delete(selection);
                 }
             });
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_configConfirmAll(),
+        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_defConfirmAll(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
@@ -169,42 +170,42 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     private void add() {
-        DriftAddConfigWizard.showWizard(context, this);
+        DriftAddDefinitionWizard.showWizard(context, this);
         // we can refresh the table buttons immediately since the wizard is a dialog, the
         // user can't access enabled buttons anyway.
-        DriftConfigurationView.this.refreshTableInfo();
+        DriftDefinitionsView.this.refreshTableInfo();
     }
 
     private void delete(ListGridRecord[] records) {
-        final String[] driftConfigNames = new String[records.length];
+        final String[] driftDefNames = new String[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            String driftConfigName = record.getAttribute(DriftConfigurationDataSource.ATTR_NAME);
-            driftConfigNames[i] = driftConfigName;
+            String driftDefName = record.getAttribute(DriftDefinitionDataSource.ATTR_NAME);
+            driftDefNames[i] = driftDefName;
         }
 
-        deleteDriftConfigurationsByName(driftConfigNames);
+        deleteDriftDefinitionsByName(driftDefNames);
     }
 
     private void deleteAll() {
         final RecordList records = getListGrid().getDataAsRecordList();
         final int numRecords = records.getLength();
-        final String[] driftConfigNames = new String[numRecords];
+        final String[] driftDefNames = new String[numRecords];
         for (int i = 0; i < numRecords; i++) {
             Record record = records.get(i);
-            String driftConfigName = record.getAttribute(DriftConfigurationDataSource.ATTR_NAME);
-            driftConfigNames[i] = driftConfigName;
+            String driftDefName = record.getAttribute(DriftDefinitionDataSource.ATTR_NAME);
+            driftDefNames[i] = driftDefName;
         }
 
-        deleteDriftConfigurationsByName(driftConfigNames);
+        deleteDriftDefinitionsByName(driftDefNames);
     }
 
-    private void deleteDriftConfigurationsByName(final String[] driftConfigNames) {
-        GWTServiceLookup.getDriftService().deleteDriftConfigurationsByContext(context, driftConfigNames,
+    private void deleteDriftDefinitionsByName(final String[] driftDefNames) {
+        GWTServiceLookup.getDriftService().deleteDriftDefinitionsByContext(context, driftDefNames,
             new AsyncCallback<Integer>() {
                 public void onSuccess(Integer resultCount) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_drift_success_deleteConfigs(String.valueOf(resultCount)),
+                        new Message(MSG.view_drift_success_deleteDefs(String.valueOf(resultCount)),
                             Message.Severity.Info));
                     refresh();
                 }
@@ -217,9 +218,9 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
 
     private void detectDrift(ListGridRecord[] records) {
         // we will only ever have a single record selected, hence why we can access the [0] item
-        DriftConfiguration driftConfig = (DriftConfiguration) records[0]
-            .getAttributeAsObject(DriftConfigurationDataSource.ATTR_ENTITY);
-        GWTServiceLookup.getDriftService().detectDrift(context, driftConfig, new AsyncCallback<Void>() {
+        DriftDefinition driftDef = (DriftDefinition) records[0]
+            .getAttributeAsObject(DriftDefinitionDataSource.ATTR_ENTITY);
+        GWTServiceLookup.getDriftService().detectDrift(context, driftDef, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_drift_success_detectNow(), Message.Severity.Info));
@@ -233,8 +234,23 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     @Override
-    public Canvas getDetailsView(Integer driftConfigId) {
-        return new DriftConfigurationEditView(extendLocatorId("ConfigEdit"), context, driftConfigId, hasWriteAccess);
+    public void renderView(ViewPath viewPath) {
+        // we have two detail views for drift defs, the config editor and the carousel. figure out which one we're
+        // dealing with. The default is the carousel, anything further in the path we assume to be /Edit 
+        if (!viewPath.isEnd()) {
+            this.useCarouselDetailsView = viewPath.isNextEnd();
+        }
+
+        super.renderView(viewPath);
+    }
+
+    @Override
+    public Canvas getDetailsView(Integer driftDefId) {
+        if (this.useCarouselDetailsView) {
+            return new DriftCarouselView(extendLocatorId("Carousel"), context, driftDefId, hasWriteAccess);
+        }
+
+        return new DriftDefinitionEditView(extendLocatorId("DefintionEdit"), context, driftDefId, hasWriteAccess);
     }
 
     public EntityContext getContext() {

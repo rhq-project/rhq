@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
@@ -28,17 +28,17 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
 /**
  * @author Jay Shaughnessy
  */
-public abstract class AbstractDriftAddConfigWizard extends AbstractWizard {
+public abstract class AbstractDriftAddDefinitionWizard extends AbstractWizard {
 
     private EntityContext context;
     private ResourceType type;
 
     private Configuration newStartingConfiguration;
-    private DriftConfiguration newDriftConfiguration;
+    private DriftDefinition newDriftDefinition;
 
     private WizardView view;
 
-    public AbstractDriftAddConfigWizard(final EntityContext context, ResourceType type) {
+    public AbstractDriftAddDefinitionWizard(final EntityContext context, ResourceType type) {
         if (context == null) {
             throw new NullPointerException("context == null");
         }
@@ -78,12 +78,12 @@ public abstract class AbstractDriftAddConfigWizard extends AbstractWizard {
         this.newStartingConfiguration = newStartingConfiguration;
     }
 
-    public DriftConfiguration getNewDriftConfiguration() {
-        return newDriftConfiguration;
+    public DriftDefinition getNewDriftDefinition() {
+        return newDriftDefinition;
     }
 
-    public void setNewConfiguration(Configuration newDriftConfiguration) {
-        this.newDriftConfiguration = new DriftConfiguration(newDriftConfiguration);
+    public void setNewConfiguration(Configuration newDriftDefinitionConfig) {
+        this.newDriftDefinition = new DriftDefinition(newDriftDefinitionConfig);
     }
 
     public void cancel() {

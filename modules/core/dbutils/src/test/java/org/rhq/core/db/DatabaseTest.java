@@ -259,6 +259,8 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         DatabaseType oracle10 = new Oracle10DatabaseType();
         DatabaseType postgres7 = new Postgresql7DatabaseType();
         DatabaseType postgres8 = new Postgresql8DatabaseType();
+        DatabaseType postgres90 = new Postgresql90DatabaseType();
+        DatabaseType postgres91 = new Postgresql91DatabaseType();
         DatabaseType h2_11 = new H2v11DatabaseType();
 
         assert DatabaseTypeFactory.isOracle(oracle8);
@@ -274,9 +276,18 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         assert DatabaseTypeFactory.isPostgres(postgres7);
         assert !DatabaseTypeFactory.isOracle(postgres7);
         assert !DatabaseTypeFactory.isH2(postgres7);
+
         assert DatabaseTypeFactory.isPostgres(postgres8);
         assert !DatabaseTypeFactory.isOracle(postgres8);
         assert !DatabaseTypeFactory.isH2(postgres8);
+
+        assert DatabaseTypeFactory.isPostgres(postgres90);
+        assert !DatabaseTypeFactory.isOracle(postgres90);
+        assert !DatabaseTypeFactory.isH2(postgres8);
+
+        assert DatabaseTypeFactory.isPostgres(postgres91);
+        assert !DatabaseTypeFactory.isOracle(postgres91);
+        assert !DatabaseTypeFactory.isH2(postgres91);
 
         assert DatabaseTypeFactory.isH2(h2_11);
         assert !DatabaseTypeFactory.isPostgres(h2_11);
@@ -341,8 +352,9 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         assert DatabaseTypeFactory.isPostgres(conn);
         assert DatabaseTypeFactory.isPostgres(dbtype);
         assert dbtype.getVendor().equals("postgresql") : dbtype;
-        assert dbtype.getVersion().startsWith("8") : dbtype;
-        assert dbtype.getName().startsWith("postgresql8") : dbtype;
+        String version = dbtype.getVersion();
+        assert version.startsWith("8") || version.startsWith("9") : dbtype;
+        assert dbtype.getName().startsWith("postgresql") : dbtype;
 
         assertPostgresTypes(dbtype);
     }

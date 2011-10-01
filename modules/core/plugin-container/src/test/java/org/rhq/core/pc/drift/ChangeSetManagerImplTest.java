@@ -19,6 +19,14 @@
 
 package org.rhq.core.pc.drift;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+
 import java.io.File;
 
 import org.testng.annotations.Test;
@@ -28,20 +36,12 @@ import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-
 public class ChangeSetManagerImplTest extends DriftTest {
 
     @Test
     public void returnNullReaderWhenNoChangeSetExists() throws Exception {
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId(), "test");
-        assertNull(reader, "Expect null for the reader when no change set exists for the drift configuration.");
+        assertNull(reader, "Expect null for the reader when no change set exists for the drift definition.");
     }
 
     @Test
@@ -91,11 +91,11 @@ public class ChangeSetManagerImplTest extends DriftTest {
         assertNotNull(reader.read(), "Expected to find a file entry");
     }
 
-    Headers createHeaders(String driftConfigName, DriftChangeSetCategory type) {
+    Headers createHeaders(String driftDefName, DriftChangeSetCategory type) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
-        headers.setDriftCofigurationId(1);
-        headers.setDriftConfigurationName(driftConfigName);
+        headers.setDriftDefinitionId(1);
+        headers.setDriftDefinitionName(driftDefName);
         headers.setBasedir(resourceDir.getPath());
         headers.setType(type);
 

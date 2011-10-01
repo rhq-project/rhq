@@ -38,7 +38,7 @@ public enum DriftChangeSetCategory {
      * A coverage change set is a snapshot of the files that are being monitored for drift
      * detection.
      */
-    COVERAGE("C"), // Reports only on files being covered by a drift configuration.
+    COVERAGE("C"), // Reports only on files being covered by a drift definition.
 
     /**
      * A drift change set represents a change between one or more files and their versions

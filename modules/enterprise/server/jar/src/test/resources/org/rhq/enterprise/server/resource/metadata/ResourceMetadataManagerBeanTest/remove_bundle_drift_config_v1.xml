@@ -3,12 +3,12 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
     <server name="ServerWithBundleAndDriftConfig">
-        <drift-configuration name="drift1">
+        <drift-definition name="drift1">
            <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/dirA</value-name>
            </basedir>
-        </drift-configuration>
+        </drift-definition>
 
         <bundle-target>
            <destination-base-dir name="destdir1">

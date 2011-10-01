@@ -144,23 +144,26 @@ public class ServerPluginClassLoader extends URLClassLoader {
                             throw ex;
                         }
 
-                        BufferedOutputStream outputStream = new BufferedOutputStream(fileOutputStream);
                         try {
-                            file.deleteOnExit();
+                            BufferedOutputStream outputStream = new BufferedOutputStream(fileOutputStream);
+                            try {
+                                file.deleteOnExit();
 
-                            // do NOT close this inputStream since it is buffering the ZipInputStream
-                            // and we are going to still process that input stream later. We close
-                            // this ZipInputStream down below in the outer most try-finally block.
-                            BufferedInputStream inputStream = new BufferedInputStream(zis);
+                                // do NOT close this inputStream since it is buffering the ZipInputStream
+                                // and we are going to still process that input stream later. We close
+                                // this ZipInputStream down below in the outer most try-finally block.
+                                BufferedInputStream inputStream = new BufferedInputStream(zis);
 
-                            int count;
-                            byte[] b = new byte[8192];
-                            while ((count = inputStream.read(b)) > -1) {
-                                outputStream.write(b, 0, count);
+                                int count;
+                                byte[] b = new byte[8192];
+                                while ((count = inputStream.read(b)) > -1) {
+                                    outputStream.write(b, 0, count);
+                                }
+                            } finally {
+                                outputStream.close(); // this also closes the fileOutputStream
                             }
                         } finally {
-                            outputStream.flush();
-                            outputStream.close(); // this also closes the fileOutputStream
+                            fileOutputStream.close();
                         }
                     } catch (IOException ioe) {
                         if (file != null) {
@@ -171,10 +174,7 @@ public class ServerPluginClassLoader extends URLClassLoader {
                 }
             }
         } finally {
-            try {
-                zis.close();
-            } catch (Exception e) {
-            }
+            zis.close();
         }
 
         return extractionDirectory;

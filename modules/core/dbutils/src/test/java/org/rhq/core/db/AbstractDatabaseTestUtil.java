@@ -188,7 +188,7 @@ public class AbstractDatabaseTestUtil {
                     e);
             }
 
-            System.err.println(database + " is not available. DatabaseTest.nofail is set - skipping test");
+            System.err.println(database + " is not available (" + e.toString() + "). DatabaseTest.nofail is set - skipping test");
         }
 
         // just do some simple things with the connection to make sure we can use this

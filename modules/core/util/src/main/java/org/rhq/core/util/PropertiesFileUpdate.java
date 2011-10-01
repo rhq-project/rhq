@@ -78,10 +78,17 @@ public class PropertiesFileUpdate {
         // if the given property is new (doesn't exist in the file yet) just append it and return
         // if the property exists, update the value in place (ignore if the value isn't really changing)
         if (!existingProps.containsKey(key)) {
-            PrintStream ps = new PrintStream(new FileOutputStream(file, true), true, "8859_1");
-            ps.println(key + "=" + value);
-            ps.flush();
-            ps.close();
+            FileOutputStream fos = new FileOutputStream(file, true);
+            try {
+                PrintStream ps = new PrintStream(fos, true, "8859_1");
+                try {
+                    ps.println(key + "=" + value);
+                } finally {
+                    ps.close();
+                }
+            } finally {
+                fos.close();
+            }
         } else if (!value.equals(existingProps.getProperty(key))) {
             Properties newProp = new Properties();
             newProp.setProperty(key, value);
@@ -175,8 +182,11 @@ public class PropertiesFileUpdate {
 
         if (file.exists()) {
             FileInputStream is = new FileInputStream(file);
-            props.load(is);
-            is.close();
+            try {
+                props.load(is);
+            } finally {
+                is.close();
+            }
         }
 
         return props;

@@ -205,22 +205,19 @@ public class InventoryFile {
      */
     public void storeInventory(Resource platformResource, Map<String, ResourceContainer> containers) throws IOException {
         FileOutputStream fos = new FileOutputStream(inventoryFile);
-
         try {
             ObjectOutputStream oos = new ObjectOutputStream(fos);
+            try {
+                oos.writeObject(platformResource);
+                oos.writeObject(containers);
 
-            oos.writeObject(platformResource);
-            oos.writeObject(containers);
-
-            this.platform = platformResource;
-            this.resourceContainers = containers;
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Exception e) {
-                }
+                this.platform = platformResource;
+                this.resourceContainers = containers;
+            } finally {
+                oos.close();
             }
+        } finally {
+            fos.close();
         }
     }
 }

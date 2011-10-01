@@ -57,7 +57,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     /**
      * Each change set is assigned a version number that is unique across change sets
-     * belonging to a given drift configuration (and corresponding resource).
+     * belonging to a given drift definition (and corresponding resource).
      */
     private int version;
 
@@ -116,12 +116,12 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     }
 
     @Override
-    public int getDriftConfigurationId() {
+    public int getDriftDefinitionId() {
         return configId;
     }
 
     @Override
-    public void setDriftConfigurationId(int id) {
+    public void setDriftDefinitionId(int id) {
         configId = id;
     }
 

@@ -470,9 +470,11 @@ public class RHNHelper {
 
         ByteArrayOutputStream zipped = new ByteArrayOutputStream();
         GZIPOutputStream gzip = new GZIPOutputStream(zipped);
-        gzip.write(input);
-        gzip.flush();
-        gzip.close();
+        try {
+            gzip.write(input);
+        } finally {
+            gzip.close();
+        }
         return zipped.toByteArray();
     }
 

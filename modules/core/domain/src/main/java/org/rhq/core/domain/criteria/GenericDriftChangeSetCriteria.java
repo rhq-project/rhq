@@ -52,7 +52,7 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
 
     private Integer filterResourceId;
 
-    private Integer filterDriftConfigId;
+    private Integer filterDriftDefId;
 
     private DriftChangeSetCategory filterCategory;
 
@@ -133,13 +133,13 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     }
 
     @Override
-    public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
-        this.filterDriftConfigId = filterDriftConfigId;
+    public void addFilterDriftDefinitionId(Integer filterDriftDefId) {
+        this.filterDriftDefId = filterDriftDefId;
     }
 
     @Override
-    public Integer getFilterDriftConfigurationId() {
-        return filterDriftConfigId;
+    public Integer getFilterDriftDefintionId() {
+        return filterDriftDefId;
     }
 
     @Override

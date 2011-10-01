@@ -84,8 +84,8 @@ public class DriftFileBean implements MessageListener {
                         + "]");
                 }
 
-                driftManager.saveChangeSetFiles(subjectManager.getOverlord(), tempFile);
-
+                driftManager.saveChangeSetContent(subjectManager.getOverlord(), request.getResourceId(),
+                    request.getDriftDefName(), request.getToken(), tempFile);
             } catch (IOException e) {
                 log.error(e);
 

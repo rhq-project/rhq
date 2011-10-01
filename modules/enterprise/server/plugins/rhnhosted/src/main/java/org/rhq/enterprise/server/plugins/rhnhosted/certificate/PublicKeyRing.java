@@ -89,7 +89,7 @@ public class PublicKeyRing {
         throws SignatureException {
         PGPSignature sig = decodeSignature(asciiSig);
         PGPPublicKey key;
-        boolean result = false;
+        boolean result;
         try {
             key = keyRing.getPublicKey(sig.getKeyID());
             sig.initVerify(key, RhnSecurityProvider.NAME);
@@ -119,12 +119,20 @@ public class PublicKeyRing {
      * @return the signature
      */
     private static PGPSignature decodeSignature(String asciiSig) {
-        PGPSignature result = null;
+        PGPSignature result;
         ByteArrayInputStream bais = new ByteArrayInputStream(asciiSig.getBytes());
         try {
-            InputStream in = PGPUtil.getDecoderStream(new ArmoredInputStream(bais));
-            result = ((PGPSignatureList) new PGPObjectFactory(in).nextObject()).get(0);
-            in.close();
+            ArmoredInputStream ais = new ArmoredInputStream(bais);
+            try {
+                InputStream in = PGPUtil.getDecoderStream(ais);
+                try {
+                    result = ((PGPSignatureList) new PGPObjectFactory(in).nextObject()).get(0);
+                } finally {
+                    in.close();
+                }
+            } finally {
+                ais.close();
+            }
         }
         catch (IOException e) {
             // This is so unlikely that we convert it to a runtime exception

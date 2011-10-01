@@ -13,10 +13,14 @@
 
    <resource type="server-a">
       <simpleResourceGenerator property="rhq.perftest.server-a-count"/>
+      <simpleNumericMeasurementGenerator/>
+      <simpleTraitMeasurementGenerator/>
    </resource>
 
    <resource type="service-a">
       <simpleResourceGenerator property="rhq.perftest.service-a-count"/>
+      <simpleNumericMeasurementGenerator/>
+      <simpleTraitMeasurementGenerator/>
    </resource>
 
 </scenario>

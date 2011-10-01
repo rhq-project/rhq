@@ -26,10 +26,10 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 public class DriftCacheElement extends AbstractCacheElement<Object> {
 
     public static final Object UNUSED_CONDITION_VALUE = "Drift Detected";
-    private final Pattern driftConfigNameRegex;
+    private final Pattern driftDefNameRegex;
     private final Pattern driftPathNameRegex;
 
-    public DriftCacheElement(AlertConditionOperator operator, String driftConfigNameRegexStr,
+    public DriftCacheElement(AlertConditionOperator operator, String driftDefNameRegexStr,
         String driftPathNameRegexStr, int conditionTriggerId) {
         // our drift processing is special in that we do not have an alert condition value that
         // we need check to determine if our cache element matches a particular value. But we need
@@ -38,10 +38,10 @@ public class DriftCacheElement extends AbstractCacheElement<Object> {
         super(operator, UNUSED_CONDITION_VALUE, conditionTriggerId);
 
         try {
-            if (driftConfigNameRegexStr != null && driftConfigNameRegexStr.length() > 0) {
-                this.driftConfigNameRegex = Pattern.compile(driftConfigNameRegexStr);
+            if (driftDefNameRegexStr != null && driftDefNameRegexStr.length() > 0) {
+                this.driftDefNameRegex = Pattern.compile(driftDefNameRegexStr);
             } else {
-                this.driftConfigNameRegex = null;
+                this.driftDefNameRegex = null;
             }
 
             if (driftPathNameRegexStr != null && driftPathNameRegexStr.length() > 0) {
@@ -64,9 +64,9 @@ public class DriftCacheElement extends AbstractCacheElement<Object> {
                 return false; // we never alert on coverage reports, we only alert when files have drifted from previous known states
             }
 
-            if (driftConfigNameRegex != null) {
-                if (!driftConfigNameRegex.matcher(summary.getDriftConfigurationName()).matches()) {
-                    return false; // drift config name did not match, our condition is false so don't alert
+            if (driftDefNameRegex != null) {
+                if (!driftDefNameRegex.matcher(summary.getDriftDefinitionName()).matches()) {
+                    return false; // drift definition name did not match, our condition is false so don't alert
                 }
             }
 

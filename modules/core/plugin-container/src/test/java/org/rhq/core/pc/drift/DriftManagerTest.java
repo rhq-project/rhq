@@ -19,6 +19,17 @@
 
 package org.rhq.core.pc.drift;
 
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.util.ZipUtil.unzipFile;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -32,24 +43,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
-
-import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.util.ZipUtil.unzipFile;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 public class DriftManagerTest extends DriftTest {
 
@@ -75,32 +75,37 @@ public class DriftManagerTest extends DriftTest {
 
         driftMgr = new TestDriftManager();
         driftMgr.setConfiguration(pcConfig);
+        driftMgr.setChangeSetMgr(changeSetMgr);
     }
 
     @Test
     public void writeChangeSetZipFileToChangeSetDirectory() throws Exception {
-        final DriftConfiguration config = driftConfiguration("write-changeset-file", resourceDir.getAbsolutePath());
+        final DriftDefinition config = driftDefinition("write-changeset-file", resourceDir.getAbsolutePath());
         final File changeSetDir = changeSetDir(config.getName());
         createRandomFile(changeSetDir, "changeset.txt");
 
         setDriftServiceCallback(new DriftServiceCallback() {
             @Override
             public void execute() {
-                assertThatZipFileExists(changeSetDir, "changeset_",
-                    "Expected to find change set zip file " +
-                        "in " + changeSetDir.getPath() + ". The file name should follow the pattern " +
-                        "changeset_<integer_timestamp>.zip");
+                assertThatZipFileExists(changeSetDir, "changeset_", "Expected to find change set zip file " + "in "
+                    + changeSetDir.getPath() + ". The file name should follow the pattern "
+                    + "changeset_<integer_timestamp>.zip");
             }
         });
 
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+        DriftDetectionSummary detectionSummary = new DriftDetectionSummary();
+        detectionSummary.setSchedule(schedule);
+        detectionSummary.setType(COVERAGE);
+
         driftMgr.setChangeSetMgr(changeSetMgr);
-        driftMgr.getSchedulesQueue().addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftMgr.sendChangeSetToServer(resourceId(), config, COVERAGE);
+        driftMgr.getSchedulesQueue().addSchedule(schedule);
+        driftMgr.sendChangeSetToServer(detectionSummary);
     }
 
     @Test
     public void sendChangeSetReportInZipFile() throws Exception {
-        final DriftConfiguration config = driftConfiguration("send-changeset-in-zip", resourceDir.getAbsolutePath());
+        final DriftDefinition config = driftDefinition("send-changeset-in-zip", resourceDir.getAbsolutePath());
         final File changeSetDir = changeSetDir(config.getName());
         final File changeSetFile = createRandomFile(changeSetDir, "changeset.txt");
 
@@ -111,32 +116,31 @@ public class DriftManagerTest extends DriftTest {
             }
         });
 
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), config);
+        DriftDetectionSummary detectionSummary = new DriftDetectionSummary();
+        detectionSummary.setSchedule(schedule);
+        detectionSummary.setType(COVERAGE);
+
         driftMgr.setChangeSetMgr(changeSetMgr);
         driftMgr.getSchedulesQueue().addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftMgr.sendChangeSetToServer(resourceId(), config, COVERAGE);
+        driftMgr.sendChangeSetToServer(detectionSummary);
     }
 
     @Test
-    public void cleanUpAfterSendingChangeSetToServer() throws Exception {
-        final DriftConfiguration config = driftConfiguration("send-changeset-in-zip", resourceDir.getAbsolutePath());
-        final File changeSetDir = changeSetDir(config.getName());
-        createRandomFile(changeSetDir, "changeset.txt");
+    public void cleanUpWhenServerAcksChangeSet() throws Exception {
+        DriftDefinition config = driftDefinition("clean-up-when-server-acks-changeset", resourceDir.getAbsolutePath());
+        File changeSetDir = changeSetDir(config.getName());
+        File snapshotFile = createRandomFile(changeSetDir, "changeset.txt");
+        File previousSnapshotFile = createRandomFile(changeSetDir, "changeset.txt.previous");
+        File changeSetZipFile = createRandomFile(changeSetDir, "changeset_" + System.currentTimeMillis() + ".zip");
 
-        driftMgr.setChangeSetMgr(changeSetMgr);
-        driftMgr.getSchedulesQueue().addSchedule(new DriftDetectionSchedule(resourceId(), config));
-        driftMgr.sendChangeSetToServer(resourceId(), config, COVERAGE);
+        driftMgr.ackChangeSet(resourceId(), config.getName());
 
-        // clean up should not happen until after the input stream is closed. The remote
-        // input stream is consumed asynchronously; so, we have to wait until the stream
-        // is closed. We could otherwise disrupt the transmission of bits.
-
-        File changeSetZip = assertThatZipFileExists(changeSetDir, "changeset_", "Expected to find change set zip " +
-            "zip file in " + changeSetDir.getPath() + ". The file name should follow the pattern " +
-            "changeset_<integer_timestamp>.zip");
-
-        driftServerService.inputStream.close();
-
-        assertFalse(changeSetZip.exists(), "The change set zip should be deleted when the remote input stream is closed.");
+        assertTrue(snapshotFile.exists(), "Snapshot file should exist after server acks change set");
+        assertFalse(previousSnapshotFile.exists(), "Previous version snapshot file should be deleted when server "
+            + "acks change set");
+        assertEquals(findChangeSetZipFiles(changeSetDir).size(), 0, "All change set zip files should be deleted when "
+            + "server acks change set");
     }
 
     @Test
@@ -151,9 +155,9 @@ public class DriftManagerTest extends DriftTest {
         setDriftServiceCallback(new DriftServiceCallback() {
             @Override
             public void execute() {
-                assertThatZipFileExists(changeSetDir, "content_", "Expected to find content zip file in " +
-                    changeSetDir.getPath() + ". The file name should follow the pattern " +
-                    "content_<integer_timestamp>.zip");
+                assertThatZipFileExists(changeSetDir, "content_", "Expected to find content zip file in "
+                    + changeSetDir.getPath() + ". The file name should follow the pattern "
+                    + "content_<integer_timestamp>.zip");
             }
         });
 
@@ -177,62 +181,56 @@ public class DriftManagerTest extends DriftTest {
         });
 
         driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
-    }
 
-    @Test
-    public void cleanUpAfterSendingContentToServer() throws Exception {
-        String configName = "clean-up-after-sending-content";
-        File changeSetDir = changeSetDir(configName);
-        File contentDir = mkdir(changeSetDir, "content");
-
-        createRandomFile(contentDir, "content-1");
-        createRandomFile(contentDir, "content-2");
-
-        driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
-
-        // clean up should not happen until after the input stream is closed. The remote
-        // input stream is consumed asynchronously; so, we have to wait until the stream
-        // is closed. We could otherwise disrupt the transmission of bits.
-        File contentZipFile = assertThatZipFileExists(changeSetDir, "content_",
-            "Expected to find content zip file in " +
-                changeSetDir.getPath() + ". The file name should have a pattern of content_integer_timestamp>.zip");
-
-        driftServerService.inputStream.close();
-
-        assertFalse(contentZipFile.exists(), "The content zip should be deleted when the remote input stream is closed");
+        // verify that the content directory is purged
         assertThatDirectoryIsEmpty(contentDir);
     }
 
     @Test
-    public void unschedulingDetectionRemovesScheduleFromQueue() throws Exception {
-        DriftConfiguration config = driftConfiguration("remove-from-queue", resourceDir.getAbsolutePath());
+    public void cleanUpWhenServerAcksChangeSetContent() throws Exception {
+        String configName = "cleanup-when-server-acks-content";
+        File changeSetDir = changeSetDir(configName);
+        File contentDir = mkdir(changeSetDir, "content");
 
-        driftMgr.scheduleDriftDetection(resourceId(), config);
-        driftMgr.scheduleDriftDetection(resourceId() + 5, driftConfiguration("another-config", "."));
-        driftMgr.unscheduleDriftDetection(resourceId(), config);
+        String token = Long.toString(System.currentTimeMillis());
+        File contentZipFile = createRandomFile(changeSetDir, "content_" + token + ".zip");
 
-        assertFalse(driftMgr.getSchedulesQueue().contains(resourceId(), config),
-            new DriftDetectionSchedule(resourceId(), config) + " should have been removed from the schedule queue");
+        driftMgr.ackChangeSetContent(resourceId(), configName, token);
+
+        assertFalse(contentZipFile.exists(), "Content zip file should be purged after server sends content ack");
     }
 
     @Test
-    public void unschedulingDetectionRemovesDriftConfigFromResourceContainer() throws Exception {
-        DriftConfiguration config = driftConfiguration("remove-from-queue", resourceDir.getAbsolutePath());
-        DriftConfiguration config2 = driftConfiguration("do-not-remove", resourceDir.getAbsolutePath());
+    public void unschedulingDetectionRemovesScheduleFromQueue() throws Exception {
+        DriftDefinition config = driftDefinition("remove-from-queue", resourceDir.getAbsolutePath());
 
         driftMgr.scheduleDriftDetection(resourceId(), config);
-        driftMgr.scheduleDriftDetection(resourceId(), config2);
+        driftMgr.scheduleDriftDetection(resourceId() + 5, driftDefinition("another-config", "."));
         driftMgr.unscheduleDriftDetection(resourceId(), config);
+
+        assertFalse(driftMgr.getSchedulesQueue().contains(resourceId(), config), new DriftDetectionSchedule(
+            resourceId(), config)
+            + " should have been removed from the schedule queue");
+    }
+
+    @Test
+    public void unschedulingDetectionRemovesDriftDefFromResourceContainer() throws Exception {
+        DriftDefinition def = driftDefinition("remove-from-queue", resourceDir.getAbsolutePath());
+        DriftDefinition def2 = driftDefinition("do-not-remove", resourceDir.getAbsolutePath());
+
+        driftMgr.scheduleDriftDetection(resourceId(), def);
+        driftMgr.scheduleDriftDetection(resourceId(), def2);
+        driftMgr.unscheduleDriftDetection(resourceId(), def);
 
         ResourceContainer container = driftMgr.getInventoryManager().getResourceContainer(resourceId());
 
-        assertCollectionMatchesNoOrder(config + " should have been removed from the resource container ",
-            asList(config2), container.getDriftConfigurations());
+        assertCollectionMatchesNoOrder(def + " should have been removed from the resource container ",
+            asList(def2), container.getDriftDefinitions());
     }
 
     @Test
     public void unschedulingDetectionDeletesChangeSetDirectoryWhenScheduleIsNotActive() throws Exception {
-        DriftConfiguration config = driftConfiguration("delete-changeset-dir", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftDefinition("delete-changeset-dir", resourceDir.getAbsolutePath());
         File changeSetDir = changeSetDir(config.getName());
         File contentDir = mkdir(changeSetDir, "content");
 
@@ -247,7 +245,7 @@ public class DriftManagerTest extends DriftTest {
 
     @Test
     public void unschedulingDetectionDeletesChangeSetDirectoryWhenScheduleIsDeactivated() throws Exception {
-        DriftConfiguration config = driftConfiguration("delete-changeset-dir", resourceDir.getAbsolutePath());
+        DriftDefinition config = driftDefinition("delete-changeset-dir", resourceDir.getAbsolutePath());
         File changeSetDir = changeSetDir(config.getName());
         File contentDir = mkdir(changeSetDir, "content");
 
@@ -258,12 +256,22 @@ public class DriftManagerTest extends DriftTest {
         driftMgr.getSchedulesQueue().getNextSchedule();
         driftMgr.unscheduleDriftDetection(resourceId(), config);
 
-        assertTrue(changeSetDir.exists(), "The change set directory should not be deleted while the schedule is " +
-            "still active.");
+        assertTrue(changeSetDir.exists(), "The change set directory should not be deleted while the schedule is "
+            + "still active.");
 
         driftMgr.getSchedulesQueue().deactivateSchedule();
-        assertFalse(changeSetDir.exists(), "The change set directory should have been deleted after the schedule is " +
-            "deactivated.");
+        assertFalse(changeSetDir.exists(), "The change set directory should have been deleted after the schedule is "
+            + "deactivated.");
+    }
+
+    private List<File> findChangeSetZipFiles(File dir) {
+        File[] files = dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith("changeset_") && name.endsWith(".zip");
+            }
+        });
+        return asList(files);
     }
 
     /**
@@ -295,8 +303,8 @@ public class DriftManagerTest extends DriftTest {
             String expectedHash = sha256(expectedFile);
             String actualHash = sha256(actualFile);
 
-            assertEquals(actualHash, expectedHash, "The zip file content is wrong. The SHA-256 hash does not match " +
-                "for " + expectedFile.getName());
+            assertEquals(actualHash, expectedHash, "The zip file content is wrong. The SHA-256 hash does not match "
+                + "for " + expectedFile.getName());
         }
     }
 
@@ -351,6 +359,8 @@ public class DriftManagerTest extends DriftTest {
     private static class TestDriftServerService implements DriftServerService {
 
         public int resourceId;
+        public String driftDefName;
+        public String token;
         public long fileSize;
         public InputStream inputStream;
 
@@ -368,8 +378,11 @@ public class DriftManagerTest extends DriftTest {
         }
 
         @Override
-        public void sendFilesZip(int resourceId, long zipSize, InputStream zipStream) {
+        public void sendFilesZip(int resourceId, String driftDefName, String token, long zipSize,
+            InputStream zipStream) {
             this.resourceId = resourceId;
+            this.driftDefName = driftDefName;
+            this.token = token;
             fileSize = zipSize;
             inputStream = zipStream;
 
@@ -379,12 +392,12 @@ public class DriftManagerTest extends DriftTest {
         }
 
         @Override
-        public Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds) {
+        public Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds) {
             return null;
         }
 
         @Override
-        public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
+        public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
             return null;
         }
     }

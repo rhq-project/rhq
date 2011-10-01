@@ -28,7 +28,7 @@ import org.rhq.enterprise.server.xmlschema.generated.configuration.instance.Conf
  *
  * @author Lukas Krejci
  */
-@XmlRootElement(name = "default-configuration", namespace = ExportingInputStream.EXPORT_NAMESPACE)
+@XmlRootElement(name = "default-configuration", namespace = SynchronizationConstants.EXPORT_NAMESPACE)
 public class DefaultImportConfigurationDescriptor extends ConfigurationInstanceDescriptor {
 
     public DefaultImportConfigurationDescriptor() {

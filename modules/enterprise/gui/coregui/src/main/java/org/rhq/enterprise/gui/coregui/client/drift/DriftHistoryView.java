@@ -64,7 +64,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     private EntityContext context;
     private boolean hasWriteAccess;
-    private DriftDataSource dataSource;
+
+    protected DriftDataSource dataSource;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -122,12 +123,12 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
-        TextItem configurationFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
+        TextItem definitionFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
         TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         TextItem pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(configurationFilter, changeSetFilter, categoryFilter, pathFilter);
+            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, pathFilter);
         }
     }
 

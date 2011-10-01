@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -67,6 +67,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * @author John Mazzitelli
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public class ResourceContainer implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -90,7 +91,7 @@ public class ResourceContainer implements Serializable {
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private Map<String, DriftConfiguration> driftConfigurations = new HashMap<String, DriftConfiguration>();
+    private Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
 
     // transient fields
     private transient ResourceComponent resourceComponent;
@@ -245,27 +246,27 @@ public class ResourceContainer implements Serializable {
         }
     }
 
-    public Collection<DriftConfiguration> getDriftConfigurations() {
+    public Collection<DriftDefinition> getDriftDefinitions() {
         synchronized (this) {
-            return driftConfigurations.values();
+            return driftDefinitions.values();
         }
     }
 
-    public boolean containsDriftConfiguration(DriftConfiguration c) {
+    public boolean containsDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            return driftConfigurations.containsKey(c.getName());
+            return driftDefinitions.containsKey(d.getName());
         }
     }
 
-    public void addDriftConfiguration(DriftConfiguration c) {
+    public void addDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            driftConfigurations.put(c.getName(), c);
+            driftDefinitions.put(d.getName(), d);
         }
     }
 
-    public void removeDriftConfiguration(DriftConfiguration c) {
+    public void removeDriftDefinition(DriftDefinition d) {
         synchronized (this) {
-            driftConfigurations.remove(c.getName());
+            driftDefinitions.remove(d.getName());
         }
     }
 
@@ -330,7 +331,6 @@ public class ResourceContainer implements Serializable {
      *
      * @throws PluginContainerException if the component does not exist or does not implement the interface
      */
-    @SuppressWarnings("unchecked")
     public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout,
         boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
         if (onlyIfStarted) {

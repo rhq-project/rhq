@@ -37,19 +37,19 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 /**
  * @author Jay Shaughnessy
  */
-public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
+public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
     private Table<?> table;
 
-    public DriftAddConfigWizard(EntityContext context, ResourceType type, Table<?> table) {
+    public DriftAddDefinitionWizard(EntityContext context, ResourceType type, Table<?> table) {
 
         super(context, type);
         this.table = table;
 
         final ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
-        steps.add(new DriftAddConfigWizardInfoStep(DriftAddConfigWizard.this));
-        steps.add(new DriftAddConfigWizardConfigStep(DriftAddConfigWizard.this));
+        steps.add(new DriftAddDefinitionWizardInfoStep(DriftAddDefinitionWizard.this));
+        steps.add(new DriftAddDefinitionWizardConfigStep(DriftAddDefinitionWizard.this));
 
         setSteps(steps);
     }
@@ -74,19 +74,19 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
             ResourceCriteria rc = new ResourceCriteria();
             rc.addFilterId(context.getResourceId());
             rc.fetchResourceType(true);
-            GWTServiceLookup.getDriftService().updateDriftConfiguration(context, getNewDriftConfiguration(),
+            GWTServiceLookup.getDriftService().updateDriftDefinition(context, getNewDriftDefinition(),
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_drift_wizard_addDef_success(getNewDriftConfiguration().getName()),
+                            new Message(MSG.view_drift_wizard_addDef_success(getNewDriftDefinition().getName()),
                                 Message.Severity.Info));
                         getView().closeDialog();
-                        DriftAddConfigWizard.this.table.refresh();
+                        DriftAddDefinitionWizard.this.table.refresh();
                     }
 
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_drift_wizard_addDef_failure(getNewDriftConfiguration().getName()), caught);
+                            MSG.view_drift_wizard_addDef_failure(getNewDriftDefinition().getName()), caught);
                         getView().closeDialog();
                     }
                 });
@@ -116,10 +116,10 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
                     final Resource resource = result.get(0);
 
                     // bypass type cache because this is infrequent an we don't need to cache the
-                    // drift config templates
+                    // drift def templates
                     ResourceTypeCriteria rtc = new ResourceTypeCriteria();
                     rtc.addFilterId(resource.getResourceType().getId());
-                    rtc.fetchDriftConfigurationTemplates(true);
+                    rtc.fetchDriftDefinitionTemplates(true);
                     GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(rtc,
                         new AsyncCallback<PageList<ResourceType>>() {
                             public void onSuccess(PageList<ResourceType> result) {
@@ -128,7 +128,8 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
                                         + resource.getResourceType().getId() + "]");
                                 }
 
-                                DriftAddConfigWizard wizard = new DriftAddConfigWizard(context, result.get(0), table);
+                                DriftAddDefinitionWizard wizard = new DriftAddDefinitionWizard(context, result.get(0),
+                                    table);
                                 wizard.startWizard();
                             }
 

@@ -3,17 +3,17 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
     <server name="ServerWithDupDrift" description="has duplicate drift config names and thus is invalid">
-        <drift-configuration name="drift-one">
+        <drift-definition name="drift-one">
            <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/a</value-name>
            </basedir>
-        </drift-configuration>
-        <drift-configuration name="drift-one">
+        </drift-definition>
+        <drift-definition name="drift-one">
            <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/b</value-name>
            </basedir>
-        </drift-configuration>
+        </drift-definition>
     </server>
 </plugin>

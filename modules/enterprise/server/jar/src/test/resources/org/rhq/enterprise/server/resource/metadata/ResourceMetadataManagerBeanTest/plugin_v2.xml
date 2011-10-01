@@ -63,7 +63,7 @@
             </configuration>
         </content>
 
-        <drift-configuration name="drift-rc">
+        <drift-definition name="drift-rc">
            <basedir>
               <!-- this resource doesn't really have this resource config prop
                    but today we do not check for validity so this is OK. In the future, if we do
@@ -71,9 +71,9 @@
               <value-context>resourceConfiguration</value-context>
               <value-name>resourceConfig1</value-name>
            </basedir>
-        </drift-configuration>
+        </drift-definition>
 
-        <drift-configuration name="drift-mt">
+        <drift-definition name="drift-mt">
            <basedir>
               <!-- this resource doesn't really have this metric trait
                    but today we do not check for validity so this is OK. In the future, if we do
@@ -81,7 +81,7 @@
               <value-context>measurementTrait</value-context>
               <value-name>trait1</value-name>
            </basedir>
-        </drift-configuration>
+        </drift-definition>
 
         <bundle-target>
            <destination-base-dir name="bundleTarget-rc" description="rc-description">

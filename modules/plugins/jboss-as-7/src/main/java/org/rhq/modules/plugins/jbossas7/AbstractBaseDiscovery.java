@@ -62,8 +62,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             InputStream is = new FileInputStream(hostXmlFile);
-            hostXml = builder.parse(is);
-            is.close();
+            try {
+                hostXml = builder.parse(is);
+            } finally {
+                is.close();
+            }
         } catch (Exception e) {
             e.printStackTrace();  // TODO: Customise this generated block
         }
@@ -128,8 +131,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
                 hp.port = port;
 
                 String nIf = mgmtInterface.getAttribute("interface");
-                String hostName = getInterface(nIf);
-                hp.host = hostName;
+                hp.host = getInterface(nIf);
                 return hp;
             }
         }
@@ -175,8 +177,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
                         if (nodeName.equals("any-ipv4-address"))
                             return "0.0.0.0";
 
-                        String x = ((Element) nl.item(j)).getAttribute("value");
-                        return x;
+                        return ((Element) nl.item(j)).getAttribute("value");
 
                         // TODO check for <any> and so on
                     }

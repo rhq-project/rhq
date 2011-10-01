@@ -102,17 +102,20 @@ public class History {
             }
             File file = new File(tokens[1]);
             try {
-                file.createNewFile();
-                if (file.canWrite()) {
-                    Writer writer = new FileWriter(file);
-                    for (String item : history) {
-                        writer.write(item);
-                        writer.write("\n");
+                if (file.createNewFile()) {
+                    if (file.canWrite()) {
+                        Writer writer = new FileWriter(file);
+                        try {
+                            for (String item : history) {
+                                writer.write(item);
+                                writer.write("\n");
+                            }
+                        } finally {
+                            writer.close();
+                        }
+                    } else {
+                        System.err.println("Can not write to file " + file);
                     }
-                    writer.flush();
-                    writer.close();
-                } else {
-                    System.err.println("Can not write to file " + file);
                 }
             } catch (IOException ioe) {
                 System.err.println("Saving the history to file " + file + " failed: " + ioe.getMessage());

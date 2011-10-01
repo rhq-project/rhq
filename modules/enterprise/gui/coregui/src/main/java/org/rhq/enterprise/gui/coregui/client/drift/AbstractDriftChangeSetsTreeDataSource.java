@@ -36,7 +36,7 @@ import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -194,9 +194,9 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
     @Override
     public ListGridRecord copyValues(Object from) {
         TreeNode node;
-        if (from instanceof DriftConfiguration) {
-            DriftConfiguration driftConfig = (DriftConfiguration) from;
-            node = new AbstractDriftChangeSetsTreeView.DriftConfigurationTreeNode(driftConfig);
+        if (from instanceof DriftDefinition) {
+            DriftDefinition driftConfig = (DriftDefinition) from;
+            node = new AbstractDriftChangeSetsTreeView.DriftDefinitionTreeNode(driftConfig);
         } else if (from instanceof DriftChangeSet) {
             DriftChangeSet changeset = (DriftChangeSet) from;
             node = new AbstractDriftChangeSetsTreeView.ChangeSetTreeNode(changeset);

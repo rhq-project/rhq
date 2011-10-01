@@ -646,24 +646,24 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ResultSet rs = null;
 
         FileInputStream fis = new FileInputStream(file);
-
         try {
 
             conn = this.dataSource.getConnection();
             ps = conn.prepareStatement("UPDATE " + ServerPlugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
-            ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
-            ps.setInt(2, id);
-            int updateResults = ps.executeUpdate();
-            if (updateResults != 1) {
-                throw new Exception("Failed to update content for plugin [" + id + "] from [" + file + "]");
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            try {
+                ps.setBinaryStream(1, bis, (int) file.length());
+                ps.setInt(2, id);
+                int updateResults = ps.executeUpdate();
+                if (updateResults != 1) {
+                    throw new Exception("Failed to update content for plugin [" + id + "] from [" + file + "]");
+                }
+            } finally {
+                bis.close();
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);
-
-            try {
-                fis.close();
-            } catch (Throwable t) {
-            }
+            fis.close();
         }
         return;
     }

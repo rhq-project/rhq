@@ -197,35 +197,37 @@ public class SnmpTrapSender implements PDUFactory {
 
     public PDU send() throws IOException {
         Snmp snmp = createSnmpSession();
-        this.target = createTarget();
-        target.setVersion(version);
-        target.setAddress(address);
-        target.setRetries(retries);
-        target.setTimeout(timeout);
-        snmp.listen();
+        try {
+            this.target = createTarget();
+            target.setVersion(version);
+            target.setAddress(address);
+            target.setRetries(retries);
+            target.setTimeout(timeout);
+            snmp.listen();
 
-        PDU request = createPDU(target);
-        if (request.getType() == PDU.GETBULK) {
-            request.setMaxRepetitions(maxRepetitions);
-            request.setNonRepeaters(nonRepeaters);
+            PDU request = createPDU(target);
+            if (request.getType() == PDU.GETBULK) {
+                request.setMaxRepetitions(maxRepetitions);
+                request.setNonRepeaters(nonRepeaters);
+            }
+
+            for (Object vb : vbs) {
+                request.add((VariableBinding) vb);
+            }
+
+            PDU response = null;
+            ResponseEvent responseEvent;
+            long startTime = System.currentTimeMillis();
+            responseEvent = snmp.send(request, target);
+            if (responseEvent != null) {
+                response = responseEvent.getResponse();
+                if (log.isDebugEnabled())
+                    log.debug("Received response after " + (System.currentTimeMillis() - startTime) + " millis");
+            }
+            return response;
+        } finally {
+            snmp.close();
         }
-
-        for (Object vb : vbs) {
-            request.add((VariableBinding) vb);
-        }
-
-        PDU response = null;
-        ResponseEvent responseEvent;
-        long startTime = System.currentTimeMillis();
-        responseEvent = snmp.send(request, target);
-        if (responseEvent != null) {
-            response = responseEvent.getResponse();
-            if (log.isDebugEnabled())
-                log.debug("Received response after " + (System.currentTimeMillis() - startTime) + " millis");
-        }
-
-        snmp.close();
-        return response;
     }
 
     private void getVariableBindings(String args) {

@@ -51,7 +51,7 @@
             </configuration>
         </content>
 
-        <drift-configuration name="drift-pc">
+        <drift-definition name="drift-pc">
            <basedir>
               <value-context>pluginConfiguration</value-context>
               <value-name>connectionPropertyX</value-name>
@@ -64,14 +64,14 @@
               <exclude path="/wot/gorilla" pattern="*.xml" />
               <exclude path="/hello"/>
            </excludes>
-        </drift-configuration>
+        </drift-definition>
 
-        <drift-configuration name="drift-fs">
+        <drift-definition name="drift-fs">
            <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/</value-name>
            </basedir>
-        </drift-configuration>
+        </drift-definition>
 
         <bundle-target>
            <destination-base-dir name="bundleTarget-pc" description="pc-description">

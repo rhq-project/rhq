@@ -200,13 +200,13 @@ public class TestRemoteServiceStatisticsView extends Table {
                         refreshOnPageChange = false;
 
                         if (timeout.intValue() == -1) {
-                            setTableTitle(TABLE_TITLE);
+                            updateTitleCanvas(TABLE_TITLE);
                         } else if (timeout.intValue() == 0) {
                             refreshOnPageChange = true;
-                            setTableTitle(TABLE_TITLE + " (refresh on page change)");
+                            updateTitleCanvas(TABLE_TITLE + " (refresh on page change)");
                         } else {
                             refreshTimer.scheduleRepeating(timeout.intValue() * 1000);
-                            setTableTitle(TABLE_TITLE + " (refresh every " + timeout + "s)");
+                            updateTitleCanvas(TABLE_TITLE + " (refresh every " + timeout + "s)");
                         }
                         refreshTableInfo();
                     }

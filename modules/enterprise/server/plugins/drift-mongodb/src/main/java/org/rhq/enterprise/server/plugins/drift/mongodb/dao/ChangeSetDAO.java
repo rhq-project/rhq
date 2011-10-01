@@ -109,7 +109,7 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         BasicDBObject keys = new BasicDBObject();
         keys.put("files", new BasicDBObject().append("$slice", new Integer[] {Integer.valueOf(entryId), 1}));
 
-        DBObject result = getCollection().findOne(query, new BasicDBObject());
+        DBObject result = getCollection().findOne(query, keys);
 
         if (result == null) {
             return null;

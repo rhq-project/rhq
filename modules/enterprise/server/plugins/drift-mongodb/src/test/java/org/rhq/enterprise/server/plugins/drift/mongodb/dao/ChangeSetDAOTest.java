@@ -19,18 +19,6 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.AssertJUnit.assertEquals;
-
 import java.util.List;
 
 import com.google.code.morphia.Datastore;
@@ -57,8 +45,8 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 public class ChangeSetDAOTest {
 
@@ -261,7 +249,8 @@ public class ChangeSetDAOTest {
 
         List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
         assertEquals(entries.size(), 1, "Expected to get back one change set entry");
-        assertPropertiesMatch(e2, entries.get(0), "Failed to find change set entry with id filter");
+        String ignoredProperties = "changeSet";
+        assertPropertiesMatch("Failed to find change set entry with id filter", e2, entries.get(0), ignoredProperties);
     }
 
     @Test(enabled = ENABLED)

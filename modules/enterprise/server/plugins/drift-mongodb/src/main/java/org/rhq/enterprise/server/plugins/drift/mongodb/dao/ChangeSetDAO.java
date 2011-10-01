@@ -104,23 +104,19 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         Query<MongoDBChangeSet> query = createQuery();
         boolean changeSetsFiltered = false;
         boolean entriesFiltered = false;
-        boolean filterOnResourceId = false;
-        boolean filterOnCategory = false;
 
-        Set<DriftCategory> categories = new TreeSet<DriftCategory>();
+        ChangeSetEntryFilters filters = new ChangeSetEntryFilters();
 
         if (criteria.getFilterResourceIds().length > 0) {
             query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
             changeSetsFiltered = true;
-            filterOnResourceId = true;
         }
 
         if (criteria.getFilterCategories().length > 0) {
             List<DriftCategory> list = asList(criteria.getFilterCategories());
             query.field("files.category").in(list);
             entriesFiltered = true;
-            filterOnCategory = true;
-            categories = new TreeSet<DriftCategory>(list);
+            filters.add(new CategoryFilter(criteria.getFilterCategories()));
         }
 
         List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();
@@ -134,7 +130,7 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         } else {
             for (MongoDBChangeSet c : query.asList()) {
                 for (MongoDBChangeSetEntry e : c.getDrifts()) {
-                    if (filterOnCategory && categories.contains(e.getCategory())) {
+                    if (filters.matchesAll(e)) {
                         entries.add(e);
                     }
                 }

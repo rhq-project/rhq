@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
@@ -111,10 +111,10 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem recentConfigurationChangesItem = new NavigationItem(ConfigurationHistoryView.VIEW_ID,
+        NavigationItem recentConfigurationChangesItem = new NavigationItem(ResourceConfigurationHistoryListView.VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()),
+                    return new ResourceConfigurationHistoryListView(extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()),
                         getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });

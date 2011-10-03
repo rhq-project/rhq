@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -45,8 +49,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigurationHistoryDataSource<? extends AbstractResourceConfigurationUpdate, ? extends AbstractResourceConfigurationUpdateCriteria>>
-    extends TableSection<T> {
+public abstract class AbstractConfigurationHistoryListView<T
+        extends AbstractConfigurationHistoryDataSource
+        <? extends AbstractResourceConfigurationUpdate, ? extends AbstractResourceConfigurationUpdateCriteria>>
+        extends TableSection<T> {
 
     private Integer resourceId;
     private boolean hasWritePerm; // can delete history or rollback to a previous config
@@ -54,7 +60,7 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public AbstractConfigurationHistoryView(String locatorId, String title, boolean hasWritePerm) {
+    public AbstractConfigurationHistoryListView(String locatorId, String title, boolean hasWritePerm) {
         super(locatorId, title);
         this.hasWritePerm = hasWritePerm;
         this.resourceId = null;
@@ -65,7 +71,7 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
      *
      * @param resourceId a Resource ID
      */
-    public AbstractConfigurationHistoryView(String locatorId, String title, boolean hasWritePerm, int resourceId) {
+    public AbstractConfigurationHistoryListView(String locatorId, String title, boolean hasWritePerm, int resourceId) {
         super(locatorId, title, createCriteria(resourceId));
         this.hasWritePerm = hasWritePerm;
         this.resourceId = resourceId;
@@ -122,13 +128,36 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
         addTableAction(extendLocatorId("Compare"), MSG.common_button_compare(), null, new AbstractTableAction(
             TableActionEnablement.MULTIPLE) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                ArrayList<AbstractResourceConfigurationUpdate> configs = new ArrayList<AbstractResourceConfigurationUpdate>();
+                // The config updates do not have their Configurations fetched, so we need to reload the selected
+                // config updates, specifying that their Configurations should be fetched, in order to compare the
+                // Configurations.
+
+                List<Integer> updateIds = new ArrayList<Integer>();
                 for (ListGridRecord record : selection) {
-                    AbstractResourceConfigurationUpdate update = (AbstractResourceConfigurationUpdate) record
-                        .getAttributeAsObject(AbstractConfigurationHistoryDataSource.Field.OBJECT);
-                    configs.add(update);
+                    int updateId = record.getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
+                    updateIds.add(updateId);
                 }
-                ConfigurationComparisonView.displayComparisonDialog(configs);
+
+                Criteria criteria = new Criteria();
+                criteria.addCriteria(AbstractConfigurationHistoryDataSource.CriteriaField.IDS,
+                        updateIds.toArray(new Integer[updateIds.size()]));
+
+                DSRequest requestProperties = new DSRequest();
+                requestProperties.setAttribute(AbstractConfigurationHistoryDataSource.RequestProperty.FETCH_CONFIGURATION,
+                        true);
+
+                getDataSource().fetchData(criteria, new DSCallback() {
+                            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                                ArrayList<AbstractResourceConfigurationUpdate> updatesWithConfigs = new ArrayList<AbstractResourceConfigurationUpdate>();
+                                Record[] records = response.getData();
+                                for (Record record : records) {
+                                    AbstractResourceConfigurationUpdate update = (AbstractResourceConfigurationUpdate) record
+                                            .getAttributeAsObject(AbstractConfigurationHistoryDataSource.Field.OBJECT);
+                                    updatesWithConfigs.add(update);
+                                }
+                                ConfigurationComparisonView.displayComparisonDialog(updatesWithConfigs);
+                            }
+                        }, requestProperties);
             }
         });
 
@@ -139,7 +168,8 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     if (selection != null && selection.length == 1) {
                         ListGridRecord record = selection[0];
-                        rollback(record.getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID).intValue());
+                        int configHistoryIdToRollbackTo = record.getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
+                        rollback(configHistoryIdToRollbackTo);
                     }
                 }
             });

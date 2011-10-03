@@ -34,17 +34,11 @@ import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 public class GroupResourceConfigurationUpdateCriteria extends AbstractGroupConfigurationUpdateCriteria {
     private static final long serialVersionUID = 1L;
 
-    private boolean fetchConfigurationUpdates;
-
     public GroupResourceConfigurationUpdateCriteria() {
     }
 
     @Override
     public Class<GroupResourceConfigurationUpdate> getPersistentClass() {
         return GroupResourceConfigurationUpdate.class;
-    }
-
-    public void fetchConfigurationUpdates(boolean fetchConfigurationUpdates) {
-        this.fetchConfigurationUpdates = fetchConfigurationUpdates;
     }
 }

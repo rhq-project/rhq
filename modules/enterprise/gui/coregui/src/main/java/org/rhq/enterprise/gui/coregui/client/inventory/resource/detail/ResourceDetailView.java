@@ -60,10 +60,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventComposi
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
@@ -181,7 +181,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         inventoryConn = new SubTab(inventoryTab.extendLocatorId("ConnectionSettings"), new ViewName(
             "ConnectionSettings", MSG.view_tabs_common_connectionSettings()), null);
         inventoryConnHistory = new SubTab(inventoryTab.extendLocatorId("ConnSetHist"),
-            PluginConfigurationHistoryView.VIEW_ID, null);
+            PluginConfigurationHistoryListView.VIEW_ID, null);
         inventoryGroups = new SubTab(inventoryTab.extendLocatorId("Groups"), new ViewName("Groups", MSG
             .view_tabs_common_groups()), null);
         inventoryAgent = new SubTab(inventoryTab.extendLocatorId("Agent"), new ViewName("Agent", MSG
@@ -359,7 +359,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new PluginConfigurationHistoryView(inventoryConnHistory.extendLocatorId("View"),
+                return new PluginConfigurationHistoryListView(inventoryConnHistory.extendLocatorId("View"),
                     resourceComposite.getResourcePermission().isInventory(), resourceComposite.getResource().getId());
             }
         };
@@ -512,7 +512,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new ConfigurationHistoryView(configurationTab.extendLocatorId("ConfigHistView"),
+                    return new ResourceConfigurationHistoryListView(configurationTab.extendLocatorId("ConfigHistView"),
                         resourceComposite.getResourcePermission().isConfigureWrite(), resource.getId());
                 }
             });

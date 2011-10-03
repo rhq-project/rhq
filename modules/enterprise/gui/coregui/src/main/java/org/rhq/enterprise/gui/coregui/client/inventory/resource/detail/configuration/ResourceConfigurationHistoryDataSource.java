@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,9 +34,7 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -51,10 +49,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ConfigurationHistoryDataSource extends
+public class ResourceConfigurationHistoryDataSource extends
     AbstractConfigurationHistoryDataSource<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> {
 
-    public ConfigurationHistoryDataSource() {
+    public ResourceConfigurationHistoryDataSource() {
         super();
     }
 
@@ -126,13 +124,13 @@ public class ConfigurationHistoryDataSource extends
 
                     // we are obtaining a single resource's history items. Let's find out which is
                     // its latest, current config item so we can mark it as such
-                    getConfigurationService().getLatestResourceConfigurationUpdate(resourceId.intValue(),
+                    getConfigurationService().getLatestResourceConfigurationUpdate(resourceId,
                         new AsyncCallback<ResourceConfigurationUpdate>() {
                             @Override
                             public void onSuccess(ResourceConfigurationUpdate latestResult) {
                                 if (latestResult != null) {
                                     for (ListGridRecord record : records) {
-                                        boolean latest = record.getAttributeAsInt(Field.ID).intValue() == latestResult
+                                        boolean latest = record.getAttributeAsInt(Field.ID) == latestResult
                                             .getId();
                                         record.setAttribute(Field.CURRENT_CONFIG, latest);
                                     }
@@ -143,7 +141,7 @@ public class ConfigurationHistoryDataSource extends
                             @Override
                             public void onFailure(Throwable caught) {
                                 // should we show an error message? this just means we can't show any item as the "current" one
-                                Log.error("cannot get latest resource config", caught);
+                                Log.error("Field to get latest Resource configuration update.", caught);
                                 finish();
                             }
 
@@ -158,20 +156,23 @@ public class ConfigurationHistoryDataSource extends
     }
 
     @Override
+    protected ResourceConfigurationUpdateCriteria createFetchCriteria() {
+        return new ResourceConfigurationUpdateCriteria();
+    }
+
+    @Override
     protected ResourceConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
-        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-        criteria.fetchConfiguration(true);
+        ResourceConfigurationUpdateCriteria criteria = super.getFetchCriteria(request);
+
         criteria.fetchResource(true);
         criteria.fetchGroupConfigurationUpdate(true);
 
-        PageControl pageControl = getPageControl(request);
-        pageControl.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
-        criteria.setPageControl(pageControl);
-
-        final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
+        final Integer resourceId = getFilter(request, CriteriaField.RESOURCE_ID, Integer.class);
         if (resourceId != null) {
             criteria.addFilterResourceIds(resourceId);
         }
+
         return criteria;
     }
+
 }

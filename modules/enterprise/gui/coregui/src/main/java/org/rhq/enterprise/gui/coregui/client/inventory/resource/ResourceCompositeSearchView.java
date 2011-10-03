@@ -70,7 +70,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, null, criteria, title, headerIcons);
     }
 
-    // surpress unchecked warnings because the superclass has different generic types for the datasource
+    // suppress unchecked warnings because the superclass has different generic types for the datasource
     @SuppressWarnings("unchecked")
     @Override
     protected RPCDataSource getDataSourceInstance() {

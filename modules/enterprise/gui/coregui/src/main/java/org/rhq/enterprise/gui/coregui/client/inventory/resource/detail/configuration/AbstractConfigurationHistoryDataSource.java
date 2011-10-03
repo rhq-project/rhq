@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
@@ -40,6 +41,8 @@ import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -76,6 +79,11 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
     public static abstract class CriteriaField {
         public static final String RESOURCE_ID = "resourceId";
+        public static final String IDS = "ids";
+    }
+
+    public static abstract class RequestProperty {
+        public static final String FETCH_CONFIGURATION = "fetchConfiguration";
     }
 
     // Specify 60s timeout to compensate for Configurations being fetched for all of the config updates.
@@ -314,4 +322,28 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
     protected abstract String getConfigurationUpdateStatusIcon(ConfigurationUpdateStatus status);
 
     protected abstract String getGroupConfigurationUpdateHistoryLink(Integer groupId, Number value);
+
+    protected abstract C createFetchCriteria();
+
+    @Override
+    protected C getFetchCriteria(DSRequest request) {
+        C criteria = createFetchCriteria();
+
+        PageControl pageControl = getPageControl(request);
+        pageControl.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
+        criteria.setPageControl(pageControl);
+
+        List<Integer> ids = getFilter(request, CriteriaField.IDS, List.class);
+        if (ids  != null) {
+            criteria.addFilterIds(ids);
+        }
+
+        Boolean fetchConfiguration = request.getAttributeAsBoolean(RequestProperty.FETCH_CONFIGURATION);
+        if (fetchConfiguration != null && fetchConfiguration) {
+            criteria.fetchConfiguration(true);
+        }
+
+        return criteria;
+    }
+
 }

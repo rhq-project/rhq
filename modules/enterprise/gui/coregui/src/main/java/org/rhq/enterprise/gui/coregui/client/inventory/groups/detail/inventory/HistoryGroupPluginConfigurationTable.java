@@ -145,12 +145,13 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
                             refresh();
                             Message message = new Message(MSG.view_group_pluginConfig_table_deleteSuccessful(String
                                 .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
-                                Message.Option.Transient, Message.Option.Sticky));
+                                Message.Option.Transient));
                             CoreGUI.getMessageCenter().notify(message);
                         }
 
                         @Override
                         public void onFailure(Throwable caught) {
+                            refreshTableInfo();
                             CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_deleteFailure(),
                                 caught);
                         }
@@ -164,6 +165,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
                         + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Settings");
+                    refreshTableInfo();
                 }
             });
 
@@ -173,6 +175,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
                     + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Members");
+                refreshTableInfo();
             }
         });
 

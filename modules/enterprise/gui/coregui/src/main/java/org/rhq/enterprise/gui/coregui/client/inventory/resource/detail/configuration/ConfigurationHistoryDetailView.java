@@ -68,12 +68,14 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
     @Override
     public void renderView(ViewPath viewPath) {
 
-        int updateId = viewPath.getCurrentAsInt();
-
         ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+
+        int updateId = viewPath.getCurrentAsInt();
+        criteria.addFilterId(updateId);
+
         criteria.fetchConfiguration(true);
         criteria.fetchResource(true);
-        criteria.addFilterId(updateId);
+        criteria.fetchGroupConfigurationUpdate(true);
 
         GWTServiceLookup.getConfigurationService().findResourceConfigurationUpdatesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {

@@ -24,7 +24,7 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.AbstractConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.AbstractConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -34,15 +34,15 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class PluginConfigurationHistoryView extends
-    AbstractConfigurationHistoryView<PluginConfigurationHistoryDataSource> {
+public class PluginConfigurationHistoryListView extends
+    AbstractConfigurationHistoryListView<PluginConfigurationHistoryDataSource> {
     public static final ViewName VIEW_ID = new ViewName("PluginConfigurationHistoryView", MSG
         .view_tabs_common_connectionSettingsHistory());
 
     /**
      * Use this constructor to view plugin config histories for all viewable Resources.
      */
-    public PluginConfigurationHistoryView(String locatorId, boolean hasWritePerm) {
+    public PluginConfigurationHistoryListView(String locatorId, boolean hasWritePerm) {
         super(locatorId, VIEW_ID.getTitle(), hasWritePerm);
         PluginConfigurationHistoryDataSource datasource = new PluginConfigurationHistoryDataSource();
         setDataSource(datasource);
@@ -53,7 +53,7 @@ public class PluginConfigurationHistoryView extends
      *
      * @param resourceId a Resource ID
      */
-    public PluginConfigurationHistoryView(String locatorId, boolean hasWritePerm, int resourceId) {
+    public PluginConfigurationHistoryListView(String locatorId, boolean hasWritePerm, int resourceId) {
         super(locatorId, VIEW_ID.getTitle(), hasWritePerm, resourceId);
         PluginConfigurationHistoryDataSource datasource = new PluginConfigurationHistoryDataSource();
         setDataSource(datasource);

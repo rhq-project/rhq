@@ -142,12 +142,13 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                             refresh();
                             Message message = new Message(MSG.view_group_resConfig_table_deleteSuccessful(String
                                 .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
-                                Message.Option.Transient, Message.Option.Sticky));
+                                Message.Option.Transient));
                             CoreGUI.getMessageCenter().notify(message);
                         }
 
                         @Override
                         public void onFailure(Throwable caught) {
+                            refreshTableInfo();
                             CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_table_deleteFailure(),
                                 caught);
                         }
@@ -161,6 +162,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
                         + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
+                    refreshTableInfo();
                 }
             });
 
@@ -170,6 +172,7 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
                         + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
+                    refreshTableInfo();
                 }
             });
 

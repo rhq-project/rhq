@@ -223,7 +223,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                 // if the resource group is gone just skip it
                 continue;
             }
-            ResourceGroup group = groupComposite.getResourceGroup();
+            final ResourceGroup group = groupComposite.getResourceGroup();
 
             MenuItem item = new MenuItem(String.valueOf(groupId));
             item.setTitle(group.getName());
@@ -231,7 +231,7 @@ public class FavoritesButton extends LocatableIMenuButton {
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                    CoreGUI.goToView(LinkManager.getResourceGroupLink(group));
                 }
             });
             items.add(item);
@@ -291,7 +291,7 @@ public class FavoritesButton extends LocatableIMenuButton {
                 // if the resource group is gone just skip it
                 continue;
             }
-            ResourceGroup group = groupComposite.getResourceGroup();
+            final ResourceGroup group = groupComposite.getResourceGroup();
 
             MenuItem item = new MenuItem(String.valueOf(groupId));
             item.setTitle(group.getName());
@@ -299,7 +299,7 @@ public class FavoritesButton extends LocatableIMenuButton {
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getResourceGroupLink(groupId));
+                    CoreGUI.goToView(LinkManager.getResourceGroupLink(group));
                 }
             });
             items.add(item);

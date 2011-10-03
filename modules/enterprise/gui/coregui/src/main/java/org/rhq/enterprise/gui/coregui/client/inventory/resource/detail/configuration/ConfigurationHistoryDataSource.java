@@ -28,6 +28,7 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
@@ -64,7 +65,7 @@ public class ConfigurationHistoryDataSource extends
 
     @Override
     protected String getGroupConfigurationUpdateHistoryLink(Integer groupId, Number value) {
-        return LinkManager.getGroupResourceConfigurationUpdateHistoryLink(groupId, value.intValue());
+        return LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(groupId), value.intValue());
     }
 
     @Override

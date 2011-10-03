@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,8 @@ import java.util.Map;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
- * Category is assigned with the following preference assuming multiple categories can be satisfied with the available context information:
+ * Category is assigned with the following preference assuming multiple categories can be satisfied with the available
+ * context information:
  * <pre>
  * ResourceGroup
  * AutoGroup
@@ -143,16 +144,16 @@ public class EntityContext implements Serializable {
     }
 
     public static EntityContext forGroup(ResourceGroup group) {
-        EntityContext ret = new EntityContext(null, group.getId(), null, null);
-        ret.isAutoCluster = group.getClusterResourceGroup() != null;
-        ret.isAutoGroup = group.getSubject() != null;
+        EntityContext context = new EntityContext(null, group.getId(), null, null);
+        context.isAutoCluster = group.getClusterResourceGroup() != null;
+        context.isAutoGroup = group.getSubject() != null;
         
-        if (ret.isAutoGroup) {
-            ret.parentResourceId = group.getAutoGroupParentResource().getId();
-            ret.resourceTypeId = group.getResourceType().getId();
+        if (context.isAutoGroup) {
+            context.parentResourceId = group.getAutoGroupParentResource().getId();
+            context.resourceTypeId = group.getResourceType().getId();
         }
         
-        return ret;
+        return context;
     }
     
     // TODO: deprecated

@@ -43,6 +43,7 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -184,7 +185,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         if (pluginConfigEnabled) {
             pluginConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group, "Inventory", "ConnectionSettings"));
+                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Inventory", "ConnectionSettings"));
                 }
             });
         }
@@ -198,7 +199,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         if (resourceConfigEnabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group, "Configuration", "Current"));
+                    CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(group), "Configuration", "Current"));
                 }
             });
         }
@@ -228,8 +229,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        String viewPath = LinkManager.getResourceGroupTabLink(group, ResourceDetailView.Tab.OPERATIONS,
-                            ResourceDetailView.OperationsSubTab.SCHEDULES)
+                        String viewPath = LinkManager.getEntityTabLink(EntityContext.forGroup(group), ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
                             + "/0/" + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
                     }

@@ -279,7 +279,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum++)));
-                        String link = LinkManager.getGroupEventHistoryListLink(groupId);
+                        String link = LinkManager.getGroupEventHistoryListLink(EntityContext.forGroup(groupId));
                         AbstractActivityView.addSeeMoreLink(row, link, column);
                     } else {
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentEventsContent

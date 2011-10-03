@@ -26,6 +26,7 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
@@ -66,7 +67,7 @@ public class HistoryGroupPluginConfigurationSettings extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId(), null);
+        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);

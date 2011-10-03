@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
@@ -161,8 +162,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
             new AbstractTableAction(TableActionEnablement.SINGLE) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
-                        HistoryGroupPluginConfigurationTable.this.group.getId(), null)
+                    CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
                         + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Settings");
                 }
             });
@@ -171,8 +171,7 @@ public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPlug
             .view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(TableActionEnablement.SINGLE) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
-                    HistoryGroupPluginConfigurationTable.this.group.getId(), null)
+                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupPluginConfigurationTable.this.group), null)
                     + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Members");
             }
         });

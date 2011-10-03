@@ -217,23 +217,16 @@ set_variables()
    #   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
    #fi
    MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
-   if [ "$RELEASE_TYPE" = "enterprise" ]; then
+
+   if [ "$RELEASE_TYPE" = "enterprise" ];
+   then
       MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
       #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
    fi
+
    if [ -n "$RELEASE_DEBUG" ]; then
       MAVEN_ARGS="$MAVEN_ARGS --debug"
    fi
-   if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
-      MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
-   fi
-
-   # TODO: We may eventually want to reenable publishing of enterprise artifacts.
-   #if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
-   #   MAVEN_RELEASE_PERFORM_GOAL="deploy"
-   #else   
-      MAVEN_RELEASE_PERFORM_GOAL="install"
-   #fi
 
    TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
    RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
@@ -254,7 +247,7 @@ set_variables()
    print_centered "Local Variables"
    local_variables=( "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
                      "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
-                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
+                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "JBOSS_ORG_USERNAME" \
                      "RELEASE_VERSION" "RELEASE_TAG")
    print_variables "${local_variables[@]}"
 }
@@ -290,7 +283,7 @@ run_tag_version_process()
 
    # 6) Publish release artifacts
    #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-   #mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+   #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
    #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 
    # 7) Cleanup after this test build
@@ -393,6 +386,7 @@ print_release_information()
    print_centered "="
 }
 
+
 #========================================================================================
 # Description: Checkout release branch.
 #========================================================================================
@@ -427,6 +421,7 @@ checkout_release_branch()
        echo "Current folder does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
    fi
 }
+
 
 #========================================================================================
 # Description: Checkout or create the build branch for the release process.
@@ -469,6 +464,7 @@ checkout_build_branch_for_release()
       fi
    fi
 }
+
 
 #========================================================================================
 # Description: Checkout or create the build branch for updating the development version.

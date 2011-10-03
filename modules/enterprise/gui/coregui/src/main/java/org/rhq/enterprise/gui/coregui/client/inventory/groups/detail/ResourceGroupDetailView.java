@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -289,13 +290,19 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //       no metrics.
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
-            final int groupId = groupComposite.getResourceGroup().getId();
+            final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(monitorGraphs.extendLocatorId("View"),
-                        "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId);
+                    String url = "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId;
+                    
+                    if (groupContext.isAutoGroup()) {
+                        url += "&parent=" + groupContext.parentResourceId + "&type=" + groupContext.resourceTypeId + "&groupType=auto";
+                    } else if (groupContext.isAutoCluster()) {
+                        url += "&groupType=cluster";
+                    }
+                    return new FullHTMLPane(monitorGraphs.extendLocatorId("View"), url);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);

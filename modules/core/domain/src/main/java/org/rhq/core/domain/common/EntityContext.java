@@ -22,6 +22,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
+
 /**
  * Category is assigned with the following preference assuming multiple categories can be satisfied with the available context information:
  * <pre>
@@ -140,6 +142,19 @@ public class EntityContext implements Serializable {
         return context;
     }
 
+    public static EntityContext forGroup(ResourceGroup group) {
+        EntityContext ret = new EntityContext(null, group.getId(), null, null);
+        ret.isAutoCluster = group.getClusterResourceGroup() != null;
+        ret.isAutoGroup = group.getSubject() != null;
+        
+        if (ret.isAutoGroup) {
+            ret.parentResourceId = group.getAutoGroupParentResource().getId();
+            ret.resourceTypeId = group.getResourceType().getId();
+        }
+        
+        return ret;
+    }
+    
     // TODO: deprecated
     public static EntityContext forAutoGroup(int parentResourceId, int resourceTypeId) {
         return new EntityContext(null, null, parentResourceId, resourceTypeId);

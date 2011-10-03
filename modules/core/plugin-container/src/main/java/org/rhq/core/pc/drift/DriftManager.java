@@ -372,6 +372,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
+    public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+        DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+        driftServer.repeatChangeSet(resourceId, driftDefName, version);
+    }
+
+    @Override
     public void detectDrift(int resourceId, DriftDefinition driftDefinition) {
         if (log.isInfoEnabled()) {
             log.info("Received request to schedule drift detection immediately for [resourceId: " + resourceId

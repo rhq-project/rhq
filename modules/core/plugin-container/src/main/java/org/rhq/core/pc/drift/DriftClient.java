@@ -23,6 +23,8 @@ public interface DriftClient {
      */
     void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir);
 
+    void repeatChangeSet(int resourceId, String driftDefName, int version);
+
     File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition);
 
 }

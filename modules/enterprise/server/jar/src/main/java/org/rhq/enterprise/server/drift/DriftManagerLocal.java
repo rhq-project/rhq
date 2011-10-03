@@ -65,6 +65,8 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
     void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
         File changeSetFilesZip) throws Exception;
 
+    void processRepeatChangeSet(int resourceId, String driftDefName, int version);
+
     /**
      * Remove the provided driftDef (identified by name) on the specified entityContext.
      * Agents, if available, will be notified of the change. 

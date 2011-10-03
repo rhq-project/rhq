@@ -39,7 +39,6 @@ import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.write;
 import static org.apache.commons.io.IOUtils.writeLines;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
@@ -193,16 +192,16 @@ public class DriftTest {
     }
 
     /**
-     * Returns the previous snapshot file for the specified drift definition for the
-     * resource with the id that can be obtained from {@link #resourceId()}.
+     * Returns the previous version snapshot file. This file is generated when an initial
+     * snapshot has already been generated and drift is subsequently detected.
      *
-     * @param config The drift definition name
-     * @return The previous snapshot file
+     * @param driftDefinitionName The drift definition name
+     * @return The previous version snapshot file
      * @throws Exception
      */
-    protected File previousChangeSet(String config) throws IOException {
-        File changeSet = changeSet(config, COVERAGE);
-        return new File(changeSet.getParentFile(), changeSet.getName() + ".previous");
+    protected File previousSnapshot(String driftDefinitionName) throws Exception {
+        File driftDefDir = changeSetDir(driftDefinitionName);
+        return new File(driftDefDir, "changeset.txt.previous");
     }
 
     protected File changeSetDir(String driftDefName) throws Exception {
@@ -267,6 +266,11 @@ public class DriftTest {
     }
 
     protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
+        return createHeaders(driftDef, type, version, false);
+    }
+
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version,
+        boolean isRepeat) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
         headers.setDriftDefinitionId(driftDef.getId());
@@ -274,6 +278,7 @@ public class DriftTest {
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
         headers.setVersion(version);
+        headers.setRepeated(isRepeat);
 
         return headers;
     }

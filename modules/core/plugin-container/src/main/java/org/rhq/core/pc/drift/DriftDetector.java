@@ -22,6 +22,7 @@ package org.rhq.core.pc.drift;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -115,7 +116,11 @@ public class DriftDetector implements Runnable {
                     detectionSummary.setType(COVERAGE);
                     generateSnapshot(detectionSummary);
                 }
-                if (detectionSummary.getType() == COVERAGE || detectionSummary.getDriftChangeSet() != null) {
+
+                if (detectionSummary.isRepeat()) {
+                    driftClient.repeatChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
+                        detectionSummary.getVersion());
+                } else if (detectionSummary.getType() == COVERAGE || detectionSummary.getDriftChangeSet() != null) {
                     driftClient.sendChangeSetToServer(detectionSummary);
                 }
             } catch (IOException e) {
@@ -251,6 +256,13 @@ public class DriftDetector implements Runnable {
             // If nothing has changed, there is no need to add/update any files
             summary.setNewSnapshot(currentSnapshot);
         } else {
+            if (schedule.getDriftDefinition().isPinned() && newVersion > 1 &&
+                isSameAsPreviousChangeSet(deltaEntries, currentSnapshot)) {
+                summary.setVersion(newVersion - 1);
+                summary.setRepeat(true);
+                return;
+            }
+
             File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() + ".previous");
             copyFile(currentSnapshot, oldSnapshot);
             currentSnapshot.delete();
@@ -280,6 +292,45 @@ public class DriftDetector implements Runnable {
             }
             deltaWriter.close();
         }
+    }
+
+    private boolean isSameAsPreviousChangeSet(List<FileEntry> entries, File currentSnapsotFile) throws IOException {
+        HashMap<String, FileEntry> entriesMap = new HashMap<String, FileEntry>();
+        for (FileEntry e : entries) {
+            entriesMap.put(e.getFile(), e);
+        }
+
+        File deltaChangeSet = new File(currentSnapsotFile.getParentFile(), "drift-changeset.txt");
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(deltaChangeSet);
+
+        int numEntries = 0;
+        for (FileEntry entry : reader) {
+            FileEntry newEntry = entriesMap.get(entry.getFile());
+            if (newEntry == null) {
+                return false;
+            }
+            if (entry.getType() != newEntry.getType()) {
+                return false;
+            }
+            switch (entry.getType()) {
+                case FILE_ADDED:
+                    if (!entry.getNewSHA().equals(newEntry.getNewSHA())) {
+                        return false;
+                    }
+                case FILE_CHANGED:
+                    if (!entry.getNewSHA().equals(newEntry.getNewSHA()) ||
+                        !entry.getOldSHA().equals(newEntry.getOldSHA())) {
+                        return false;
+                    }
+                default:  // FILE_REMOVED
+                    if (!entry.getOldSHA().equals(newEntry.getOldSHA())) {
+                        return false;
+                    }
+            }
+            numEntries++;
+        }
+
+        return numEntries == entriesMap.size();
     }
 
     private void generateSnapshot(DriftDetectionSummary summary) throws IOException {

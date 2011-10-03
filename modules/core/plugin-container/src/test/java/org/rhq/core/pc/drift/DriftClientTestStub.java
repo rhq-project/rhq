@@ -22,6 +22,10 @@ class DriftClientTestStub implements DriftClient {
     }
 
     @Override
+    public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+    }
+
+    @Override
     public File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition) {
         return basedir;
     }

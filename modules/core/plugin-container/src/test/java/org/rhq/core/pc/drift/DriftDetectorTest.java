@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -50,6 +51,7 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class DriftDetectorTest extends DriftTest {
 
@@ -243,7 +245,7 @@ public class DriftDetectorTest extends DriftTest {
 
         File snapshot = changeSet(def.getName(), COVERAGE);
         String newHash = sha256(snapshot);
-        File previousSnapshot = previousChangeSet(def.getName());
+        File previousSnapshot = previousSnapshot(def.getName());
         String oldHash = sha256(previousSnapshot);
 
         // create some drift and make sure drift detection does not run.
@@ -471,7 +473,7 @@ public class DriftDetectorTest extends DriftTest {
 
         // Need to delete the previous version snapshot file; otherwise, the
         // next detection run will be skipped.
-        previousChangeSet(def.getName()).delete();
+        previousSnapshot(def.getName()).delete();
 
         // generate some more drift, and fail on sending the change set
         // to the server
@@ -490,7 +492,7 @@ public class DriftDetectorTest extends DriftTest {
         // The previous version file must be deleted on revert; otherwise, drift
         // detection will not run for the schedule if the previous version file
         // is found on disk.
-        assertFalse(previousChangeSet(def.getName()).exists(), "The copy of the previous version snapshot file "
+        assertFalse(previousSnapshot(def.getName()).exists(), "The copy of the previous version snapshot file "
             + "should be deleted once we have reverted back to it and have a new, current snapsot file.");
     }
 
@@ -726,6 +728,79 @@ public class DriftDetectorTest extends DriftTest {
         assertTrue(pinnedSnapshot.exists(), "Pinned snapshot file should be generated when initial version is pinned");
         assertEquals(sha256(changeSet), sha256(pinnedSnapshot), "The contents of the pinned snapshot file and the " +
             "initial snapshot should be identical");
+    }
+
+    @Test
+    public void notifyServerOfRepeatChangeSet() throws Exception {
+        final DriftDefinition driftDef = driftDefinition("repeat-changeset", resourceDir.getAbsolutePath());
+        driftDef.setId(1);
+        driftDef.setPinned(true);
+        driftDef.setPinnedVersion(0);
+
+        File confDir = mkdir(resourceDir, "conf");
+        createRandomFile(confDir, "server1.conf");
+
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftDef);
+
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        // generate some drift
+        createRandomFile(confDir, "server2.conf");
+        schedule.resetSchedule();
+        detector.run();
+
+        File currentSnapshot = changeSet(driftDef.getName(), COVERAGE);
+        String currentSnapshotHash = sha256(currentSnapshot);
+
+        File driftChangeSet = changeSet(driftDef.getName(), DRIFT);
+        String driftChangeSetHash = sha256(driftChangeSet);
+
+        // We have to delete the previous version snapshot so that the detector will
+        // run again.
+        File previousSnapshot = previousSnapshot(driftDef.getName());
+        previousSnapshot.delete();
+
+        // Now do another drift detection run. This should re-detect the same drift that
+        // was previously detected. It should not however, produce a new current snapshot
+        // since there are no changes on the file system.
+        final AtomicBoolean repeatChangeSetCalled = new AtomicBoolean(false);
+        detector.setDriftClient(new DriftClientTestStub() {
+            {
+                setBaseDir(resourceDir);
+            }
+
+            @Override
+            public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
+                fail("Do not send repeat change set to server.");
+            }
+
+            @Override
+            public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+                repeatChangeSetCalled.set(true);
+                assertEquals(resourceId, resourceId(), "The resource id for the repeat change set is wrong");
+                assertEquals(driftDefName, driftDef.getName(), "The drift definition name for the repeat change set " +
+                    "is wrong");
+                assertEquals(version, 1, "The snapshot version should not have changed since no new drift was detected");
+            }
+        });
+
+        schedule.resetSchedule();
+        detector.run();
+
+        // verify that the current snapshot file has not changed
+        assertEquals(sha256(currentSnapshot), currentSnapshotHash, "The current snapshot should not have been updated");
+
+        // verify that the drift change set has not changed
+        assertEquals(sha256(driftChangeSet), driftChangeSetHash, "The drift change set file should not have changed");
+
+        // verify that notified the server
+        assertTrue(repeatChangeSetCalled.get(), "Failed to notify server of repeat change set");
+
+        // verify that the previous version snapshot file has been deleted
+        assertFalse(previousSnapshot.exists(), "There should be no previous version snapshot file because the " +
+            "server has already acknowledged the current snapshot.");
+
     }
 
     private void assertHeaderEquals(File changeSet, Headers expected) throws Exception {

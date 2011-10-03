@@ -219,6 +219,52 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    public void processRepeatChangeSet(int resourceId, String driftDefName, int version) {
+        Subject overlord = subjectManager.getOverlord();
+
+        DriftDefinitionCriteria driftDefCriteria = new DriftDefinitionCriteria();
+        driftDefCriteria.addFilterResourceIds(resourceId);
+        driftDefCriteria.addFilterName(driftDefName);
+
+        PageList<DriftDefinition> defs = findDriftDefinitionsByCriteria(overlord, driftDefCriteria);
+        if (defs.isEmpty()) {
+            log.warn("Cannot process repeat change set. No drift definition found for [resourceId: " + resourceId +
+                ", driftDefinitionName: " + driftDefName + "]");
+        }
+        DriftDefinition driftDef = defs.get(0);
+
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterResourceId(resourceId);
+        criteria.addFilterDriftDefinitionId(driftDef.getId());
+        criteria.addFilterVersion(Integer.toString(version));
+        criteria.fetchDrifts(true);
+
+        PageList<? extends DriftChangeSet<?>> changeSets = driftServerPlugin.findDriftChangeSetsByCriteria(overlord,
+            criteria);
+        if (changeSets.isEmpty()) {
+            log.warn("Cannot process repeat change set. No change set found for [driftDefinitionId: " +
+                driftDef.getId() + ", version: " + version + "]");
+            return;
+        }
+
+        DriftChangeSet<?> changeSet = changeSets.get(0);
+        DriftChangeSetSummary summary = new DriftChangeSetSummary();
+        summary.setCategory(changeSet.getCategory());
+        // TODO ctime should come from agent
+        summary.setCreatedTime(System.currentTimeMillis());
+        summary.setResourceId(changeSet.getResourceId());
+        summary.setDriftDefinitionName(driftDef.getName());
+        summary.setDriftHandlingMode(driftDef.getDriftHandlingMode());
+
+        for (Drift<?, ?> drift : changeSet.getDrifts()) {
+            summary.addDriftPathname(drift.getPath());
+        }
+
+        notifyAlertConditionCacheManager("processRepeatChangeSet", summary);
+    }
+
+    @Override
     @TransactionAttribute(NOT_SUPPORTED)
     public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();

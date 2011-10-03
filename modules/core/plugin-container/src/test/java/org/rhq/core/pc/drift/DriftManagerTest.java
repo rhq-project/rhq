@@ -392,6 +392,10 @@ public class DriftManagerTest extends DriftTest {
         }
 
         @Override
+        public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+        }
+
+        @Override
         public Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds) {
             return null;
         }

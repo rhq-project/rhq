@@ -19,9 +19,6 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
-
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,6 +35,9 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 public class DriftServerServiceImpl implements DriftServerService {
     @Override
@@ -59,6 +59,12 @@ public class DriftServerServiceImpl implements DriftServerService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+        DriftManagerLocal driftManager = getDriftManager();
+        driftManager.processRepeatChangeSet(resourceId, driftDefName, version);
     }
 
     @Override

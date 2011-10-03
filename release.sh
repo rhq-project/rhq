@@ -241,6 +241,18 @@ set_variables()
    # property files.
    LANG=en_US.iso8859
    export LANG
+
+   # Print out a summary of the environment.
+   print_centered "Environment Variables"
+   environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
+   print_variables "${environment_variables[@]}"
+
+   print_centered "Local Variables"
+   local_variables=( "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
+                     "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
+                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
+                     "RELEASE_VERSION" "RELEASE_TAG")
+   print_variables "${local_variables[@]}"
 }
 
 #========================================================================================
@@ -330,6 +342,26 @@ verify_tags()
    fi
 }
 
+#========================================================================================
+# Description: Run the validation process for all the system utilities needed by
+#              the script. At the end print the version of each utility.
+#========================================================================================
+validate_system_utilities()
+{
+   # TODO: Check that JDK version is < 1.7.
+
+   validate_java_6
+
+   validate_java_5
+
+   validate_maven
+
+   validate_git
+
+   print_centered "Program Versions"
+   program_versions=("git --version" "java -version" "mvn --version")
+   print_program_versions "${program_versions[@]}"
+}
 
 
 if [ -n "$RELEASE_DEBUG" ];
@@ -338,38 +370,11 @@ then
    set -x
 fi
 
-# TODO: Check that JDK version is < 1.7.
-
 parse_validate_options $@
 
-validate_java_6
-
-validate_java_5
-
-validate_maven
-
-validate_git
-
-print_centered "Program Versions"
-program_versions=("git --version" "java -version" "mvn --version")
-print_program_versions "${program_versions[@]}"
+validate_system_utilities
 
 set_variables
-
-# Print out a summary of the environment.
-print_centered "Environment Variables"
-environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
-print_variables "${environment_variables[@]}"
-
-
-print_centered "Local Variables"
-local_variables=( "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
-                  "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
-                  "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
-                  "RELEASE_VERSION" "RELEASE_TAG")
-print_variables "${local_variables[@]}"
-
-print_centered "="
 
 # Checkout the source from git, assume that the git repo is already cloned
 git status >/dev/null 2>&1

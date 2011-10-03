@@ -1,14 +1,17 @@
 #!/bin/bash
 #========================================================================================
-#
-# Usage: release.sh community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production
+# Usage:
+# See usage function.
 #
 # Description: 
-# Add description here
+# RHQ release script. Supports tagging and branching model described in the community
+# wiki:
+# http://www.rhq-project.org/display/RHQ/Source+Control
 #
 # Options: 
-# Add option description here
+# See usage function.
 #========================================================================================
+
 
 #include the utility library
 source `dirname $0`/rhq_bash.lib
@@ -176,6 +179,7 @@ parse_validate_options()
    print_variables "${script_options[@]}"
 }
 
+
 #========================================================================================
 # Description: Set all the local and environment variables required by the script.
 #========================================================================================
@@ -254,6 +258,7 @@ set_variables()
                      "RELEASE_VERSION" "RELEASE_TAG")
    print_variables "${local_variables[@]}"
 }
+
 
 #========================================================================================
 # Description: Perform version update process and test the outcome by building 
@@ -342,6 +347,7 @@ verify_tags()
    fi
 }
 
+
 #========================================================================================
 # Description: Run the validation process for all the system utilities needed by
 #              the script. At the end print the version of each utility.
@@ -364,11 +370,26 @@ validate_system_utilities()
 }
 
 
+#========================================================================================
+# Description: Prints the release information.
+#========================================================================================
+print_release_information()
+{
+   echo
+   echo "=============================== Release Info =================================="
+   echo "Version: $RELEASE_VERSION"
+   echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
+   echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
+   echo "==============================================================================="
+}
+
 if [ -n "$RELEASE_DEBUG" ];
 then
    echo "Debug output is enabled."
    set -x
 fi
+
+## MAIN SCRIPT ##
 
 parse_validate_options $@
 
@@ -430,11 +451,7 @@ fi
 
 
 verify_tags
+
 run_tag_version_process
 
-echo
-echo "=============================== Release Info =================================="
-echo "Version: $RELEASE_VERSION"
-echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
-echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
-echo "==============================================================================="
+print_release_information

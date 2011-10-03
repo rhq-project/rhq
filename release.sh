@@ -298,7 +298,7 @@ run_tag_version_process()
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
-   # 8) Commit the change in version (if everything went well so far then this is a good tag
+   # 8) Commit the change in version (if everything went well so far then this is a good tag)
    git add -u
    git commit -m "tag $RELEASE_TAG"
    
@@ -320,7 +320,7 @@ update_development_version()
    mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
-   # 2) Commit the change in version (if everything went well so far then this is a good tag
+   # 2) Commit the change in version
    git add -u
    git commit -m "development RHQ_$DEVELOPMENT_VERSION"
 
@@ -472,11 +472,11 @@ validate_system_utilities
 
 set_variables
 
+verify_tags
+
 checkout_release_branch
 
 checkout_create_build_branch
-
-verify_tags
 
 run_tag_version_process
 

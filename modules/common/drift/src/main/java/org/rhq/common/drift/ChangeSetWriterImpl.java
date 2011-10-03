@@ -52,6 +52,7 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
         writer.write(headers.getBasedir() + "\n");
         writer.write(headers.getType().code() + "\n");
         writer.write(headers.getVersion() + "\n");
+        writer.write(headers.isRepeated() + "\n");
     }
 
     public void write(FileEntry entry) throws IOException {

@@ -19,12 +19,6 @@
 
 package org.rhq.core.pc.drift;
 
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.util.file.FileUtil.purge;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -67,7 +61,6 @@ import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.util.file.FileUtil.copyFile;
-import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 

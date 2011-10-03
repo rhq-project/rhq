@@ -24,6 +24,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
+                           "false\n" +
                            "A " + sha + " 0 conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -36,6 +37,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
+        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -56,6 +58,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
+                           "false\n" +
                            "R 0 " + sha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -68,6 +71,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
+        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -89,6 +93,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
+                           "false\n" +
                            "C " + newSha + " " + oldSha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -101,6 +106,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
+        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -121,6 +127,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
+                           "false\n" +
                            "A " + sha + " 0 conf/file with spaces.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -133,6 +140,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
+        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -162,6 +170,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
+                           "false\n" +
                            "A " + sha256("resource.conf") +  " 0 conf/resource.conf\n" +
                            "A " + sha256("resource.jar") + " 0 lib/resource.jar";
 
@@ -185,6 +194,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
+                           "false\n" +
                            "A " + sha + " 0 conf/resource.conf\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -209,7 +219,8 @@ public class ChangeSetReaderImplTest {
                            "empty-changeset-test\n" +
                            "myresouce\n" +
                            "C\n" +
-                           "1\n";
+                           "1\n" +
+                           "false\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numEntries = 0;
@@ -228,7 +239,7 @@ public class ChangeSetReaderImplTest {
     void assertFileEntryEquals(FileEntry actual, FileEntry expected) {
         assertEquals(actual.getType(), expected.getType(), "The first column, the entry type, is wrong");
         assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The second column, the new SHA-256, is wrong");
-        assertEquals(actual.getOldSHA(), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
+        assertEquals(actual.getOldSHA (), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
         assertEquals(actual.getFile(), expected.getFile(), "The fourth column, the file name, is wrong");
     }
 

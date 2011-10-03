@@ -19,13 +19,6 @@
 
 package org.rhq.core.pc.drift;
 
-import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.IOUtils.write;
-import static org.apache.commons.io.IOUtils.writeLines;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,10 +29,18 @@ import java.util.Random;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
+
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
  * A base test class that provides a framework for drift related tests. DriftTest sets up
@@ -261,4 +262,19 @@ public class DriftTest {
         return config;
     }
 
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type) {
+        return createHeaders(driftDef, type, 0);
+    }
+
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId());
+        headers.setDriftDefinitionId(driftDef.getId());
+        headers.setDriftDefinitionName(driftDef.getName());
+        headers.setBasedir(resourceDir.getAbsolutePath());
+        headers.setType(type);
+        headers.setVersion(version);
+
+        return headers;
+    }
 }

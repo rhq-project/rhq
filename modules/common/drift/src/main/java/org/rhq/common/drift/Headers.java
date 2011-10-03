@@ -44,6 +44,8 @@ public class Headers implements Serializable {
 
     private int version;
 
+    private boolean repeated;
+
     /**
      * This is the id of the resource to which the change set belongs
      *
@@ -126,6 +128,26 @@ public class Headers implements Serializable {
      */
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    /**
+     * @return True is the change set of a repeat of a previous change set. This can occur
+     * with a pinned snapshot. With a pinned snaspshot, the agent always compares the file
+     * system against that same snapshot version. So if during a scan the agent detects a
+     * new file, then in the subsequent scan the agent will "redetect" that same file
+     * because it is not in the pinned snapshot. When this flag is set, is assumed that no
+     * entries are included since they were already specified in a previous change set.
+     */
+    public boolean isRepeated() {
+        return repeated;
+    }
+
+    /**
+     * @param repeated Indicates whether or not this is a repeat of a previous change set
+     * which may happen when using pinned snapshots.
+     */
+    public void setRepeated(boolean repeated) {
+        this.repeated = repeated;
     }
 
 }

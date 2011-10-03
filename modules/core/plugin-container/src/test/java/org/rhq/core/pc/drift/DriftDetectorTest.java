@@ -33,7 +33,6 @@ import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfoFactory;
@@ -769,22 +768,6 @@ public class DriftDetectorTest extends DriftTest {
         }
 
         assertCollectionMatchesNoOrder(msg, expected, actual);
-    }
-
-    Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type) {
-        return createHeaders(driftDef, type, 0);
-    }
-
-    Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
-        Headers headers = new Headers();
-        headers.setResourceId(resourceId());
-        headers.setDriftDefinitionId(driftDef.getId());
-        headers.setDriftDefinitionName(driftDef.getName());
-        headers.setBasedir(resourceDir.getAbsolutePath());
-        headers.setType(type);
-        headers.setVersion(version);
-
-        return headers;
     }
 
 }

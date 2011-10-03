@@ -100,6 +100,7 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
             headers.setBasedir(reader.readLine());
             headers.setType(DriftChangeSetCategory.fromCode(reader.readLine()));
             headers.setVersion(Integer.parseInt(reader.readLine()));
+            headers.setRepeated(Boolean.valueOf(reader.readLine()));
         } catch (IOException e) {
             throw e;
         } catch (Throwable t) {

@@ -526,15 +526,7 @@ public class DriftDetectorTest extends DriftTest {
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
         File server2Conf = createRandomFile(confDir, "server-2.conf");
-        boolean setToReadable = server2Conf.setReadable(false);
-        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
-        if (!setToReadable) {
-            if (isWindows) {
-                server2Conf.delete();
-            } else {
-                assertTrue(setToReadable, "Failed to make " + server2Conf.getPath() + " write only");
-            }
-        }
+        setNotReadable(server2Conf);
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), def));
         detector.run();
@@ -565,15 +557,7 @@ public class DriftDetectorTest extends DriftTest {
         String newServer1Hash = sha256(server1Conf);
 
         File server2Conf = createRandomFile(confDir, "server-2.conf");
-        boolean setToReadable = server2Conf.setReadable(false);
-        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
-        if (!setToReadable) {
-            if (isWindows) {
-                server2Conf.delete();
-            } else {
-                assertTrue(setToReadable, "Failed to make " + server2Conf.getPath() + " write only");
-            }
-        }
+        setNotReadable(server2Conf);
 
         schedule.resetSchedule();
         detector.run();
@@ -608,15 +592,7 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         // make the file non-readable and run the detector again
-        boolean setToReadable = server1Conf.setReadable(false);
-        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
-        if (!setToReadable) {
-            if (isWindows) {
-                server1Conf.delete();
-            } else {
-                assertTrue(setToReadable, "Failed to make " + server1Conf.getPath() + " write only");
-            }
-        }
+        setNotReadable(server1Conf);
 
         schedule.resetSchedule();
         detector.run();
@@ -752,14 +728,14 @@ public class DriftDetectorTest extends DriftTest {
             "initial snapshot should be identical");
     }
 
-    void assertHeaderEquals(File changeSet, Headers expected) throws Exception {
+    private void assertHeaderEquals(File changeSet, Headers expected) throws Exception {
         ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new FileReader(changeSet)));
         Headers actual = reader.getHeaders();
         assertPropertiesMatch(expected, actual, "Headers for " + changeSet.getPath() + " do not match "
             + "expected values");
     }
 
-    void assertFileEntriesMatch(String msg, List<FileEntry> expected, File changeSet) throws Exception {
+    private void assertFileEntriesMatch(String msg, List<FileEntry> expected, File changeSet) throws Exception {
         List<FileEntry> actual = new ArrayList<FileEntry>();
         ChangeSetReader reader = new ChangeSetReaderImpl(changeSet);
 
@@ -768,6 +744,24 @@ public class DriftDetectorTest extends DriftTest {
         }
 
         assertCollectionMatchesNoOrder(msg, expected, actual);
+    }
+
+    /**
+     * Attempts to make a file non-readable. Windows does not support file permissions like
+     * unix and linux platforms do.
+     *
+     * @param file The file to update
+     */
+    private void setNotReadable(File file) {
+        boolean setToReadable = file.setReadable(false);
+        // not every win os (maybe none) supports this call, perform the test anyway, as best as possible
+        if (!setToReadable) {
+            if (isWindows) {
+                file.delete();
+            } else {
+                assertTrue(setToReadable, "Failed to make " + file.getPath() + " write only");
+            }
+        }
     }
 
 }

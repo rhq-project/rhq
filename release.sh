@@ -376,11 +376,76 @@ validate_system_utilities()
 print_release_information()
 {
    echo
-   echo "=============================== Release Info =================================="
+   print_centered "Release Info"
    echo "Version: $RELEASE_VERSION"
    echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
    echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
-   echo "==============================================================================="
+   print_centered "="
+}
+
+#========================================================================================
+# Description: Checkout release branch.
+#========================================================================================
+checkout_release_branch()
+{
+   # Checkout the source from git, assume that the git repo is already cloned
+   git status >/dev/null 2>&1
+   GIT_STATUS_EXIT_CODE=$?
+   # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
+   # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if current folder
+   # is truly a git working copy.
+   if [ "$GIT_STATUS_EXIT_CODE" -le 1 ];
+   then
+       echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
+       git fetch origin "$RELEASE_BRANCH"
+       [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
+
+       git checkout "$RELEASE_BRANCH" 2>/dev/null
+       if [ "$?" -ne 0 ];
+       then
+           git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
+       fi
+
+       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+       git reset --hard "origin/$RELEASE_BRANCH"
+       [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
+       git clean -dxf
+       [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
+       git pull origin $RELEASE_BRANCH
+       [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
+   else
+       echo "Current folder does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
+   fi
+}
+
+#========================================================================================
+# Description: Checkout or create the build branch.
+#========================================================================================
+checkout_create_build_branch()
+{
+   # if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
+   # continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents
+   # change before it completes.
+   if [ "$MODE" = "test" ];
+   then
+       BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
+       # delete the branch if it exists, so we can recreate it fresh
+       EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
+       if [ -n "$EXISTING_BUILD_BRANCH" ];
+       then
+           echo "Deleting remote branch origin/$BUILD_BRANCH"
+           git branch -D -r "origin/$BUILD_BRANCH"
+           echo "Deleting local branch $BUILD_BRANCH"
+           git branch -D "$BUILD_BRANCH"
+       fi
+       echo "Creating and checking out local branch $BUILD_BRANCH from $RELEASE_BRANCH"
+       git checkout -b "$BUILD_BRANCH"
+       echo "Creating remote branch $BUILD_BRANCH"
+       git pull origin "$BUILD_BRANCH"
+       git push origin "$BUILD_BRANCH"
+   else
+       BUILD_BRANCH="${RELEASE_BRANCH}"
+   fi
 }
 
 if [ -n "$RELEASE_DEBUG" ];
@@ -397,58 +462,9 @@ validate_system_utilities
 
 set_variables
 
-# Checkout the source from git, assume that the git repo is already cloned
-git status >/dev/null 2>&1
-GIT_STATUS_EXIT_CODE=$?
-# Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
-# and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if current folder
-# is truly a git working copy.
-if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; 
-then
-    echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
-    git fetch origin "$RELEASE_BRANCH"
-    [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
+checkout_release_branch
 
-    git checkout "$RELEASE_BRANCH" 2>/dev/null
-    if [ "$?" -ne 0 ]; 
-    then
-        git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
-    fi
-
-    [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
-    git reset --hard "origin/$RELEASE_BRANCH"
-    [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
-    git clean -dxf
-    [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
-    git pull origin $RELEASE_BRANCH
-    [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
-else
-    echo "Current folder does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
-fi
-
-# if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
-# continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents
-# change before it completes.
-if [ "$MODE" = "production" ]; then  
-    BUILD_BRANCH="${RELEASE_BRANCH}"
-else
-    BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
-#   delete the branch if it exists, so we can recreate it fresh     
-    EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
-    if [ -n "$EXISTING_BUILD_BRANCH" ]; 
-    then
-        echo "Deleting remote branch origin/$BUILD_BRANCH"    
-        git branch -D -r "origin/$BUILD_BRANCH"
-        echo "Deleting local branch $BUILD_BRANCH"        
-        git branch -D "$BUILD_BRANCH"
-    fi
-    echo "Creating and checking out local branch $BUILD_BRANCH from $RELEASE_BRANCH"    
-    git checkout -b "$BUILD_BRANCH"
-    echo "Creating remote branch $BUILD_BRANCH"  
-    git pull origin "$BUILD_BRANCH"
-    git push origin "$BUILD_BRANCH"    
-fi
-
+checkout_create_build_branch
 
 verify_tags
 

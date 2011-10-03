@@ -352,79 +352,86 @@ public class ChangeSetDAOTest {
             asList(e1, e2, e4), entries);
     }
 
-//    @Test(enabled = ENABLED)
-//    public void findEntriesWithResourceIdAndStartTimeFilters() throws Exception {
-//        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
-//        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
-//        c1.add(e1);
-//        dao.save(c1);
-//
-//        long startTime = System.currentTimeMillis();
-//        Thread.sleep(10);
-//
-//        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, 2, 1);
-//        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
-//        c2.add(e2);
-//        dao.save(c2);
-//
-//        GenericDriftCriteria criteria = new GenericDriftCriteria();
-//        criteria.addFilterResourceIds(resourceId);
-//    }
-
     @Test(enabled = ENABLED)
-    public void findByDriftCriteriaWithEndTimeFilter() throws Exception {
-        int resourceId = 1;
-
-        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, resourceId, 1);
+    public void findEntriesWithResourceIdAndStartTimeFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
         MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
         c1.add(e1);
-
         dao.save(c1);
+
+        long startTime = System.currentTimeMillis();
+        Thread.sleep(10);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 1, 2, 1);
+        c2.add(new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED));
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = createChangeSet(DRIFT, 2, 1, 1);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        c3.add(e3);
+        dao.save(c3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterStartTime(startTime);
+        criteria.addFilterResourceIds(1);
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with resource id and start time filters", asList(e3),
+            entries);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findEntriesWithResourceIdAndEndTimeFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 1, 2, 1);
+        c2.add(new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED));
+        dao.save(c2);
 
         long endTime = System.currentTimeMillis();
         Thread.sleep(10);
 
-        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, resourceId, 1);
-        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
-        c2.add(e2);
-
-        dao.save(c2);
-
-        GenericDriftCriteria criteria = new GenericDriftCriteria();
-        criteria.addFilterEndTime(endTime);
-        criteria.addFilterResourceIds(resourceId);
-
-        List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
-
-        assertEquals(actual.size(), 1, "Expected to get back one change set");
-        MongoDBChangeSet actualChangeSet = actual.get(0);
-
-        assertChangeSetMatches("Failed to find drift entries with end time filter", c1, actualChangeSet);
-    }
-
-    @Test(enabled = ENABLED)
-    public void findByDriftCriteriaWithPathFilter() throws Exception {
-        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
-        c1.add(new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED));
-
-        dao.save(c1);
-
-        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, 1, 1);
-        c2.add(new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED));
-
-        dao.save(c2);
-
-        MongoDBChangeSet c3 = createChangeSet(DRIFT, 3, 1, 1);
-        c3.add(new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED));
-
+        MongoDBChangeSet c3 = createChangeSet(DRIFT, 2, 1, 1);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        c3.add(e3);
         dao.save(c3);
 
         GenericDriftCriteria criteria = new GenericDriftCriteria();
-        criteria.addFilterPath("c1-1.txt");
+        criteria.addFilterEndTime(endTime);
+        criteria.addFilterResourceIds(1);
 
-        List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with resource id and end time filters", asList(e1),
+            entries);
+    }
 
-        assertChangeSetsMatch("Failed to find change sets with drift path filter", asList(c1, c2), actual);
+    @Test(enabled = ENABLED)
+    public void findEntriesWithPathFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, 1, 1);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c2.add(e2).add(e3);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = createChangeSet(COVERAGE, 1, 2, 1);
+        MongoDBChangeSetEntry e4 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        MongoDBChangeSetEntry e5 = new MongoDBChangeSetEntry("c3-1.txt", FILE_ADDED);
+        c3.add(e4).add(e5);
+        dao.save(c3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterPath("c2-1.txt");
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with path filter", asList(e3, e4), entries);
     }
 
     @Test(enabled = ENABLED)

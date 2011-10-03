@@ -21,8 +21,6 @@ package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.dao.BasicDAO;
@@ -34,7 +32,6 @@ import com.mongodb.Mongo;
 import org.bson.types.ObjectId;
 
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 
@@ -113,10 +110,27 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         }
 
         if (criteria.getFilterCategories().length > 0) {
-            List<DriftCategory> list = asList(criteria.getFilterCategories());
-            query.field("files.category").in(list);
+            query.field("files.category").in(asList(criteria.getFilterCategories()));
             entriesFiltered = true;
             filters.add(new CategoryFilter(criteria.getFilterCategories()));
+        }
+
+        if (criteria.getFilterEndTime() != null) {
+            query.field("files.ctime").lessThanOrEq(criteria.getFilterEndTime());
+            entriesFiltered = true;
+            filters.add(new CreatedBeforeFilter(criteria.getFilterEndTime()));
+        }
+
+        if (criteria.getFilterStartTime() != null) {
+            query.field("files.ctime").greaterThanOrEq(criteria.getFilterStartTime());
+            entriesFiltered = true;
+            filters.add(new CreatedAfterFilter(criteria.getFilterStartTime()));
+        }
+
+        if (criteria.getFilterPath() != null && !criteria.getFilterPath().isEmpty()) {
+            query.field("files.path").equal(criteria.getFilterPath());
+            entriesFiltered = true;
+            filters.add(new PathFilter(criteria.getFilterPath()));
         }
 
         List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();

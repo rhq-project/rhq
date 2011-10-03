@@ -113,9 +113,9 @@ public interface JPADriftServerLocal {
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN
      * This is for internal use only - do not call it unless you know what you are doing.
-     * This purges all drift entities and changeset entities associated with the drift config.
+     * This purges all drift entities and changeset entities associated with the drift definition.
      */
-    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
 
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN

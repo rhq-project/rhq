@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 
@@ -103,10 +105,14 @@ public class DriftCarouselView extends Carousel {
                     carouselSize = (null == carouselSize || carouselSize < 1) ? CAROUSEL_DEFAULT_SIZE : carouselSize;
                     int size = carouselSize;
                     Integer carouselStart = null;
+                    Criteria initialCriteria = getInitialMemberCriteria(isRefresh ? getCurrentCriteria() : null);
+
+                    Map map = initialCriteria.getValues();
+                    map.entrySet();
 
                     for (DriftChangeSet changeSet : result) {
-                        DriftCarouselMemberView view = new DriftCarouselMemberView(extendLocatorId(changeSet
-                            .getId()), context, changeSet, hasWriteAccess);
+                        DriftCarouselMemberView view = new DriftCarouselMemberView(extendLocatorId(changeSet.getId()),
+                            context, changeSet, hasWriteAccess, initialCriteria);
                         addCarouselMember(view);
 
                         if (null == carouselStart) {
@@ -131,6 +137,17 @@ public class DriftCarouselView extends Carousel {
                     CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
                 }
             });
+    }
+
+    protected static Criteria getInitialMemberCriteria(Criteria additionalCriteria) {
+        if (null == additionalCriteria) {
+            return DriftHistoryView.INITIAL_CRITERIA;
+        }
+
+        Criteria initialCriteria = new Criteria();
+        addCriteria(initialCriteria, DriftHistoryView.INITIAL_CRITERIA);
+        addCriteria(initialCriteria, additionalCriteria);
+        return initialCriteria;
     }
 
     @Override

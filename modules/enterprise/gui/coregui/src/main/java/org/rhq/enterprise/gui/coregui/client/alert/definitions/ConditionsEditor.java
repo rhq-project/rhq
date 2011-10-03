@@ -149,20 +149,20 @@ public class ConditionsEditor extends LocatableVLayout {
             addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
 
-                    // we need the drift config templates (if there are any) so we know if we should offer drift conditions as an option
+                    // we need the drift definition templates (if there are any) so we know if we should offer drift conditions as an option
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(),
-                        EnumSet.of(MetadataType.driftConfigurationTemplates),
+                        EnumSet.of(MetadataType.driftDefinitionTemplates),
                         new ResourceTypeRepository.TypeLoadedCallback() {
                             @Override
                             public void onTypesLoaded(ResourceType type) {
                                 // the resource type repo caches types - so if this resource type was already cached prior
                                 // to the conditions editor component created (which it probably was) then we are getting the same
                                 // exact instance that we had before (resourceType). When this happens, great! Our resourceType
-                                // instance will have its drift config templates populated. But, I'm being paranoid. If somehow
+                                // instance will have its drift definition templates populated. But, I'm being paranoid. If somehow
                                 // we have a resourceType that is different than the type being passed to us, we need to copy
-                                // the drift config.
+                                // the drift definition.
                                 if (type != resourceType) {
-                                    // paranoia, unsure if this is needed but clear out any old drift config still hanging around
+                                    // paranoia, unsure if this is needed but clear out any old drift definition still hanging around
                                     if (resourceType.getDriftDefinitionTemplates() != null) {
                                         resourceType.getDriftDefinitionTemplates().clear();
                                     }

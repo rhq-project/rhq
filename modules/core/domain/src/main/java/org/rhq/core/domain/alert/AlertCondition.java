@@ -432,9 +432,9 @@ public class AlertCondition implements Serializable {
      * CONTROL: the name of the operation (not its display name)
      * EVENT: the level of event to compare with (DEBUG, INFO, WARN, ERROR, FATAL)
      * RESOURCE_CONFIG: n/a (null)
-     * DRIFT: the name of the drift config that triggered the drift detection. This is actually a
-     *        regex that allows the user to match more than one drift config if they so choose.
-     *        (this value may be null, in which case it doesn't matter which drift configs were the ones
+     * DRIFT: the name of the drift definition that triggered the drift detection. This is actually a
+     *        regex that allows the user to match more than one drift definition if they so choose.
+     *        (this value may be null, in which case it doesn't matter which drift definition were the ones
      *         in which the drift was detected) 
      * RANGE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
      * 

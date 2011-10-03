@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -415,7 +414,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
         }
 
-        // our unidirectional one-to-many mapping of drift config makes it not possible to easily bulk delete drift config
+        // our unidirectional one-to-many mapping of drift definition makes it not possible to easily bulk delete drift definition
         // so remove them here and let cascading of delete_orphan do the work
         if (attachedResource.getDriftDefinitions() != null) {
             attachedResource.getDriftDefinitions().clear();
@@ -758,7 +757,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // Build up a list of composite Resources for the ancestry that includes which ancestors, if any, should be
         // locked from view.
         boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
-        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(rawResourceLineage.size());
+        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(rawResourceLineage
+            .size());
         for (Resource resource : rawResourceLineage) {
             boolean isLocked = !(isInventoryManager || authorizationManager.canViewResource(subject, resource.getId()));
             ResourceLineageComposite composite = new ResourceLineageComposite(resource, isLocked);
@@ -776,8 +776,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // If the ancestor is not locked, include viewable children.
             if (!ancestor.isLocked() || ancestor.getResource() == parent) {
                 // Get all viewable committed children.
-                PageList<Resource> children = findChildResourcesByCategoryAndInventoryStatus(subject,
-                    ancestor.getResource(), null, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
+                PageList<Resource> children = findChildResourcesByCategoryAndInventoryStatus(subject, ancestor
+                    .getResource(), null, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);
                 for (Resource child : children) {

@@ -337,27 +337,27 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public void scheduleDriftDetection(int resourceId, DriftDefinition driftConfiguration) {
+    public void scheduleDriftDetection(int resourceId, DriftDefinition driftDefinition) {
     }
 
     @Override
-    public void detectDrift(int resourceId, DriftDefinition driftConfiguration) {
+    public void detectDrift(int resourceId, DriftDefinition driftDefinition) {
     }
 
     @Override
-    public void unscheduleDriftDetection(int resourceId, DriftDefinition driftConfiguration) {
+    public void unscheduleDriftDetection(int resourceId, DriftDefinition driftDefinition) {
     }
 
     @Override
-    public void updateDriftDetection(int resourceId, DriftDefinition driftConfiguration) {
+    public void updateDriftDetection(int resourceId, DriftDefinition driftDefinition) {
     }
 
     @Override
-    public void ackChangeSet(int resourceId, String driftConfigName) {
+    public void ackChangeSet(int resourceId, String driftDefName) {
     }
 
     @Override
-    public void ackChangeSetContent(int resourceId, String driftConfigName, String token) {
+    public void ackChangeSetContent(int resourceId, String driftDefName, String token) {
     }
 
     @Override

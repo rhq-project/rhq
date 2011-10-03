@@ -138,13 +138,13 @@ public interface AlertI18NResourceKeys {
     @I18NMessages( { @I18NMessage("Drift!") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_DRIFT_SHORT = "alert.condition.drift.short";
 
-    @I18NMessages( { @I18NMessage("Drift detected for files that match \"{0}\" and for drift configuration [{1}]") /*, @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage("Drift detected for files that match \"{0}\" and for drift definition [{1}]") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_DRIFT_CONFIGPATHS = "alert.condition.drift.configpaths";
 
     @I18NMessages( { @I18NMessage("Drift matching \"{0}\", config=[{1}]") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_DRIFT_CONFIGPATHS_SHORT = "alert.condition.drift.configpaths.short";
 
-    @I18NMessages( { @I18NMessage("Drift detected for drift configuration [{0}]") /*, @I18NMessage(locale = "de", value = "") */})
+    @I18NMessages( { @I18NMessage("Drift detected for drift definition [{0}]") /*, @I18NMessage(locale = "de", value = "") */})
     String ALERT_DRIFT_ONLYCONFIG = "alert.condition.drift.onlyconfig";
 
     @I18NMessages( { @I18NMessage("Drift! config=[{0}]") /*, @I18NMessage(locale = "de", value = "") */})

@@ -195,13 +195,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void addFiles(int resourceId, String driftConfigName, String token, long zipSize, InputStream zipStream)
+    public void addFiles(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream)
         throws Exception {
 
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         MessageProducer producer = session.createProducer(fileQueue);
-        ObjectMessage msg = session.createObjectMessage(new DriftUploadRequest(resourceId, driftConfigName, token,
+        ObjectMessage msg = session.createObjectMessage(new DriftUploadRequest(resourceId, driftDefName, token,
             zipSize, zipStream));
         producer.send(msg);
         connection.close();
@@ -209,13 +209,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public void saveChangeSetContent(Subject subject, int resourceId, String driftConfigName, String token,
+    public void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
         File changeSetFilesZip) throws Exception {
         saveChangeSetFiles(subject, changeSetFilesZip);
 
         AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
         DriftAgentService driftService = agent.getDriftAgentService();
-        driftService.ackChangeSetContent(resourceId, driftConfigName, token);
+        driftService.ackChangeSetContent(resourceId, driftDefName, token);
     }
 
     @Override
@@ -486,7 +486,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         // before we do anything, make sure the drift def name is valid
         if (!driftDef.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
-            throw new IllegalArgumentException("Drift configuration name contains invalid characters: "
+            throw new IllegalArgumentException("Drift definition name contains invalid characters: "
                 + driftDef.getName());
         }
 

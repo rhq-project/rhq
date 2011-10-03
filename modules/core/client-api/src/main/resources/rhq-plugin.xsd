@@ -569,7 +569,7 @@
                 <xs:complexType>
                     <xs:annotation>
                         <xs:documentation>
-                            The root directory from which snapshots will be generated during drift monitoring.
+                            The root directory from which snapshots will be generated during drift detection.
                             Each base directory's value is obtained from a particular context (e.g. in the
                             resource's plugin configuration or its resource configuration).
                             Within that context, the base directory value is obtained by looking up the named value in the given context.
@@ -752,7 +752,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
-         <xs:element name="drift-configuration" type="rhq:Drift" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="drift-definition" type="rhq:Drift" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:bundle-target" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
       </xs:sequence>

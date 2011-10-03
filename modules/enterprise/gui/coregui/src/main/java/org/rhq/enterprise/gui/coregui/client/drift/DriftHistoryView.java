@@ -60,7 +60,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftDataSource.ATTR_CTIME,
         SortDirection.DESCENDING);
 
-    private static final Criteria INITIAL_CRITERIA = new Criteria();
+    public static final Criteria INITIAL_CRITERIA = new Criteria();
 
     private EntityContext context;
     private boolean hasWriteAccess;
@@ -80,19 +80,24 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     // for subsystem views
     public DriftHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
+        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false, INITIAL_CRITERIA);
     }
 
     public DriftHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
+        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false, INITIAL_CRITERIA);
     }
 
     public DriftHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false);
+        this(locatorId, tableTitle, entityContext, false, INITIAL_CRITERIA);
     }
 
-    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext entityContext, boolean hasWriteAccess) {
+        this(locatorId, tableTitle, entityContext, hasWriteAccess, INITIAL_CRITERIA);
+    }
+
+    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess,
+        Criteria initialCriteria) {
+        super(locatorId, tableTitle, initialCriteria, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 

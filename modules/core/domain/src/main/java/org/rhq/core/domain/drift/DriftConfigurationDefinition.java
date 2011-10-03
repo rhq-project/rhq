@@ -60,7 +60,7 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_PATH = "path"; // for both include and exclude
     public static final String PROP_PATTERN = "pattern"; // for both include and exclude
 
-    // because we know drift config names will actually be used by the agent's plugin container as directories names,
+    // because we know drift definition names will actually be used by the agent's plugin container as directories names,
     // we must make sure they are restricted to only be characters valid for file system pathnames.
     // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
     public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
@@ -112,9 +112,9 @@ public class DriftConfigurationDefinition implements Serializable {
     }
 
     /**
-     * Returns a configuration definition suitable for showing an existing drift configuration.
+     * Returns a configuration definition suitable for showing an existing drift definition.
      * This will set certain fields as read-only - those fields which the user is not allowed to
-     * edit on exiting drift configurations (which includes name, basedir and includes/excludes filters).
+     * edit on exiting drift definition (which includes name, basedir and includes/excludes filters).
      * 
      * @return configuration definition
      */

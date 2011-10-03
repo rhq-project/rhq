@@ -204,8 +204,8 @@ public class DriftTest {
         return new File(changeSet.getParentFile(), changeSet.getName() + ".previous");
     }
 
-    protected File changeSetDir(String driftConfigName) throws Exception {
-        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftConfigName);
+    protected File changeSetDir(String driftDefName) throws Exception {
+        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftDefName);
         dir.mkdirs();
         return dir;
     }

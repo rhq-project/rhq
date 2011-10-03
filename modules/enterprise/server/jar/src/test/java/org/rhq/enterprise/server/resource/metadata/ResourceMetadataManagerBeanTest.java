@@ -30,8 +30,8 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -54,12 +54,12 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(groups = { "plugin.metadata", "NewPlugin" })
     public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
-        // create the initial type that has bundle and drift configs 
+        // create the initial type that has bundle and drift definitions 
         createPlugin("test-plugin.jar", "1.0", "remove_bundle_drift_config_v1.xml");
 
-        // make sure the drift config was persisted, and remember the type
+        // make sure the drift definition was persisted, and remember the type
         ResourceType type1 = assertResourceTypeAssociationEquals("ServerWithBundleAndDriftConfig", "TestPlugin",
-            "driftConfigurationTemplates", asList("drift1"));
+            "driftDefinitionTemplates", asList("drift1"));
 
         // sanity check, make sure our queries work and that we did persist these things
         Query qTemplate;
@@ -68,12 +68,12 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         String qConfigString = "select c from Configuration c where c.id = :id";
         ConfigurationTemplate driftTemplate = type1.getDriftDefinitionTemplates().iterator().next();
         Configuration bundleConfig = type1.getResourceTypeBundleConfiguration().getBundleConfiguration();
-        Configuration driftConfig = driftTemplate.getConfiguration();
+        Configuration driftDefConfig = driftTemplate.getConfiguration();
 
         getTransactionManager().begin();
         try {
             qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", driftTemplate.getId());
-            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfig.getId());
+            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftDefConfig.getId());
             assertEquals("drift template didn't get persisted", 1, qTemplate.getResultList().size());
             assertEquals("drift template config didn't get persisted", 1, qConfig.getResultList().size());
 
@@ -89,13 +89,13 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         assertEquals("destdir1", type1.getResourceTypeBundleConfiguration().getBundleDestinationBaseDirectories()
             .iterator().next().getName());
 
-        // upgrade the type which removes the bundle config and drift config
+        // upgrade the type which removes the bundle config and drift definition
         createPlugin("test-plugin.jar", "2.0", "remove_bundle_drift_config_v2.xml");
 
         getTransactionManager().begin();
         try {
             qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", driftTemplate.getId());
-            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfig.getId());
+            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftDefConfig.getId());
             assertEquals("drift template didn't get purged", 0, qTemplate.getResultList().size());
             assertEquals("drift template config didn't get purged", 0, qConfig.getResultList().size());
 
@@ -107,12 +107,12 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     @Test(groups = { "plugin.metadata", "NewPlugin" })
-    public void registerPluginWithDuplicateDriftConfigurations() {
+    public void registerPluginWithDuplicateDriftDefinitions() {
         try {
             createPlugin("test-plugin.jar", "1.0", "dup_drift.xml");
-            fail("should not have succeeded - the drift config had duplicate names");
+            fail("should not have succeeded - the drift definition had duplicate names");
         } catch (Exception e) {
-            // OK, the plugin should have failed to be deployed since it has duplicate drift configs
+            // OK, the plugin should have failed to be deployed since it has duplicate drift definitions
         }
     }
 
@@ -159,40 +159,40 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
-    public void persistDriftConfigurationTemplates() throws Exception {
-        ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftConfigurationTemplates",
+    public void persistDriftDefinitionTemplates() throws Exception {
+        ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftDefinitionTemplates",
             asList("drift-pc", "drift-fs"));
 
-        DriftDefinition driftConfig = null;
+        DriftDefinition driftDef = null;
         Set<ConfigurationTemplate> drifts = type.getDriftDefinitionTemplates();
         for (ConfigurationTemplate drift : drifts) {
             if (drift.getName().equals("drift-pc")) {
-                driftConfig = new DriftDefinition(drift.getConfiguration());
-                assertTrue(driftConfig.isEnabled());
-                assertEquals(BaseDirValueContext.pluginConfiguration, driftConfig.getBasedir().getValueContext());
-                assertEquals("connectionPropertyX", driftConfig.getBasedir().getValueName());
-                assertEquals(123456L, driftConfig.getInterval());
-                assertEquals(1, driftConfig.getIncludes().size());
-                assertEquals(2, driftConfig.getExcludes().size());
-                Filter filter = driftConfig.getIncludes().get(0);
+                driftDef = new DriftDefinition(drift.getConfiguration());
+                assertTrue(driftDef.isEnabled());
+                assertEquals(BaseDirValueContext.pluginConfiguration, driftDef.getBasedir().getValueContext());
+                assertEquals("connectionPropertyX", driftDef.getBasedir().getValueName());
+                assertEquals(123456L, driftDef.getInterval());
+                assertEquals(1, driftDef.getIncludes().size());
+                assertEquals(2, driftDef.getExcludes().size());
+                Filter filter = driftDef.getIncludes().get(0);
                 assertEquals("foo/bar", filter.getPath());
                 assertEquals("**/*.blech", filter.getPattern());
-                filter = driftConfig.getExcludes().get(0);
+                filter = driftDef.getExcludes().get(0);
                 assertEquals("/wot/gorilla", filter.getPath());
                 assertEquals("*.xml", filter.getPattern());
-                filter = driftConfig.getExcludes().get(1);
+                filter = driftDef.getExcludes().get(1);
                 assertEquals("/hello", filter.getPath());
                 assertEquals("", filter.getPattern());
             } else if (drift.getName().equals("drift-fs")) {
-                driftConfig = new DriftDefinition(drift.getConfiguration());
-                assertTrue(driftConfig.isEnabled());
-                assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
-                assertEquals("/", driftConfig.getBasedir().getValueName());
-                assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftConfig.getInterval());
-                assertEquals(0, driftConfig.getIncludes().size());
-                assertEquals(0, driftConfig.getExcludes().size());
+                driftDef = new DriftDefinition(drift.getConfiguration());
+                assertTrue(driftDef.isEnabled());
+                assertEquals(BaseDirValueContext.fileSystem, driftDef.getBasedir().getValueContext());
+                assertEquals("/", driftDef.getBasedir().getValueName());
+                assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftDef.getInterval());
+                assertEquals(0, driftDef.getIncludes().size());
+                assertEquals(0, driftDef.getExcludes().size());
             } else {
-                fail("got an unexpected drift config: " + driftConfig);
+                fail("got an unexpected drift definition: " + driftDef);
             }
         }
     }
@@ -281,31 +281,31 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
-    public void upgradeDriftConfigurationTemplates() throws Exception {
-        ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftConfigurationTemplates",
+    public void upgradeDriftDefinitionTemplates() throws Exception {
+        ResourceType type = assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "driftDefinitionTemplates",
             asList("drift-rc", "drift-mt"));
 
-        DriftDefinition driftConfig = null;
+        DriftDefinition driftDef = null;
         Set<ConfigurationTemplate> drifts = type.getDriftDefinitionTemplates();
         for (ConfigurationTemplate drift : drifts) {
             if (drift.getName().equals("drift-rc")) {
-                driftConfig = new DriftDefinition(drift.getConfiguration());
-                assertTrue(driftConfig.isEnabled());
-                assertEquals(BaseDirValueContext.resourceConfiguration, driftConfig.getBasedir().getValueContext());
-                assertEquals("resourceConfig1", driftConfig.getBasedir().getValueName());
-                assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftConfig.getInterval());
-                assertEquals(0, driftConfig.getIncludes().size());
-                assertEquals(0, driftConfig.getExcludes().size());
+                driftDef = new DriftDefinition(drift.getConfiguration());
+                assertTrue(driftDef.isEnabled());
+                assertEquals(BaseDirValueContext.resourceConfiguration, driftDef.getBasedir().getValueContext());
+                assertEquals("resourceConfig1", driftDef.getBasedir().getValueName());
+                assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftDef.getInterval());
+                assertEquals(0, driftDef.getIncludes().size());
+                assertEquals(0, driftDef.getExcludes().size());
             } else if (drift.getName().equals("drift-mt")) {
-                driftConfig = new DriftDefinition(drift.getConfiguration());
-                assertTrue(driftConfig.isEnabled());
-                assertEquals(BaseDirValueContext.measurementTrait, driftConfig.getBasedir().getValueContext());
-                assertEquals("trait1", driftConfig.getBasedir().getValueName());
-                assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftConfig.getInterval());
-                assertEquals(0, driftConfig.getIncludes().size());
-                assertEquals(0, driftConfig.getExcludes().size());
+                driftDef = new DriftDefinition(drift.getConfiguration());
+                assertTrue(driftDef.isEnabled());
+                assertEquals(BaseDirValueContext.measurementTrait, driftDef.getBasedir().getValueContext());
+                assertEquals("trait1", driftDef.getBasedir().getValueName());
+                assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftDef.getInterval());
+                assertEquals(0, driftDef.getIncludes().size());
+                assertEquals(0, driftDef.getExcludes().size());
             } else {
-                fail("got an unexpected drift config: " + driftConfig);
+                fail("got an unexpected drift definition: " + driftDef);
             }
         }
     }

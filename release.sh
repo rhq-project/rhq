@@ -22,52 +22,158 @@ abort()
    echo >&2
    for ARG in "$@"; do
       echo "$ARG" >&2
+      echo "">&2
    done
    exit 1
 }
+
 
 #========================================================================================
 # Description: Display usage information then abort the script.
 #========================================================================================
 usage() 
-{   
-   abort "$@" "Usage:   $EXE branch|tag community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
+{
+   USAGE=$(
+cat << EOF
+USAGE:   release.sh OPTIONS
+   --release-type=community|enterprise    [REQUIRED]
+      Type of release.
+
+   --release-version=version
+      The release version to be tagged by this script.
+
+   --development-version=version          [REQUIRED]
+      The version under which development will continue after tagging.
+
+   --release-branch=git_branch            [REQUIRED]
+      Git branch to be used as base for tagging and/or branching.
+
+   --git-username=username                [REQUIRED]
+      Git username for authentication. Please make sure that the user is authenticated prior to using this script.
+
+   --branch                               [OPTIONAL]
+      Branch from release branch before tagging the release version. And updated development version on original branch.
+
+   --test-mode                            [OPTIONAL]
+      Run this script in test mode. Create a test branch from release branch and perform tagging and version updates on this test branch.
+
+   --tag-only                             [DEFAULT]
+      Use the release branch to tag the release version. And update development version on the same branch.
+EOF
+)
+
+   EXAMPLE="release.sh --release-type=\"enterprise\" --release-version=\"5.0.0.GA\" --development-version=\"5.0.1-SNAPSHOT\" --release-branch=\"stefan/release_test\" --git-username=\"user\" --branch"
+
+   abort "$@" "$USAGE" "$EXAMPLE"
 }
 
 
 #========================================================================================
 # Description: Validate and parse input arguments
 #========================================================================================
-validate_arguments()
+parse_validate_options()
 {
-   # Process command line args.
+   RELEASE_VERSION=
+   DEVELOPMENT_VERSION=
+   RELEASE_BRANCH=
+   RELEASE_TYPE=
+   GIT_USERNAME=
+   MODE="production"
+   SCM_STRATEGY="tag"
 
-   EXE=`basename $0`
-   if [ "$#" -ne 7 ]; then
-      usage
+   short_options="h"
+   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,branch,tag-only"
+
+   PROGNAME=${0##*/}
+   ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
+   eval set -- "$ARGS"
+
+   while true; do
+	   case $1 in
+		   -h|--help)
+            usage
+			   ;;
+		   --release-version)
+			   shift
+            RELEASE_VERSION="$1"
+            shift
+			   ;;
+		   --development-version)
+			   shift
+            DEVELOPMENT_VERSION=$1
+            shift
+			   ;;
+         --release-branch)
+            shift
+            RELEASE_BRANCH=$1
+            shift
+            ;;
+         --release-type)
+            shift
+            RELEASE_TYPE=$1
+            shift
+            ;;
+         --git-username)
+            shift
+            GIT_USERNAME=$1
+            shift
+            ;;
+         --test-mode)
+            MODE="test"
+            shift
+            ;;
+         --tag-only)
+            SCM_STRATEGY="tag"
+            shift
+            ;;
+         --branch)
+            SCM_STRATEGY="branch"
+            shift
+            ;;
+         --)
+            shift
+            break
+            ;;
+         *)
+            usage
+            ;;
+	   esac
+   done
+
+   if [ -z $RELEASE_VERSION ];
+   then
+      usage "Release version not specified!"
    fi
 
-   SCRIPT_MODE="$1"
+   if [ -z $DEVELOPMENT_VERSION ];
+   then
+      usage "Development version not specified!"
+   fi
 
-   RELEASE_TYPE="$2"
+   if [ -z $RELEASE_BRANCH ];
+   then
+      usage "Release branch not specified!"
+   fi
+
    if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
       usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
    fi
-   RELEASE_VERSION="$3"
-   DEVELOPMENT_VERSION="$4"
-   RELEASE_BRANCH="$5"
-   GIT_USERNAME="$6"
-   MODE="$7"
 
-   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
-      usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
+   if [ -z $GIT_USERNAME ];
+   then
+      usage "Git username not specified!"
    fi
 
-   if [ "$MODE" = "production" ]; then
-      if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
-         usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
-      fi    
-   fi
+   print_centered "Script Options"
+   script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" "GIT_USERNAME" \
+                     "MODE" "SCM_STRATEGY")
+   print_variables "${script_options[@]}"
+
+   #if [ "$MODE" = "production" ]; then
+   #   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+   #      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+   #   fi
+   #fi
 }
 
 #========================================================================================
@@ -203,7 +309,7 @@ fi
 
 # TODO: Check that JDK version is < 1.7.
 
-validate_arguments $@
+parse_validate_options $@
 
 validate_java_6
 

@@ -164,16 +164,16 @@ parse_validate_options()
       usage "Git username not specified!"
    fi
 
-   print_centered "Script Options"
-   script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" "GIT_USERNAME" \
-                     "MODE" "SCM_STRATEGY")
-   print_variables "${script_options[@]}"
-
    #if [ "$MODE" = "production" ]; then
    #   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
    #      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
    #   fi
    #fi
+
+   print_centered "Script Options"
+   script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" "GIT_USERNAME" \
+                     "MODE" "SCM_STRATEGY")
+   print_variables "${script_options[@]}"
 }
 
 #========================================================================================
@@ -301,6 +301,37 @@ run_tag_version_process()
    git push origin "$RELEASE_TAG"
 }
 
+
+#========================================================================================
+# Description: Perform tag verification process
+#              1) if the tag already exists on the remote repo than abort the script
+#              2) if the tag exists only locally then delete it, that means there was
+#                 error during the previous run of this script. Tags are committed to
+#                 repo only this script runs successfully.
+#========================================================================================
+verify_tags()
+{
+   # If the specified tag already exists remotely and we're in production mode, then abort. If it exists and
+   # we're in test mode, delete it
+   EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
+   if [ -n "$EXISTING_REMOTE_TAG" ];
+   then
+      abort "A remote tag named $RELEASE_TAG already exists - aborting"
+   fi
+
+   # See if the specified tag already exists locally - if so, delete it (even if in production mode).
+   # If the tag is just local then there were errors during the last run; no harm in removing it.
+   EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
+   if [ -n "$EXISTING_LOCAL_TAG" ];
+   then
+      echo "A local tag named $RELEASE_TAG already exists - deleting it..."
+      git tag -d "$RELEASE_TAG"
+      [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
+   fi
+}
+
+
+
 if [ -n "$RELEASE_DEBUG" ];
 then
    echo "Debug output is enabled."
@@ -319,6 +350,10 @@ validate_maven
 
 validate_git
 
+print_centered "Program Versions"
+program_versions=("git --version" "java -version" "mvn --version")
+print_program_versions "${program_versions[@]}"
+
 set_variables
 
 # Print out a summary of the environment.
@@ -333,11 +368,6 @@ local_variables=( "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_V
                   "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
                   "RELEASE_VERSION" "RELEASE_TAG")
 print_variables "${local_variables[@]}"
-
-
-print_centered "Program Versions"
-program_versions=("git --version" "java -version" "mvn --version")
-print_program_versions "${program_versions[@]}"
 
 print_centered "="
 
@@ -393,24 +423,8 @@ else
     git push origin "$BUILD_BRANCH"    
 fi
 
-# If the specified tag already exists remotely and we're in production mode, then abort. If it exists and 
-# we're in test mode, delete it
-EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
-if [ -n "$EXISTING_REMOTE_TAG" ];
-then
-   abort "A remote tag named $RELEASE_TAG already exists - aborting" 
-fi   
 
-# See if the specified tag already exists locally - if so, delete it (even if in production mode).
-# If the tag is just local then there were errors during the last run; no harm in removing it.
-EXISTING_LOCAL_TAG=`git tag -l "$RELEASE_TAG"`
-if [ -n "$EXISTING_LOCAL_TAG" ]; 
-then
-   echo "A local tag named $RELEASE_TAG already exists - deleting it..."
-   git tag -d "$RELEASE_TAG"
-   [ "$?" -ne 0 ] && abort "Failed to delete local tag ($RELEASE_TAG)."
-fi 
-
+verify_tags
 run_tag_version_process
 
 echo

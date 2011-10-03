@@ -305,17 +305,27 @@ run_tag_version_process()
    # 9) Tag the current source
    git tag "$RELEASE_TAG"
 
-   # 10) Set version to the current development version
+   # 10) If everything went well so far than means all the changes can be pushed!!!
+   git push origin "$BUILD_BRANCH"
+   git push origin "$RELEASE_TAG"
+}
+
+
+#========================================================================================
+# Description: Update the version for the development branch.
+#========================================================================================
+update_development_version()
+{
+   # 1) Set version to the current development version
    mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
-   # 11) Commit the change in version (if everything went well so far then this is a good tag
+   # 2) Commit the change in version (if everything went well so far then this is a good tag
    git add -u
    git commit -m "development RHQ_$DEVELOPMENT_VERSION"
 
-   # 12) If everything went well so far than means all the changes can be pushed!!!
+   # 3) If everything went well so far than means all the changes can be pushed!!!
    git push origin "$BUILD_BRANCH"
-   git push origin "$RELEASE_TAG"
 }
 
 
@@ -469,5 +479,7 @@ checkout_create_build_branch
 verify_tags
 
 run_tag_version_process
+
+update_development_version
 
 print_release_information

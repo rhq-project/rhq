@@ -429,9 +429,9 @@ checkout_release_branch()
 }
 
 #========================================================================================
-# Description: Checkout or create the build branch.
+# Description: Checkout or create the build branch for the release process.
 #========================================================================================
-checkout_create_build_branch()
+checkout_build_branch_for_release()
 {
    # if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
    # continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents
@@ -470,13 +470,31 @@ checkout_create_build_branch()
    fi
 }
 
+#========================================================================================
+# Description: Checkout or create the build branch for updating the development version.
+#========================================================================================
+checkout_build_branch_for_development()
+{
+   if [ "$SCM_STRATEGY" = "branch" ];
+   then
+      checkout_release_branch
+      BUILD_BRANCH="${RELEASE_BRANCH}"
+   fi
+}
+
+
 if [ -n "$RELEASE_DEBUG" ];
 then
    echo "Debug output is enabled."
    set -x
 fi
 
-## MAIN SCRIPT ##
+
+
+
+
+
+############ MAIN SCRIPT ############
 
 parse_validate_options $@
 
@@ -488,9 +506,11 @@ verify_tags
 
 checkout_release_branch
 
-checkout_create_build_branch
+checkout_build_branch_for_release
 
 run_tag_version_process
+
+checkout_build_branch_for_development
 
 update_development_version
 

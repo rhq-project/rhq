@@ -438,23 +438,35 @@ checkout_create_build_branch()
    # change before it completes.
    if [ "$MODE" = "test" ];
    then
-       BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
-       # delete the branch if it exists, so we can recreate it fresh
-       EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
-       if [ -n "$EXISTING_BUILD_BRANCH" ];
-       then
-           echo "Deleting remote branch origin/$BUILD_BRANCH"
-           git branch -D -r "origin/$BUILD_BRANCH"
-           echo "Deleting local branch $BUILD_BRANCH"
-           git branch -D "$BUILD_BRANCH"
-       fi
-       echo "Creating and checking out local branch $BUILD_BRANCH from $RELEASE_BRANCH"
-       git checkout -b "$BUILD_BRANCH"
-       echo "Creating remote branch $BUILD_BRANCH"
-       git pull origin "$BUILD_BRANCH"
-       git push origin "$BUILD_BRANCH"
+      BUILD_BRANCH="${RELEASE_BRANCH}-test-build"
+      # delete the branch if it exists, so we can recreate it fresh
+      EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
+      if [ -n "$EXISTING_BUILD_BRANCH" ];
+      then
+          echo "Deleting remote branch origin/$BUILD_BRANCH"
+          git branch -D -r "origin/$BUILD_BRANCH"
+          echo "Deleting local branch $BUILD_BRANCH"
+          git branch -D "$BUILD_BRANCH"
+      fi
+
+      echo "Creating and checking out local branch $BUILD_BRANCH from $RELEASE_BRANCH"
+      git checkout -b "$BUILD_BRANCH"
    else
-       BUILD_BRANCH="${RELEASE_BRANCH}"
+      if [ "$SCM_STRATEGY" = "tag" ];
+      then
+         BUILD_BRANCH="${RELEASE_BRANCH}"
+      else
+         BUILD_BRANCH="release-$TAG_VERSION"
+         # delete the branch if it exists, so we can recreate it fresh
+         EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
+         if [ -n "$EXISTING_BUILD_BRANCH" ];
+         then
+            abort "Remote repository already contains $BUILD_BRANCH."
+         fi
+
+         echo "Creating and checking out local branch $BUILD_BRANCH from $RELEASE_BRANCH"
+         git checkout -b "$BUILD_BRANCH"
+      fi
    fi
 }
 

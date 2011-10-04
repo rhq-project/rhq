@@ -128,11 +128,12 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private LocatableIButton previousButton;
     private LocatableIButton widthButton;
 
-    // null indicates filtering on the member number
+    // null means no start filter, start with highest 
     private Integer carouselStartFilter = null;
-    // null indicates no  limit to the carousel size. This can be dangerous.
-    private Integer carouselSizeFilter = null;
-    private boolean carouselDirty = false;
+    // null means no end filter, end with lowest 
+    private Integer carouselEndFilter = null;
+    // null or < 0 indicates no limit to the carousel size. A size limit is always recommended to avoid unbounded view 
+    private Integer carouselSizeFilter = getDefaultCarouselSize();
     private boolean carouselUsingFixedWidths = false;
 
     public Carousel(String locatorId) {
@@ -465,10 +466,13 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         if (null == carouselSizeFilter) {
             carouselSizeFilter = getDefaultCarouselSize();
         }
+
         if (null != carouselStartFilter) {
-            int newStart = carouselStartFilter + carouselSizeFilter;
-            setCarouselStartFilter(newStart);
+            int newEnd = carouselStartFilter + 1;
+            setCarouselEndFilter(newEnd);
         }
+        setCarouselStartFilter(null);
+
         buildCarousel(true);
     }
 
@@ -477,11 +481,13 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             carouselSizeFilter = getDefaultCarouselSize();
         }
 
-        if (null != carouselStartFilter) {
-            int newStart = carouselStartFilter - carouselSizeFilter;
+        if (null != carouselEndFilter) {
+            int newStart = carouselEndFilter - 1;
             newStart = (newStart < carouselSizeFilter) ? carouselSizeFilter : newStart;
             setCarouselStartFilter(newStart);
         }
+        setCarouselEndFilter(null);
+
         buildCarousel(true);
     }
 
@@ -819,41 +825,26 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
         Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() : Collections
             .<String, Object> emptyMap();
-        Integer carouselStart;
-        Integer carouselSize;
+
         try {
-            carouselSize = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_SIZE));
+            carouselSizeFilter = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_SIZE));
         } catch (Exception e) {
-            carouselSize = null;
-        }
-        try {
-            carouselStart = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_START));
-        } catch (Exception e) {
-            carouselStart = null;
-        }
-        if (carouselStartFilter != carouselStart) {
-            if (null == carouselStartFilter || !carouselStartFilter.equals(carouselStart)) {
-                carouselStartFilter = carouselStart;
-                carouselDirty = true;
-            }
-        }
-        if (carouselSizeFilter != carouselSize) {
-            if (null == carouselSizeFilter || !carouselSizeFilter.equals(carouselSize)) {
-                carouselSizeFilter = carouselSize;
-                carouselDirty = true;
-            }
+            carouselSizeFilter = null;
         }
 
-        // if we're channging the entire carousel then rebuild, otherwise, just refresh the members
-        if (carouselDirty) {
-            buildCarousel(true);
-
-        } else {
-            for (Canvas member : carouselHolder.getMembers()) {
-                CarouselMember carouselMember = (CarouselMember) member;
-                carouselMember.refresh(criteria);
-            }
+        try {
+            carouselStartFilter = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_START));
+        } catch (Exception e) {
+            carouselStartFilter = null;
         }
+
+        // on refresh remove any end filter as the criteria may have changed completely
+        carouselEndFilter = null;
+
+        // Any change to filters means we have to rebuild the carousel because the set of members may change, because
+        // "empty" members (i.e. members whose relevant data has been completely filtered) may be omitted completely
+        // from the carousel.
+        buildCarousel(true);
 
         // TODO: it would be best if this was actually called after the async return of the member refreshes
         refreshCarouselInfo();
@@ -1083,8 +1074,18 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     protected void setCarouselStartFilter(Integer carouselStartFilter) {
         this.carouselStartFilter = carouselStartFilter;
-        this.filterForm.getItem(FILTER_CAROUSEL_START).setValue(String.valueOf(carouselStartFilter));
-        this.filterForm.getItem(FILTER_CAROUSEL_START).redraw();
+        if (null != carouselStartFilter) {
+            this.filterForm.getItem(FILTER_CAROUSEL_START).setValue(String.valueOf(carouselStartFilter));
+            this.filterForm.getItem(FILTER_CAROUSEL_START).redraw();
+        }
+    }
+
+    protected Integer getCarouselEndFilter() {
+        return carouselEndFilter;
+    }
+
+    protected void setCarouselEndFilter(Integer carouselEndFilter) {
+        this.carouselEndFilter = carouselEndFilter;
     }
 
     protected Integer getCarouselSizeFilter() {
@@ -1097,14 +1098,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         this.filterForm.getItem(FILTER_CAROUSEL_SIZE).redraw();
     }
 
-    protected boolean isCarouselDirty() {
-        return carouselDirty;
-    }
-
-    protected void setCarouselDirty(boolean carouselDirty) {
-        this.carouselDirty = carouselDirty;
-    }
-
     protected boolean isCarouselUsingFixedWidths() {
         return carouselUsingFixedWidths;
     }
@@ -1113,7 +1106,14 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         this.carouselUsingFixedWidths = carouselUsingFixedWidths;
     }
 
-    private interface CarouselAction {
+    protected void setFilter(String name, String value) {
+        FormItem item = this.filterForm.getItem(name);
+        if (null != item) {
+            item.setValue(value);
+        }
+    }
+
+    protected interface CarouselAction {
 
         /**
          * Returns true if the action should be enabled based on the currently selected record(s).

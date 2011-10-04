@@ -49,7 +49,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The change-set zip file stream
      * @throws Exception
      */
-    void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    void addChangeSet(Subject subject, int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the drift file zip. Upon successful
@@ -60,11 +60,11 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The drift files zip file stream
      * @throws Exception
      */
-    void addFiles(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream)
-        throws Exception;
+    void addFiles(Subject subject, int resourceId, String driftDefName, String token, long zipSize,
+        InputStream zipStream) throws Exception;
 
-    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
-        File changeSetFilesZip) throws Exception;
+    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token, File changeSetFilesZip)
+        throws Exception;
 
     void processRepeatChangeSet(int resourceId, String driftDefName, int version);
 
@@ -127,18 +127,17 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
-    String getDriftFileBits(String hash);
+    String getDriftFileBits(Subject subject, String hash);
 
     /**
-     * Generates a unified diff of the two files references by drift. In the case of a
-     * modified file, a Drift object references the current and previous versions of the
-     * file. This method generates a diff of the two versions.
+     * Generates a unified diff of the two file versions referenced by drift ids.
      *
-     * @param drift Specifies the two files that will be compared
+     * @param drift1Id the "new" version of the first drift
+     * @param drift2Id the "new" version of the second drift 
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
      */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
+    FileDiffReport generateUnifiedDiffByIds(Subject subject, String driftId1, String driftId2);
 
     /**
      * Returns an object that encapsulates the information needed for viewing drift details
@@ -149,11 +148,11 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
-    boolean isBinaryFile(Drift<?, ?> drift);
-
     DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
     DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
 
     void pinSnapshot(Subject subject, String changeSetId);
+
+    boolean isBinaryFile(Subject subject, Drift<?, ?> drift);
 }

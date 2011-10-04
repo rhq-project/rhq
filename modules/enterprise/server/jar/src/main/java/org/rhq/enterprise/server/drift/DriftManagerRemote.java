@@ -65,7 +65,7 @@ public interface DriftManagerRemote {
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
-    String getDriftFileBits(String hash);
+    String getDriftFileBits(Subject subject, String hash);
 
     /**
      * Generates a unified diff of the two files references by drift. In the case of a
@@ -76,7 +76,7 @@ public interface DriftManagerRemote {
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
      */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
+    FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift);
 
     /**
      * Generates a unified diff of the two files referenced by drift1 and drift2. More
@@ -87,6 +87,6 @@ public interface DriftManagerRemote {
      * @param drift2 References the second file to be compared
      * @return A report containing a unified diff of the two files compared
      */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2);
+    FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift1, Drift<?, ?> drift2);
 
 }

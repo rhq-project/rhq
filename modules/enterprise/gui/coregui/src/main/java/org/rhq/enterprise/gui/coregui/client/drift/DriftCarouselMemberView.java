@@ -24,19 +24,28 @@ import java.util.Date;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.carousel.CarouselMember;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 
 /**
  * @author Jay Shaughnessy
@@ -46,6 +55,7 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
 
     private DriftChangeSet changeSet;
     private Criteria carouselCriteria;
+    private ArrayList<DriftSelectionListener> driftSelectionListeners = new ArrayList<DriftSelectionListener>();
 
     public static DriftCarouselMemberView get(String locatorId, ResourceComposite composite,
         DriftChangeSet driftChangeSet, Criteria initialCriteria) {
@@ -76,6 +86,46 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
         }
 
         return dataSource;
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    ListGridRecord record = selectedRows[0];
+                    Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                    String driftId = getId(record);
+                    String url = LinkManager.getDriftHistoryLink(resourceId, driftId);
+                    CoreGUI.goToView(url);
+                }
+            }
+        });
+
+        getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
+
+            public void onSelectionChanged(SelectionEvent event) {
+                Record record = event.getRecord();
+                boolean isSelected = event.getState();
+
+                for (DriftSelectionListener listener : driftSelectionListeners) {
+                    listener.onDriftSelection(record, isSelected);
+                }
+            }
+        });
+    }
+
+    public interface DriftSelectionListener {
+        void onDriftSelection(Record record, boolean isSelected);
+    }
+
+    public void addDriftSelectionListener(DriftSelectionListener listener) {
+        this.driftSelectionListeners.add(listener);
     }
 
     @Override
@@ -133,12 +183,15 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
 
         @Override
         protected GenericDriftCriteria getFetchCriteria(DSRequest request) {
+
+            // Call super to get standard drift criteria that has been set
             GenericDriftCriteria criteria = super.getFetchCriteria(request);
 
             if (null == criteria) {
                 criteria = new GenericDriftCriteria();
             }
 
+            // Always restrict to the relevant change set
             criteria.addFilterChangeSetId(changeSetId);
             return criteria;
         }

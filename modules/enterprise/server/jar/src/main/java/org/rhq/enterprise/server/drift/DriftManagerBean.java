@@ -183,7 +183,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception {
+    public void addChangeSet(Subject subject, int resourceId, long zipSize, InputStream zipStream) throws Exception {
 
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -197,8 +197,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void addFiles(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream)
-        throws Exception {
+    public void addFiles(Subject subject, int resourceId, String driftDefName, String token, long zipSize,
+        InputStream zipStream) throws Exception {
 
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -502,18 +502,18 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public String getDriftFileBits(String hash) {
+    public String getDriftFileBits(Subject subject, String hash) {
         log.debug("Retrieving drift file content for " + hash);
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        return driftServerPlugin.getDriftFileBits(hash);
+        return driftServerPlugin.getDriftFileBits(subject, hash);
     }
 
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) {
+    public FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift) {
         log.debug("Generating diff for " + drift);
-        String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
+        String oldContent = getDriftFileBits(subject, drift.getOldDriftFile().getHashId());
         List<String> oldList = asList(oldContent.split("\\n"));
-        String newContent = getDriftFileBits(drift.getNewDriftFile().getHashId());
+        String newContent = getDriftFileBits(subject, drift.getNewDriftFile().getHashId());
         List<String> newList = asList(newContent.split("\\n"));
 
         Patch patch = DiffUtils.diff(oldList, newList);
@@ -522,12 +522,35 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         return new FileDiffReport(patch.getDeltas().size(), deltas);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2) {
-        String content1 = getDriftFileBits(drift1.getNewDriftFile().getHashId());
+    public FileDiffReport generateUnifiedDiffByIds(Subject subject, String driftId1, String driftId2) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterId(driftId1);
+        List<? extends Drift<?, ?>> result = driftServerPlugin.findDriftsByCriteria(subject, criteria);
+        if (result.size() != 1) {
+            throw new IllegalArgumentException("Drift record not found: " + driftId1);
+        }
+        Drift drift1 = result.get(0);
+
+        criteria.addFilterId(driftId2);
+        result = driftServerPlugin.findDriftsByCriteria(subject, criteria);
+        if (result.size() != 1) {
+            throw new IllegalArgumentException("Drift record not found: " + driftId2);
+        }
+        Drift drift2 = result.get(0);
+
+        return generateUnifiedDiff(subject, drift1, drift2);
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift1, Drift<?, ?> drift2) {
+        String content1 = getDriftFileBits(subject, drift1.getNewDriftFile().getHashId());
         List<String> content1List = asList(content1.split("\\n"));
 
-        String content2 = getDriftFileBits(drift2.getNewDriftFile().getHashId());
+        String content2 = getDriftFileBits(subject, drift2.getNewDriftFile().getHashId());
         List<String> content2List = asList(content2.split("\\n"));
 
         Patch patch = DiffUtils.diff(content1List, content2List);
@@ -601,7 +624,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public boolean isBinaryFile(Drift<?, ?> drift) {
+    public boolean isBinaryFile(Subject subject, Drift<?, ?> drift) {
         String path = drift.getPath();
         int index = path.lastIndexOf('.');
 
@@ -661,7 +684,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                 + e.getMessage());
             throw new RuntimeException("An error occurred while loading th drift details for drift id " + driftId, e);
         }
-        driftDetails.setBinaryFile(isBinaryFile(drift));
+        driftDetails.setBinaryFile(isBinaryFile(subject, drift));
         return driftDetails;
     }
 

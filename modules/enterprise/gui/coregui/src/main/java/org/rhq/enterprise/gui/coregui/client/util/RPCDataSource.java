@@ -465,10 +465,13 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         addFields(Arrays.asList(fields));
     }
 
-    @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
+        return getArrayFilter(request.getCriteria(), paramName, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S[] getArrayFilter(Criteria criteria, String paramName, Class<S> type) {
         Log.debug("Fetching array " + paramName + " (" + type + ")");
-        Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
 
         S[] resultArray = null;
@@ -554,9 +557,13 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        Criteria criteria = request.getCriteria();
+        return getFilter(request.getCriteria(), paramName, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S getFilter(Criteria criteria, String paramName, Class<S> type) {
+
         Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() : Collections
             .<String, Object> emptyMap();
 

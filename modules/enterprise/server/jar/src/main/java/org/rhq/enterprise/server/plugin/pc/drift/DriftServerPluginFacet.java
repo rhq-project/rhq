@@ -111,5 +111,5 @@ public interface DriftServerPluginFacet {
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
-    String getDriftFileBits(String hash);
+    String getDriftFileBits(Subject subject, String hash);
 }

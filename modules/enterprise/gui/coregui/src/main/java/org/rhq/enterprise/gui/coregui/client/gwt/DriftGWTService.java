@@ -112,6 +112,8 @@ public interface DriftGWTService extends RemoteService {
 
     FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException;
 
+    FileDiffReport generateUnifiedDiffByIds(String driftId1, String driftId2) throws RuntimeException;
+
     boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException;
 
     DriftDetails getDriftDetails(String driftId) throws RuntimeException;

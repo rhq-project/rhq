@@ -144,7 +144,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public String getDriftFileBits(String hash) throws RuntimeException {
         try {
-            return driftManager.getDriftFileBits(hash);
+            return driftManager.getDriftFileBits(getSessionSubject(), hash);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -153,7 +153,16 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException {
         try {
-            return driftManager.generateUnifiedDiff(drift);
+            return driftManager.generateUnifiedDiff(getSessionSubject(), drift);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiffByIds(String driftId1, String driftId2) throws RuntimeException {
+        try {
+            return driftManager.generateUnifiedDiffByIds(getSessionSubject(), driftId1, driftId2);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -172,7 +181,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException {
         try {
-            return driftManager.isBinaryFile(drift);
+            return driftManager.isBinaryFile(getSessionSubject(), drift);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

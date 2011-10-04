@@ -125,7 +125,7 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public String getDriftFileBits(String hash) {
+    public String getDriftFileBits(Subject subject, String hash) {
         return getJPADriftServer().getDriftFileBits(hash);
     }
 }

@@ -42,7 +42,8 @@ public class DriftServerServiceImpl implements DriftServerService {
     public void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addChangeSet(resourceId, zipSize, zipStream);
+            Subject overlord = getSubjectManager().getOverlord();
+            driftManager.addChangeSet(overlord, resourceId, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -53,7 +54,8 @@ public class DriftServerServiceImpl implements DriftServerService {
         InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addFiles(resourceId, driftDefinitionName, token, zipSize, zipStream);
+            Subject overlord = getSubjectManager().getOverlord();
+            driftManager.addFiles(overlord, resourceId, driftDefinitionName, token, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

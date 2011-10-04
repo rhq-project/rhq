@@ -47,8 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -141,7 +141,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
             });
     }
 
-    class ResourceConfigurationHistoryCriteriaView extends ConfigurationHistoryView {
+    class ResourceConfigurationHistoryCriteriaView extends ResourceConfigurationHistoryListView {
 
         public ResourceConfigurationHistoryCriteriaView(String locatorId, boolean hasWritePerm, int resourceId) {
             super(locatorId, hasWritePerm, resourceId);
@@ -183,7 +183,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
         }
     }
 
-    class ConfigurationUdpatesCriteriaDataSource extends ConfigurationHistoryDataSource {
+    class ConfigurationUdpatesCriteriaDataSource extends ResourceConfigurationHistoryDataSource {
 
         public ConfigurationUdpatesCriteriaDataSource(Configuration portletConfig) {
             super();

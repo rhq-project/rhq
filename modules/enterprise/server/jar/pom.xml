@@ -800,30 +800,28 @@ Build-OS-Version=${os.version}
             <plugins>
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>
-                        <id>javadoc-remote-api</id>
+                        <id>remote-api</id>
                         <phase>compile</phase>
                         <configuration>
                            <tasks>
                               <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}" />
                               <property name="project.dir" value="./src/main/java/org/rhq/enterprise/server" />
                               <property name="maven.compile.classpath" refid="maven.compile.classpath" />
-
-                              <javadoc destdir="${javadoc.outputDirectory}/remote-api" author="true" version="true" windowtitle="Remote API" noindex="false">
+ 
+                              <mkdir dir="${javadoc.outputDirectory}/remote-api" />
+                              <javadoc destdir="${javadoc.outputDirectory}/remote-api" author="false" version="true" windowtitle="RHQ ${project.version} Remote API" noindex="false">
                                  <classpath>
                                     <pathelement path="${maven.compile.classpath}" />
                                  </classpath>
                                  <fileset dir="${project.dir}" defaultexcludes="yes">
                                     <include name="**/*Remote.java" />
-                                    <exclude name="**/*Test*.java" />
                                  </fileset>
-                                 <link href="../domain" />
-                                 <link href="../plugin-api" />
-                                 <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
-                                 <bottom><![CDATA[Copyright &#169; 2008-2010 <a href="http://rhq-project.org/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
+                                 <link href="../domain/" />
+                                 <link href="http://download.oracle.com/javase/6/docs/api/" />
+                                 <bottom><![CDATA[Copyright &#169; 2005-2011 <a href="http://redhat.com/">Red Hat, Inc.</a>. All Rights Reserved.]]></bottom>
                               </javadoc>
                            </tasks>
                         </configuration>
@@ -838,6 +836,7 @@ Build-OS-Version=${os.version}
          </build>
 
       </profile>
+
       <profile>
         <id>cobertura</id>
         <build>

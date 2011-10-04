@@ -24,6 +24,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -83,7 +84,7 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
                     }
 
                     final ResourceGroup group = result.get(0);
-                    String url = LinkManager.getResourceGroupLink(group.getId());
+                    String url = LinkManager.getResourceGroupLink(group);
                     resourceGroupTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, group.getName(), null));
 
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(group.getResourceType().getId(),

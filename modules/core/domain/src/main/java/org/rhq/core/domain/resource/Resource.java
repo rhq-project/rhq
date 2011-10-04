@@ -69,7 +69,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.dashboard.Dashboard;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -291,13 +291,14 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
-        + "   AND res.resourceType.category = :category " + "   AND res.inventoryStatus = :status "),
+        + "   AND res.inventoryStatus = :status " //
+        + "   AND (res.resourceType.category = :category OR :category is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_CHILDREN_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
         + " WHERE res.parentResource = :parent " //
         + "   AND res.inventoryStatus = :status " //
-        + "   AND res.resourceType.category = :category "),
+        + "   AND (res.resourceType.category = :category OR :category is null)"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
@@ -1076,7 +1077,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    private Set<DriftConfiguration> driftConfigurations = null;
+    private Set<DriftDefinition> driftDefinitions = null;
 
     public Resource() {
     }
@@ -1746,21 +1747,21 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.dashboards = dashboards;
     }
 
-    public Set<DriftConfiguration> getDriftConfigurations() {
-        if (this.driftConfigurations == null) {
-            this.driftConfigurations = new LinkedHashSet<DriftConfiguration>();
+    public Set<DriftDefinition> getDriftDefinitions() {
+        if (this.driftDefinitions == null) {
+            this.driftDefinitions = new LinkedHashSet<DriftDefinition>();
         }
 
-        return driftConfigurations;
+        return driftDefinitions;
     }
 
-    public void setDriftConfigurations(Set<DriftConfiguration> driftConfigurations) {
-        this.driftConfigurations = driftConfigurations;
+    public void setDriftDefinitions(Set<DriftDefinition> driftDefinitions) {
+        this.driftDefinitions = driftDefinitions;
     }
 
-    public void addDriftConfiguration(DriftConfiguration driftConfiguration) {
-        getDriftConfigurations().add(driftConfiguration);
-        driftConfiguration.setResource(this);
+    public void addDriftDefinition(DriftDefinition driftDefinition) {
+        getDriftDefinitions().add(driftDefinition);
+        driftDefinition.setResource(this);
     }
 
     public int compareTo(Resource that) {

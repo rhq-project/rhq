@@ -200,8 +200,11 @@ public class AgentUpdate {
         System.out.println(msg);
         try {
             PrintWriter pw = new PrintWriter(new FileOutputStream(logFile, true));
+            try {
             pw.println(msg);
-            pw.close();
+            } finally {
+                pw.close();
+            }
         } catch (Throwable t) {
         }
     }
@@ -216,8 +219,11 @@ public class AgentUpdate {
         t.printStackTrace(System.out);
         try {
             PrintWriter pw = new PrintWriter(new FileOutputStream(logFile, true));
-            t.printStackTrace(pw);
-            pw.close();
+            try {
+                t.printStackTrace(pw);
+            } finally {
+                pw.close();
+            }
         } catch (Throwable t1) {
         }
     }
@@ -232,8 +238,11 @@ public class AgentUpdate {
         System.out.println(msg);
         try {
             PrintWriter pw = new PrintWriter(new FileOutputStream(logFileArgument, true));
-            pw.println(msg);
-            pw.close();
+            try {
+                pw.println(msg);
+            } finally {
+                pw.close();
+            }
         } catch (Throwable t) {
         }
     }
@@ -266,7 +275,11 @@ public class AgentUpdate {
         byte[] bytes = getJarFileContent(RHQ_AGENT_UPDATE_VERSION_PROPERTIES);
         InputStream propertiesStream = new ByteArrayInputStream(bytes);
         Properties versionProps = new Properties();
-        versionProps.load(propertiesStream);
+        try {
+            versionProps.load(propertiesStream);
+        } finally {
+            propertiesStream.close();
+        }
         return versionProps;
     }
 

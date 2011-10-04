@@ -241,7 +241,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         //------------- Build second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeProblemResourcesComboBox = new SelectItem(PROBLEM_RESOURCE_SHOW_HRS);
         maximumTimeProblemResourcesComboBox.setTitle(MSG.common_title_over() + " ");
-        maximumTimeProblemResourcesComboBox.setHint("<nobr><b> " + MSG.common_label_hours() + " </b></nobr>");
+        maximumTimeProblemResourcesComboBox.setHint("<nobr><b> " + MSG.common_unit_hours() + " </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeProblemResourcesComboBox.setType("selection");
         //define acceptable values for display amount

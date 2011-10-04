@@ -115,23 +115,28 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
             if (fl.exists() && fl.isFile()) {
                 foundIncludes.add(fl.getAbsolutePath());
                 
-                FileInputStream fstream = new FileInputStream(fl);
-                BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-                String strLine;
-                while ((strLine = br.readLine()) != null) {
-                    Matcher m = includePattern.matcher(strLine);
-                    if (m.matches()) {
-                        String glob = m.group(1);
+                BufferedReader br = null;
+                try {
+                    br = new BufferedReader(new InputStreamReader(new FileInputStream(fl)));
+                    String strLine;
+                    while ((strLine = br.readLine()) != null) {
+                        Matcher m = includePattern.matcher(strLine);
+                        if (m.matches()) {
+                            String glob = m.group(1);
 
-                        module.addIncludedGlob(glob);
-                        loadIncludes(glob, foundIncludes);
+                            module.addIncludedGlob(glob);
+                            loadIncludes(glob, foundIncludes);
+                        }
+                        Matcher serverRootMatcher = serverRootPattern.matcher(strLine);
+                        if (serverRootMatcher.matches()) {
+                            serverRootPath = serverRootMatcher.group(1);
+                        }
                     }
-                    Matcher serverRootMatcher = serverRootPattern.matcher(strLine);
-                    if (serverRootMatcher.matches()) {
-                        serverRootPath = serverRootMatcher.group(1);
+                } finally {
+                    if (br != null) {
+                        br.close();
                     }
                 }
-                br.close();
             }
            }
 

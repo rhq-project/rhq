@@ -107,20 +107,20 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
             100, false);
         fields.add(descriptionField);
 
-        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY,
-           MSG.datasource_roles_field_resourceGroups());
+        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, MSG
+            .common_title_resourceGroups());
         fields.add(resourceGroupsField);
 
-        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY,
-                MSG.datasource_roles_field_permissions());
+        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, MSG
+            .common_title_permissions());
         fields.add(permissionsField);
 
-        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY,
-                MSG.datasource_roles_field_subjects());
+        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, MSG
+            .datasource_roles_field_subjects());
         fields.add(subjectsField);
 
-        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY,
-                MSG.datasource_roles_field_ldapGroups());
+        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY, MSG
+            .datasource_roles_field_ldapGroups());
         fields.add(ldapGroupsField);
 
         return fields;

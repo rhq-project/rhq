@@ -95,10 +95,13 @@ public class SNMPClient {
         }
         Properties props = new Properties();
         try {
-            props.load(stream);
+            try {
+                props.load(stream);
+            } finally {
+                stream.close();
+            }
         } catch (Exception e) {
             throw new IllegalStateException("Failed to parse oids.properties file from plugin classloader.", e);
-
         }
 
         Enumeration<?> propNames = props.propertyNames();

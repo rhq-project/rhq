@@ -40,7 +40,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "TagCloud";
     // A default displayed, persisted name for the portlet    
-    public static final String NAME = MSG.view_portlet_defaultName_tagCloud();
+    public static final String NAME = MSG.common_title_tag_cloud();
 
     public TagCloudPortlet(String locatorId) {
         super(locatorId);

@@ -68,12 +68,12 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable
     }
 
     @Override
-    public int getDriftConfigurationId() {
+    public int getDriftDefinitionId() {
         return configId;
     }
 
     @Override
-    public void setDriftConfigurationId(int id) {
+    public void setDriftDefinitionId(int id) {
         configId = id;
     }
 

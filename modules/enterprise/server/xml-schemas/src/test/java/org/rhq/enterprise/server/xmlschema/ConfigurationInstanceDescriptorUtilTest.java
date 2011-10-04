@@ -21,8 +21,10 @@ package org.rhq.enterprise.server.xmlschema;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertNotNull;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 
@@ -30,6 +32,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.logging.Log;
@@ -39,10 +42,12 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.descriptor.configuration.MapProperty;
 import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -73,10 +78,12 @@ public class ConfigurationInstanceDescriptorUtilTest {
     }
 
     private static final Marshaller CONFIGURATION_INSTANCE_MARSHALLER;
+    private static final Unmarshaller CONFIGURATION_INSTANCE_UNMARSHALLER;
     static {
         try {
             JAXBContext context = JAXBContext.newInstance(StandaloneConfigurationInstance.class);
             CONFIGURATION_INSTANCE_MARSHALLER = context.createMarshaller();
+            CONFIGURATION_INSTANCE_UNMARSHALLER = context.createUnmarshaller();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize the configuration instance marshaller.", e);
         }
@@ -216,6 +223,211 @@ public class ConfigurationInstanceDescriptorUtilTest {
         //TODO implement
     }
 
+    public void testReverseSimplePropertyConversion() throws Exception {
+        String xml = "" +
+            "<standaloneConfigurationInstance xmlns:ci='urn:xmlns:rhq-configuration-instance' xmlns:c='urn:xmlns:rhq-configuration'>" +
+            "    <ci:simple-property value='42' name='my-name' type='integer'/>" +
+            "</standaloneConfigurationInstance>";
+                
+        ConfigurationInstanceDescriptor descriptor = (ConfigurationInstanceDescriptor) CONFIGURATION_INSTANCE_UNMARSHALLER.unmarshal(new StringReader(xml));
+        
+        ConfigurationInstanceDescriptorUtil.ConfigurationAndDefinition ccd = ConfigurationInstanceDescriptorUtil.createConfigurationAndDefinition(descriptor);
+        
+        ConfigurationDefinition def = ccd.definition;
+        Configuration conf = ccd.configuration;
+        
+        assertEquals(def.getPropertyDefinitions().size(), 1, "Unexpected number of defined properties");
+        assertEquals(conf.getProperties().size(), 1, "Unexpected number of properties");
+        
+        PropertyDefinition propDef = def.get("my-name");
+        Property prop = conf.get("my-name");
+        
+        assertNotNull(propDef, "Could not find the expected property definition");
+        assertNotNull(prop, "Could not find the expected property");
+        
+        assertEquals(propDef.getClass(), PropertyDefinitionSimple.class, "Unexpected type of the property definition");
+        assertEquals(prop.getClass(), PropertySimple.class, "Unexpecetd type of the property");
+        
+        PropertyDefinitionSimple simpleDef = (PropertyDefinitionSimple) propDef;
+        PropertySimple simpleProp = (PropertySimple) prop;
+        
+        assertEquals(simpleDef.getType(), PropertySimpleType.INTEGER, "Unexpected type of the simple property definition");
+        assertEquals(simpleProp.getIntegerValue(), Integer.valueOf(42), "Unexpected value of the simple property");        
+    }
+    
+    public void testReverseListPropertyConversion() throws Exception {
+        String xml = "" +
+        "<standaloneConfigurationInstance xmlns:ci='urn:xmlns:rhq-configuration-instance' xmlns:c='urn:xmlns:rhq-configuration'>" +
+        "    <ci:list-property name='list'>" +
+        "        <c:simple-property name='member' type='integer'/>" +
+        "        <ci:values>" +
+        "            <ci:simple-value value='1'/>" +
+        "            <ci:simple-value value='2'/>" +
+        "            <ci:simple-value value='3'/>" +
+        "        </ci:values>" +
+        "    </ci:list-property>" +
+        "</standaloneConfigurationInstance>";
+
+        ConfigurationInstanceDescriptor descriptor = (ConfigurationInstanceDescriptor) CONFIGURATION_INSTANCE_UNMARSHALLER.unmarshal(new StringReader(xml));
+        
+        ConfigurationInstanceDescriptorUtil.ConfigurationAndDefinition ccd = ConfigurationInstanceDescriptorUtil.createConfigurationAndDefinition(descriptor);
+        
+        ConfigurationDefinition def = ccd.definition;
+        Configuration conf = ccd.configuration;
+        
+        assertEquals(def.getPropertyDefinitions().size(), 1, "Unexpected number of defined properties");
+        assertEquals(conf.getProperties().size(), 1, "Unexpected number of properties");
+
+        PropertyDefinition propDef = def.get("list");
+        Property prop = conf.get("list");
+        
+        assertNotNull(propDef, "Could not find the expected property definition");
+        assertNotNull(prop, "Could not find the expected property");
+        
+        assertEquals(propDef.getClass(), PropertyDefinitionList.class, "Unexpected type of the property definition");
+        assertEquals(prop.getClass(), PropertyList.class, "Unexpecetd type of the property");
+        
+        PropertyDefinitionList listDef = (PropertyDefinitionList) propDef;
+        PropertyList listProp = (PropertyList) prop;
+        
+        PropertyDefinition memberDef = listDef.getMemberDefinition();
+        assertEquals(memberDef.getClass(), PropertyDefinitionSimple.class, "Unexpected type of the list member property definition");
+        
+        PropertyDefinitionSimple memberSimpleDef = (PropertyDefinitionSimple) memberDef;
+        assertEquals(memberSimpleDef.getName(), "member");
+        assertEquals(memberSimpleDef.getType(), PropertySimpleType.INTEGER);
+        
+        assertEquals(listProp.getList().size(), 3, "Unexpected number of list members");
+        
+        for(int i = 0; i < 3; ++i) {
+            Property memberProp = listProp.getList().get(i);
+            assertEquals(memberProp.getClass(), PropertySimple.class, "Unexpected type of the property in the list on index " + i);
+            assertEquals(memberProp.getName(), "member");
+            assertEquals(((PropertySimple)memberProp).getIntegerValue(), Integer.valueOf(i + 1));
+        }        
+    }
+    
+    public void testReverseMapPropertyConversion() throws Exception {
+        String xml = "" +
+        "<standaloneConfigurationInstance xmlns:ci='urn:xmlns:rhq-configuration-instance' xmlns:c='urn:xmlns:rhq-configuration'>" +
+        "    <ci:map-property name='map'>" +
+        "        <c:simple-property name='m1' type='integer'/>" +
+        "        <c:simple-property name='m2' type='string'/>" +
+        "        <ci:values>" +
+        "            <ci:simple-value property-name='m1' value='1'/>" +
+        "            <ci:simple-value property-name='m2' value='v'/>" +
+        "        </ci:values>" +
+        "    </ci:map-property>" +
+        "</standaloneConfigurationInstance>";
+
+        ConfigurationInstanceDescriptor descriptor = (ConfigurationInstanceDescriptor) CONFIGURATION_INSTANCE_UNMARSHALLER.unmarshal(new StringReader(xml));
+        
+        ConfigurationInstanceDescriptorUtil.ConfigurationAndDefinition ccd = ConfigurationInstanceDescriptorUtil.createConfigurationAndDefinition(descriptor);
+        
+        ConfigurationDefinition def = ccd.definition;
+        Configuration conf = ccd.configuration;
+        
+        assertEquals(def.getPropertyDefinitions().size(), 1, "Unexpected number of defined properties");
+        assertEquals(conf.getProperties().size(), 1, "Unexpected number of properties");
+
+        PropertyDefinition propDef = def.get("map");
+        Property prop = conf.get("map");
+        
+        assertNotNull(propDef, "Could not find the expected property definition");
+        assertNotNull(prop, "Could not find the expected property");
+        
+        assertEquals(propDef.getClass(), PropertyDefinitionMap.class, "Unexpected type of the property definition");
+        assertEquals(prop.getClass(), PropertyMap.class, "Unexpecetd type of the property");
+        
+        PropertyDefinitionMap mapDef = (PropertyDefinitionMap) propDef;
+        PropertyMap mapProp = (PropertyMap) prop;
+
+        assertEquals(mapDef.getPropertyDefinitions().size(), 2, "Unexpected number of map member definitions");
+        assertEquals(mapProp.getMap().size(), 2, "Unexpected number of map members");
+        
+        PropertyDefinition m1Def = mapDef.get("m1");
+        PropertyDefinition m2Def = mapDef.get("m2");
+        Property m1Prop = mapProp.get("m1");
+        Property m2Prop = mapProp.get("m2");
+        
+        assertEquals(m1Def.getClass(), PropertyDefinitionSimple.class);
+        assertEquals(m2Def.getClass(), PropertyDefinitionSimple.class);
+        assertEquals(m1Prop.getClass(), PropertySimple.class);
+        assertEquals(m2Prop.getClass(), PropertySimple.class);
+        
+        PropertyDefinitionSimple m1SimpleDef = (PropertyDefinitionSimple) m1Def;
+        PropertyDefinitionSimple m2SimpleDef = (PropertyDefinitionSimple) m2Def;
+        PropertySimple m1SimpleProp = (PropertySimple) m1Prop;
+        PropertySimple m2SimpleProp = (PropertySimple) m2Prop;
+        
+        assertEquals(m1SimpleDef.getName(), "m1");
+        assertEquals(m2SimpleDef.getName(), "m2");
+        assertEquals(m1SimpleDef.getType(), PropertySimpleType.INTEGER);
+        assertEquals(m2SimpleDef.getType(), PropertySimpleType.STRING);
+        
+        assertEquals(m1SimpleProp.getName(), "m1");
+        assertEquals(m2SimpleProp.getName(), "m2");
+        assertEquals(m1SimpleProp.getIntegerValue(), Integer.valueOf(1));
+        assertEquals(m2SimpleProp.getStringValue(), "v");
+    }
+    
+    public void testReverseListOfMapsConversion() throws Exception {
+        String xml = "" +
+        "<standaloneConfigurationInstance xmlns:ci='urn:xmlns:rhq-configuration-instance' xmlns:c='urn:xmlns:rhq-configuration'>" +
+        "    <ci:list-property name='list'>" +
+        "        <c:map-property name='map'>" +
+        "            <c:simple-property name='m1' type='integer'/>" +
+        "            <c:simple-property name='m2' type='string'/>" +
+        "        </c:map-property>" +
+        "        <ci:values>" +
+        "            <ci:map-value>" +
+        "              <ci:simple-value property-name='m1' value='1'/>" +
+        "              <ci:simple-value property-name='m2' value='m1'/>" +
+        "            </ci:map-value>" +
+        "            <ci:map-value>" +
+        "              <ci:simple-value property-name='m1' value='2'/>" +
+        "              <ci:simple-value property-name='m2' value='m2'/>" +
+        "            </ci:map-value>" +
+        "        </ci:values>" +
+        "    </ci:list-property>" +
+        "</standaloneConfigurationInstance>";
+
+        ConfigurationInstanceDescriptor descriptor = (ConfigurationInstanceDescriptor) CONFIGURATION_INSTANCE_UNMARSHALLER.unmarshal(new StringReader(xml));
+        
+        ConfigurationInstanceDescriptorUtil.ConfigurationAndDefinition ccd = ConfigurationInstanceDescriptorUtil.createConfigurationAndDefinition(descriptor);
+        
+        ConfigurationDefinition def = ccd.definition;
+        Configuration conf = ccd.configuration;
+        
+        assertEquals(def.getPropertyDefinitions().size(), 1, "Unexpected number of defined properties");
+        assertEquals(conf.getProperties().size(), 1, "Unexpected number of properties"); 
+        
+        PropertyDefinitionList listDef = (PropertyDefinitionList) def.get("list");
+        PropertyList listProp = (PropertyList) conf.get("list");
+        
+        PropertyDefinitionMap mapDef = (PropertyDefinitionMap) listDef.getMemberDefinition();
+        PropertyDefinitionSimple m1Def = (PropertyDefinitionSimple) mapDef.get("m1");
+        PropertyDefinitionSimple m2Def = (PropertyDefinitionSimple) mapDef.get("m2");
+        
+        assertEquals(mapDef.getName(), "map");
+        assertEquals(m1Def.getType(), PropertySimpleType.INTEGER);
+        assertEquals(m2Def.getType(), PropertySimpleType.STRING);
+        
+        assertEquals(listProp.getList().size(), 2, "Unexpected number of maps in the list");
+        
+        PropertyMap firstMapValue = (PropertyMap) listProp.getList().get(0);
+        PropertyMap secondMapValue = (PropertyMap) listProp.getList().get(1);
+        
+        assertEquals(firstMapValue.getName(), "map");
+        assertEquals(secondMapValue.getName(), "map");
+        
+        assertEquals(firstMapValue.getSimpleValue("m1", null), "1", "Unexpected value of m1 property in the first map.");
+        assertEquals(firstMapValue.getSimpleValue("m2", null), "m1", "Unexpected value of m2 property in the first map.");
+        
+        assertEquals(secondMapValue.getSimpleValue("m1", null), "2", "Unexpected value of m1 property in the second map.");
+        assertEquals(secondMapValue.getSimpleValue("m2", null), "m2", "Unexpected value of m2 property in the second map.");
+    }
+    
     private static void logInstance(String message, ConfigurationInstanceDescriptor instance) throws JAXBException,
         IOException {
         StringWriter wrt = new StringWriter();

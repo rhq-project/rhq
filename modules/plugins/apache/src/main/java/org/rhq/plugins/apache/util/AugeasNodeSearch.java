@@ -44,7 +44,7 @@ public class AugeasNodeSearch {
             boolean match = true;
             int i =0;           
              
-            while (match & i<nodeParams.size() & tempNode!=parentNode){          
+            while (match && i<nodeParams.size() && tempNode!=parentNode){
               List<AugeasNode> childNodes = tempNode.getChildByLabel("param");
               if (childNodes.size()>0){                  
                  if (!nodeParams.get(i).equals(childNodes.get(0).getValue()))
@@ -135,7 +135,7 @@ public class AugeasNodeSearch {
     public static String getNodeKey(AugeasNode node,AugeasNode parentNode){
         AugeasNode pNode = node;
         StringBuilder str = new StringBuilder();
-        while (pNode!=null & !pNode.equals(parentNode))
+        while (pNode!=null && !pNode.equals(parentNode))
          {                       
             str.append(getNodeKeyFromParent(pNode));
             pNode = pNode.getParentNode();

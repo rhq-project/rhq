@@ -78,7 +78,7 @@ public class ResourceGroupTest extends AbstractEJB3Test {
                 resource.setUuid("" + new Random().nextInt());
                 em.persist(resource);
 
-                ResourceGroup group = new ResourceGroup("testgroup" + System.currentTimeMillis(), resourceType);
+                ResourceGroup group = new ResourceGroup("testgroupRG" + System.currentTimeMillis(), resourceType);
                 em.persist(group);
                 group.addExplicitResource(resource);
             } catch (Exception e) {

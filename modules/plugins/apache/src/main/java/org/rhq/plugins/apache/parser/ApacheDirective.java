@@ -41,7 +41,7 @@ public class ApacheDirective implements Cloneable {
         }else{         
         int startIndex = 0;
         boolean updated = true;
-        while (updated & startIndex < directive.length()){
+        while (updated && startIndex < directive.length()){
             updated = false;          
                 Matcher m = DIRECTIVE_PATTERN.matcher(directive);
                 while (m.find(startIndex)) {

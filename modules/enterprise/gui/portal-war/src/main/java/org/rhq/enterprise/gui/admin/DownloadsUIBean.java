@@ -42,10 +42,14 @@ public class DownloadsUIBean implements Serializable {
             File file = LookupUtil.getAgentManager().getAgentUpdateVersionFile();
 
             Properties props = new Properties();
-            props.load(new FileInputStream(file));
+            FileInputStream fis = new FileInputStream(file);
+            try {
+                props.load(fis);
+            } finally {
+                fis.close();
+            }
 
             return props;
-
         } catch (Exception e) {
             throw new RuntimeException("Agent download information not available", e);
         }
@@ -79,7 +83,12 @@ public class DownloadsUIBean implements Serializable {
         File versionFile = new File(getClientDownloadDir(), "rhq-client-version.properties");
         try {
             Properties p = new Properties();
-            p.load(new FileInputStream(versionFile));
+            FileInputStream fis = new FileInputStream(versionFile);
+            try {
+                p.load(fis);
+            } finally {
+                fis.close();
+            }
             return p;
         } catch (Exception e) {
             throw new RuntimeException("Unable to retrieve client version info", e);

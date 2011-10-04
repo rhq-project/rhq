@@ -317,17 +317,17 @@ class AgentConditionCache extends AbstractConditionCache {
         } else if (alertConditionCategory == AlertConditionCategory.DRIFT) {
             AlertConditionDriftCategoryComposite driftComposite = (AlertConditionDriftCategoryComposite) composite;
 
-            String driftConfigNameRegexStr = driftComposite.getCondition().getName();
+            String driftDefNameRegexStr = driftComposite.getCondition().getName();
             String driftPathNameRegexStr = driftComposite.getCondition().getOption();
 
             DriftCacheElement cacheElement = null;
             try {
-                cacheElement = new DriftCacheElement(alertConditionOperator, driftConfigNameRegexStr,
+                cacheElement = new DriftCacheElement(alertConditionOperator, driftDefNameRegexStr,
                     driftPathNameRegexStr, alertConditionId);
             } catch (InvalidCacheElementException icee) {
                 log.info("Failed to create DriftCacheElement: id=" + alertConditionId + ", operator="
-                    + alertConditionOperator + ", driftConfigNameRegex=" + driftConfigNameRegexStr
-                    + ", driftPathNameRegex=" + driftPathNameRegexStr);
+                    + alertConditionOperator + ", driftDefNameRegex=" + driftDefNameRegexStr + ", driftPathNameRegex="
+                    + driftPathNameRegexStr);
             }
             addTo("driftCache", driftCache, driftComposite.getResourceId(), cacheElement, alertConditionId, stats);
         } else if (alertConditionCategory == AlertConditionCategory.RANGE) {

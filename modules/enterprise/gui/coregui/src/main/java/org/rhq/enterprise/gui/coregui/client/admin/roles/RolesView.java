@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  */
 public class RolesView extends TableSection<RolesDataSource> implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
+    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.common_title_roles());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
@@ -58,7 +58,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     private boolean initialized;
 
     public RolesView(String locatorId) {
-        super(locatorId, MSG.view_adminSecurity_roles());
+        super(locatorId, MSG.common_title_roles());
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);

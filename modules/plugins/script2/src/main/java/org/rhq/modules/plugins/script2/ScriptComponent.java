@@ -97,17 +97,28 @@ public class ScriptComponent implements ResourceComponent, MeasurementFacet, Ope
         if (!scriptFile.exists())
             throw new InvalidPluginConfigurationException("Script does not exist at " + scriptFile.getAbsolutePath());
 
-        Reader reader;
         try {
-            reader = new BufferedReader(new FileReader(scriptFile));
-            StringWriter writer = new StringWriter();
-            int tmp;
-            while ((tmp=reader.read())!=-1)
-                writer.write(tmp);
-
-            reader.close();
-            theScript = writer.toString();
-            writer.close();
+            FileReader fr = new FileReader(scriptFile);
+            try {
+                Reader reader = new BufferedReader(fr);
+                try {
+                    StringWriter writer = new StringWriter();
+                    try {
+                        int tmp;
+                        while ((tmp=reader.read())!=-1) {
+                            writer.write(tmp);
+                        }
+                        reader.close();
+                        theScript = writer.toString();
+                    } finally {
+                        writer.close();
+                    }
+                } finally {
+                    reader.close();
+                }
+            } finally {
+                fr.close();
+            }
 
             engine.eval(theScript);
         }

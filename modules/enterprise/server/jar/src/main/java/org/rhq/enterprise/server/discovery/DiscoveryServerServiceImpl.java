@@ -166,7 +166,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
             resourceManager.addResourceError(resourceError);
         } catch (RuntimeException re) {
-            log.error("Failed to persist resource error: " + resourceError);
+            log.error("Failed to persist Resource error [" + resourceError + "].", re);
             throw re;
         }
     }

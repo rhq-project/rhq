@@ -201,12 +201,56 @@ public class CreateNewPackageUIBean {
         }
         
         try {
-            // Grab a stream for the file being uploaded
-            InputStream packageStream;
-
+            PackageVersion packageVersion = null;
             try {
                 log.debug("Streaming new package bits from uploaded file: " + fileItem.getFile());
-                packageStream = new FileInputStream(fileItem.getFile());
+
+                // Grab a stream for the file being uploaded
+                InputStream packageStream = new FileInputStream(fileItem.getFile());
+                try {
+                    // Ask the bean to create the package
+
+                    /* Currently, this is just used in the workflow for deploying a new package. This will probably get
+                       refactored in the future for a general way of adding packages to the repo as its own operation. For
+                       now, don't worry about that. The rest of this will be written assuming it's part of the deploy
+                       workflow and we'll deal with the refactoring later.
+                       jdobies, Feb 27, 2008
+                     */
+                    try {
+                        ContentManagerLocal contentManager = LookupUtil.getContentManager();
+
+                        //store information about uploaded file for packageDetails as most of it is already available
+                        Map<String, String> packageUploadDetails = new HashMap<String, String>();
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
+                            .currentTimeMillis()));
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_OWNER, subject.getName());
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_NAME, fileItem.getFileName());
+
+                        try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
+                            packageUploadDetails.put(ContentManagerLocal.UPLOAD_MD5, new MessageDigestGenerator(
+                                MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
+                            packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, new MessageDigestGenerator(
+                                MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
+                        } catch (IOException e1) {
+                            log.warn("Error calculating file digest(s)", e1);
+                        }
+
+                        Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
+                        packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
+                            version, architectureId, packageStream, packageUploadDetails, iRepoId);
+
+                    } catch (NoResultException nre) {
+                        //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
+                    } catch (Exception e) {
+                        String errorMessages = ThrowableUtil.getAllMessages(e);
+                        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
+                            + "] in repository. Cause: " + errorMessages);
+                        return "failure";
+                    }
+                } finally {
+                    packageStream.close();
+                }
             } catch (IOException e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
@@ -214,47 +258,6 @@ public class CreateNewPackageUIBean {
                 return "failure";
             }
 
-            // Ask the bean to create the package
-
-            /* Currently, this is just used in the workflow for deploying a new package. This will probably get
-               refactored in the future for a general way of adding packages to the repo as its own operation. For
-               now, don't worry about that. The rest of this will be written assuming it's part of the deploy
-               workflow and we'll deal with the refactoring later.
-               jdobies, Feb 27, 2008
-             */
-            PackageVersion packageVersion = null;
-            try {
-                ContentManagerLocal contentManager = LookupUtil.getContentManager();
-
-                //store information about uploaded file for packageDetails as most of it is already available
-                Map<String, String> packageUploadDetails = new HashMap<String, String>();
-                packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
-                packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
-                    .currentTimeMillis()));
-                packageUploadDetails.put(ContentManagerLocal.UPLOAD_OWNER, subject.getName());
-                packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_NAME, fileItem.getFileName());
-
-                try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
-                    packageUploadDetails.put(ContentManagerLocal.UPLOAD_MD5, new MessageDigestGenerator(
-                        MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
-                    packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, new MessageDigestGenerator(
-                        MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
-                } catch (IOException e1) {
-                    log.warn("Error calculating file digest(s)", e1);
-                }
-
-                Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
-                packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
-                    version, architectureId, packageStream, packageUploadDetails, iRepoId);
-
-            } catch (NoResultException nre) {
-                //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
-            } catch (Exception e) {
-                String errorMessages = ThrowableUtil.getAllMessages(e);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
-                    + "] in repository. Cause: " + errorMessages);
-                return "failure";
-            }
 
             int[] packageVersionList = new int[] { packageVersion.getId() };
 
@@ -321,7 +324,7 @@ public class CreateNewPackageUIBean {
     private SelectItem[] getPackageTypes(boolean includeResourceTypeResolution) {
         Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
 
-        List<PackageType> packageTypes = null;
+        List<PackageType> packageTypes;
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
         if (resource != null) {
             packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());

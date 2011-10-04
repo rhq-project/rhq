@@ -144,11 +144,16 @@ public abstract class ZipUtil {
                     File parentDirectoryFile = new File(parentDirectory);
                     parentDirectoryFile.mkdirs();
 
-                    BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(entryFile));
+                    FileOutputStream fos = new FileOutputStream(entryFile);
                     try {
-                        StreamUtil.copy(zis, outputStream, false);
+                        BufferedOutputStream outputStream = new BufferedOutputStream(fos);
+                        try {
+                            StreamUtil.copy(zis, outputStream, false);
+                        } finally {
+                            outputStream.close();
+                        }
                     } finally {
-                        outputStream.close();
+                        fos.close();
                     }
                 }
             }
@@ -167,18 +172,24 @@ public abstract class ZipUtil {
      * @throws Exception if any errors occur during the reading or visiting
      */
     public static void walkZipFile(File zipFile, ZipEntryVisitor visitor) throws Exception {
-        InputStream zipContent = new BufferedInputStream(new FileInputStream(zipFile));
+        FileInputStream fis = new FileInputStream(zipFile);
         try {
-            ZipInputStream zis = new ZipInputStream(zipContent);
-            ZipEntry e;
-            while ((e = zis.getNextEntry()) != null) {
-                boolean keepGoing = visitor.visit(e, zis);
-                if (!keepGoing) {
-                    break; // visitor told us to stop
+            InputStream zipContent = new BufferedInputStream(fis);
+            try {
+                ZipInputStream zis = new ZipInputStream(zipContent);
+
+                ZipEntry e;
+                while ((e = zis.getNextEntry()) != null) {
+                    boolean keepGoing = visitor.visit(e, zis);
+                    if (!keepGoing) {
+                        break; // visitor told us to stop
+                    }
                 }
+            } finally {
+                zipContent.close();
             }
         } finally {
-            zipContent.close();
+            fis.close();
         }
     }
 

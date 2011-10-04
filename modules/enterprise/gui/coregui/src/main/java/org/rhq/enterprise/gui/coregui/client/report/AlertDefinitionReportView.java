@@ -22,6 +22,7 @@ import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -185,8 +186,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                             });
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getResourceGroupLink(groupAlertDef.getResourceGroup().getId())
-                            + "/Alerts/Definitions/" + groupAlertDef.getId());
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef.getResourceGroup()), "Alert", "Definitions")
+                            + "/" + groupAlertDef.getId());
                     }
                 }
             });

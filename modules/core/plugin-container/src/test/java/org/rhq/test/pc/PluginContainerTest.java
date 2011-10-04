@@ -177,7 +177,7 @@ public class PluginContainerTest extends JMockTest {
         } catch (InterruptedException e) {
             throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.", e);
         }
-        
+
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
         for (int i = 0; i < CURRENT_SETUP.get().numberOfInitialDiscoveries(); ++i) {
             im.executeServerScanImmediately();
@@ -358,7 +358,7 @@ public class PluginContainerTest extends JMockTest {
     }
     
     private static File createTemporaryDirectory(PluginContainerSetup setup) {
-        String name = null;
+        String name;
         boolean mustBeNew = true;
         if (setup.sharedGroup().length() > 0) {
             name = setup.sharedGroup();
@@ -378,7 +378,7 @@ public class PluginContainerTest extends JMockTest {
     
     private File copyPluginToDestination(Object testObject, String plugin, File destination) throws IOException {
         URI pluginUri = URI.create(plugin);
-        URL pluginUrl = null;
+        URL pluginUrl;
         if ("classpath".equals(pluginUri.getScheme())) {
             String path = pluginUri.getPath();
             pluginUrl = testObject.getClass().getResource(path);

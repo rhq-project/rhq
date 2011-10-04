@@ -29,6 +29,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.xml.bind.JAXBElement;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationProperty;
@@ -74,6 +78,9 @@ import org.rhq.core.domain.util.StringUtils;
  * @author Ian Springer
  */
 public class ConfigurationMetadataParser {
+
+    private static Log log = LogFactory.getLog("ConfigurationMetadataParser");
+
     public static ConfigurationDefinition parse(String configurationName, ConfigurationDescriptor descriptor)
         throws InvalidPluginDescriptorException {
         if (descriptor == null) {
@@ -283,6 +290,10 @@ public class ConfigurationMetadataParser {
             String name = option.getName();
             if (name == null) {
                 name = option.getValue();
+            }
+
+            if (option.isDefault()) {
+                log.warn("!!\nFor simple-property [" + parentProperty.getName() + "], attribute 'default' on c:option is useless and deprecated.\n   Please use the 'default' attribute on the c:simple-property.\n   The deprecated attribute will be removed in the future.\n!!");
             }
 
             PropertyDefinitionEnumeration enumeration = new PropertyDefinitionEnumeration(name, option.getValue());

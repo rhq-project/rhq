@@ -445,7 +445,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                 recentMeasurementsContent
                                                                     .extendLocatorId("RecentMeasurementsContentSeeMore"));
                                                             String link = LinkManager
-                                                                .getGroupMonitoringGraphsLink(groupId);
+                                                                .getGroupMonitoringGraphsLink(EntityContext.forGroup(groupId));
                                                             AbstractActivityView.addSeeMoreLink(row, link, column);
                                                         }
                                                         //call out to 3rd party javascript lib

@@ -74,11 +74,15 @@ public class VelocityTemplateProcessor {
 
     public void processTemplate(File outputFile) {
         try {
-            OutputStream outputStream = new FileOutputStream(outputFile);
-            Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream));
-            this.template.merge(this.context, writer);
-            writer.close();
-            outputStream.close();
+            Writer writer = null;
+            try {
+                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
+                this.template.merge(this.context, writer);
+            } finally {
+                if (writer != null) {
+                    writer.close();
+                }
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

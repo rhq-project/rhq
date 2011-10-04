@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,11 +38,14 @@ import org.rhq.core.domain.util.PageOrdering;
 public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    public static final String SORT_FIELD_CTIME = "createdTime";
+    public static final String SORT_FIELD_CREATED_TIME = "createdTime";
 
     public static final String SORT_FIELD_STATUS = "status";
 
+    public static final String FETCH_FIELD_CONFIGURATION = "configuration";
+
     private Integer filterId;
+    private List<Integer> filterIds; // requires overrides
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides
     private ConfigurationUpdateStatus filterStatus;
@@ -50,20 +53,22 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
 
     private boolean fetchConfiguration;
 
-    private PageOrdering sortCtime;
+    private PageOrdering sortCreatedTime;
     private PageOrdering sortStatus; // requires sort override
 
     public AbstractConfigurationUpdateCriteria() {
-
+        filterOverrides.put("ids", "id IN ( ? )");
         filterOverrides.put("startTime", "createdTime >= ?");
         filterOverrides.put("endTime", "createdTime <= ?");
         filterOverrides.put("statuses", "status IN ( ? )");
-
-        sortOverrides.put(SORT_FIELD_STATUS, "status");
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterIds(List<Integer> filterIds) {
+        this.filterIds = filterIds;
     }
 
     public void addFilterStartTime(Long filterStartTime) {
@@ -82,13 +87,13 @@ public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
         this.filterStatuses = CriteriaUtils.getListIgnoringNulls(configUpdateStatus);
     }
 
-    public void fetchConfiguration(boolean configuration) {
-        this.fetchConfiguration = configuration;
+    public void fetchConfiguration(boolean fetchConfiguration) {
+        this.fetchConfiguration = fetchConfiguration;
     }
 
-    public void addSortCtime(PageOrdering sortCtime) {
-        addSortField(SORT_FIELD_CTIME);
-        this.sortCtime = sortCtime;
+    public void addSortCreatedTime(PageOrdering sortCreatedTime) {
+        addSortField(SORT_FIELD_CREATED_TIME);
+        this.sortCreatedTime = sortCreatedTime;
     }
 
     public void addSortStatus(PageOrdering sortStatus) {

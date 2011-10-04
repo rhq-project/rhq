@@ -166,8 +166,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
         addMember(footer);
 
-        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), MSG
-            .view_autoDiscoveryQ_import());
+        final IButton importButton = new LocatableIButton(this.extendLocatorId("Import"), MSG.common_button_import());
         final IButton ignoreButton = new LocatableIButton(this.extendLocatorId("Ignore"), MSG
             .view_autoDiscoveryQ_ignore());
         final IButton unignoreButton = new LocatableIButton(this.extendLocatorId("Unignore"), MSG
@@ -198,11 +197,11 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         });
         footer.addMember(form);
 
-        final IButton selectAllButton = new LocatableIButton(this.extendLocatorId("SelectAll"),
-                MSG.view_autoDiscoveryQ_selectAll());
+        final IButton selectAllButton = new LocatableIButton(this.extendLocatorId("SelectAll"), MSG
+            .view_autoDiscoveryQ_selectAll());
         footer.addMember(selectAllButton);
-        final IButton deselectAllButton = new LocatableIButton(this.extendLocatorId("DeselectAll"),
-                MSG.view_autoDiscoveryQ_deselectAll());
+        final IButton deselectAllButton = new LocatableIButton(this.extendLocatorId("DeselectAll"), MSG
+            .view_autoDiscoveryQ_deselectAll());
         deselectAllButton.setDisabled(true);
         footer.addMember(deselectAllButton);
 
@@ -238,7 +237,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                                     }
                                 }
                                 updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                                        unignoreButton);
+                                    unignoreButton);
                                 selectionChangedHandlerDisabled = false;
                             }
                         });
@@ -252,7 +251,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                         // platform checkbox remained checked.
                         treeGrid.redraw();
                         updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                                unignoreButton);
+                            unignoreButton);
                         selectionChangedHandlerDisabled = false;
                     }
                 } else {
@@ -262,7 +261,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                         }
                     }
                     updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                            unignoreButton);
+                        unignoreButton);
                     selectionChangedHandlerDisabled = false;
                 }
             }
@@ -273,7 +272,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (treeGrid != null) {
                     updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                            unignoreButton);
+                        unignoreButton);
                     // NOTE: Due to a SmartGWT bug, the TreeGrid is not automatically redrawn upon data arrival, and
                     //       calling treeGrid.markForRedraw() doesn't redraw it either. The user can mouse over the grid
                     //       to cause it to redraw, but it is obviously not reasonable to expect that. So we must
@@ -304,7 +303,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                         }
                         treeGrid.markForRedraw();
                         updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
-                                unignoreButton);
+                            unignoreButton);
                         selectionChangedHandlerDisabled = false;
                     }
                 });
@@ -389,8 +388,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
     }
 
-    private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton,
-                                        IButton importButton, IButton ignoreButton, IButton unignoreButton) {
+    private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton, IButton importButton,
+        IButton ignoreButton, IButton unignoreButton) {
         if (treeGrid.getSelection().length == 0) {
             selectAllButton.setDisabled(false);
             deselectAllButton.setDisabled(true);

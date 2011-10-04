@@ -101,7 +101,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
-    private static final String DRIFT_CONFIGNAME_REGEX_ITEMNAME = "driftConfigNameRegex";
+    private static final String DRIFT_DEFNAME_REGEX_ITEMNAME = "driftDefNameRegex";
     private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
     private static final String RANGE_METRIC_ITEMNAME = "rangeMetric";
     private static final String RANGE_COMPARATOR_ITEMNAME = "rangeComparator";
@@ -133,8 +133,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
         this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
-        this.supportsDrift = (rtype.getDriftConfigurationTemplates() != null && rtype.getDriftConfigurationTemplates()
-            .size() > 0);
+        this.supportsDrift = (rtype.getDriftDefinitionTemplates() != null && rtype.getDriftDefinitionTemplates().size() > 0);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {
@@ -428,7 +427,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             }
 
             case DRIFT: {
-                newCondition.setName(getValueAsString(DRIFT_CONFIGNAME_REGEX_ITEMNAME));
+                newCondition.setName(getValueAsString(DRIFT_DEFNAME_REGEX_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
                 newCondition.setOption(getValueAsString(DRIFT_PATHNAME_REGEX_ITEMNAME));
@@ -790,8 +789,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             ops.put(opDef.getName(), opDef.getDisplayName());
         }
 
-        SelectItem opSelection = new SelectItem(OPERATION_NAME_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_operation_value());
+        SelectItem opSelection = new SelectItem(OPERATION_NAME_ITEMNAME, MSG.common_title_value());
         opSelection.setValueMap(ops);
         opSelection.setDefaultValue(ops.keySet().iterator().next()); // just use the first one
         opSelection.setWidth("*");
@@ -799,17 +797,12 @@ public class NewConditionEditor extends LocatableDynamicForm {
         opSelection.setShowIfCondition(ifFunc);
         formItems.add(opSelection);
 
-        SelectItem opResultsSelection = new SelectItem(OPERATION_RESULTS_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_operation_status());
+        SelectItem opResultsSelection = new SelectItem(OPERATION_RESULTS_ITEMNAME, MSG.common_title_status());
         LinkedHashMap<String, String> operationStatuses = new LinkedHashMap<String, String>(4);
-        operationStatuses.put(OperationRequestStatus.INPROGRESS.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_inprogress());
-        operationStatuses.put(OperationRequestStatus.SUCCESS.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_success());
-        operationStatuses.put(OperationRequestStatus.FAILURE.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_failure());
-        operationStatuses.put(OperationRequestStatus.CANCELED.name(), MSG
-            .view_alert_definition_condition_editor_operation_status_canceled());
+        operationStatuses.put(OperationRequestStatus.INPROGRESS.name(), MSG.common_status_inprogress());
+        operationStatuses.put(OperationRequestStatus.SUCCESS.name(), MSG.common_status_success());
+        operationStatuses.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
+        operationStatuses.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
         opResultsSelection.setValueMap(operationStatuses);
         opResultsSelection.setDefaultValue(OperationRequestStatus.FAILURE.name());
         opResultsSelection.setWrapTitle(false);
@@ -831,11 +824,11 @@ public class NewConditionEditor extends LocatableDynamicForm {
         SelectItem eventSeveritySelection = new SelectItem(EVENT_SEVERITY_ITEMNAME, MSG
             .view_alert_definition_condition_editor_event_severity());
         LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
-        severities.put(EventSeverity.DEBUG.name(), MSG.view_alert_definition_condition_editor_event_severity_debug());
-        severities.put(EventSeverity.INFO.name(), MSG.view_alert_definition_condition_editor_event_severity_info());
-        severities.put(EventSeverity.WARN.name(), MSG.view_alert_definition_condition_editor_event_severity_warn());
-        severities.put(EventSeverity.ERROR.name(), MSG.view_alert_definition_condition_editor_event_severity_error());
-        severities.put(EventSeverity.FATAL.name(), MSG.view_alert_definition_condition_editor_event_severity_fatal());
+        severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
+        severities.put(EventSeverity.INFO.name(), MSG.common_severity_info());
+        severities.put(EventSeverity.WARN.name(), MSG.common_severity_warn());
+        severities.put(EventSeverity.ERROR.name(), MSG.common_severity_error());
+        severities.put(EventSeverity.FATAL.name(), MSG.common_severity_fatal());
         eventSeveritySelection.setValueMap(severities);
         eventSeveritySelection.setDefaultValue(EventSeverity.ERROR.name());
         eventSeveritySelection.setWrapTitle(false);
@@ -875,14 +868,14 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("driftHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        TextItem driftConfigNameRegex = new TextItem(DRIFT_CONFIGNAME_REGEX_ITEMNAME, MSG
+        TextItem driftDefNameRegex = new TextItem(DRIFT_DEFNAME_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_drift_configname_regex());
-        driftConfigNameRegex.setRequired(false);
-        driftConfigNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
-        driftConfigNameRegex.setHoverWidth(200);
-        driftConfigNameRegex.setWrapTitle(false);
-        driftConfigNameRegex.setShowIfCondition(ifFunc);
-        formItems.add(driftConfigNameRegex);
+        driftDefNameRegex.setRequired(false);
+        driftDefNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
+        driftDefNameRegex.setHoverWidth(200);
+        driftDefNameRegex.setWrapTitle(false);
+        driftDefNameRegex.setShowIfCondition(ifFunc);
+        formItems.add(driftDefNameRegex);
 
         TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_drift_pathname_regex());

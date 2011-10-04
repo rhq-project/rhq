@@ -55,7 +55,7 @@ public class DriftFilesSenderTest extends DriftTest {
 
     @Test
     public void sendFilesInOneDirectory() throws Exception {
-        String driftConfigName = "single-directory-test";
+        String driftDefName = "single-directory-test";
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -64,9 +64,9 @@ public class DriftFilesSenderTest extends DriftTest {
         String server1ConfHash = sha256(server1Conf);
         String server2ConfHash = sha256(server2Conf);
 
-        File changeSetDir = changeSetDir(driftConfigName);
+        File changeSetDir = changeSetDir(driftDefName);
 
-        Headers headers = createHeaders(driftConfigName, COVERAGE);
+        Headers headers = createHeaders(driftDefName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
         writer.write(addedFileEntry("conf/server-1.conf", server1ConfHash));
@@ -74,7 +74,7 @@ public class DriftFilesSenderTest extends DriftTest {
         writer.close();
 
         sender.setDriftFiles(driftFiles(server1ConfHash, server2ConfHash));
-        sender.setHeaders(createHeaders(driftConfigName, COVERAGE));
+        sender.setHeaders(createHeaders(driftDefName, COVERAGE));
         sender.run();
 
         File contentDir = mkdir(changeSetDir, "content");
@@ -86,7 +86,7 @@ public class DriftFilesSenderTest extends DriftTest {
 
     @Test
     public void sendFilesInMultipleDirectories() throws Exception {
-        String driftConfigName = "multiple-directories-test";
+        String driftDefName = "multiple-directories-test";
 
         File confDir = mkdir(resourceDir, "conf");
         File libDir = mkdir(resourceDir, "lib");
@@ -100,9 +100,9 @@ public class DriftFilesSenderTest extends DriftTest {
         String server1JarHash = sha256(server1Jar);
         String server2JarHash = sha256(server2Jar);
 
-        File changeSetDir = changeSetDir(driftConfigName);
+        File changeSetDir = changeSetDir(driftDefName);
 
-        Headers headers = createHeaders(driftConfigName, COVERAGE);
+        Headers headers = createHeaders(driftDefName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
         writer.write(addedFileEntry("conf/server-1.conf", server1ConfHash));
@@ -114,7 +114,7 @@ public class DriftFilesSenderTest extends DriftTest {
         // Note that the order of the drift files is random. When the server sends a request
         // for files we cannot assume that the files will be in any particular order.
         sender.setDriftFiles(driftFiles(server1JarHash, server2ConfHash, server2JarHash, server1ConfHash));
-        sender.setHeaders(createHeaders(driftConfigName, COVERAGE));
+        sender.setHeaders(createHeaders(driftDefName, COVERAGE));
         sender.run();
 
         File contentDir = mkdir(changeSetDir, "content");
@@ -128,7 +128,7 @@ public class DriftFilesSenderTest extends DriftTest {
 
     @Test
     public void checkForFilesThatHaveBeenRemoved() throws Exception {
-        String driftConfigName = "file-exists-test";
+        String driftDefName = "file-exists-test";
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server-1.conf");
@@ -137,9 +137,9 @@ public class DriftFilesSenderTest extends DriftTest {
         String server1ConfHash = sha256(server1Conf);
         String server2ConfHash = sha256(server2Conf);
 
-        File changeSetDir = changeSetDir(driftConfigName);
+        File changeSetDir = changeSetDir(driftDefName);
 
-        Headers headers = createHeaders(driftConfigName, COVERAGE);
+        Headers headers = createHeaders(driftDefName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
         writer.write(addedFileEntry("conf/server-1.conf", server1ConfHash));
@@ -179,8 +179,8 @@ public class DriftFilesSenderTest extends DriftTest {
     Headers createHeaders(String configName, DriftChangeSetCategory type) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
-        headers.setDriftCofigurationId(0);
-        headers.setDriftConfigurationName(configName);
+        headers.setDriftDefinitionId(0);
+        headers.setDriftDefinitionName(configName);
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
 

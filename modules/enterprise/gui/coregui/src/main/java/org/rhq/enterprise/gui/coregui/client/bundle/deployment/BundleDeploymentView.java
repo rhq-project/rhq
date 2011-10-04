@@ -173,7 +173,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup()));
         destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
 
@@ -197,8 +197,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             status.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent event) {
-                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"),
-                        MSG.common_title_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
+                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"), MSG
+                        .common_severity_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
                     win.show();
                 }
             });

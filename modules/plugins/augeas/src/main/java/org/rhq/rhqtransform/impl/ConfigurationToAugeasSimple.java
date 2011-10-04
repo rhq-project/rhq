@@ -94,8 +94,8 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
         List<AugeasNode> nodes = tree.matchRelative(mapNode, propDefMap.getName());
 
         AugeasNode node;
-        int i = 0;
-        if (nodes.isEmpty() | nodes.size() < seq) {
+        int i;
+        if (nodes.isEmpty() || nodes.size() < seq) {
             node = tree.createNode(mapNode, propDefMap.getName(), null, seq);
             nodes.add(node);
             i = ((seq == 0) ? 0 : seq - 1);
@@ -130,9 +130,9 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
         }
 
         List<AugeasNode> nodes = tree.matchRelative(listNode, propDef.getName());
-        AugeasNode node = null;
+        AugeasNode node;
 
-        if (nodes.isEmpty() | nodes.size() < seq) {
+        if (nodes.isEmpty() || nodes.size() < seq) {
             node = tree.createNode(listNode, propDef.getName(), null, seq);
             nodes.add(node);
         } else
@@ -150,7 +150,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
         throws AugeasRhqException {
 
         PropertySimple simpleProp = null;
-        AugeasNode node = null;
+        AugeasNode node;
         if (prop instanceof PropertyList) {
             PropertyList lst = (PropertyList) prop;
             List<Property> props = lst.getList();

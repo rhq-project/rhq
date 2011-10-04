@@ -146,8 +146,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         } catch (IOException e) {
             throw new InvalidPluginConfigurationException(e);
         }
-        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
-            installInfo);
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo, installInfo);
         return resourceDetails;
     }
 
@@ -413,8 +412,9 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {
         File jnpServiceUrlFile = new File(configDir, "data/jnp-service.url");
         if (jnpServiceUrlFile.exists() && jnpServiceUrlFile.canRead()) {
+            BufferedReader br = null;
             try {
-                BufferedReader br = new BufferedReader(new FileReader(jnpServiceUrlFile));
+                br = new BufferedReader(new FileReader(jnpServiceUrlFile));
                 String jnpUrl = br.readLine();
                 if (jnpUrl != null) {
                     if (log.isDebugEnabled()) {
@@ -424,6 +424,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 }
             } catch (IOException ioe) {
                 // Nothing to do
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        // nada
+                    }
+                }
             }
         }
 

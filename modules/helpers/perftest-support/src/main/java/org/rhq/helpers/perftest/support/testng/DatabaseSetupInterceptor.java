@@ -168,6 +168,12 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
         }
     }
 
+/*  Dropping the tables explicitly is a workaround around a problem in the perf tests
+ *  but otherwise it should not be necessary at all.
+ *  Even then, dropping the table in the beforeInvocation() should be enough and we
+ *  shouldn't have to drop it again in the afterInvocation(). That is going to leave
+ *  the database corrupted because it is going to miss this table altogether.
+ */
     public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
         DatabaseState state = getRequiredDatabaseState(method);
 
@@ -202,7 +208,7 @@ public class DatabaseSetupInterceptor implements IInvokedMethodListener {
 
 
     }
-
+    
     /**
      * Obtain the required database state by looking for the @DatabaseState annotation.
      * Lookup is first done at method level and if not found done at class level.

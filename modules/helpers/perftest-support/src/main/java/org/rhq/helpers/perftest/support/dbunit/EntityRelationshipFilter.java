@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -177,7 +178,9 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
             }
         }
 
-        resolvedPks.getOrCreate(node.getTranslation().getTableName()).addAll(unresolvedPks);
+        if (unresolvedPks != null) {
+            resolvedPks.getOrCreate(node.getTranslation().getTableName()).addAll(unresolvedPks);
+        }
 
         for (Edge e : node.getOutgoingEdges()) {
             //only include the dependents if the relationship
@@ -271,6 +274,24 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
                 }
             }
 
+            //now translate the foreign keys into primary keys
+            //but first check if we even need to do it by comparing the column names
+            boolean columnsDiffer = false;
+            Set<String> pkColumns = new HashSet<String>(Arrays.asList(edge.getTo().getTranslation().getPkColumns()));
+            
+            for(String col : translation.getToColumns()) {
+                if (!pkColumns.contains(col)) {
+                    columnsDiffer = true;
+                    break;
+                }
+            }
+            
+            if (columnsDiffer) {
+                columnValues =
+                    getValuesFromTable(connection, edge.getTo().getTranslation().getTableName(), edge.getTo()
+                        .getTranslation().getPkColumns(), removeValuesWithNullColumn(columnValues));
+            }
+            
             Set<ColumnValues> ret = getValuesFromTable(connection, edge.getTo().getTranslation().getTableName(), edge
                 .getTo().getTranslation().getPkColumns(), columnValues);
 
@@ -299,11 +320,25 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
                 }
             }
 
-            //now translate the foreign keys into primary keys
             EntityTranslation fromTranslation = edge.getFrom().getTranslation();
-            columnValues = getValuesFromTable(connection, fromTranslation.getTableName(),
-                fromTranslation.getPkColumns(), removeValuesWithNullColumn(columnValues));
 
+            //now translate the foreign keys into primary keys
+            //but first check if we even need to do it by comparing the column names
+            boolean columnsDiffer = false;
+            Set<String> pkColumns = new HashSet<String>(Arrays.asList(fromTranslation.getPkColumns()));
+            
+            for(String col : translation.getFromColumns()) {
+                if (!pkColumns.contains(col)) {
+                    columnsDiffer = true;
+                    break;
+                }
+            }
+            
+            if (columnsDiffer) {
+                columnValues = getValuesFromTable(connection, fromTranslation.getTableName(),
+                    fromTranslation.getPkColumns(), removeValuesWithNullColumn(columnValues));
+            }
+            
             return removeValuesWithNullColumn(columnValues);
         } else {
             //only bother with one-to-many relationships. A many-to-many
@@ -408,47 +443,50 @@ public class EntityRelationshipFilter extends DatabaseSequenceFilter {
 
     private static Set<ColumnValues> getValuesFromTable(IDatabaseConnection connection, String tableName,
         String[] valueColumns, Set<ColumnValues> knownlColumns) throws SQLException {
-        //I know, doing this one by one is super lame, but prevents the 1000 IN clause members limit of Oracle
-        StringBuilder sqlCommon = new StringBuilder("SELECT ").append(colNamesToSql(valueColumns)).append(" FROM ")
+        StringBuilder sql = new StringBuilder("SELECT ").append(colNamesToSql(valueColumns)).append(" FROM ")
             .append(tableName).append(" WHERE ");
 
         Set<ColumnValues> ret = new HashSet<ColumnValues>();
-
+        
         for (ColumnValues cols : knownlColumns) {
-            StringBuilder sql = new StringBuilder(sqlCommon);
+            sql.append("(");
             for (ColumnValues.Column c : cols) {
                 sql.append(c.getName()).append(" = ? AND ");
             }
 
-            sql.replace(sql.length() - 4, sql.length(), "");
-
-            PreparedStatement st = null;
-            try {
-                st = connection.getConnection().prepareStatement(sql.toString());
-                int idx = 1;
+            sql.replace(sql.length() - 5, sql.length(), ") OR ");
+        }
+        
+        sql.replace(sql.length() - 4, sql.length(), "");
+        
+        PreparedStatement st = null;
+        try {
+            st = connection.getConnection().prepareStatement(sql.toString());
+            int idx = 1;
+            for (ColumnValues cols : knownlColumns) {
                 for (ColumnValues.Column c : cols) {
                     st.setObject(idx++, c.getValue());
                 }
+            }
+            
+            ResultSet rs = st.executeQuery();
 
-                ResultSet rs = st.executeQuery();
+            ResultSetMetaData rsmd = rs.getMetaData();
 
-                ResultSetMetaData rsmd = rs.getMetaData();
+            while (rs.next()) {
+                ColumnValues vals = new ColumnValues();
 
-                while (rs.next()) {
-                    ColumnValues vals = new ColumnValues();
-
-                    for (int i = 1; i <= rsmd.getColumnCount(); ++i) {
-                        String columnName = rsmd.getColumnName(i);
-                        Object value = rs.getObject(i);
-                        vals.add(columnName, value);
-                    }
-
-                    ret.add(vals);
+                for (int i = 1; i <= rsmd.getColumnCount(); ++i) {
+                    String columnName = rsmd.getColumnName(i);
+                    Object value = rs.getObject(i);
+                    vals.add(columnName, value);
                 }
-            } finally {
-                if (st != null) {
-                    st.close();
-                }
+
+                ret.add(vals);
+            }
+        } finally {
+            if (st != null) {
+                st.close();
             }
         }
 

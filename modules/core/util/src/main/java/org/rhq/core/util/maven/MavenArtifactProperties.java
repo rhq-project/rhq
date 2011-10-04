@@ -133,7 +133,11 @@ public class MavenArtifactProperties {
         }
         Properties props = new Properties();
         try {
-            props.load(inputStream);
+            try {
+                props.load(inputStream);
+            } finally {
+                inputStream.close();
+            }
         } catch (IOException e) {
             LOG.error("Failed to load resource " + resourcePath + " into Properties object.", e);
             return null;

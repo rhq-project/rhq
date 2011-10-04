@@ -68,7 +68,7 @@ public class CallTimeDataSource extends RPCDataSource<CallTimeDataComposite, Cri
         DataSourceIntegerField maximum = new DataSourceIntegerField("maximum", MSG
             .view_resource_monitor_calltime_maximum());
         fields.add(maximum);
-        DataSourceIntegerField total = new DataSourceIntegerField("total", MSG.view_resource_monitor_calltime_total());
+        DataSourceIntegerField total = new DataSourceIntegerField("total", MSG.common_title_total());
         fields.add(total);
 
         return fields;

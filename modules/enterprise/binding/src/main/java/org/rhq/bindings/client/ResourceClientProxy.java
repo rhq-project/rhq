@@ -564,9 +564,11 @@ public class ResourceClientProxy {
                             remoteClient.getSubject(), resourceClientProxy.resourceId, installedPackage.getId());
 
             FileOutputStream fos = new FileOutputStream(file);
-            fos.write(data);
-            fos.close();
-
+            try {
+                fos.write(data);
+            } finally {
+                fos.close();
+            }
         }
 
         // ------------------------------------------------------------------------------------------------------

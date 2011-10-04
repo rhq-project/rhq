@@ -509,7 +509,7 @@
                           <configuration>
                              <skip>${maven.test.skip}</skip>
                              <parallel>false</parallel>
-                             <useSystemClassLoader>false</useSystemClassLoader>
+                             <useSystemClassLoader>true</useSystemClassLoader>
                              <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                              <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                              <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
@@ -726,3 +726,4 @@
     </reporting>
 
 </project>
+

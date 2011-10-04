@@ -31,8 +31,8 @@ public class ChangeSetReaderImplTest {
         Headers actualHeaders = reader.getHeaders();
         Headers expectedHeaders = new Headers();
         expectedHeaders.setResourceId(1);
-        expectedHeaders.setDriftCofigurationId(1);
-        expectedHeaders.setDriftConfigurationName("file-added-test");
+        expectedHeaders.setDriftDefinitionId(1);
+        expectedHeaders.setDriftDefinitionName("file-added-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
@@ -63,8 +63,8 @@ public class ChangeSetReaderImplTest {
         Headers actualHeaders = reader.getHeaders();
         Headers expectedHeaders = new Headers();
         expectedHeaders.setResourceId(1);
-        expectedHeaders.setDriftCofigurationId(1);
-        expectedHeaders.setDriftConfigurationName("file-removed-test");
+        expectedHeaders.setDriftDefinitionId(1);
+        expectedHeaders.setDriftDefinitionName("file-removed-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
@@ -96,8 +96,8 @@ public class ChangeSetReaderImplTest {
         Headers actualHeaders = reader.getHeaders();
         Headers expectedHeaders = new Headers();
         expectedHeaders.setResourceId(1);
-        expectedHeaders.setDriftCofigurationId(1);
-        expectedHeaders.setDriftConfigurationName("file-changed-test");
+        expectedHeaders.setDriftDefinitionId(1);
+        expectedHeaders.setDriftDefinitionName("file-changed-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
@@ -128,8 +128,8 @@ public class ChangeSetReaderImplTest {
         Headers actualHeaders = reader.getHeaders();
         Headers expectedHeaders = new Headers();
         expectedHeaders.setResourceId(1);
-        expectedHeaders.setDriftCofigurationId(1);
-        expectedHeaders.setDriftConfigurationName("file-name-test");
+        expectedHeaders.setDriftDefinitionId(1);
+        expectedHeaders.setDriftDefinitionName("file-name-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
@@ -228,7 +228,7 @@ public class ChangeSetReaderImplTest {
     void assertFileEntryEquals(FileEntry actual, FileEntry expected) {
         assertEquals(actual.getType(), expected.getType(), "The first column, the entry type, is wrong");
         assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The second column, the new SHA-256, is wrong");
-        assertEquals(actual.getOldSHA(), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
+        assertEquals(actual.getOldSHA (), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
         assertEquals(actual.getFile(), expected.getFile(), "The fourth column, the file name, is wrong");
     }
 

@@ -95,8 +95,8 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
         headers = new Headers();
         try {
             headers.setResourceId(Integer.parseInt(reader.readLine()));
-            headers.setDriftCofigurationId(Integer.parseInt(reader.readLine()));
-            headers.setDriftConfigurationName(reader.readLine());
+            headers.setDriftDefinitionId(Integer.parseInt(reader.readLine()));
+            headers.setDriftDefinitionName(reader.readLine());
             headers.setBasedir(reader.readLine());
             headers.setType(DriftChangeSetCategory.fromCode(reader.readLine()));
             headers.setVersion(Integer.parseInt(reader.readLine()));

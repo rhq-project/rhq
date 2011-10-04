@@ -115,8 +115,8 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
-        getJPADriftServer().purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+    public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
+        getJPADriftServer().purgeByDriftDefinitionName(subject, resourceId, driftDefName);
     }
 
     @Override
@@ -125,7 +125,7 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public String getDriftFileBits(String hash) {
+    public String getDriftFileBits(Subject subject, String hash) {
         return getJPADriftServer().getDriftFileBits(hash);
     }
 }

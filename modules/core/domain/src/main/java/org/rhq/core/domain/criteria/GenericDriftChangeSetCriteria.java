@@ -18,8 +18,12 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.io.Serializable;
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
+import java.io.Serializable;
+import java.util.List;
+
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
@@ -52,9 +56,13 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
 
     private Integer filterResourceId;
 
-    private Integer filterDriftConfigId;
+    private Integer filterDriftDefId;
 
     private DriftChangeSetCategory filterCategory;
+
+    private List<DriftCategory> filterDriftCategories;
+
+    private String filterDriftPath;
 
     private boolean fetchDrifts;
 
@@ -133,13 +141,13 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     }
 
     @Override
-    public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
-        this.filterDriftConfigId = filterDriftConfigId;
+    public void addFilterDriftDefinitionId(Integer filterDriftDefId) {
+        this.filterDriftDefId = filterDriftDefId;
     }
 
     @Override
-    public Integer getFilterDriftConfigurationId() {
-        return filterDriftConfigId;
+    public Integer getFilterDriftDefinitionId() {
+        return filterDriftDefId;
     }
 
     @Override
@@ -150,6 +158,26 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     @Override
     public DriftChangeSetCategory getFilterCategory() {
         return filterCategory;
+    }
+
+    @Override
+    public void addFilterDriftCategories(DriftCategory... filterDriftCategories) {
+        this.filterDriftCategories = getListIgnoringNulls(filterDriftCategories);
+    }
+
+    @Override
+    public List<DriftCategory> getFilterDriftCategories() {
+        return filterDriftCategories;
+    }
+
+    @Override
+    public void addFilterDriftPath(String filterDriftPath) {
+        this.filterDriftPath = filterDriftPath;
+    }
+
+    @Override
+    public String getFilterDriftPath() {
+        return this.filterDriftPath;
     }
 
     @Override

@@ -67,17 +67,17 @@ public class PluginDocGenerator {
             throw new IllegalArgumentException("Argument to loadProperties must not be null");
         }
 
-        InputStream fileInputStream;
-        try {
-            File f = new File(propertiesFileName);
-            fileInputStream = new FileInputStream(f);
-        } catch (FileNotFoundException fnfe) {
-            throw new IllegalArgumentException(propertiesFileName + " file does not exist");
-        }
-
         Properties props = new Properties();
         try {
-            props.load(fileInputStream);
+            File f = new File(propertiesFileName);
+            InputStream fileInputStream = new FileInputStream(f);
+            try {
+                props.load(fileInputStream);
+            } finally {
+                fileInputStream.close();
+            }
+        } catch (FileNotFoundException fnfe) {
+            throw new IllegalArgumentException(propertiesFileName + " file does not exist");
         } catch (IOException ioe) {
             throw new IllegalStateException("Error loading properties from " + propertiesFileName + ": "
                 + ioe.getMessage());

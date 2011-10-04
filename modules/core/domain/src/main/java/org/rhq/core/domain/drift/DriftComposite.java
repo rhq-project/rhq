@@ -12,15 +12,15 @@ public class DriftComposite implements Serializable {
 
     private Resource resource;
 
-    private String driftConfigName;
+    private String driftDefName;
 
     public DriftComposite() {
     }
 
-    public DriftComposite(Drift<?, ?> drift, Resource resource, String driftConfigName) {
+    public DriftComposite(Drift<?, ?> drift, Resource resource, String driftDefName) {
         this.drift = drift;
         this.resource = resource;
-        this.driftConfigName = driftConfigName;
+        this.driftDefName = driftDefName;
     }
 
     public Drift<?, ?> getDrift() {
@@ -39,12 +39,12 @@ public class DriftComposite implements Serializable {
         this.resource = resource;
     }
 
-    public String getDriftConfigName() {
-        return driftConfigName;
+    public String getDriftDefinitionName() {
+        return driftDefName;
     }
 
-    public void setDriftConfigName(String driftConfigName) {
-        this.driftConfigName = driftConfigName;
+    public void setDriftDefName(String driftDefName) {
+        this.driftDefName = driftDefName;
     }
 
 }

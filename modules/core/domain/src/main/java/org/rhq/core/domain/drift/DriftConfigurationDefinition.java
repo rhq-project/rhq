@@ -51,6 +51,8 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_BASEDIR_VALUENAME = "valueName";
     public static final String PROP_INTERVAL = "interval";
     public static final String PROP_DRIFT_HANDLING_MODE = "driftHandlingMode";
+    public static final String PROP_PINNED = "pinned";
+    public static final String PROP_PINNED_VERSION = "pinnedVersion";
     public static final String PROP_INCLUDES = "includes";
     public static final String PROP_INCLUDES_INCLUDE = "include";
     public static final String PROP_EXCLUDES = "excludes";
@@ -58,7 +60,7 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_PATH = "path"; // for both include and exclude
     public static final String PROP_PATTERN = "pattern"; // for both include and exclude
 
-    // because we know drift config names will actually be used by the agent's plugin container as directories names,
+    // because we know drift definition names will actually be used by the agent's plugin container as directories names,
     // we must make sure they are restricted to only be characters valid for file system pathnames.
     // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
     public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
@@ -87,14 +89,14 @@ public class DriftConfigurationDefinition implements Serializable {
     }
 
     private static final ConfigurationDefinition INSTANCE = new ConfigurationDefinition("GLOBAL_DRIFT_CONFIG_DEF",
-        "The drift configuration definition");
+        "The drift detection definition");
 
     /**
-     * For drift configurations that have already been created, this definition can be used for editing those existing configuration.
-     * Existing drift configurations cannot have their name changed nor can their base directory or includes/excludes be altered.
+     * For drift definitions that have already been created, this definition can be used for editing those existing configuration.
+     * Existing drift definitions cannot have their name changed nor can their base directory or includes/excludes be altered.
      */
     private static final ConfigurationDefinition INSTANCE_FOR_EXISTING_CONFIGS = new ConfigurationDefinition(
-        "GLOBAL_DRIFT_CONFIG_DEF", "The drift configuration definition");
+        "GLOBAL_DRIFT_CONFIG_DEF", "The drift detection definition");
 
     /**
      * Returns a configuration definition suitable for showing a new configuration form - that is,
@@ -110,9 +112,9 @@ public class DriftConfigurationDefinition implements Serializable {
     }
 
     /**
-     * Returns a configuration definition suitable for showing an existing drift configuration.
+     * Returns a configuration definition suitable for showing an existing drift definition.
      * This will set certain fields as read-only - those fields which the user is not allowed to
-     * edit on exiting drift configurations (which includes name, basedir and includes/excludes filters).
+     * edit on exiting drift definition (which includes name, basedir and includes/excludes filters).
      * 
      * @return configuration definition
      */
@@ -129,6 +131,8 @@ public class DriftConfigurationDefinition implements Serializable {
         INSTANCE.put(createBasedir(INSTANCE, false));
         INSTANCE.put(createIncludes(INSTANCE, false));
         INSTANCE.put(createExcludes(INSTANCE, false));
+        INSTANCE.put(createPinned(INSTANCE));
+        INSTANCE.put(createPinnedVersion(INSTANCE));
 
         INSTANCE_FOR_EXISTING_CONFIGS.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE_FOR_EXISTING_CONFIGS.put(createName(INSTANCE_FOR_EXISTING_CONFIGS, true));
@@ -138,16 +142,18 @@ public class DriftConfigurationDefinition implements Serializable {
         INSTANCE_FOR_EXISTING_CONFIGS.put(createBasedir(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createIncludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createPinned(INSTANCE_FOR_EXISTING_CONFIGS));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createPinnedVersion(INSTANCE_FOR_EXISTING_CONFIGS));
     }
 
     private static PropertyDefinitionSimple createName(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_NAME;
-        String description = "The drift configuration name";
+        String description = "The drift detection definition name";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setDisplayName("Drift Configuration Name");
+        pd.setDisplayName("Drift Definition Name");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
@@ -163,7 +169,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createEnabled(ConfigurationDefinition configDef) {
         String name = PROP_ENABLED;
-        String description = "Enables or disables the drift configuration";
+        String description = "Enables or disables the drift definition";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.BOOLEAN;
 
@@ -181,13 +187,13 @@ public class DriftConfigurationDefinition implements Serializable {
     private static PropertyDefinitionSimple createDriftHandlingMode(ConfigurationDefinition configDef) {
         String name = PROP_DRIFT_HANDLING_MODE;
         String description = "" //
-            + "Specifies the way in which drift occurrences will be handled when reported. Normal " //
+            + "Specifies the way in which drift instances will be handled when reported. Normal " //
             + "handling implies the reported drift is unexpected and as such can trigger alerts, " //
             + "will be present in recent drift reports, etc.  Setting to 'Planned Changes' implies " //
             + "that the reported drift is happening at a time when drift is expected due to " //
             + "planned changes in the monitored environment, such as an application deployment, a " //
             + "configuration change, or something similar.  With this setting drift is only reported " //
-            + " for inspection, in the drift history view.";
+            + " for inspection, in drift snapshot views.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -215,9 +221,41 @@ public class DriftConfigurationDefinition implements Serializable {
         return pd;
     }
 
+    private static PropertyDefinitionSimple createPinned(ConfigurationDefinition configDef) {
+        String name = PROP_PINNED;
+        String description = "If set, pins the snapshot that the agent uses for comparing files during drift " +
+            "detection. Normally, the agent compares those files being monitored for drift against the latest " +
+            "snapshot. If you pin a snapshot, the agent will use that pinned version to compare against files " +
+            "being monitored for drift";
+        boolean required = true;
+        PropertySimpleType type = PropertySimpleType.BOOLEAN;
+
+        PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
+        pd.setDisplayName("Pinned");
+        pd.setDefaultValue("false");
+        // TODO set order
+        pd.setConfigurationDefinition(configDef);
+
+        return pd;
+    }
+
+    private static PropertyDefinitionSimple createPinnedVersion(ConfigurationDefinition configDef) {
+        String name = PROP_PINNED_VERSION;
+        String description = "Specifies the snapshot version to use as the pinned snapshot.";
+        boolean required = false;
+        PropertySimpleType type = PropertySimpleType.INTEGER;
+
+        PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
+        pd.setDisplayName("Pinned Snapshot");
+        // TODO set order
+        pd.setConfigurationDefinition(configDef);
+
+        return pd;
+    }
+
     private static PropertyDefinitionSimple createInterval(ConfigurationDefinition configDef) {
         String name = PROP_INTERVAL;
-        String description = "The frequency in seconds in which drift monitoring should run. Defaults to 1800 seconds (i.e. 30 minutes)";
+        String description = "The frequency in seconds in which drift detection should run. Defaults to 1800 seconds (i.e. 30 minutes)";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.LONG;
 
@@ -337,7 +375,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createIncludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.";
+        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift definition.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -399,7 +437,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createExcludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.";
+        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift definition.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 

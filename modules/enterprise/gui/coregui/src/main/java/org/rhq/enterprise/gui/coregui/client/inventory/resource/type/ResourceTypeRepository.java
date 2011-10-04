@@ -58,7 +58,7 @@ public class ResourceTypeRepository {
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftConfigurationTemplates
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates
     }
 
     public static class Cache {
@@ -246,8 +246,8 @@ public class ResourceTypeRepository {
                 case subCategory:
                     criteria.fetchSubCategory(true);
                     break;
-                case driftConfigurationTemplates:
-                    criteria.fetchDriftConfigurationTemplates(true);
+                case driftDefinitionTemplates:
+                    criteria.fetchDriftDefinitionTemplates(true);
                     break;
                 default:
                     Log.error("ERROR: metadataType " + metadataType.name()
@@ -352,13 +352,13 @@ public class ResourceTypeRepository {
                                 case subCategory:
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
-                                case driftConfigurationTemplates:
-                                    if (cachedType.getDriftConfigurationTemplates() != null) {
-                                        cachedType.getDriftConfigurationTemplates().clear(); // remove any old ones hanging around
+                                case driftDefinitionTemplates:
+                                    if (cachedType.getDriftDefinitionTemplates() != null) {
+                                        cachedType.getDriftDefinitionTemplates().clear(); // remove any old ones hanging around
                                     }
-                                    if (type.getDriftConfigurationTemplates() != null) {
-                                        for (ConfigurationTemplate ct : type.getDriftConfigurationTemplates()) {
-                                            cachedType.addDriftConfigurationTemplate(ct);
+                                    if (type.getDriftDefinitionTemplates() != null) {
+                                        for (ConfigurationTemplate ct : type.getDriftDefinitionTemplates()) {
+                                            cachedType.addDriftDefinitionTemplate(ct);
                                         }
                                     }
                                     break;

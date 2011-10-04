@@ -49,7 +49,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
- * Test the management and loading of plugin metadata.
+ * Test the management and loading of Agent plugin metadata.
  *
  * @author Greg Hinkle
  */
@@ -89,10 +89,7 @@ public class MetadataManagerTest {
         this.metadataManager.loadPlugin(pluginDescriptor);
 
         System.out.println("\n~~~~~~~~~~~~DESCRIPTOR TEST 1");
-        Set<ResourceType> allTypes = metadataManager.getRootTypes();
-        for (ResourceType type : allTypes) {
-            outputType(type, 0);
-        }
+        outputTypes();
     }
 
     @Test(dependsOnMethods = "loadPluginDescriptorTest1")
@@ -120,10 +117,7 @@ public class MetadataManagerTest {
         this.metadataManager.loadPlugin(pluginDescriptor);
 
         System.out.println("\n~~~~~~~~~~~~DESCRIPTOR TEST 2");
-        Set<ResourceType> allTypes = metadataManager.getRootTypes();
-        for (ResourceType type : allTypes) {
-            outputType(type, 0);
-        }
+        outputTypes();
     }
 
     @Test(dependsOnMethods = "loadPluginDescriptorTest2")
@@ -134,7 +128,7 @@ public class MetadataManagerTest {
         assertServerTypeIsOK(serverBType);
     }
 
-    @Test
+    @Test(dependsOnMethods = "loadPluginDescriptorTest2")
     public void loadPluginDescriptorTest3() throws Exception {
         PluginDescriptor pluginDescriptor;
 
@@ -151,10 +145,7 @@ public class MetadataManagerTest {
         this.metadataManager.loadPlugin(pluginDescriptor);
 
         System.out.println("\n~~~~~~~~~~~~DESCRIPTOR TEST 3");
-        Set<ResourceType> allTypes = metadataManager.getRootTypes();
-        for (ResourceType type : allTypes) {
-            outputType(type, 0);
-        }
+        outputTypes();
 
         ResourceType parentA = getResourceType(new ResourceType("Server A", "Test1", ResourceCategory.SERVER, null));
         ResourceType parentB = getResourceType(new ResourceType("Extension Server B", "Test2", ResourceCategory.SERVER,
@@ -276,6 +267,14 @@ public class MetadataManagerTest {
             }
         }
 
+    }
+
+    private void outputTypes() {
+        Set<ResourceType> allTypes = metadataManager.getRootTypes();
+        for (ResourceType type : allTypes) {
+            outputType(type, 0);
+        }
+        System.out.flush();
     }
 
     private void outputType(ResourceType type, int depth) {

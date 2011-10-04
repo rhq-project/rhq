@@ -59,7 +59,11 @@ public class LinkManager {
         }
     }
 
-    public static String getAutoGroupTabLink(int autoGroupId, String tabName, String subTabName) {
+    public static String getResourceGroupLink(ResourceGroup group) {
+        return getResourceOrGroupLink(EntityContext.forGroup(group));
+    }
+    
+    private static String getAutoGroupTabLink(int autoGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#Resource/AutoGroup/" + autoGroupId + "/" + tabName
                 + ((null == subTabName) ? "" : ("/" + subTabName));
@@ -68,7 +72,11 @@ public class LinkManager {
         }
     }
 
-    public static String getAutoClusterTabLink(int autoClusterGroupId, String tabName, String subTabName) {
+    private static String getAutoGroupLink(int autoGroupId) {
+        return "#Resource/AutoGroup/" + autoGroupId;
+    }
+    
+    private static String getAutoClusterTabLink(int autoClusterGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#ResourceGroup/AutoCluster/" + autoClusterGroupId + "/" + tabName
                 + ((null == subTabName) ? "" : ("/" + subTabName));
@@ -77,7 +85,11 @@ public class LinkManager {
         }
     }
 
-    public static String getResourceGroupTabLink(int resourceGroupId, String tabName, String subTabName) {
+    private static String getAutoClusterLink(int autoClusterGroupId) {
+        return "#ResourceGroup/AutoCluster/" + autoClusterGroupId;
+    }
+    
+    private static String getResourceGroupTabLink(int resourceGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#ResourceGroup/" + resourceGroupId + "/" + tabName
                 + ((null == subTabName) ? "" : ("/" + subTabName));
@@ -86,91 +98,95 @@ public class LinkManager {
         }
     }
 
-    public static String getResourceGroupTabLink(ResourceGroup group, String tabName, String subTabName) {
-        String link;
-        if (group.getSubject() != null) {
-            // autogroup
-            link = getAutoGroupTabLink(group.getId(), tabName, subTabName);
-        } else if (group.getClusterResourceGroup() != null) {
-            // autocluster
-            link = getAutoClusterTabLink(group.getId(), tabName, subTabName);
-        } else {
-            // regular group
-            link = getResourceGroupTabLink(group.getId(), tabName, subTabName);
-        }
-        return link;
-    }
-
     public static String getEntityTabLink(EntityContext entityContext, String tabName, String subTabName) {
         String link;
         switch (entityContext.getType()) {
-            case Resource:
-                link = getResourceTabLink(entityContext.getResourceId(), tabName, subTabName);
-                break;
-            case ResourceGroup:
-                if (entityContext.isAutoGroup()) {
-                    link = getAutoGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
-                } else if (entityContext.isAutoCluster()) {
-                    link = getAutoClusterTabLink(entityContext.getGroupId(), tabName, subTabName);
-                } else {
-                    link = getResourceGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
-                }
-                break;
-            case SubsystemView:
-                if (tabName.equals("Alerts") && subTabName.equals("Definitions")) {
-                    link = "#Reports/Subsystems/AlertDefinitions";
-                } else if (tabName.equals("Alerts") && subTabName.equals("History")) {
-                    link = "#Reports/Subsystems/RecentAlerts";
-                } else if (tabName.equals("Operations") && subTabName.equals("History")) {
-                    link = "#Reports/Subsystems/RecentOperations";
-                } else if (tabName.equals("Configuration") && subTabName.equals("History")) {
-                    link = "#Reports/Subsystems/ConfigurationHistoryView";
-                } else {
-                    throw new IllegalArgumentException("Subsystem link not supported for tab " + tabName + ">"
-                            + subTabName + ".");
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported entity context type: " + entityContext.getType());
+        case Resource:
+            link = getResourceTabLink(entityContext.getResourceId(), tabName, subTabName);
+            break;
+        case ResourceGroup:
+            if (entityContext.isAutoGroup()) {
+                link = getAutoGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
+            } else if (entityContext.isAutoCluster()) {
+                link = getAutoClusterTabLink(entityContext.getGroupId(), tabName, subTabName);
+            } else {
+                link = getResourceGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
+            }
+            break;
+        case SubsystemView:
+            if (tabName.equals("Alerts") && subTabName.equals("Definitions")) {
+                link = "#Reports/Subsystems/AlertDefinitions";
+            } else if (tabName.equals("Alerts") && subTabName.equals("History")) {
+                link = "#Reports/Subsystems/RecentAlerts";
+            } else if (tabName.equals("Operations") && subTabName.equals("History")) {
+                link = "#Reports/Subsystems/RecentOperations";
+            } else if (tabName.equals("Configuration") && subTabName.equals("History")) {
+                link = "#Reports/Subsystems/ConfigurationHistoryView";
+            } else {
+                throw new IllegalArgumentException("Subsystem link not supported for tab " + tabName + ">" + subTabName
+                    + ".");
+            }
+            break;
+        default:
+            throw new IllegalArgumentException("Unsupported entity context type: " + entityContext.getType());
         }
         return link;
     }
 
-    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
-        if (groupUpdateHistoryId != null) {
-            return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory/" + groupUpdateHistoryId
-                + "/Members";
-        } else {
-            return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    private static String getResourceOrGroupLink(EntityContext entityContext) {
+        switch (entityContext.getType()) {
+        case Resource:
+            return getResourceLink(entityContext.getResourceId());
+        case ResourceGroup:
+            if (entityContext.isAutoGroup()) {
+                return getAutoGroupLink(entityContext.getGroupId());
+            } else if (entityContext.isAutoCluster()) {
+                return getAutoClusterLink(entityContext.getGroupId());
+            } else {
+                return getResourceGroupLink(entityContext.getGroupId());
+            }
+        case SubsystemView:
+            throw new IllegalArgumentException("Subsystems are not supported for simple entity context links.");
+        default:
+            throw new IllegalArgumentException("Unsupported entity context type: " + entityContext);
         }
     }
-
-    public static String getGroupResourceConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
+    
+    public static String getGroupPluginConfigurationUpdateHistoryLink(EntityContext group, Integer groupUpdateHistoryId) {
         if (groupUpdateHistoryId != null) {
-            return getResourceGroupLink(groupId) + "/Configuration/History/" + groupUpdateHistoryId + "/Members";
+            return getEntityTabLink(group, "Inventory", "ConnectionSettingsHistory") + "/" + groupUpdateHistoryId;            
         } else {
-            return getResourceGroupLink(groupId) + "/Configuration/History";
+            return getEntityTabLink(group, "Inventory", "ConnectionSettingsHistory"); 
         }
     }
-
-    public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {
-        return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
+    
+    public static String getGroupResourceConfigurationUpdateHistoryLink(EntityContext group, Integer groupUpdateHistoryId) {
+        if (groupUpdateHistoryId != null) {
+            return getEntityTabLink(group, "Configuration", "History") + "/" + groupUpdateHistoryId;            
+        } else {
+            return getEntityTabLink(group, "Configuration", "History"); 
+        }
+    }
+    
+    public static String getGroupOperationHistoryLink(ResourceGroup group, int groupOperationHistoryId) {
+        return getEntityTabLink(EntityContext.forGroup(group), "Operations", "History") + "/"
+            + groupOperationHistoryId;
     }
 
     public static String getResourceEventHistoryListLink(int resourceId) {
         return "#Resource/" + resourceId + "/Events/History/";
     }
 
-    public static String getGroupEventHistoryListLink(int groupId) {
-        return getResourceGroupLink(groupId) + "/Events/History/";
+    public static String getGroupEventHistoryListLink(EntityContext group) {
+        return getEntityTabLink(group, "Events", "History");
     }
 
     public static String getResourceMonitoringGraphsLink(int resourceId) {
         return "#Resource/" + resourceId + "/Monitoring/Graphs/";
     }
 
-    public static String getGroupMonitoringGraphsLink(int groupId) {
-        return getResourceGroupLink(groupId) + "/Monitoring/Graphs/";
+    public static String getGroupMonitoringGraphsLink(EntityContext group) {
+        return getEntityTabLink(group, "Monitoring", "Graphs");
     }
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {
@@ -491,8 +507,8 @@ public class LinkManager {
         return "#Resource/" + resourceId + "/Drift/History/" + driftId;
     }
 
-    public static String getDriftConfigurationLink(int resourceId, int driftConfigId) {
-        return "#Resource/" + resourceId + "/Drift/Configuration/" + driftConfigId;
+    public static String getDriftDefinitionEditLink(int resourceId, int driftDefId) {
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Edit";
     }
 
 }

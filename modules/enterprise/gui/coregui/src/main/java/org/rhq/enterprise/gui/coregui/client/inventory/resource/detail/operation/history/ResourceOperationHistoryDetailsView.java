@@ -83,8 +83,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         if (groupOperationHistory != null) {
             StaticTextItem groupOperationHistoryItem = new StaticTextItem(
                 ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
-            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup()
-                .getId(), groupOperationHistory.getId());
+            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup(), groupOperationHistory.getId());
             String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId()
                 + "</a> (on group '" + groupOperationHistory.getGroup().getName() + "')";
             groupOperationHistoryItem.setValue(value);

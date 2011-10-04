@@ -115,8 +115,8 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         ldapField.setCanEdit(false); // read-only
         fields.add(ldapField);
 
-        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, MSG
-            .dataSource_users_field_password(), 100, true);
+        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD,
+            MSG.common_title_password(), 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
         passwordValidator.setMin(6);
         passwordValidator.setMax(100);

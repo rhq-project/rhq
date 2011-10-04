@@ -164,7 +164,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                 serverNameFull, // key TODO distinguish per domain?
                 serverName, // Name
-                version, // TODO get via API ?�
+                version, // TODO get via API ?
                 description, // Description
                 config, psr.getProcessInfo());
 
@@ -227,9 +227,12 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             InputStream is = new FileInputStream(hostXmlFile);
-            Document document = builder.parse(is); // TODO keep this around
-            hostName = document.getDocumentElement().getAttribute("name");
-            is.close();
+            try {
+                Document document = builder.parse(is); // TODO keep this around
+                hostName = document.getDocumentElement().getAttribute("name");
+            } finally {
+                is.close();
+            }
         } catch (Exception e) {
             e.printStackTrace(); // TODO: Customise this generated block
         }

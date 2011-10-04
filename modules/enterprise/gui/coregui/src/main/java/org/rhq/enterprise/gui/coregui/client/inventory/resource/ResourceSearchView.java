@@ -81,7 +81,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 @SuppressWarnings("unchecked")
 public class ResourceSearchView extends Table {
 
-    private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
+    private static final String DEFAULT_TITLE = MSG.common_title_resources();
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 

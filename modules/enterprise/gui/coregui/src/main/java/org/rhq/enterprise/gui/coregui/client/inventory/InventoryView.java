@@ -59,8 +59,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     public static final ViewName VIEW_ID = new ViewName("Inventory", MSG.common_title_inventory());
 
     // view IDs for Resources section
-    private static final ViewName RESOURCES_SECTION_VIEW_ID = new ViewName("Resources", MSG
-        .view_inventory_resources_title());
+    private static final ViewName RESOURCES_SECTION_VIEW_ID = new ViewName("Resources", MSG.common_title_resources());
 
     private static final ViewName PAGE_AUTODISCOVERY_QUEUE = new ViewName("AutodiscoveryQueue", MSG
         .view_inventory_adq());

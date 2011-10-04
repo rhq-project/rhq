@@ -62,7 +62,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         nameField.setWidth("30%");
         fields.add(nameField);
 
-        ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.view_resource_monitor_table_alerts());
+        ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
         alertsField.setWidth("10%");
         fields.add(alertsField);
 

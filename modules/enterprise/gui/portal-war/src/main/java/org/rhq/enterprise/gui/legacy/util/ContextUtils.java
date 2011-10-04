@@ -243,7 +243,11 @@ public class ContextUtils {
         filename = context.getRealPath(filename);
 
         FileOutputStream out = new FileOutputStream(filename);
-        props.store(out, null);
+        try {
+            props.store(out, null);
+        } finally {
+            out.close();
+        }
     }
 
     public static boolean usingLDAPAuthentication(ServletContext context) throws Exception {

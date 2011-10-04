@@ -18,6 +18,9 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -58,13 +61,29 @@ public interface DriftChangeSetCriteria extends BaseCriteria {
 
     Integer getFilterResourceId();
 
-    void addFilterDriftConfigurationId(Integer filterDriftConfigId);
+    void addFilterDriftDefinitionId(Integer filterDriftDefId);
 
-    Integer getFilterDriftConfigurationId();
+    Integer getFilterDriftDefinitionId();
 
     void addFilterCategory(DriftChangeSetCategory filterCategory);
 
     DriftChangeSetCategory getFilterCategory();
+
+    void addFilterDriftCategories(DriftCategory... filterDriftCategories);
+
+    /**
+     * Return only change sets with Drift instances having one of the specified drift categories. 
+     * @param filterDriftPath
+     */
+    List<DriftCategory> getFilterDriftCategories();
+
+    /**
+     * Return only change sets with Drift instances having path containing the specified substring. 
+     * @param filterDriftPath
+     */
+    void addFilterDriftPath(String filterDriftPath);
+
+    String getFilterDriftPath();
 
     void fetchDrifts(boolean fetchDrifts);
 

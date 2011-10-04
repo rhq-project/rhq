@@ -166,6 +166,13 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
             return result;
         } catch (NoResultException nre) {
             return null;
+        } catch (RuntimeException re) {
+            Throwable cause = re.getCause();
+            if (cause instanceof SQLException) {
+                log.error("Failed to get latest avail for Resource [" + resourceId + "]: "
+                        + JDBCUtil.convertSQLExceptionToString((SQLException)cause));
+            }
+            throw re;
         }
     }
 

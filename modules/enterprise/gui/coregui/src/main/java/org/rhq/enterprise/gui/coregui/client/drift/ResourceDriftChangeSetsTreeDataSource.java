@@ -28,7 +28,7 @@ import com.smartgwt.client.data.DSResponse;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -57,17 +57,17 @@ public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSe
     protected void fetchDriftConfigurations(final DSRequest request, final DSResponse response) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(context.getResourceId());
-        criteria.fetchDriftConfigurations(true);
+        criteria.fetchDriftDefinitions(true);
         this.resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onSuccess(PageList<Resource> result) {
-                Set<DriftConfiguration> driftConfigs = result.get(0).getDriftConfigurations();
+                Set<DriftDefinition> driftConfigs = result.get(0).getDriftDefinitions();
                 response.setData(buildRecords(driftConfigs));
                 response.setTotalRows(result.getTotalSize());
                 processResponse(request.getRequestId(), response);
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

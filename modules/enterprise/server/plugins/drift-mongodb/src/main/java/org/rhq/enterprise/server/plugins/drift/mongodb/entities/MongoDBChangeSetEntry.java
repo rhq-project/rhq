@@ -35,7 +35,7 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     /**
      * This is the path relative to the base directory defined in the
-     * {@link org.rhq.core.domain.drift.DriftConfiguration}
+     * {@link org.rhq.core.domain.drift.DriftDefinition}
      */
     private String path;
 
@@ -45,6 +45,10 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
     private MongoDBFile oldFile;
 
     private MongoDBFile newFile;
+
+    private String oldFileHash;
+
+    private String newFileHash;
 
     public MongoDBChangeSetEntry() {
     }
@@ -141,7 +145,23 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
         this.path = path;
     }
 
-    @Override
+    public String getOldFileHash() {
+        return oldFileHash;
+    }
+
+    public void setOldFileHash(String oldFileHash) {
+        this.oldFileHash = oldFileHash;
+    }
+
+    public String getNewFileHash() {
+        return newFileHash;
+    }
+
+    public void setNewFileHash(String newFileHash) {
+        this.newFileHash = newFileHash;
+    }
+
+        @Override
     public MongoDBFile getOldDriftFile() {
         return oldFile;
     }

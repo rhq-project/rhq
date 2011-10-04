@@ -19,10 +19,15 @@
 
 package org.rhq.core.domain.criteria;
 
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
+
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageOrdering;
@@ -41,15 +46,17 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     private Integer filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
-    private Integer filterDriftConfigurationId; // needs override
+    private Integer filterDriftDefinitionId; // needs override
     private Integer filterVersion;
     private Integer filterStartVersion;
     private Integer filterEndVersion;
     private Long filterCreatedAfter;
     private Long filterCreatedBefore;
     private DriftChangeSetCategory filterCategory;
+    private List<DriftCategory> filterDriftCategories; // needs override      
+    private String filterDriftPath; // needs override
     private Boolean fetchDrifts;
-    private Boolean fetchDriftConfiguration;
+    private Boolean fetchDriftDefinition;
 
     private PageOrdering sortVersion;
 
@@ -64,18 +71,30 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         filterOverrides.put("endVersion", "version <= ?");
         filterOverrides.put("createdAfter", "ctime >= ?");
         filterOverrides.put("createdBefore", "ctime <= ?");
-        filterOverrides.put("driftConfigurationId", "driftConfiguration.id = ?");
+        filterOverrides.put("driftDefinitionId", "driftDefinition.id = ?");
+        filterOverrides.put("driftCategories", "" //
+            + "id IN ( SELECT innerChangeSet.id " //
+            + "          FROM JPADriftChangeSet innerChangeSet " //
+            + "          JOIN innerChangeSet.drifts drift " //
+            + "         WHERE drift.category IN ( ? ) )");
+        filterOverrides.put("driftPath", "" //
+            + "id IN ( SELECT innerChangeSet.id " //
+            + "          FROM JPADriftChangeSet innerChangeSet " //
+            + "          JOIN innerChangeSet.drifts drift " //
+            + "         WHERE drift.path like ? )");
 
         if (null != changeSetCriteria) {
             this.addFilterCategory(changeSetCriteria.getFilterCategory());
             this.addFilterCreatedAfter(changeSetCriteria.getFilterCreatedAfter());
             this.addFilterCreatedBefore(changeSetCriteria.getFilterCreatedBefore());
-            this.addFilterDriftConfigurationId(changeSetCriteria.getFilterDriftConfigurationId());
+            this.addFilterDriftDefinitionId(changeSetCriteria.getFilterDriftDefinitionId());
             this.addFilterEndVersion(changeSetCriteria.getFilterEndVersion());
             this.addFilterId(changeSetCriteria.getFilterId());
             this.addFilterResourceId(changeSetCriteria.getFilterResourceId());
             this.addFilterStartVersion(changeSetCriteria.getFilterStartVersion());
             this.addFilterVersion(changeSetCriteria.getFilterVersion());
+            this.addFilterDriftCategories(changeSetCriteria.getFilterDriftCategories());
+            this.addFilterDriftPath(changeSetCriteria.getFilterDriftPath());
 
             this.addSortVersion(changeSetCriteria.getSortVersion());
 
@@ -88,6 +107,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return JPADriftChangeSet.class;
     }
 
+    @Override
     public void addFilterId(String filterId) {
         if (filterId != null) {
             this.filterId = Integer.parseInt(filterId);
@@ -99,6 +119,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return filterId == null ? null : filterId.toString();
     }
 
+    @Override
     public void addFilterVersion(String filterVersion) {
         if (filterVersion != null) {
             this.filterVersion = Integer.parseInt(filterVersion);
@@ -154,6 +175,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return filterCreatedBefore;
     }
 
+    @Override
     public void addFilterResourceId(Integer filterResourceId) {
         this.filterResourceId = filterResourceId;
     }
@@ -164,15 +186,16 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     }
 
     @Override
-    public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
-        this.filterDriftConfigurationId = filterDriftConfigId;
+    public void addFilterDriftDefinitionId(Integer filterDriftDefId) {
+        this.filterDriftDefinitionId = filterDriftDefId;
     }
 
     @Override
-    public Integer getFilterDriftConfigurationId() {
-        return filterDriftConfigurationId;
+    public Integer getFilterDriftDefinitionId() {
+        return filterDriftDefinitionId;
     }
 
+    @Override
     public void addFilterCategory(DriftChangeSetCategory filterCategory) {
         this.filterCategory = filterCategory;
     }
@@ -182,6 +205,31 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return filterCategory;
     }
 
+    public void addFilterDriftCategories(List<DriftCategory> filterDriftCategories) {
+        this.filterDriftCategories = filterDriftCategories;
+    }
+
+    @Override
+    public void addFilterDriftCategories(DriftCategory... filterDriftCategories) {
+        this.filterDriftCategories = getListIgnoringNulls(filterDriftCategories);
+    }
+
+    @Override
+    public List<DriftCategory> getFilterDriftCategories() {
+        return filterDriftCategories;
+    }
+
+    @Override
+    public void addFilterDriftPath(String filterDriftPath) {
+        this.filterDriftPath = filterDriftPath;
+    }
+
+    @Override
+    public String getFilterDriftPath() {
+        return this.filterDriftPath;
+    }
+
+    @Override
     public void fetchDrifts(boolean fetchDrifts) {
         this.fetchDrifts = fetchDrifts;
     }
@@ -191,10 +239,11 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return fetchDrifts;
     }
 
-    public void fetchDriftConfiguration(boolean fetchDriftConfiguration) {
-        this.fetchDriftConfiguration = fetchDriftConfiguration;
+    public void fetchDriftDefinition(boolean fetchDriftDefinition) {
+        this.fetchDriftDefinition = fetchDriftDefinition;
     }
 
+    @Override
     public void addSortVersion(PageOrdering sortVersion) {
         addSortField("version");
         this.sortVersion = sortVersion;

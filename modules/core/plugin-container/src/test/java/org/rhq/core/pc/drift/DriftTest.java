@@ -29,9 +29,10 @@ import java.util.Random;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.util.Arrays.asList;
@@ -103,10 +104,10 @@ public class DriftTest {
     protected File resourceDir;
 
     /**
-     * The default interval assigned to drift configurations created using
-     * {@link #driftConfiguration(String, String)}
+     * The default interval assigned to drift definitions created using
+     * {@link #driftDefinition(String, String)}
      */
-    protected long defaultInterval = 1800L;  // 30 minutes;
+    protected long defaultInterval = 1800L; // 30 minutes;
 
     private MessageDigestGenerator digestGenerator;
 
@@ -177,11 +178,11 @@ public class DriftTest {
     }
 
     /**
-     * Returns the change set file for the specified drift configuration for the resource
+     * Returns the change set file for the specified drift definition for the resource
      * with the id that can be obtained from {@link #resourceId}. The type argument
      * determines whether a coverage or drift change set file is returned.
      *
-     * @param config The drift configuration name
+     * @param config The drift definition name
      * @param type Determines whether a coverage or drift change set file is to be returned
      * @return The change set file
      * @throws IOException
@@ -190,8 +191,21 @@ public class DriftTest {
         return changeSetMgr.findChangeSet(resourceId(), config, type);
     }
 
-    protected File changeSetDir(String driftConfigName) throws Exception {
-        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftConfigName);
+    /**
+     * Returns the previous version snapshot file. This file is generated when an initial
+     * snapshot has already been generated and drift is subsequently detected.
+     *
+     * @param driftDefinitionName The drift definition name
+     * @return The previous version snapshot file
+     * @throws Exception
+     */
+    protected File previousSnapshot(String driftDefinitionName) throws Exception {
+        File driftDefDir = changeSetDir(driftDefinitionName);
+        return new File(driftDefDir, "changeset.txt.previous");
+    }
+
+    protected File changeSetDir(String driftDefName) throws Exception {
+        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftDefName);
         dir.mkdirs();
         return dir;
     }
@@ -229,22 +243,38 @@ public class DriftTest {
     }
 
     /**
-     * Creates a {@link DriftConfiguration} with the specified basedir. The file system is
+     * Creates a {@link DriftDefinition} with the specified basedir. The file system is
      * used as the context for the basedir which means the path specified is used as is.
      * The interval property is set to {@link #defaultInterval}.
      *
-     * @param name The configuration name
+     * @param name The definition name
      * @param basedir An absolute path of the base directory
-     * @return The drift configuration object
+     * @return The drift definition object
      */
-    protected DriftConfiguration driftConfiguration(String name, String basedir) {
-        DriftConfiguration config = new DriftConfiguration(new Configuration());
+    protected DriftDefinition driftDefinition(String name, String basedir) {
+        DriftDefinition config = new DriftDefinition(new Configuration());
         config.setName(name);
-        config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
+        config.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, basedir));
         config.setEnabled(true);
         config.setInterval(defaultInterval);
 
         return config;
+    }
+
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type) {
+        return createHeaders(driftDef, type, 0);
+    }
+
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId());
+        headers.setDriftDefinitionId(driftDef.getId());
+        headers.setDriftDefinitionName(driftDef.getName());
+        headers.setBasedir(resourceDir.getAbsolutePath());
+        headers.setType(type);
+        headers.setVersion(version);
+
+        return headers;
     }
 
 }

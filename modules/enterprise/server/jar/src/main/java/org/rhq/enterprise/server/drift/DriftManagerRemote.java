@@ -21,16 +21,24 @@ package org.rhq.enterprise.server.drift;
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 @Remote
 public interface DriftManagerRemote {
+
+    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject,
+        DriftDefinitionCriteria criteria);
+
+    void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftConfig);
 
     DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) throws Exception;
 
@@ -57,7 +65,7 @@ public interface DriftManagerRemote {
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
-    String getDriftFileBits(String hash);
+    String getDriftFileBits(Subject subject, String hash);
 
     /**
      * Generates a unified diff of the two files references by drift. In the case of a
@@ -68,7 +76,7 @@ public interface DriftManagerRemote {
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
      */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
+    FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift);
 
     /**
      * Generates a unified diff of the two files referenced by drift1 and drift2. More
@@ -79,6 +87,6 @@ public interface DriftManagerRemote {
      * @param drift2 References the second file to be compared
      * @return A report containing a unified diff of the two files compared
      */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2);
+    FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift1, Drift<?, ?> drift2);
 
 }

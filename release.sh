@@ -93,19 +93,19 @@ parse_validate_options()
 
    while true; do
 	   case $1 in
-		   -h|--help)
+         -h|--help)
             usage
-			   ;;
-		   --release-version)
-			   shift
+            ;;
+         --release-version)
+            shift
             RELEASE_VERSION="$1"
             shift
-			   ;;
-		   --development-version)
-			   shift
+            ;;
+         --development-version)
+            shift
             DEVELOPMENT_VERSION="$1"
             shift
-			   ;;
+            ;;
          --release-branch)
             shift
             RELEASE_BRANCH="$1"

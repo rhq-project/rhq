@@ -493,10 +493,13 @@ checkout_build_branch_for_release()
 #========================================================================================
 checkout_build_branch_for_development()
 {
-   if [ "$SCM_STRATEGY" = "branch" ];
+   if [ "$MODE" = "production" ];
    then
-      checkout_release_branch
-      BUILD_BRANCH="${RELEASE_BRANCH}"
+      if [ "$SCM_STRATEGY" = "branch" ];
+      then
+         checkout_release_branch
+         BUILD_BRANCH="${RELEASE_BRANCH}"
+      fi
    fi
 }
 

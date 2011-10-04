@@ -33,8 +33,9 @@ public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
 
     public enum CompareMode {
         /**
-         * The comparator will only check the base information: name, enabled, interval, driftHandlingMode
-         * The basedir/includes-excludes filters will be ignored. 
+         * The comparator will only check the base information: name, enabled, interval,
+         * driftHandlingMode, pinned, and pinnedVersion. The basedir/includes-excludes
+         * filters will be ignored.
          */
         ONLY_BASE_INFO,
 
@@ -83,6 +84,14 @@ public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
 
             if (dc1.isEnabled() != dc2.isEnabled()) {
                 return dc1.isEnabled() ? 1 : -1; // so false sorts before true, seems logical to me
+            }
+
+            if (dc1.isPinned() != dc2.isPinned()) {
+                return dc1.isPinned() ? 1 : -1;
+            }
+
+            if (dc1.getPinnedVersion() != dc2.getPinnedVersion()) {
+                return dc1.getPinnedVersion() < dc2.getPinnedVersion() ? -1 : 1;
             }
         }
 

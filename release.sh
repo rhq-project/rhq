@@ -49,9 +49,6 @@ USAGE:   release.sh OPTIONS
    --release-branch=git_branch            [REQUIRED]
       Git branch to be used as base for tagging and/or branching.
 
-   --git-username=username                [REQUIRED]
-      Git username for authentication. Please make sure that the user is authenticated prior to using this script.
-
    --release-type=community|enterprise    [REQUIRED]
       Type of release.
 
@@ -75,7 +72,7 @@ USAGE:   release.sh OPTIONS
 EOF
 )
 
-   EXAMPLE="release.sh --release-type=\"enterprise\" --release-version=\"5.0.0.GA\" --development-version=\"5.0.1-SNAPSHOT\" --release-branch=\"stefan/release_test\" --git-username=\"user\" --branch"
+   EXAMPLE="release.sh --release-type=\"enterprise\" --release-version=\"5.0.0.GA\" --development-version=\"5.0.1-SNAPSHOT\" --release-branch=\"stefan/release_test\" --branch"
 
    abort "$@" "$USAGE" "$EXAMPLE"
 }
@@ -90,12 +87,11 @@ parse_validate_options()
    DEVELOPMENT_VERSION=
    RELEASE_BRANCH=
    RELEASE_TYPE="community"
-   GIT_USERNAME=
    MODE="test"
    SCM_STRATEGY="tag"
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:"
+   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -124,11 +120,6 @@ parse_validate_options()
          --release-type)
             shift
             RELEASE_TYPE="$1"
-            shift
-            ;;
-         --git-username)
-            shift
-            GIT_USERNAME="$1"
             shift
             ;;
          --test-mode)
@@ -186,11 +177,6 @@ parse_validate_options()
       usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
    fi
 
-   if [ -z $GIT_USERNAME ];
-   then
-      usage "Git username not specified!"
-   fi
-
    if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
       usage "Invalid script mode: $MODE (valid modes are 'test' or 'production')"
    fi
@@ -206,7 +192,7 @@ parse_validate_options()
    #fi
 
    print_centered "Script Options"
-   script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" "GIT_USERNAME" \
+   script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
                      "MODE" "SCM_STRATEGY")
    print_variables "${script_options[@]}"
 }
@@ -240,8 +226,6 @@ set_variables()
       MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
       MAVEN_SETTINGS_FILE="$HOME/.m2/settings.xml"
    fi
-
-   PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 
    MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
    # TODO: We may eventually want to reenable tests for production releases.
@@ -277,7 +261,7 @@ set_variables()
    print_variables "${environment_variables[@]}"
 
    print_centered "Local Variables"
-   local_variables=( "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
+   local_variables=( "PROJECT_NAME" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
                      "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
                      "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "JBOSS_ORG_USERNAME" \
                      "RELEASE_VERSION" "RELEASE_TAG")

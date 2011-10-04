@@ -68,7 +68,11 @@ USAGE:   release.sh OPTIONS
       Use the release branch to tag the release version. And update development version on the same branch.
 
    --scm-strategy=tag|branch              [OPTIONAL]
-      Used to Directly set the scm strategy.
+      Used to directly set the scm strategy.
+
+   --extra-profile                        [OPTIONAL]
+      An extra maven profile to be used for all the maven commands.
+
 EOF
 )
 
@@ -89,9 +93,10 @@ parse_validate_options()
    RELEASE_TYPE="community"
    MODE="test"
    SCM_STRATEGY="tag"
+   EXTRA_MAVEN_PROFILE=
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:"
+   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -146,6 +151,11 @@ parse_validate_options()
          --scm-strategy)
             shift
             SCM_STRATEGY="$1"
+            shift
+            ;;
+         --extra-profile)
+            shift
+            EXTRA_MAVEN_PROFILE="$1"
             shift
             ;;
          --)
@@ -228,10 +238,17 @@ set_variables()
    fi
 
    MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
+
+   if [ -n "$EXTRA_PROFILE" ];
+   then
+      MAVEN_ARGS="$MAVEN_ARGS,$EXTRA_PROFILE"
+   fi
+
    # TODO: We may eventually want to reenable tests for production releases.
    #if [ "$MODE" = "test" ]; then
    #   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
    #fi
+
    MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
 
    if [ "$RELEASE_TYPE" = "enterprise" ];

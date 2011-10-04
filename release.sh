@@ -79,7 +79,7 @@ parse_validate_options()
    RELEASE_VERSION=
    DEVELOPMENT_VERSION=
    RELEASE_BRANCH=
-   RELEASE_TYPE=
+   RELEASE_TYPE="community"
    GIT_USERNAME=
    MODE="production"
    SCM_STRATEGY="tag"

@@ -259,6 +259,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
         listGrid.setSelectionType(getDefaultSelectionStyle());
+        listGrid.setDataPageSize(45); // the default is 75 - lower it to speed up data loading
 
         if (flexRowDisplay) {
             //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU

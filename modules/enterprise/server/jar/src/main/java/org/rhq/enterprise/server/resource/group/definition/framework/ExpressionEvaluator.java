@@ -55,7 +55,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private static final String METRIC_DEF_ALIAS = "def";
 
     private enum JoinCondition {
-        RESOURCE_CONFIGURATION(".resourceConfiguration", "conf"), // 
+        RESOURCE_CONFIGURATION(".resourceConfiguration", "conf"), //
         PLUGIN_CONFIGURATION(".pluginConfiguration", "pluginConf"), //
         SCHEDULES(".schedules", "sched"), //
         RESOURCE_CHILD(".childResources", "child"), //
@@ -277,6 +277,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             return;
         }
 
+        if (expression.contains("<"))
+            throw new InvalidExpressionException("Expressions must not contain the '<' character");
+
         String condition;
         String value = null;
 
@@ -284,7 +287,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          * instead of building '= value' parsing into the below algorithm, let's chop this off early and store it; this
          * makes the rest of the parsing a bit simpler because some ParseContexts need the value immediately in order to
          * properly build up internal maps / constructs to be used in generating the requisite JPQL statement
-         * 
+         *
          * however, since '=' can occur in the names of configuration properties and trait names, we need
          * to process from the end of the word skipping over all characters that are inside brackets
          */
@@ -476,7 +479,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 AvailabilityType type = null;
                 if (isGroupBy == false) {
                     if (value == null) {
-                        // pass through, NULL elements now supported  
+                        // pass through, NULL elements now supported
                     } else if ("up".equalsIgnoreCase(value)) {
                         type = AvailabilityType.UP;
                     } else if ("down".equalsIgnoreCase(value)) {
@@ -685,10 +688,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
 
             // change the value as necessary based on the comparison type
             if (comparisonType == ComparisonType.EMPTY) {
-                /* 
-                 * a single parse context may populate several predicate collections, 
-                 * but we want to make sure we are only performing extra comparison  
-                 * computation on values representing the "empty" RHS of the expression 
+                /*
+                 * a single parse context may populate several predicate collections,
+                 * but we want to make sure we are only performing extra comparison
+                 * computation on values representing the "empty" RHS of the expression
                  */
                 if (value == null) {
                     value = Literal.NULL;
@@ -804,7 +807,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
          *     group(2) = "operator"
          *     group(3) = ":argX"
          */
-        private final static String nullHandlerPattern = "" + // the 'token' will go in front 
+        private final static String nullHandlerPattern = "" + // the 'token' will go in front
             "\\s+" + // followed by some whitespace
             "((\\=|LIKE)" + // and either an '=' or the word 'like'
             "\\s+" + // followed by more whitespace
@@ -855,7 +858,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         log.warn("Did not match for pivoted NULL result");
                         log.warn("Handler pattern was: " + patternWtihArgument);
                         log.warn("Computed statement was: " + computedJPQLGroupStatement);
-                        return null; // default to classic, non-null-supported handling 
+                        return null; // default to classic, non-null-supported handling
                     }
                     log.debug("Dynamic replacement made for pivoted NULL result on subexpression bind argument '"
                         + bindArgumentName + "'");
@@ -977,13 +980,13 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             JoinCondition.PLUGIN_CONFIGURATION_DEFINITION, JoinCondition.RESOURCE_CONFIGURATION,
             JoinCondition.RESOURCE_CONFIGURATION_DEFINITION };
 
-        /* 
+        /*
          * process JoinConditions in a specific order, because hibernate AST parsing requires
          * tokens to have been identified in the JPQL before their first use; in this case,
-         * JoinCondition.RESOURCE_CHILD must be first because ANY of the others might be joining 
-         * down the resource hierarchy (note: joining up the resource hierarchy doesn't require 
-         * any special processing because it follows from the "many" to the "one" side of the 
-         * relationship, for instance "resource.parent.parent" for grandparents. 
+         * JoinCondition.RESOURCE_CHILD must be first because ANY of the others might be joining
+         * down the resource hierarchy (note: joining up the resource hierarchy doesn't require
+         * any special processing because it follows from the "many" to the "one" side of the
+         * relationship, for instance "resource.parent.parent" for grandparents.
          */
         for (JoinCondition joinCondition : orderedConditionProcessing) {
             ResourceRelativeContext context = joinConditions.get(joinCondition);

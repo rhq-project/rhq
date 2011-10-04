@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
@@ -141,12 +142,13 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
                             refresh();
                             Message message = new Message(MSG.view_group_resConfig_table_deleteSuccessful(String
                                 .valueOf(selection.length)), Message.Severity.Info, EnumSet.of(
-                                Message.Option.Transient, Message.Option.Sticky));
+                                Message.Option.Transient));
                             CoreGUI.getMessageCenter().notify(message);
                         }
 
                         @Override
                         public void onFailure(Throwable caught) {
+                            refreshTableInfo();
                             CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_table_deleteFailure(),
                                 caught);
                         }
@@ -158,9 +160,9 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
             new AbstractTableAction(TableActionEnablement.SINGLE) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
-                        HistoryGroupResourceConfigurationTable.this.group.getId(), null)
+                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
                         + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Settings");
+                    refreshTableInfo();
                 }
             });
 
@@ -168,9 +170,9 @@ public class HistoryGroupResourceConfigurationTable extends Table<GroupResourceC
             new AbstractTableAction(TableActionEnablement.SINGLE) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
-                        HistoryGroupResourceConfigurationTable.this.group.getId(), null)
+                    CoreGUI.goToView(LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(HistoryGroupResourceConfigurationTable.this.group), null)
                         + "/" + selection[0].getAttribute(GroupResourceConfigurationDataSource.Field.ID) + "/Members");
+                    refreshTableInfo();
                 }
             });
 

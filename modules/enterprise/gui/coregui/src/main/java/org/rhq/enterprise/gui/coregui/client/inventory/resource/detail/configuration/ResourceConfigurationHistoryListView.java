@@ -33,16 +33,16 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ConfigurationHistoryView extends AbstractConfigurationHistoryView<ConfigurationHistoryDataSource> {
+public class ResourceConfigurationHistoryListView extends AbstractConfigurationHistoryListView<ResourceConfigurationHistoryDataSource> {
     public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView", MSG
         .view_configurationHistoryList_title());
 
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
-    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm) {
+    public ResourceConfigurationHistoryListView(String locatorId, boolean hasWritePerm) {
         super(locatorId, VIEW_ID.getTitle(), hasWritePerm);
-        ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        ResourceConfigurationHistoryDataSource datasource = new ResourceConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 
@@ -51,9 +51,9 @@ public class ConfigurationHistoryView extends AbstractConfigurationHistoryView<C
      *
      * @param resourceId a Resource ID
      */
-    public ConfigurationHistoryView(String locatorId, boolean hasWritePerm, int resourceId) {
+    public ResourceConfigurationHistoryListView(String locatorId, boolean hasWritePerm, int resourceId) {
         super(locatorId, VIEW_ID.getTitle(), hasWritePerm, resourceId);
-        ConfigurationHistoryDataSource datasource = new ConfigurationHistoryDataSource();
+        ResourceConfigurationHistoryDataSource datasource = new ResourceConfigurationHistoryDataSource();
         setDataSource(datasource);
     }
 

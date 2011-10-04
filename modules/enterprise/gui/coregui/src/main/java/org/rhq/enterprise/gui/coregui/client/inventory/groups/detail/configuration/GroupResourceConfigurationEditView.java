@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -211,8 +212,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 }
 
                 public void onSuccess(Void result) {
-                    String configHistoryUrl = LinkManager.getResourceGroupTabLink(group,
-                        ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                    String configHistoryUrl = LinkManager.getEntityTabLink(EntityContext.forGroup(group), ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
                         .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group

@@ -173,7 +173,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup()));
         destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
 

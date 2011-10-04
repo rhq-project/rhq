@@ -48,7 +48,7 @@ public abstract class AbstractConfigurationUpdate implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = false)
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     @XmlTransient
     protected Configuration configuration;
 

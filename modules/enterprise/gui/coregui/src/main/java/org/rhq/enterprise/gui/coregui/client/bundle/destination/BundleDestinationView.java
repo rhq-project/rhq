@@ -136,7 +136,7 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.view_bundle_dest_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(destination.getGroup().getId()));
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(destination.getGroup()));
         destinationGroup.setLinkTitle(StringUtility.escapeHtml(destination.getGroup().getName()));
         destinationGroup.setTarget("_self");
 

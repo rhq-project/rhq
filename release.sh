@@ -239,9 +239,9 @@ set_variables()
 
    MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
 
-   if [ -n "$EXTRA_PROFILE" ];
+   if [ -n "$EXTRA_MAVEN_PROFILE" ];
    then
-      MAVEN_ARGS="$MAVEN_ARGS,$EXTRA_PROFILE"
+      MAVEN_ARGS="$MAVEN_ARGS,$EXTRA_MAVEN_PROFILE"
    fi
 
    # TODO: We may eventually want to reenable tests for production releases.

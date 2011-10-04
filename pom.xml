@@ -98,7 +98,8 @@
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
-    <testng.version>6.2</testng.version>
+    <!-- NOTE (ips, 10/04/11): Upgrading testng to 6.2.x causes 10 server-jar tests to fail for an unknown reason. -->
+    <testng.version>6.1.1</testng.version>
     <cobertura.version>1.9.4.1</cobertura.version>
     <augeas.version>0.9.0</augeas.version>
     <augeas.classifier>el5</augeas.classifier>

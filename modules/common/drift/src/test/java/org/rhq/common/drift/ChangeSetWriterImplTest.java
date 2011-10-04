@@ -68,7 +68,6 @@ public class ChangeSetWriterImplTest {
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(1);
-        headers.setRepeated(false);
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
@@ -78,10 +77,10 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 8, "Expected to find eight lines in " + metaDataFile.getPath()
+        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath()
             + " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(7), "A a34ef6 0 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "A a34ef6 0 conf/myconf.conf");
     }
 
     @Test
@@ -97,7 +96,6 @@ public class ChangeSetWriterImplTest {
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(1);
-        headers.setRepeated(true);
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
@@ -107,10 +105,10 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 8, "Expected to find eight lines in " + metaDataFile.getPath()
+        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath()
             + " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(7), "R 0 a34ef6 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "R 0 a34ef6 conf/myconf.conf");
     }
 
     @Test
@@ -126,7 +124,6 @@ public class ChangeSetWriterImplTest {
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
         headers.setVersion(1);
-        headers.setRepeated(true);
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
@@ -136,10 +133,10 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 8, "Expected to find eight lines in " + metaDataFile.getPath()
+        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath()
             + " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(7), "C c2d55f a34ef6 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "C c2d55f a34ef6 conf/myconf.conf");
     }
 
     /**
@@ -162,8 +159,6 @@ public class ChangeSetWriterImplTest {
             + "category code");
         assertEquals(Integer.parseInt(lines.get(5)), headers.getVersion(),
             "The sixth header entry should be the change set version.");
-        assertEquals((boolean) Boolean.valueOf(lines.get(6)), headers.isRepeated(), "The seventh header entry " +
-            "should be a boolean flag indicating whether or not the change set is a repeat");
     }
 
     /**

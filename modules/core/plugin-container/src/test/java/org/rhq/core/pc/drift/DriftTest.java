@@ -266,11 +266,6 @@ public class DriftTest {
     }
 
     protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
-        return createHeaders(driftDef, type, version, false);
-    }
-
-    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version,
-        boolean isRepeat) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
         headers.setDriftDefinitionId(driftDef.getId());
@@ -278,8 +273,8 @@ public class DriftTest {
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
         headers.setVersion(version);
-        headers.setRepeated(isRepeat);
 
         return headers;
     }
+
 }

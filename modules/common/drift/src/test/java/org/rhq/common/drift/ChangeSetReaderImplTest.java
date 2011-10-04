@@ -24,7 +24,6 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "false\n" +
                            "A " + sha + " 0 conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -37,7 +36,6 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
-        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -58,7 +56,6 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "false\n" +
                            "R 0 " + sha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -71,7 +68,6 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
-        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -93,7 +89,6 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "false\n" +
                            "C " + newSha + " " + oldSha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -106,7 +101,6 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
-        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -127,7 +121,6 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "false\n" +
                            "A " + sha + " 0 conf/file with spaces.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -140,7 +133,6 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
         expectedHeaders.setVersion(1);
-        expectedHeaders.setRepeated(false);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -170,7 +162,6 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "false\n" +
                            "A " + sha256("resource.conf") +  " 0 conf/resource.conf\n" +
                            "A " + sha256("resource.jar") + " 0 lib/resource.jar";
 
@@ -194,7 +185,6 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "false\n" +
                            "A " + sha + " 0 conf/resource.conf\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -219,8 +209,7 @@ public class ChangeSetReaderImplTest {
                            "empty-changeset-test\n" +
                            "myresouce\n" +
                            "C\n" +
-                           "1\n" +
-                           "false\n";
+                           "1\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numEntries = 0;

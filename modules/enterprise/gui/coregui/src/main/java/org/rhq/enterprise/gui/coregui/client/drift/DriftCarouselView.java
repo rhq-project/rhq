@@ -164,6 +164,8 @@ public class DriftCarouselView extends Carousel {
 
                     if (!isRefresh) {
                         DriftCarouselView.super.onDraw();
+                    } else {
+                        DriftCarouselView.this.refreshCarouselInfo();
                     }
 
                     setCarouselStartFilter(carouselStart);

@@ -301,7 +301,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             Label carouselInfo = new Label();
             carouselInfo.setWrap(false);
             setCarouselInfo(carouselInfo);
-            refreshRowCount();
 
             if (showTitle) {
                 drawTitle();
@@ -313,9 +312,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
-    }
-
-    private void refreshRowCount() {
     }
 
     @Override
@@ -883,7 +879,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                     ((CarouselWidget) extraWidget).refresh(carouselHolder.getMembers());
                 }
             }
-            refreshRowCount();
+
             if (isShowFooterRefresh() && this.refreshButton != null) {
                 this.refreshButton.enable();
             }

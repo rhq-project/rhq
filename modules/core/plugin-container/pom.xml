@@ -166,6 +166,7 @@
               <goal>run</goal>
             </goals>
           </execution>
+
           <execution>
             <id>process-test-classes</id>
             <phase>process-test-classes</phase>
@@ -367,6 +368,7 @@
            -->
         </configuration>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -469,4 +471,3 @@
    </profiles>
 
 </project>
-

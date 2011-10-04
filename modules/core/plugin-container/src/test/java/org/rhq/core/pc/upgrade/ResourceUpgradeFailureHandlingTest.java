@@ -16,13 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.pc.upgrade;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.util.Arrays;
@@ -44,13 +41,11 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
-import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.upgrade.plugins.multi.base.BaseResourceComponentInterface;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.test.pc.PluginContainerSetup;
@@ -74,7 +69,7 @@ import org.rhq.test.pc.PluginContainerSetup;
  * @author Lukas Krejci
  */
 @Test(singleThreaded = true, invocationCount = 1)
-public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase {
+public class ResourceUpgradeFailureHandlingTest extends AbstractResourceUpgradeHandlingTest {
 
     //test names
     private static final String SUCCESS_TEST = "SUCCESS_TEST";
@@ -93,8 +88,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     private static final String SIBLING_V2_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-sibling-2.0.0.jar";
     private static final String TEST_V1_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-test-1.0.0.jar";
     private static final String TEST_V2_PLUGIN_NAME = "classpath:///resource-upgrade-test-plugin-multi-test-2.0.0.jar";
-
-    private static final String UPGRADED_RESOURCE_KEY_PREFIX = "UPGRADED";
 
     private static final ResType TEST_TYPE = new ResType("TestResource", "test");
     private static final ResType SIBLING_TYPE = new ResType("TestResourceSibling", "test");
@@ -148,7 +141,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         checkResourcesUpgraded(resources.get(PARENT_TYPE), 3);
         checkResourcesUpgraded(resources.get(SIBLING_TYPE), 45);
         checkResourcesUpgraded(resources.get(TEST_TYPE), 45);
-        
     }
     
     @Test
@@ -181,7 +173,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
     @Test(dependsOnMethods = "testFailureOnLeaf_V1")
     @PluginContainerSetup(plugins = {TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME, SIBLING_V2_PLUGIN_NAME}, 
         sharedGroup = FAILURE_ON_LEAF_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 3)
-    public void testFailureOnLeaf_V2() {
+    public void testFailureOnLeaf_V2() throws Exception {
         final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(FAILURE_ON_LEAF_TEST);
         context.checking(new Expectations() {
             {
@@ -293,7 +285,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         //(i.e. they include error objects).
         Resource parent0 = getEqualFrom(resources.get(PARENT_TYPE), findResourceWithOrdinal(PARENT_TYPE, 0));
         Resource parent1 = getEqualFrom(resources.get(PARENT_TYPE), findResourceWithOrdinal(PARENT_TYPE, 1));
-        
+
         checkResourceFailedUpgrade(parent0);
         checkOthersUpgraded(resources.get(PARENT_TYPE), parent0);
 
@@ -357,23 +349,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         checkResourcesNotUpgraded(resources.get(SIBLING_TYPE), 20);
         checkResourcesNotUpgraded(resources.get(TEST_TYPE), 20);        
     }
-    
-    @SuppressWarnings("unchecked")
-    protected void defineDefaultExpectations(FakeServerInventory inventory, Expectations expectations) {
-        super.defineDefaultExpectations(inventory, expectations);
-        try {
-            ServerServices ss = pluginContainerConfiguration.getServerServices();
-            expectations.allowing(ss.getDiscoveryServerService()).mergeInventoryReport(
-                expectations.with(Expectations.any(InventoryReport.class)));
-            expectations.will(inventory.mergeInventoryReport(InventoryStatus.COMMITTED));
-
-            expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(
-                expectations.with(Expectations.any(Set.class)));
-            expectations.will(inventory.upgradeResources());
-        } catch (InvalidInventoryReportException e) {
-            //this is not going to happen because we're mocking the invocation
-        }
-    }
 
     protected static void checkPresenceOfResourceTypes(Map<ResType, Set<Resource>> resources, Collection<ResType> expectedTypes) {
         for (ResType resType : expectedTypes) {
@@ -383,47 +358,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
 
     protected static void checkNumberOfResources(Map<ResType, Set<Resource>> resources, ResType type, int count) {
         assertEquals(resources.get(type).size(), count, "Unexpected number of " + type + " discovered.");
-    }
-
-    protected static void checkResourcesUpgraded(Set<Resource> resources, int expectedSize) {
-        assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
-        for (Resource res : resources) {
-            assertTrue(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
-                + " doesn't seem to be upgraded even though it should.");
-
-            ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(res);
-
-            assertEquals(rc.getResourceComponentState(), ResourceComponentState.STARTED,
-                "A resource that successfully upgraded should be started.");
-        }
-    }
-
-    protected static void checkResourcesNotUpgraded(Set<Resource> resources, int expectedSize) {
-        assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
-        for(Resource res : resources) {
-            assertFalse(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
-                + " seems to be upgraded even though it shouldn't.");
-            
-            ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(res);
-
-            assertEquals(rc.getResourceComponentState(), ResourceComponentState.STOPPED,
-                "A resource that has not been upgraded due to upgrade error in parent should be stopped.");
-            
-            //recurse, since the whole subtree under the failed resource should be not upgraded and stopped.
-            checkResourcesNotUpgraded(res.getChildResources(), res.getChildResources().size());
-        }
-    }
-    
-    protected static void checkResourceFailedUpgrade(Resource resource) {
-        assertFalse(resource.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + resource
-            + " seems to be upgraded even though it shouldn't.");
-        assertTrue(resource.getResourceErrors(ResourceErrorType.UPGRADE).size() == 1,
-            "The failed resource should have an error associated with it.");
-
-        ResourceContainer rc = PluginContainer.getInstance().getInventoryManager().getResourceContainer(resource);
-
-        assertEquals(rc.getResourceComponentState(), ResourceComponentState.STOPPED,
-            "A resource that failed to upgrade should be stopped.");
     }
 
     protected static void checkOthersUpgraded(Set<Resource> resources, Resource... failedResource) {
@@ -458,29 +392,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         }
     }
 
-    protected Resource findResourceWithOrdinal(ResType resType, int ordinal) {
-        ResourceType resourceType = PluginContainer.getInstance().getPluginManager().getMetadataManager()
-            .getType(resType.getResourceTypeName(), resType.getResourceTypePluginName());
-
-        InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        Set<Resource> resources = inventoryManager.getResourcesWithType(resourceType);
-
-        return findResourceWithOrdinal(resources, ordinal);
-    }
-
-    protected Resource findResourceWithOrdinal(Set<Resource> resources, int ordinal) {
-        for (Resource r : resources) {
-            Configuration pluginConfig = r.getPluginConfiguration();
-            String ordinalString = pluginConfig.getSimpleValue("ordinal", null);
-
-            if (ordinalString != null && Integer.parseInt(ordinalString) == ordinal) {
-                return r;
-            }
-        }
-
-        return null;
-    }
-
     protected Set<Resource> filterResources(Set<Resource> resources, ResType resType) {
         Set<Resource> ret = new HashSet<Resource>(resources);
 
@@ -499,7 +410,6 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         return ret;
     }
 
-    
     private Map<ResType, Set<Resource>> getResourcesFromInventory(FakeServerInventory inventory, Collection<ResType> types) {
         Map<ResType, Set<Resource>> resources = new HashMap<ResType, Set<Resource>>();
 

@@ -276,12 +276,12 @@ set_variables()
 run_tag_version_process()
 {
    # 1) Cleanup before doing anything
-   echo "Cleaning up module target dirs"
-   mvn clean $MAVEN_ARGS
-   [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars from module target dirs. Please see above Maven output for details, fix any issues, then try again."
+   #echo "Cleaning up module target dirs"
+   #mvn clean $MAVEN_ARGS
+   #[ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
    # 2) Perform a test build before changing version
-   mvn install $MAVEN_ARGS -Ddbreset
+   mvn clean install $MAVEN_ARGS -Ddbreset
    [ "$?" -ne 0 ] && abort "Test build failed. Please see output for details, fix any issues, then try again."
 
    # 3) Run another cleanup

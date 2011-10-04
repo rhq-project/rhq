@@ -85,7 +85,7 @@ parse_validate_options()
    SCM_STRATEGY="tag"
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,branch,tag"
+   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,branch,tag,scm-strategy:"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -103,22 +103,22 @@ parse_validate_options()
 			   ;;
 		   --development-version)
 			   shift
-            DEVELOPMENT_VERSION=$1
+            DEVELOPMENT_VERSION="$1"
             shift
 			   ;;
          --release-branch)
             shift
-            RELEASE_BRANCH=$1
+            RELEASE_BRANCH="$1"
             shift
             ;;
          --release-type)
             shift
-            RELEASE_TYPE=$1
+            RELEASE_TYPE="$1"
             shift
             ;;
          --git-username)
             shift
-            GIT_USERNAME=$1
+            GIT_USERNAME="$1"
             shift
             ;;
          --test-mode)
@@ -131,6 +131,11 @@ parse_validate_options()
             ;;
          --branch)
             SCM_STRATEGY="branch"
+            shift
+            ;;
+         --scm-strategy)
+            shift
+            SCM_STRATEGY="$1"
             shift
             ;;
          --)
@@ -165,6 +170,10 @@ parse_validate_options()
    if [ -z $GIT_USERNAME ];
    then
       usage "Git username not specified!"
+   fi
+
+   if [ "$SCM_STRATEGY" != "tag" ] && [ "$SCM_STRATEGY" != "branch" ]; then
+      usage "Invalid scm strategy: $SCM_STRATEGY (valid scm strategies are 'tag' or 'branch')"
    fi
 
    #if [ "$MODE" = "production" ]; then

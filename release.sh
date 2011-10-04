@@ -81,11 +81,11 @@ parse_validate_options()
    RELEASE_BRANCH=
    RELEASE_TYPE="community"
    GIT_USERNAME=
-   MODE="production"
+   MODE="test"
    SCM_STRATEGY="tag"
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,branch,tag,scm-strategy:"
+   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -123,6 +123,15 @@ parse_validate_options()
             ;;
          --test-mode)
             MODE="test"
+            shift
+            ;;
+         --production-mode)
+            MODE="production"
+            shift
+            ;;
+         --mode)
+            shift
+            MODE="$1"
             shift
             ;;
          --tag)
@@ -170,6 +179,10 @@ parse_validate_options()
    if [ -z $GIT_USERNAME ];
    then
       usage "Git username not specified!"
+   fi
+
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+      usage "Invalid script mode: $MODE (valid modes are 'test' or 'production')"
    fi
 
    if [ "$SCM_STRATEGY" != "tag" ] && [ "$SCM_STRATEGY" != "branch" ]; then

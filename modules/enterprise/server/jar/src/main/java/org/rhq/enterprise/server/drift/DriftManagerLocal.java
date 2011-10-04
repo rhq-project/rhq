@@ -26,11 +26,12 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
@@ -149,6 +150,10 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
     boolean isBinaryFile(Drift<?, ?> drift);
+
+    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+
+    DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
 
     void pinSnapshot(Subject subject, String changeSetId);
 }

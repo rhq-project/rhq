@@ -123,4 +123,7 @@ public interface DriftServerService {
     Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds);
 
     DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
+
+    DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion);
+
 }

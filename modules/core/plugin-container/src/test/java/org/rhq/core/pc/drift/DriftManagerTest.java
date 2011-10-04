@@ -404,6 +404,11 @@ public class DriftManagerTest extends DriftTest {
         public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
             return null;
         }
+
+        @Override
+        public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
+            return null;
+        }
     }
 
     /**

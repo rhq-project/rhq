@@ -28,13 +28,11 @@ import java.util.Set;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
@@ -91,16 +89,18 @@ public class DriftServerServiceImpl implements DriftServerService {
 
     @Override
     public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
-        DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterDriftDefinitionId(driftDefinitionId);
-        criteria.addSortVersion(PageOrdering.ASC);
+        return getDriftManager().getCurrentSnapshot(driftDefinitionId);
+    }
 
+    @Override
+    public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
         Subject overlord = getSubjectManager().getOverlord();
 
-        try {
-            return getDriftManager().createSnapshot(overlord, criteria);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+        criteria.addFilterStartVersion(Integer.toString(startVersion));
+        criteria.addFilterEndVersion(Integer.toString(endVersion));
+
+        return getDriftManager().createSnapshot(overlord, criteria);
     }
 }

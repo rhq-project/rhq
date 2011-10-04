@@ -64,6 +64,7 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -85,6 +86,7 @@ import difflib.Patch;
 import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -269,6 +271,16 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.createSnapshot(subject, criteria);
+    }
+
+    @Override
+    public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
+        DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+        criteria.addSortVersion(PageOrdering.ASC);
+
+        Subject overlord = getSubjectManager().getOverlord();
+        return createSnapshot(overlord, criteria);
     }
 
     @Override

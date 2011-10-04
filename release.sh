@@ -39,10 +39,8 @@ usage()
    USAGE=$(
 cat << EOF
 USAGE:   release.sh OPTIONS
-   --release-type=community|enterprise    [REQUIRED]
-      Type of release.
 
-   --release-version=version
+   --release-version=version              [REQUIRED]
       The release version to be tagged by this script.
 
    --development-version=version          [REQUIRED]
@@ -54,14 +52,26 @@ USAGE:   release.sh OPTIONS
    --git-username=username                [REQUIRED]
       Git username for authentication. Please make sure that the user is authenticated prior to using this script.
 
+   --release-type=community|enterprise    [REQUIRED]
+      Type of release.
+
+   --test-mode                            [OPTIONAL, DEFAULT]
+      Run this script in test mode. Create a test branch from release branch and perform tagging and version updates on this test branch.
+
+   --production-mode                      [OPTIONAL]
+      Run this script in production mode. Follow the official branching and tagging model.
+
+   --mode=test|production                 [OPTIONAL]
+      Used to directly set the script mode.
+
    --branch                               [OPTIONAL]
       Branch from release branch before tagging the release version. And updated development version on original branch.
 
-   --test-mode                            [OPTIONAL]
-      Run this script in test mode. Create a test branch from release branch and perform tagging and version updates on this test branch.
-
-   --tag-only                             [DEFAULT]
+   --tag                                  [OPTIONAL, DEFAULT]
       Use the release branch to tag the release version. And update development version on the same branch.
+
+   --scm-strategy=tag|branch              [OPTIONAL]
+      Used to Directly set the scm strategy.
 EOF
 )
 

@@ -778,7 +778,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 if (couldPing) {
                     Set<ResourceMeasurementScheduleRequest> requestsToSend = new HashSet<ResourceMeasurementScheduleRequest>(
                         agentRequests.values());
-                    agentClient.getMeasurementAgentService().scheduleCollection(requestsToSend);
+                    agentClient.getMeasurementAgentService().updateCollection(requestsToSend);
                 } else {
                     log.error("Could not send measurement schedule updates to agent[id=" + nextAgentId
                         + "], marking resources for update; agent ping failed");

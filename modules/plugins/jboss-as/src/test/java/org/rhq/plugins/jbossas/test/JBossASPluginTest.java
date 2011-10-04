@@ -70,9 +70,10 @@ public class JBossASPluginTest {
 
             PluginContainer.getInstance().setConfiguration(pcConfig);
             PluginContainer.getInstance().initialize();
-            System.out.println("PC Started");
-            for (String plugin : PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames()) {
-                System.out.println("PLUGIN: " + plugin);
+            System.out.println("Plugin container started with the following plugins:");
+            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames();
+            for (String pluginName : pluginNames) {
+                System.out.println("\t* " + pluginName);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -85,7 +85,7 @@ parse_validate_options()
    SCM_STRATEGY="tag"
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,branch,tag-only"
+   long_options="help,release-version:,development-version:,release-branch:,git-username:,release-type:,test-mode,branch,tag"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -125,7 +125,7 @@ parse_validate_options()
             MODE="test"
             shift
             ;;
-         --tag-only)
+         --tag)
             SCM_STRATEGY="tag"
             shift
             ;;

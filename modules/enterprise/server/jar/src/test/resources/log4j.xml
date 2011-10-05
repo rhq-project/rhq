@@ -26,7 +26,7 @@
          <!--
          <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
          -->
-         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} (%F:%M:%L)  -%m%n"/>
+         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} [%c] (%F:%M:%L)  -%m%n"/>
       </layout>
    </appender>
 
@@ -40,7 +40,7 @@
          <!--
          <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
          -->
-         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} (%F:%M:%L)  -%m%n"/>
+         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} [%c] (%F:%M:%L)  -%m%n"/>
       </layout>
    </appender>
 
@@ -51,6 +51,11 @@
 
    <!-- hides the TIMER SERVICE IS NOT INSTALLED warning - we know embedded EJB3 container doesn't support timers -->
    <category name="org.jboss.ejb3.timerservice.jboss.JBossTimerServiceFactory">
+      <priority value="ERROR"/>
+   </category>
+
+   <!-- hides the shutdown warnings - for some reason, the container spits out some warnings when shutting down -->
+   <category name="org.jboss.kernel.plugins.dependency.StartStopLifecycleAction">
       <priority value="ERROR"/>
    </category>
 

@@ -94,6 +94,20 @@ public class SessionTestHelper {
         return newSubject;
     }
 
+    public static void simulateLogin(Subject subject) {
+        Subject sessionSubject = SessionManager.getInstance().put(subject, 1000 * 300);
+        subject.setSessionId(sessionSubject.getSessionId());
+        return;
+    }
+
+    public static void simulateLogout(Subject subject) {
+        Integer sessionId = subject.getSessionId();
+        if (sessionId != null) {
+            SessionManager.getInstance().invalidate(sessionId);
+        }
+        return;
+    }
+
     public static Role createNewRoleForSubject(EntityManager em, Subject subject, String roleName) {
         return createNewRoleForSubject(em, subject, roleName, new Permission[0]);
     }
@@ -132,7 +146,14 @@ public class SessionTestHelper {
     }
 
     public static ResourceGroup createNewCompatibleGroupForRole(EntityManager em, Role role, String groupName) {
-        ResourceType type = createNewResourceType(em);
+        return createNewCompatibleGroupForRole(em, role, groupName, null);
+    }
+
+    public static ResourceGroup createNewCompatibleGroupForRole(EntityManager em, Role role, String groupName,
+        ResourceType type) {
+        if (type == null) {
+            type = createNewResourceType(em);
+        }
         return createNewGroupForRoleHelper(em, role, groupName, type, false);
     }
 
@@ -169,6 +190,11 @@ public class SessionTestHelper {
 
     public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName) {
         ResourceType type = group.getResourceType();
+        return createNewResourceForGroup(em, group, resourceName, type, true);
+    }
+
+    public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName,
+        ResourceType type, boolean doFlush) {
 
         if (type == null) {
             type = createNewResourceType(em);
@@ -188,7 +214,9 @@ public class SessionTestHelper {
         resource.getImplicitGroups().add(group);
 
         em.persist(resource);
-        em.flush();
+        if (doFlush) {
+            em.flush();
+        }
 
         return resource;
     }
@@ -208,12 +236,19 @@ public class SessionTestHelper {
     }
 
     public static Resource createNewResource(EntityManager em, String resourceName) {
+        return createNewResource(em, resourceName, null);
+    }
+
+    public static Resource createNewResource(EntityManager em, String resourceName, ResourceType type) {
+        if (type == null) {
+            type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
+            em.persist(type);
+        }
+
         resourceName = preprocess(resourceName);
-        ResourceType type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
 
-        em.persist(type);
         em.persist(resource);
         em.flush();
 

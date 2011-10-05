@@ -30,6 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
  * @author Ian Springer
  */
 public class Message {
+    private static final String BR = "=br/=";
     protected String conciseMessage;
     protected String detailedMessage;
     protected Date fired = new Date();
@@ -113,12 +114,12 @@ public class Message {
     }
 
     public Message(String conciseMessage, Throwable details, Severity severity, EnumSet<Option> options) {
-        this(conciseMessage, ErrorHandler.getAllMessages(details, true), severity, options);
+        this(conciseMessage, ErrorHandler.getAllMessages(details, true, BR), severity, options);
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {
-        this.conciseMessage = conciseMessage;
-        this.detailedMessage = detailedMessage;
+        this.conciseMessage = conciseMessage.replaceAll("<","&lt;");
+        this.detailedMessage = detailedMessage.replaceAll("<","&lt;").replaceAll(BR,"<br/>");
         this.severity = (severity != null) ? severity : Severity.Info;
         this.options = (options != null) ? options : EnumSet.noneOf(Option.class);
     }

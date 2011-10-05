@@ -62,11 +62,13 @@ public class ErrorHandler {
     }
 
     public static String getAllMessages(Throwable t) {
-        return getAllMessages(t, false);
+        return getAllMessages(t, false, null);
     }
 
-    public static String getAllMessages(Throwable t, boolean includeStackTrace) {
+    public static String getAllMessages(Throwable t, boolean includeStackTrace, String newline) {
         StringBuilder results = new StringBuilder();
+        if (newline==null)
+            newline=NL;
 
         if (t != null) {
             String[] msgs = getAllMessagesArray(t);
@@ -74,18 +76,18 @@ public class ErrorHandler {
 
             String indent = INDENT;
             for (int i = 1; i < msgs.length; i++) {
-                results.append(NL).append(indent);
+                results.append(newline).append(indent);
                 results.append(msgs[i]);
                 indent = indent + INDENT;
             }
 
             if (includeStackTrace) {
-                results.append(NL).append(MSG.view_messageCenter_stackTraceFollows()).append(NL);
-                getStackTrace(t, results);
+                results.append(newline).append(MSG.view_messageCenter_stackTraceFollows()).append(newline);
+                getStackTrace(t, results, newline);
             }
 
         } else {
-            results.append(">> " + MSG.util_errorHandler_nullException() + " <<");
+            results.append(">> ").append(MSG.util_errorHandler_nullException()).append(" <<");
         }
 
         return results.toString();
@@ -107,35 +109,35 @@ public class ErrorHandler {
         return list.toArray(new String[list.size()]);
     }
 
-    public static String getStackTrace(Throwable t, StringBuilder s) {
+    public static String getStackTrace(Throwable t, StringBuilder s, String newline) {
         if (s == null) {
             s = new StringBuilder();
         }
 
-        s.append(t.getMessage()).append(NL);
+        s.append(t.getMessage()).append(newline);
 
         for (Object line : t.getStackTrace()) {
-            s.append(INDENT).append("at ").append(line).append(NL);
+            s.append(INDENT).append("at ").append(line).append(newline);
         }
 
         Throwable cause = t.getCause();
         if (cause != null && cause != t) {
-            getStackTraceAsCause(t, s, cause);
+            getStackTraceAsCause(t, s, cause, newline);
         }
 
         return s.toString();
     }
 
-    private static void getStackTraceAsCause(Throwable t, StringBuilder s, Throwable cause) {
-        s.append("Caused by: " + cause.getMessage()).append(NL);
+    private static void getStackTraceAsCause(Throwable t, StringBuilder s, Throwable cause, String newline) {
+        s.append("Caused by: " + cause.getMessage()).append(newline);
 
         for (Object line : cause.getStackTrace()) {
-            s.append(INDENT).append("at ").append(line).append(NL);
+            s.append(INDENT).append("at ").append(line).append(newline);
         }
 
         Throwable nextCause = cause.getCause();
         if (nextCause != null && nextCause != cause) {
-            getStackTraceAsCause(t, s, nextCause);
+            getStackTraceAsCause(t, s, nextCause, newline);
         }
     }
 

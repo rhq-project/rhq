@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.EnumSet;
 
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * A message to be displayed to the user in one or more places.
@@ -118,8 +119,9 @@ public class Message {
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {
-        this.conciseMessage = conciseMessage.replaceAll("<","&lt;");
-        this.detailedMessage = detailedMessage.replaceAll("<","&lt;").replaceAll(BR,"<br/>");
+        this.conciseMessage = StringUtility.escapeHtml(conciseMessage);
+        String escapedDetailedMessage = StringUtility.escapeHtml(detailedMessage);
+        this.detailedMessage = (escapedDetailedMessage != null) ? escapedDetailedMessage.replaceAll(BR, "<br/>") : null;
         this.severity = (severity != null) ? severity : Severity.Info;
         this.options = (options != null) ? options : EnumSet.noneOf(Option.class);
     }

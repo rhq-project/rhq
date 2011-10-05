@@ -231,8 +231,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             entityManager.merge(update);
 
         } else {
-            handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(), response
-                .getErrorMessage());
+            handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(),
+                response.getErrorMessage());
 
             update.setStatus(response.getStatus());
             update.setErrorMessage(response.getErrorMessage());
@@ -282,8 +282,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationMaskingUtility.unmaskConfiguration(newPluginConfiguration, existingPluginConfiguration);
 
         // create our new update request and assign it to our resource - its status will initially be "in progress"
-        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, newPluginConfiguration, subject
-            .getName());
+        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, newPluginConfiguration,
+            subject.getName());
 
         update.setStatus(ConfigurationUpdateStatus.SUCCESS);
         entityManager.persist(update);
@@ -1295,8 +1295,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
-            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
-                .getConfiguration(), update.getResource().getId());
+            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(),
+                update.getConfiguration(), update.getResource().getId());
             agentClient.getConfigurationAgentService().updateResourceConfiguration(request);
         } catch (RuntimeException e) {
             // Any exception means the remote call itself failed - make sure to change the status on the update to FAILURE
@@ -1447,8 +1447,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         log.debug("Received a configuration-update-completed message: " + response);
 
         // find the current update request that is persisted - this is the one that is being reported as being complete
-        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class, response
-            .getConfigurationUpdateId());
+        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
+            response.getConfigurationUpdateId());
         if (update == null) {
             throw new IllegalStateException(
                 "The completed request passed in does not match any request for any resource in inventory: " + response);
@@ -1673,14 +1673,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration getConfiguration(Subject subject, int configurationId) {
-        @SuppressWarnings( { "UnnecessaryLocalVariable" })
+        @SuppressWarnings({ "UnnecessaryLocalVariable" })
         Configuration configuration = getConfigurationById(configurationId);
         return configuration;
     }
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
-        ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
-            .getId());
+        ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class,
+            definition.getId());
         Configuration configuration = managedDefinition.getDefaultTemplate().getConfiguration();
         ConfigurationMaskingUtility.maskConfiguration(configuration, managedDefinition);
         return configuration;

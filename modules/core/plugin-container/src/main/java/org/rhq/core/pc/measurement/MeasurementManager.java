@@ -378,7 +378,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
             info.setNextCollection(firstCollection);
 
-            this.scheduledRequests.removeAll(info);
+            this.scheduledRequests.remove(info);
 
             // Don't add it if collection is disabled for this resource
             if (info.isEnabled()) {

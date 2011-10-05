@@ -197,6 +197,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationDefinition pluginConfigurationDefinition = getPluginConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), resource.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
+        pluginConfiguration.getMap().size();
         entityManager.clear();
         ConfigurationMaskingUtility.maskConfiguration(pluginConfiguration, pluginConfigurationDefinition);
 
@@ -346,6 +347,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationDefinition resourceConfigurationDefinition = getResourceConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), resource.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
+        resourceConfiguration.getMap().size();
         entityManager.clear();
         ConfigurationMaskingUtility.maskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
 
@@ -439,6 +441,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (current != null) {
             // Mask the configuration before returning the update.
             Configuration configuration = current.getConfiguration();
+            configuration.getMap().size();
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
                 subjectManager.getOverlord(), resource.getResourceType().getId());
             // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
@@ -509,6 +512,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             // Mask the configuration before returning the update.
             Configuration configuration = current.getConfiguration();
+            configuration.getMap().size();
             ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
                 subjectManager.getOverlord(), resource.getResourceType().getId());
             // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
@@ -665,6 +669,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         // Mask the configurations before returning them.
+        for (Configuration resourceConfiguration : currentPersistedConfigs.values()) {
+            resourceConfiguration.getMap().size();
+        }
         ConfigurationDefinition resourceConfigurationDefinition = getResourceConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), group.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -689,6 +696,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Map<Integer, Configuration> currentPersistedConfigs = getPersistedPluginConfigurationsForCompatibleGroup(group);
 
         // Mask the configurations before returning them.
+        for (Configuration pluginConfiguration : currentPersistedConfigs.values()) {
+            pluginConfiguration.getMap().size();
+        }
         ConfigurationDefinition pluginConfigurationDefinition = getPluginConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), group.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -1953,6 +1963,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100, groupIdParameter);
 
         // Mask the configurations before returning them.
+        for (Configuration configuration : results.values()) {
+            configuration.getMap().size();
+        }
         ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), groupResourceConfigurationUpdate.getGroup().getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -1977,6 +1990,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100, groupIdParameter);
 
         // Mask the configurations before returning them.
+        for (Configuration configuration : results.values()) {
+            configuration.getMap().size();
+        }
         ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), groupPluginConfigurationUpdate.getGroup().getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -2309,6 +2325,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
         Set<String> fetchFields = new HashSet<String>(generator.getFetchFields(criteria));
         if (fetchFields.contains(AbstractConfigurationUpdateCriteria.FETCH_FIELD_CONFIGURATION)) {
+            for (ResourceConfigurationUpdate update : updates) {
+                Configuration configuration = update.getConfiguration();
+                configuration.getMap().size();
+            }
             entityManager.clear();
             for (ResourceConfigurationUpdate update : updates) {
                 Configuration configuration = update.getConfiguration();
@@ -2339,6 +2359,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
         Set<String> fetchFields = new HashSet<String>(generator.getFetchFields(criteria));
         if (fetchFields.contains(AbstractConfigurationUpdateCriteria.FETCH_FIELD_CONFIGURATION)) {
+            for (PluginConfigurationUpdate update : updates) {
+                Configuration configuration = update.getConfiguration();
+                configuration.getMap().size();
+            }
             entityManager.clear();
             for (PluginConfigurationUpdate update : updates) {
                 Configuration configuration = update.getConfiguration();

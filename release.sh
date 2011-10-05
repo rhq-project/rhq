@@ -213,21 +213,12 @@ parse_validate_options()
 #========================================================================================
 set_variables()
 {
-   # Constants
-
-   PROJECT_NAME="rhq"
-   PROJECT_DISPLAY_NAME="RHQ"
-   PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
-   TAG_PREFIX="RHQ"
-   MINIMUM_MAVEN_VERSION="2.1.0"
-
-   # Set various environment variables.
-
+   # Set environment variables
    MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
    export MAVEN_OPTS
 
-   # Set various local variables.
 
+   # Set various local variables
    if [ -n "$WORKSPACE" ]; then
       echo "We appear to be running in a Hudson job." 
       MAVEN_LOCAL_REPO_DIR="$WORKSPACE/.m2/repository"
@@ -247,13 +238,13 @@ set_variables()
    if [ "$RELEASE_TYPE" = "enterprise" ];
    then
       MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
-      #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
    fi
 
    if [ -n "$RELEASE_DEBUG" ]; then
       MAVEN_ARGS="$MAVEN_ARGS --debug"
    fi
 
+   TAG_PREFIX="RHQ"
    TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
    RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
@@ -271,7 +262,7 @@ set_variables()
    print_variables "${environment_variables[@]}"
 
    print_centered "Local Variables"
-   local_variables=( "PROJECT_NAME" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
+   local_variables=( "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
                      "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
                      "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "JBOSS_ORG_USERNAME" \
                      "RELEASE_VERSION" "RELEASE_TAG")
@@ -285,46 +276,41 @@ set_variables()
 #========================================================================================
 run_tag_version_process()
 {
-   # 1) Cleanup before doing anything
-   #echo "Cleaning up module target dirs"
-   #mvn clean $MAVEN_ARGS
-   #[ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars from module target dirs. Please see above Maven output for details, fix any issues, then try again."
-
-   # 2) Perform a test build before changing version
+   # 1) Perform a test build before changing version
    mvn clean install $MAVEN_ARGS -Ddbreset
    [ "$?" -ne 0 ] && abort "Test build failed. Please see output for details, fix any issues, then try again."
 
-   # 3) Run another cleanup
+   # 2) Run another cleanup
    echo "Cleaning up module target dirs..."
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
-   # 4) Increment version on all poms
+   # 3) Increment version on all poms
    mvn versions:set versions:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
-   # 5) Perform a test build with the new version   
+   # 4) Perform a test build with the new version
    mvn install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
    [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."
 
-   # 6) Publish release artifacts
+   # 5) Publish release artifacts - **FUTURE IMPROVEMENT**
    #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
    #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
    #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 
-   # 7) Cleanup after this test build
+   # 6) Cleanup after this test build
    echo "Cleaning up module target dirs..."
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
-   # 8) Commit the change in version (if everything went well so far then this is a good tag)
+   # 7) Commit the change in version (if everything went well so far then this is a good tag)
    git add -u
    git commit -m "tag $RELEASE_TAG"
    
-   # 9) Tag the current source
+   # 8) Tag the current source
    git tag "$RELEASE_TAG"
 
-   # 10) If everything went well so far than means all the changes can be pushed!!!
+   # 9) If everything went well so far than means all the changes can be pushed!!!
    git push origin "$BUILD_BRANCH"
    git push origin "$RELEASE_TAG"
 }
@@ -407,8 +393,8 @@ print_release_information()
    echo
    print_centered "Release Info"
    echo "Version: $RELEASE_VERSION"
-   echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
-   echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
+   echo "Branch URL: http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
+   echo "Tag URL: http://git.fedorahosted.org/git/?p=rhq/rhq.git;a=shortlog;h=refs/tags/$RELEASE_TAG"
    print_centered "="
 }
 
@@ -513,7 +499,6 @@ then
    echo "Debug output is enabled."
    set -x
 fi
-
 
 
 

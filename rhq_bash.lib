@@ -93,6 +93,7 @@ validate_java_5()
 validate_maven()
 {
    # Make sure M2_HOME points to a valid Maven 2.1.x or 2.2.x install.
+   MINIMUM_MAVEN_VERSION="2.1.0"
 
    if [ -z "$M2_HOME" ]; then
       abort "M2_HOME environment variable is not set - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."

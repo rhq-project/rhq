@@ -3477,7 +3477,9 @@
                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="DRIFT_HANDLING_MODE" columnType="VARCHAR2" precision="20" />
                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="DRIFT_HANDLING_MODE" nullable="FALSE" />                
                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" columnType="INTEGER" />
-                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />                
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_DRIFT_CONFIG" column="PINNED" columnType="BOOLEAN" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_DRIFT_CONFIG" column="PINNED_VERSION" columnType="INTEGER"/>
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_CONFIG foreign key relation to RHQ_CONFIG">
                         ALTER TABLE RHQ_DRIFT_CONFIG

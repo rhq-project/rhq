@@ -59,6 +59,9 @@ USAGE:   release.sh OPTIONS
    --extra-profile                        [OPTIONAL]
       An extra maven profile to be used for all the maven commands.
 
+   --debug-maven                          [OPTIONAL]
+      Set maven in debug mode.
+
 EOF
 )
 
@@ -80,9 +83,10 @@ parse_and_validate_options()
    MODE="test"
    SCM_STRATEGY="tag"
    EXTRA_MAVEN_PROFILE=
+   DEBUG_MAVEN=
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:"
+   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug-maven"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -144,6 +148,9 @@ parse_and_validate_options()
             EXTRA_MAVEN_PROFILE="$1"
             shift
             ;;
+         --debug-maven)
+            shift
+            DEBUG_MAVEN="true"
          --)
             shift
             break
@@ -229,7 +236,8 @@ set_local_and_environment_variables()
       MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
    fi
 
-   if [ -n "$RELEASE_DEBUG" ]; then
+   if [ -n "$DEBUG_MAVEN" ]; then
+      echo "Maven debug enabled"
       MAVEN_ARGS="$MAVEN_ARGS --debug"
    fi
 
@@ -479,14 +487,6 @@ checkout_build_branch_for_development()
       fi
    fi
 }
-
-
-if [ -n "$RELEASE_DEBUG" ];
-then
-   echo "Debug output is enabled."
-   set -x
-fi
-
 
 
 

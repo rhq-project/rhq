@@ -1,5 +1,20 @@
 
 
+
+#========================================================================================
+# Description: Display an error message and abort the script.
+#========================================================================================
+abort()
+{
+   echo >&2
+   for ARG in "$@"; do
+      echo "$ARG" >&2
+      echo "">&2
+   done
+   exit 1
+}
+
+
 print_variables()
 {
    for variable in "$@"

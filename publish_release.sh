@@ -4,15 +4,6 @@ source `dirname $0`/rhq_bash.lib
 
 # Functions
 
-abort()
-{
-   echo >&2
-   for ARG in "$@"; do
-      echo "$ARG" >&2
-   done
-   exit 1
-}
-
 usage() 
 {   
    EXE=`basename $0`

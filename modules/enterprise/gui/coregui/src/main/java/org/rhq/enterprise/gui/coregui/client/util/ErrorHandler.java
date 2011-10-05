@@ -129,7 +129,7 @@ public class ErrorHandler {
     }
 
     private static void getStackTraceAsCause(Throwable t, StringBuilder s, Throwable cause, String newline) {
-        s.append("Caused by: " + cause.getMessage()).append(newline);
+        s.append("Caused by: ").append(cause.getMessage()).append(newline);
 
         for (Object line : cause.getStackTrace()) {
             s.append(INDENT).append("at ").append(line).append(newline);

@@ -59,7 +59,7 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
      */
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        env = createLargeGroupWithNormalUserRoleAccess(10); // go over 1,000 to test the oracle IN clause limit
+        env = createLargeGroupWithNormalUserRoleAccess(1010); // go over 1,000 to test the oracle IN clause limit
         SessionTestHelper.simulateLogin(env.normalSubject);
     }
 

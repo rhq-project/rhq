@@ -29,12 +29,13 @@ import javax.persistence.EntityManager;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.authz.Permission.Target;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -203,6 +204,7 @@ public class SessionTestHelper {
         resourceName = preprocess(resourceName);
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
+        resource.setInventoryStatus(InventoryStatus.COMMITTED);
 
         group.addExplicitResource(resource);
         resource.getExplicitGroups().add(group);
@@ -248,7 +250,7 @@ public class SessionTestHelper {
         resourceName = preprocess(resourceName);
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
-
+        resource.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(resource);
         em.flush();
 

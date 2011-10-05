@@ -145,7 +145,7 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     "LargeGroupTestCompatGroup", serverType);
 
                 // create our many server resources
-                System.out.print("   creating resources, this might take some time");
+                System.out.print("   Creating resources, this might take some time");
                 for (int i = 1; i <= groupSize; i++) {
                     System.out.print(((i % 100) == 0) ? String.valueOf(i) : ".");
                     Resource res = SessionTestHelper.createNewResourceForGroup(em, lge.compatibleGroup,
@@ -187,11 +187,15 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         // purge all resources by performing in-band and out-of-band work in quick succession.
         // this takes a long time but trying to get this right using native queries is hard to get right so just do it this way.
         // only need to delete the platform which will delete all children servers AND the agent itself
+        System.out.print("   Removing resources, this might take some time");
         final List<Integer> deletedIds = resourceManager.uninventoryResource(getOverlord(),
             lge.platformResource.getId());
+        int i = deletedIds.size();
         for (Integer deletedResourceId : deletedIds) {
+            System.out.print(((--i % 100) == 0) ? String.valueOf(i) : ".");
             resourceManager.uninventoryResourceAsyncWork(getOverlord(), deletedResourceId);
         }
+        System.out.println(" Done.");
 
         // purge the user and role
         JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {

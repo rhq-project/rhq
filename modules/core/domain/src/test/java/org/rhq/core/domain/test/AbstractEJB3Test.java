@@ -33,8 +33,7 @@ import javax.persistence.EntityManager;
 import javax.transaction.TransactionManager;
 
 import org.testng.AssertJUnit;
-import org.testng.annotations.AfterGroups;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
 import org.jboss.ejb3.embedded.EJB3StandaloneBootstrap;
@@ -43,19 +42,12 @@ import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 import org.rhq.test.JPAUtils;
 import org.rhq.test.TransactionCallback;
 
-import static org.rhq.test.JPAUtils.clearDB;
 import static org.rhq.test.JPAUtils.lookupEntityManager;
 import static org.rhq.test.JPAUtils.lookupTransactionManager;
 
 public abstract class AbstractEJB3Test extends AssertJUnit {
 
-    @BeforeClass
-    public void resetDB() throws Exception {
-        clearDB();
-    }
-
     @BeforeSuite(groups = "integration.ejb3")
-    //@BeforeGroups(groups = "integration.ejb3")
     public static void startupEmbeddedJboss() {
         System.out.println("Starting ejb3...");
         String classesDir = System.getProperty("ejbjarDirectory", "target/classes");
@@ -95,8 +87,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         }
     }
 
-//    @AfterSuite
-    @AfterGroups(groups = "integration.ejb3")
+    @AfterSuite(groups = "integration.ejb3")
     public static void shutdownEmbeddedJboss() {
         EJB3StandaloneBootstrap.shutdown();
     }

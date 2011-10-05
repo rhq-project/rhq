@@ -112,18 +112,17 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {
             public Object execute(TransactionManager tm, EntityManager em) throws Exception {
                 // create the agent where all resources will be housed
-                lge.agent = SessionTestHelper.createNewAgent(em, "GroupPluginConfigTestAgent");
+                lge.agent = SessionTestHelper.createNewAgent(em, "LargeGroupTestAgent");
 
                 // create the platform resource type and server resource type
                 // the server type will have our plugin configuration definition that we will use when testing
-                ResourceType platformType = new ResourceType("GroupPluginConfigTestPlatformType", "testPlugin",
+                ResourceType platformType = new ResourceType("LargeGroupTestPlatformType", "testPlugin",
                     ResourceCategory.PLATFORM, null);
                 em.persist(platformType);
 
-                ResourceType serverType = new ResourceType("GroupPluginConfigTestServerType", "testPlugin",
+                ResourceType serverType = new ResourceType("LargeGroupTestServerType", "testPlugin",
                     ResourceCategory.SERVER, platformType);
-                ConfigurationDefinition pluginConfigDef = new ConfigurationDefinition("GroupPluginConfigTestDef",
-                    "desc");
+                ConfigurationDefinition pluginConfigDef = new ConfigurationDefinition("LargeGroupTestDef", "desc");
                 pluginConfigDef.put(new PropertyDefinitionSimple(PROPERTY_ONE_NAME, "prop1desc", false,
                     PropertySimpleType.STRING));
                 pluginConfigDef.put(new PropertyDefinitionSimple(PROPERTY_TWO_NAME, "prop2desc", false,
@@ -133,25 +132,24 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                 em.flush();
 
                 // create our platform - all of our server resources will have this as their parent
-                lge.platformResource = SessionTestHelper.createNewResource(em, "GroupPluginConfigTestPlatform",
-                    platformType);
+                lge.platformResource = SessionTestHelper.createNewResource(em, "LargeGroupTestPlatform", platformType);
                 lge.platformResource.setAgent(lge.agent);
 
                 // create our subject and role
-                lge.normalSubject = new Subject("GroupPluginConfigTestSubject", true, false);
-                lge.normalRole = SessionTestHelper.createNewRoleForSubject(em, lge.normalSubject,
-                    "GroupPluginConfigTestRole", Permission.MODIFY_RESOURCE);
+                lge.normalSubject = new Subject("LargeGroupTestSubject", true, false);
+                lge.normalRole = SessionTestHelper.createNewRoleForSubject(em, lge.normalSubject, "LargeGroupTestRole",
+                    Permission.MODIFY_RESOURCE);
 
                 // create our compatible group
                 lge.compatibleGroup = SessionTestHelper.createNewCompatibleGroupForRole(em, lge.normalRole,
-                    "GroupPluginConfigTestCompatGroup", serverType);
+                    "LargeGroupTestCompatGroup", serverType);
 
                 // create our many server resources
                 System.out.print("   creating resources, this might take some time");
                 for (int i = 1; i <= groupSize; i++) {
                     System.out.print(((i % 100) == 0) ? String.valueOf(i) : ".");
                     Resource res = SessionTestHelper.createNewResourceForGroup(em, lge.compatibleGroup,
-                        "GroupPluginConfigTestServer", serverType, (i % 100) == 0);
+                        "LargeGroupTestServer", serverType, (i % 100) == 0);
                     res.setAgent(lge.agent);
                     lge.platformResource.addChildResource(res);
 

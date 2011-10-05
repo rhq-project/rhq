@@ -244,13 +244,6 @@ set_variables()
       MAVEN_ARGS="$MAVEN_ARGS,$EXTRA_MAVEN_PROFILE"
    fi
 
-   # TODO: We may eventually want to reenable tests for production releases.
-   #if [ "$MODE" = "test" ]; then
-   #   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
-   #fi
-
-   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
-
    if [ "$RELEASE_TYPE" = "enterprise" ];
    then
       MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "

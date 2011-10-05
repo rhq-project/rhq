@@ -687,7 +687,8 @@
           <source>1.6</source>
           <target>1.6</target>
           <optimize>false</optimize>
-          <verbose>true</verbose>
+          <verbose>true</verbose>          
+          <proc>none</proc> <!-- disable annotation processing -->
           <compilerArgument>-Xlint</compilerArgument>
         </configuration>
       </plugin>

@@ -777,9 +777,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
-        if (count != compatibleGroup.getExplicitResources().size())
-            throw new IllegalStateException("Size of group changed from "
-                + compatibleGroup.getExplicitResources().size() + " to " + count + " - please retry the operation.");
+        int groupSize = resourceGroupManager.getExplicitGroupMemberCount(compatibleGroup.getId());
+        if (count != groupSize) {
+            throw new IllegalStateException("Size of group changed from " + groupSize + " to " + count
+                + " - please retry the operation.");
+        }
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 10);
@@ -792,15 +794,18 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
             List<Object[]> pagedResults = query.getResultList();
 
-            if (pagedResults.size() <= 0)
+            if (pagedResults.size() <= 0) {
                 break;
+            }
 
-            for (Object[] result : pagedResults)
+            for (Object[] result : pagedResults) {
                 results.put((Integer) result[0], (Configuration) result[1]);
+            }
 
             rowsProcessed += pagedResults.size();
-            if (rowsProcessed >= count)
+            if (rowsProcessed >= count) {
                 break;
+            }
 
             pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
         }
@@ -813,9 +818,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
-        if (count != compatibleGroup.getExplicitResources().size())
-            throw new IllegalStateException("Size of group changed from "
-                + compatibleGroup.getExplicitResources().size() + " to " + count + " - please retry the operation.");
+        int groupSize = resourceGroupManager.getExplicitGroupMemberCount(compatibleGroup.getId());
+        if (count != groupSize) {
+            throw new IllegalStateException("Size of group changed from " + groupSize + " to " + count
+                + " - please retry the operation.");
+        }
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 20);
@@ -827,18 +834,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         while (true) {
             List<Object[]> pagedResults = query.getResultList();
 
-            if (pagedResults.size() <= 0)
+            if (pagedResults.size() <= 0) {
                 break;
+            }
 
-            for (Object[] result : pagedResults)
+            for (Object[] result : pagedResults) {
                 results.put((Integer) result[0], (Configuration) result[1]);
+            }
 
             rowsProcessed += pagedResults.size();
-            if (rowsProcessed >= count)
+            if (rowsProcessed >= count) {
                 break;
-
+            }
             pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
-            PersistenceUtility.setDataPage(query, pageControl); // and update the query to retrieve the new page
+            PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
         }
         return results;
     }

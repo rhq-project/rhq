@@ -151,6 +151,7 @@ parse_and_validate_options()
          --debug-maven)
             shift
             DEBUG_MAVEN="true"
+            ;;
          --)
             shift
             break

@@ -242,7 +242,7 @@ set_local_and_environment_variables()
    fi
 
    TAG_PREFIX="RHQ"
-   TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
+   TAG_VERSION=`echo $RELEASE_VERSION | sed 's/[\.|-]/_/g'`
    RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
 
    # Set the system character encoding to ISO-8859-1 to ensure i18log reads its 

@@ -85,7 +85,7 @@ EOF
 #========================================================================================
 # Description: Validate and parse input arguments
 #========================================================================================
-parse_validate_options()
+parse_and_validate_options()
 {
    RELEASE_VERSION=
    DEVELOPMENT_VERSION=
@@ -211,7 +211,7 @@ parse_validate_options()
 #========================================================================================
 # Description: Set all the local and environment variables required by the script.
 #========================================================================================
-set_variables()
+set_local_and_environment_variables()
 {
    # Set environment variables
    MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
@@ -274,7 +274,7 @@ set_variables()
 # Description: Perform version update process and test the outcome by building 
 #              from source.
 #========================================================================================
-run_tag_version_process()
+run_release_version_and_tag_process()
 {
    # 1) Perform a test build before changing version
    mvn clean install $MAVEN_ARGS -Ddbreset
@@ -503,14 +503,13 @@ fi
 
 
 
-
 ############ MAIN SCRIPT ############
 
-parse_validate_options $@
+parse_and_validate_options $@
 
 validate_system_utilities
 
-set_variables
+set_local_and_environment_variables
 
 verify_tags
 
@@ -518,7 +517,7 @@ checkout_release_branch
 
 checkout_build_branch_for_release
 
-run_tag_version_process
+run_release_version_and_tag_process
 
 checkout_build_branch_for_development
 

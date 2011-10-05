@@ -189,7 +189,7 @@ parse_and_validate_options()
 
    print_centered "Script Options"
    script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
-                     "MODE" "SCM_STRATEGY")
+                     "MODE" "SCM_STRATEGY" )
    print_variables "${script_options[@]}"
 }
 
@@ -206,15 +206,18 @@ set_local_and_environment_variables()
 
    # Set various local variables
    if [ -n "$WORKSPACE" ]; then
-      echo "We appear to be running in a Hudson job." 
+      echo "Running script in a Hudson job."
       MAVEN_LOCAL_REPO_DIR="$WORKSPACE/.m2/repository"
+      if [ ! -d "$DIRECTORY" ]; then
+         mkdir -p "$MAVEN_LOCAL_REPO_DIR"
+      fi
       MAVEN_SETTINGS_FILE="$WORKSPACE/.m2/settings.xml"
    else
       MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
       MAVEN_SETTINGS_FILE="$HOME/.m2/settings.xml"
    fi
 
-   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
+   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE -Dmaven.repo.local=$MAVEN_LOCAL_REPO_DIR --batch-mode --errors -Penterprise,dist,release"
 
    if [ -n "$EXTRA_MAVEN_PROFILE" ];
    then
@@ -244,14 +247,12 @@ set_local_and_environment_variables()
 
    # Print out a summary of the environment.
    print_centered "Environment Variables"
-   environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
+   environment_variables=( "JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" )
    print_variables "${environment_variables[@]}"
 
    print_centered "Local Variables"
-   local_variables=( "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
-                     "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
-                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "JBOSS_ORG_USERNAME" \
-                     "RELEASE_VERSION" "RELEASE_TAG")
+   local_variables=( "MAVEN_LOCAL_REPO_DIR" "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" \
+                     "JBOSS_ORG_USERNAME" )
    print_variables "${local_variables[@]}"
 }
 
@@ -276,7 +277,7 @@ run_release_version_and_tag_process()
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
    # 4) Perform a test build with the new version
-   mvn install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
+   mvn clean install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
    [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."
 
    # 5) Publish release artifacts - **FUTURE IMPROVEMENT**
@@ -284,7 +285,7 @@ run_release_version_and_tag_process()
    #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
    #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 
-   # 6) Cleanup after this test build
+   # 6) Cleanup after this test build before commiting changes
    echo "Cleaning up module target dirs..."
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."

@@ -46,7 +46,7 @@ public class GroupMembersHealthView extends MembersView {
         this.canModifyMembers = canModifyMembers;
         this.groupId = groupId;
         setShowFilterForm(false);
-        setShowFooterRefresh(false);
+        setShowFooterRefresh(true);
         //diable search view
         setHideSearchBar(true);
         setTitle(MSG.common_title_group_member_health());

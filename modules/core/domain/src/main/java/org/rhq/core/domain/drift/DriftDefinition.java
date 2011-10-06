@@ -20,6 +20,7 @@
 package org.rhq.core.domain.drift;
 
 import static java.util.Collections.emptyList;
+import static javax.persistence.FetchType.LAZY;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -91,12 +92,16 @@ public class DriftDefinition implements Serializable {
     private long interval;
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = LAZY, optional = false)
     private Configuration configuration;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(optional = true)
     private Resource resource = null;
+
+    @ManyToOne(fetch = LAZY)
+    @JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID")
+    private DriftDefinitionTemplate template;
 
     @Column(name = "PINNED", nullable = false)
     private boolean pinned;
@@ -233,6 +238,14 @@ public class DriftDefinition implements Serializable {
         if (this.resource != null) {
             this.resource.getDriftDefinitions().add(this);
         }
+    }
+
+    public DriftDefinitionTemplate getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(DriftDefinitionTemplate template) {
+        this.template = template;
     }
 
     @Override

@@ -90,8 +90,10 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             if (templatesMapKeySetArray.length == 1) {
                 // there is only one, select it for the user
                 String theOne = templatesMapKeySetArray[0];
+                DriftDefinitionTemplate selectedTemplate = templatesMap.get(theOne);
                 templateSelect.setValue(theOne);
-                wizard.setNewStartingConfiguration(templatesMap.get(theOne).createConfiguration());
+                wizard.setSelectedTemplate(selectedTemplate);
+                wizard.setNewStartingConfiguration(selectedTemplate.createConfiguration());
             }
             templateSelect.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -99,6 +101,7 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
                     if (value == null) {
                         value = "";
                     }
+                    wizard.setSelectedTemplate((DriftDefinitionTemplate) value);
                     wizard.setNewStartingConfiguration(templatesMap.get(value).createConfiguration());
                 }
             });

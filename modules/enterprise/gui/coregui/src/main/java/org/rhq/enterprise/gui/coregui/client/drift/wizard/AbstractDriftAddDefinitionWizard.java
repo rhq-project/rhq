@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
@@ -33,6 +34,7 @@ public abstract class AbstractDriftAddDefinitionWizard extends AbstractWizard {
     private EntityContext context;
     private ResourceType type;
 
+    private DriftDefinitionTemplate selectedTemplate;
     private Configuration newStartingConfiguration;
     private DriftDefinition newDriftDefinition;
 
@@ -70,6 +72,14 @@ public abstract class AbstractDriftAddDefinitionWizard extends AbstractWizard {
         return type;
     }
 
+    public DriftDefinitionTemplate getSelectedTemplate() {
+        return selectedTemplate;
+    }
+
+    public void setSelectedTemplate(DriftDefinitionTemplate template) {
+        selectedTemplate = template;
+    }
+
     public Configuration getNewStartingConfiguration() {
         return newStartingConfiguration;
     }
@@ -83,7 +93,8 @@ public abstract class AbstractDriftAddDefinitionWizard extends AbstractWizard {
     }
 
     public void setNewConfiguration(Configuration newDriftDefinitionConfig) {
-        this.newDriftDefinition = new DriftDefinition(newDriftDefinitionConfig);
+        newDriftDefinition = new DriftDefinition(newDriftDefinitionConfig);
+        newDriftDefinition.setTemplate(selectedTemplate);
     }
 
     public void cancel() {

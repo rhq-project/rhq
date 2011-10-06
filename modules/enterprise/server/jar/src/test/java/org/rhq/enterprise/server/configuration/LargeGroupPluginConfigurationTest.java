@@ -30,6 +30,7 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -38,6 +39,7 @@ import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.test.LargeGroupTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.SessionTestHelper;
@@ -59,7 +61,7 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
      */
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        env = createLargeGroupWithNormalUserRoleAccess(1010); // go over 1,000 to test the oracle IN clause limit
+        env = createLargeGroupWithNormalUserRoleAccess(1010, Permission.MODIFY_RESOURCE);
         SessionTestHelper.simulateLogin(env.normalSubject);
     }
 
@@ -92,13 +94,13 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         for (Map.Entry<Integer, Configuration> entry : existingMap.entrySet()) {
             Integer resourceId = entry.getKey();
             Configuration config = entry.getValue();
-            assert PROPERTY_ONE_VALUE.equals(config.getSimpleValue(PROPERTY_ONE_NAME, null)) : "bad plugin config for "
+            assert PC_PROP1_VALUE.equals(config.getSimpleValue(PC_PROP1_NAME, null)) : "bad plugin config for "
                 + resourceId + "=" + config.toString(true);
-            assert resourceId.toString().equals(config.getSimpleValue(PROPERTY_TWO_NAME, null)) : "bad plugin config for "
+            assert resourceId.toString().equals(config.getSimpleValue(PC_PROP2_NAME, null)) : "bad plugin config for "
                 + resourceId + "=" + config.toString(true);
 
             // create new plugin configuration settings for this resource, we will update the group members to these new configs
-            config.getSimple(PROPERTY_TWO_NAME).setStringValue("UPDATE" + resourceId);
+            config.getSimple(PC_PROP2_NAME).setStringValue("UPDATE" + resourceId);
         }
 
         // update our group with the new plugin configs
@@ -141,12 +143,26 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         for (Map.Entry<Integer, Configuration> entry : existingMap.entrySet()) {
             Integer resourceId = entry.getKey();
             Configuration config = entry.getValue();
-            assert PROPERTY_ONE_VALUE.equals(config.getSimpleValue(PROPERTY_ONE_NAME, null)) : "bad plugin config for "
+            assert PC_PROP1_VALUE.equals(config.getSimpleValue(PC_PROP1_NAME, null)) : "bad plugin config for "
                 + resourceId + "=" + config.toString(true);
-            assert ("UPDATE" + resourceId.toString()).equals(config.getSimpleValue(PROPERTY_TWO_NAME, null)) : "bad plugin config for "
+            assert ("UPDATE" + resourceId.toString()).equals(config.getSimpleValue(PC_PROP2_NAME, null)) : "bad plugin config for "
                 + resourceId + "=" + config.toString(true);
         }
 
+        // now test our authz - unauthorized user should bomb out
+        System.out.println("Attempting unauthz access");
+        SessionTestHelper.simulateLogin(env.unauthzSubject);
+        start = System.currentTimeMillis();
+        try {
+            configurationManager.getPluginConfigurationsForCompatibleGroup(env.unauthzSubject,
+                env.compatibleGroup.getId());
+            assert false : "should have failed - unauthz user not allowed to get plugin configuration";
+        } catch (PermissionException expected) {
+        } finally {
+            duration = System.currentTimeMillis() - start;
+            SessionTestHelper.simulateLogout(env.unauthzSubject);
+        }
+        System.out.println("Took [" + duration + "]ms to attempt unauthz access");
         return;
     }
 

@@ -90,13 +90,13 @@ public class SessionTestHelper {
 
         // We want to return the attached object but sessionmanager.put will return a detached copy of newSubject.
         // Copy over the sessionId and pass back the attached Subject.
-        Subject sessionSubject = SessionManager.getInstance().put(newSubject, 1000 * 300);
+        Subject sessionSubject = SessionManager.getInstance().put(newSubject, 1000 * 60 * 10); // 10 mins timeout
         newSubject.setSessionId(sessionSubject.getSessionId());
         return newSubject;
     }
 
     public static void simulateLogin(Subject subject) {
-        Subject sessionSubject = SessionManager.getInstance().put(subject, 1000 * 300);
+        Subject sessionSubject = SessionManager.getInstance().put(subject, 1000 * 60 * 10); // 10 mins timeout
         subject.setSessionId(sessionSubject.getSessionId());
         return;
     }

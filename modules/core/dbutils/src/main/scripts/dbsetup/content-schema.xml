@@ -648,6 +648,28 @@
     </table>
 
     <!--  Drift Management Tables -->
+    <table name="RHQ_DRIFT_DEF_TEMPLATE">
+        <column name="ID" default="sequence-only" initial="1001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="NAME" type="VARCHAR2" size="128" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="256" required="false"/>
+        <!--
+          Change sets are managed by the drift server plugins; therefore, we cannot maintain
+          a FK constraint on the change set id. And the type cannot be integer because
+          other back ends like MongoDB use other types that are basically variants of a
+          UUID
+
+          jsanda
+        -->
+        <column name="DRIFT_CHANGE_SET_ID" type="VARCHAR2" size="64" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <index name="RHQ_DRIFT_DEF_TEMPLATE_UNIQUE" unique="true">
+            <field ref="RESOURCE_TYPE_ID"/>
+            <field ref="NAME"/>
+        </index>
+    </table>
     
     <!--  Content of a file being managed for drift. Used for diff and/or remediation -->    
     <table name="RHQ_DRIFT_FILE">
@@ -667,6 +689,7 @@
     -->
     <table name="RHQ_DRIFT_CONFIG">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DRIFT_DEF_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_DRIFT_DEF_TEMPLATE"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="NAME" type="VARCHAR2" size="512" required="true"/>        
         <column name="INTERVAL" type="LONG" required="true"/>
@@ -700,38 +723,6 @@
         <column name="PATH" type="VARCHAR2" size="1024" required="true"/>        
         <column name="OLD_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
         <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
-    </table>
-
-    <!--
-        A resource type can have zero or more drift templates which correspond to <drift>
-        elements declared in the plugin descriptor. A drift template is represented as a
-        config template.
-    -->
-    <!--<table name="RHQ_DRIFT_TEMPLATE_MAP">-->
-        <!--<column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>-->
-        <!--<column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>-->
-    <!--</table>-->
-    <table name="RHQ_DRIFT_DEF_TEMPLATE">
-        <column name="ID" default="sequence-only" initial="1001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
-        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
-        <column name="NAME" type="VARCHAR2" size="128" required="true"/>
-        <column name="DESCRIPTION" type="VARCHAR2" size="256" required="false"/>
-        <!--
-          Change sets are managed by the drift server plugins; therefore, we cannot maintain
-          a FK constraint on the change set id. And the type cannot be integer because
-          other back ends like MongoDB use other types that are basically variants of a
-          UUID
-
-          jsanda
-        -->
-        <column name="DRIFT_CHANGE_SET_ID" type="VARCHAR2" size="64" required="false"/>
-        <column name="CTIME" type="LONG" required="true"/>
-
-        <index name="RHQ_DRIFT_DEF_TEMPLATE_UNIQUE" unique="true">
-            <field ref="RESOURCE_TYPE_ID"/>
-            <field ref="NAME"/>
-        </index>
     </table>
 
 </dbsetup>

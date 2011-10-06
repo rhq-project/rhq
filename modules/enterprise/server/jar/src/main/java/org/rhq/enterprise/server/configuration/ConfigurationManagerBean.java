@@ -95,6 +95,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -784,8 +785,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
-        PageControl pageControl = new PageControl(0, 10);
-        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
+        PageControl pageControl = new PageControl(0, 20);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID, new OrderingField("r.id", PageOrdering.ASC));
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
         Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) count);
@@ -826,12 +828,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 20);
-        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID, new OrderingField("r.id", PageOrdering.ASC));
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
         Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) count);
         int rowsProcessed = 0;
         while (true) {
+            PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
             List<Object[]> pagedResults = query.getResultList();
 
             if (pagedResults.size() <= 0) {
@@ -847,7 +851,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 break;
             }
             pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
-            PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
         }
         return results;
     }

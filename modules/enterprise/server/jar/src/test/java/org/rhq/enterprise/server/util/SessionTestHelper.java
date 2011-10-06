@@ -34,6 +34,8 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -205,6 +207,7 @@ public class SessionTestHelper {
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
         resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        resource.setCurrentAvailability(new ResourceAvailability(resource, AvailabilityType.UP));
 
         group.addExplicitResource(resource);
         resource.getExplicitGroups().add(group);
@@ -251,6 +254,8 @@ public class SessionTestHelper {
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
         resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        resource.setCurrentAvailability(new ResourceAvailability(resource, AvailabilityType.UP));
+
         em.persist(resource);
         em.flush();
 

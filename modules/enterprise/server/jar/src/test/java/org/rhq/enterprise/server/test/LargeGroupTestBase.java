@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -265,6 +266,29 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     Query query = em.createNamedQuery(GroupPluginConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
                     query.setParameter("groupId", groupId);
                     GroupPluginConfigurationUpdate latestConfigGroupUpdate = (GroupPluginConfigurationUpdate) query
+                        .getSingleResult();
+                    return latestConfigGroupUpdate.getStatus();
+                } catch (NoResultException nre) {
+                    // The group resource config history is empty, so there's obviously no update in progress.
+                    return null;
+                }
+            }
+        });
+    }
+
+    /**
+     * Given the id of a compatible group, this will return the status of the update.
+     * 
+     * @param groupId compatible group ID
+     * @return status, or null if not known
+     */
+    protected ConfigurationUpdateStatus getGroupResourceConfigurationStatus(final int groupId) {
+        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<ConfigurationUpdateStatus>() {
+            public ConfigurationUpdateStatus execute(TransactionManager tm, EntityManager em) throws Exception {
+                try {
+                    Query query = em.createNamedQuery(GroupResourceConfigurationUpdate.QUERY_FIND_LATEST_BY_GROUP_ID);
+                    query.setParameter("groupId", groupId);
+                    GroupResourceConfigurationUpdate latestConfigGroupUpdate = (GroupResourceConfigurationUpdate) query
                         .getSingleResult();
                     return latestConfigGroupUpdate.getStatus();
                 } catch (NoResultException nre) {

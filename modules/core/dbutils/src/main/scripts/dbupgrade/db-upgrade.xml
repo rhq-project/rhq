@@ -3443,6 +3443,45 @@
             </schemaSpec>
 
             <schemaSpec version="2.111">
+                <!-- RHQ_DRIFT_DEF_TEMPLATE -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DRIFT_DEF_TEMPLATE">
+                        CREATE TABLE RHQ_DRIFT_DEF_TEMPLATE (
+                            RESOURCE_TYPE_ID INTEGER,
+                            CONFIG_TEMPLATE_ID INTEGER)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="RESOURCE_TYPE_ID" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="CONFIG_TEMPLATE_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="NAME" columnType="VARCHAR2"
+                                  precision="128"/>
+                <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="NAME" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="DESCRIPTION" columnType="VARCHAR2"
+                                  precision="256"/>
+                <schema-addColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="DRIFT_CHANGE_SET_ID" columnType="VARCHAR2"
+                                  precision="64"/>
+                <schema-addColumn table="RHQ_DRIFT_CONFIG" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CTIME" nullable="FALSE" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_DEF_TEMPLATE foreign key to RHQ_RESOURCE_TYPE">
+                        ALTER TABLE RHQ_DRIFT_DEF_TEMPLATE
+                        ADD CONSTRAINT RHQ_DTM_RESOURCE_TYPE_ID_FK
+                        FOREIGN KEY (RESOURCE_TYPE_ID)
+                        REFERENCES RHQ_RESOURCE_TYPE (ID)
+                    </statement>
+                    <statement desc="Creating RHQ_DRIFT_DEF_TEMPLATE foreign key to RHQ_CONFIG_TEMPLATE">
+                        ALTER TABLE RHQ_DRIFT_DEF_TEMPLATE
+                        ADD CONSTRAINT RHQ_DTM_CONFIG_TEMPLATE_ID_FK
+                        FOREIGN KEY (CONFIG_TEMPLATE_ID)
+                        REFERENCES RHQ_CONFIG_TEMPLATE (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating unique index on RESOURCE_TYPE_ID and NAME columns">
+                        CREATE UNIQUE INDEX RHQ_TYPE_DEF_NAME ON RHQ_DRIFT_DEF_TEMPLATE ( RESOURCE_TYPE_ID, NAME )
+                    </statement>
+                </schema-directSQL>
+
                 <!-- RHQ_DRIFT_FILE -->
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Creating table RHQ_DRIFT_FILE">
@@ -3575,31 +3614,6 @@
                         ADD CONSTRAINT RHQ_DRIFT_FILE_NEW_FK
                         FOREIGN KEY (NEW_DRIFT_FILE)
                         REFERENCES RHQ_DRIFT_FILE (HASH_ID)
-                    </statement>
-                </schema-directSQL>
-
-                <!-- RHQ_DRIFT_TEMPLATE_MAP -->
-                <schema-directSQL>
-                    <statement desc="Creating table RHQ_DRIFT_TEMPLATE_MAP">
-                        CREATE TABLE RHQ_DRIFT_TEMPLATE_MAP (
-                            RESOURCE_TYPE_ID INTEGER,
-                            CONFIG_TEMPLATE_ID INTEGER)
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_DRIFT_TEMPLATE_MAP" column="RESOURCE_TYPE_ID" nullable="FALSE"/>
-                <schema-alterColumn table="RHQ_DRIFT_TEMPLATE_MAP" column="CONFIG_TEMPLATE_ID" nullable="FALSE"/>
-                <schema-directSQL>
-                    <statement desc="Creating RHQ_DRIFT_TEMPLATE_MAP foreign key to RHQ_RESOURCE_TYPE">
-                        ALTER TABLE RHQ_DRIFT_TEMPLATE_MAP
-                        ADD CONSTRAINT RHQ_DTM_RESOURCE_TYPE_ID_FK
-                        FOREIGN KEY (RESOURCE_TYPE_ID)
-                        REFERENCES RHQ_RESOURCE_TYPE (ID)
-                    </statement>
-                    <statement desc="Creating RHQ_DRIFT_TEMPLATE_MAP foreign key to RHQ_CONFIG_TEMPLATE">
-                        ALTER TABLE RHQ_DRIFT_TEMPLATE_MAP
-                        ADD CONSTRAINT RHQ_DTM_CONFIG_TEMPLATE_ID_FK
-                        FOREIGN KEY (CONFIG_TEMPLATE_ID)
-                        REFERENCES RHQ_CONFIG_TEMPLATE (ID)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

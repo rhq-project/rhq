@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -70,11 +71,11 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             templateSelect.setRequired(true);
             FormUtility.addContextualHelp(templateSelect, MSG.view_drift_wizard_addDef_templateHelp());
 
-            Set<ConfigurationTemplate> templates = wizard.getType().getDriftDefinitionTemplates();
-            final HashMap<String, ConfigurationTemplate> templatesMap = new HashMap<String, ConfigurationTemplate>(
+            Set<DriftDefinitionTemplate> templates = wizard.getType().getDriftDefinitionTemplates();
+            final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
                 templates.size());
             if (!templates.isEmpty()) {
-                for (ConfigurationTemplate template : templates) {
+                for (DriftDefinitionTemplate template : templates) {
                     templatesMap.put(template.getName(), template);
                 }
             } else {

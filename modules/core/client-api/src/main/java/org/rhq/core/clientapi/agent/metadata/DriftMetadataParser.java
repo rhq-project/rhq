@@ -24,22 +24,23 @@
 package org.rhq.core.clientapi.agent.metadata;
 
 import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.DriftFilterDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor.Basedir;
+import org.rhq.core.clientapi.descriptor.plugin.DriftFilterDescriptor;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 
 public class DriftMetadataParser {
 
-    public ConfigurationTemplate parseDriftMetadata(DriftDescriptor descriptor) {
-        ConfigurationTemplate template = createTemplate(descriptor.getName());
+    public DriftDefinitionTemplate parseDriftMetadata(DriftDescriptor descriptor) {
+        DriftDefinitionTemplate template = new DriftDefinitionTemplate();
+        template.setConfiguration(new Configuration());
 
-        initEnabled(template);
         initName(descriptor, template);
+        initEnabled(template);
         initBasedir(descriptor, template);
         initInterval(descriptor, template);
         initIncludes(descriptor, template);
@@ -48,26 +49,20 @@ public class DriftMetadataParser {
         return template;
     }
 
-    private ConfigurationTemplate createTemplate(String name) {
-        ConfigurationTemplate template = new ConfigurationTemplate(name, name + " drift definition default template");
-        template.setConfiguration(new Configuration());
-
-        return template;
-    }
-
-    private void initEnabled(ConfigurationTemplate template) {
+    private void initEnabled(DriftDefinitionTemplate template) {
         template.getConfiguration()
             .put(
                 new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED,
                     DriftConfigurationDefinition.DEFAULT_ENABLED));
     }
 
-    private void initName(DriftDescriptor descriptor, ConfigurationTemplate template) {
+    private void initName(DriftDescriptor descriptor, DriftDefinitionTemplate template) {
+        template.setName(descriptor.getName());
         template.getConfiguration().put(
             new PropertySimple(DriftConfigurationDefinition.PROP_NAME, descriptor.getName()));
     }
 
-    private void initBasedir(DriftDescriptor descriptor, ConfigurationTemplate template) {
+    private void initBasedir(DriftDescriptor descriptor, DriftDefinitionTemplate template) {
         Basedir basedir = descriptor.getBasedir();
         String valueContext = basedir.getValueContext();
         String valueName = basedir.getValueName();
@@ -79,7 +74,7 @@ public class DriftMetadataParser {
         template.getConfiguration().put(basedirMap);
     }
 
-    private void initInterval(DriftDescriptor descriptor, ConfigurationTemplate template) {
+    private void initInterval(DriftDescriptor descriptor, DriftDefinitionTemplate template) {
         Configuration config = template.getConfiguration();
         if (descriptor.getInterval() == null) {
             config.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, String
@@ -89,7 +84,7 @@ public class DriftMetadataParser {
         }
     }
 
-    private void initIncludes(DriftDescriptor descriptor, ConfigurationTemplate template) {
+    private void initIncludes(DriftDescriptor descriptor, DriftDefinitionTemplate template) {
         if (descriptor.getIncludes() != null && descriptor.getIncludes().getInclude().size() > 0) {
             Configuration config = template.getConfiguration();
             PropertyList includes = new PropertyList(DriftConfigurationDefinition.PROP_INCLUDES);
@@ -105,7 +100,7 @@ public class DriftMetadataParser {
         }
     }
 
-    private void initExcludes(DriftDescriptor descriptor, ConfigurationTemplate template) {
+    private void initExcludes(DriftDescriptor descriptor, DriftDefinitionTemplate template) {
         if (descriptor.getExcludes() != null && descriptor.getExcludes().getExclude().size() > 0) {
             Configuration config = template.getConfiguration();
             PropertyList excludes = new PropertyList(DriftConfigurationDefinition.PROP_EXCLUDES);

@@ -40,8 +40,8 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
@@ -168,8 +168,8 @@ public class ConditionsEditor extends LocatableVLayout {
                                     }
                                     // if the newly loaded resource type supports drift, put it in our type object
                                     if (type.getDriftDefinitionTemplates() != null) {
-                                        for (ConfigurationTemplate ct : type.getDriftDefinitionTemplates()) {
-                                            resourceType.addDriftDefinitionTemplate(ct);
+                                        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
+                                            resourceType.addDriftDefinitionTemplate(template);
                                         }
                                     }
                                 }

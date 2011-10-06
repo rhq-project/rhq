@@ -30,8 +30,8 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -357,8 +357,8 @@ public class ResourceTypeRepository {
                                         cachedType.getDriftDefinitionTemplates().clear(); // remove any old ones hanging around
                                     }
                                     if (type.getDriftDefinitionTemplates() != null) {
-                                        for (ConfigurationTemplate ct : type.getDriftDefinitionTemplates()) {
-                                            cachedType.addDriftDefinitionTemplate(ct);
+                                        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
+                                            cachedType.addDriftDefinitionTemplate(template);
                                         }
                                     }
                                     break;

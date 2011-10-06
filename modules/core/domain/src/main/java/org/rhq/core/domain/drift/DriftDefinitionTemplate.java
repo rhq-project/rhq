@@ -19,6 +19,8 @@
 
 package org.rhq.core.domain.drift;
 
+import java.io.Serializable;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -29,6 +31,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
+import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -38,7 +41,7 @@ import org.rhq.core.domain.resource.ResourceType;
 @Entity
 @Table(name = "RHQ_DRIFT_DEF_TEMPLATE")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ")
-public class DriftDefinitionTemplate {
+public class DriftDefinitionTemplate implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
@@ -122,9 +125,18 @@ public class DriftDefinitionTemplate {
         this.changeSetId = changeSetId;
     }
 
+    public Configuration createConfiguration() {
+        return configuration.deepCopyWithoutProxies();
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.ctime = System.currentTimeMillis();
+    }
+
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[id: " + id + ", name: " + name + ", description: " + description +
+        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", description: " + description +
             ", resourceType: " + resourceType + ", changeSetId: " + changeSetId + ", configuration: " + configuration +
             "]";
     }
@@ -142,12 +154,12 @@ public class DriftDefinitionTemplate {
         }
 
         if (resourceType != null) {
-            return getClass().getSimpleName() + "[id: " + id + ", name: " + name + ", resourceType[id: " +
+            return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType[id: " +
                 resourceType.getId() + ", name: " + resourceType.getName() + ", plugin: " + resourceType.getPlugin() +
                 ", changeSetId: " + changeSetId + ", configuration[id: " + configId + "]]";
         }
 
-        return getClass().getSimpleName() + "[id: " + id + ", name: " + name + ", resourceType:[null], " +
+        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType:[null], " +
             "changeSetId: " + changeSetId + "configuration[id: " + configId + "]]";
     }
 

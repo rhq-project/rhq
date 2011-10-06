@@ -83,7 +83,7 @@
     <rhq_content_source/>
     <rhq_package/>
     <rhq_bundle/>
-    <rhq_drift_template_map/>
+    <rhq_drift_def_template/>
 
     <rhq_plugin id="1"
                 deployment="AGENT"

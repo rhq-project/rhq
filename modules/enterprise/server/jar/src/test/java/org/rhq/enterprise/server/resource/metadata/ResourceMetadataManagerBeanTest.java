@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import static java.util.Arrays.asList;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,9 +29,10 @@ import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -50,6 +49,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import static java.util.Arrays.asList;
+
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(groups = { "plugin.metadata", "NewPlugin" })
@@ -64,9 +65,10 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         // sanity check, make sure our queries work and that we did persist these things
         Query qTemplate;
         Query qConfig;
-        String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
-        String qConfigString = "select c from Configuration c where c.id = :id";
-        ConfigurationTemplate driftTemplate = type1.getDriftDefinitionTemplates().iterator().next();
+        //String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
+        String qTemplateString = "from DriftDefinitionTemplate where id = :id";
+        String qConfigString = "from Configuration c where id = :id";
+        DriftDefinitionTemplate driftTemplate = type1.getDriftDefinitionTemplates().iterator().next();
         Configuration bundleConfig = type1.getResourceTypeBundleConfiguration().getBundleConfiguration();
         Configuration driftDefConfig = driftTemplate.getConfiguration();
 
@@ -164,8 +166,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             asList("drift-pc", "drift-fs"));
 
         DriftDefinition driftDef = null;
-        Set<ConfigurationTemplate> drifts = type.getDriftDefinitionTemplates();
-        for (ConfigurationTemplate drift : drifts) {
+        Set<DriftDefinitionTemplate> drifts = type.getDriftDefinitionTemplates();
+        for (DriftDefinitionTemplate drift : drifts) {
             if (drift.getName().equals("drift-pc")) {
                 driftDef = new DriftDefinition(drift.getConfiguration());
                 assertTrue(driftDef.isEnabled());
@@ -286,8 +288,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             asList("drift-rc", "drift-mt"));
 
         DriftDefinition driftDef = null;
-        Set<ConfigurationTemplate> drifts = type.getDriftDefinitionTemplates();
-        for (ConfigurationTemplate drift : drifts) {
+        Set<DriftDefinitionTemplate> drifts = type.getDriftDefinitionTemplates();
+        for (DriftDefinitionTemplate drift : drifts) {
             if (drift.getName().equals("drift-rc")) {
                 driftDef = new DriftDefinition(drift.getConfiguration());
                 assertTrue(driftDef.isEnabled());

@@ -18,11 +18,6 @@
  */
 package org.rhq.core.clientapi.agent.metadata.test;
 
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +35,17 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.resource.ResourceType;
+
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 @Test
 public class PluginMetadataParserTest {
@@ -377,7 +378,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 DriftDefinition dc = new DriftDefinition(driftTemplate.getConfiguration());
                 BaseDirectory basedir = dc.getBasedir();
                 assertEquals(basedir.getValueContext(), BaseDirValueContext.pluginConfiguration, "Bad value context");
@@ -426,7 +427,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 assertEquals(driftTemplate.getConfiguration().getSimpleValue(
                     DriftConfigurationDefinition.PROP_INTERVAL, null), String
                     .valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL),
@@ -454,7 +455,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 assertEquals(driftTemplate.getConfiguration().getSimpleValue(
                     DriftConfigurationDefinition.PROP_INTERVAL, null), "3600",
                     "Expected to find default property set for <interval>");
@@ -485,7 +486,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
                 PropertyList includes = config.getList(DriftConfigurationDefinition.PROP_INCLUDES);
 
@@ -541,7 +542,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
                 PropertyList excludes = config.getList(DriftConfigurationDefinition.PROP_EXCLUDES);
 
@@ -635,7 +636,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftDefinition dconfig = new DriftDefinition(config);
 
@@ -675,7 +676,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test2", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftDefinition dconfig = new DriftDefinition(config);
 
@@ -715,7 +716,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test3", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftDefinition dconfig = new DriftDefinition(config);
 
@@ -777,7 +778,7 @@ public class PluginMetadataParserTest {
 
         verifyDriftDefinition(descriptor, "TestServer", "test4", new AssertDriftTemplateRunnable() {
             @Override
-            public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
+            public void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftDefinition dconfig = new DriftDefinition(config);
 
@@ -795,7 +796,7 @@ public class PluginMetadataParserTest {
     }
 
     private interface AssertDriftTemplateRunnable {
-        void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception;
+        void assertDriftTemplate(DriftDefinitionTemplate driftTemplate) throws Exception;
     }
 
     private void verifyDriftDefinition(PluginDescriptor descriptor, String resourceTypeName, String driftDefName,
@@ -804,9 +805,9 @@ public class PluginMetadataParserTest {
         Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>(0);
         PluginMetadataParser parser = new PluginMetadataParser(descriptor, parsersByPlugin);
         ResourceType resourceType = findResourceType(parser, resourceTypeName);
-        Set<ConfigurationTemplate> driftTemplates = resourceType.getDriftDefinitionTemplates();
-        ConfigurationTemplate driftTemplate = null;
-        for (ConfigurationTemplate template : driftTemplates) {
+        Set<DriftDefinitionTemplate> driftTemplates = resourceType.getDriftDefinitionTemplates();
+        DriftDefinitionTemplate driftTemplate = null;
+        for (DriftDefinitionTemplate template : driftTemplates) {
             if (template.getName().equals(driftDefName)) {
                 driftTemplate = template;
                 break;

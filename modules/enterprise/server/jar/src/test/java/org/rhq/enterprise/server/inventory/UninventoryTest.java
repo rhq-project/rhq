@@ -29,10 +29,10 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -60,7 +60,9 @@ public class UninventoryTest extends AbstractEJB3Test {
     public void testDriftDefRemoval() throws Exception {
         ResourceTypeCreator rtCreator = new ResourceTypeCreator() {
             public void modifyResourceTypeToPersist(ResourceType resourceType, EntityManager em) {
-                ConfigurationTemplate template = new ConfigurationTemplate("drift1", "drift def template");
+                DriftDefinitionTemplate template = new DriftDefinitionTemplate();
+                template.setName("drift1");
+                template.setDescription("drift def template");
                 Configuration config = new Configuration();
                 DriftDefinition driftDef = new DriftDefinition(config);
                 driftDef.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/"));

@@ -318,7 +318,7 @@
    <rhq_tagging_bundle_dest_map/>
    <rhq_create_res_hist/>
    <rhq_delete_res_hist/>
-   <rhq_drift_template_map/>
+   <rhq_drift_def_template/>
    <rhq_drift_config/>
    <rhq_drift_change_set/>
    <jms_messages/>

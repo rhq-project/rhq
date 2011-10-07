@@ -136,6 +136,7 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author John Mazzitelli
  * @author Ian Springer
  */
+@SuppressWarnings({"UnnecessaryLocalVariable", "UnnecessaryReturnStatement"})
 @Stateless
 @XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
@@ -1831,7 +1832,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         } catch (SchedulerException e) {
             String message = "Error scheduling job named '" + jobDetail.getName() + "':";
             log.error(message, e);
-            new ResourceGroupUpdateException(message + e.getMessage());
+            throw new ResourceGroupUpdateException(message + e.getMessage());
         }
 
         log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId

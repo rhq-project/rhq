@@ -36,6 +36,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -46,6 +48,8 @@ import javax.persistence.Table;
 
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
+
+import static javax.persistence.CascadeType.PERSIST;
 
 /**
  * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet.
@@ -90,7 +94,6 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     private DriftChangeSetCategory category;
 
     @JoinColumn(name = "DRIFT_CONFIG_ID", referencedColumnName = "ID", nullable = false)
-    // @ManyToOne(optional = false)
     // TODO: remove this eager load, the drift tree build should be written to not need this
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     private DriftDefinition driftDefinition;
@@ -107,6 +110,10 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
     private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
+
+    @ManyToOne(optional = true, cascade = PERSIST)
+    @JoinColumn(name = "DRIFT_SET_ID", referencedColumnName = "ID")
+    private JPADriftSet initialDriftSet;
 
     protected JPADriftChangeSet() {
     }
@@ -207,6 +214,14 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @Override
     public void setDrifts(Set<JPADrift> drifts) {
         this.drifts = drifts;
+    }
+
+    public JPADriftSet getInitialDriftSet() {
+        return initialDriftSet;
+    }
+
+    public void setInitialDriftSet(JPADriftSet driftSet) {
+        initialDriftSet = driftSet;
     }
 
     @Override

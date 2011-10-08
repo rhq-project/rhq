@@ -670,8 +670,8 @@
             <field ref="NAME"/>
         </index>
     </table>
-    
-    <!--  Content of a file being managed for drift. Used for diff and/or remediation -->    
+
+    <!--  Content of a file being managed for drift. Used for diff and/or remediation -->
     <table name="RHQ_DRIFT_FILE">
         <column name="HASH_ID" type="VARCHAR2" size="64" primarykey="true" required="true"/>        
         <column name="CTIME" type="LONG" required="true"/>
@@ -689,14 +689,14 @@
     -->
     <table name="RHQ_DRIFT_CONFIG">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="DRIFT_DEF_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_DRIFT_DEF_TEMPLATE"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="DRIFT_DEF_TEMPLATE_ID" type="INTEGER" required="false" references="RHQ_DRIFT_DEF_TEMPLATE"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="NAME" type="VARCHAR2" size="512" required="true"/>        
         <column name="INTERVAL" type="LONG" required="true"/>
         <column name="IS_ENABLED" type="BOOLEAN" required="true"/>        
-        <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>        
-        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
-        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>
         <column name="PINNED" type="BOOLEAN" required="true"/>
         <column name="PINNED_VERSION" type="INTEGER" required="false"/>
     </table>

@@ -71,22 +71,23 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
 
     private void purgeDB() {
         EntityManager em = getEntityManager();
-         List results =  em.createQuery("select id from ResourceType where name = :name")
+
+        List<DriftDefinition> defs = (List<DriftDefinition>) em.createQuery("from DriftDefinition").getResultList();
+        for (DriftDefinition def : defs) {
+            em.remove(def);
+        }
+
+        List results =  em.createQuery("from ResourceType where name = :name")
             .setParameter("name", RESOURCE_TYPE_NAME)
             .getResultList();
         if (results.isEmpty()) {
             return;
         }
-        Integer resourceTypeId = (Integer) results.get(0);
-
-        em.createQuery(
-            "delete from DriftDefinitionTemplate template " +
-                "where template.resourceType.id = :resourceTypeId")
-            .setParameter("resourceTypeId", resourceTypeId)
-            .executeUpdate();
-        em.createQuery("delete from ResourceType where id = :id")
-            .setParameter("id", resourceTypeId)
-            .executeUpdate();
+        ResourceType type = (ResourceType) results.get(0);
+        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
+            em.remove(template);
+        }
+        em.remove(type);
     }
 
     private void createResourceType() {
@@ -198,7 +199,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
                 ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
 
                 assertCollectionMatchesNoOrder("Failed to persist drift definition template when updating resource " +
-                    "type", asList(template), updatedType.getDriftDefinitionTemplates(), "id", "resourceType");
+                    "type", asList(template), updatedType.getDriftDefinitionTemplates(), "id", "resourceType", "ctime");
             }
         });
     }
@@ -234,6 +235,84 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
 
                 assertNull("Deleting " + resourceType + " should have cascaded to " + template.toString(false),
                     em.find(DriftDefinitionTemplate.class, template.getId()));
+            }
+        });
+    }
+
+    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    public void persistTemplateAndDefinition() {
+        final DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("addDefToTemplate");
+        driftDef.setEnabled(true);
+        driftDef.setDriftHandlingMode(normal);
+        driftDef.setInterval(1800L);
+        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
+        template.setName("saveAndLoadTemplate");
+        template.setDescription("Testing save and load");
+        template.setResourceType(resourceType);
+        template.setChangeSetId("1");
+        template.setConfiguration(driftDef.getConfiguration().deepCopy());
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+
+                template.addDriftDefinition(driftDef);
+                em.persist(template);
+                em.flush();
+                em.clear();
+
+                DriftDefinitionTemplate savedTemplate = em.find(DriftDefinitionTemplate.class, template.getId());
+
+                assertNotNull("Failed to persist template", savedTemplate);
+                assertEquals("Failed to add definition to template", 1, savedTemplate.getDriftDefinitions().size());
+
+                DriftDefinition savedDefinition = savedTemplate.getDriftDefinitions().iterator().next();
+                assertPropertiesMatch("Failed to persist definition", driftDef, savedDefinition, "id", "configuration",
+                    "template");
+            }
+        });
+    }
+
+    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    public void deleteTemplateShouldNotCascadeToDefinitions() {
+        final DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("addDefToTemplate");
+        driftDef.setEnabled(true);
+        driftDef.setDriftHandlingMode(normal);
+        driftDef.setInterval(1800L);
+        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
+        template.setName("saveAndLoadTemplate");
+        template.setDescription("Testing save and load");
+        template.setResourceType(resourceType);
+        template.setChangeSetId("1");
+        template.setConfiguration(driftDef.getConfiguration().deepCopy());
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(template);
+
+                driftDef.setTemplate(template);
+                em.persist(driftDef);
+                em.flush();
+                em.clear();
+
+                DriftDefinitionTemplate templateToDelete = em.find(DriftDefinitionTemplate.class, template.getId());
+                DriftDefinition def = em.find(DriftDefinition.class, driftDef.getId());
+                def.setTemplate(null);
+                em.remove(templateToDelete);
+                em.flush();
+                em.clear();
+
+                assertNotNull("Deleting the template should not delete its definitions",
+                    em.find(DriftDefinition.class, driftDef.getId()));
             }
         });
     }

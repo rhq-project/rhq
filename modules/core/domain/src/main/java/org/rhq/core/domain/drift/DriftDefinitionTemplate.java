@@ -20,6 +20,8 @@
 package org.rhq.core.domain.drift;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -29,7 +31,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
@@ -38,6 +42,27 @@ import javax.persistence.Table;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 
+/**
+ * <p>
+ * A drift definition template (or drift template for short) is a drift definition that
+ * applies at the type level like an alert template. Drift templates can be defined in
+ * plugin descriptors as a way to provide suggested and/or common definitions for users
+ * wanting to monitor resources of that type. Users can also create templates from admin
+ * section of the UI where templates can be managed. Template can be created from existing
+ * definitions.
+ * </p>
+ * <p>
+ * A pinned drift template is pinned to a specific snapshot and applies at the type level. A
+ * pinned template can be created from an existing snapshot that belongs to a particular
+ * resource. Definitions created from a pinned template are pinned as well and use the
+ * template's snapshot as their snapshots.
+ * </p>
+ * <p>
+ * When a pinned template is deleted, all definitions created from said template are deleted
+ * as well. With an unpinned template however, the definitions can outlive the template.
+ * </p>
+ * @see DriftDefinition
+ */
 @Entity
 @Table(name = "RHQ_DRIFT_DEF_TEMPLATE")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ")
@@ -66,8 +91,16 @@ public class DriftDefinitionTemplate implements Serializable {
     @JoinColumn(name = "CONFIG_ID")
     private Configuration configuration;
 
+    /**
+     * If the template is pinned this will be set to the id of the pinned snapshot/change
+     * set. Note that change sets are managed by the drift server plugin.
+     */
     @Column(name = "DRIFT_CHANGE_SET_ID")
     private String changeSetId;
+
+    // TODO do we want to cascade other operations? - jsanda
+    @OneToMany(mappedBy = "template", cascade = CascadeType.PERSIST)
+    private Set<DriftDefinition> driftDefinitions = new HashSet<DriftDefinition>();
 
     public int getId() {
         return id;
@@ -117,12 +150,36 @@ public class DriftDefinitionTemplate implements Serializable {
         this.configuration = configuration;
     }
 
+    /**
+     * If the template is pinned this will be set to the id of the pinned snapshot/change
+     * set. Note that change sets are managed by the drift server plugin.
+     *
+     * @return The id of the pinned change set or null if the template is not pinned.
+     */
     public String getChangeSetId() {
         return changeSetId;
     }
 
+    /**
+     * @param changeSetId The id of the change set to which the template is pinned
+     */
     public void setChangeSetId(String changeSetId) {
         this.changeSetId = changeSetId;
+    }
+
+    public Set<DriftDefinition> getDriftDefinitions() {
+        return driftDefinitions;
+    }
+
+    public void addDriftDefinition(DriftDefinition definition) {
+        driftDefinitions.add(definition);
+        definition.setTemplate(this);
+    }
+
+    public void removeDriftDefinition(DriftDefinition definition) {
+        if (driftDefinitions.remove(definition)) {
+            definition.setTemplate(null);
+        }
     }
 
     public Configuration createConfiguration() {
@@ -163,6 +220,14 @@ public class DriftDefinitionTemplate implements Serializable {
             "changeSetId: " + changeSetId + "configuration[id: " + configId + "]]";
     }
 
+    /**
+     * Equality for drift templates is defined as having the same resource type and the
+     * same name.
+     *
+     * @param o The object against which to compare
+     * @return True if the arugment is a DriftDefinitionTemplate and has the same resource
+     * type and name as this template.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

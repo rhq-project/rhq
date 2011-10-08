@@ -19,9 +19,6 @@
 
 package org.rhq.core.domain.drift;
 
-import static java.util.Collections.emptyList;
-import static javax.persistence.FetchType.LAZY;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,11 +28,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
@@ -49,6 +46,9 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
+
+import static java.util.Collections.emptyList;
+import static javax.persistence.FetchType.LAZY;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
@@ -99,8 +99,13 @@ public class DriftDefinition implements Serializable {
     @ManyToOne(optional = true)
     private Resource resource = null;
 
-    @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID")
+    @ManyToOne(optional = true, fetch = LAZY)
+//    @JoinTable(
+//        name = "RHQ_DRIFT_TEMPLATE_CONFIG_MAP",
+//        joinColumns = {@JoinColumn(name = "DRIFT_CONFIG_ID", nullable = true)},
+//        inverseJoinColumns = {@JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID", nullable = true)}
+//    )
+    @JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID", referencedColumnName = "ID", nullable = true)
     private DriftDefinitionTemplate template;
 
     @Column(name = "PINNED", nullable = false)

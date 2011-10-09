@@ -8,7 +8,7 @@
     <version>4.1.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
-  
+
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-server-container</artifactId>
   <packaging>pom</packaging>
@@ -120,6 +120,9 @@
       <dependency>
           <groupId>org.jboss.resteasy</groupId>
           <artifactId>resteasy-jaxrs-all</artifactId>
+          <scope>provided</scope>
+          <version>${resteasy.version}</version>
+          <type>pom</type>
       </dependency>
       <dependency>
           <groupId>org.jboss.resteasy</groupId>

@@ -107,7 +107,7 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.2.0.GA</resteasy.version>
+    <resteasy.version>2.2.1.GA</resteasy.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -700,7 +700,7 @@
           <source>1.6</source>
           <target>1.6</target>
           <optimize>false</optimize>
-          <verbose>true</verbose>          
+          <verbose>true</verbose>
           <proc>none</proc> <!-- disable annotation processing -->
           <compilerArgument>-Xlint</compilerArgument>
         </configuration>
@@ -1163,11 +1163,11 @@
             </plugins>
          </build>
       </profile>
-      
-      <!-- These plugins i)need to be active by default 
+
+      <!-- These plugins i)need to be active by default
        					 ii)need to be in a profile so that deactivation is possible for brew builds
-       					  
-         Profile activation for 'build-properties' and 'brew-generate-build-number' need to be mutually exclusive.       					 
+
+         Profile activation for 'build-properties' and 'brew-generate-build-number' need to be mutually exclusive.
        					 -->
 	  <profile>
 	    <id>build-properties</id>
@@ -1190,12 +1190,12 @@
 		                  <configuration>
 		                      <tasks>
 		                          <mkdir dir="target" />
-		
+
 		                          <tstamp>
 		                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
 		                          </tstamp>
 		                          <echo file="${product.buildPropertiesFile}">buildTime = ${buildTime}${line.separator}</echo>
-		
+
 		                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
 		                             <arg value="log" />
 		                             <arg value="--pretty=format:%h" />
@@ -1205,7 +1205,7 @@
 		                      </tasks>
 		                  </configuration>
 		              </execution>
-		
+
 		              <execution>
 		                  <id>echo-build-properties</id>
 		                  <phase>compile</phase>
@@ -1228,7 +1228,7 @@
 	                      upgrade to that version. -->
 	           <version>1.1</version>
 	         </plugin>
-           
+
              <plugin>
 		          <groupId>org.codehaus.mojo</groupId>
 		          <artifactId>properties-maven-plugin</artifactId>
@@ -1252,8 +1252,8 @@
         </build>
 	  </profile>
 
-      <!-- Profile activated when -Dbrew=true passed in. Profile activation for 'build-properties' and 'brew-generate-build-number' 
-      		need to be mutually exclusive.  -->	  
+      <!-- Profile activated when -Dbrew=true passed in. Profile activation for 'build-properties' and 'brew-generate-build-number'
+      		need to be mutually exclusive.  -->
       <profile>
             <id>brew-generate-build-number</id>
             <activation>
@@ -1322,7 +1322,7 @@
                 </plugins>
             </build>
         </profile>
-	  
+
   </profiles>
 
 
@@ -1343,7 +1343,7 @@
                   <reportSet>
                     <id>agent-plugin</id>
                     <configuration>
-                      <doctitle>RHQ ${project.version} Agent Plugin API</doctitle>                    
+                      <doctitle>RHQ ${project.version} Agent Plugin API</doctitle>
                       <destDir>agentPlugin-apidocs</destDir>
                       <subpackages>org.rhq.core.domain:org.rhq.core.util:org.rhq.core.system:org.rhq.core.pluginapi</subpackages>
                     </configuration>
@@ -1355,11 +1355,11 @@
                   <reportSet>
                     <id>remote</id>
                     <configuration>
-                      <doctitle>RHQ ${project.version} Remote API</doctitle>                    
-                      <windowtitle>RHQ ${project.version} Remote API</windowtitle>                    
+                      <doctitle>RHQ ${project.version} Remote API</doctitle>
+                      <windowtitle>RHQ ${project.version} Remote API</windowtitle>
                       <destDir>remote-apidocs</destDir>
                       <subpackages>org.rhq.core.domain:org.rhq.enterprise.server:org.rhq.enterprise.client</subpackages>
-                      <links>                         
+                      <links>
                          <link>http://java.sun.com/javaee/5/docs/api/</link>
                       </links>
                     </configuration>

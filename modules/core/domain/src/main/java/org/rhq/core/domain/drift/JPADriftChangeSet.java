@@ -52,7 +52,34 @@ import org.rhq.core.domain.resource.Resource;
 import static javax.persistence.CascadeType.PERSIST;
 
 /**
+ * <p>
  * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet.
+ * </p>
+ * <p>
+ * All change sets belong to a drift definition, and the definition is created from a
+ * {@link DriftDefinitionTemplate}. Templates can be pinned or unpinned. This class has
+ * slightly different semantics depending on whether or not the template is pinned. Each
+ * change set encapsulates a collection of changes that are represented by {@link JPADrift}.
+ * When a template is pinned there is a corresponding pinned snapshot that belongs to the
+ * template. Each definition created from that template uses that same pinned snapshot. In
+ * terms of implementation, the pinned snapshot is always change set version zero. As an
+ * optimization (of the default plugin data model design), the pinned snapshot is shared
+ * among definitions to avoid the overhead of making copies of what could potentially be
+ * very large numbers of Drift entities. When an instance of this class represents the
+ * pinned snapshot, different fields will be "live" (i.e., non-null and in use) versus
+ * when it is not the pinned snapshot.
+ * </p>
+ * <p>
+ * <strong>Note:</strong> Because persistence of this entity is managed by a drift server
+ * plugin, other entities managed by the RHQ core server cannot maintain direct references
+ * or JPA associations to this class. This restriction is necessary because entities managed
+ * by the RHQ core server interact with instance of this class through its drift entity
+ * interface which may have multiple implementation. Those implementations need not even
+ * be based on a RDBMS. Even though this entity is managed via a drift server plugin, it
+ * can maintain direct references and JPA associations to entities managed by the RHQ
+ * core server since they reside in the same database. That is however an implementation
+ * detail only of this class. It cannot be exposed in the drift interfaces.
+ * </p>
  *   
  * @author Jay Shaughnessy
  * @author John Sanda 
@@ -108,9 +135,20 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @ManyToOne(optional = false)
     private Resource resource;
 
+    /**
+     * The set of drift entries that make up this change set. If this instance of
+     * JPADriftChangeSet is a pinned snapshot, then this field will be null because
+     * the set of drifts are shared. And those shared drifts are accessed through the
+     * {@link JPADriftSet}
+     */
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
     private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
 
+    /**
+     * This field is null unless this instance of JPADriftChangeSet is a pinned snapshot.
+     * The shared drifts that comprise a pinned snapshot are shared through a
+     * {@link JPADriftSet}.
+     */
     @ManyToOne(optional = true, cascade = PERSIST)
     @JoinColumn(name = "DRIFT_SET_ID", referencedColumnName = "ID")
     private JPADriftSet initialDriftSet;

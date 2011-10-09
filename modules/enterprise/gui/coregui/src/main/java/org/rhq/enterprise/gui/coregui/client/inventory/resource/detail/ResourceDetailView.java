@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring.IFrameWithMeasurementRangeEditorView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
@@ -405,7 +406,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new FullHTMLPane(monitorGraphs.extendLocatorId("View"),
+                return new IFrameWithMeasurementRangeEditorView(monitorGraphs.extendLocatorId("View"),
                     "/rhq/resource/monitor/graphs-plain.xhtml?id=" + resource.getId());
             }
         };
@@ -449,7 +450,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new FullHTMLPane(monitorCallTime.extendLocatorId("View"),
+                return new IFrameWithMeasurementRangeEditorView(monitorCallTime.extendLocatorId("View"),
                     "/rhq/resource/monitor/response-plain.xhtml?id=" + resource.getId());
             }
         };

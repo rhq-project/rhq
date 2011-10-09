@@ -38,11 +38,13 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
@@ -188,25 +190,19 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
 
     private void initializeSorting(PageControl pageControl, DSRequest request) {
         // TODO: Uncomment this once the bug in request.getSortBy() is fixed.
-        /*SortSpecifier[] sortSpecifiers = request.getSortBy();
+        SortSpecifier[] sortSpecifiers = request.getSortBy();
         if (sortSpecifiers != null) {
             for (SortSpecifier sortSpecifier : sortSpecifiers) {
                 PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
                     PageOrdering.ASC : PageOrdering.DESC;
                 String columnName = sortSpecifier.getField();
-                pageControl.addDefaultOrderingField(columnName, ordering);
-            }
-        }*/
-
-        String sortBy = request.getAttribute("sortBy");
-        if (sortBy != null) {
-            String[] sorts = sortBy.split(",");
-            for (String sort : sorts) {
-                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
-                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
                 String sortField = getSortFieldForColumn(columnName);
-                if (null != sortField)
+                if (sortField != null) {
                     pageControl.addDefaultOrderingField(sortField, ordering);
+                } else {
+                    Log.warn("Field [" + columnName + "] in [" + getClass().getName()
+                        + "] could not be mapped to a PageControl ordering field.");
+                }
             }
         }
     }
@@ -214,7 +210,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     /**
      * By default, for a sortable column, the field name (usually a ListGridField name) is used as the
      * OrderingField in the PageControl passed to the server.  If for some reason the field name does not
-     * properly map to a sortable entity field, this method can be overrident to provide the proper maping.
+     * properly map to a sortable entity field, this method can be overridden to provide the proper mapping.
      * Note that certain columns may also leverage sort fields in the underlying (rhq) criteria class itself, but
      * not every sortable column may be appropriate as a sort field in the criteria.      
      * 

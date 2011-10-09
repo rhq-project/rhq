@@ -118,6 +118,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
+        conditionField.setCanSortClientOnly(true);
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
@@ -328,20 +329,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
     @Override
     protected String getSortFieldForColumn(String columnName) {
+        String sortField;
         if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
-            return "alertDefinition.resource.ancestry";
+            sortField = "alertDefinition.resource.ancestry";
         }
-        if ("status".equals(columnName)) {
-            return "acknowledgeTime";
+        else if ("status".equals(columnName)) {
+            sortField = "acknowledgeTime";
+        } else {
+            sortField = super.getSortFieldForColumn(columnName);
         }
-        if ("conditionText".equals(columnName)) {
-            // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
-            // on this ListGridField. To me that should mean any sorting done client side on this field should
-            // not be passed in on the Request, but it seems to be...
-            return null;
-        }
-
-        return super.getSortFieldForColumn(columnName);
+        return sortField;
     }
 
     @Override

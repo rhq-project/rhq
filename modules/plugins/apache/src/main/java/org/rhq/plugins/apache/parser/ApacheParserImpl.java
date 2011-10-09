@@ -1,18 +1,17 @@
 package org.rhq.plugins.apache.parser;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.augeas.util.Glob;
 
 public class ApacheParserImpl implements ApacheParser{
 
+    private final static String INCLUDE_DIRECTIVE = "Include";
+    private final ApacheDirectiveTree tree;
     private ApacheDirectiveStack stack;
-    private static String INCLUDE_DIRECTIVE = "Include";
     private String serverRootPath;
-    private ApacheDirectiveTree tree;
-    
+
     public ApacheParserImpl(ApacheDirectiveTree tree,String serverRootPath){          
       stack = new ApacheDirectiveStack();
       this.serverRootPath = serverRootPath;

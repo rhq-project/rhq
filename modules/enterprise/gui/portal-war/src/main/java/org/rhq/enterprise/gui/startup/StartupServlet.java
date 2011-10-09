@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,13 +33,18 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.sql.DataSource;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.SchedulerException;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
@@ -70,7 +75,10 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * Specifically, we know that at {@link #init()} time, all EJBs have been deployed and available.
  */
 public class StartupServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
+
+    private Log log = LogFactory.getLog(this.getClass());
 
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
@@ -79,7 +87,7 @@ public class StartupServlet extends HttpServlet {
      */
     @Override
     public void init() throws ServletException {
-        log("All business tier deployments are complete - finishing the startup");
+        log.info("All business tier deployments are complete - finishing the startup...");
 
         // As a security measure, make sure the installer has been undeployed
         LookupUtil.getSystemManager().undeployInstaller();
@@ -96,7 +104,7 @@ public class StartupServlet extends HttpServlet {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
             typeManager.reloadResourceFacetsCache();
         } catch (Throwable t) {
-            log("Could not load ResourceFacets cache", t);
+            log.error("Could not load ResourceFacets cache.", t);
         }
 
         // Before starting determine the operating mode of this server and
@@ -114,7 +122,7 @@ public class StartupServlet extends HttpServlet {
         // causing a job to be scheduled), so that explains the ordering of the comm layer and the scheduler.
         startHibernateStatistics();
         initScheduler(); // make sure this is initialized before starting the plugin deployer
-        startPluginDeployer(); // make sure this is before starting the server plugin container
+        startPluginDeployer(); // make sure this is initialized before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
         startServerCommunicationServices();
@@ -128,6 +136,8 @@ public class StartupServlet extends HttpServlet {
         PropertyRenderingUtility.putDynamicPropertyRetriever(PropertyDynamicType.DATABASE,
             new DatabaseDynamicPropertyRetriever());
 
+        logServerStartedMessage();
+
         return;
     }
 
@@ -139,13 +149,13 @@ public class StartupServlet extends HttpServlet {
             conn = ds.getConnection();
             DatabaseTypeFactory.setDefaultDatabaseType(DatabaseTypeFactory.getDatabaseType(conn));
         } catch (Exception e) {
-            log("Could not initialize server: ", e);
+            log.error("Could not initialize server.", e);
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
                 } catch (Exception e) {
-                    log("Failed to close temporary connection used for server initialization: ", e);
+                    log.error("Failed to close temporary connection used for server initialization.", e);
                 }
             }
         }
@@ -157,7 +167,7 @@ public class StartupServlet extends HttpServlet {
 
         // immediately put the server into MM if configured to do so
         if (ServerCommunicationsServiceUtil.getService().getMaintenanceModeAtStartup()) {
-            log("Server is configured to start up in MAINTENANCE mode");
+            log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
             LookupUtil.getCloudManager().updateServerMode(serverId, OperationMode.MAINTENANCE);
@@ -170,7 +180,7 @@ public class StartupServlet extends HttpServlet {
             try {
                 serverManager.syncEndpointAddress();
             } catch (SyncEndpointAddressException e) {
-                log("Failed to sync server endpoint address.", e);
+                log.error("Failed to sync server endpoint address.", e);
             }
         }
     }
@@ -202,7 +212,7 @@ public class StartupServlet extends HttpServlet {
             server.setComputePower(1);
             server.setOperationMode(Server.OperationMode.INSTALLED);
             LookupUtil.getServerManager().create(server);
-            log("Default server created: " + server);
+            log.info("Default HA server created: " + server);
         }
     }
 
@@ -212,11 +222,11 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startHibernateStatistics() throws ServletException {
-        log("Starting hibernate statistics monitoring");
+        log.info("Starting hibernate statistics monitoring...");
         try {
             LookupUtil.getSystemManager().enableHibernateStatistics();
         } catch (Exception e) {
-            throw new ServletException("Cannot start hibernate statistics monitoring", e);
+            throw new ServletException("Cannot start hibernate statistics monitoring!", e);
         }
     }
 
@@ -230,7 +240,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startPluginDeployer() throws ServletException {
-        log("Starting the agent/server plugin deployer");
+        log.info("Starting the agent/server plugin deployer...");
 
         try {
             PluginDeploymentScannerMBean deployer_mbean;
@@ -241,7 +251,7 @@ public class StartupServlet extends HttpServlet {
                 iface, false);
             deployer_mbean.startDeployment();
         } catch (Exception e) {
-            throw new ServletException("Cannot start the agent/server plugin deployer", e);
+            throw new ServletException("Cannot start the agent/server plugin deployer!", e);
         }
     }
 
@@ -251,7 +261,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void installJaasModules() throws ServletException {
-        log("Installing JAAS Modules");
+        log.info("Installing JAAS login modules...");
 
         try {
             CustomJaasDeploymentServiceMBean jaas_mbean;
@@ -262,7 +272,7 @@ public class StartupServlet extends HttpServlet {
                 iface, false);
             jaas_mbean.installJaasModules();
         } catch (Exception e) {
-            throw new ServletException("Cannot deploy our JAAS login modules!", e);
+            throw new ServletException("Cannot install JAAS login modules!", e);
         }
     }
 
@@ -272,7 +282,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void initScheduler() throws ServletException {
-        log("Initializing the scheduler");
+        log.info("Initializing the scheduler....");
 
         try {
             LookupUtil.getSchedulerBean().initQuartzScheduler();
@@ -288,7 +298,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startScheduler() throws ServletException {
-        log("Starting the scheduler");
+        log.info("Starting the scheduler...");
 
         try {
             LookupUtil.getSchedulerBean().startQuartzScheduler();
@@ -318,21 +328,21 @@ public class StartupServlet extends HttpServlet {
         long sleepTime = (ensureDownTimeSecs * 1000L) - elapsed;
         if (sleepTime > 0) {
             try {
-                log("Forcing the server to wait [" + sleepTime + "]ms to ensure agents know we went down");
+                log.info("Forcing the server to wait [" + sleepTime + "]ms to ensure agents know we went down...");
                 Thread.sleep(sleepTime);
             } catch (InterruptedException ignore) {
             }
         }
 
         // now start our comm layer
-        log("Starting the server-agent communications services");
+        log.info("Starting the server-agent communications services...");
 
         try {
             ServerCommunicationsServiceUtil.getService().startCommunicationServices();
             ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
                 new ExternalizableStrategyCommandListener(org.rhq.core.server.ExternalizableStrategy.Subsystem.AGENT));
         } catch (Exception e) {
-            throw new ServletException("Cannot start the server-side communications services", e);
+            throw new ServletException("Cannot start the server-side communications services.", e);
         }
     }
 
@@ -342,7 +352,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException if unable to schedule a job
      */
     private void scheduleJobs() throws ServletException {
-        log("Scheduling some jobs that need to be run");
+        log.info("Scheduling asynchronous jobs...");
 
         /*
          * All jobs need to be set as non-volatile since a volatile job in a clustered environment is effectively
@@ -364,7 +374,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(SavedSearchResultCountRecalculationJob.class, true, false,
                 initialDelay, interval);
         } catch (Exception e) {
-            log("Cannot schedule asynchronous resource deletion job: " + e);
+            log.error("Cannot schedule asynchronous resource deletion job.", e);
         }
 
         try {
@@ -373,7 +383,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 60 * 5;
             scheduler.scheduleSimpleRepeatingJob(AsyncResourceDeleteJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            log("Cannot schedule asynchronous resource deletion job: " + e);
+            log.error("Cannot schedule asynchronous resource deletion job.", e);
         }
 
         try {
@@ -382,7 +392,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 60 * 5;
             scheduler.scheduleSimpleRepeatingJob(PurgeResourceTypesJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            log("Cannot schedule purge resource types job: " + e);
+            log.error("Cannot schedule purge resource types job.", e);
         }
 
         try {
@@ -391,7 +401,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 60 * 5;
             scheduler.scheduleSimpleRepeatingJob(PurgePluginsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            log("Cannot schedule purge plugins job: " + e);
+            log.error("Cannot schedule purge plugins job.", e);
         }
 
         // DynaGroup Auto-Recalculation Job
@@ -402,7 +412,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(DynaGroupAutoRecalculationJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            log("Cannot schedule DynaGroup auto-recalculation job: " + e);
+            log.error("Cannot schedule DynaGroup auto-recalculation job.", e);
         }
 
         // Cluster Manager Job
@@ -410,9 +420,9 @@ public class StartupServlet extends HttpServlet {
             String oldJobName = "org.rhq.enterprise.server.scheduler.jobs.ClusterManagerJob";
             boolean foundAndDeleted = scheduler.deleteJob(oldJobName, oldJobName);
             if (foundAndDeleted) {
-                log("Unscheduling deprecated job references for " + oldJobName);
+                log.info("Unscheduling deprecated job references for " + oldJobName + "...");
             } else {
-                log("No deprecated job references found for " + oldJobName);
+                log.debug("No deprecated job references found for " + oldJobName + ".");
             }
 
             // Wait long enough to allow the Server instance jobs to start executing first.
@@ -420,7 +430,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 30; // 30 secs
             scheduler.scheduleSimpleRepeatingJob(CloudManagerJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            log("Cannot schedule cloud management job: " + e);
+            log.error("Cannot schedule cloud management job.", e);
         }
 
         // Suspected Agents Job
@@ -430,7 +440,7 @@ public class StartupServlet extends HttpServlet {
             final long interval = 1000L * 60; // 60 secs
             scheduler.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
         } catch (Exception e) {
-            log("Cannot schedule suspected Agents job: " + e);
+            log.error("Cannot schedule suspected Agents job.", e);
         }
 
         // Timed Out Operations Job
@@ -440,7 +450,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutOperationsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            log("Cannot schedule check-for-timed-out-operations job: " + e);
+            log.error("Cannot schedule check-for-timed-out-operations job.", e);
         }
 
         // Timed Out Resource Configuration Update Requests Job
@@ -451,7 +461,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutConfigUpdatesJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            log("Cannot schedule check-for-timed-out-configuration-update-requests job: " + e);
+            log.error("Cannot schedule check-for-timed-out-configuration-update-requests job.", e);
         }
 
         // Timed Out Content Requests Job
@@ -461,7 +471,7 @@ public class StartupServlet extends HttpServlet {
             scheduler.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, initialDelay,
                 interval);
         } catch (Exception e) {
-            log("Cannot schedule check-for-timed-out-artifact-requests job: " + e);
+            log.error("Cannot schedule check-for-timed-out-artifact-requests job.", e);
         }
 
         // Data Purge Job
@@ -474,7 +484,7 @@ public class StartupServlet extends HttpServlet {
             String cronString = "0 0 * * * ?"; // every hour, on the hour
             scheduler.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
         } catch (Exception e) {
-            log("Cannot schedule data purge job: " + e);
+            log.error("Cannot schedule data purge job.", e);
         }
 
         // Server Plugin Jobs
@@ -483,7 +493,7 @@ public class StartupServlet extends HttpServlet {
             MasterServerPluginContainer masterPC = mbean.getMasterPluginContainer();
             masterPC.scheduleAllPluginJobs();
         } catch (Exception e) {
-            log("Cannot schedule server plugin jobs: " + e);
+            log.error("Cannot schedule server plugin jobs.", e);
         }
 
         return;
@@ -496,7 +506,7 @@ public class StartupServlet extends HttpServlet {
      * delivered might trigger the agents to send messages back to the server.
      */
     private void startAgentClients() {
-        log("Starting agent clients - any persisted messages with guaranteed delivery will be sent");
+        log.info("Starting agent clients - any persisted messages with guaranteed delivery will be sent...");
 
         AgentManagerLocal agentManager = LookupUtil.getAgentManager();
         List<Agent> agents = agentManager.getAllAgents();
@@ -532,7 +542,7 @@ public class StartupServlet extends HttpServlet {
             // now check to see if its enabled - if so start it; any startup exceptions now are thrown
             try {
                 if (Boolean.valueOf(enabled)) {
-                    log("The embedded Agent is installed and enabled - it will now be started...");
+                    log.info("The embedded Agent is installed and enabled - it will now be started...");
 
                     // NOTE: we cannot directly import AgentConfigurationConstants, so we hardcode the
                     // actual constant values here - need to keep an eye on these in the unlikely event
@@ -596,7 +606,7 @@ public class StartupServlet extends HttpServlet {
                             try {
                                 mbs.invoke(agentBootstrapMBean, startAgentMethod, new Object[0], new String[0]);
                             } catch (Throwable t) {
-                                log("Failed to start the embedded Agent - it will not be available!", t);
+                                log.error("Failed to start the embedded Agent - it will not be available!", t);
                             }
                         }
                     };
@@ -605,7 +615,7 @@ public class StartupServlet extends HttpServlet {
                     agentStartThread.setDaemon(true);
                     agentStartThread.start();
                 } else {
-                    log("The embedded Agent is not enabled, so it will not be started.");
+                    log.debug("The embedded Agent is not enabled, so it will not be started.");
                 }
             } catch (Throwable t) {
                 throw new ServletException("Failed to start the embedded Agent.", t);
@@ -613,7 +623,7 @@ public class StartupServlet extends HttpServlet {
         } catch (ServletException se) {
             throw se;
         } catch (Throwable t) {
-            log("The embedded Agent is not installed, so it will not be started (" + t + ").");
+            log.info("The embedded Agent is not installed, so it will not be started (" + t + ").");
         }
 
         return;
@@ -625,7 +635,7 @@ public class StartupServlet extends HttpServlet {
      * @throws ServletException
      */
     private void startServerPluginContainer() throws ServletException {
-        log("Starting the master server plugin container...");
+        log.info("Starting the master server plugin container...");
 
         try {
             ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
@@ -669,4 +679,13 @@ public class StartupServlet extends HttpServlet {
         }
         return elapsed;
     }
+
+    private void logServerStartedMessage() {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        ProductInfo productInfo = LookupUtil.getSystemManager().getProductInfo(overlord);
+        log.info("--------------------------------------------------"); // 50 dashes
+        log.info(productInfo.getFullName() + " " + productInfo.getVersion() + " (build " + productInfo.getBuildNumber() + ") Server started.");
+        log.info("--------------------------------------------------"); // 50 dashes
+    }
+
 }

@@ -9,7 +9,6 @@
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
-   <groupId>org.rhq</groupId>
    <artifactId>rhq-enterprise-server</artifactId>
    <packaging>ejb</packaging>
 
@@ -608,7 +607,7 @@ Build-OS-Version=${os.version}
          </plugin>
 
          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
+           <artifactId>maven-surefire-plugin</artifactId>
             <!-- Everything but the web service tests, this is the standard test execution -->
            <configuration>
                <excludes>

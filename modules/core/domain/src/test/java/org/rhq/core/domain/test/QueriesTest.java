@@ -35,12 +35,13 @@ import javax.transaction.TransactionManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementOOB;
 import org.rhq.core.domain.measurement.NumericType;
@@ -74,6 +75,8 @@ public class QueriesTest extends AbstractEJB3Test {
 
         //////////////////////////////////////////
         // ADD YOUR QUERIES WITH THEIR PARAMS HERE
+        add(Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID, new Object[] { "resourceGroupId", 1 });
+        add(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID, new Object[] { "resourceGroupId", 1 });
         add(PackageVersion.QUERY_FIND_BY_REPO_ID, new Object[] { "repoId", 1 });
         add(PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
         add(PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE, new Object[] { "repoId", 1 });

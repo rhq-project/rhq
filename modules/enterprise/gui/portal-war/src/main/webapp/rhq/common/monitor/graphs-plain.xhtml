@@ -48,39 +48,42 @@
     </td>
 </tr>
 
-<tr class="BlockContent">
-    <td>
-        <h:form id="MetricComponentForm">
-            <c:if test="#{IndicatorChartsUIBean.context.resourceId != -1}">
-               <input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
-            </c:if>
-            <c:if test="#{IndicatorChartsUIBean.context.groupId != -1}">
-               <input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
-            </c:if>
-            <c:if test="#{IndicatorChartsUIBean.context.parentResourceId != -1}">
-               <input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
-            </c:if>
-            <c:if test="#{IndicatorChartsUIBean.context.resourceTypeId != -1}">
-               <input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
-            </c:if>
-            <table>
-                <tr>
-                    <td><onc:metric optionList="m,h,d" /></td>
-                    <td>
-                        <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+<!-- BZ 634648 - removing the ability to set the metric time range from the JSF UI.-->
+<ui:remove>
+tr class="BlockContent">
+    td>
+        h:form id="MetricComponentForm">
+            c:if test="#{IndicatorChartsUIBean.context.resourceId != -1}">
+               input type="hidden" name="id" value="#{IndicatorChartsUIBean.context.resourceId}" />
+            /c:if>
+            c:if test="#{IndicatorChartsUIBean.context.groupId != -1}">
+               input type="hidden" name="groupId" value="#{IndicatorChartsUIBean.context.groupId}" />
+            /c:if>
+            c:if test="#{IndicatorChartsUIBean.context.parentResourceId != -1}">
+               input type="hidden" name="parent" value="#{IndicatorChartsUIBean.context.parentResourceId}" />
+            /c:if>
+            c:if test="#{IndicatorChartsUIBean.context.resourceTypeId != -1}">
+               input type="hidden" name="type" value="#{IndicatorChartsUIBean.context.resourceTypeId}" />
+            /c:if>
+            table>
+                tr>
+                    td>onc:metric optionList="m,h,d" />/td>
+                    td>
+                        h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
                                        action="#{MetricComponentUtilityUIBean.update}" >
-                            <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
-                        </h:commandLink>
-                        <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                            img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                        /h:commandLink>
+                        h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
                                        action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
-                            <h:outputText value="Switch to Simple Mode" />
-                        </h:commandLink>
-                    </td>
-                </tr>
-            </table>
-        </h:form>
-    </td>
-</tr>
+                            h:outputText value="Switch to Simple Mode" />
+                        /h:commandLink>
+                    /td>
+                /tr>
+            /table>
+        /h:form>
+    /td>
+/tr>
+</ui:remove>
 
 <!-- footerDiv used purely for calculating the height for the overlay -->
 <tr class="BlockContent">

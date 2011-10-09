@@ -28,6 +28,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -40,6 +42,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * this servlet serves up as well as versions of agents the RHQ Server supports.
  */
 public class AgentUpdateServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
 
     // the system property that defines how many concurrent downloads we will allow
@@ -56,17 +59,19 @@ public class AgentUpdateServlet extends HttpServlet {
 
     private static int numActiveDownloads = 0;
 
+    private Log log = LogFactory.getLog(this.getClass());
+
     private AgentManagerLocal agentManager = null;
 
     @Override
     public void init() throws ServletException {
-        log("Starting the agent update servlet");
+        log.info("Starting the RHQ agent update servlet...");
 
         // make sure we have a agent update binary file; log its location
         try {
-            log("Agent Update Binary File: " + getAgentUpdateBinaryFile());
+            log.info("Agent Update Binary File: " + getAgentUpdateBinaryFile());
         } catch (Throwable t) {
-            log("Missing agent update binary file - agents will not be able to update", t);
+            log.error("Missing agent update binary file - agents will not be able to update", t);
         }
 
         // make sure we create a version file if we have to by getting the version file now
@@ -74,10 +79,10 @@ public class AgentUpdateServlet extends HttpServlet {
             File versionFile = getAgentUpdateVersionFile();
 
             // log the version info - this also makes sure we can read it back in
-            log(versionFile + ": " + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
+            log.debug(versionFile + ": " + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
 
         } catch (Throwable t) {
-            log("Cannot determine the agent version information - agents will not be able to update", t);
+            log.error("Cannot determine the agent version information - agents will not be able to update.", t);
         }
     }
 
@@ -137,7 +142,7 @@ public class AgentUpdateServlet extends HttpServlet {
                 agentJarStream.close();
             }
         } catch (Throwable t) {
-            log("Failed to stream agent jar", t);
+            log.error("Failed to stream agent jar.", t);
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to stream agent jar");
         }
@@ -155,7 +160,7 @@ public class AgentUpdateServlet extends HttpServlet {
             byte[] versionData = StreamUtil.slurp(stream);
             resp.getOutputStream().write(versionData);
         } catch (Throwable t) {
-            log("Failed to stream version info", t);
+            log.error("Failed to stream version info.", t);
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to stream version info");
         }
@@ -177,8 +182,8 @@ public class AgentUpdateServlet extends HttpServlet {
             limit = Integer.parseInt(limitStr);
         } catch (Exception e) {
             limit = DEFAULT_AGENT_DOWNLOADS_LIMIT;
-            log("Agent downloads limit system property [" + SYSPROP_AGENT_DOWNLOADS_LIMIT
-                + "] is either not set or invalid [" + limitStr + "] - limit will be [" + limit + "]");
+            log.warn("Agent downloads limit system property [" + SYSPROP_AGENT_DOWNLOADS_LIMIT
+                + "] is either not set or invalid [" + limitStr + "] - limit will be [" + limit + "].");
         }
 
         return limit;
@@ -229,4 +234,5 @@ public class AgentUpdateServlet extends HttpServlet {
             return false;
         }
     }
+
 }

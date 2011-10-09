@@ -9,7 +9,6 @@
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
-   <groupId>org.rhq</groupId>
    <artifactId>rhq-webdav</artifactId>
    <packaging>war</packaging>
 

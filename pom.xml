@@ -978,6 +978,12 @@
        <url>http://repository.jboss.org/nexus/content/groups/public/</url>
     </pluginRepository>
 
+    <pluginRepository>
+       <id>jboss-central-mirror-repo-group</id>
+       <name>JBoss Public Repository Group</name>
+       <url>http://repository.jboss.org/nexus/content/groups/developer/</url>
+    </pluginRepository>
+
   </pluginRepositories>
 
   <distributionManagement>

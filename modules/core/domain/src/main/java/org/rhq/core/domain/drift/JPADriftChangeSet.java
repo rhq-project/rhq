@@ -53,21 +53,25 @@ import static javax.persistence.CascadeType.PERSIST;
 
 /**
  * <p>
- * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet.
+ * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet. A change
+ * set instance has slightly different behavior based on whether or not it is version zero,
+ * that is the initial change set. This is due to the way in which pinned templates are
+ * supported.
  * </p>
  * <p>
  * All change sets belong to a drift definition, and the definition is created from a
- * {@link DriftDefinitionTemplate}. Templates can be pinned or unpinned. This class has
- * slightly different semantics depending on whether or not the template is pinned. Each
- * change set encapsulates a collection of changes that are represented by {@link JPADrift}.
+ * {@link DriftDefinitionTemplate}. Templates can be pinned or unpinned. Each change set
+ * encapsulates a collection of changes that are represented by {@link JPADrift}.
  * When a template is pinned there is a corresponding pinned snapshot that belongs to the
  * template. Each definition created from that template uses that same pinned snapshot. In
  * terms of implementation, the pinned snapshot is always change set version zero. As an
- * optimization (of the default plugin data model design), the pinned snapshot is shared
- * among definitions to avoid the overhead of making copies of what could potentially be
- * very large numbers of Drift entities. When an instance of this class represents the
- * pinned snapshot, different fields will be "live" (i.e., non-null and in use) versus
- * when it is not the pinned snapshot.
+ * optimization (of the default driftserver plugin data model design), the pinned snapshot
+ * is shared among definitions to avoid the overhead of making copies of what could
+ * potentially be very large numbers of Drift entities.
+ * </p>
+ * <p>
+ * When an instance of this class represents change set version zero, different fields will
+ * be "live" (i.e., non-null and in use) versus when it is not the initial change set.
  * </p>
  * <p>
  * <strong>Note:</strong> Because persistence of this entity is managed by a drift server
@@ -137,17 +141,17 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     /**
      * The set of drift entries that make up this change set. If this instance of
-     * JPADriftChangeSet is a pinned snapshot, then this field will be null because
-     * the set of drifts are shared. And those shared drifts are accessed through the
-     * {@link JPADriftSet}
+     * JPADriftChangeSet is change set version zero, then this field will be null because
+     * the drifts for the initial change set are accessed through a {@link JPADriftSet}.
      */
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
     private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
 
     /**
-     * This field is null unless this instance of JPADriftChangeSet is a pinned snapshot.
-     * The shared drifts that comprise a pinned snapshot are shared through a
-     * {@link JPADriftSet}.
+     * This field is null unless this instance of JPADriftChangeSet is the initial change
+     * set. If the change set belongs to a definition that was created from a pinned
+     * template, then the {@link JPADriftSet} will be shared by all definitions created
+     * from the template.
      */
     @ManyToOne(optional = true, cascade = PERSIST)
     @JoinColumn(name = "DRIFT_SET_ID", referencedColumnName = "ID")
@@ -246,7 +250,16 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     @Override
     public Set<JPADrift> getDrifts() {
-        return drifts;
+        if (version > 0) {
+            return drifts;
+        }
+
+        // TODO do we need to check for null here?
+        // If this is the initial change set, initialDriftSet should be non-null so I am
+        // not sure whether or not a null check is necessary here.
+        //
+        // jsanda
+        return initialDriftSet.getDrifts();
     }
 
     @Override

@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -44,6 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+
 /**
  * @author John Mazzitelli
  */
@@ -53,6 +54,7 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
     public static final String ATTR_PARENT_ID = "parentId";
     public static final String ATTR_ID = "id";
     public static final String ATTR_NAME = "name";
+    public static final String ATTR_VERSION = "version";
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private final boolean canManageDrift;
@@ -116,27 +118,62 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
                 });
         } else {
             String changesetId = parentId.substring(parentId.indexOf('_') + 1);
-            GenericDriftCriteria criteria = new GenericDriftCriteria();
-            criteria.addFilterChangeSetId(changesetId);
-            // TODO, this should probably not need to be eager loaded, the drift tree build should not need this 
-            criteria.fetchChangeSet(true);
 
-            driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<? extends Drift>>() {
+            // This is just a temporary hack to get the change set version so that we can
+            // determine whether or not we are loading drifts for the initial snapshot or
+            // for a delta change set. In the views that will be replacing the tree views,
+            // we will always have the version or other information to make the
+            // determination in advance.
+            GenericDriftChangeSetCriteria idCriteria = getDriftChangeSetCriteria(request);
+            idCriteria.addFilterId(changesetId);
+
+            driftService.findDriftChangeSetsByCriteria(idCriteria, new AsyncCallback<PageList<? extends DriftChangeSet>>() {
+                @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
+                    CoreGUI.getErrorHandler().handleError("Failed to load change set", caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
                 }
 
-                public void onSuccess(PageList<? extends Drift> result) {
-                    response.setData(buildRecords(result));
-                    response.setTotalRows(result.getTotalSize());
-                    processResponse(request.getRequestId(), response);
+                @Override
+                public void onSuccess(PageList<? extends DriftChangeSet> result) {
+                    if (result.isEmpty()) {
+                        return;
+                    }
+                    DriftChangeSet changeSet = result.get(0);
+                    loadDrifts(request, response, changeSet);
                 }
             });
         }
-
         return;
+    }
+
+    private void loadDrifts(final DSRequest request, final DSResponse response, final DriftChangeSet changeSet) {
+        GenericDriftChangeSetCriteria criteria = getDriftChangeSetCriteria(request);
+        criteria.addFilterId(changeSet.getId());
+        criteria.fetchDrifts(true);
+        if (changeSet.getVersion() == 0) {
+            criteria.addFilterCategory(COVERAGE);
+        }
+
+        driftService.findDriftChangeSetsByCriteria(criteria, new AsyncCallback<PageList<? extends DriftChangeSet>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
+
+            @Override
+            public void onSuccess(PageList<? extends DriftChangeSet> result) {
+                if (result.isEmpty()) {
+                    return;
+                }
+                DriftChangeSet changeSet = result.get(0);
+                response.setData(buildRecords(changeSet.getDrifts()));
+                response.setTotalRows(changeSet.getDrifts().size());
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
     /**

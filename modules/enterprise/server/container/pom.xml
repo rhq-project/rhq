@@ -194,6 +194,7 @@
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
                   <property name="hibernate3.version" value="${hibernate3.version}" />
                   <property name="quartz.version" value="${quartz.version}" />
+                  <property name="resteasy.version" value="${resteasy.version}" />
 
                   <!-- dev DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                   <property name="rhq.dev.ds.connection-url" value="${rhq.dev.ds.connection-url}" />

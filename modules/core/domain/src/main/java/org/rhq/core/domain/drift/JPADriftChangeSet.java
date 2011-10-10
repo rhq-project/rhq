@@ -49,6 +49,7 @@ import javax.persistence.Table;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 
+import static javax.persistence.CascadeType.MERGE;
 import static javax.persistence.CascadeType.PERSIST;
 
 /**
@@ -153,7 +154,7 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
      * template, then the {@link JPADriftSet} will be shared by all definitions created
      * from the template.
      */
-    @ManyToOne(optional = true, cascade = PERSIST)
+    @ManyToOne(optional = true, cascade = {PERSIST, MERGE})
     @JoinColumn(name = "DRIFT_SET_ID", referencedColumnName = "ID")
     private JPADriftSet initialDriftSet;
 

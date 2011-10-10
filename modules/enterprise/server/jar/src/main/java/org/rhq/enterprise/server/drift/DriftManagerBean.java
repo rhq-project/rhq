@@ -482,7 +482,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         DriftDefinition config = entityManager.find(DriftDefinition.class, changeSet.getDriftDefinitionId());
         config.setPinned(true);
-        config.setPinnedVersion(changeSet.getVersion());
 
         // TODO is this merge call needed? - jsanda
         config = entityManager.merge(config);

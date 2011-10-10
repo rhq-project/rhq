@@ -79,6 +79,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
@@ -158,10 +159,29 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         JPADriftChangeSetCriteria jpaCriteria = (criteria instanceof JPADriftChangeSetCriteria) ? (JPADriftChangeSetCriteria) criteria
             : new JPADriftChangeSetCriteria(criteria);
 
+        if (criteria.getFilterCategory() != null && criteria.getFilterCategory() == COVERAGE) {
+            if (jpaCriteria.isFetchDrifts()) {
+                jpaCriteria.fetchInitialDriftSet(true);
+                jpaCriteria.fetchDrifts(false);
+            }
+            jpaCriteria.addFilterVersion("0");
+        } else {
+            jpaCriteria.fetchInitialDriftSet(false);
+        }
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, jpaCriteria);
         CriteriaQueryRunner<JPADriftChangeSet> queryRunner = new CriteriaQueryRunner<JPADriftChangeSet>(jpaCriteria,
             generator, entityManager);
         PageList<JPADriftChangeSet> result = queryRunner.execute();
+
+        if (jpaCriteria.isFetchInitialDriftSet()) {
+            for (JPADriftChangeSet changeSet : result) {
+                // Need to wire up each drift with its parent change set.
+                for (JPADrift drift : changeSet.getInitialDriftSet().getDrifts()) {
+                    drift.setChangeSet(changeSet);
+                }
+            }
+        }
 
         return result;
     }

@@ -26,6 +26,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -35,6 +36,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import static javax.persistence.CascadeType.PERSIST;
+import static javax.persistence.FetchType.EAGER;
 
 @Entity
 @Table(name = "RHQ_DRIFT_SET")
@@ -47,7 +49,7 @@ public class JPADriftSet implements Serializable {
     @Id
     private int id;
 
-    @OneToMany(cascade = PERSIST)
+    @OneToMany(cascade = PERSIST, fetch = EAGER)
     @JoinColumn(name = "DRIFT_SET_ID")
     private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
 

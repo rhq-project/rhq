@@ -19,8 +19,6 @@
 
 package org.rhq.core.domain.criteria;
 
-import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
-
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -31,6 +29,8 @@ import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageOrdering;
+
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
 /**
  * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSetCriteria.
@@ -57,6 +57,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     private String filterDriftPath; // needs override
     private Boolean fetchDrifts;
     private Boolean fetchDriftDefinition;
+    private Boolean fetchInitialDriftSet;
 
     private PageOrdering sortVersion;
 
@@ -241,6 +242,14 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
 
     public void fetchDriftDefinition(boolean fetchDriftDefinition) {
         this.fetchDriftDefinition = fetchDriftDefinition;
+    }
+
+    public boolean isFetchInitialDriftSet() {
+        return fetchInitialDriftSet;
+    }
+
+    public void fetchInitialDriftSet(boolean fetchInitialDriftSet) {
+        this.fetchInitialDriftSet = fetchInitialDriftSet;
     }
 
     @Override

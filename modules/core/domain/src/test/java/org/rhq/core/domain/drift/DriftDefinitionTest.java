@@ -83,19 +83,11 @@ public class DriftDefinitionTest {
 
         // Make dc1 pinned
         dc1.setPinned(true);
-        dc1.setPinnedVersion(0);
-        assert comparator.compare(dc1, dc2) > 0 : dc1 + " is pinned to snapshot version 0";
+        assert comparator.compare(dc1, dc2) > 0 : dc1 + " is pinned";
 
         // make both dc1 and dc2 pinned to the same versions
         dc2.setPinned(true);
-        dc2.setPinnedVersion(0);
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should be equal to " + dc2;
-
-        // now pin them to different versions
-        dc2.setPinnedVersion(1);
-        assert comparator.compare(dc1, dc2) < 0 : dc1 + " should be pinned to a different version than " + dc2;
-
-        dc2.setPinnedVersion(0);
 
         dc1.setName("zzzzz" + dc2.getName());
         assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different name than " + dc2;
@@ -132,14 +124,12 @@ public class DriftDefinitionTest {
         dc1.setDriftHandlingMode(DriftHandlingMode.normal);
         dc1.setName("the-name");
         dc1.setPinned(true);
-        dc1.setPinnedVersion(1);
 
         dc2.setEnabled(true);
         dc2.setInterval(1000L);
         dc2.setDriftHandlingMode(DriftHandlingMode.normal);
         dc2.setName("the-name");
         dc2.setPinned(true);
-        dc2.setPinnedVersion(1);
 
         getCompareBaseInfoAndIncludesExcludes(comparator, dc1, dc2);
     }
@@ -311,14 +301,6 @@ public class DriftDefinitionTest {
 
         driftDef.setPinned(false);
         assertFalse(driftDef.isPinned(), "Expected drift definition not to be pinned");
-    }
-
-    @Test
-    public void getPinnedVersion() {
-        Configuration config = new Configuration();
-        config.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED_VERSION, 1));
-        DriftDefinition driftDef = new DriftDefinition(config);
-        assertEquals(driftDef.getPinnedVersion(), 1, "Failed to get the pinned snapshot version");
     }
 
     @Test

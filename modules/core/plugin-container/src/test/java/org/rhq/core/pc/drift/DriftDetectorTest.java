@@ -620,7 +620,6 @@ public class DriftDetectorTest extends DriftTest {
     public void doNotModifyPinnedSnapshotWhenDriftIsDetected() throws Exception {
         DriftDefinition driftDef = driftDefinition("do-not-modify-pinned-snapshot", resourceDir.getAbsolutePath());
         driftDef.setPinned(true);
-        driftDef.setPinnedVersion(0);
         DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftDef);
 
         File confDir = mkdir(resourceDir, "conf");
@@ -660,7 +659,6 @@ public class DriftDetectorTest extends DriftTest {
     public void updateCurrentSnapshotVersionNumberWhenUsingPinnedSnapshot() throws Exception {
         DriftDefinition driftDef = driftDefinition("update-snapshot-version-pinned", resourceDir.getAbsolutePath());
         driftDef.setPinned(true);
-        driftDef.setPinnedVersion(0);
 
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = createRandomFile(confDir, "server1.conf");
@@ -709,7 +707,6 @@ public class DriftDetectorTest extends DriftTest {
     public void generatePinnedSnapshotFileWhenInitialVersionIsPinned() throws Exception {
         DriftDefinition driftDef = driftDefinition("initial-snapshot-pinned-test", resourceDir.getAbsolutePath());
         driftDef.setPinned(true);
-        driftDef.setPinnedVersion(0);
 
         File confDir = mkdir(resourceDir, "conf");
         File serverConf = createRandomFile(confDir, "server.conf");
@@ -735,7 +732,6 @@ public class DriftDetectorTest extends DriftTest {
         final DriftDefinition driftDef = driftDefinition("repeat-changeset", resourceDir.getAbsolutePath());
         driftDef.setId(1);
         driftDef.setPinned(true);
-        driftDef.setPinnedVersion(0);
 
         File confDir = mkdir(resourceDir, "conf");
         createRandomFile(confDir, "server1.conf");

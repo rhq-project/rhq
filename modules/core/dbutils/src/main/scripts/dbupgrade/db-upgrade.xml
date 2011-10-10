@@ -3520,7 +3520,6 @@
                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="PINNED" columnType="BOOLEAN"/>
                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="PINNED" nullable="FALSE"/>
-                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="PINNED_VERSION" columnType="INTEGER"/>
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_CONFIG foreign key relation to RHQ_CONFIG">
                         ALTER TABLE RHQ_DRIFT_CONFIG

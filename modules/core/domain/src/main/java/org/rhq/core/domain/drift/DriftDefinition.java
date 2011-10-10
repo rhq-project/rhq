@@ -111,9 +111,6 @@ public class DriftDefinition implements Serializable {
     @Column(name = "PINNED", nullable = false)
     private boolean pinned;
 
-    @Column(name = "PINNED_VERSION", nullable = true)
-    private Integer pinnedVersion;
-
     // required for jaxb/web services stuff
     protected DriftDefinition() {
     }
@@ -208,18 +205,6 @@ public class DriftDefinition implements Serializable {
         setPinnedProperty(pinned);
     }
 
-    public int getPinnedVersion() {
-        if (pinnedVersion == null) {
-            return -1;
-        }
-        return pinnedVersion;
-    }
-
-    public void setPinnedVersion(Integer version) {
-        pinnedVersion = version;
-        setPinnedVersionProperty(version);
-    }
-
     public Configuration getConfiguration() {
         return configuration;
     }
@@ -231,7 +216,6 @@ public class DriftDefinition implements Serializable {
         interval = getIntervalProperty();
         driftHandlingMode = getDriftHandlingModeProperty();
         pinned = getPinnedProperty();
-        pinnedVersion = getPinnedVersionProperty();
     }
 
     public Resource getResource() {
@@ -402,18 +386,6 @@ public class DriftDefinition implements Serializable {
 
     private void setPinnedProperty(boolean pinned) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED, pinned));
-    }
-
-    private Integer getPinnedVersionProperty() {
-        String value = configuration.getSimpleValue(DriftConfigurationDefinition.PROP_PINNED_VERSION, null);
-        if (value == null) {
-            return null;
-        }
-        return Integer.valueOf(value);
-    }
-
-    private void setPinnedVersionProperty(Integer version) {
-        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED_VERSION, version));
     }
 
     private DriftHandlingMode getDriftHandlingModeProperty() {

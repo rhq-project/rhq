@@ -148,9 +148,9 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+    DriftSnapshot createSnapshot(Subject subject, int driftDefinitionId, int startVersion, int endVersion);
 
-    DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
+    DriftSnapshot getCurrentSnapshot(Subject subject, int driftDefinitionId);
 
     void pinSnapshot(Subject subject, String changeSetId);
 

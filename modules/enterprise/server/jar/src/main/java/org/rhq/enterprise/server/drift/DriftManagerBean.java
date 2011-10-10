@@ -64,7 +64,6 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -86,7 +85,8 @@ import difflib.Patch;
 import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -268,19 +268,82 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
-        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        return driftServerPlugin.createSnapshot(subject, criteria);
+    public DriftSnapshot createSnapshot(Subject subject, int driftDefinitionId, int startVersion, int endVersion) {
+        DriftSnapshot snapshot = new DriftSnapshot();
+
+        if (startVersion == 0) {
+            DriftChangeSet<?> initialChangeset = loadInitialChangeSet(subject, driftDefinitionId);
+            if (initialChangeset == null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Cannot create snapshot for drift definition id " + driftDefinitionId +
+                        " - No initial change set found.");
+                }
+                return null;
+            } else {
+                snapshot.add(initialChangeset);
+            }
+        }
+
+        // if startVersion and endVersion are both zero, we are done.
+        if (startVersion == 0 && endVersion == 0) {
+            return snapshot;
+        }
+
+        // if we get here then we are generating a snapshot of version N where N > 0.
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterCategory(DRIFT);
+        criteria.addFilterEndVersion(Integer.toString(endVersion));
+        criteria.addFilterStartVersion(Integer.toString(1));
+        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+
+        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+        for (DriftChangeSet<?> changeSet : changeSets) {
+            snapshot.add(changeSet);
+        }
+
+        return snapshot;
     }
 
     @Override
-    public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
-        DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterDriftDefinitionId(driftDefinitionId);
-        criteria.addSortVersion(PageOrdering.ASC);
+    public DriftSnapshot getCurrentSnapshot(Subject subject, int driftDefinitionId) {
+        // First load the initial change set
+        DriftChangeSet<?> initialChangeSet = loadInitialChangeSet(subject, driftDefinitionId);
+        if (initialChangeSet == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot create snapshot for drift definition id " + driftDefinitionId +
+                    " - No initial change set found.");
+            }
+            return null;
+        }
 
-        Subject overlord = getSubjectManager().getOverlord();
-        return createSnapshot(overlord, criteria);
+        // now fetch the delta change sets
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterCategory(DRIFT);
+        criteria.addFilterStartVersion("1");
+        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+        PageList<? extends DriftChangeSet<?>> deltaChangeSets = findDriftChangeSetsByCriteria(subject, criteria);
+
+        DriftSnapshot snapshot = new DriftSnapshot();
+        snapshot.add(initialChangeSet);
+        for (DriftChangeSet<?> changeSet : deltaChangeSets) {
+            snapshot.add(changeSet);
+        }
+
+        return snapshot;
+    }
+
+    private DriftChangeSet<?> loadInitialChangeSet(Subject subject, int driftDefinitionId) {
+        DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterCategory(COVERAGE);
+        criteria.addFilterVersion("0");
+        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+
+        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+        if (changeSets.isEmpty()) {
+            return null;
+        }
+
+        return changeSets.get(0);
     }
 
     @Override
@@ -475,28 +538,28 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public void pinSnapshot(Subject subject, String changeSetId) {
-        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterId(changeSetId);
-        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
-        DriftChangeSet<?> changeSet = changeSets.get(0);
-
-        DriftDefinition config = entityManager.find(DriftDefinition.class, changeSet.getDriftDefinitionId());
-        config.setPinned(true);
-
-        // TODO is this merge call needed? - jsanda
-        config = entityManager.merge(config);
-
-        GenericDriftChangeSetCriteria snapshotCriteria = new GenericDriftChangeSetCriteria();
-        snapshotCriteria.addFilterDriftDefinitionId(config.getId());
-        snapshotCriteria.addFilterEndVersion(Integer.toString(changeSet.getVersion()));
-        DriftSnapshot snapshot = createSnapshot(subject, snapshotCriteria);
-
-        entityManager.flush();
-        entityManager.clear();
-
-        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), changeSet.getResourceId());
-        DriftAgentService driftService = agent.getDriftAgentService();
-        driftService.pinSnapshot(changeSet.getResourceId(), config.getName(), snapshot);
+//        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+//        criteria.addFilterId(changeSetId);
+//        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+//        DriftChangeSet<?> changeSet = changeSets.get(0);
+//
+//        DriftDefinition config = entityManager.find(DriftDefinition.class, changeSet.getDriftDefinitionId());
+//        config.setPinned(true);
+//
+//        // TODO is this merge call needed? - jsanda
+//        config = entityManager.merge(config);
+//
+//        GenericDriftChangeSetCriteria snapshotCriteria = new GenericDriftChangeSetCriteria();
+//        snapshotCriteria.addFilterDriftDefinitionId(config.getId());
+//        snapshotCriteria.addFilterEndVersion(Integer.toString(changeSet.getVersion()));
+//        DriftSnapshot snapshot = createSnapshot(subject, snapshotCriteria);
+//
+//        entityManager.flush();
+//        entityManager.clear();
+//
+//        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), changeSet.getResourceId());
+//        DriftAgentService driftService = agent.getDriftAgentService();
+//        driftService.pinSnapshot(changeSet.getResourceId(), config.getName(), snapshot);
     }
 
     @Override

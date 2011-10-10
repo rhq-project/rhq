@@ -29,7 +29,6 @@ import java.util.Set;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
@@ -91,18 +90,13 @@ public class DriftServerServiceImpl implements DriftServerService {
 
     @Override
     public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
-        return getDriftManager().getCurrentSnapshot(driftDefinitionId);
+        Subject overlord = getSubjectManager().getOverlord();
+        return getDriftManager().getCurrentSnapshot(overlord, driftDefinitionId);
     }
 
     @Override
     public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
         Subject overlord = getSubjectManager().getOverlord();
-
-        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterDriftDefinitionId(driftDefinitionId);
-        criteria.addFilterStartVersion(Integer.toString(startVersion));
-        criteria.addFilterEndVersion(Integer.toString(endVersion));
-
-        return getDriftManager().createSnapshot(overlord, criteria);
+        return getDriftManager().createSnapshot(overlord, driftDefinitionId, startVersion, endVersion);
     }
 }

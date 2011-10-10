@@ -47,7 +47,24 @@ public interface DriftServerPluginFacet {
     DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
     /**
-     * Standard criteria based fetch method
+     * <p>
+     * Performs criteria-based search for change sets.
+     * </p>
+     * <p>
+     * Note that there are really two types
+     * of change sets - a delta change set and a snapshot or coverage change set. A snapshot
+     * includes all files that are under drift detection. The delta snapshot just includes
+     * references to those files that have changed (here change can be a modification,
+     * addition, or deletion of a file).
+     * </p>
+     * <p>
+     * Implementations of this method can assume that queries for snapshots and for delta
+     * change sets will always be made in separate calls; in other words, this method should
+     * return either only snapshots (i.e., coverage change sets) or only delta change sets.
+     * This assumption/restriction is in place in large part because of how the UI queries
+     * change sets.
+     * </p>
+     *
      * @param subject
      * @param criteria
      * @return The DriftChangeSets matching the criteria

@@ -198,7 +198,12 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
     private void handleLoadFailure(Throwable caught) {
         refreshing = false;
-        CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()), caught);
+        if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
+            final String msg = MSG.view_group_resConfig_edit_loadFail(group.toString());
+            CoreGUI.getMessageCenter().notify(new Message(msg, Message.Severity.Warning));
+        } else {
+            CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()), caught);
+        }
     }
 
     private void save() {

@@ -19,9 +19,6 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -66,6 +63,7 @@ import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftFileBits;
+import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.StopWatch;
@@ -79,6 +77,9 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -271,29 +272,41 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         summary.setDriftHandlingMode(driftDef.getDriftHandlingMode());
                         summary.setCreatedTime(driftChangeSet.getCtime());
 
-                        for (FileEntry entry : reader) {
-                            JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
-                            JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                        if (version > 0) {
+                            for (FileEntry entry : reader) {
+                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                            // TODO Figure out an efficient way to save coverage change sets.
-                            // The initial/coverage change set could contain hundreds or even thousands
-                            // of entries. We probably want to consider doing some kind of batch insert
-                            //
-                            // jsanda
+                                // TODO Figure out an efficient way to save coverage change sets.
+                                // The initial/coverage change set could contain hundreds or even thousands
+                                // of entries. We probably want to consider doing some kind of batch insert
+                                //
+                                // jsanda
 
-                            // use a path with only forward slashing to ensure consistent paths across reports
-                            String path = FileUtil.useForwardSlash(entry.getFile());
-                            JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
-                                newDriftFile);
-                            entityManager.persist(drift);
+                                // use a path with only forward slashing to ensure consistent paths across reports
+                                String path = FileUtil.useForwardSlash(entry.getFile());
+                                JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                    newDriftFile);
+                                entityManager.persist(drift);
 
-                            // we are taking advantage of the fact that we know the summary is only used by the server
-                            // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
-                            // not alert on coverage reports) - so don't waste memory by collecting all the paths
-                            // when we know they aren't going to be used anyway.
-                            if (category == DriftChangeSetCategory.DRIFT) {
-                                summary.addDriftPathname(path);
+                                // we are taking advantage of the fact that we know the summary is only used by the server
+                                // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
+                                // not alert on coverage reports) - so don't waste memory by collecting all the paths
+                                // when we know they aren't going to be used anyway.
+                                if (category == DriftChangeSetCategory.DRIFT) {
+                                    summary.addDriftPathname(path);
+                                }
                             }
+                        } else {
+                            JPADriftSet driftSet = new JPADriftSet();
+                            for (FileEntry entry : reader) {
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                String path = FileUtil.useForwardSlash(entry.getFile());
+                                driftSet.addDrift(new JPADrift(null, path, entry.getType(), null, newDriftFile));
+                            }
+                            entityManager.persist(driftSet);
+                            driftChangeSet.setInitialDriftSet(driftSet);
+                            entityManager.merge(driftChangeSet);
                         }
 
                         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

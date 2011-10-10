@@ -89,10 +89,6 @@ public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
             if (dc1.isPinned() != dc2.isPinned()) {
                 return dc1.isPinned() ? 1 : -1;
             }
-
-            if (dc1.getPinnedVersion() != dc2.getPinnedVersion()) {
-                return dc1.getPinnedVersion() < dc2.getPinnedVersion() ? -1 : 1;
-            }
         }
 
         if (compareMode != CompareMode.ONLY_BASE_INFO) {

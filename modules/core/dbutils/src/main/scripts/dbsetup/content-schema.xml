@@ -698,7 +698,6 @@
         <column name="IS_ENABLED" type="BOOLEAN" required="true"/>        
         <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>
         <column name="PINNED" type="BOOLEAN" required="true"/>
-        <column name="PINNED_VERSION" type="INTEGER" required="false"/>
     </table>
 
     <table name="RHQ_DRIFT_SET">

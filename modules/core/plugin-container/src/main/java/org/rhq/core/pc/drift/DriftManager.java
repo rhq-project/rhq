@@ -61,7 +61,6 @@ import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.util.file.FileUtil.copyFile;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -195,8 +194,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
             if (driftDefinition.isPinned()) {
                 log.debug(driftDefinition + " is pinned. Fetching pinned snapshot...");
-                DriftSnapshot pinnedSnapshot = driftServer.getSnapshot(driftDefinition.getId(), 0,
-                    driftDefinition.getPinnedVersion());
+                // The pinned snapshot is always the initial change set and only the initial
+                // change set.
+                DriftSnapshot pinnedSnapshot = driftServer.getSnapshot(driftDefinition.getId(), 0, 0);
                 Headers pinnedHeaders = createHeaders(resource.getId(), driftDefinition);
                 File pinnedSnapshotFile = new File(currentSnapshotFile.getParent(), "snapshot.pinned");
                 log.info("Preparing to write pinned snapshot to disk for " + toString(resource, driftDefinition));
@@ -535,35 +535,26 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void pinSnapshot(final int resourceId, final String defName, final DriftSnapshot snapshot) {
+        // When we pin a snapshot for an existing drift definition, we reset. We delete the
+        // detection schedule and create a new schedule. We reset because the pinned
+        // snapshot is always set to version zero.
+
         if (log.isInfoEnabled()) {
-            log.info("Pinning snapshot version " + snapshot.getVersion() + " for " + toString(resourceId, defName));
+            log.info("Pinning snapshot for " + toString(resourceId, defName));
         }
+
         final DriftDetectionSchedule schedule = schedulesQueue.find(resourceId, defName);
         if (schedule == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Unable to pin snapshot for " + toString(resourceId, defName) + " - no detection schedule " +
+                    "found.");
+            }
             return;
         }
-
-        schedule.getDriftDefinition().setPinned(true);
-        schedule.getDriftDefinition().setPinnedVersion(snapshot.getVersion());
-
-        schedulesQueue.removeAndExecute(resourceId, defName, new Runnable() {
-            @Override
-            public void run() {
-                File snapshotFile = changeSetMgr.findChangeSet(resourceId, defName, COVERAGE);
-                snapshotFile.delete();
-                try {
-                    // Replace the current snapshot and then create/copy it to the pinned
-                    // snapshot file
-                    writeSnapshotToFile(snapshot, snapshotFile, createHeaders(resourceId,
-                        schedule.getDriftDefinition()));
-                    schedulesQueue.addSchedule(schedule);
-                    copyFile(snapshotFile, new File(snapshotFile.getParentFile(), "snapshot.pinned"));
-                } catch (IOException e) {
-                    log.error("An error occurred while writing the pinned snapshot to disk. Drift detection will " +
-                        "not be rescheduled for " + schedule);
-                }
-            }
-        });
+        DriftDefinition driftDef = schedule.getDriftDefinition();
+        driftDef.setPinned(true);
+        unscheduleDriftDetection(resourceId, driftDef);
+        scheduleDriftDetection(resourceId, driftDef);
     }
 
     @Override

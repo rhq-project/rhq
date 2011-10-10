@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+
+<jboss-web>
+    <context-root>rest</context-root>
+    <security-domain>java:/jaas/REST</security-domain>
+</jboss-web>

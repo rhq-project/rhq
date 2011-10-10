@@ -79,7 +79,6 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.AbstractConfigurationUpdateCriteria;
-import org.rhq.core.domain.criteria.AbstractGroupConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
@@ -96,6 +95,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -136,6 +136,7 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author John Mazzitelli
  * @author Ian Springer
  */
+@SuppressWarnings({"UnnecessaryLocalVariable", "UnnecessaryReturnStatement"})
 @Stateless
 @XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
@@ -197,6 +198,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationDefinition pluginConfigurationDefinition = getPluginConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), resource.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
+        pluginConfiguration.getMap().size();
         entityManager.clear();
         ConfigurationMaskingUtility.maskConfiguration(pluginConfiguration, pluginConfigurationDefinition);
 
@@ -231,8 +233,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             entityManager.merge(update);
 
         } else {
-            handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(), response
-                .getErrorMessage());
+            handlePluginConfiguratonUpdateRemoteException(resource, response.getStatus().toString(),
+                response.getErrorMessage());
 
             update.setStatus(response.getStatus());
             update.setErrorMessage(response.getErrorMessage());
@@ -282,8 +284,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationMaskingUtility.unmaskConfiguration(newPluginConfiguration, existingPluginConfiguration);
 
         // create our new update request and assign it to our resource - its status will initially be "in progress"
-        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, newPluginConfiguration, subject
-            .getName());
+        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, newPluginConfiguration,
+            subject.getName());
 
         update.setStatus(ConfigurationUpdateStatus.SUCCESS);
         entityManager.persist(update);
@@ -346,6 +348,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ConfigurationDefinition resourceConfigurationDefinition = getResourceConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), resource.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
+        resourceConfiguration.getMap().size();
         entityManager.clear();
         ConfigurationMaskingUtility.maskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
 
@@ -439,6 +442,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (current != null) {
             // Mask the configuration before returning the update.
             Configuration configuration = current.getConfiguration();
+            configuration.getMap().size();
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
                 subjectManager.getOverlord(), resource.getResourceType().getId());
             // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
@@ -509,6 +513,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             // Mask the configuration before returning the update.
             Configuration configuration = current.getConfiguration();
+            configuration.getMap().size();
             ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
                 subjectManager.getOverlord(), resource.getResourceType().getId());
             // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
@@ -665,6 +670,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         // Mask the configurations before returning them.
+        for (Configuration resourceConfiguration : currentPersistedConfigs.values()) {
+            resourceConfiguration.getMap().size();
+        }
         ConfigurationDefinition resourceConfigurationDefinition = getResourceConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), group.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -689,6 +697,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Map<Integer, Configuration> currentPersistedConfigs = getPersistedPluginConfigurationsForCompatibleGroup(group);
 
         // Mask the configurations before returning them.
+        for (Configuration pluginConfiguration : currentPersistedConfigs.values()) {
+            pluginConfiguration.getMap().size();
+        }
         ConfigurationDefinition pluginConfigurationDefinition = getPluginConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), group.getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -720,14 +731,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             query.setParameter("groupId", compatibleGroup.getId());
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
             List<Resource> resources = query.getResultList();
+            List<String> names = new ArrayList<String>();
+            for (Resource resource : resources) {
+                names.add(resource.getName());
+            }
             throw new ConfigurationUpdateStillInProgressException("Current group Resource configuration for "
                 + compatibleGroup
                 + " cannot be calculated, because Resource configuration updates are currently in progress for the"
                 + " following Resources (please wait for these updates to complete or delete them from the history): "
-                + resources);
+                + names);
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void ensureNoPluginConfigurationUpdatesInProgress(ResourceGroup compatibleGroup)
         throws ConfigurationUpdateStillInProgressException {
         if (isGroupPluginConfigurationUpdateInProgress(this.subjectManager.getOverlord(), compatibleGroup.getId())) {
@@ -735,17 +751,25 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + compatibleGroup
                 + " cannot be calculated, because a group plugin configuration update is currently in progress.");
         }
-        List<Resource> resourcesWithPluginConfigUpdatesInProgress = new ArrayList<Resource>();
-        for (Resource memberResource : compatibleGroup.getExplicitResources()) {
-            if (isPluginConfigurationUpdateInProgress(this.subjectManager.getOverlord(), memberResource.getId()))
-                resourcesWithPluginConfigUpdatesInProgress.add(memberResource);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            PluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
+        countQuery.setParameter("groupId", compatibleGroup.getId());
+        countQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
+        long count = (Long) countQuery.getSingleResult();
+        if (count != 0) {
+            Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
+            query.setParameter("groupId", compatibleGroup.getId());
+            query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
+            List<Resource> resources = query.getResultList();
+            List<String> names = new ArrayList<String>();
+            for (Resource resource : resources) {
+                names.add(resource.getName());
+            }
+            throw new ConfigurationUpdateStillInProgressException("Current group plugin configuration for "
+                + compatibleGroup
+                + " cannot be calculated, because plugin configuration updates are currently in progress for the"
+                + " following Resources (please wait for these updates to complete): " + names);
         }
-        if (!resourcesWithPluginConfigUpdatesInProgress.isEmpty())
-            throw new ConfigurationUpdateStillInProgressException(
-                "Current group plugin configuration for "
-                    + compatibleGroup
-                    + " cannot be calculated, because plugin configuration updates are currently in progress for the following Resources: "
-                    + resourcesWithPluginConfigUpdatesInProgress);
     }
 
     @SuppressWarnings("unchecked")
@@ -755,13 +779,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
-        if (count != compatibleGroup.getExplicitResources().size())
-            throw new IllegalStateException("Size of group changed from "
-                + compatibleGroup.getExplicitResources().size() + " to " + count + " - please retry the operation.");
+        int groupSize = resourceGroupManager.getExplicitGroupMemberCount(compatibleGroup.getId());
+        if (count != groupSize) {
+            throw new IllegalStateException("Size of group changed from " + groupSize + " to " + count
+                + " - please retry the operation.");
+        }
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
-        PageControl pageControl = new PageControl(0, 10);
-        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID);
+        PageControl pageControl = new PageControl(0, 20);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID, new OrderingField("r.id", PageOrdering.ASC));
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
         Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) count);
@@ -770,15 +797,18 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
             List<Object[]> pagedResults = query.getResultList();
 
-            if (pagedResults.size() <= 0)
+            if (pagedResults.size() <= 0) {
                 break;
+            }
 
-            for (Object[] result : pagedResults)
+            for (Object[] result : pagedResults) {
                 results.put((Integer) result[0], (Configuration) result[1]);
+            }
 
             rowsProcessed += pagedResults.size();
-            if (rowsProcessed >= count)
+            if (rowsProcessed >= count) {
                 break;
+            }
 
             pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
         }
@@ -791,32 +821,37 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
         countQuery.setParameter("resourceGroupId", compatibleGroup.getId());
         long count = (Long) countQuery.getSingleResult();
-        if (count != compatibleGroup.getExplicitResources().size())
-            throw new IllegalStateException("Size of group changed from "
-                + compatibleGroup.getExplicitResources().size() + " to " + count + " - please retry the operation.");
+        int groupSize = resourceGroupManager.getExplicitGroupMemberCount(compatibleGroup.getId());
+        if (count != groupSize) {
+            throw new IllegalStateException("Size of group changed from " + groupSize + " to " + count
+                + " - please retry the operation.");
+        }
 
         // Configurations are very expensive to load, so load 'em in chunks to ease the strain on the DB.
         PageControl pageControl = new PageControl(0, 20);
-        Query query = entityManager.createNamedQuery(Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_ID, new OrderingField("r.id", PageOrdering.ASC));
         query.setParameter("resourceGroupId", compatibleGroup.getId());
 
         Map<Integer, Configuration> results = new HashMap<Integer, Configuration>((int) count);
         int rowsProcessed = 0;
         while (true) {
+            PersistenceUtility.setDataPage(query, pageControl); // retrieve one page at a time
             List<Object[]> pagedResults = query.getResultList();
 
-            if (pagedResults.size() <= 0)
+            if (pagedResults.size() <= 0) {
                 break;
+            }
 
-            for (Object[] result : pagedResults)
+            for (Object[] result : pagedResults) {
                 results.put((Integer) result[0], (Configuration) result[1]);
+            }
 
             rowsProcessed += pagedResults.size();
-            if (rowsProcessed >= count)
+            if (rowsProcessed >= count) {
                 break;
-
+            }
             pageControl.setPageNumber(pageControl.getPageNumber() + 1); // advance the page
-            PersistenceUtility.setDataPage(query, pageControl); // and update the query to retrieve the new page
         }
         return results;
     }
@@ -1273,8 +1308,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
-            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
-                .getConfiguration(), update.getResource().getId());
+            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(),
+                update.getConfiguration(), update.getResource().getId());
             agentClient.getConfigurationAgentService().updateResourceConfiguration(request);
         } catch (RuntimeException e) {
             // Any exception means the remote call itself failed - make sure to change the status on the update to FAILURE
@@ -1425,8 +1460,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         log.debug("Received a configuration-update-completed message: " + response);
 
         // find the current update request that is persisted - this is the one that is being reported as being complete
-        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class, response
-            .getConfigurationUpdateId());
+        ResourceConfigurationUpdate update = entityManager.find(ResourceConfigurationUpdate.class,
+            response.getConfigurationUpdateId());
         if (update == null) {
             throw new IllegalStateException(
                 "The completed request passed in does not match any request for any resource in inventory: " + response);
@@ -1651,14 +1686,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration getConfiguration(Subject subject, int configurationId) {
-        @SuppressWarnings( { "UnnecessaryLocalVariable" })
+        @SuppressWarnings({ "UnnecessaryLocalVariable" })
         Configuration configuration = getConfigurationById(configurationId);
         return configuration;
     }
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
-        ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
-            .getId());
+        ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class,
+            definition.getId());
         Configuration configuration = managedDefinition.getDefaultTemplate().getConfiguration();
         ConfigurationMaskingUtility.maskConfiguration(configuration, managedDefinition);
         return configuration;
@@ -1797,7 +1832,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         } catch (SchedulerException e) {
             String message = "Error scheduling job named '" + jobDetail.getName() + "':";
             log.error(message, e);
-            new ResourceGroupUpdateException(message + e.getMessage());
+            throw new ResourceGroupUpdateException(message + e.getMessage());
         }
 
         log.debug("Scheduled Resource configuration update against compatible ResourceGroup[id=" + compatibleGroupId
@@ -1953,6 +1988,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100, groupIdParameter);
 
         // Mask the configurations before returning them.
+        for (Configuration configuration : results.values()) {
+            configuration.getMap().size();
+        }
         ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), groupResourceConfigurationUpdate.getGroup().getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -1977,6 +2015,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Configuration.QUERY_GET_PLUGIN_CONFIG_MAP_BY_GROUP_UPDATE_ID, 100, groupIdParameter);
 
         // Mask the configurations before returning them.
+        for (Configuration configuration : results.values()) {
+            configuration.getMap().size();
+        }
         ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
             subjectManager.getOverlord(), groupPluginConfigurationUpdate.getGroup().getResourceType().getId());
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
@@ -2309,6 +2350,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
         Set<String> fetchFields = new HashSet<String>(generator.getFetchFields(criteria));
         if (fetchFields.contains(AbstractConfigurationUpdateCriteria.FETCH_FIELD_CONFIGURATION)) {
+            for (ResourceConfigurationUpdate update : updates) {
+                Configuration configuration = update.getConfiguration();
+                configuration.getMap().size();
+            }
             entityManager.clear();
             for (ResourceConfigurationUpdate update : updates) {
                 Configuration configuration = update.getConfiguration();
@@ -2339,6 +2384,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // We do not want the masked configurations persisted, so detach all entities before masking the configurations.
         Set<String> fetchFields = new HashSet<String>(generator.getFetchFields(criteria));
         if (fetchFields.contains(AbstractConfigurationUpdateCriteria.FETCH_FIELD_CONFIGURATION)) {
+            for (PluginConfigurationUpdate update : updates) {
+                Configuration configuration = update.getConfiguration();
+                configuration.getMap().size();
+            }
             entityManager.clear();
             for (PluginConfigurationUpdate update : updates) {
                 Configuration configuration = update.getConfiguration();

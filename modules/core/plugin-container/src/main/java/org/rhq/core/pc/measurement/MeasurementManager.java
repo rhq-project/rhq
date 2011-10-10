@@ -378,8 +378,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
 
             info.setNextCollection(firstCollection);
 
-            // This is a workaround for JDK Bug 6207984 (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6207984)
-            this.scheduledRequests.removeAll(Collections.singletonList(info));
+            this.scheduledRequests.remove(info);
 
             // Don't add it if collection is disabled for this resource
             if (info.isEnabled()) {

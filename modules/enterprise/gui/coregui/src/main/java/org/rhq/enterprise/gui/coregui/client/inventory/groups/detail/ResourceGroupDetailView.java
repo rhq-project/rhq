@@ -57,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring.IFrameWithMeasurementRangeEditorView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
@@ -66,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.M
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMembersHealthView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMonitoringTablesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
@@ -302,7 +304,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     } else if (groupContext.isAutoCluster()) {
                         url += "&groupType=cluster";
                     }
-                    return new FullHTMLPane(monitorGraphs.extendLocatorId("View"), url);
+                    return new IFrameWithMeasurementRangeEditorView(monitorGraphs.extendLocatorId("View"), url);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
@@ -314,15 +316,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     //                    return new FullHTMLPane(monitorTables.extendLocatorId("View"),
                     //                        "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId);
                     //gwt version of group table view.
-                    LocatableVLayout groupTableView = new LocatableVLayout(monitorTables
-                        .extendLocatorId("monitorTable"));
-                    GroupMeasurementTableView metrics = new GroupMeasurementTableView(monitorTables
-                        .extendLocatorId("ViewMetrics"), groupComposite, groupId);
-                    GroupMembersHealthView memberHealth = new GroupMembersHealthView(monitorTables
-                        .extendLocatorId("ViewHealth"), groupId, false);
-                    groupTableView.addMember(metrics);
-                    groupTableView.addMember(memberHealth);
-                    return groupTableView;
+                    return new GroupMonitoringTablesView(monitorTables.extendLocatorId("monitorTable"), groupComposite);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);
@@ -349,7 +343,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(monitorCallTime.extendLocatorId("View"),
+                    return new IFrameWithMeasurementRangeEditorView(monitorCallTime.extendLocatorId("View"),
                         "/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId);
                 }
             };

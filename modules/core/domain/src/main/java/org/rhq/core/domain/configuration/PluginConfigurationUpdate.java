@@ -66,6 +66,11 @@ import org.rhq.core.domain.resource.Resource;
         + "   AND cu.modifiedTime = ( SELECT MAX(cu2.modifiedTime) " //
         + "                             FROM PluginConfigurationUpdate cu2 " //
         + "                            WHERE cu2.resource.id = :resourceId) "),
+    @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS, query = "" //
+        + "SELECT cu " //
+        + "  FROM PluginConfigurationUpdate cu JOIN cu.resource.explicitGroups rg " //
+        + " WHERE rg.id = :groupId " //
+        + "   AND cu.status = :status"),
     @NamedQuery(name = PluginConfigurationUpdate.QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID, query = "" //
         + "SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
         + "       ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
@@ -131,6 +136,7 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findCompositeByParentUpdateId";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findByParentUpdateId";
     public static final String QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID = "PluginConfigurationUpdate.findStatusByParentUpdateId";
+    public static final String QUERY_FIND_BY_GROUP_ID_AND_STATUS = "PluginConfigurationUpdate.findByGroupIdAndStatus";
     public static final String QUERY_DELETE_BY_RESOURCES_0 = "PluginConfigurationUpdate.deleteByResources0";
     public static final String QUERY_DELETE_BY_RESOURCES_1 = "PluginConfigurationUpdate.deleteByResources1";
     public static final String QUERY_DELETE_BY_RESOURCES_2 = "PluginConfigurationUpdate.deleteByResources2";

@@ -157,7 +157,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
         }
         // DO NOT LOAD ALL ALERTS FOR A DEFINITION... This would be all alerts that have been fired
-        //alertDefinition.getAlerts().size();
+        //alertDefinition.getAlertsForResource().size();
         for (AlertNotification notification : alertDefinition.getAlertNotifications()) {
             notification.getConfiguration().getProperties().size(); // eager load configuration and properties too
             if (notification.getExtraConfiguration() != null) {
@@ -717,7 +717,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         // Inv managers can do anything and anyone can inspect templates
         if (!authorizationManager.isInventoryManager(subject) && !criteria.isTemplateCriteria()) {
 
-            // otherwise, for group alert defs ensure group view authz and for everything else, assume resource view authz 
+            // otherwise, for group alert defs ensure group view authz and for everything else, assume resource view authz
             AuthorizationTokenType tokenType = criteria.isGroupCriteria() ? AuthorizationTokenType.GROUP
                 : AuthorizationTokenType.RESOURCE;
 

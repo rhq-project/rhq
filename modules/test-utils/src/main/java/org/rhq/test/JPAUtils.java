@@ -1,5 +1,7 @@
 package org.rhq.test;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.naming.InitialContext;
@@ -57,15 +59,17 @@ public class JPAUtils {
             callback.execute();
             tm.commit();
         } catch (Throwable t) {
+            RuntimeException re = new RuntimeException(getAllThrowableMessages(t), t);
             try {
                 if (tm != null) {
                     tm.rollback();
                 }
             } catch (SystemException e) {
-                throw new RuntimeException("Failed to rollback transaction", e);
+                throw new RuntimeException("Failed to rollback transaction ((" + getAllThrowableMessages(e)
+                    + ")) but there was a real cause before this - see cause for that", re);
             }
-            Throwable rootCause = getRootCause(t);
-            throw new RuntimeException(rootCause);
+            re.printStackTrace();
+            throw re;
         }
     }
 
@@ -78,23 +82,53 @@ public class JPAUtils {
             tm.commit();
             return results;
         } catch (Throwable t) {
+            RuntimeException re = new RuntimeException(getAllThrowableMessages(t), t);
             try {
                 if (tm != null) {
                     tm.rollback();
                 }
             } catch (SystemException e) {
-                throw new RuntimeException("Failed to rollback transaction", e);
+                throw new RuntimeException("Failed to rollback transaction ((" + getAllThrowableMessages(e)
+                    + ")) but there was a real cause before this - see cause for that", re);
             }
-            Throwable rootCause = getRootCause(t);
-            throw new RuntimeException(rootCause);
+            re.printStackTrace();
+            throw re;
         }
     }
 
-    private static Throwable getRootCause(Throwable t) {
-        while ((t.getCause() != null) && (t != t.getCause())) {
-            t = t.getCause();
+    private static String getAllThrowableMessages(Throwable t) {
+        ArrayList<String> list = new ArrayList<String>();
+        if (t != null) {
+            String msg = t.getClass().getName() + ":" + t.getMessage();
+            if (t instanceof SQLException) {
+                msg += "[SQLException=" + getAllSqlExceptionMessages((SQLException) t) + "]";
+            }
+            list.add(msg);
+
+            while ((t.getCause() != null) && (t != t.getCause())) {
+                t = t.getCause();
+                msg = t.getClass().getName() + ":" + t.getMessage();
+                if (t instanceof SQLException) {
+                    msg += "[SQLException=" + getAllSqlExceptionMessages((SQLException) t) + "]";
+                }
+                list.add(msg);
+            }
         }
-        return t;
+
+        return list.toString();
+    }
+
+    private static String getAllSqlExceptionMessages(SQLException t) {
+        ArrayList<String> list = new ArrayList<String>();
+        if (t != null) {
+            list.add(t.getClass().getName() + ":" + t.getMessage());
+            while ((t.getNextException() != null) && (t != t.getNextException())) {
+                t = t.getNextException();
+                String msg = t.getClass().getName() + ":" + t.getMessage();
+                list.add(msg + "(error-code=" + t.getErrorCode() + ",sql-state=" + t.getSQLState() + ")");
+            }
+        }
+        return list.toString();
     }
 
     public static void clearDB() {
@@ -186,8 +220,7 @@ public class JPAUtils {
                 em.createNativeQuery("delete from rhq_measurement_sched");
                 em.createNativeQuery("delete from rhq_measurement_def");
                 em.createNativeQuery("delete from rhq_plugin");
-                em
-                    .createNativeQuery("delete from rhq_system_config where id not in (1, 2, 3, 4, 9, 10, 32, 34, 35, 36, 51, 52, 53, 54, 55, 56, 57, 58)");
+                em.createNativeQuery("delete from rhq_system_config where id not in (1, 2, 3, 4, 9, 10, 32, 34, 35, 36, 51, 52, 53, 54, 55, 56, 57, 58)");
                 em.createNativeQuery("delete from rhq_alert_notification");
                 em.createNativeQuery("delete from rhq_alert_condition_log");
                 em.createNativeQuery("delete from rhq_alert");

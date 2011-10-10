@@ -53,7 +53,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "InventorySummary";
-    // A default displayed, persisted name for the portlet    
+    // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_inventorySummary();
 
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
@@ -112,7 +112,7 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
 
                 StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal", MSG
                     .common_title_group_def_total(), summary.getGroupDefinitionCount(),
-                    "Inventory/Groups/DynagroupManager");
+                    "Inventory/Groups/DynagroupDefinitions");
                 formItems.add(groupDefinitionTotal);
 
                 StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal", MSG

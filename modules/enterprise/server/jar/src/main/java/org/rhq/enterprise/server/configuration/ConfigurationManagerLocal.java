@@ -495,6 +495,8 @@ public interface ConfigurationManagerLocal {
 
     boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId);
 
+    boolean isGroupPluginConfigurationUpdateInProgress(Subject subject, int groupId);
+
     int scheduleGroupResourceConfigurationUpdate(Subject subject, int compatibleGroupId,
         Map<Integer, Configuration> newResourceConfigurationMap);
 

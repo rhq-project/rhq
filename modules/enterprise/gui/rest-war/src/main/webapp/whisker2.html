@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>(free mem, schedule 10003)</title>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <script type="text/javascript" src="js/d3.layout.js"></script>
+    <script type="text/javascript" src="js/d3.time.js"></script>
+    <script type="text/javascript" src="js/whisker.js"></script>
+
+    <style type="text/css">
+
+svg {
+  width: 240px;
+  height: 125px;
+  border: solid 1px #ccc;
+  font: 10px sans-serif;
+  shape-rendering: crispEdges;
+}
+
+    </style>
+  </head>
+  <body>
+  <h2>Various metrics</h2>
+  <table>
+      <tr>
+          <td>
+              Schedule 10003<br/>
+              <div id="two">
+                  <script>whisker(10003,'two')</script>
+              </div>
+          </td>
+          <td>
+              Schedule 10004<br/>
+              <div id="three">
+                  <script>whisker(10004,'three')</script>
+              </div>
+          </td>
+
+          <td>
+              Schedule 10007<br/>
+              <div id="four">
+                  <script>whisker(10007,'four')</script>
+              </div>
+          </td>
+      </tr>
+      <tr>
+          <td>
+          Schedule 10011<br/>
+          <div id="five">
+              <script>whisker(10011,'five')</script>
+          </div>
+          </td>
+          <td>
+              Schedule 10009<br/>
+              <div id="six">
+                  <script>whisker(10009,'six')</script>
+              </div>
+          </td>
+          <td>
+              Schedule 10010<br/>
+              <div id="seven">
+                  <script>whisker(10010,'seven')</script>
+              </div>
+          </td>
+      </tr>
+  </table>
+
+
+  </body>
+</html>

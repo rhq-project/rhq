@@ -31,6 +31,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -39,6 +41,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Serves the static content found in rhq-downloads.
  */
 public class DownloadServlet extends HttpServlet {
+
     private static final long serialVersionUID = 1L;
 
     // the system property that disables/enables file listing - default is to show the listing
@@ -47,9 +50,11 @@ public class DownloadServlet extends HttpServlet {
     private static int numActiveDownloads = 0;
     private static boolean showDownloadsListing;
 
+    private Log log = LogFactory.getLog(this.getClass());
+
     @Override
     public void init() throws ServletException {
-        log("Starting the download servlet");
+        log.info("Starting the RHQ download servlet...");
 
         String propValue = System.getProperty(SYSPROP_SHOW_DOWNLOADS_LISTING, "true");
         showDownloadsListing = Boolean.parseBoolean(propValue);
@@ -128,7 +133,7 @@ public class DownloadServlet extends HttpServlet {
                 }
             }
         } catch (Throwable t) {
-            log("Failed to stream download content", t);
+            log.error("Failed to stream download content.", t);
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to download content");
         }
@@ -143,7 +148,7 @@ public class DownloadServlet extends HttpServlet {
             mimeType = getServletContext().getMimeType(file.getName());
         } catch (Throwable t) {
             // i'm paranoid, no idea if this will ever happen, but its not fatal so keep going
-            log("Failed to get mime type for [" + file + "]. Cause: " + t);
+            log.warn("Failed to get mime type for [" + file + "].", t);
         }
 
         if (mimeType == null) {
@@ -241,4 +246,5 @@ public class DownloadServlet extends HttpServlet {
             return false;
         }
     }
+
 }

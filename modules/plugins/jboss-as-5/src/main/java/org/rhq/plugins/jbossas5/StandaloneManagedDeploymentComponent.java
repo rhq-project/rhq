@@ -1,6 +1,6 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -117,6 +117,16 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         File packageFile = new File(packageDetails.getName());
         File fileToSend;
         try {
+            /*
+             * TODO: This all seems very broken. We are first setting packageFile 
+             * to the key used for packageDetails and not the fileName of packageDetails. 
+             * Additionally, PackageDetails.fileName contains the file name without its
+             * path making its use invalid here.   
+             */
+            // If the file isn't real then lets fall-back to this ManagedDeploymentComponent's file name and hope its valid
+            if (!packageFile.exists() && this.deploymentFile != null) {
+                packageFile = this.deploymentFile;
+            }
             if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
                 ZipUtil.zipFileOrDirectory(packageFile, fileToSend);

@@ -12,7 +12,7 @@
 
    <ui:define name="content">
 
-   <rich:panel styleClass="BlockContent">
+   <rich:panel styleClass="BlockContent" id="callTimePanel">
 
       <h:form id="callTimeForm">
          <a4j:keepAlive beanName="CallTimeUIBean"/>
@@ -134,25 +134,58 @@
 
          </rich:dataTable>
          
-         <table>
-             <tr>
-                 <td><onc:metric optionList="m,h,d" /></td>
-                 <td>
-                     <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
+<!-- BZ 634648 - removing the ability to set the metric time range from the JSF UI.-->
+<ui:remove>
+         table>
+             tr>
+                 td>onc:metric optionList="m,h,d" />/td>
+                 td>
+                     h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
                                     action="#{MetricComponentUtilityUIBean.update}" >
-                         <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
-                     </h:commandLink>
-                     <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
+                         img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                     /h:commandLink>
+                     h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
                                     action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">
-                         <h:outputText value="Switch to Simple Mode" />
-                     </h:commandLink>
-                 </td>
-             </tr>
-         </table>
-
+                         h:outputText value="Switch to Simple Mode" />
+                     /h:commandLink>
+                 /td>
+             /tr>
+         /table>
+</ui:remove>
       </h:form>
 
    </rich:panel>
+         <div id="spacer" class="BlockContent"></div>
+   
+<script type="text/javascript">
+    function maxPage() {
+        var panel = getElementCrossBrowser("callTimePanel");
+        
+        var spacer = getElementCrossBrowser("spacer");
+        
+        //IE6 returns 0 for document.documentElement.clientHeight
+        var browserHeight = document.documentElement.clientHeight || document.body.clientHeight;
+        var panelTopPos = getElementTopPos(panel);
+        
+        var spacerTopPos = getElementTopPos(spacer);
+        var panelHeight = spacerTopPos - panelTopPos;
+        
+        var newSpacerHeight = browserHeight - panelTopPos - panelHeight - 8;
+
+        //accomodating for the IE measurement difficulties
+        if (Prototype.Browser.IE) {
+            newSpacerHeight -= 4;
+        }
+
+        //if the inidicator div would be too small, let the whole content pane scroll instead
+        if (newSpacerHeight > 8) {
+            spacer.style.height = newSpacerHeight + "px";
+        } 
+    }
+    
+    addWindowOnLoadEvent(maxPage);
+    addWindowOnResizeEvent(maxPage);
+</script>
 
    </ui:define>
 </ui:composition>

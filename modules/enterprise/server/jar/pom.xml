@@ -9,7 +9,6 @@
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
-   <groupId>org.rhq</groupId>
    <artifactId>rhq-enterprise-server</artifactId>
    <packaging>ejb</packaging>
 
@@ -118,7 +117,7 @@
            reasons.  Maven orders the [test] classpath in the order listed in the pom.  We specifically
            need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
            loaded when testing.  -->
-           
+
       <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
@@ -472,6 +471,38 @@
            <version>0.1.29</version>
        </dependency>
 
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxrs</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jettison-provider</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-links</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.el</groupId>
+           <artifactId>jboss-el</artifactId>
+           <version>2.0.1.GA</version>
+           <scope>provided</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.freemarker</groupId>
+           <artifactId>freemarker</artifactId>
+           <version>2.3.18</version>
+           <scope>provided</scope>
+       </dependency>
+
+
    </dependencies>
 
    <build>
@@ -632,7 +663,7 @@ Build-OS-Version=${os.version}
                </execution>
             </executions>
          </plugin>
-      
+
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>

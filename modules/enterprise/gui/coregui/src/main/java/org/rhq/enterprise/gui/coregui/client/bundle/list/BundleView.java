@@ -278,7 +278,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                 criteria.fetchDestinations(true);
                 criteria.fetchTags(true);
 
-                GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria,
+                GWTServiceLookup.getBundleService().findBundlesByCriteriaWithDestinationFilter(criteria,
                     new AsyncCallback<PageList<Bundle>>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_error3(), caught);

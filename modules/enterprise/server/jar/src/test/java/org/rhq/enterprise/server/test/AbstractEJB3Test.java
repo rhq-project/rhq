@@ -156,8 +156,9 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     //@Configuration(groups = "integration.ejb3", afterSuite = true)
     @AfterSuite(alwaysRun = true)
     public static void shutdownEmbeddedJboss() {
-        System.err.println("!!! Any errors occurring after this point occurred during embedded server shutdown !!!\n"
-            + "!!! and is probably not a real problem. !!!");
+        System.err.println("!!! Any errors occurring after this point    !!!");
+        System.err.println("!!! occurred during embedded server shutdown !!!");
+        System.err.println("!!! and is probably not a real problem.      !!!");
         if (deployer != null) {
             try {
                 deployer.stop();

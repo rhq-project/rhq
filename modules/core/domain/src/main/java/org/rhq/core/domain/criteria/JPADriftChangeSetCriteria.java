@@ -55,9 +55,9 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     private DriftChangeSetCategory filterCategory;
     private List<DriftCategory> filterDriftCategories; // needs override      
     private String filterDriftPath; // needs override
-    private Boolean fetchDrifts;
-    private Boolean fetchDriftDefinition;
-    private Boolean fetchInitialDriftSet;
+    private Boolean fetchDrifts = false;
+    private Boolean fetchDriftDefinition = false;
+    private Boolean fetchInitialDriftSet = false;
 
     private PageOrdering sortVersion;
 

@@ -40,7 +40,8 @@ public interface DriftManagerRemote {
 
     void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftConfig);
 
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) throws Exception;
+    DriftSnapshot createSnapshot(Subject subject, int driftDefinitionId, int startVersion, int endVersion)
+        throws Exception;
 
     /**
      * Standard criteria based fetch method

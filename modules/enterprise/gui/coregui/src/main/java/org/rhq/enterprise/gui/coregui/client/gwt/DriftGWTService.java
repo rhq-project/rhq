@@ -39,8 +39,6 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface DriftGWTService extends RemoteService {
 
-    DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) throws RuntimeException;
-
     /**
      * Delete all named drift definitions for the specified context if the current user has permission to do so (i.e. either
      * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).

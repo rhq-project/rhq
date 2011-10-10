@@ -44,8 +44,6 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface DriftServerPluginFacet {
 
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
-
     /**
      * <p>
      * Performs criteria-based search for change sets.

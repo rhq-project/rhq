@@ -28,6 +28,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1087,7 +1088,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), bundleTargetResourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
-        // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try        
+        // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try
         // to add History to it during immediate deployments. So, create and persist it (requires a new trans).
         BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
             .getId(), bundleTargetResourceId);
@@ -1367,11 +1368,42 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
+    /**
+     * Fetch bundle deployments by criteria and then filter on destinations on the result objects to limit what the user can see
+     * @param subject Caller
+     * @param criteria criteria to fetch the deployments
+     * @return List of deployments with destinations filtered.
+     */
+    @Override
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteriaWithDestinationFilter(Subject subject,
+                                                                                           BundleDeploymentCriteria criteria) {
+
+        PageList<BundleDeployment> deployments = findBundleDeploymentsByCriteria(subject,criteria);
+        if (authorizationManager.isInventoryManager(subject))
+            return deployments;
+
+        PageList<BundleDeployment> resultingDeployments = new PageList<BundleDeployment>(deployments.getPageControl());
+        // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
+        for (BundleDeployment deployment : deployments) {
+
+            int bundleId = deployment.getBundleVersion().getBundle().getId();
+            BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
+            destinationCriteria.addFilterBundleId(bundleId);
+            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
+            if (destinationsContains(destinations,deployment.getDestination()))
+                resultingDeployments.add(deployment);
+        }
+        return resultingDeployments;
+    }
+
     @Override
     public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
         BundleDestinationCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
+        // Filter by destinations that are viewable
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,subject.getId());
+        }        CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
         return queryRunner.execute();
     }
@@ -1393,6 +1425,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                         + "] requires InventoryManager or BundleManager permission for requested query criteria.");
                 }
             }
+            // TODO limit target groups according to visibility
         }
 
         CriteriaQueryRunner<BundleResourceDeployment> queryRunner = new CriteriaQueryRunner<BundleResourceDeployment>(
@@ -1409,6 +1442,51 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return queryRunner.execute();
     }
 
+    /**
+     * Fetch bundle versions by criteria and then filter destination on the result objects to limit what the user can see
+     * @param subject Caller
+     * @param criteria criteria to fetch the bundles
+     * @return List of versions with destinations filtered.
+     */
+    @Override
+    public PageList<BundleVersion> findBundleVersionsByCriteriaWithDestinationFilter(Subject subject,
+                                                                                     BundleVersionCriteria criteria) {
+
+        PageList<BundleVersion> versions = findBundleVersionsByCriteria(subject,criteria);
+        if (authorizationManager.isInventoryManager(subject)) {
+            return versions;
+        }
+        // Not inv manager -> restrict visible deployments by visible destinations
+
+        for (BundleVersion version:versions) {
+
+            Bundle bundle = version.getBundle();
+            BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
+            destinationCriteria.addFilterBundleId(bundle.getId());
+            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
+            List<BundleDeployment> resultingDeployments = new ArrayList<BundleDeployment>(version.getBundleDeployments().size());
+            // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
+            for (BundleDeployment deployment : version.getBundleDeployments()) {
+                if (destinationsContains(destinations,deployment.getDestination()))
+                    resultingDeployments.add(deployment);
+            }
+
+            version.setBundleDeployments(resultingDeployments);
+        }
+
+        return versions;
+
+    }
+
+    private boolean destinationsContains(List<BundleDestination> list, BundleDestination dest) {
+        int id = dest.getId();
+        for (BundleDestination destination : list) {
+            if (destination.getId() == id)
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -1422,6 +1500,31 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
+    }
+
+    /**
+     * Fetch bundles by criteria and then filter destination on the result objects to limit what the user can see
+     * @param subject Caller
+     * @param criteria criteria to fetch the bundles
+     * @return List of bundles with destinations filtered.
+     */
+    @Override
+    public PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(Subject subject, BundleCriteria criteria) {
+        // First get the bundles
+        PageList<Bundle> bundles = findBundlesByCriteria(subject,criteria);
+        if (authorizationManager.isInventoryManager(subject)) {
+            return bundles;
+        }
+        // Not inv manager -> restrict visible destinations
+        PageList<Bundle> result = new PageList<Bundle>(bundles.size(),bundles.getPageControl());
+        for (Bundle bundle : bundles.getValues()) { // TODO clone the bundle and return the modified clones
+            BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
+            destinationCriteria.addFilterBundleId(bundle.getId());
+            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
+            bundle.setDestinations(destinations);
+        }
+
+        return bundles;
     }
 
     @Override

@@ -22,13 +22,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.AnimationEffect;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
@@ -45,7 +41,6 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -53,20 +48,21 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.components.carousel.Carousel;
+import org.rhq.enterprise.gui.coregui.client.components.carousel.BookmarkableCarousel;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftCarouselMemberView.DriftSelectionListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * A carousel view used for display of Drift Definition detail.  Each carousel member is a snapshot delta
+ * view.  This view in turn serves as a "Master" view for snapshot and drift "Detail" views.  
+ * 
  * @author Jay Shaughnessy
  */
-public class DriftCarouselView extends Carousel implements DetailsView, BookmarkableView {
+public class DriftCarouselView extends BookmarkableCarousel implements DetailsView {
 
     private static final int CAROUSEL_DEFAULT_SIZE = 4;
     private static final String CAROUSEL_MEMBER_FIXED_WIDTH = "250px";
@@ -76,6 +72,7 @@ public class DriftCarouselView extends Carousel implements DetailsView, Bookmark
     private boolean hasWriteAccess;
     private Integer maxCarouselEndFilter;
     private ArrayList<Record> selectedRecords = new ArrayList<Record>();
+    private boolean useHistoryDetailsView;
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
@@ -396,170 +393,28 @@ public class DriftCarouselView extends Carousel implements DetailsView, Bookmark
         return true;
     }
 
-    private boolean initialDisplay;
-    private VLayout detailsHolder;
-    private Canvas detailsView;
-    private String basePath;
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-
-        this.initialDisplay = true;
-
-        detailsHolder = new LocatableVLayout(extendLocatorId("carousel"));
-        detailsHolder.setAlign(VerticalAlignment.TOP);
-        //detailsHolder.setWidth100();
-        //detailsHolder.setHeight100();
-        detailsHolder.setMargin(4);
-        detailsHolder.hide();
-
-        addMember(detailsHolder);
-
-        // if the detailsView is already defined it means we want the details view to be rendered prior to
-        // the master view, probably due to a direct navigation or refresh (like F5 when sitting on the details page)
-        if (null != detailsView) {
-            switchToDetailsView();
-        }
-    }
-
     // this class is somewhat unusual in that it is a detail view for the drift defs list view, but also a pseudo-
-    // master view for snapshot and drift detail views.  It's "pseudo" in that there is no master-detail infrastucture
+    // master view for snapshot and drift detail views.  It's "pseudo" in that there is no master-detail infrastructure
     // like that found in TableSection. The following paths must be handled (starting at the ^):
     //   #Resource/10001/Drift/Definitions/10001/History/driftId
-    //                                           ^
     //   #Resource/10001/Drift/Definitions/10001/Snapshot/version
     //                                           ^
     @Override
     public void renderView(ViewPath viewPath) {
-        viewPath.next();
-        this.basePath = viewPath.getPathToCurrent();
-
-        if (!viewPath.isEnd()) {
-            // we have two detail views for the drift carousel, a drift history or a snapshot view. Figure out which one
-            // we're dealing with. 
-            boolean isHistory = "History".equals(viewPath.getCurrent().getPath());
-            viewPath.next();
-            // get the id, which may be in string format
-            String id = convertCurrentViewPathToID(viewPath.getCurrent().getPath());
-
-            if (isHistory) {
-                detailsView = new DriftDetailsView(extendLocatorId("History"), id);
-            } else {
-                detailsView = new DriftSnapshotView(extendLocatorId("Snapshot"), context.getResourceId(), driftDefId,
-                    Integer.valueOf(id));
-            }
-
-            switchToDetailsView();
-        } else {
-            switchToCarouselView();
-        }
-    }
-
-    // the main CoreGUI class will assume anything with a digit as the first character in a path segment in the
-    // URL is an ID.
-    public static final String ID_PREFIX = "0id_"; // the prefix to be placed in front of the string IDs in URLs
-
-    protected String convertCurrentViewPathToID(String path) {
-        return path.startsWith(ID_PREFIX) ? path.substring(ID_PREFIX.length()) : path;
-    }
-
-    /**
-     * Switches to viewing the details canvas, hiding the table. This does not
-     * do anything with reloading data or switching to the selected row in the table;
-     * this only changes the visibility of canvases.
-     */
-    protected void switchToDetailsView() {
-        Canvas contents = getCarouselContents();
-
-        // If the Carousel has not yet been initialized then ignore
-        if (contents != null) {
-            // If the carousel view is visible then gracefully switch to the details view.
-            if (contents.isVisible()) {
-                contents.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
-                    @Override
-                    public void execute(boolean b) {
-                        buildDetailsView();
-                    }
-                });
-            } else {
-                // Even if the table view is not visible, it may not be hidden. Instead, it may be the
-                // case that its parent (the encompassing Table/HLayout) may not be visible.  This is unusual
-                // because typically we switch between the table and detail view while under the subtab, but
-                // if we navigate to the detail view from another subtab (for example, the drift tree context
-                // menu) the Table may not be visible and the table view may not be hidden.  To make a long
-                // story short, ensure the table view is hidden when displaying the details view.
-                contents.hide();
-
-                /*
-                 * if the programmer chooses to go directly from the detailView in create-mode to the 
-                 * detailsView in edit-mode, the content canvas will already be hidden, which means the
-                 * animateHide would be a no-op (the event won't fire).  this causes the detailsHolder 
-                 * to keep a reference to the previous detailsView (the one in create-mode) instead of the
-                 * newly returned reference from getDetailsView(ID) that was called when the renderView
-                 * methods were called hierarchically down to render the new detailsView in edit-mode.
-                 * therefore, we need to explicitly destroy what's already there (presumably the detailsView
-                 * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
-                 */
-                SeleniumUtility.destroyMembers(detailsHolder);
-
-                buildDetailsView();
-            }
-        }
-    }
-
-    private void buildDetailsView() {
-        detailsView.setWidth100();
-        detailsView.setHeight100();
-
-        boolean isEditable = (detailsView instanceof DetailsView && ((DetailsView) detailsView).isEditable());
-        if (!isEditable) {
-            // Only add the "Back to List" button if the details are definitely not editable, because if they are
-            // editable, a Cancel button should already be provided by the details view.
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
-                basePath);
-            detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
-            verticalSpacer.setHeight(8);
-            detailsHolder.addMember(verticalSpacer);
+        if (!viewPath.isEnd() && !viewPath.isNextEnd()) {
+            this.useHistoryDetailsView = !viewPath.isNextEnd() && "History".equals(viewPath.getNext().getPath());
         }
 
-        detailsHolder.addMember(detailsView);
-        detailsHolder.animateShow(AnimationEffect.WIPE);
+        super.renderView(viewPath);
     }
 
-    /**
-     * Switches to viewing the table, hiding the details canvas.
-     */
-    protected void switchToCarouselView() {
-        final Canvas contents = getCarouselContents();
-        if (contents != null) {
-            // If this is not the initial display of the table, refresh the table's data. Otherwise, a refresh would be
-            // redundant, since the data was just loaded when the table was drawn.
-            if (this.initialDisplay) {
-                this.initialDisplay = false;
-            } else {
-                Log.debug("Refreshing data for Table [" + getClass().getName() + "]...");
-                refresh();
-            }
-            // if the detailsHolder is visible then gracefully switch views, otherwise just
-            // clean up any lingering details holder and show the table view.
-            if (detailsHolder != null && detailsHolder.isVisible()) {
-                detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
-                    @Override
-                    public void execute(boolean b) {
-                        SeleniumUtility.destroyMembers(detailsHolder);
-
-                        contents.animateShow(AnimationEffect.WIPE);
-                    }
-                });
-            } else {
-                if (detailsHolder != null) {
-                    SeleniumUtility.destroyMembers(detailsHolder);
-                }
-                contents.animateShow(AnimationEffect.WIPE);
-            }
+    @Override
+    public Canvas getDetailsView(String id) {
+        if (this.useHistoryDetailsView) {
+            return new DriftDetailsView(extendLocatorId("History"), id);
         }
-    }
 
+        return new DriftSnapshotView(extendLocatorId("Snapshot"), context.getResourceId(), driftDefId, Integer
+            .valueOf(id));
+    }
 }

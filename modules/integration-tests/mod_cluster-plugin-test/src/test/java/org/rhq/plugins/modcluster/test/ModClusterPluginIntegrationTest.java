@@ -120,9 +120,26 @@ public class ModClusterPluginIntegrationTest {
                 } else if (resource.getResourceType().getName().equals("HA Service")) {
                     testServiceMeasurement(resource);
                     testServiceMethodInvocation(resource);
+                    testServiceSimpleMethodInvocation(resource);
+                } else if (resource.getResourceType().getName().equals("Catalina Service")) {
+                    testServiceSimpleMethodInvocation(resource);
                 }
             }
         }
+    }
+
+    private void testServiceSimpleMethodInvocation(Resource resource) throws InterruptedException, Exception {
+        ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+            .getResourceComponent(resource);
+
+        Configuration config = new Configuration();
+        OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("enable", config);
+        log.info("Result of operation enable was: " + result.getSimpleResult());
+        assert result.getSimpleResult().equals("true") : "The operation execution failed!";
+
+        result = ((OperationFacet) resourceComponent).invokeOperation("disable", config);
+        log.info("Result of operation disable was: " + result.getSimpleResult());
+        assert result.getSimpleResult().equals("true") : "The operation execution failed!";
     }
 
     private void testServiceMethodInvocation(Resource resource) throws InterruptedException, Exception {
@@ -133,7 +150,7 @@ public class ModClusterPluginIntegrationTest {
         config.put(new PropertySimple("p1", "1"));
         config.put(new PropertySimple("p2", java.util.concurrent.TimeUnit.SECONDS));
         OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("stop", config);
-        log.info("Result of operation stopContext was: " + result.getSimpleResult());
+        log.info("Result of operation stop was: " + result.getSimpleResult());
     }
 
     private void testLoadServiceConfiguration(Resource resource) throws Exception {
@@ -165,13 +182,14 @@ public class ModClusterPluginIntegrationTest {
             .getResourceComponent(resource);
 
         if (resourceComponent instanceof OperationFacet) {
-            OperationResult result = null;
+            for (String operationName : new String[] { "reset", "refresh" }) {
+                OperationResult result = ((OperationFacet) resourceComponent).invokeOperation(operationName,
+                    new Configuration());
+                log.info("Result of operation " + operationName + " was: " + result);
 
-            result = ((OperationFacet) resourceComponent).invokeOperation("reset", new Configuration());
-            log.info("Result of operation test was: " + result);
-
-            result = ((OperationFacet) resourceComponent).invokeOperation("refresh", new Configuration());
-            log.info("Result of operation test was: " + result);
+                //need to wait for the reset to finish, this is a long operation
+                Thread.sleep(5000);
+            }
         }
     }
 
@@ -187,15 +205,18 @@ public class ModClusterPluginIntegrationTest {
                 Configuration config = new Configuration();
                 config.put(new PropertySimple("timeout", "1"));
                 config.put(new PropertySimple("unit", java.util.concurrent.TimeUnit.SECONDS));
+
                 result = ((OperationFacet) resourceComponent).invokeOperation("stopContext", config);
                 log.info("Result of operation stopContext was: " + result.getSimpleResult());
+                assert result.getSimpleResult().equals("true") : "The operation execution failed!";
 
                 result = ((OperationFacet) resourceComponent).invokeOperation("enableContext", null);
                 log.info("Result of operation enableContext was: " + result.getSimpleResult());
+                assert result.getSimpleResult().equals("true") : "The operation execution failed!";
 
                 result = ((OperationFacet) resourceComponent).invokeOperation("disableContext", null);
                 log.info("Result of operation disableContext was: " + result.getSimpleResult());
-
+                assert result.getSimpleResult().equals("true") : "The operation execution failed!";
             } catch (Exception e) {
                 log.info("Operation failed. ", e);
             }
@@ -204,7 +225,7 @@ public class ModClusterPluginIntegrationTest {
     }
 
     private Set<Resource> findResource(Resource parent) {
-        Set<Resource> found = new HashSet<Resource>();
+        Set<Resource> foundResources = new HashSet<Resource>();
 
         Queue<Resource> discoveryQueue = new LinkedList<Resource>();
         discoveryQueue.add(parent);
@@ -214,7 +235,7 @@ public class ModClusterPluginIntegrationTest {
 
             log.info("Discovered resource of type: " + currentResource.getResourceType().getName());
             if (currentResource.getResourceType().getPlugin().equals(PLUGIN_NAME)) {
-                found.add(currentResource);
+                foundResources.add(currentResource);
             }
 
             if (currentResource.getChildResources() != null) {
@@ -224,6 +245,6 @@ public class ModClusterPluginIntegrationTest {
             }
         }
 
-        return found;
+        return foundResources;
     }
 }

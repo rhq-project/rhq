@@ -1,3 +1,13 @@
+#========================================================================================
+# Usage:
+# Include in any script file as script dependency.
+#
+# Description:
+# Library of common functions used between multiple release related scripts.
+#
+# Options:
+# N/A
+#========================================================================================
 
 
 
@@ -15,6 +25,9 @@ abort()
 }
 
 
+#========================================================================================
+# Description: Prints an array of variables passed in as arguments.
+#========================================================================================
 print_variables()
 {
    for variable in "$@"
@@ -31,6 +44,9 @@ print_variables()
 }
 
 
+#========================================================================================
+# Description: Prints the eval result of each array element passed in.
+#========================================================================================
 print_program_versions()
 {
    for variable in "$@"
@@ -41,6 +57,9 @@ print_program_versions()
 }
 
 
+#========================================================================================
+# Description: Validates that a compatible version of Java 6 is installed.
+#========================================================================================
 validate_java_6()
 {
    # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
@@ -69,6 +88,10 @@ validate_java_6()
    fi
 }
 
+
+#========================================================================================
+# Description: Validates that a compatible version of Java 5 is installed.
+#========================================================================================
 validate_java_5()
 {
    echo "nothing executed here"
@@ -105,6 +128,9 @@ validate_java_5()
 }
 
 
+#========================================================================================
+# Description: Validates that a compatible version of Maven is installed.
+#========================================================================================
 validate_maven()
 {
    # Make sure M2_HOME points to a valid Maven 2.1.x or 2.2.x install.
@@ -133,6 +159,10 @@ validate_maven()
    fi
 }
 
+
+#========================================================================================
+# Description: Validates that a compatible version of Git is installed.
+#========================================================================================
 validate_git()
 {
    # Make sure git 1.6.x or 1.7.x is in the PATH.
@@ -149,6 +179,10 @@ validate_git()
    fi
 }
 
+
+#========================================================================================
+# Description: Prints the input string centered.
+#========================================================================================
 print_centered()
 {
 	max_length=90

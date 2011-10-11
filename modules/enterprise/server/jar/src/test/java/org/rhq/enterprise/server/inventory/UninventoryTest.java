@@ -89,7 +89,7 @@ public class UninventoryTest extends AbstractEJB3Test {
         // sanity check, make sure things are in the DB now
         Query qTemplate;
         Query qDef;
-        String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
+        String qTemplateString = "select t from DriftDefinitionTemplate t where t.id = :id";
         String qDefString = "select dc from DriftDefinition dc where dc.id = :id";
 
         getTransactionManager().begin();

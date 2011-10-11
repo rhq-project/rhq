@@ -35,7 +35,6 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.TransactionCallback;
 
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
@@ -58,32 +57,32 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         templateMgr = getDriftTemplateManager();
     }
 
-//    @BeforeMethod
-//    public void initDB() {
-//        executeInTransaction(new TransactionCallback() {
-//            @Override
-//            public void execute() throws Exception {
-//                purgeDB();
-//                createResourceType();
-//                getEntityManager().persist(resourceType);
-//            }
-//        });
-//    }
-//
-//    @AfterClass
-//    public void resetDB() {
-//        executeInTransaction(new TransactionCallback() {
-//            @Override
-//            public void execute() throws Exception {
-//                purgeDB();
-//            }
-//        });
-//    }
+    @BeforeMethod
+    public void initDB() {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                purgeDB();
+                createResourceType();
+                getEntityManager().persist(resourceType);
+            }
+        });
+    }
+
+    @AfterClass
+    public void resetDB() {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                purgeDB();
+            }
+        });
+    }
 
     private void purgeDB() {
         EntityManager em = getEntityManager();
 
-        List results =  em.createQuery("from ResourceType where name = :name")
+        List results =  em.createQuery("select t from ResourceType t where t.name = :name")
             .setParameter("name", RESOURCE_TYPE_NAME)
             .getResultList();
         if (results.isEmpty()) {
@@ -105,39 +104,39 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
             .build();
     }
 
-//    @Test
-//    public void createNewTemplate() {
-//        final DriftDefinition definition = new DriftDefinition(new Configuration());
-//        definition.setName("test::createNewTemplate");
-//        definition.setEnabled(true);
-//        definition.setDriftHandlingMode(normal);
-//        definition.setInterval(2400L);
-//        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-//
-//        templateMgr.createTemplate(getOverlord(), resourceType.getId(), definition);
-//
-//        executeInTransaction(new TransactionCallback() {
-//            @Override
-//            public void execute() throws Exception {
-//                EntityManager em = getEntityManager();
-//                ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
-//
-//                assertEquals("Failed to add new drift definition to resource type", 1,
-//                    updatedType.getDriftDefinitionTemplates().size());
-//
-//                DriftDefinitionTemplate newTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
-//                assertEquals("Failed to save template - name is wrong", definition.getName(), newTemplate.getName());
-//                assertEquals("Failed to save template - enabled flag is wrong", definition.isEnabled(),
-//                    newTemplate.isEnabled());
-//                assertEquals("Failed to save template - drift handling mode is wrong",
-//                    definition.getDriftHandlingMode(), newTemplate.getDriftHandlingMode());
-//                assertEquals("Failed to save template - interval is wrong", definition.getInterval(),
-//                    (long) newTemplate.getInterval());
-//                assertEquals("Failed to save template - base directory is wrong", definition.getBasedir(),
-//                    newTemplate.getBaseDirectory());
-//            }
-//        });
-//    }
+    @Test
+    public void createNewTemplate() {
+        final DriftDefinition definition = new DriftDefinition(new Configuration());
+        definition.setName("test::createNewTemplate");
+        definition.setEnabled(true);
+        definition.setDriftHandlingMode(normal);
+        definition.setInterval(2400L);
+        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), definition);
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
+
+                assertEquals("Failed to add new drift definition to resource type", 1,
+                    updatedType.getDriftDefinitionTemplates().size());
+
+                DriftDefinitionTemplate newTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
+                assertEquals("Failed to save template - name is wrong", definition.getName(), newTemplate.getName());
+                assertEquals("Failed to save template - enabled flag is wrong", definition.isEnabled(),
+                    newTemplate.isEnabled());
+                assertEquals("Failed to save template - drift handling mode is wrong",
+                    definition.getDriftHandlingMode(), newTemplate.getDriftHandlingMode());
+                assertEquals("Failed to save template - interval is wrong", definition.getInterval(),
+                    (long) newTemplate.getInterval());
+                assertEquals("Failed to save template - base directory is wrong", definition.getBasedir(),
+                    newTemplate.getBaseDirectory());
+            }
+        });
+    }
 
     private Subject getOverlord() {
         return getSubjectManager().getOverlord();

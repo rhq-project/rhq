@@ -42,7 +42,6 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
-import static org.rhq.test.JPAUtils.executeInTransaction;
 
 public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 

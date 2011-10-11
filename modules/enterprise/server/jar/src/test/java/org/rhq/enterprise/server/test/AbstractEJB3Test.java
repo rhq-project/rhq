@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.server.test;
 
-import static org.rhq.test.JPAUtils.clearDB;
-import static org.rhq.test.JPAUtils.lookupEntityManager;
-import static org.rhq.test.JPAUtils.lookupTransactionManager;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Hashtable;
@@ -60,6 +56,12 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.test.JPAUtils;
+import org.rhq.test.TransactionCallback;
+
+import static org.rhq.test.JPAUtils.clearDB;
+import static org.rhq.test.JPAUtils.lookupEntityManager;
+import static org.rhq.test.JPAUtils.lookupTransactionManager;
 
 /**
  * This is the abstract test base for server jar tests.
@@ -347,5 +349,9 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             getJBossMBeanServer().unregisterMBean(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
             schedulerService = null;
         }
+    }
+
+    protected void executeInTransaction(TransactionCallback callback) {
+        JPAUtils.executeInTransaction(callback);
     }
 }

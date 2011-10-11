@@ -33,6 +33,8 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 public class JPADriftServerBeanTest extends AbstractEJB3Test {
 
+    private static final String HASH_ID = "a1b2c3";
+
     @BeforeMethod
     public void initDB() throws Exception {
 //        executeInTransaction(new TransactionCallback() {
@@ -43,7 +45,9 @@ public class JPADriftServerBeanTest extends AbstractEJB3Test {
 //            }
 //        });
         getTransactionManager().begin();
-        getEntityManager().createQuery("delete from JPADriftFileBits").executeUpdate();
+        getEntityManager().createQuery("delete from JPADriftFileBits where hashId = :id")
+            .setParameter("id", HASH_ID)
+            .executeUpdate();
         getTransactionManager().commit();
     }
 

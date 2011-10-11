@@ -50,7 +50,6 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.drift.DriftSnapshotView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -147,7 +146,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab configHistory;
     private SubTab eventHistory;
     private SubTab driftHistory;
-    private SubTab driftSnapshots;
     private SubTab driftDefinitions;
     private SubTab contentDeployed;
     private SubTab contentNew;
@@ -245,13 +243,11 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        this.driftSnapshots = new SubTab(driftTab.extendLocatorId(DriftSubTab.SNAPSHOTS), new ViewName(
-            DriftSubTab.SNAPSHOTS, MSG.view_drift_snapshots()), null);
         this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
             MSG.view_tabs_common_history()), null);
         this.driftDefinitions = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
             DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        driftTab.registerSubTabs(driftHistory, driftSnapshots, driftDefinitions);
+        driftTab.registerSubTabs(driftHistory, driftDefinitions);
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
@@ -523,13 +519,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private void updateDriftTabContent(final ResourceComposite resourceComposite, final Resource resource,
         ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), resourcePermissions.isDrift())) {
-
-            updateSubTab(this.driftTab, this.driftSnapshots, true, true, new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    return new DriftSnapshotView(driftSnapshots.extendLocatorId("View"), 10001, 10001, 0);
-                }
-            });
 
             updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
                 @Override

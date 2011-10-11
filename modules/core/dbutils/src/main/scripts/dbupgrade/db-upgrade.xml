@@ -3449,7 +3449,7 @@
                     <statement desc="Creating table RHQ_DRIFT_DEF_TEMPLATE">
                         CREATE TABLE RHQ_DRIFT_DEF_TEMPLATE (
                             RESOURCE_TYPE_ID INTEGER,
-                            CONFIG_TEMPLATE_ID INTEGER)
+                            CONFIG_ID INTEGER)
                     </statement>
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="RESOURCE_TYPE_ID" nullable="FALSE"/>

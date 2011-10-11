@@ -102,4 +102,11 @@ public class DriftSnapshotRequest implements Serializable {
         return includeDriftInstances;
     }
 
+    @Override
+    public String toString() {
+        return "DriftSnapshotRequest [driftDefinitionId=" + driftDefinitionId + ", includeDriftDirectories="
+            + includeDriftDirectories + ", includeDriftInstances=" + includeDriftInstances + ", startVersion="
+            + startVersion + ", version=" + version + "]";
+    }
+
 }

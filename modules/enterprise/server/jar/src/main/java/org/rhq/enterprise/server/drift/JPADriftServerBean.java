@@ -19,6 +19,10 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -52,14 +56,11 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftCriteria;
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -67,7 +68,6 @@ import org.rhq.core.domain.drift.JPADriftFileBits;
 import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -79,10 +79,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -140,26 +136,6 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             + "] changesets associated with drift def [" + driftDefName + "] from resource [" + resourceId
             + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
         return;
-    }
-
-    @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftSnapshotRequest request) {
-        // TODO security checks
-
-        DriftSnapshot snapshot = new DriftSnapshot(request);
-
-        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
-        criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
-        criteria.addFilterStartVersion(request.getStartVersion());
-        criteria.addFilterEndVersion(request.getVersion());
-        criteria.addSortVersion(PageOrdering.ASC);
-        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
-
-        for (DriftChangeSet<?> changeSet : changeSets) {
-            snapshot.addChangeSet(changeSet);
-        }
-
-        return snapshot;
     }
 
     @Override

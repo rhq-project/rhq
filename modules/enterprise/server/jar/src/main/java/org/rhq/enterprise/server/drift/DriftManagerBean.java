@@ -60,6 +60,7 @@ import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -73,6 +74,7 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
@@ -266,6 +268,49 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         notifyAlertConditionCacheManager("processRepeatChangeSet", summary);
     }
 
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request) {
+        DriftSnapshot result = null;
+        int startVersion = request.getStartVersion();
+
+        if (0 == startVersion) {
+            DriftChangeSet<?> initialChangeset = loadInitialChangeSet(subject, request.getDriftDefinitionId());
+            if (null == initialChangeset) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Cannot create snapshot, no initial changeset for: " + request);
+                }
+
+                return result;
+
+            } else {
+                result = new DriftSnapshot(request);
+                result.addChangeSet(initialChangeset);
+            }
+
+            // if startVersion and endVersion are both zero, we are done.
+            if (Integer.valueOf(0).equals(request.getVersion())) {
+                return result;
+            }
+
+            ++startVersion;
+        }
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterCategory(DriftChangeSetCategory.DRIFT);
+        criteria.addFilterStartVersion(String.valueOf(startVersion));
+        criteria.addFilterEndVersion(Integer.toString(request.getVersion()));
+        criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
+        criteria.addSortVersion(PageOrdering.ASC);
+
+        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+        for (DriftChangeSet<?> changeSet : changeSets) {
+            result.addChangeSet(changeSet);
+        }
+
+        return result;
+    }
+
     private DriftChangeSet<?> loadInitialChangeSet(Subject subject, int driftDefinitionId) {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterCategory(COVERAGE);
@@ -278,14 +323,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         return changeSets.get(0);
-    }
-
-    @Override
-    @TransactionAttribute(NOT_SUPPORTED)
-    public DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request) {
-
-        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        return driftServerPlugin.getSnapshot(subject, request);
     }
 
     @Override

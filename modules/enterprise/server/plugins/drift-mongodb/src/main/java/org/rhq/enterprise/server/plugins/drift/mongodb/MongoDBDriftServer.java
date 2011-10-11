@@ -55,8 +55,6 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
@@ -286,11 +284,6 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     @Override
     public DriftFile getDriftFile(Subject subject, String hashId) throws Exception {
         // TODO
-        return null;
-    }
-
-    @Override
-    public DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request) {
         return null;
     }
 

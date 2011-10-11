@@ -33,8 +33,6 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageList;
@@ -75,11 +73,6 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     @Override
     public void shutdown() {
         log.debug("The RHQ Drift plugin has been shut down!!! : " + this);
-    }
-
-    @Override
-    public DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request) {
-        return getJPADriftServer().createSnapshot(subject, request);
     }
 
     @Override

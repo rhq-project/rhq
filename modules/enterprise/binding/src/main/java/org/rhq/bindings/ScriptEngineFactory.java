@@ -66,6 +66,7 @@ public class ScriptEngineFactory {
      * 
      * @param language the language of the script to instantiate
      * @param packageFinder the package finder to find the standard packages in user provided locations
+     * @param bindings the initial standard bindings or null if none required
      * @return the initialized engine or null if the engine for given language isn't known.
      * 
      * @throws ScriptException on error during initialization of the script environment
@@ -80,7 +81,9 @@ public class ScriptEngineFactory {
         
         ScriptEngine engine = initializer.instantiate(packageFinder.findPackages("org.rhq.core.domain"));
 
-        injectStandardBindings(engine, bindings, true);
+        if (bindings != null) {
+            injectStandardBindings(engine, bindings, true);
+        }
         
         return engine;
     }

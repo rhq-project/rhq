@@ -69,6 +69,10 @@ public class ScriptUtil {
     }
     
     public PageList<Resource> findResources(String string) {
+        if (remoteClient == null) {
+            throw new IllegalStateException("The findResources() method requires a connection to the RHQ server.");
+        }
+        
         ResourceManagerRemote resourceManager = remoteClient.getResourceManager();
 
         ResourceCriteria criteria = new ResourceCriteria();
@@ -134,13 +138,18 @@ public class ScriptUtil {
 
     public ResourceOperationHistory waitForScheduledOperationToComplete(ResourceOperationSchedule schedule)
         throws InterruptedException{
-
+        
         return waitForScheduledOperationToComplete(schedule, 1000L, 10);
     }
 
     public ResourceOperationHistory waitForScheduledOperationToComplete(ResourceOperationSchedule schedule,
                                                                         long intervalDuration,
                                                                         int maxIntervals) throws InterruptedException {
+        
+        if (remoteClient == null) {
+            throw new IllegalStateException("The waitForScheduledOperationToComplete() method requires a connection to the RHQ server.");
+        }
+        
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(schedule.getJobId());
         criteria.addFilterResourceIds(schedule.getResource().getId());

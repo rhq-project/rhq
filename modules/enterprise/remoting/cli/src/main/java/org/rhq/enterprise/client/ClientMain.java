@@ -96,11 +96,10 @@ public class ClientMain {
 
     // Entrance to main.
     public static void main(String[] args) throws Exception {
+        initCommands();        
 
         // instantiate
         ClientMain main = new ClientMain();
-
-        initCommands();
 
         // process startup arguments
         main.processArguments(args);
@@ -125,6 +124,17 @@ public class ClientMain {
         }
     }
 
+    private void initScriptCommandAndServiceCompletor() {
+        ScriptCommand sc = (ScriptCommand) commands.get("exec");
+        sc.initBindings(this);
+        
+        this.serviceCompletor.setContext(sc.getContext());
+        
+        if (remoteClient != null) {
+            this.serviceCompletor.setServices(remoteClient.getManagers());
+        }
+    }
+    
     //
     public ClientMain() throws Exception {
 
@@ -147,9 +157,12 @@ public class ClientMain {
         this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
         consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
             commandCompletor }));
+        
+        //ScriptCommand is super special because it handles executing all the code for us
+        initScriptCommandAndServiceCompletor();
 
         // enable pagination
-        consoleReader.setUsePagination(true);
+        consoleReader.setUsePagination(true);                
     }
 
     // ?? what is this again? Might be able to remove this.
@@ -512,15 +525,10 @@ public class ClientMain {
 
     public void setRemoteClient(RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
-
-        if (remoteClient != null) {
-            ScriptCommand sc = (ScriptCommand) commands.get("exec");
-            sc.initBindings(this);
-            this.serviceCompletor.setContext(sc.getContext());
-            this.serviceCompletor.setServices(remoteClient.getManagers());
-        }
+        
+        initScriptCommandAndServiceCompletor();
     }
-
+    
     public Subject getSubject() {
         return subject;
     }

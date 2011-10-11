@@ -234,13 +234,13 @@ public abstract class AncestryUtil {
 
         String resourceName = getResourceName(listGridRecord);
 
-        MapWrapper typeMap = (MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
-        if (typeMap == null) {
+        MapWrapper typesWrapper = (MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
+        if (typesWrapper == null) {
             // This means the record hasn't been loaded yet, so return null to tell the ListGrid to not display any
             // tooltip.
             return null;
         }
-        Map<Integer, ResourceType> types = typeMap.getMap();
+        Map<Integer, ResourceType> types = typesWrapper.getMap();
         Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
         String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
 
@@ -334,13 +334,20 @@ public abstract class AncestryUtil {
      * @return the long name for the resource
      */
     public static String getResourceHoverHTML(Record record, int width) {
+        // See if we cached the HTML as an attribute on the record on a previous call to this method.
         String resourceHover = record.getAttributeAsString(RESOURCE_HOVER);
-        if (null != resourceHover) {
+        if (resourceHover != null) {
             return resourceHover;
         }
 
         String resourceName = getResourceName(record);
-        Map<Integer, ResourceType> types = ((MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES)).getMap();
+        MapWrapper typesWrapper = (MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
+        if (typesWrapper == null) {
+            // This means the record hasn't been loaded yet, so return null to tell the ListGrid to not display any
+            // tooltip.
+            return null;
+        }
+        Map<Integer, ResourceType> types = typesWrapper.getMap();
         Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
         ResourceType type = types.get(resourceTypeId);
 
@@ -353,7 +360,7 @@ public abstract class AncestryUtil {
         StringBuilder sb = new StringBuilder("<p");
         if (widthObj != null) {
             sb.append(" style='width:");
-            sb.append(widthObj.toString());
+            sb.append(widthObj);
             sb.append("px'");
         }
         sb.append(">");
@@ -363,7 +370,10 @@ public abstract class AncestryUtil {
         sb.append("</p>");
 
         String result = sb.toString();
+
+        // Cache the HTML as an attribute on the record.
         record.setAttribute(RESOURCE_HOVER, result);
+
         return result;
     }
 

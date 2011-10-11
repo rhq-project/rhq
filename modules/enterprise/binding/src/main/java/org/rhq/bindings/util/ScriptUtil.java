@@ -64,6 +64,7 @@ public class ScriptUtil {
      * 
      * @param scriptEngine the script engine this instance is to be injected in
      */
+    @NoTopLevelIndirection
     public void init(ScriptEngine scriptEngine) {
         this.scriptEngine = scriptEngine;
     }

@@ -129,8 +129,8 @@ public class StandardBindings extends HashMap<String, Object> {
     }
 
     public void postInject(ScriptEngine scriptEngine) {        
-        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL, get(SCRIPT_UTIL));
-        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT, get(ASSERT));
+        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL);
+        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT);
     }
     
     public Map.Entry<String, PageControl> getUnlimitedPC() {

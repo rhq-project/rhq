@@ -50,12 +50,19 @@ public interface ScriptEngineInitializer {
      * <code>
      * function bar(arg) { return foo.bar(arg); }
      * </code>
-     * 
+     * <p>
+     * This method gets passed all the overloaded versions of a method on the object (i.e.
+     * all the methods with the same name) and is free to return any number of functions
+     * that will map all the possible overloaded versions.
+     * <p>
+     * This is because different scripting languages have different support for function
+     * overloading and different ways of handling varying number of arguments of a function.
+     *  
      * @param boundObjectName
-     * @param method
-     * @return a string with method definition in the scripting language
+     * @param overloadedMethods
+     * @return a set of strings with top-level function definitions in the scripting language
      */
-    String generateIndirectionMethod(String boundObjectName, Method method);
+    Set<String> generateIndirectionMethods(String boundObjectName, Set<Method> overloadedMethods);
     
     /**
      * At least the Rhino script engine for java script generates exceptions

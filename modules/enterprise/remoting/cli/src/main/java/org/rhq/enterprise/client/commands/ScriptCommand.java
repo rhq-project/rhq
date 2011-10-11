@@ -196,8 +196,8 @@ public class ScriptCommand implements ClientCommand {
         ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
 
         ScriptEngineFactory
-            .bindIndirectionMethods(engine, "configurationEditor", bindings.get("configurationEditor"));
-        ScriptEngineFactory.bindIndirectionMethods(engine, "rhq", bindings.get("rhq"));
+            .bindIndirectionMethods(engine, "configurationEditor");
+        ScriptEngineFactory.bindIndirectionMethods(engine, "rhq");
     }
 
     private void executeUtilScripts() {

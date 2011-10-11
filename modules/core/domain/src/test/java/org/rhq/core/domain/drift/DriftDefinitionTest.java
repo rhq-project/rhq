@@ -81,6 +81,27 @@ public class DriftDefinitionTest {
 
         dc1.setDriftHandlingMode(DriftHandlingMode.normal); // put them back to the same value
 
+        // change the description of dc1
+        dc1.setDescription("description 1");
+        assert comparator.compare(dc1, dc2) > 0 : dc1 + " description is different from dc2's";
+
+        // set the descriptions to be the same
+        dc2.setDescription(dc1.getDescription());
+        assert comparator.compare(dc1, dc2) == 0 : dc1 + " description should equal description of " + dc2;
+
+        // make dc1 description null
+        dc1.setDescription(null);
+        assert comparator.compare(dc1, dc2) < 0 : dc1 + " description is null and " + dc2 + " description is not null";
+
+        // make both dc1 and dc2 descriptions non-null and different
+        dc1.setDescription("description 1");
+        dc2.setDescription("description 2");
+        assert comparator.compare(dc1, dc2) < 0 : dc1 + " description is different from description of " + dc2;
+
+        // make descriptions same again
+        dc1.setDescription(null);
+        dc2.setDescription(null);
+
         // Make dc1 pinned
         dc1.setPinned(true);
         assert comparator.compare(dc1, dc2) > 0 : dc1 + " is pinned";

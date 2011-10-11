@@ -653,7 +653,7 @@
         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
         <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
         <column name="NAME" type="VARCHAR2" size="128" required="true"/>
-        <column name="DESCRIPTION" type="VARCHAR2" size="256" required="false"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="512" required="false"/>
         <!--
           Change sets are managed by the drift server plugins; therefore, we cannot maintain
           a FK constraint on the change set id. And the type cannot be integer because
@@ -693,7 +693,8 @@
         <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
         <column name="DRIFT_DEF_TEMPLATE_ID" type="INTEGER" required="false" references="RHQ_DRIFT_DEF_TEMPLATE"/>
         <column name="CTIME" type="LONG" required="true"/>
-        <column name="NAME" type="VARCHAR2" size="512" required="true"/>        
+        <column name="NAME" type="VARCHAR2" size="128" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="512" required="false"/>
         <column name="INTERVAL" type="LONG" required="true"/>
         <column name="IS_ENABLED" type="BOOLEAN" required="true"/>        
         <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>

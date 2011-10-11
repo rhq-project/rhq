@@ -80,7 +80,7 @@ public class DriftDefinitionTemplate implements Serializable {
     @Column(name = "NAME", length = 128, nullable = false)
     private String name;
 
-    @Column(name = "DESCRIPTION", length = 256)
+    @Column(name = "DESCRIPTION", length = 512, nullable = true)
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

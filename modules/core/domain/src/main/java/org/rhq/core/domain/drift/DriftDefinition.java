@@ -77,8 +77,11 @@ public class DriftDefinition implements Serializable {
     @Column(name = "CTIME", nullable = false)
     private Long ctime = -1L;
 
-    @Column(name = "NAME", nullable = false)
+    @Column(name = "NAME", nullable = false, length = 128)
     private String name;
+
+    @Column(name = "DESCRIPTION", nullable = true, length = 512)
+    private String description;
 
     @Column(name = "IS_ENABLED", nullable = false)
     private boolean isEnabled;
@@ -100,11 +103,6 @@ public class DriftDefinition implements Serializable {
     private Resource resource = null;
 
     @ManyToOne(optional = true, fetch = LAZY)
-//    @JoinTable(
-//        name = "RHQ_DRIFT_TEMPLATE_CONFIG_MAP",
-//        joinColumns = {@JoinColumn(name = "DRIFT_CONFIG_ID", nullable = true)},
-//        inverseJoinColumns = {@JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID", nullable = true)}
-//    )
     @JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID", referencedColumnName = "ID", nullable = true)
     private DriftDefinitionTemplate template;
 
@@ -147,6 +145,15 @@ public class DriftDefinition implements Serializable {
 
         this.name = name;
         this.setNameProperty(name);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+        setDescriptionProperty(description);
     }
 
     public boolean isEnabled() {
@@ -320,6 +327,10 @@ public class DriftDefinition implements Serializable {
             throw new IllegalArgumentException("name is null");
         }
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_NAME, name));
+    }
+
+    private void setDescriptionProperty(String description) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_DESCRIPTION, description));
     }
 
     public BaseDirectory getBasedir() {

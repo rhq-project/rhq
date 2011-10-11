@@ -33,8 +33,8 @@ public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
 
     public enum CompareMode {
         /**
-         * The comparator will only check the base information: name, enabled, interval,
-         * driftHandlingMode, pinned, and pinnedVersion. The basedir/includes-excludes
+         * The comparator will only check the base information: name, description, enabled,
+         * interval, driftHandlingMode, pinned, and pinnedVersion. The basedir/includes-excludes
          * filters will be ignored.
          */
         ONLY_BASE_INFO,
@@ -72,6 +72,19 @@ public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
                 }
             } else if (dc2.getName() != null) {
                 return -1; // dc1's name is null, but dc2's name is not null, not equal!
+            }
+
+            if (dc1.getDescription() != null) {
+                if (dc2.getDescription() != null) {
+                    int results = dc1.getDescription().compareTo(dc2.getDescription());
+                    if (results != 0) {
+                        return results;
+                    }
+                } else {
+                    return 1;  // dc1's description is not null, but dc2's description is null
+                }
+            } else if (dc2.getDescription() != null) {
+                return -1;  // dc2's description is not null, but dc1's description is null
             }
 
             if (dc1.getInterval() != dc2.getInterval()) {

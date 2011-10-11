@@ -124,6 +124,12 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                     if (criteria.getPageControlOverrides() == null) {
                         criteria.setPageControl(getPageControl(request));
                     }
+                    if (Log.isDebugEnabled()) {
+                        Log.debug(getClass().getName() + " using [" + criteria.getPageControlOverrides()
+                            + "] for fetch request.");
+                    }
+                } else {
+                    Log.warn(getClass().getName() + ".getFetchCriteria() returned null - no paging of results will be done.");
                 }
                 executeFetch(request, response, criteria);
                 break;

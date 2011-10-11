@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -68,16 +68,14 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
     private static final Criteria INITIAL_CRITERIA = new Criteria();
-    EntityContext context;
-    boolean hasWriteAccess;
-    AlertDataSource dataSource;
+    private EntityContext context;
+    private boolean hasWriteAccess;
 
     static {
         AlertPriority[] priorityValues = AlertPriority.values();
         String[] priorityNames = new String[priorityValues.length];
-        int i = 0;
-        for (AlertPriority s : priorityValues) {
-            priorityNames[i++] = s.name();
+        for (int i = 0, priorityValuesLength = priorityValues.length; i < priorityValuesLength; i++) {
+            priorityNames[i] = priorityValues[i].name();
         }
 
         INITIAL_CRITERIA.addCriteria(AlertDataSource.FILTER_PRIORITIES, priorityNames);
@@ -98,19 +96,12 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
         setInitialCriteriaFixed(false);
-        setDataSource(getDataSource());
-    }
-
-    @Override
-    public AlertDataSource getDataSource() {
-        if (null == this.dataSource) {
-            this.dataSource = new AlertDataSource(context);
-        }
-        return this.dataSource;
+        setDataSource(new AlertDataSource(context));
     }
 
     @Override

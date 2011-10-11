@@ -54,8 +54,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal {
             template.setConfiguration(definition.getConfiguration().deepCopyWithoutProxies());
 
             resourceType.addDriftDefinitionTemplate(template);
-            entityMgr.merge(template);
-
         } catch (ResourceTypeNotFoundException e) {
         }
     }

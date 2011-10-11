@@ -47,6 +47,10 @@ public interface Drift<C extends DriftChangeSet<?>, F extends DriftFile> {
 
     void setPath(String path);
 
+    String getDirectory();
+
+    void setDirectory(String directory);
+
     F getOldDriftFile();
 
     void setOldDriftFile(F oldDriftFile);

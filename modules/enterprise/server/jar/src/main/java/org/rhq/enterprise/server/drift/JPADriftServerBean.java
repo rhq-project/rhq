@@ -59,6 +59,7 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -66,6 +67,7 @@ import org.rhq.core.domain.drift.JPADriftFileBits;
 import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -141,13 +143,20 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+    public DriftSnapshot createSnapshot(Subject subject, DriftSnapshotRequest request) {
         // TODO security checks
-        DriftSnapshot snapshot = new DriftSnapshot();
+
+        DriftSnapshot snapshot = new DriftSnapshot(request);
+
+        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
+        criteria.addFilterStartVersion(request.getStartVersion());
+        criteria.addFilterEndVersion(request.getVersion());
+        criteria.addSortVersion(PageOrdering.ASC);
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
 
         for (DriftChangeSet<?> changeSet : changeSets) {
-            snapshot.add(changeSet);
+            snapshot.addChangeSet(changeSet);
         }
 
         return snapshot;

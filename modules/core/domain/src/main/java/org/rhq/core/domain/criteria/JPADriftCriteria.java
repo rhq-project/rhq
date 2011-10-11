@@ -46,8 +46,10 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     private Integer filterChangeSetId; // needs override
     private Integer filterChangeSetStartVersion; // needs override
     private Integer filterChangeSetEndVersion; // needs override 
+    private Integer filterDriftDefinitionId; // needs override
     private List<DriftHandlingMode> filterDriftHandlingModes = new ArrayList<DriftHandlingMode>(); // needs override    
     private String filterPath;
+    private String filterDirectory;
     private List<Integer> filterResourceIds = new ArrayList<Integer>();
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides    
@@ -65,6 +67,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         filterOverrides.put("changeSetStartVersion", "changeSet.version >= ?");
         filterOverrides.put("changeSetEndVersion", "changeSet.version <= ?");
         filterOverrides.put("categories", "category IN ( ? )");
+        filterOverrides.put("driftDefinitionId", "changeSet.driftDefinition.id = ?");
         filterOverrides.put("driftHandlingModes", "changeSet.driftHandlingMode IN ( ? )");
         filterOverrides.put("resourceIds", "changeSet.resource.id IN ( ? )");
         filterOverrides.put("startTime", "ctime >= ?");
@@ -78,14 +81,18 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
             this.addFilterChangeSetId(driftCriteria.getFilterChangeSetId());
             this.addFilterChangeSetStartVersion(driftCriteria.getFilterChangeSetStartVersion());
             this.addFilterChangeSetEndVersion(driftCriteria.getFilterChangeSetEndVersion());
+            this.addFilterDriftDefinitionId(driftCriteria.getFilterDriftDefinitionId());
             this.addFilterDriftHandlingModes(driftCriteria.getFilterDriftHandlingModes());
             this.addFilterEndTime(driftCriteria.getFilterEndTime());
             this.addFilterId(driftCriteria.getFilterId());
             this.addFilterPath(driftCriteria.getFilterPath());
+            this.addFilterDirectory(driftCriteria.getFilterDirectory());
             this.addFilterResourceIds(driftCriteria.getFilterResourceIds());
             this.addFilterStartTime(driftCriteria.getFilterStartTime());
 
             this.addSortCtime(driftCriteria.getSortCtime());
+
+            this.setStrict(driftCriteria.isStrict());
         }
     }
 
@@ -94,6 +101,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return JPADrift.class;
     }
 
+    @Override
     public void addFilterId(String filterId) {
         if (filterId != null) {
             this.filterId = Integer.parseInt(filterId);
@@ -105,6 +113,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return filterId == null ? null : filterId.toString();
     }
 
+    @Override
     public void addFilterCategories(DriftCategory... filterCategories) {
         this.filterCategories = CriteriaUtils.getListIgnoringNulls(filterCategories);
     }
@@ -147,6 +156,16 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
+    public void addFilterDriftDefinitionId(Integer filterDriftDefinitionId) {
+        this.filterDriftDefinitionId = filterDriftDefinitionId;
+    }
+
+    @Override
+    public Integer getFilterDriftDefinitionId() {
+        return this.filterDriftDefinitionId;
+    }
+
+    @Override
     public void addFilterDriftHandlingModes(DriftHandlingMode... filterDriftHandlingModes) {
         this.filterDriftHandlingModes = CriteriaUtils.getListIgnoringNulls(filterDriftHandlingModes);
     }
@@ -156,6 +175,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return this.filterDriftHandlingModes.toArray(new DriftHandlingMode[this.filterDriftHandlingModes.size()]);
     }
 
+    @Override
     public void addFilterPath(String filterPath) {
         this.filterPath = filterPath;
     }
@@ -165,6 +185,17 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return filterPath;
     }
 
+    @Override
+    public void addFilterDirectory(String filterDirectory) {
+        this.filterDirectory = filterDirectory;
+    }
+
+    @Override
+    public String getFilterDirectory() {
+        return filterDirectory;
+    }
+
+    @Override
     public void addFilterResourceIds(Integer... filterResourceIds) {
         this.filterResourceIds = CriteriaUtils.getListIgnoringNulls(filterResourceIds);
     }
@@ -174,6 +205,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return filterResourceIds.toArray(new Integer[this.filterResourceIds.size()]);
     }
 
+    @Override
     public void addFilterStartTime(Long filterStartTime) {
         this.filterStartTime = filterStartTime;
     }
@@ -183,6 +215,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return filterStartTime;
     }
 
+    @Override
     public void addFilterEndTime(Long filterEndTime) {
         this.filterEndTime = filterEndTime;
     }
@@ -192,6 +225,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return filterEndTime;
     }
 
+    @Override
     public void fetchChangeSet(boolean fetchChangeSet) {
         this.fetchChangeSet = fetchChangeSet;
     }
@@ -201,6 +235,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return fetchChangeSet;
     }
 
+    @Override
     public void addSortCtime(PageOrdering sortCtime) {
         addSortField("ctime");
         this.sortCtime = sortCtime;

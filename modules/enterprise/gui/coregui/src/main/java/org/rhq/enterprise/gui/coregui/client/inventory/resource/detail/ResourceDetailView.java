@@ -50,7 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftChangeSetsView;
+import org.rhq.enterprise.gui.coregui.client.drift.DriftSnapshotView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -61,8 +61,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventComposi
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceCompositeSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceAgentView;
@@ -527,7 +527,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.driftTab, this.driftSnapshots, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftChangeSetsView.get(driftSnapshots.extendLocatorId("View"), resourceComposite);
+                    return new DriftSnapshotView(driftSnapshots.extendLocatorId("View"), 10001, 10001, 0);
                 }
             });
 
@@ -541,8 +541,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             updateSubTab(this.driftTab, this.driftDefinitions, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftDefinitionsView.get(driftDefinitions.extendLocatorId("View"),
-                        resourceComposite);
+                    return ResourceDriftDefinitionsView
+                        .get(driftDefinitions.extendLocatorId("View"), resourceComposite);
                 }
             });
         }

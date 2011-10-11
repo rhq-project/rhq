@@ -29,6 +29,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -43,6 +44,16 @@ import org.rhq.core.domain.util.PageList;
  * @author John Sanda
  */
 public interface DriftServerPluginFacet {
+
+    /**
+     * Calculate and return requested Drift Snapshot.
+     *  
+     * @param subject
+     * @param request
+     * @return The DriftSnapshot
+     * @throws IllegalArgumentException if the specified drift definition does not exist
+     */
+    DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request);
 
     /**
      * <p>

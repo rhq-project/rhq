@@ -53,9 +53,13 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
 
     private Integer filterChangeSetEndVersion;
 
+    private Integer filterDriftDefinitionId;
+
     private List<DriftHandlingMode> filterDriftHandlingModes = new ArrayList<DriftHandlingMode>();
 
     private String filterPath;
+
+    private String filterDirectory;
 
     private List<Integer> filterResourceIds = new ArrayList<Integer>();
 
@@ -68,6 +72,8 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     private PageControl pageControl;
 
     private PageOrdering sortCtime;
+
+    private boolean strict;
 
     @Override
     public void addFilterId(String filterId) {
@@ -115,6 +121,16 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     }
 
     @Override
+    public void addFilterDriftDefinitionId(Integer filterDriftDefinitionId) {
+        this.filterDriftDefinitionId = filterDriftDefinitionId;
+    }
+
+    @Override
+    public Integer getFilterDriftDefinitionId() {
+        return this.filterDriftDefinitionId;
+    }
+
+    @Override
     public void addFilterDriftHandlingModes(DriftHandlingMode... filterDriftHandlingModes) {
         this.filterDriftHandlingModes = getListIgnoringNulls(filterDriftHandlingModes);
     }
@@ -137,6 +153,16 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     @Override
     public String getFilterPath() {
         return filterPath;
+    }
+
+    @Override
+    public void addFilterDirectory(String filterDirectory) {
+        this.filterDirectory = filterDirectory;
+    }
+
+    @Override
+    public String getFilterDirectory() {
+        return filterDirectory;
     }
 
     @Override
@@ -198,4 +224,15 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     public void setPageControl(PageControl pageControl) {
         this.pageControl = pageControl;
     }
+
+    @Override
+    public void setStrict(boolean strict) {
+        this.strict = strict;
+    }
+
+    @Override
+    public boolean isStrict() {
+        return this.strict;
+    }
+
 }

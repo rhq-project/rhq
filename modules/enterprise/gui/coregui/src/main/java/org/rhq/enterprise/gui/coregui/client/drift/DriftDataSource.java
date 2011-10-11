@@ -74,6 +74,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
     public static final String ATTR_CATEGORY = "category";
     public static final String ATTR_CHANGESET_VERSION = "changeSetVersion";
     public static final String ATTR_CHANGESET_DEF_NAME = "changSetDef";
+    public static final String ATTR_CHANGESET_DEF_ID = "changSetDefId";
     public static final String ATTR_PATH = "path";
 
     public static final String FILTER_CATEGORIES = "categories";
@@ -372,6 +373,9 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         record.setAttribute(ATTR_PATH, drift.getPath());
         record.setAttribute(ATTR_CHANGESET_DEF_NAME, from.getDriftDefinitionName());
         record.setAttribute(ATTR_CHANGESET_VERSION, drift.getChangeSet().getVersion());
+
+        // for navigation needs
+        record.setAttribute(ATTR_CHANGESET_DEF_ID, drift.getChangeSet().getDriftDefinitionId());
 
         // for ancestry handling     
         Resource resource = from.getResource();

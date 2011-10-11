@@ -60,6 +60,7 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -90,6 +91,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private HTMLFlow titleCanvas;
     private String titleString;
     private List<String> titleIcons = new ArrayList<String>();
+    private BackButton titleBackButton;
 
     private Canvas carouselDetails;
 
@@ -264,6 +266,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                 titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
+                titleLayout.setMembersMargin(4);
                 contents.addMember(titleLayout, 0);
             }
 
@@ -325,6 +328,10 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             Img img = new Img(headerIcon, 24, 24);
             img.setPadding(4);
             titleLayout.addMember(img);
+        }
+
+        if (null != titleBackButton) {
+            titleLayout.addMember(titleBackButton);
         }
 
         titleLayout.addMember(titleCanvas);
@@ -660,11 +667,12 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         return criteria;
     }
 
+    //TODO move to a utility
     // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.
-    protected static void addCriteria(Criteria dest, Criteria src) {
+    public static void addCriteria(Criteria dest, Criteria src) {
         Map otherMap = src.getValues();
         Set otherKeys = otherMap.keySet();
         for (Iterator i = otherKeys.iterator(); i.hasNext();) {
@@ -788,6 +796,10 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     public void addHeaderIcon(String headerIcon) {
         this.titleIcons.add(headerIcon);
+    }
+
+    public void setTitleBackButton(BackButton backButton) {
+        this.titleBackButton = backButton;
     }
 
     /**

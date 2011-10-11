@@ -67,6 +67,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -222,14 +223,33 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.flexRowDisplay = flexRowDisplay;
     }
 
+    /**
+     * Returns the encompassing canvas that contains all content for this table component.
+     * This content includes the list grid, the buttons, etc.
+     */
+    protected LocatableVLayout getTableContents() {
+
+        if (null == contents) {
+            contents = new LocatableVLayout(extendLocatorId("Contents"));
+            contents.setWidth100();
+            contents.setHeight100();
+        }
+
+        return contents;
+    }
+
+    protected void configureTableContents(Layout contents) {
+        contents.setWidth100();
+        contents.setHeight100();
+        //contents.setOverflow(Overflow.AUTO);        
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
 
         contents = new LocatableVLayout(extendLocatorId("Contents"));
-        contents.setWidth100();
-        contents.setHeight100();
-        //contents.setOverflow(Overflow.AUTO);
+        configureTableContents(contents);
         addMember(contents);
 
         filterForm = new TableFilter(this);
@@ -248,7 +268,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+        listGrid = getListGrid();
         listGrid.setAutoFetchData(autoFetchData);
 
         if (initialCriteria != null) {
@@ -337,6 +357,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
+            if (!showFooter) {
+                footer.hide();
+            }
             contents.addMember(footer);
 
             // The ListGrid has been created and configured - now give subclasses a chance to configure the table.
@@ -626,14 +649,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         titleCanvas.markForRedraw();
     }
 
-    /**
-     * Returns the encompassing canvas that contains all content for this table component.
-     * This content includes the list grid, the buttons, etc.
-     */
-    public Canvas getTableContents() {
-        return this.contents;
-    }
-
     public boolean isShowHeader() {
         return showHeader;
     }
@@ -764,6 +779,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public ListGrid getListGrid() {
+        if (null == listGrid) {
+            listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+        }
         return listGrid;
     }
 

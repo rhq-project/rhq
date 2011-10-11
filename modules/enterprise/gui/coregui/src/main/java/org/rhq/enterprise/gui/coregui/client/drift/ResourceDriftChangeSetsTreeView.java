@@ -53,7 +53,7 @@ public class ResourceDriftChangeSetsTreeView extends AbstractDriftChangeSetsTree
     protected String getNodeDetailsLink(TreeNode node) {
         if (node instanceof DriftTreeNode) {
             String driftId = ((DriftTreeNode) node).getDriftId();
-            String path = LinkManager.getDriftHistoryLink(this.context.resourceId, driftId);
+            String path = LinkManager.getDriftHistoryLink(this.context.resourceId, 0, driftId);
             return path;
         } else if (node instanceof DriftDefinitionTreeNode) {
             int driftDefId = ((DriftDefinitionTreeNode) node).getDriftDefinitionId();

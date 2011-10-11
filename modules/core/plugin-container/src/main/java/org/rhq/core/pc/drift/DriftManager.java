@@ -697,7 +697,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     private void writeSnapshotToFile(DriftSnapshot snapshot, File file, Headers headers) throws IOException {
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(file, headers);
-        for (Drift drift : snapshot.getEntries()) {
+        for (Drift drift : snapshot.getDriftInstances()) {
             switch (drift.getCategory()) {
             case FILE_ADDED:
                 writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));

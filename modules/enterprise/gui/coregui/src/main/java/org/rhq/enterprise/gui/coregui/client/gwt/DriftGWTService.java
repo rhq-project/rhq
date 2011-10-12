@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
@@ -31,6 +30,7 @@ import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
@@ -97,6 +97,20 @@ public interface DriftGWTService extends RemoteService {
      */
     DriftDefinition getDriftDefinition(int driftDefId) throws RuntimeException;
 
+    DriftDetails getDriftDetails(String driftId) throws RuntimeException;
+
+    String getDriftFileBits(String hash) throws RuntimeException;
+
+    DriftSnapshot getSnapshot(DriftSnapshotRequest request) throws RuntimeException;
+
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException;
+
+    FileDiffReport generateUnifiedDiffByIds(String driftId1, String driftId2) throws RuntimeException;
+
+    boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException;
+
+    void pinSnapshot(String changeSetId) throws RuntimeException;
+
     /**
      * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
@@ -105,17 +119,5 @@ public interface DriftGWTService extends RemoteService {
      * @param driftDef
      */
     void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException;
-
-    String getDriftFileBits(String hash) throws RuntimeException;
-
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException;
-
-    FileDiffReport generateUnifiedDiffByIds(String driftId1, String driftId2) throws RuntimeException;
-
-    boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException;
-
-    DriftDetails getDriftDetails(String driftId) throws RuntimeException;
-
-    void pinSnapshot(String changeSetId) throws RuntimeException;
 
 }

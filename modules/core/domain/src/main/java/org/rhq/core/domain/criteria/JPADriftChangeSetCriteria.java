@@ -120,6 +120,10 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return filterId == null ? null : filterId.toString();
     }
 
+    public void addFilterVersion(Integer filterVersion) {
+        this.filterVersion = filterVersion;
+    }
+
     @Override
     public void addFilterVersion(String filterVersion) {
         if (filterVersion != null) {
@@ -132,6 +136,10 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         return filterVersion == null ? null : filterVersion.toString();
     }
 
+    public void addFilterStartVersion(Integer filterStartVersion) {
+        this.filterStartVersion = filterStartVersion;
+    }
+
     @Override
     public void addFilterStartVersion(String filterStartVersion) {
         if (filterStartVersion != null) {
@@ -142,6 +150,10 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     @Override
     public String getFilterStartVersion() {
         return filterStartVersion == null ? null : filterStartVersion.toString();
+    }
+
+    public void addFilterEndVersion(Integer filterEndVersion) {
+        this.filterEndVersion = filterEndVersion;
     }
 
     @Override

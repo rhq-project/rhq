@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "FieldCanBeLocal"})
 public class AlertCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
@@ -80,7 +80,6 @@ public class AlertCriteria extends Criteria {
     private PageOrdering sortResourceName; // requires sort override
 
     public AlertCriteria() {
-
         filterOverrides.put("triggeredOperationName", "triggeredOperation like ?");
         filterOverrides.put("startTime", "ctime >= ?");
         filterOverrides.put("endTime", "ctime <= ?");
@@ -102,6 +101,8 @@ public class AlertCriteria extends Criteria {
         sortOverrides.put(SORT_FIELD_PRIORITY, "alertDefinition.priority");
         sortOverrides.put(SORT_FIELD_RESOURCE_ID, "alertDefinition.resource.id");
         sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "alertDefinition.resource.name");
+
+        fetchConditionLogs = true; // fetch condition logs by default
     }
 
     @Override

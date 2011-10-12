@@ -42,9 +42,13 @@ public interface DriftCriteria extends BaseCriteria {
 
     void addFilterChangeSetEndVersion(Integer filterChangeSetEndVersion);
 
+    void addFilterDriftDefinitionId(Integer filterDriftDefinitionId);
+
     void addFilterDriftHandlingModes(DriftHandlingMode... filterDriftHandlingModes);
 
     void addFilterPath(String filterPath);
+
+    void addFilterDirectory(String filterDirectory);
 
     void addFilterResourceIds(Integer... filterResourceIds);
 
@@ -69,9 +73,13 @@ public interface DriftCriteria extends BaseCriteria {
 
     Integer getFilterChangeSetEndVersion();
 
+    Integer getFilterDriftDefinitionId();
+
     DriftHandlingMode[] getFilterDriftHandlingModes();
 
     String getFilterPath();
+
+    String getFilterDirectory();
 
     Integer[] getFilterResourceIds();
 

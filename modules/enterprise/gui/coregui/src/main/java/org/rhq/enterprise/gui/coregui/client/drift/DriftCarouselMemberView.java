@@ -42,6 +42,7 @@ import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.carousel.CarouselMember;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -100,8 +101,9 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
                 if (selectedRows != null && selectedRows.length == 1) {
                     ListGridRecord record = selectedRows[0];
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                    Integer driftDefId = record.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_DEF_ID);
                     String driftId = getId(record);
-                    String url = LinkManager.getDriftHistoryLink(resourceId, driftId);
+                    String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
                     CoreGUI.goToView(url);
                 }
             }
@@ -145,14 +147,25 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
     }
 
     public void updateTitleCanvas(String titleString) {
-        StringBuilder sb = new StringBuilder("<span class=\"HeaderLabel\">");
+        int resourceId = getContext().getResourceId();
+        String imageHtml = Canvas.imgHTML(ImageManager.getViewIcon());
+        String link = LinkManager.getDriftSnapshotLink(resourceId, changeSet.getDriftDefinitionId(), changeSet
+            .getVersion());
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("<a href=\"").append(link).append("\">");
+        sb.append(imageHtml);
+        sb.append("</a>");
+        sb.append("<span class=\"HeaderLabel\">");
         sb.append(MSG.view_drift_table_snapshot());
         sb.append(" ");
         sb.append(changeSet.getVersion());
-        sb.append("</span><br/>");
+        sb.append("</span>");
+        sb.append("<br/>");
         sb.append(TimestampCellFormatter.DATE_TIME_FORMAT_MEDIUM.format(new Date(this.changeSet.getCtime())));
 
         Canvas titleCanvas = getTitleCanvas();
+
         titleCanvas.setWidth100();
         titleCanvas.setHeight(35);
         titleCanvas.setContents(sb.toString());

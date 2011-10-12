@@ -27,6 +27,8 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
@@ -105,6 +107,15 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
             PageList<DriftDefinition> results = driftManager.findDriftDefinitionsByCriteria(getSessionSubject(),
                 criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftDefinitionsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public DriftSnapshot getSnapshot(DriftSnapshotRequest request) throws RuntimeException {
+        try {
+            return driftManager.getSnapshot(getSessionSubject(), request);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

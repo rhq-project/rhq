@@ -120,7 +120,11 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.3/mongo-java-driver-2.6.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/0.99/morphia-0.99.jar"/>
-	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.2.1.GA/resteasy-links-2.2.1.GA.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.2.1.GA/resteasy-jaxrs-2.2.1.GA.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jettison-provider/2.2.1.GA/resteasy-jettison-provider-2.2.1.GA.jar"/>
+    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.2.1.GA/jaxrs-api-2.2.1.GA.jar"/>	
+    <classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/test/java"/>

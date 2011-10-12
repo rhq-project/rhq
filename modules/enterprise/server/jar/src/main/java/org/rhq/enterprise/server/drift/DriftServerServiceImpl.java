@@ -19,6 +19,9 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,10 +34,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.util.PageList;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 public class DriftServerServiceImpl implements DriftServerService {
     @Override
@@ -91,12 +92,15 @@ public class DriftServerServiceImpl implements DriftServerService {
     @Override
     public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
         Subject overlord = getSubjectManager().getOverlord();
-        return getDriftManager().getCurrentSnapshot(overlord, driftDefinitionId);
+
+        return getDriftManager().getSnapshot(overlord, new DriftSnapshotRequest(driftDefinitionId));
     }
 
     @Override
     public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
         Subject overlord = getSubjectManager().getOverlord();
-        return getDriftManager().createSnapshot(overlord, driftDefinitionId, startVersion, endVersion);
+
+        return getDriftManager().getSnapshot(overlord,
+            new DriftSnapshotRequest(driftDefinitionId, endVersion, startVersion, false, true));
     }
 }

@@ -33,7 +33,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -81,6 +80,10 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     @Enumerated(EnumType.STRING)
     private String path;
 
+    @Column(name = "DIRECTORY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private String directory;
+
     @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private JPADriftChangeSet changeSet;
@@ -106,6 +109,8 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
         JPADriftFile newDriftFile) {
         this.changeSet = changeSet;
         this.path = path;
+        int i = path.lastIndexOf("/");
+        this.directory = (i != -1) ? path.substring(0, i) : "./";
         this.category = category;
         this.oldDriftFile = oldDriftFile;
         this.newDriftFile = newDriftFile;
@@ -159,6 +164,16 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     @Override
     public void setPath(String path) {
         this.path = path;
+    }
+
+    @Override
+    public String getDirectory() {
+        return directory;
+    }
+
+    @Override
+    public void setDirectory(String directory) {
+        this.directory = directory;
     }
 
     @Override

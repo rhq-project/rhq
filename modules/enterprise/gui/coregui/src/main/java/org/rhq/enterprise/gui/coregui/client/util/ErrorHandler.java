@@ -67,8 +67,8 @@ public class ErrorHandler {
 
     public static String getAllMessages(Throwable t, boolean includeStackTrace, String newline) {
         StringBuilder results = new StringBuilder();
-        if (newline==null)
-            newline=NL;
+        if (newline == null)
+            newline = NL;
 
         if (t != null) {
             String[] msgs = getAllMessagesArray(t);

@@ -62,7 +62,7 @@ public class LinkManager {
     public static String getResourceGroupLink(ResourceGroup group) {
         return getResourceOrGroupLink(EntityContext.forGroup(group));
     }
-    
+
     private static String getAutoGroupTabLink(int autoGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#Resource/AutoGroup/" + autoGroupId + "/" + tabName
@@ -75,7 +75,7 @@ public class LinkManager {
     private static String getAutoGroupLink(int autoGroupId) {
         return "#Resource/AutoGroup/" + autoGroupId;
     }
-    
+
     private static String getAutoClusterTabLink(int autoClusterGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#ResourceGroup/AutoCluster/" + autoClusterGroupId + "/" + tabName
@@ -88,7 +88,7 @@ public class LinkManager {
     private static String getAutoClusterLink(int autoClusterGroupId) {
         return "#ResourceGroup/AutoCluster/" + autoClusterGroupId;
     }
-    
+
     private static String getResourceGroupTabLink(int resourceGroupId, String tabName, String subTabName) {
         if (GWT) {
             return "#ResourceGroup/" + resourceGroupId + "/" + tabName
@@ -151,26 +151,26 @@ public class LinkManager {
             throw new IllegalArgumentException("Unsupported entity context type: " + entityContext);
         }
     }
-    
+
     public static String getGroupPluginConfigurationUpdateHistoryLink(EntityContext group, Integer groupUpdateHistoryId) {
         if (groupUpdateHistoryId != null) {
-            return getEntityTabLink(group, "Inventory", "ConnectionSettingsHistory") + "/" + groupUpdateHistoryId;            
+            return getEntityTabLink(group, "Inventory", "ConnectionSettingsHistory") + "/" + groupUpdateHistoryId;
         } else {
-            return getEntityTabLink(group, "Inventory", "ConnectionSettingsHistory"); 
+            return getEntityTabLink(group, "Inventory", "ConnectionSettingsHistory");
         }
     }
-    
-    public static String getGroupResourceConfigurationUpdateHistoryLink(EntityContext group, Integer groupUpdateHistoryId) {
+
+    public static String getGroupResourceConfigurationUpdateHistoryLink(EntityContext group,
+        Integer groupUpdateHistoryId) {
         if (groupUpdateHistoryId != null) {
-            return getEntityTabLink(group, "Configuration", "History") + "/" + groupUpdateHistoryId;            
+            return getEntityTabLink(group, "Configuration", "History") + "/" + groupUpdateHistoryId;
         } else {
-            return getEntityTabLink(group, "Configuration", "History"); 
+            return getEntityTabLink(group, "Configuration", "History");
         }
     }
-    
+
     public static String getGroupOperationHistoryLink(ResourceGroup group, int groupOperationHistoryId) {
-        return getEntityTabLink(EntityContext.forGroup(group), "Operations", "History") + "/"
-            + groupOperationHistoryId;
+        return getEntityTabLink(EntityContext.forGroup(group), "Operations", "History") + "/" + groupOperationHistoryId;
     }
 
     public static String getResourceEventHistoryListLink(int resourceId) {
@@ -500,15 +500,23 @@ public class LinkManager {
         return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
     }
 
-    public static String getDriftHistoryLink(int resourceId, String driftId) {
-        if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
-            driftId = StringIDTableSection.ID_PREFIX + driftId;
-        }
-        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
+    public static String getDriftDefinitionsLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Drift/Definitions";
     }
 
     public static String getDriftDefinitionEditLink(int resourceId, int driftDefId) {
         return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Edit";
+    }
+
+    public static String getDriftHistoryLink(int resourceId, int driftDefId, String driftId) {
+        if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
+            driftId = StringIDTableSection.ID_PREFIX + driftId;
+        }
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/History/" + driftId;
+    }
+
+    public static String getDriftSnapshotLink(int resourceId, int driftDefId, int version) {
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Snapshot/" + version;
     }
 
 }

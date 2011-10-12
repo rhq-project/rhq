@@ -29,7 +29,6 @@ import java.util.Set;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -60,6 +59,7 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -73,7 +73,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
  * @{link CarouselMember}s, offering horizontal presentation of the member canvases, high level filtering, and
- * other member-wide handling. 
+ * other member-wide handling. See @{link BookmarkableCarousel} for a subclass providing master-detail support.
  * 
  * @author Jay Shaughnessy
  */
@@ -90,6 +90,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private HTMLFlow titleCanvas;
     private String titleString;
     private List<String> titleIcons = new ArrayList<String>();
+    private BackButton titleBackButton;
 
     private Canvas carouselDetails;
 
@@ -106,14 +107,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     private Criteria initialCriteria;
     private boolean initialCriteriaFixed = true;
-    @SuppressWarnings("unused")
-    private SortSpecifier[] sortSpecifiers;
-    @SuppressWarnings("unused")
-    private String[] excludedFieldNames;
-    @SuppressWarnings("unused")
-    private boolean autoFetchData;
-    @SuppressWarnings("unused")
-    private boolean flexRowDisplay = true;
     private boolean hideSearchBar = false;
     private String initialSearchBarSearchText = null;
 
@@ -137,40 +130,14 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private boolean carouselUsingFixedWidths = false;
 
     public Carousel(String locatorId) {
-        this(locatorId, null, null, null, null, true);
+        this(locatorId, null, null);
     }
 
     public Carousel(String locatorId, String titleString) {
-        this(locatorId, titleString, null, null, null, true);
+        this(locatorId, titleString, null);
     }
 
     public Carousel(String locatorId, String titleString, Criteria criteria) {
-        this(locatorId, titleString, criteria, null, null, true);
-    }
-
-    public Carousel(String locatorId, String titleString, SortSpecifier[] sortSpecifiers) {
-        this(locatorId, titleString, null, sortSpecifiers, null, true);
-    }
-
-    protected Carousel(String locatorId, String titleString, SortSpecifier[] sortSpecifiers, Criteria criteria) {
-        this(locatorId, titleString, criteria, sortSpecifiers, null, true);
-    }
-
-    public Carousel(String locatorId, String titleString, boolean autoFetchData) {
-        this(locatorId, titleString, null, null, null, autoFetchData);
-    }
-
-    public Carousel(String locatorId, String titleString, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(locatorId, titleString, null, sortSpecifiers, excludedFieldNames, true);
-    }
-
-    public Carousel(String locatorId, String titleString, Criteria criteria, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames) {
-        this(locatorId, titleString, criteria, sortSpecifiers, excludedFieldNames, true);
-    }
-
-    public Carousel(String locatorId, String titleString, Criteria criteria, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames, boolean autoFetchData) {
         super(locatorId);
 
         setWidth100();
@@ -179,9 +146,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
         this.titleString = titleString;
         this.initialCriteria = criteria;
-        this.sortSpecifiers = sortSpecifiers;
-        this.excludedFieldNames = excludedFieldNames;
-        this.autoFetchData = autoFetchData;
     }
 
     /**
@@ -206,10 +170,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         this.initialSearchBarSearchText = text;
     }
 
-    public void setFlexRowDisplay(boolean flexRowDisplay) {
-        this.flexRowDisplay = flexRowDisplay;
-    }
-
     @Override
     protected void onInit() {
         super.onInit();
@@ -217,7 +177,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         contents = new LocatableVLayout(extendLocatorId("Contents"));
         contents.setWidth100();
         contents.setHeight100();
-        //contents.setOverflow(Overflow.AUTO);
+
         addMember(contents);
 
         filterForm = new CarouselFilter(this);
@@ -264,6 +224,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                 titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
+                titleLayout.setMembersMargin(4);
                 contents.addMember(titleLayout, 0);
             }
 
@@ -325,6 +286,10 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             Img img = new Img(headerIcon, 24, 24);
             img.setPadding(4);
             titleLayout.addMember(img);
+        }
+
+        if (null != titleBackButton) {
+            titleLayout.addMember(titleBackButton);
         }
 
         titleLayout.addMember(titleCanvas);
@@ -660,11 +625,12 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         return criteria;
     }
 
+    //TODO move to a utility
     // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.
-    protected static void addCriteria(Criteria dest, Criteria src) {
+    public static void addCriteria(Criteria dest, Criteria src) {
         Map otherMap = src.getValues();
         Set otherKeys = otherMap.keySet();
         for (Iterator i = otherKeys.iterator(); i.hasNext();) {
@@ -788,6 +754,10 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
 
     public void addHeaderIcon(String headerIcon) {
         this.titleIcons.add(headerIcon);
+    }
+
+    public void setTitleBackButton(BackButton backButton) {
+        this.titleBackButton = backButton;
     }
 
     /**

@@ -19,6 +19,12 @@
 
 package org.rhq.core.domain.drift;
 
+import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
+import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
+
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -27,19 +33,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.test.TransactionCallback;
-
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 
 public class JPADriftChangeSetTest extends AbstractEJB3Test {
 
@@ -80,37 +80,28 @@ public class JPADriftChangeSetTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
 
         List<Resource> resources = (List<Resource>) em.createQuery("from Resource where resourceType.name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME)
-            .getResultList();
+            .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
         for (Resource resource : resources) {
             em.remove(resource);
         }
 
-        List<ResourceType> resourceTypes =  (List<ResourceType>) em.createQuery("from ResourceType where name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME)
-            .getResultList();
+        List<ResourceType> resourceTypes = (List<ResourceType>) em.createQuery("from ResourceType where name = :name")
+            .setParameter("name", RESOURCE_TYPE_NAME).getResultList();
         for (ResourceType type : resourceTypes) {
             em.remove(type);
         }
     }
 
     private ResourceType createResourceType() {
-        return new ResourceTypeBuilder().createResourceType()
-            .withId(0)
-            .withName(JPADriftChangeSetTest.class.getName())
-            .withCategory(SERVER)
-            .withPlugin(JPADriftChangeSetTest.class.getName().toLowerCase())
-            .build();
+        return new ResourceTypeBuilder().createResourceType().withId(0).withName(JPADriftChangeSetTest.class.getName())
+            .withCategory(SERVER).withPlugin(JPADriftChangeSetTest.class.getName().toLowerCase()).build();
     }
 
     private Resource createResource(ResourceType type) {
-        return new ResourceBuilder().createResource()
-            .withId(0)
-            .withName(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount++)
-            .withResourceKey(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount)
-            .withUuid(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount)
-            .withResourceType(type)
-            .build();
+        return new ResourceBuilder().createResource().withId(0).withName(
+            JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount++).withResourceKey(
+            JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount).withUuid(
+            JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount).withResourceType(type).build();
     }
 
     private DriftDefinition createDriftDefinition() {
@@ -124,11 +115,9 @@ public class JPADriftChangeSetTest extends AbstractEJB3Test {
         return def;
     }
 
-    @Test(groups = {"JPADriftChangeSet", "integration.ejb3"})
+    @Test(groups = { "JPADriftChangeSet", "integration.ejb3" })
     public void saveAndLoadInitialChangeSet() {
-        JPADrift drift = new JPADrift();
-        drift.setCategory(FILE_ADDED);
-        drift.setPath("drift.1");
+        JPADrift drift = new JPADrift(null, "drift.1", FILE_ADDED, null, null);
 
         JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift);
@@ -149,7 +138,8 @@ public class JPADriftChangeSetTest extends AbstractEJB3Test {
                 em.flush();
                 em.clear();
 
-                JPADriftChangeSet savedChangeSet = em.find(JPADriftChangeSet.class, Integer.parseInt(changeSet.getId()));
+                JPADriftChangeSet savedChangeSet = em
+                    .find(JPADriftChangeSet.class, Integer.parseInt(changeSet.getId()));
                 assertNotNull("Failed to persist change set", savedChangeSet);
 
                 JPADriftSet driftSet = savedChangeSet.getInitialDriftSet();

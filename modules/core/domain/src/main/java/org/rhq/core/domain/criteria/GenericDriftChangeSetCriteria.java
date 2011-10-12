@@ -70,6 +70,8 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
 
     private PageControl pageControl;
 
+    private boolean strict;
+
     @Override
     public void addFilterId(String filterId) {
         this.filterId = filterId;
@@ -209,4 +211,15 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     public void setPageControl(PageControl pageControl) {
         this.pageControl = pageControl;
     }
+
+    @Override
+    public void setStrict(boolean strict) {
+        this.strict = strict;
+    }
+
+    @Override
+    public boolean isStrict() {
+        return this.strict;
+    }
+
 }

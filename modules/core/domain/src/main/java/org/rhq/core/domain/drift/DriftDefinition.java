@@ -19,6 +19,9 @@
 
 package org.rhq.core.domain.drift;
 
+import static java.util.Collections.emptyList;
+import static javax.persistence.FetchType.LAZY;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +35,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
@@ -46,9 +48,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
-
-import static java.util.Collections.emptyList;
-import static javax.persistence.FetchType.LAZY;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that

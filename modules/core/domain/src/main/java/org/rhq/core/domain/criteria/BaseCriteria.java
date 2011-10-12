@@ -32,4 +32,8 @@ public interface BaseCriteria {
 
     void setPageControl(PageControl pageControl);
 
+    void setStrict(boolean strict);
+
+    public boolean isStrict();
+
 }

@@ -72,7 +72,7 @@ public abstract class AncestryUtil {
     }
 
     /**
-     * Convienence method that creates a standard ancestry ListGridField where the field already exists
+     * Convenience method that creates a standard ancestry ListGridField where the field already exists
      * in the given list grid.
      * 
      * @return ancestry field
@@ -226,20 +226,27 @@ public abstract class AncestryUtil {
     }
 
     public static String getAncestryHoverHTML(ListGridRecord listGridRecord, int width) {
+        // See if we cached the HTML as an attribute on the record on a previous call to this method.
         String ancestryHover = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY_HOVER);
-        if (null != ancestryHover) {
+        if (ancestryHover != null) {
             return ancestryHover;
         }
 
         String resourceName = getResourceName(listGridRecord);
 
-        Map<Integer, ResourceType> types = ((MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES))
-            .getMap();
+        MapWrapper typesWrapper = (MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
+        if (typesWrapper == null) {
+            // This means the record hasn't been loaded yet, so return null to tell the ListGrid to not display any
+            // tooltip.
+            return null;
+        }
+        Map<Integer, ResourceType> types = typesWrapper.getMap();
         Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
         String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
 
         String result = getAncestryHoverHTMLString(resourceName, ancestry, resourceTypeId, types, width);
 
+        // Cache the HTML as an attribute on the record.
         listGridRecord.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
         return result;
     }
@@ -327,13 +334,20 @@ public abstract class AncestryUtil {
      * @return the long name for the resource
      */
     public static String getResourceHoverHTML(Record record, int width) {
+        // See if we cached the HTML as an attribute on the record on a previous call to this method.
         String resourceHover = record.getAttributeAsString(RESOURCE_HOVER);
-        if (null != resourceHover) {
+        if (resourceHover != null) {
             return resourceHover;
         }
 
         String resourceName = getResourceName(record);
-        Map<Integer, ResourceType> types = ((MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES)).getMap();
+        MapWrapper typesWrapper = (MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
+        if (typesWrapper == null) {
+            // This means the record hasn't been loaded yet, so return null to tell the ListGrid to not display any
+            // tooltip.
+            return null;
+        }
+        Map<Integer, ResourceType> types = typesWrapper.getMap();
         Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
         ResourceType type = types.get(resourceTypeId);
 
@@ -346,7 +360,7 @@ public abstract class AncestryUtil {
         StringBuilder sb = new StringBuilder("<p");
         if (widthObj != null) {
             sb.append(" style='width:");
-            sb.append(widthObj.toString());
+            sb.append(widthObj);
             sb.append("px'");
         }
         sb.append(">");
@@ -356,7 +370,10 @@ public abstract class AncestryUtil {
         sb.append("</p>");
 
         String result = sb.toString();
+
+        // Cache the HTML as an attribute on the record.
         record.setAttribute(RESOURCE_HOVER, result);
+
         return result;
     }
 

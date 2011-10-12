@@ -20,6 +20,7 @@
 package org.rhq.bindings.engine;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.Set;
 
 import javax.script.ScriptEngine;
@@ -51,26 +52,34 @@ public class JsEngineInitializer implements ScriptEngineInitializer {
         return eng;
     }
 
-    public String generateIndirectionMethod(String boundObjectName, Method method) {
-        String methodName = method.getName();
-        int argCount = method.getParameterTypes().length;
-
-        StringBuilder functionBuilder = new StringBuilder();
-        functionBuilder.append(methodName).append("(");
-        for (int i = 0; i < argCount; ++i) {
-            if (i != 0) {
-                functionBuilder.append(", ");
-            }
-            functionBuilder.append("arg_" + i);
+    public Set<String> generateIndirectionMethods(String boundObjectName, Set<Method> methods) {
+        if (methods.size() == 0) {
+            return Collections.emptySet();
         }
-        functionBuilder.append(")");
-        String functionFragment = functionBuilder.toString();
-        boolean returnsVoid = method.getReturnType().equals(Void.TYPE);
-
-        String functionDefinition = "function " + functionFragment + " { " + (returnsVoid ? "" : "return ")
-            + boundObjectName + "." + functionFragment + "; }";
         
-        return functionDefinition;
+        String methodName = methods.iterator().next().getName();
+                
+        StringBuilder functionBuilder = new StringBuilder("function ");
+        functionBuilder.append(methodName).append("() { switch(arguments.length) { ");
+        
+        for(Method method : methods) {
+            int argCnt = method.getParameterTypes().length;
+            functionBuilder.append("case ").append(argCnt).append(": ");
+            functionBuilder.append("return ").append(boundObjectName).append(".").append(methodName).append("(");
+            for(int i = 0; i < argCnt; ++i) {
+                if (i > 0) {
+                    functionBuilder.append(", ");
+                }
+                
+                functionBuilder.append("arguments[").append(i).append("]");
+            }
+            
+            functionBuilder.append("); break; ");
+        }
+        
+        functionBuilder.append(" default: throw \"Unsupported number of parameters.\"; } }");
+        
+        return Collections.singleton(functionBuilder.toString());
     }
     
     public String extractUserFriendlyErrorMessage(ScriptException e) {

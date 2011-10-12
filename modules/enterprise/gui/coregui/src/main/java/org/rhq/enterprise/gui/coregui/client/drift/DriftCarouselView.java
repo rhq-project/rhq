@@ -42,9 +42,13 @@ import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-import org.rhq.enterprise.gui.coregui.client.components.carousel.Carousel;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.components.carousel.BookmarkableCarousel;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftCarouselMemberView.DriftSelectionListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
@@ -53,9 +57,12 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
+ * A carousel view used for display of Drift Definition detail.  Each carousel member is a snapshot delta
+ * view.  This view in turn serves as a "Master" view for snapshot and drift "Detail" views.  
+ * 
  * @author Jay Shaughnessy
  */
-public class DriftCarouselView extends Carousel {
+public class DriftCarouselView extends BookmarkableCarousel implements DetailsView {
 
     private static final int CAROUSEL_DEFAULT_SIZE = 4;
     private static final String CAROUSEL_MEMBER_FIXED_WIDTH = "250px";
@@ -65,6 +72,7 @@ public class DriftCarouselView extends Carousel {
     private boolean hasWriteAccess;
     private Integer maxCarouselEndFilter;
     private ArrayList<Record> selectedRecords = new ArrayList<Record>();
+    private boolean useHistoryDetailsView;
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
@@ -90,7 +98,7 @@ public class DriftCarouselView extends Carousel {
 
             public void onSuccess(PageList<DriftDefinition> result) {
                 // Create and add the details canvas for the def
-                addTitleString(result.get(0));
+                buildTitle(result.get(0));
 
                 buildCarousel(false);
             }
@@ -245,9 +253,11 @@ public class DriftCarouselView extends Carousel {
         }
     }
 
-    private void addTitleString(DriftDefinition driftDef) {
+    private void buildTitle(DriftDefinition driftDef) {
 
         setTitleString(driftDef.getName());
+        setTitleBackButton(new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+            LinkManager.getDriftDefinitionsLink(this.context.getResourceId())));
     }
 
     @Override
@@ -377,4 +387,34 @@ public class DriftCarouselView extends Carousel {
         return MSG.view_drift_carousel_sizeFilterLabel();
     }
 
+    @Override
+    public boolean isEditable() {
+        // This ensures the default BackButton is not presented. Instead, we implement our own back capability
+        return true;
+    }
+
+    // this class is somewhat unusual in that it is a detail view for the drift defs list view, but also a pseudo-
+    // master view for snapshot and drift detail views.  It's "pseudo" in that there is no master-detail infrastructure
+    // like that found in TableSection. The following paths must be handled (starting at the ^):
+    //   #Resource/10001/Drift/Definitions/10001/History/driftId
+    //   #Resource/10001/Drift/Definitions/10001/Snapshot/version
+    //                                           ^
+    @Override
+    public void renderView(ViewPath viewPath) {
+        if (!viewPath.isEnd() && !viewPath.isNextEnd()) {
+            this.useHistoryDetailsView = !viewPath.isNextEnd() && "History".equals(viewPath.getNext().getPath());
+        }
+
+        super.renderView(viewPath);
+    }
+
+    @Override
+    public Canvas getDetailsView(String id) {
+        if (this.useHistoryDetailsView) {
+            return new DriftDetailsView(extendLocatorId("History"), id);
+        }
+
+        return new DriftSnapshotView(extendLocatorId("Snapshot"), context.getResourceId(), driftDefId, Integer
+            .valueOf(id));
+    }
 }

@@ -67,6 +67,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -146,23 +147,23 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private LocatableIButton refreshButton;
 
     public Table(String locatorId) {
-        this(locatorId, null, null, null, null, true);
+        this(locatorId, null, null, null, null, false);
     }
 
     public Table(String locatorId, String tableTitle) {
-        this(locatorId, tableTitle, null, null, null, true);
+        this(locatorId, tableTitle, null, null, null, false);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, null, null, true);
+        this(locatorId, tableTitle, criteria, null, null, (criteria == null));
     }
 
     public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(locatorId, tableTitle, null, sortSpecifiers, null, true);
+        this(locatorId, tableTitle, null, sortSpecifiers, null, false);
     }
 
     protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, null, true);
+        this(locatorId, tableTitle, criteria, sortSpecifiers, null, (criteria == null));
     }
 
     public Table(String locatorId, String tableTitle, boolean autoFetchData) {
@@ -170,18 +171,21 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, true);
+        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, false);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);
+        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, false);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames, boolean autoFetchData) {
         super(locatorId);
 
+        if (criteria != null && autoFetchData) {
+            throw new IllegalArgumentException("Non-null initialCriteria and autoFetchData=true cannot be specified together, due to a bug in SmartGWT.");
+        }
         setWidth100();
         setHeight100();
         setOverflow(Overflow.HIDDEN);
@@ -219,14 +223,33 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.flexRowDisplay = flexRowDisplay;
     }
 
+    /**
+     * Returns the encompassing canvas that contains all content for this table component.
+     * This content includes the list grid, the buttons, etc.
+     */
+    protected LocatableVLayout getTableContents() {
+
+        if (null == contents) {
+            contents = new LocatableVLayout(extendLocatorId("Contents"));
+            contents.setWidth100();
+            contents.setHeight100();
+        }
+
+        return contents;
+    }
+
+    protected void configureTableContents(Layout contents) {
+        contents.setWidth100();
+        contents.setHeight100();
+        //contents.setOverflow(Overflow.AUTO);        
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
 
         contents = new LocatableVLayout(extendLocatorId("Contents"));
-        contents.setWidth100();
-        contents.setHeight100();
-        //contents.setOverflow(Overflow.AUTO);
+        configureTableContents(contents);
         addMember(contents);
 
         filterForm = new TableFilter(this);
@@ -245,7 +268,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+        listGrid = getListGrid();
         listGrid.setAutoFetchData(autoFetchData);
 
         if (initialCriteria != null) {
@@ -259,7 +282,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
         listGrid.setSelectionType(getDefaultSelectionStyle());
-        listGrid.setDataPageSize(45); // the default is 75 - lower it to speed up data loading
+        listGrid.setDataPageSize(50); // the default is 75 - lower it to speed up data loading
+        // Don't fetch more than 200 records for the sake of an attempt to group-by.
+        listGrid.setGroupByMaxRecords(200); // the default is 1000
+        // Disable the group-by option in the column header context menu, since group-by requires the entire data set to
+        // by loaded on the client-side, which isn't practical for most of our list views, since they can contain
+        // thousands of records.
+        listGrid.setCanGroupBy(false);
 
         if (flexRowDisplay) {
             //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
@@ -328,10 +357,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
+            if (!showFooter) {
+                footer.hide();
+            }
             contents.addMember(footer);
 
-            // The ListGrid has been created and configured
-            // Now give subclasses a chance to configure the table
+            // The ListGrid has been created and configured - now give subclasses a chance to configure the table.
             configureTable();
 
             listGrid.addDoubleClickHandler(new DoubleClickHandler() {
@@ -363,6 +394,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             if (showFooter) {
                 drawFooter();
+            }
+
+            if (!autoFetchData) {
+                refresh();
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
@@ -614,14 +649,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         titleCanvas.markForRedraw();
     }
 
-    /**
-     * Returns the encompassing canvas that contains all content for this table component.
-     * This content includes the list grid, the buttons, etc.
-     */
-    public Canvas getTableContents() {
-        return this.contents;
-    }
-
     public boolean isShowHeader() {
         return showHeader;
     }
@@ -646,6 +673,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             Criteria criteria = getCurrentCriteria();
             this.listGrid.setCriteria(criteria);
             this.listGrid.invalidateCache();
+            if (!this.autoFetchData) {
+                this.listGrid.fetchData(criteria);
+            }
             this.listGrid.markForRedraw();
         }
     }
@@ -749,6 +779,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public ListGrid getListGrid() {
+        if (null == listGrid) {
+            listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+        }
         return listGrid;
     }
 

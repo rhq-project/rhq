@@ -1,13 +1,5 @@
 package org.rhq.core.domain.drift;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
@@ -18,93 +10,145 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftSnapshot.DriftSnapshotDirectory;
+
 @SuppressWarnings("unchecked")
 public class DriftSnapshotTest {
 
     @Test
     public void addChangeSetWithAddedFile() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest request = new DriftSnapshotRequest(defId);
 
-        FakeDriftChangeSet changeSet = new FakeDriftChangeSet(0, COVERAGE, configId).add(new FakeDrift(FILE_ADDED,
-            null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt"));
+        FakeDriftChangeSet changeSet = new FakeDriftChangeSet(0, COVERAGE, defId).add(new FakeDrift(FILE_ADDED, null,
+            new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt"));
 
-        DriftSnapshot snapshot = new DriftSnapshot().add(changeSet);
+        DriftSnapshot snapshot = new DriftSnapshot(request).addChangeSet(changeSet);
 
-        assertCollectionMatchesNoOrder(changeSet.getDrifts(), snapshot.getEntries(), "Failed to build "
+        assertCollectionMatchesNoOrder(changeSet.getDrifts(), snapshot.getDriftInstances(), "Failed to build "
             + "a snapshot that contains a single change set");
         assertEquals(snapshot.getVersion(), changeSet.getVersion(), "Snapshot version is wrong");
     }
 
     @Test
     public void addChangeSetsWithAddedFiles() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest request = new DriftSnapshotRequest(defId, 1);
 
         Drift<?, ?> entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
-        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
+        FakeDriftChangeSet changeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
 
         Drift<?, ?> entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("4a5b6c", 1024, LOADED), "/drift/2.txt");
-        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry2);
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(1, DRIFT, defId).add(entry2);
 
-        DriftSnapshot snapshot = new DriftSnapshot().add(changeSet1).add(changeSet2);
+        DriftSnapshot snapshot = new DriftSnapshot(request).addChangeSet(changeSet0).addChangeSet(changeSet1);
 
         // not sure but asSet with one arg was not working for me, so create Set manually
         Set set = new HashSet<Drift<?, ?>>();
         set.add(entry1);
         set.add(entry2);
-        assertCollectionMatchesNoOrder(set, snapshot.getEntries(), "Failed to build snapshot "
+        assertCollectionMatchesNoOrder(set, snapshot.getDriftInstances(), "Failed to build snapshot "
             + "with two change sets and file added in second change set");
-        assertEquals(snapshot.getVersion(), changeSet2.getVersion(), "Snapshot version is wrong");
+        assertEquals(snapshot.getVersion(), changeSet1.getVersion(), "Snapshot version is wrong");
     }
 
     @Test
     public void replaceFileWithChangedVersion() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest request = new DriftSnapshotRequest(defId, 1);
 
         Drift<?, ?> entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
-        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
+        FakeDriftChangeSet changeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
 
         Drift<?, ?> entry2 = new FakeDrift(FILE_CHANGED, new FakeDriftFile("a1b2c3", 1024, LOADED), new FakeDriftFile(
             "4d5e6f", 1024, LOADED), "/drift/1.txt");
-        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry2);
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(1, DRIFT, defId).add(entry2);
 
-        DriftSnapshot snapshot = new DriftSnapshot().add(changeSet1).add(changeSet2);
+        DriftSnapshot snapshot = new DriftSnapshot(request).addChangeSet(changeSet0).addChangeSet(changeSet1);
 
         // not sure but asSet with one arg was not working for me, so create Set manually
         Set set = new HashSet<Drift<?, ?>>();
         set.add(entry2);
-        assertCollectionMatchesNoOrder(set, snapshot.getEntries(), "Failed to build snapshot with file changed");
+        assertCollectionMatchesNoOrder(set, snapshot.getDriftInstances(), "Failed to build snapshot with file changed");
     }
 
     @Test
     public void deleteFileThatHasBeenRemoved() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest request = new DriftSnapshotRequest(defId, 1);
 
         Drift<?, ?> entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
         Drift<?, ?> entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("d1f2a3", 1024, LOADED), "/drift/2.txt");
-        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1).add(entry2);
+        FakeDriftChangeSet changeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1).add(entry2);
 
         Drift entry3 = new FakeDrift(FILE_REMOVED, new FakeDriftFile("a1b2c3", 1024, LOADED), null, "/drift/1.txt");
-        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry3);
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(1, DRIFT, defId).add(entry3);
 
-        DriftSnapshot snapshot = new DriftSnapshot().add(changeSet1).add(changeSet2);
+        DriftSnapshot snapshot = new DriftSnapshot(request).addChangeSet(changeSet0).addChangeSet(changeSet1);
 
         // not sure but asSet with one arg was not working for me, so create Set manually
         Set set = new HashSet<Drift<?, ?>>();
         set.add(entry2);
-        assertCollectionMatchesNoOrder(set, snapshot.getEntries(), "Failed to build snapshot with a file " + "removed.");
+        assertCollectionMatchesNoOrder(set, snapshot.getDriftInstances(), "Failed to build snapshot with a file "
+            + "removed.");
+    }
+
+    @Test
+    public void directorySnapshotTest() {
+        int defId = 1;
+        DriftSnapshotRequest request = new DriftSnapshotRequest(defId, 1, null, true, false);
+
+        Drift<?, ?> entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
+        Drift<?, ?> entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("d1f2a3", 1024, LOADED), "/drift/2.txt");
+        Drift<?, ?> entry3 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("abcd12", 1024, LOADED),
+            "/another/1.txt");
+        FakeDriftChangeSet changeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1).add(entry2).add(entry3);
+
+        Drift entry4 = new FakeDrift(FILE_REMOVED, new FakeDriftFile("a1b2c3", 1024, LOADED), null, "/drift/1.txt");
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(1, DRIFT, defId).add(entry4);
+
+        DriftSnapshot snapshot = new DriftSnapshot(request).addChangeSet(changeSet0).addChangeSet(changeSet1);
+
+        assert null == snapshot.getDriftInstances();
+        assert null != snapshot.getDriftDirectories();
+        assert 2 == snapshot.getDriftDirectories().size();
+        Iterator<DriftSnapshotDirectory> iterator = snapshot.getDriftDirectories().iterator(); // should be sorted alphabetically
+        DriftSnapshotDirectory dir = iterator.next();
+        assert "/another".equals(dir.getDirectoryPath());
+        assert 1 == dir.getFiles();
+        assert 1 == dir.getAdded();
+        assert 0 == dir.getChanged();
+        assert 0 == dir.getRemoved();
+
+        dir = iterator.next();
+        assert "/drift".equals(dir.getDirectoryPath());
+        assert 1 == dir.getFiles();
+        assert 2 == dir.getAdded();
+        assert 0 == dir.getChanged();
+        assert 1 == dir.getRemoved();
     }
 
     @Test
     public void diffShowsEntriesInLeftAndNotInRight() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest rightRequest = new DriftSnapshotRequest(defId);
+        DriftSnapshotRequest leftRequest = new DriftSnapshotRequest(defId);
 
         Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
-        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
-        DriftSnapshot right = new DriftSnapshot().add(changeSet1);
+        FakeDriftChangeSet rightChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
+        DriftSnapshot right = new DriftSnapshot(rightRequest).addChangeSet(rightChangeSet0);
 
         Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a3b6c9", 1024, LOADED), "/drift/2.txt");
-        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1).add(entry2);
-        DriftSnapshot left = new DriftSnapshot().add(changeSet1).add(changeSet2);
+        FakeDriftChangeSet leftChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1).add(entry2);
+        DriftSnapshot left = new DriftSnapshot(leftRequest).addChangeSet(rightChangeSet0).addChangeSet(leftChangeSet0);
 
         DriftDiffReport diff = left.diff(right);
 
@@ -114,15 +158,17 @@ public class DriftSnapshotTest {
 
     @Test
     public void diffShowsEntriesInRightAndNotInLeft() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest rightRequest = new DriftSnapshotRequest(defId);
+        DriftSnapshotRequest leftRequest = new DriftSnapshotRequest(defId);
 
         Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
-        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
-        DriftSnapshot right = new DriftSnapshot().add(changeSet1);
+        FakeDriftChangeSet rightChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
+        DriftSnapshot right = new DriftSnapshot(rightRequest).addChangeSet(rightChangeSet0);
 
         Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a3b6c9", 1024, LOADED), "/drift/2.txt");
-        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry2);
-        DriftSnapshot left = new DriftSnapshot().add(changeSet2);
+        FakeDriftChangeSet leftChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry2);
+        DriftSnapshot left = new DriftSnapshot(leftRequest).addChangeSet(leftChangeSet0);
 
         DriftDiffReport diff = left.diff(right);
 
@@ -132,15 +178,17 @@ public class DriftSnapshotTest {
 
     @Test
     public void diffShowsEntriesInLeftAndRightThatAreInConflict() {
-        int configId = 1;
+        int defId = 1;
+        DriftSnapshotRequest rightRequest = new DriftSnapshotRequest(defId);
+        DriftSnapshotRequest leftRequest = new DriftSnapshotRequest(defId);
 
         Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drfit/1.txt");
-        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
-        DriftSnapshot right = new DriftSnapshot().add(changeSet1);
+        FakeDriftChangeSet changeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
+        DriftSnapshot right = new DriftSnapshot(rightRequest).addChangeSet(changeSet0);
 
         Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("c3b2a1", 1024, LOADED), "/drfit/1.txt");
-        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry2);
-        DriftSnapshot left = new DriftSnapshot().add(changeSet2);
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(1, DRIFT, defId).add(entry2);
+        DriftSnapshot left = new DriftSnapshot(leftRequest).addChangeSet(changeSet1);
 
         DriftDiffReport diff = left.diff(right);
 
@@ -256,6 +304,7 @@ public class DriftSnapshotTest {
         private String id;
         private DriftCategory category;
         private String path;
+        private String directory;
         private DriftFile oldFile;
         private DriftFile newFile;
         private long ctime = System.currentTimeMillis();
@@ -313,6 +362,16 @@ public class DriftSnapshotTest {
         @Override
         public void setPath(String path) {
             this.path = path;
+        }
+
+        @Override
+        public String getDirectory() {
+            return this.directory;
+        }
+
+        @Override
+        public void setDirectory(String directory) {
+            this.directory = directory;
         }
 
         @Override

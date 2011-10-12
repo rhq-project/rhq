@@ -26,13 +26,10 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
@@ -130,16 +127,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
     String getDriftFileBits(Subject subject, String hash);
 
     /**
-     * Generates a unified diff of the two file versions referenced by drift ids.
-     *
-     * @param drift1Id the "new" version of the first drift
-     * @param drift2Id the "new" version of the second drift 
-     * @return A report containing a unified diff of the two versions of the file
-     * referenced by drift
-     */
-    FileDiffReport generateUnifiedDiffByIds(Subject subject, String driftId1, String driftId2);
-
-    /**
      * Returns an object that encapsulates the information needed for viewing drift details
      *
      * @param subject
@@ -147,10 +134,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @return
      */
     DriftDetails getDriftDetails(Subject subject, String driftId);
-
-    DriftSnapshot createSnapshot(Subject subject, int driftDefinitionId, int startVersion, int endVersion);
-
-    DriftSnapshot getCurrentSnapshot(Subject subject, int driftDefinitionId);
 
     void pinSnapshot(Subject subject, String changeSetId);
 

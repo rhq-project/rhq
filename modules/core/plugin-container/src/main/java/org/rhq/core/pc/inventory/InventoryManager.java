@@ -213,6 +213,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             this.agent = new Agent(this.configuration.getContainerName(), null, 0, null, null);
 
+            //make sure the avail collectors are available before we instantiate any 
+            //resource context - either from disk or from anywhere else.
+            availabilityCollectors = new AvailabilityCollectorThreadPool();
+            availabilityCollectors.initialize();
+
             if (configuration.isInsideAgent()) {
                 loadFromDisk();
             }
@@ -224,9 +229,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
             //so that we don't get any interventions from concurrently running
             //discoveries.
             activateAndUpgradeResources();
-
-            availabilityCollectors = new AvailabilityCollectorThreadPool();
-            availabilityCollectors.initialize();
 
             // Never run more than one avail check at a time.
             availabilityThreadPoolExecutor = new ScheduledThreadPoolExecutor(AVAIL_THREAD_POOL_CORE_POOL_SIZE,

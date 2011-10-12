@@ -29,19 +29,14 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 @Remote
 public interface DriftManagerRemote {
 
-    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject,
-        DriftDefinitionCriteria criteria);
-
-    void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftConfig);
-
-    DriftSnapshot createSnapshot(Subject subject, int driftDefinitionId, int startVersion, int endVersion)
-        throws Exception;
+    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
 
     /**
      * Standard criteria based fetch method
@@ -59,14 +54,6 @@ public interface DriftManagerRemote {
      * @return The Drifts matching the criteria
      */
     PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) throws Exception;
-
-    /**
-     * Returns the content associated with the specified hash as a string
-     *
-     * @param hash The hash the uniquely identifies the requested content
-     * @return The content as a string
-     */
-    String getDriftFileBits(Subject subject, String hash);
 
     /**
      * Generates a unified diff of the two files references by drift. In the case of a
@@ -90,4 +77,33 @@ public interface DriftManagerRemote {
      */
     FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift1, Drift<?, ?> drift2);
 
+    /**
+     * Generates a unified diff of the two file versions referenced by drift ids.
+     *
+     * @param drift1Id the "new" version of the first drift
+     * @param drift2Id the "new" version of the second drift 
+     * @return A report containing a unified diff of the two versions of the file
+     * referenced by drift
+     */
+    FileDiffReport generateUnifiedDiffByIds(Subject subject, String driftId1, String driftId2);
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(Subject subject, String hash);
+
+    /**
+     * Calculate and return requested Drift Snapshot.
+     *  
+     * @param subject
+     * @param request
+     * @return The DriftSnapshot
+     * @throws IllegalArgumentException if the specified drift definition does not exist
+     */
+    DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request);
+
+    void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftConfig);
 }

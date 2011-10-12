@@ -32,9 +32,9 @@ public class DriftDetails implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Drift drift;
+    private Drift<?, ?> drift;
 
-    private DriftChangeSet previousChangeSet;
+    private DriftChangeSet<?> previousChangeSet;
 
     private DriftFileStatus newFileStatus;
 
@@ -43,17 +43,17 @@ public class DriftDetails implements Serializable {
     private boolean isBinary;
 
     /** @return The drift object */
-    public Drift getDrift() {
+    public Drift<?, ?> getDrift() {
         return drift;
     }
 
     /** @param drift The Drift object to which the details belong */
-    public void setDrift(Drift drift) {
+    public void setDrift(Drift<?, ?> drift) {
         this.drift = drift;
     }
 
     /** @return The change set to which the drift is part of */
-    public DriftChangeSet getChangeSet() {
+    public DriftChangeSet<?> getChangeSet() {
         return drift.getChangeSet();
     }
 
@@ -65,7 +65,7 @@ public class DriftDetails implements Serializable {
      * @return The previous change set for which there was drift on the file referenced by
      * the Drift object or null if there is not previous drift on the file.
      */
-    public DriftChangeSet getPreviousChangeSet() {
+    public DriftChangeSet<?> getPreviousChangeSet() {
         return previousChangeSet;
     }
 
@@ -73,7 +73,7 @@ public class DriftDetails implements Serializable {
      * @param changeSet The previous change set in which drift occurred on the file
      * referenced by the Drift object.
      */
-    public void setPreviousChangeSet(DriftChangeSet changeSet) {
+    public void setPreviousChangeSet(DriftChangeSet<?> changeSet) {
         previousChangeSet = changeSet;
     }
 

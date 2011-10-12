@@ -19,6 +19,8 @@ public class DriftDTO implements Drift<DriftChangeSetDTO, DriftFileDTO>, Seriali
 
     private String path;
 
+    private String directory;
+
     private DriftFileDTO oldDriftFile;
 
     private DriftFileDTO newDriftFile;
@@ -70,6 +72,16 @@ public class DriftDTO implements Drift<DriftChangeSetDTO, DriftFileDTO>, Seriali
     @Override
     public void setPath(String path) {
         this.path = path;
+    }
+
+    @Override
+    public String getDirectory() {
+        return this.directory;
+    }
+
+    @Override
+    public void setDirectory(String directory) {
+        this.directory = directory;
     }
 
     @Override

@@ -301,6 +301,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterStartVersion(String.valueOf(startVersion));
         criteria.addFilterEndVersion(Integer.toString(request.getVersion()));
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
+        criteria.fetchDrifts(true);
         criteria.addSortVersion(PageOrdering.ASC);
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
@@ -316,6 +317,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterCategory(COVERAGE);
         criteria.addFilterVersion("0");
         criteria.addFilterDriftDefinitionId(driftDefinitionId);
+        criteria.fetchDrifts(true);
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
         if (changeSets.isEmpty()) {

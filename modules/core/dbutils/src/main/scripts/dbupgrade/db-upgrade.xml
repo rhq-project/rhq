@@ -3647,7 +3647,7 @@
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT foreign key relation to RHQ_DRIFT_SET">
                         ALTER TABLE RHQ_DRIFT
-                        ADD CONSTRAINT RHQ_DCS_SET_ID_FK
+                        ADD CONSTRAINT RHQ_DRIFT_SET_ID_FK
                         FOREIGN KEY (DRIFT_SET_ID)
                         REFERENCES RHQ_DRIFT_SET (ID)
                     </statement>

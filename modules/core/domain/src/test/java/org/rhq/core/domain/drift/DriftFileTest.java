@@ -1,7 +1,5 @@
 package org.rhq.core.domain.drift;
 
-import static org.apache.commons.io.IOUtils.toInputStream;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,37 +11,22 @@ import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.transaction.SystemException;
-
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
-import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.test.TransactionCallback;
 
-public class DriftFileTest extends AbstractEJB3Test {
+import static org.apache.commons.io.IOUtils.toInputStream;
+
+public class DriftFileTest extends DriftDataAccessTest {
 
     static private final MessageDigestGenerator digestGen = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
-    static interface TransactionCallback {
-        void execute() throws Exception;
-    }
-
-    @BeforeGroups(groups = { "driftFile" })
-    public void resetDB() throws Exception {
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                getEntityManager().createQuery("delete from JPADriftFile").executeUpdate();
-            }
-        });
-    }
-
     // Note, this test is more of a general Blob handling test. A real JPADriftFile never has its content updated.
     // But this is a useful test to just ensure Blob handling is working as expected.
-    @Test(groups = { "integration.ejb3", "driftFile" })
+    @Test(groups = {"driftFile", "drift.ejb"})
     public void updateDriftFileData() throws Exception {
         String content = "driftFile data";
         String hashId = digestGen.calcDigestString(content);
@@ -94,7 +77,7 @@ public class DriftFileTest extends AbstractEJB3Test {
     // In other words, to ensure LazyLoad semantics are working for Blobs
     // Because of the amount data involved is very large the test is long
     // running and should be moved to an integration test suite.
-    @Test(groups = { "integration.ejb3", "driftFile" })
+    @Test(groups = {"driftFile", "drift.ejb"})
     public void loadMultipleDriftFilesWithoutLoadingData() throws Exception {
         int numDriftFiles = 3;
         final List<String> driftFileHashIds = new ArrayList<String>();
@@ -134,7 +117,7 @@ public class DriftFileTest extends AbstractEJB3Test {
 
     // The purpose of this test is to ensure we won't store two drift files for
     // the same content.
-    @Test(groups = { "integration.ejb3", "driftFile" })
+    @Test(groups = {"driftFile", "drift.ejb"})
     public void loadSameFile() throws Exception {
         int numDriftFiles = 2;
         final List<String> driftFileHashIds = new ArrayList<String>();
@@ -178,27 +161,6 @@ public class DriftFileTest extends AbstractEJB3Test {
         }
 
         assertEquals("Failed to save or load " + numDriftFiles + " driftFiles", numDriftFiles, driftFiles.size());
-    }
-
-    void executeInTransaction(TransactionCallback callback) {
-        try {
-            getTransactionManager().begin();
-            callback.execute();
-            getTransactionManager().commit();
-        } catch (Throwable t) {
-            try {
-                getTransactionManager().rollback();
-            } catch (SystemException e) {
-                throw new RuntimeException("Failed to rollback transaction", e);
-            }
-            throw new RuntimeException(t.getCause());
-        }
-    }
-
-    File driftFileDir() throws URISyntaxException {
-        File dir = new File(new File(getClass().getResource(".").toURI()), "driftFiles");
-        dir.mkdir();
-        return dir;
     }
 
     File workDir() throws URISyntaxException {

@@ -41,7 +41,7 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 
-public class JPADriftChangeSetTest extends AbstractEJB3Test {
+public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     private final String RESOURCE_TYPE_NAME = JPADriftChangeSetTest.class.getName();
 
@@ -55,8 +55,8 @@ public class JPADriftChangeSetTest extends AbstractEJB3Test {
 
     private DriftDefinition definition;
 
-    @BeforeMethod(groups = "JPADriftChangeSet")
-    public void initDB() {
+    @BeforeMethod(groups = {"JPADriftChangeSet", "drift.ejb"})
+    public void init() {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
@@ -124,7 +124,7 @@ public class JPADriftChangeSetTest extends AbstractEJB3Test {
         return def;
     }
 
-    @Test(groups = {"JPADriftChangeSet", "integration.ejb3"})
+    @Test(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void saveAndLoadInitialChangeSet() {
         JPADrift drift = new JPADrift();
         drift.setCategory(FILE_ADDED);

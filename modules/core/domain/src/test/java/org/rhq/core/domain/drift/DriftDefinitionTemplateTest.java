@@ -24,14 +24,12 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterGroups;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
-import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.test.TransactionCallback;
 
 import static java.util.Arrays.asList;
@@ -41,14 +39,14 @@ import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
-public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
+public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
     private final String RESOURCE_TYPE_NAME = DriftDefinitionTemplateTest.class.getName();
 
     private ResourceType resourceType;
 
-    @BeforeMethod(groups = "DriftDefinitionTemplate")
-    public void initDB() {
+    @BeforeMethod(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    public void init() {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
@@ -59,8 +57,8 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
         });
     }
 
-    @AfterClass
-    public void resetDB() {
+    @AfterClass(groups = {"DriftDefinitionTemplate", "drift.ejb"})
+    public void cleanUp() {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
@@ -72,18 +70,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
     private void purgeDB() {
         EntityManager em = getEntityManager();
 
-        List<JPADriftChangeSet> changeSets = (List<JPADriftChangeSet>) em.createQuery(
-            "select c from JPADriftChangeSet c ").getResultList();
-        for (JPADriftChangeSet changeSet : changeSets) {
-            em.remove(changeSet);
-        }
-
-        List<DriftDefinition> defs = (List<DriftDefinition>) em.createQuery("from DriftDefinition").getResultList();
-        for (DriftDefinition def : defs) {
-            em.remove(def);
-        }
-
-        List results =  em.createQuery("from ResourceType where name = :name")
+        List results =  em.createQuery("select t from ResourceType t where t.name = :name")
             .setParameter("name", RESOURCE_TYPE_NAME)
             .getResultList();
         if (results.isEmpty()) {
@@ -105,7 +92,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
             .build();
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void saveAndLoadTemplate() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setName("saveAndLoadTemplate");
@@ -138,7 +125,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void deleteTemplate() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setName("saveAndLoadTemplate");
@@ -179,7 +166,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void addTemplateToResourceType() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setName("saveAndLoadTemplate");
@@ -210,7 +197,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void deleteResourceTypeShouldCascadeToTemplates() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
         template.setName("saveAndLoadTemplate");
@@ -245,7 +232,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void persistTemplateAndDefinition() {
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
         driftDef.setName("addDefToTemplate");
@@ -283,7 +270,7 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
         });
     }
 
-    @Test(groups = {"DriftDefinitionTemplate", "integration.ejb3"})
+    @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void deleteTemplateShouldNotCascadeToDefinitions() {
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
         driftDef.setName("addDefToTemplate");

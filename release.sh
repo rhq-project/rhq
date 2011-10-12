@@ -216,7 +216,7 @@ set_local_and_environment_variables()
    if [ -n "$WORKSPACE" ]; then
       echo "Running script in a Hudson job."
       MAVEN_LOCAL_REPO_DIR="$WORKSPACE/.m2/repository"
-      if [ ! -d "$DIRECTORY" ]; then
+      if [ ! -d "$MAVEN_LOCAL_REPO_DIR" ]; then
          mkdir -p "$MAVEN_LOCAL_REPO_DIR"
       fi
       MAVEN_SETTINGS_FILE="$WORKSPACE/.m2/settings.xml"

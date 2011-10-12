@@ -119,11 +119,20 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
             editor.destroy();
             removeMember(editor);
         }
-
+        
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 @Override
                 public void onSuccess(final ResourceConfigurationUpdate result) {
+                    if (result == null) {
+                        
+                        CoreGUI.getMessageCenter().notify(new Message(MSG.view_configurationDetails_noConfigurationFetched(), Message.Severity.Info));
+                        
+                        saveButton.disable();
+                        refreshing = false;
+                        return;
+                    }
+                    
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
                         EnumSet.of(MetadataType.resourceConfigurationDefinition), new TypeLoadedCallback() {
                             @Override

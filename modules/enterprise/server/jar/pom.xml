@@ -608,7 +608,6 @@ Build-OS-Version=${os.version}
 
          <plugin>
            <artifactId>maven-surefire-plugin</artifactId>
-           <version>2.4</version>
             <!-- Everything but the web service tests, this is the standard test execution -->
            <configuration>
                <excludes>

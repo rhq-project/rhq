@@ -76,9 +76,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * 
  * !!! Actually, this is really testing only the JPA impl, it does not actually go through the
  * !!! configured drift server plugin.  To enhance this to do that then you may need to model this
- * !!! mode like BundleManagerBeanTest 
+ * !!! mode like BundleManagerBeanTest
  */
-@Test(groups = "drift-manager")
+// Tests in this class **must** be run after the drift-template group. More specifically,
+// tests in this class need to be run after DriftTemplateManagerBeanTest. If test methods
+// in this class run first, for reasons I have yet to understand, DriftTemplateManagerBeanTest.initDB
+// will fail with a ClassNotFoundException for an anonymous inner class that is created in
+// the initDB method.
+//
+// - jsanda
+@Test(groups = "drift-manager", dependsOnGroups = "drift-template")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;

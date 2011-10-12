@@ -51,12 +51,12 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
     private DriftTemplateManagerLocal templateMgr;
 
-    @BeforeClass
+    @BeforeClass(groups = "drift-template")
     public void initClass() {
         templateMgr = getDriftTemplateManager();
     }
 
-    @BeforeMethod
+    @BeforeMethod(groups = "drift-template")
     public void initDB() {
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -68,7 +68,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         });
     }
 
-    @AfterClass
+    @AfterClass(groups = "drift-template")
     public void resetDB() {
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -103,7 +103,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
             .build();
     }
 
-    @Test
+    @Test(groups = "drift-template")
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName("test::createNewTemplate");

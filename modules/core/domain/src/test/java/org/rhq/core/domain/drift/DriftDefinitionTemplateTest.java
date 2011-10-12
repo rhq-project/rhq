@@ -72,6 +72,12 @@ public class DriftDefinitionTemplateTest extends AbstractEJB3Test {
     private void purgeDB() {
         EntityManager em = getEntityManager();
 
+        List<JPADriftChangeSet> changeSets = (List<JPADriftChangeSet>) em.createQuery(
+            "select c from JPADriftChangeSet c ").getResultList();
+        for (JPADriftChangeSet changeSet : changeSets) {
+            em.remove(changeSet);
+        }
+
         List<DriftDefinition> defs = (List<DriftDefinition>) em.createQuery("from DriftDefinition").getResultList();
         for (DriftDefinition def : defs) {
             em.remove(def);

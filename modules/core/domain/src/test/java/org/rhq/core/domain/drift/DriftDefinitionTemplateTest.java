@@ -94,12 +94,12 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
     @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void saveAndLoadTemplate() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
-        template.setName("saveAndLoadTemplate");
-        template.setDescription("Testing save and load");
         template.setResourceType(resourceType);
         template.setChangeSetId("1");
 
         DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("saveAndLoadTemplate");
+        driftDef.setDescription("Testing save and load");
         driftDef.setEnabled(true);
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
@@ -126,12 +126,12 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
     @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void deleteTemplate() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
-        template.setName("saveAndLoadTemplate");
-        template.setDescription("Testing save and load");
         template.setResourceType(resourceType);
         template.setChangeSetId("1");
 
         DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("saveAndLoadTemplate");
+        driftDef.setDescription("Testing save and load");
         driftDef.setEnabled(true);
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
@@ -167,11 +167,11 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
     @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void addTemplateToResourceType() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
-        template.setName("saveAndLoadTemplate");
-        template.setDescription("Testing save and load");
         template.setChangeSetId("1");
 
         DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("saveAndLoadTemplate");
+        driftDef.setDescription("Testing save and load");
         driftDef.setEnabled(true);
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
@@ -200,12 +200,12 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
     @Test(groups = {"DriftDefinitionTemplate", "drift.ejb"})
     public void deleteResourceTypeShouldCascadeToTemplates() {
         final DriftDefinitionTemplate template = new DriftDefinitionTemplate();
-        template.setName("saveAndLoadTemplate");
-        template.setDescription("Testing save and load");
         template.setResourceType(resourceType);
         template.setChangeSetId("1");
 
         DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("cascadeDelete");
+        driftDef.setDescription("testing cascade delete");
         driftDef.setEnabled(true);
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);

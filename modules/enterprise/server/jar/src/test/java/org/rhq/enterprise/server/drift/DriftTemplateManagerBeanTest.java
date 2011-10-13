@@ -19,6 +19,14 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
+import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
+import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -31,17 +39,12 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.test.TransactionCallback;
-
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
-import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
@@ -124,21 +127,31 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
                     updatedType.getDriftDefinitionTemplates().size());
 
                 DriftDefinitionTemplate newTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
-                assertEquals("Failed to save template - name is wrong", definition.getName(), newTemplate.getName());
-                assertEquals("Failed to save template - enabled flag is wrong", definition.isEnabled(),
-                    newTemplate.isEnabled());
-                assertEquals("Failed to save template - drift handling mode is wrong",
-                    definition.getDriftHandlingMode(), newTemplate.getDriftHandlingMode());
-                assertEquals("Failed to save template - interval is wrong", definition.getInterval(),
-                    (long) newTemplate.getInterval());
-                assertEquals("Failed to save template - base directory is wrong", definition.getBasedir(),
-                    newTemplate.getBaseDirectory());
+
+                DriftDefinitionTemplate expectedTemplate = new DriftDefinitionTemplate();
+                expectedTemplate.setTemplateDefinition(definition);
+
+                assertDriftTemplateEquals("Failed to save template", expectedTemplate, newTemplate);
             }
         });
     }
 
     private Subject getOverlord() {
         return getSubjectManager().getOverlord();
+    }
+
+    private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected,
+        DriftDefinitionTemplate actual) {
+        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected,
+                    actual, "id", "resourceType", "ctime", "templateDefinition");
+                assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(),
+                    actual.getTemplateDefinition());
+    }
+
+    private void assertDriftDefEquals(String msg, DriftDefinition expected, DriftDefinition actual) {
+        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
+            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+        assertEquals(msg, 0, comparator.compare(expected, actual));
     }
 
 }

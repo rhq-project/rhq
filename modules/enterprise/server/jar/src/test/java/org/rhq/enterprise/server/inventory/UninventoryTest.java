@@ -67,7 +67,7 @@ public class UninventoryTest extends AbstractEJB3Test {
                 DriftDefinition driftDef = new DriftDefinition(config);
                 driftDef.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/"));
                 driftDef.setName("drift1");
-                template.setConfiguration(driftDef.getConfiguration());
+                template.setTemplateDefinition(driftDef);
                 resourceType.addDriftDefinitionTemplate(template);
             }
         };

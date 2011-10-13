@@ -50,8 +50,8 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal {
             ResourceType resourceType = resourceTypeMgr.getResourceTypeById(subject, resourceTypeId);
             DriftDefinitionTemplate template = new DriftDefinitionTemplate();
             template.setName(definition.getName());
-            //template.setDescription(definition.);
-            template.setConfiguration(definition.getConfiguration().deepCopyWithoutProxies());
+            template.setDescription(definition.getDescription());
+            template.setTemplateDefinition(definition);
 
             resourceType.addDriftDefinitionTemplate(template);
         } catch (ResourceTypeNotFoundException e) {

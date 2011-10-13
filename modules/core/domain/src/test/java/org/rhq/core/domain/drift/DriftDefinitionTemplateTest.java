@@ -19,6 +19,12 @@
 
 package org.rhq.core.domain.drift;
 
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
+import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
+import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -31,13 +37,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.test.TransactionCallback;
-
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
@@ -105,7 +104,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-        template.setConfiguration(driftDef.getConfiguration());
+        template.setTemplateDefinition(driftDef);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -117,8 +116,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
 
                 DriftDefinitionTemplate savedTemplate = em.find(DriftDefinitionTemplate.class, template.getId());
                 assertNotNull("Failed to persist " + template.toString(false), savedTemplate);
-                assertPropertiesMatch("Failed to persist " + template.toString(false), template,
-                    savedTemplate, "resourceType");
+                assertDriftTemplateEquals("Failed to persist template", savedTemplate, template);
                 assertPropertiesMatch("Failed to persist " + template.toString(false),
                     template.getResourceType(), resourceType, "driftDefinitionTemplates");
             }
@@ -138,7 +136,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-        template.setConfiguration(driftDef.getConfiguration());
+        template.setTemplateDefinition(driftDef);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -178,7 +176,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-        template.setConfiguration(driftDef.getConfiguration());
+        template.setTemplateDefinition(driftDef);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -190,9 +188,11 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
                 em.clear();
 
                 ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
+                assertFalse("Failed to persist drift definition template",
+                    updatedType.getDriftDefinitionTemplates().isEmpty());
 
-                assertCollectionMatchesNoOrder("Failed to persist drift definition template when updating resource " +
-                    "type", asList(template), updatedType.getDriftDefinitionTemplates(), "id", "resourceType", "ctime");
+                DriftDefinitionTemplate savedTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
+                assertDriftTemplateEquals("Failed to add template to existing resource type", template, savedTemplate);
             }
         });
     }
@@ -210,7 +210,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         driftDef.setDriftHandlingMode(normal);
         driftDef.setInterval(1800L);
         driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-        template.setConfiguration(driftDef.getConfiguration());
+        template.setTemplateDefinition(driftDef);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -246,7 +246,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setDescription("Testing save and load");
         template.setResourceType(resourceType);
         template.setChangeSetId("1");
-        template.setConfiguration(driftDef.getConfiguration().deepCopy());
+        template.setTemplateDefinition(driftDef);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -284,7 +284,7 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
         template.setDescription("Testing save and load");
         template.setResourceType(resourceType);
         template.setChangeSetId("1");
-        template.setConfiguration(driftDef.getConfiguration().deepCopy());
+        template.setTemplateDefinition(driftDef);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -308,5 +308,19 @@ public class DriftDefinitionTemplateTest extends DriftDataAccessTest {
                     em.find(DriftDefinition.class, driftDef.getId()));
             }
         });
+    }
+
+    private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected,
+        DriftDefinitionTemplate actual) {
+        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected,
+                    actual, "id", "resourceType", "ctime", "templateDefinition");
+                assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(),
+                    actual.getTemplateDefinition());
+    }
+
+    private void assertDriftDefEquals(String msg, DriftDefinition expected, DriftDefinition actual) {
+        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
+            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+        assertEquals(msg, 0, comparator.compare(expected, actual));
     }
 }

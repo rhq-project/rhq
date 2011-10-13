@@ -146,8 +146,14 @@ public class DriftDefinitionTemplate implements Serializable {
         return configuration;
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
+    public DriftDefinition getTemplateDefinition() {
+        return new DriftDefinition(configuration);
+    }
+
+    public void setTemplateDefinition(DriftDefinition templateDefinition) {
+        configuration = templateDefinition.getConfiguration().deepCopyWithoutProxies();
+        name = templateDefinition.getName();
+        description = templateDefinition.getDescription();
     }
 
     /**
@@ -165,50 +171,6 @@ public class DriftDefinitionTemplate implements Serializable {
      */
     public void setChangeSetId(String changeSetId) {
         this.changeSetId = changeSetId;
-    }
-
-    public boolean isEnabled() {
-        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_ENABLED,
-            String.valueOf(DriftConfigurationDefinition.DEFAULT_ENABLED)).equals("true");
-    }
-
-    public Long getInterval() {
-        return Long.parseLong(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_INTERVAL, String
-            .valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL)));
-    }
-
-    public DriftConfigurationDefinition.DriftHandlingMode getDriftHandlingMode() {
-        return DriftConfigurationDefinition.DriftHandlingMode.valueOf(configuration.getSimpleValue(
-            DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE,
-            DriftConfigurationDefinition.DEFAULT_DRIFT_HANDLING_MODE.name()));
-    }
-
-    public DriftDefinition.BaseDirectory getBaseDirectory() {
-        PropertyMap map = configuration.getMap(DriftConfigurationDefinition.PROP_BASEDIR);
-        if (map == null) {
-            return null;
-        }
-
-        String valueContext = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT, null);
-        String valueName = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, null);
-
-        DriftConfigurationDefinition.BaseDirValueContext valueContextEnum;
-
-        if (valueContext == null) {
-            throw new NullPointerException("valueContext is null");
-        } else {
-            try {
-                valueContextEnum = DriftConfigurationDefinition.BaseDirValueContext.valueOf(valueContext);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("Invalid valueContext: " + valueContext);
-            }
-        }
-
-        if (valueName == null) {
-            throw new NullPointerException("valueName is null");
-        }
-
-        return new DriftDefinition.BaseDirectory(valueContextEnum, valueName);
     }
 
     public Set<DriftDefinition> getDriftDefinitions() {

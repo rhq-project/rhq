@@ -64,6 +64,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_ENABLED = "enabled";
     public static final String ATTR_EDIT = "edit";
+    public static final String ATTR_PINNED = "pinned";
 
     public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
     public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
@@ -127,6 +128,24 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         });
         fields.add(editField);
 
+        ListGridField pinnedField = new ListGridField(ATTR_PINNED, "Pinned?"); //TODO I18N
+        pinnedField.setType(ListGridFieldType.IMAGE);
+        pinnedField.setAlign(Alignment.CENTER);
+        pinnedField.addRecordClickHandler(new RecordClickHandler() {
+
+            public void onRecordClick(RecordClickEvent event) {
+                switch (entityContext.getType()) {
+                case Resource:
+                    CoreGUI.goToView(LinkManager.getDriftSnapshotLink(entityContext.getResourceId(), event.getRecord()
+                        .getAttributeAsInt(ATTR_ID), 0));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Entity Type not supported");
+                }
+            }
+        });
+        fields.add(pinnedField);
+
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
@@ -152,6 +171,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
             driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
             baseDirField.setWidth("*");
+            pinnedField.setWidth(70);
             editField.setWidth(70);
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
@@ -161,6 +181,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
             driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
             baseDirField.setWidth("*");
+            pinnedField.setWidth(70);
             editField.setWidth(70);
         }
 
@@ -277,6 +298,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
+        record.setAttribute(ATTR_PINNED, from.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
+            .getUnpinnedIcon());
 
         // // for ancestry handling       
         // Resource resource = ...

@@ -82,6 +82,20 @@ public class ImageManager {
     }
 
     /**
+     * Returns a generic pinned icon.
+     */
+    public static String getUnpinnedIcon() {
+        return "[SKIN]/headerIcons/pin_left.png";
+    }
+
+    /**
+     * Returns a generic pinned icon.
+     */
+    public static String getPinnedIcon() {
+        return "[SKIN]/headerIcons/pin_down.png";
+    }
+
+    /**
      * Returns a drift icon given the category of the drift.
      * Note that if the category is null, it will be assumed the drift icon
      * should be one that indicates the file is "new" (presumably from

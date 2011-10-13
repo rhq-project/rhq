@@ -25,7 +25,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/struts/struts/1.2.9/struts-1.2.9.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/servlet/jsp-api/2.0/jsp-api-2.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-validator/commons-validator/1.1.4/commons-validator-1.1.4.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/testng/testng/5.13.1/testng-5.13.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/testng/testng/6.1.1/testng-6.1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/snmp4j/snmp4j/1.8.2/snmp4j-1.8.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
@@ -117,9 +117,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.3/mongo-java-driver-2.6.3.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.5/mongo-java-driver-2.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/0.99/morphia-0.99.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/1.00-SNAPSHOT/morphia-1.00-SNAPSHOT.jar"/>
     <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.2.1.GA/resteasy-links-2.2.1.GA.jar"/>
     <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.2.1.GA/resteasy-jaxrs-2.2.1.GA.jar"/>
     <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jettison-provider/2.2.1.GA/resteasy-jettison-provider-2.2.1.GA.jar"/>

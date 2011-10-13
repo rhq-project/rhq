@@ -135,7 +135,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
-    void pinSnapshot(Subject subject, String changeSetId);
+    void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion);
 
     boolean isBinaryFile(Subject subject, Drift<?, ?> drift);
 }

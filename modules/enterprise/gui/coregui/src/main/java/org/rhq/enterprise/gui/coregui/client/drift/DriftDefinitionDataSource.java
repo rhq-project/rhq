@@ -110,7 +110,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         baseDirField.setCanSort(false);
         fields.add(baseDirField);
 
-        ListGridField editField = new ListGridField(ATTR_EDIT, "Edit?"); //TODO I18N
+        ListGridField editField = new ListGridField(ATTR_EDIT, MSG.view_drift_table_edit());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
         editField.addRecordClickHandler(new RecordClickHandler() {
@@ -128,7 +128,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         });
         fields.add(editField);
 
-        ListGridField pinnedField = new ListGridField(ATTR_PINNED, "Pinned?"); //TODO I18N
+        ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
         pinnedField.setType(ListGridFieldType.IMAGE);
         pinnedField.setAlign(Alignment.CENTER);
         pinnedField.addRecordClickHandler(new RecordClickHandler() {

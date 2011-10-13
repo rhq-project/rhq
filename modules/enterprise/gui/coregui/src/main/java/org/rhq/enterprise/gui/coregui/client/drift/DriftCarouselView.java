@@ -182,7 +182,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
                 }
             });
     }

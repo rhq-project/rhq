@@ -46,12 +46,15 @@ import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -136,6 +139,40 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
+        TableActionEnablement pinEnablement = hasWriteAccess ? TableActionEnablement.ALWAYS
+            : TableActionEnablement.NEVER;
+
+        addTableAction("PinToDef", MSG.view_drift_button_pinToDef(), MSG.view_drift_button_pinToDef_confirm(),
+            new AbstractTableAction(pinEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    pinToDefinition();
+                }
+            });
+
+        addTableAction("PinToTemplate", MSG.view_drift_button_pinToTemplate(), MSG
+            .view_drift_button_pinToTemplate_confirm(), new AbstractTableAction(pinEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                pinToTemplate();
+            }
+        });
+    }
+
+    private void pinToDefinition() {
+        GWTServiceLookup.getDriftService().pinSnapshot(driftDefId, version, new AsyncCallback<Void>() {
+            public void onSuccess(Void x) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_drift_success_pinToDef(String.valueOf(version)), Message.Severity.Info));
+                CoreGUI.goToView(LinkManager.getDriftDefinitionsLink(resourceId));
+            }
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_pinToDef(), caught);
+            }
+        });
+    }
+
+    private void pinToTemplate() {
+        // TODO
     }
 
     private class DriftSnapshotListGrid extends LocatableListGrid {

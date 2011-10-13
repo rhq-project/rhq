@@ -522,7 +522,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void pinSnapshot(Subject subject, String changeSetId) {
+    public void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
         //        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         //        criteria.addFilterId(changeSetId);
         //        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);

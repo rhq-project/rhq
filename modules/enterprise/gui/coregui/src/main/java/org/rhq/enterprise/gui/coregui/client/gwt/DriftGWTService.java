@@ -109,7 +109,7 @@ public interface DriftGWTService extends RemoteService {
 
     boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException;
 
-    void pinSnapshot(String changeSetId) throws RuntimeException;
+    void pinSnapshot(int driftDefId, int version) throws RuntimeException;
 
     /**
      * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will

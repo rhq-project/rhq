@@ -138,8 +138,10 @@ public class DriftDefinition implements Serializable {
     }
 
     public void setName(String name) {
-        if (null == name) {
-            throw new IllegalArgumentException("Drift congig name can not be null");
+        name = (null != name) ? name.trim() : name;
+
+        if (null == name || "".equals(name)) {
+            throw new IllegalArgumentException("Drift congig name can not be null or empty");
         }
 
         this.name = name;

@@ -31,13 +31,14 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 
 public class DriftMetadataParser {
 
     public DriftDefinitionTemplate parseDriftMetadata(DriftDescriptor descriptor) {
         DriftDefinitionTemplate template = new DriftDefinitionTemplate();
-        template.setConfiguration(new Configuration());
+        template.setTemplateDefinition(new DriftDefinition(new Configuration()));
 
         initName(descriptor, template);
         initEnabled(template);

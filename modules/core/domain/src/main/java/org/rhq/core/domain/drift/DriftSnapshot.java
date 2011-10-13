@@ -23,6 +23,7 @@ import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -86,9 +87,14 @@ public class DriftSnapshot implements Serializable {
         return directoryMap.values();
     }
 
-    public <D extends Drift<?, ?>> DriftSnapshot addChangeSet(DriftChangeSet<D> changeSet) {
+    //public <D extends Drift<?, ?>> DriftSnapshot addChangeSet(DriftChangeSet<D> changeSet) {
+    public DriftSnapshot addChangeSet(DriftChangeSet changeSet) {
 
-        for (Drift<?, ?> drift : changeSet.getDrifts()) {
+        String dirFilter = request.getDirectory();
+        Set<Drift> drifts = changeSet.getDrifts();
+        changeSet.setDrifts(null);
+
+        for (Drift drift : drifts) {
             String path = drift.getPath();
 
             if (request.isIncludeDriftDirectories()) {
@@ -117,10 +123,16 @@ public class DriftSnapshot implements Serializable {
             }
 
             if (request.isIncludeDriftInstances()) {
+
+                if ((null != dirFilter) && (!dirFilter.equals(drift.getDirectory()))) {
+                    continue;
+                }
+
                 if (drift.getCategory() == FILE_REMOVED) {
                     driftMap.remove(path);
                 } else {
                     // add drift instance to map, or replace with latest drift instance for the given path
+                    drift.setChangeSet(changeSet);
                     driftMap.put(drift.getPath(), drift);
                 }
             }

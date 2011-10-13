@@ -104,7 +104,7 @@ public class DriftSnapshotTest {
     @Test
     public void directorySnapshotTest() {
         int defId = 1;
-        DriftSnapshotRequest request = new DriftSnapshotRequest(defId, 1, null, true, false);
+        DriftSnapshotRequest request = new DriftSnapshotRequest(defId, 1, null, null, true, false);
 
         Drift<?, ?> entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
         Drift<?, ?> entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("d1f2a3", 1024, LOADED), "/drift/2.txt");

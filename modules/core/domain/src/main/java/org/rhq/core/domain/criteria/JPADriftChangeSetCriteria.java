@@ -19,6 +19,8 @@
 
 package org.rhq.core.domain.criteria;
 
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
+
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -29,8 +31,6 @@ import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageOrdering;
-
-import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
 /**
  * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSetCriteria.
@@ -54,7 +54,8 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     private Long filterCreatedBefore;
     private DriftChangeSetCategory filterCategory;
     private List<DriftCategory> filterDriftCategories; // needs override      
-    private String filterDriftPath; // needs override
+    private String filterDriftDirectory; // needs override
+    private String filterDriftPath; // needs override    
     private Boolean fetchDrifts = false;
     private Boolean fetchDriftDefinition = false;
     private Boolean fetchInitialDriftSet = false;
@@ -78,11 +79,16 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
             + "          FROM JPADriftChangeSet innerChangeSet " //
             + "          JOIN innerChangeSet.drifts drift " //
             + "         WHERE drift.category IN ( ? ) )");
+        filterOverrides.put("driftDirectory", "" //
+            + "id IN ( SELECT innerChangeSet.id " //
+            + "          FROM JPADriftChangeSet innerChangeSet " //
+            + "          JOIN innerChangeSet.drifts drift " //
+            + "         WHERE drift.directory = ? )"); // note, this uses = on purpose, it is always strict equality 
         filterOverrides.put("driftPath", "" //
             + "id IN ( SELECT innerChangeSet.id " //
             + "          FROM JPADriftChangeSet innerChangeSet " //
             + "          JOIN innerChangeSet.drifts drift " //
-            + "         WHERE drift.path like ? )");
+            + "         WHERE drift.path like ? )"); // note, this uses 'like' on purpose, it is always substring
 
         if (null != changeSetCriteria) {
             this.addFilterCategory(changeSetCriteria.getFilterCategory());
@@ -95,11 +101,14 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
             this.addFilterStartVersion(changeSetCriteria.getFilterStartVersion());
             this.addFilterVersion(changeSetCriteria.getFilterVersion());
             this.addFilterDriftCategories(changeSetCriteria.getFilterDriftCategories());
+            this.addFilterDriftDirectory(changeSetCriteria.getFilterDriftDirectory());
             this.addFilterDriftPath(changeSetCriteria.getFilterDriftPath());
 
             this.addSortVersion(changeSetCriteria.getSortVersion());
 
             this.fetchDrifts(changeSetCriteria.isFetchDrifts());
+
+            this.setStrict(changeSetCriteria.isStrict());
         }
     }
 
@@ -230,6 +239,16 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     @Override
     public List<DriftCategory> getFilterDriftCategories() {
         return filterDriftCategories;
+    }
+
+    @Override
+    public void addFilterDriftDirectory(String filterDriftDirectory) {
+        this.filterDriftDirectory = filterDriftDirectory;
+    }
+
+    @Override
+    public String getFilterDriftDirectory() {
+        return this.filterDriftDirectory;
     }
 
     @Override

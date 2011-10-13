@@ -115,7 +115,8 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public DriftSnapshot getSnapshot(DriftSnapshotRequest request) throws RuntimeException {
         try {
-            return driftManager.getSnapshot(getSessionSubject(), request);
+            DriftSnapshot results = driftManager.getSnapshot(getSessionSubject(), request);
+            return SerialUtility.prepare(results, "DriftService.getSnapshot");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -94,7 +94,7 @@ public class DriftSnapshotDataSource extends RPCDataSource<DriftSnapshotDirector
         GenericDriftChangeSetCriteria criteria) {
 
         DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
-        DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, version, null, true, false);
+        DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, version, null, null, true, false);
 
         driftService.getSnapshot(snapshotRequest, new AsyncCallback<DriftSnapshot>() {
             public void onFailure(Throwable caught) {

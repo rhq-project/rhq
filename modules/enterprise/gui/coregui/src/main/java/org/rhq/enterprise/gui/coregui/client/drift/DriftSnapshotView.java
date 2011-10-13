@@ -20,18 +20,40 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ExpansionMode;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.GenericDriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a nested table view of a snapshot. The outer table is a list of directories in the snapshot
@@ -130,24 +152,28 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         protected Canvas getExpansionComponent(ListGridRecord record) {
 
             String dirPath = record.getAttribute(DriftSnapshotDataSource.ATTR_DIR_PATH);
-            //Integer defId = record.getAttributeAsInt(DriftSnapshotDataSource.ATTR_DEF_ID);
 
             return new DirectoryView(extendLocatorId(dirPath), EntityContext.forResource(resourceId), driftDefId,
-                dirPath, hasWriteAccess);
+                version, dirPath, hasWriteAccess);
         }
     }
 
-    private static class DirectoryView extends DriftHistoryView {
+    public static class DirectoryView extends StringIDTableSection<DirectoryView.DirectoryViewDataSource> {
 
         private int driftDefId;
-        private String dirPath;
+        private String directory;
+        private int version;
+        private EntityContext context;
+        private DirectoryViewDataSource dataSource;
 
-        public DirectoryView(String locatorId, EntityContext context, int driftDefId, String dirPath,
+        public DirectoryView(String locatorId, EntityContext context, int driftDefId, int version, String directory,
             boolean hasWriteAccess) {
-            super(locatorId, null, context, hasWriteAccess);
+            super(locatorId, null, true);
 
             this.driftDefId = driftDefId;
-            this.dirPath = dirPath;
+            this.directory = directory;
+            this.version = version;
+            this.context = context;
 
             setShowFilterForm(false);
             setShowHeader(false);
@@ -155,42 +181,187 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
             setWidth100();
             setHeight(250);
+
+            setDataSource(getDataSource());
         }
 
         @Override
-        public DriftDataSource getDataSource() {
+        public DirectoryViewDataSource getDataSource() {
+
             if (null == this.dataSource) {
                 this.dataSource = new DirectoryViewDataSource();
             }
+
             return this.dataSource;
         }
 
-        //        @Override
-        //        protected void configureTableContents(Layout contents) {
-        //            contents.setWidth100();
-        //            contents.setAutoHeight();
-        //            contents.setOverflow(Overflow.VISIBLE);
-        //        }
+        @Override
+        protected void configureTable() {
+            ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+            getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
-        private class DirectoryViewDataSource extends DriftDataSource {
+            super.configureTable();
+        }
+
+        @Override
+        protected String getDetailsLinkColumnName() {
+            return DriftDataSource.ATTR_CTIME;
+        }
+
+        @Override
+        protected CellFormatter getDetailsLinkColumnCellFormatter() {
+            return new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int i, int i1) {
+                    Integer resourceId = context.getResourceId();
+                    String driftId = getId(record);
+                    String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
+                    String formattedValue = TimestampCellFormatter.format(value);
+                    return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+                }
+            };
+        }
+
+        public class DirectoryViewDataSource extends RPCDataSource<Drift<?, ?>, GenericDriftChangeSetCriteria> {
 
             public DirectoryViewDataSource() {
-                super(getContext());
+                addDataSourceFields();
+            }
+
+            /**
+             * The view that contains the list grid which will display this datasource's data will call this
+             * method to get the field information which is used to control the display of the data.
+             * 
+             * @return list grid fields used to display the datasource data
+             */
+            public ArrayList<ListGridField> getListGridFields() {
+                ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
+
+                ListGridField ctimeField = new ListGridField(DriftDataSource.ATTR_CTIME, MSG.common_title_createTime());
+                ctimeField.setCellFormatter(new TimestampCellFormatter());
+                ctimeField.setShowHover(true);
+                ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(DriftDataSource.ATTR_CTIME));
+                fields.add(ctimeField);
+
+                ListGridField categoryField = new ListGridField(DriftDataSource.ATTR_CATEGORY, MSG
+                    .common_title_category());
+                categoryField.setType(ListGridFieldType.IMAGE);
+                categoryField.setAlign(Alignment.CENTER);
+                categoryField.setShowHover(true);
+                categoryField.setHoverCustomizer(new HoverCustomizer() {
+                    @Override
+                    public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        String cat = record.getAttribute(DriftDataSource.ATTR_CATEGORY);
+                        if (DriftDataSource.CATEGORY_ICON_ADD.equals(cat)) {
+                            return MSG.view_drift_category_fileAdded();
+                        } else if (DriftDataSource.CATEGORY_ICON_CHANGE.equals(cat)) {
+                            return MSG.view_drift_category_fileChanged();
+                        } else if (DriftDataSource.CATEGORY_ICON_REMOVE.equals(cat)) {
+                            return MSG.view_drift_category_fileRemoved();
+                        } else if (DriftDataSource.CATEGORY_ICON_NEW.equals(cat)) {
+                            return MSG.view_drift_category_fileNew();
+                        } else {
+                            return ""; // will never get here
+                        }
+                    }
+                });
+                fields.add(categoryField);
+
+                ListGridField changeSetVersionField = new ListGridField(DriftDataSource.ATTR_CHANGESET_VERSION, MSG
+                    .view_drift_table_snapshot());
+                fields.add(changeSetVersionField);
+
+                ListGridField pathField = new ListGridField(DriftDataSource.ATTR_PATH, MSG.common_title_name());
+                fields.add(pathField);
+
+                ctimeField.setWidth(200);
+                categoryField.setWidth(100);
+                changeSetVersionField.setWidth(100);
+                pathField.setWidth("*");
+
+                return fields;
             }
 
             @Override
-            protected GenericDriftCriteria getFetchCriteria(DSRequest request) {
+            protected void executeFetch(final DSRequest request, final DSResponse response,
+                GenericDriftChangeSetCriteria criteria) {
+                DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
+                DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, version, null, directory,
+                    false, true);
 
-                GenericDriftCriteria criteria = new GenericDriftCriteria();
+                driftService.getSnapshot(snapshotRequest, new AsyncCallback<DriftSnapshot>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                        response.setStatus(RPCResponse.STATUS_FAILURE);
+                        processResponse(request.getRequestId(), response);
+                    }
 
-                criteria.addFilterDriftDefinitionId(driftDefId);
-                criteria.addFilterDirectory(dirPath);
-                criteria.setStrict(true);
-
-                return criteria;
+                    public void onSuccess(DriftSnapshot result) {
+                        Collection<Drift<?, ?>> drifts = result.getDriftInstances();
+                        ListGridRecord[] records = buildRecords(drifts);
+                        response.setData(records);
+                        response.setTotalRows(drifts.size());
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
             }
 
+            @Override
+            protected GenericDriftChangeSetCriteria getFetchCriteria(DSRequest request) {
+                return null;
+            }
+
+            @Override
+            public Drift<?, ?> copyValues(Record from) {
+                return null;
+            }
+
+            @Override
+            public ListGridRecord copyValues(Drift<?, ?> from) {
+                ListGridRecord record = new ListGridRecord();
+
+                record.setAttribute(DriftDataSource.ATTR_ID, from.getId());
+
+                record.setAttribute(DriftDataSource.ATTR_CTIME, new Date(from.getCtime()));
+
+                switch (from.getChangeSet().getCategory()) {
+                case COVERAGE:
+                    record.setAttribute(DriftDataSource.ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(null));
+                    break;
+                case DRIFT:
+                    record.setAttribute(DriftDataSource.ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(from
+                        .getCategory()));
+                    break;
+                }
+
+                record.setAttribute(DriftDataSource.ATTR_CHANGESET_VERSION, (null == from.getChangeSet()) ? "0" : from
+                    .getChangeSet().getVersion());
+
+                record.setAttribute(DriftDataSource.ATTR_PATH, getFileName(from.getPath(), "/"));
+
+                return record;
+            }
         }
+
+        @Override
+        public Canvas getDetailsView(String driftId) {
+            return new DriftDetailsView(extendLocatorId("Details"), driftId);
+        }
+    }
+
+    /**
+     * Return just the filename portion (the portion right of the last path separator string)
+     * @param path
+     * @param separator
+     * @return null if path is null, otherwise the trimmed filename  
+     */
+    public static String getFileName(String path, String separator) {
+        if (null == path) {
+            return null;
+        }
+
+        int i = path.lastIndexOf(separator);
+
+        return (i < 0) ? path.trim() : path.substring(++i).trim();
     }
 
 }

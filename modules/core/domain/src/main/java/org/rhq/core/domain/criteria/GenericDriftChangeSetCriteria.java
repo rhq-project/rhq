@@ -62,6 +62,8 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
 
     private List<DriftCategory> filterDriftCategories;
 
+    private String filterDriftDirectory;
+
     private String filterDriftPath;
 
     private boolean fetchDrifts;
@@ -180,6 +182,20 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     @Override
     public String getFilterDriftPath() {
         return this.filterDriftPath;
+    }
+
+    @Override
+    public void addFilterDriftDirectory(String filterDriftDirectory) {
+        // this requires strict equality
+        if (null != filterDriftDirectory) {
+            setStrict(true);
+        }
+        this.filterDriftDirectory = filterDriftDirectory;
+    }
+
+    @Override
+    public String getFilterDriftDirectory() {
+        return this.filterDriftDirectory;
     }
 
     @Override

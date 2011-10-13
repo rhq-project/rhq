@@ -101,6 +101,6 @@ public class DriftServerServiceImpl implements DriftServerService {
         Subject overlord = getSubjectManager().getOverlord();
 
         return getDriftManager().getSnapshot(overlord,
-            new DriftSnapshotRequest(driftDefinitionId, endVersion, startVersion, false, true));
+            new DriftSnapshotRequest(driftDefinitionId, endVersion, startVersion, null, false, true));
     }
 }

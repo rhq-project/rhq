@@ -167,6 +167,22 @@ public interface DriftChangeSetCriteria extends BaseCriteria {
     List<DriftCategory> getFilterDriftCategories();
 
     /**
+     * Allows for filtering on a specific directory. A change set should be considered a match
+     * only if it contains {@link org.rhq.core.domain.drift.Drift Drift} with a directory that
+     * IS CASE SENSITIVE EQUAL TO the specified string. All substring matching should use the
+     * {@link #addFilterDriftPath(String)}. Setting this filter non-null will force
+     * {@link #setStrict(boolean)} to true. 
+     *
+     * @param filterDriftDirectory A directory substring on which to filter
+     */
+    void addFilterDriftDirectory(String filterDriftDirectory);
+
+    /**
+     * @return The drift directory substring filter
+     */
+    String getFilterDriftDirectory();
+
+    /**
      * Allows for filtering on a specific path. A change set should be considered a match
      * only if it contains {@link org.rhq.core.domain.drift.Drift Drift} with a path that
      * contains the specified substring.

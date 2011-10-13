@@ -275,7 +275,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         int startVersion = request.getStartVersion();
 
         if (0 == startVersion) {
-            DriftChangeSet<?> initialChangeset = loadInitialChangeSet(subject, request.getDriftDefinitionId());
+            DriftChangeSet<?> initialChangeset = loadInitialChangeSet(subject, request);
             if (null == initialChangeset) {
                 if (log.isDebugEnabled()) {
                     log.debug("Cannot create snapshot, no initial changeset for: " + request);
@@ -301,6 +301,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterStartVersion(String.valueOf(startVersion));
         criteria.addFilterEndVersion(Integer.toString(request.getVersion()));
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
+        criteria.addFilterDriftDirectory(request.getDirectory());
+        criteria.setStrict(true);
         criteria.fetchDrifts(true);
         criteria.addSortVersion(PageOrdering.ASC);
 
@@ -312,11 +314,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         return result;
     }
 
-    private DriftChangeSet<?> loadInitialChangeSet(Subject subject, int driftDefinitionId) {
+    private DriftChangeSet<?> loadInitialChangeSet(Subject subject, DriftSnapshotRequest request) {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterCategory(COVERAGE);
         criteria.addFilterVersion("0");
-        criteria.addFilterDriftDefinitionId(driftDefinitionId);
+        criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
         criteria.fetchDrifts(true);
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);

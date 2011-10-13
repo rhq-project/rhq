@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 /**
  * An immutable class used to specify the characteristics of a requested DriftSnapshot. See 
- * @{link DriftManagerLocal.getSnapshot(Subject, DriftSnapshotRequest}.
+ * {@link org.rhq.enterprise.server.drift.DriftManagerLocal#getSnapshot(org.rhq.core.domain.auth.Subject, DriftSnapshotRequest)}.
  * <pre>
  * Defaults:
  * startVersion = 0 (initial snapshot)
@@ -39,6 +39,7 @@ public class DriftSnapshotRequest implements Serializable {
     private int driftDefinitionId;
     private Integer version;
     private Integer startVersion;
+    private String directory;
     private boolean includeDriftDirectories;
     private boolean includeDriftInstances;
 
@@ -56,21 +57,26 @@ public class DriftSnapshotRequest implements Serializable {
      * @param driftDefinitionId
      */
     public DriftSnapshotRequest(int driftDefinitionId) {
-        this(driftDefinitionId, 0, null, false, true);
+        this(driftDefinitionId, 0, null, null, false, true);
     }
 
     public DriftSnapshotRequest(int driftDefinitionId, Integer version) {
-        this(driftDefinitionId, version, null, false, true);
+        this(driftDefinitionId, version, null, null, false, true);
+    }
+
+    public DriftSnapshotRequest(int driftDefinitionId, Integer version, String directory) {
+        this(driftDefinitionId, version, null, directory, false, true);
     }
 
     /**
      * @param driftDefinitionId
      * @param version null or < 0 or > most recent will default to most recent
      * @param startVersion null or < 0 or > version will default to 0
+     * @param directory if specified, limit the snapshot to the specified directory 
      * @param includeDriftDirectories
      * @param includeDriftInstances
      */
-    public DriftSnapshotRequest(int driftDefinitionId, Integer version, Integer startVersion,
+    public DriftSnapshotRequest(int driftDefinitionId, Integer version, Integer startVersion, String directory,
         boolean includeDriftDirectories, boolean includeDriftInstances) {
         super();
 
@@ -78,6 +84,10 @@ public class DriftSnapshotRequest implements Serializable {
         this.version = (null != version && version >= 0) ? version : null;
         this.startVersion = (null != startVersion && startVersion >= 0 && (null == this.version || startVersion > this.version)) ? startVersion
             : 0;
+        if (null != directory) {
+            directory = directory.trim();
+            this.directory = "".equals(directory) ? "./" : directory;
+        }
         this.includeDriftDirectories = includeDriftDirectories;
         this.includeDriftInstances = includeDriftInstances;
     }
@@ -94,6 +104,10 @@ public class DriftSnapshotRequest implements Serializable {
         return startVersion;
     }
 
+    public String getDirectory() {
+        return directory;
+    }
+
     public boolean isIncludeDriftDirectories() {
         return includeDriftDirectories;
     }
@@ -104,9 +118,9 @@ public class DriftSnapshotRequest implements Serializable {
 
     @Override
     public String toString() {
-        return "DriftSnapshotRequest [driftDefinitionId=" + driftDefinitionId + ", includeDriftDirectories="
-            + includeDriftDirectories + ", includeDriftInstances=" + includeDriftInstances + ", startVersion="
-            + startVersion + ", version=" + version + "]";
+        return "DriftSnapshotRequest [directory=" + directory + ", driftDefinitionId=" + driftDefinitionId
+            + ", includeDriftDirectories=" + includeDriftDirectories + ", includeDriftInstances="
+            + includeDriftInstances + ", startVersion=" + startVersion + ", version=" + version + "]";
     }
 
 }

@@ -73,4 +73,10 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+
+    @Override
+    public void updateTemplate(Subject subject, DriftDefinitionTemplate template, boolean applyToDefs) {
+        DriftDefinitionTemplate updatedTemplate = entityMgr.merge(template);
+    }
 }

@@ -192,6 +192,10 @@ public class DriftDefinitionTemplate implements Serializable {
         return configuration.deepCopyWithoutProxies();
     }
 
+    public DriftDefinition createDefinition() {
+        return new DriftDefinition(configuration.deepCopyWithoutProxies());
+    }
+
     @PrePersist
     void onPersist() {
         this.ctime = System.currentTimeMillis();

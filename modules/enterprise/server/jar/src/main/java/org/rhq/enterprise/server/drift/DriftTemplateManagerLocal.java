@@ -35,4 +35,6 @@ public interface DriftTemplateManagerLocal {
 
     void createTemplate(Subject subject, int resourceTypeId, DriftDefinition definition);
 
+    void updateTemplate(Subject subject, DriftDefinitionTemplate template, boolean applyToDefs);
+
 }

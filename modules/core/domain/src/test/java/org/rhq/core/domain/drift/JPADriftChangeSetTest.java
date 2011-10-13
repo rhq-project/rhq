@@ -98,10 +98,12 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
     }
 
     private Resource createResource(ResourceType type) {
-        return new ResourceBuilder().createResource().withId(0).withName(
-            JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount++).withResourceKey(
-            JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount).withUuid(
-            JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount).withResourceType(type).build();
+        return new ResourceBuilder().createResource().withId(0)
+            .withName(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount++)
+            .withResourceKey(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount)
+            .withUuid(JPADriftChangeSetTest.class.getSimpleName() + "_" + resourceCount)
+            .withResourceType(type)
+            .build();
     }
 
     private DriftDefinition createDriftDefinition() {

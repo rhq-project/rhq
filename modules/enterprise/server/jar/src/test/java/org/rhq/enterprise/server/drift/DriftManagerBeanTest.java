@@ -42,7 +42,6 @@ import org.testng.annotations.Test;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.Headers;
-import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
@@ -55,7 +54,6 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.resource.Agent;
@@ -428,40 +426,4 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         return digestGenerator.calcDigestString(s);
     }
 
-    private class TestDefService implements DriftAgentService {
-
-        @Override
-        public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
-            return true;
-        }
-
-        @Override
-        public void scheduleDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
-
-        }
-
-        @Override
-        public void detectDrift(int resourceId, DriftDefinition DriftDefinition) {
-        }
-
-        @Override
-        public void unscheduleDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
-        }
-
-        @Override
-        public void updateDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
-        }
-
-        @Override
-        public void ackChangeSet(int resourceId, String driftDefName) {
-        }
-
-        @Override
-        public void ackChangeSetContent(int resourceId, String driftDefName, String token) {
-        }
-
-        @Override
-        public void pinSnapshot(int resourceId, String configName, DriftSnapshot snapshot) {
-        }
-    }
 }

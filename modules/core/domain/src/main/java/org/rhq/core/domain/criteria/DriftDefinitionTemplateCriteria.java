@@ -28,6 +28,8 @@ public class DriftDefinitionTemplateCriteria extends Criteria {
     private String filterName;
     private Integer filterResourceTypeId;
 
+    private boolean fetchDriftDefinitions;
+
     public DriftDefinitionTemplateCriteria() {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
     }
@@ -47,5 +49,9 @@ public class DriftDefinitionTemplateCriteria extends Criteria {
 
     public void addFilterResourceTypeId(Integer resourceTypeId) {
         filterResourceTypeId = resourceTypeId;
+    }
+
+    public void fetchDriftDefinitions(boolean fetchDefinitions) {
+        fetchDriftDefinitions = fetchDefinitions;
     }
 }

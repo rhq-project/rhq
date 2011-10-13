@@ -162,7 +162,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -783,6 +783,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public void deleteResource(Subject subject, int resourceId) {
         resourceFactoryManager.deleteResource(subject, resourceId);
+    }
+
+    public void updateResourceName(Subject subject, int resourceId, String name) {
+        resourceFactoryManager.updateResourceName(subject, resourceId, name);
     }
 
     //RESOURCEFACTORYMANAGER: END ----------------------------------

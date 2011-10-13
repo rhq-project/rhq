@@ -29,7 +29,7 @@ import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
- * RHQ Criteria query support for @{link DriftDefinition}.  This is not drift server plugin supported,
+ * RHQ Criteria query support for {@link DriftDefinition}.  This is not drift server plugin supported,
  * DriftDefintition is a native entity.
  * 
  * @author Jay Shaughnessy

@@ -31,12 +31,13 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableSection;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Provides the typical carousel view with the additional ability of traversing to "details" views - a masters/detail 
- * view in effect. This class is analogous to @{link AbstractTableSection}.
+ * view in effect. This class is analogous to {@link AbstractTableSection}.
  * 
  * @author Jay Shaughnessy
  */

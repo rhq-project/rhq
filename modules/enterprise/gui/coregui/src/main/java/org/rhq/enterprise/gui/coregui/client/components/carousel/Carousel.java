@@ -72,8 +72,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Similar to (i.e. originally a copy of) Table but instead of encapsulating a ListGrid, it manages a list of 
- * @{link CarouselMember}s, offering horizontal presentation of the member canvases, high level filtering, and
- * other member-wide handling. See @{link BookmarkableCarousel} for a subclass providing master-detail support.
+ * {@link CarouselMember}s, offering horizontal presentation of the member canvases, high level filtering, and
+ * other member-wide handling. See {@link BookmarkableCarousel} for a subclass providing master-detail support.
  * 
  * @author Jay Shaughnessy
  */

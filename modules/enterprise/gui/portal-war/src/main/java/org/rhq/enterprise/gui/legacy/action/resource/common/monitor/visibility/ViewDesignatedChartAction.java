@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -36,7 +37,7 @@ public class ViewDesignatedChartAction extends MetricDisplayRangeAction {
     protected final Log log = LogFactory.getLog(ViewDesignatedChartAction.class);
 
     /**
-     * Modify the metric chart as specified in the given <code>@{link ViewActionForm}</code>.
+     * Modify the metric chart as specified in the given <code>{@link ViewActionForm}</code>.
      */
     @Override
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,

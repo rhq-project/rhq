@@ -63,7 +63,7 @@ public class ViewChartAction extends MetricDisplayRangeAction {
     ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     /**
-     * Modify the metric chart as specified in the given <code>@{link
+     * Modify the metric chart as specified in the given <code>{@link
      * ViewActionForm}</code>.
      */
     @Override

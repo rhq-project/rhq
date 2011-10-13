@@ -184,7 +184,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         super(locatorId);
 
         if (criteria != null && autoFetchData) {
-            throw new IllegalArgumentException("Non-null initialCriteria and autoFetchData=true cannot be specified together, due to a bug in SmartGWT.");
+            throw new IllegalArgumentException(
+                "Non-null initialCriteria and autoFetchData=true cannot be specified together, due to a bug in SmartGWT.");
         }
         setWidth100();
         setHeight100();
@@ -248,7 +249,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected void onInit() {
         super.onInit();
 
-        contents = new LocatableVLayout(extendLocatorId("Contents"));
+        contents = getTableContents();
         configureTableContents(contents);
         addMember(contents);
 
@@ -438,7 +439,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // logic. This happens in selenium testing or when a user navs away prior to the refresh.
         this.listGrid = null;
 
-        SeleniumUtility.destroyMembers(contents);
+        SeleniumUtility.destroyMembers(getTableContents());
         super.destroy();
     }
 
@@ -780,7 +781,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public ListGrid getListGrid() {
         if (null == listGrid) {
-            listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+            listGrid = new LocatableListGrid(getTableContents().extendLocatorId("ListGrid"));
         }
         return listGrid;
     }

@@ -17,22 +17,35 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.drift;
+package org.rhq.core.domain.criteria;
 
-import javax.ejb.Local;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
-import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
-import org.rhq.core.domain.util.PageList;
 
-@Local
-public interface DriftTemplateManagerLocal {
+public class DriftDefinitionTemplateCriteria extends Criteria {
+    private static final long serialVersionUID = 1L;
 
-    PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
-        DriftDefinitionTemplateCriteria criteria);
+    private Integer filterId;
+    private String filterName;
+    private Integer filterResourceTypeId;
 
-    void createTemplate(Subject subject, int resourceTypeId, DriftDefinition definition);
+    public DriftDefinitionTemplateCriteria() {
+        filterOverrides.put("filterResourceTypeId", "resourceType.id");
+    }
 
+    @Override
+    public Class<?> getPersistentClass() {
+        return DriftDefinitionTemplate.class;
+    }
+
+    public void addFilterId(Integer id) {
+        filterId = id;
+    }
+
+    public void addFilterName(String name) {
+        filterName = name;
+    }
+
+    public void addFilterResourceTypeId(Integer resourceTypeId) {
+        filterResourceTypeId = resourceTypeId;
+    }
 }

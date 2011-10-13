@@ -26,22 +26,37 @@ import javax.persistence.PersistenceContext;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
-public class DriftTemplateManagerBean implements DriftTemplateManagerLocal {
+public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, DriftTemplateManagerRemote {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
 
     @EJB
     ResourceTypeManagerLocal resourceTypeMgr;
+
+    @Override
+    public PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
+        DriftDefinitionTemplateCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<DriftDefinitionTemplate> queryRunner =
+            new CriteriaQueryRunner<DriftDefinitionTemplate>(criteria, generator, entityMgr);
+        PageList<DriftDefinitionTemplate> result = queryRunner.execute();
+
+        return result;
+    }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override

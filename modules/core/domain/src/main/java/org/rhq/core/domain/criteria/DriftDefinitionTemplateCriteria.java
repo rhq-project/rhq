@@ -29,11 +29,11 @@ public class DriftDefinitionTemplateCriteria extends Criteria {
     private Integer filterResourceTypeId;
 
     public DriftDefinitionTemplateCriteria() {
-        filterOverrides.put("filterResourceTypeId", "resourceType.id");
+        filterOverrides.put("resourceTypeId", "resourceType.id = ?");
     }
 
     @Override
-    public Class<?> getPersistentClass() {
+    public Class<DriftDefinitionTemplate> getPersistentClass() {
         return DriftDefinitionTemplate.class;
     }
 

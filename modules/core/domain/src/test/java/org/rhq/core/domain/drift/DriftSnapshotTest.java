@@ -31,9 +31,10 @@ public class DriftSnapshotTest {
         FakeDriftChangeSet changeSet = new FakeDriftChangeSet(0, COVERAGE, defId).add(new FakeDrift(FILE_ADDED, null,
             new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt"));
 
+        Set drifts = changeSet.getDrifts();
         DriftSnapshot snapshot = new DriftSnapshot(request).addChangeSet(changeSet);
 
-        assertCollectionMatchesNoOrder(changeSet.getDrifts(), snapshot.getDriftInstances(), "Failed to build "
+        assertCollectionMatchesNoOrder(drifts, snapshot.getDriftInstances(), "Failed to build "
             + "a snapshot that contains a single change set");
         assertEquals(snapshot.getVersion(), changeSet.getVersion(), "Snapshot version is wrong");
     }
@@ -146,6 +147,8 @@ public class DriftSnapshotTest {
         FakeDriftChangeSet rightChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
         DriftSnapshot right = new DriftSnapshot(rightRequest).addChangeSet(rightChangeSet0);
 
+        // recreate rightChangeSet0 because addChangeSet is destructive
+        rightChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1);
         Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a3b6c9", 1024, LOADED), "/drift/2.txt");
         FakeDriftChangeSet leftChangeSet0 = new FakeDriftChangeSet(0, COVERAGE, defId).add(entry1).add(entry2);
         DriftSnapshot left = new DriftSnapshot(leftRequest).addChangeSet(rightChangeSet0).addChangeSet(leftChangeSet0);

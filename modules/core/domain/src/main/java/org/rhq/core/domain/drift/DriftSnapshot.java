@@ -88,6 +88,17 @@ public class DriftSnapshot implements Serializable {
     }
 
     //public <D extends Drift<?, ?>> DriftSnapshot addChangeSet(DriftChangeSet<D> changeSet) {
+    // TODO: add to plugin facet a getInstance capability for DriftChangeSet so we can actually
+    //       create a slim DriftChangeSet to set on the Drifts. Without this we'll get class cast
+    //       exceptions.  That's why we currently hijack the passed in DriftChangeSet. When we do that
+    //       perhaps we can get a version that doesn't need to suppress unchecked warnings.
+    /**
+     * MAJOR SIDE_EFFECT! This method will on exit will leave changeSet.getDrifts() null.
+     * 
+     * @param changeSet
+     * @return
+     */
+    @SuppressWarnings("unchecked")
     public DriftSnapshot addChangeSet(DriftChangeSet changeSet) {
 
         String dirFilter = request.getDirectory();

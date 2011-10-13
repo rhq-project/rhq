@@ -57,7 +57,7 @@ public class DriftSnapshotRequest implements Serializable {
      * @param driftDefinitionId
      */
     public DriftSnapshotRequest(int driftDefinitionId) {
-        this(driftDefinitionId, 0, null, null, false, true);
+        this(driftDefinitionId, null, null, null, false, true);
     }
 
     public DriftSnapshotRequest(int driftDefinitionId, Integer version) {

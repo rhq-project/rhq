@@ -299,7 +299,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterCategory(DriftChangeSetCategory.DRIFT);
         criteria.addFilterStartVersion(String.valueOf(startVersion));
-        criteria.addFilterEndVersion(Integer.toString(request.getVersion()));
+        if (null != request.getVersion()) {
+            criteria.addFilterEndVersion(Integer.toString(request.getVersion()));
+        }
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
         criteria.addFilterDriftDirectory(request.getDirectory());
         criteria.setStrict(true);

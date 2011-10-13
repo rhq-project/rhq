@@ -142,7 +142,9 @@ public class DisambiguatedResourceNameTag extends TagSupport {
         }
 
         if (url != null) {
-            writer.append("<a href=\"").append(url).append("\">");
+            //writer.append("<a href=\"").append(url).append("\">");
+            //support for GWT UI
+            writer.append("<a href=\"").append(url).append("\" target=\"_parent\">");
         }
 
         if (htmlOutput) {
@@ -171,6 +173,8 @@ public class DisambiguatedResourceNameTag extends TagSupport {
     }
 
     public static String getDefaultResourceUrl(int resourceId) {
-        return FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + resourceId;
+        //return FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + resourceId;
+        //support for GWT UI
+        return "/coregui/#Resource/" + resourceId;
     }
 }

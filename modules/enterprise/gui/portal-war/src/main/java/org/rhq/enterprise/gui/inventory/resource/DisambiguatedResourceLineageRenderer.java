@@ -75,6 +75,10 @@ public class DisambiguatedResourceLineageRenderer extends Renderer {
         encodePreName(writer, parent);
         writer.startElement("a", null);
         writer.writeAttribute("href", getUrl(parent), null);
+        
+        //support for GWT UI
+        writer.writeAttribute("target", "_parent", null);
+        
         writeName(writer, parent);
         writer.endElement("a");
         encodePostName(writer, parent);
@@ -87,7 +91,9 @@ public class DisambiguatedResourceLineageRenderer extends Renderer {
     }
 
     private static String getUrl(DisambiguationReport.Resource parent) {
-        return FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + parent.getId();
+        //return FunctionTagLibrary.getDefaultResourceTabURL() + "?id=" + parent.getId();
+        //support for GWT UI
+        return "/coregui/#Resource/" + parent.getId();
     }
 
     private static void encodePreName(ResponseWriter writer, DisambiguationReport.Resource parent) throws IOException {

@@ -201,4 +201,33 @@ public class MBeanResourceDiscoveryComponent<T extends JMXComponent<?>> implemen
 
         return services;
     }
+
+    /**
+     * Loads the bean with the given object name.
+     *
+     * Subclasses are free to override this method in order to load the bean.
+     * 
+     * @param objectName the name of the bean to load
+     * @return the bean that is loaded
+     */
+    protected EmsBean loadBean(T context, String objectName) {
+        EmsConnection emsConnection = context.getEmsConnection();
+
+        if (emsConnection != null) {
+            EmsBean bean = emsConnection.getBean(objectName);
+            if (bean == null) {
+                // In some cases, this resource component may have been discovered by some means other than querying its
+                // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
+                // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
+                // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
+                // bean before giving up.
+                emsConnection.queryBeans(objectName);
+                bean = emsConnection.getBean(objectName);
+            }
+
+            return bean;
+        }
+
+        return null;
+    }
 }

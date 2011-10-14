@@ -688,7 +688,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 if (!this.autoFetchData) {
                     this.listGrid.fetchData(criteria, new DSCallback() {
                         public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            if (request.getStartRow() == 0 && listGrid.isDrawn()) {
+                            if (listGrid != null && listGrid.isDrawn() && request.getStartRow() == 0) {
                                 listGrid.scrollToRow(0);
                                 listGrid.markForRedraw();
                             }

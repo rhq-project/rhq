@@ -95,6 +95,10 @@ public class ImageManager {
         return "[SKIN]/headerIcons/pin_down.png";
     }
 
+    public static String getDriftIcon() {
+        return "subsystems/drift/Drift_16.png";
+    }
+
     /**
      * Returns a drift icon given the category of the drift.
      * Note that if the category is null, it will be assumed the drift icon

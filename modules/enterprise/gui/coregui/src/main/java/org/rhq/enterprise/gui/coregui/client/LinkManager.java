@@ -387,9 +387,17 @@ public class LinkManager {
         }
     }
 
-    public static String getAdminTemplatesLink() {
+    public static String getAdminTemplatesLink(String viewName) {
         if (GWT) {
-            return "#Administration/Configuration/Templates";
+            return "#Administration/Configuration/" + viewName;
+        } else {
+            return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
+        }
+    }
+
+    public static String getAdminTemplatesEditLink(String viewName, String typeId) {
+        if (GWT) {
+            return "#Administration/Configuration/" + viewName + "/" + typeId;
         } else {
             return "/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all";
         }

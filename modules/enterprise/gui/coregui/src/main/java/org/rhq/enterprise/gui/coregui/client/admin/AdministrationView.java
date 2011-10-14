@@ -29,7 +29,9 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
@@ -179,13 +181,31 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
         systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
 
-        NavigationItem templatesItem = new NavigationItem(ResourceTypeTreeView.VIEW_ID, ImageManager
-            .getMetricEditIcon(), new ViewFactory() {
+        NavigationItem alertTemplatesItem = new NavigationItem(AlertDefinitionTemplateTypeView.VIEW_ID, ImageManager
+            .getAlertIcon(), new ViewFactory() {
             public Canvas createView() {
-                return new ResourceTypeTreeView(extendLocatorId(ResourceTypeTreeView.VIEW_ID.getName()));
+                return new AlertDefinitionTemplateTypeView(extendLocatorId(AlertDefinitionTemplateTypeView.VIEW_ID
+                    .getName()));
             }
         });
-        templatesItem.setRefreshRequired(true); // we always need a new page
+        alertTemplatesItem.setRefreshRequired(true); // we always need a new page
+
+        NavigationItem driftTemplatesItem = new NavigationItem(DriftDefinitionTemplateTypeView.VIEW_ID, ImageManager
+            .getDriftIcon(), new ViewFactory() {
+            public Canvas createView() {
+                return new DriftDefinitionTemplateTypeView(extendLocatorId(DriftDefinitionTemplateTypeView.VIEW_ID
+                    .getName()));
+            }
+        });
+        driftTemplatesItem.setRefreshRequired(true); // we always need a new page        
+
+        NavigationItem metricTemplatesItem = new NavigationItem(MetricTemplateTypeView.VIEW_ID, ImageManager
+            .getMetricEditIcon(), new ViewFactory() {
+            public Canvas createView() {
+                return new MetricTemplateTypeView(extendLocatorId(MetricTemplateTypeView.VIEW_ID.getName()));
+            }
+        });
+        metricTemplatesItem.setRefreshRequired(true); // we always need a new page        
 
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, "global/Download_16.png",
             new ViewFactory() {
@@ -202,8 +222,8 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
-        return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, templatesItem, downloadsItem,
-            pluginsItem);
+        return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
+            driftTemplatesItem, metricTemplatesItem, downloadsItem, pluginsItem);
     }
 
     private NavigationSection buildContentSection() {

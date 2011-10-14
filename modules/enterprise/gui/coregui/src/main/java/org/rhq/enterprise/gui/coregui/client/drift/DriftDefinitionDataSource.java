@@ -110,7 +110,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         baseDirField.setCanSort(false);
         fields.add(baseDirField);
 
-        ListGridField editField = new ListGridField(ATTR_EDIT, MSG.view_drift_table_edit());
+        ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
         editField.addRecordClickHandler(new RecordClickHandler() {

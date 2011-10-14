@@ -42,6 +42,7 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 
 /**
@@ -92,8 +93,10 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
             record.setAttribute(FIELD_READONLY, MSG.common_val_na());
         } else {
             if (parentId != null && parentId.intValue() != 0) {
-                record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesLink() + "/Alert/"
-                    + this.resource.getResourceType().getId() + "/" + parentId);
+                record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesEditLink(
+                    AlertDefinitionTemplateTypeView.VIEW_ID.getName(), String.valueOf(this.resource.getResourceType()
+                        .getId()))
+                    + "/" + parentId);
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
                 record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getResourceGroup().getId()

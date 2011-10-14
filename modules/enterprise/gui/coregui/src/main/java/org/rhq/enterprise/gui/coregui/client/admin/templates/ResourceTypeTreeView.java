@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
@@ -223,19 +224,37 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
 
             public void onTypesLoaded(final Map<Integer, ResourceType> types) {
                 new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-
                     public void onPermissionsLoaded(Set<Permission> permissions) {
                         ResourceType rt = types.get(idArray[0]);
-                        Layout alertCanvas = getAlertTemplateCanvas();
+                        final Layout alertCanvas = getAlertTemplateCanvas();
                         String locatorId = extendLocatorId("alertTemplateDef");
-                        TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt, permissions);
-                        def.renderView(viewPath.next());
-                        prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
-                        switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
+                        final TemplateAlertDefinitionsView defsView = new TemplateAlertDefinitionsView(locatorId, rt,
+                            permissions);
+                        renderTemplateAlertView(alertCanvas, defsView, viewPath);
                     }
                 });
             }
         });
+    }
+
+    private void renderTemplateAlertView(final Layout defsHolderLayout, final TemplateAlertDefinitionsView defsView,
+                                         final ViewPath viewPath) {
+        prepareSubCanvas(defsHolderLayout, defsView, true);
+        new Timer() {
+            final long startTime = System.currentTimeMillis();
+
+            public void run() {
+                if (defsView.isInitialized()) {
+                    defsView.renderView(viewPath.next());
+                    switchToCanvas(ResourceTypeTreeView.this, defsHolderLayout);
+                } else {
+                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                    if (elapsedMillis < 10000) {
+                        schedule(100); // Reschedule the timer.
+                    }
+                }
+            }
+        }.run(); // fire the timer immediately
     }
 
     private void editMetricTemplate(final int resourceTypeId) {

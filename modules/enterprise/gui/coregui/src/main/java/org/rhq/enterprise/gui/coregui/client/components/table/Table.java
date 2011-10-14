@@ -74,6 +74,7 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
@@ -102,7 +103,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 @SuppressWarnings("unchecked")
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -145,6 +146,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private LocatableToolStrip footer;
     private LocatableToolStrip footerExtraWidgets;
     private LocatableIButton refreshButton;
+    private boolean initialized;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, false);
@@ -310,6 +312,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
 
         contents.addMember(listGrid);
+
+        this.initialized = true;
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return this.initialized;
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
@@ -673,16 +682,19 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             Criteria criteria = getCurrentCriteria();
             Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
             this.listGrid.setCriteria(criteria);
-            this.listGrid.invalidateCache();
-            if (!this.autoFetchData) {
-                this.listGrid.fetchData(criteria, new DSCallback() {
-                    public void execute(DSResponse response, Object rawData, DSRequest request) {
-                        if (request.getStartRow() == 0) {
-                            listGrid.scrollToRow(0);
-                            listGrid.markForRedraw();
+            // Only call invalidateCache() and fetchData() if the ListGrid is backed by a DataSource.
+            if (this.listGrid.getDataSource() != null) {
+                this.listGrid.invalidateCache();
+                if (!this.autoFetchData) {
+                    this.listGrid.fetchData(criteria, new DSCallback() {
+                        public void execute(DSResponse response, Object rawData, DSRequest request) {
+                            if (request.getStartRow() == 0 && listGrid.isDrawn()) {
+                                listGrid.scrollToRow(0);
+                                listGrid.markForRedraw();
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
             this.listGrid.markForRedraw();
         }

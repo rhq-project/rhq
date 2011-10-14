@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
@@ -239,7 +240,10 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
 
     private void renderTemplateAlertView(final Layout defsHolderLayout, final TemplateAlertDefinitionsView defsView,
                                          final ViewPath viewPath) {
-        prepareSubCanvas(defsHolderLayout, defsView, true);
+        // Don't show our back button if we are going to a template details pane which has its own back button, in
+        // which case viewPath.viewsLeft() would return 1.
+        boolean showBackButton = (viewPath.viewsLeft() == 0);
+        prepareSubCanvas(defsHolderLayout, defsView, showBackButton);
         new Timer() {
             final long startTime = System.currentTimeMillis();
 
@@ -251,6 +255,11 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                     long elapsedMillis = System.currentTimeMillis() - startTime;
                     if (elapsedMillis < 10000) {
                         schedule(100); // Reschedule the timer.
+                    } else {
+                        Log.error("Initialization of " + defsView.getClass().getName() + " timed out.");
+                        // Make a last-ditch attempt to call renderView() even though the view may not be initialized.
+                        defsView.renderView(viewPath.next());
+                        switchToCanvas(ResourceTypeTreeView.this, defsHolderLayout);
                     }
                 }
             }

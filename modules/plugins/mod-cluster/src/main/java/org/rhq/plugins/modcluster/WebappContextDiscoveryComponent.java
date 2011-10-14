@@ -37,8 +37,7 @@ import org.rhq.plugins.modcluster.model.ProxyInfo;
  *
  * @author Stefan Negrea
  */
-public class WebappContextDiscoveryComponent<T extends MBeanResourceComponent<?>> implements
-    ResourceDiscoveryComponent<T> {
+public class WebappContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent<?>> {
 
     private static final String JVM_ROUTE_PROPERTY = "jvmRoute";
     private static final String ENGINE_OBJECT_NAME = "engineObjectName";
@@ -46,7 +45,7 @@ public class WebappContextDiscoveryComponent<T extends MBeanResourceComponent<?>
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
         String jvmRoute = this.getJvmRoute(context);
 
         EmsBean configBean = context.getParentResourceComponent().getEmsBean();
@@ -72,7 +71,7 @@ public class WebappContextDiscoveryComponent<T extends MBeanResourceComponent<?>
      * @param context the discovery context
      * @return node's jvm route
      */
-    private String getJvmRoute(ResourceDiscoveryContext<T> context) {
+    private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
         Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
 
         String[] engineObjectNames = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue().split("\\|");
@@ -95,7 +94,7 @@ public class WebappContextDiscoveryComponent<T extends MBeanResourceComponent<?>
      * @param objectName the name of the bean to load
      * @return the bean that is loaded
      */
-    protected EmsBean loadBean(T context, String objectName) {
+    protected EmsBean loadBean(MBeanResourceComponent<?> context, String objectName) {
         EmsConnection emsConnection = context.getEmsConnection();
 
         if (emsConnection != null) {

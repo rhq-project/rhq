@@ -34,7 +34,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  *
  * @author Stefan Negrea
  */
-public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends MBeanResourceDiscoveryComponent<T> {
+public class ClassNameMBeanDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 
@@ -44,7 +44,7 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends
      * @see org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext, boolean)
      */
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context,
         boolean skipUnknownProps) {
 
         Set<DiscoveredResourceDetails> results = super.discoverResources(context, skipUnknownProps);
@@ -63,7 +63,7 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends
      * @param objectName
      * @return
      */
-    public boolean isBeanConfiguredClassName(ResourceDiscoveryContext<T> context, String objectName) {
+    public boolean isBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent<?>> context, String objectName) {
         EmsBean emsBean = loadBean(context.getParentResourceComponent(), objectName);
         if (emsBean == null) {
             return false;

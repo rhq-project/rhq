@@ -32,10 +32,10 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Stefan Negrea
  *
  */
-public class LoadMetricDiscoveryComponent<T extends JMXComponent<?>> extends MBeanResourceDiscoveryComponent<T> {
+public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context,
         boolean skipUnknownProps) {
 
         Set<DiscoveredResourceDetails> results = super.discoverResources(context, skipUnknownProps);

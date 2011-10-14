@@ -44,7 +44,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.hibernate.impl.QueryImpl;
+import org.hibernate.ejb.QueryImpl;
 import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -65,6 +65,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
@@ -1251,9 +1252,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         Query query = generator.getQuery(entityManager);
         if (log.isDebugEnabled()) {
             QueryImpl queryImpl = (QueryImpl) query;
-            log.debug("*Executing JPA query: " + queryImpl.getQueryString() + ", selection=["
-                + queryImpl.getSelection().getFirstRow() + ".." + (queryImpl.getSelection().getFirstRow()
-                + queryImpl.getSelection().getMaxRows() - 1) + "]...");
+            PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
+            log.debug("*Executing JPA query: " + queryImpl.getHibernateQuery().getQueryString() + ", selection=["
+                + pageControl.getStartRow() + ".." + (pageControl.getStartRow() + pageControl.getPageSize() - 1)
+                + "]...");
         }
 
         CriteriaQueryRunner<Alert> queryRunner = new CriteriaQueryRunner<Alert>(criteria, generator, entityManager);

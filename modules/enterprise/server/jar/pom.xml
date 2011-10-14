@@ -274,6 +274,13 @@
       </dependency>
 
       <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
          <groupId>i18nlog</groupId>
          <artifactId>i18nlog</artifactId>
       </dependency>

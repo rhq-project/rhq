@@ -68,6 +68,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
     private static final Criteria INITIAL_CRITERIA = new Criteria();
+
     private EntityContext context;
     private boolean hasWriteAccess;
 
@@ -84,10 +85,6 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     // for subsystem views
     public AlertHistoryView(String locatorId) {
         this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
-    }
-
-    public AlertHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
     }
 
     public AlertHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
@@ -212,6 +209,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler()
                     .handleError(MSG.view_alerts_delete_failure(Arrays.toString(alertIds)), caught);
+                refreshTableInfo();
             }
         });
     }
@@ -222,11 +220,13 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
+                resetSortingAndPaging();
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alerts_delete_failure_all(), caught);
+                refreshTableInfo();
             }
         });
     }
@@ -248,6 +248,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alerts_ack_failure(Arrays.toString(alertIds)), caught);
+                refreshTableInfo();
             }
         });
     }
@@ -263,6 +264,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alerts_ack_failure_all(), caught);
+                refreshTableInfo();
             }
         });
     }
@@ -275,4 +277,5 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     public EntityContext getContext() {
         return context;
     }
+
 }

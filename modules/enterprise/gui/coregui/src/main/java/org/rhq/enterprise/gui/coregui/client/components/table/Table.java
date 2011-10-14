@@ -20,14 +20,13 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -77,6 +76,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
+import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -229,7 +229,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * This content includes the list grid, the buttons, etc.
      */
     protected LocatableVLayout getTableContents() {
-
         if (null == contents) {
             contents = new LocatableVLayout(extendLocatorId("Contents"));
             contents.setWidth100();
@@ -672,10 +671,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     public void refresh() {
         if (this.listGrid != null) {
             Criteria criteria = getCurrentCriteria();
+            Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
             this.listGrid.setCriteria(criteria);
             this.listGrid.invalidateCache();
             if (!this.autoFetchData) {
-                this.listGrid.fetchData(criteria);
+                this.listGrid.fetchData(criteria, new DSCallback() {
+                    public void execute(DSResponse response, Object rawData, DSRequest request) {
+                        if (request.getStartRow() == 0) {
+                            listGrid.scrollToRow(0);
+                            listGrid.markForRedraw();
+                        }
+                    }
+                });
             }
             this.listGrid.markForRedraw();
         }
@@ -716,59 +723,22 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // If this table has a filter form (table filters OR search bar),
         // we need to refresh it as per the filtering, combined with any fixed criteria.
         if (this.filterForm != null && this.filterForm.hasContent()) {
-
             criteria = this.filterForm.getValuesAsCriteria();
-
             if (this.initialCriteriaFixed) {
                 if (criteria != null) {
                     if (this.initialCriteria != null) {
                         // There is fixed criteria - add it to the filter form criteria.
-                        addCriteria(criteria, this.initialCriteria);
+                        CriteriaUtility.addCriteria(criteria, this.initialCriteria);
                     }
                 } else {
                     criteria = this.initialCriteria;
                 }
             }
         } else if (this.initialCriteriaFixed) {
-
             criteria = this.initialCriteria;
         }
 
         return criteria;
-    }
-
-    // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
-    // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
-    // supports adding array types and Objects.
-    // This method takes the src criteria and adds it to the dest criteria.
-    private static void addCriteria(Criteria dest, Criteria src) {
-        Map otherMap = src.getValues();
-        Set otherKeys = otherMap.keySet();
-        for (Iterator i = otherKeys.iterator(); i.hasNext();) {
-            String field = (String) i.next();
-            Object value = otherMap.get(field);
-
-            if (value instanceof Integer) {
-                dest.addCriteria(field, (Integer) value);
-            } else if (value instanceof Float) {
-                dest.addCriteria(field, (Float) value);
-            } else if (value instanceof String) {
-                dest.addCriteria(field, (String) value);
-            } else if (value instanceof Date) {
-                dest.addCriteria(field, (Date) value);
-            } else if (value instanceof Boolean) {
-                dest.addCriteria(field, (Boolean) value);
-            } else if (value instanceof Integer[]) {
-                dest.addCriteria(field, (Integer[]) value);
-            } else if (value instanceof Double[]) {
-                dest.addCriteria(field, (Double[]) value);
-            } else if (value instanceof String[]) {
-                dest.addCriteria(field, (String[]) value);
-            } else {
-                // this is the magic piece - we need to get attrib as an object and set that value
-                dest.setAttribute(field, src.getAttributeAsObject(field));
-            }
-        }
     }
 
     public DS getDataSource() {
@@ -1050,6 +1020,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         field.setHidden(true);
     }
 
+    public void resetSortingAndPaging() {
+        if (listGrid != null) {
+            listGrid.clearSort();
+            listGrid.setSort(sortSpecifiers);
+        }
+    }
+
+
     // -------------- Inner utility classes ------------- //
 
     /**
@@ -1064,6 +1042,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         private Table<?> table;
         private SearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
+        private Long lastEnterKeyPressEventTimeMillis;
 
         public TableFilter(Table<?> table) {
             super(table.extendLocatorId("TableFilter"));
@@ -1106,13 +1085,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             table.refresh();
         }
 
+        @Override
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getKeyName().equals("Enter") == false) {
-                return;
+            if (event.getKeyName().equals("Enter")) {
+                fetchFilteredTableData();
             }
-            fetchFilteredTableData();
         }
 
+        @Override
         public void onChanged(ChangedEvent event) {
             fetchFilteredTableData();
         }
@@ -1123,12 +1103,26 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         @Override
         public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
-            if (event.getCharCode() != KeyCodes.KEY_ENTER) {
-                return;
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+                // TODO (ips, 10/14/11): Figure out why this event is being sent twice. However, this is not urgent,
+                //                       since the if check below will prevent the 2nd event from triggering a redundant
+                //                       fetch request.
+                String searchBarValue = searchBarItem.getSearchBar().getValue();
+                String hiddenValue = (String) hiddenItem.getValue();
+                // Only send a fetch request if the user actually changed the search expression.
+                if (!equals(searchBarValue, hiddenValue)) {
+                    hiddenItem.setValue(searchBarValue);
+                    fetchFilteredTableData();
+                }
             }
-            // TODO: figure out why this event is being sent twice
-            hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
-            fetchFilteredTableData();
+        }
+
+        private static boolean equals(String string1, String string2) {
+            if (string1 == null) {
+                return (string2 == null);
+            } else {
+                return (string1.equals(string2));
+            }
         }
     }
 

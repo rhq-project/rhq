@@ -44,6 +44,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.hibernate.impl.QueryImpl;
 import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -599,7 +600,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     public void fireAlert(int alertDefinitionId) {
-        log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");
+        if (log.isDebugEnabled()) {
+            log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");
+        }
 
         Subject overlord = subjectManager.getOverlord();
         AlertDefinition alertDefinition = alertDefinitionManager.getAlertDefinitionById(overlord, alertDefinitionId);
@@ -1243,6 +1246,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "alertDefinition.resource", subject.getId());
+        }
+
+        Query query = generator.getQuery(entityManager);
+        if (log.isDebugEnabled()) {
+            QueryImpl queryImpl = (QueryImpl) query;
+            log.debug("*Executing JPA query: " + queryImpl.getQueryString() + ", selection=["
+                + queryImpl.getSelection().getFirstRow() + ".." + (queryImpl.getSelection().getFirstRow()
+                + queryImpl.getSelection().getMaxRows() - 1) + "]...");
         }
 
         CriteriaQueryRunner<Alert> queryRunner = new CriteriaQueryRunner<Alert>(criteria, generator, entityManager);

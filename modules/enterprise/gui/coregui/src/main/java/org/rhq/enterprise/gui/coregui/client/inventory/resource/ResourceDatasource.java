@@ -199,7 +199,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
             @Override
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                // SmartGWT has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
                 AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                 Record[] records = buildRecords(result);
@@ -219,7 +219,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
                     record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                 }
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                setPagingInfo(response, result);
                 processResponse(request.getRequestId(), response);
             }
         });

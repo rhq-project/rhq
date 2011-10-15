@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -114,16 +116,45 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
                     public void onPermissionsLoaded(Set<Permission> permissions) {
                         ResourceType rt = types.get(idArray[0]);
-                        Layout alertCanvas = getCanvas();
+                        final Layout alertCanvas = getCanvas();
                         String locatorId = extendLocatorId("alertTemplateDef");
-                        TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt, permissions);
-                        def.renderView(viewPath.next());
-                        prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
-                        switchToCanvas(AlertDefinitionTemplateTypeView.this, alertCanvas);
+                        final TemplateAlertDefinitionsView defsView = new TemplateAlertDefinitionsView(locatorId, rt,
+                            permissions);
+                        renderTemplateAlertView(alertCanvas, defsView, viewPath);
                     }
                 });
             }
         });
+    }
+
+    private void renderTemplateAlertView(final Layout defsHolderLayout, final TemplateAlertDefinitionsView defsView,
+        final ViewPath viewPath) {
+
+        // Don't show our back button if we are going to a template details pane which has its own back button, in
+        // which case viewPath.viewsLeft() would return 1.
+        boolean showBackButton = (viewPath.viewsLeft() == 0);
+        prepareSubCanvas(defsHolderLayout, defsView, showBackButton);
+
+        new Timer() {
+            final long startTime = System.currentTimeMillis();
+
+            public void run() {
+                if (defsView.isInitialized()) {
+                    defsView.renderView(viewPath.next());
+                    switchToCanvas(AlertDefinitionTemplateTypeView.this, defsHolderLayout);
+                } else {
+                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                    if (elapsedMillis < 10000) {
+                        schedule(100); // Reschedule the timer.
+                    } else {
+                        Log.error("Initialization of " + defsView.getClass().getName() + " timed out.");
+                        // Make a last-ditch attempt to call renderView() even though the view may not be initialized.
+                        defsView.renderView(viewPath.next());
+                        switchToCanvas(AlertDefinitionTemplateTypeView.this, defsHolderLayout);
+                    }
+                }
+            }
+        }.run(); // fire the timer immediately
     }
 
     private Layout getCanvas() {

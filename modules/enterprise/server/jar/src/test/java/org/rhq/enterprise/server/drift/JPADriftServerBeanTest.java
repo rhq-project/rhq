@@ -19,39 +19,19 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
+
 import javax.persistence.EntityManager;
 
 import org.hibernate.Hibernate;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.drift.JPADriftFileBits;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
+public class JPADriftServerBeanTest extends DriftServerTest {
 
-public class JPADriftServerBeanTest extends AbstractEJB3Test {
-
-    private static final String HASH_ID = "a1b2c3";
-
-    @BeforeMethod
-    public void initDB() throws Exception {
-//        executeInTransaction(new TransactionCallback() {
-//            @Override
-//            public void execute() throws Exception {
-//                EntityManager em = getEntityManager();
-//                em.createQuery("delete from JPADriftFileBits").executeUpdate();
-//            }
-//        });
-        getTransactionManager().begin();
-        getEntityManager().createQuery("delete from JPADriftFileBits where hashId = :id")
-            .setParameter("id", HASH_ID)
-            .executeUpdate();
-        getTransactionManager().commit();
-    }
-
-    @Test
+    @Test(groups = {"drift", "drift.ejb"})
     public void saveAndLoadFileContent() throws Exception {
         String string = "Testing saving and loading content";
 

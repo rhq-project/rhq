@@ -143,12 +143,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
         assertTrue("Failed to set pinned flag of " + toString(driftDef), updatedDriftDef.isPinned());
     }
 
-    /**
-     * This test is temporarily disabled because it looks like there might be a problem with
-     * DriftManagerBean.getSnapshot and DriftManagerBean.pinSnapshot relies on getSnapshot.
-     * I am going to go back and first get some tests in place for getSnapshot.
-     */
-    @Test(groups = {"drift", "drift.ejb", "drift.server"}, enabled = false)
+    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void makePinnedSnapshotVersionZero() throws Exception {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::makeSnapshotVersionZero");
 
@@ -165,7 +160,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
         // create change set v1
         final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
         final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, driftDef);
-        changeSet1.getDrifts().add(new JPADrift(null, "drift.2", FILE_ADDED, null, driftFile2));
+        final JPADrift drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -175,6 +170,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
                 em.persist(driftFile2);
                 em.persist(changeSet0);
                 em.persist(changeSet1);
+                em.persist(drift2);
             }
         });
 

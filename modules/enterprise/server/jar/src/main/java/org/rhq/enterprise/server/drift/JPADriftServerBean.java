@@ -56,6 +56,8 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -125,6 +127,10 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         q.setParameter("resourceId", resourceId);
         q.setParameter("driftDefinitionName", driftDefName);
         driftsDeleted = q.executeUpdate();
+
+        // delete the drift set
+//        JPADriftChangeSet changeSet = entityManager.createQuery(
+//            "select c from JPADriftChangeSet c where c.version = 0 and c.driftDefinition")
 
         // now purge all changesets
         q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTDEF_RESOURCE);
@@ -204,6 +210,43 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     @Override
+    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        Resource resource = getResource(changeSet.getResourceId());
+
+        DriftDefinition driftDef = null;
+        for (DriftDefinition def : resource.getDriftDefinitions()) {
+            if (def.getId() == changeSet.getDriftDefinitionId()) {
+                driftDef = def;
+                break;
+            }
+        }
+
+        JPADriftChangeSet jpaChangeSet = new JPADriftChangeSet(resource, changeSet.getVersion(),
+            changeSet.getCategory(), driftDef);
+        JPADriftSet driftSet = new JPADriftSet();
+
+        for (Drift<?, ?> drift : changeSet.getDrifts()) {
+            JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(),
+                toJPADriftFile(drift.getOldDriftFile()), toJPADriftFile(drift.getNewDriftFile()));
+//            entityManager.persist(jpaDrift);
+            driftSet.addDrift(jpaDrift);
+        }
+        entityManager.persist(driftSet);
+        jpaChangeSet.setInitialDriftSet(driftSet);
+        entityManager.persist(jpaChangeSet);
+    }
+
+    private JPADriftFile toJPADriftFile(DriftFile driftFile) {
+        if (driftFile == null) {
+            return null;
+        }
+        JPADriftFile jpaFile = new JPADriftFile(driftFile.getHashId());
+        jpaFile.setDataSize(driftFile.getDataSize());
+        jpaFile.setStatus(driftFile.getStatus());
+        return jpaFile;
+    }
+
+    @Override
     public JPADriftFile getDriftFile(Subject subject, String sha256) {
         JPADriftFile result = entityManager.find(JPADriftFile.class, sha256);
         return result;
@@ -233,11 +276,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     @TransactionAttribute(REQUIRES_NEW)
     public DriftChangeSetSummary storeChangeSet(Subject subject, final int resourceId, final File changeSetZip)
         throws Exception {
-        final Resource resource = entityManager.find(Resource.class, resourceId);
-        if (null == resource) {
-            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
-        }
-
+        final Resource resource = getResource(resourceId);
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
 
         try {
@@ -438,5 +477,13 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private Resource getResource(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
+        }
+        return resource;
     }
 }

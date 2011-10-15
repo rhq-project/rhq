@@ -277,6 +277,10 @@ public class DriftSnapshotTest {
         }
 
         @Override
+        public void setResourceId(int id) {
+        }
+
+        @Override
         public Set getDrifts() {
             return drifts;
         }

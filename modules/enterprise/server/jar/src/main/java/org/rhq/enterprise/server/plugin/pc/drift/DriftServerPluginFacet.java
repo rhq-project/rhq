@@ -28,6 +28,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -96,6 +97,8 @@ public interface DriftServerPluginFacet {
      * @throws Exception
      */
     DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+
+    void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
 
     void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 

@@ -26,15 +26,27 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 @Local
-public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerRemote {
+public interface DriftManagerLocal extends DriftManagerRemote {
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
+
+    DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
+
+    DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+
+    void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
@@ -80,6 +92,16 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
     void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId);
 
     /**
+     * When a user wants to completely remove all data related to a drift definition,
+     * this method will be called to give the plugin a chance to clean up any data related
+     * to the drift definition that is going to be deleted.
+     * @param Subject
+     * @param resourceId the resource whose drift definition is being purged
+     * @param driftDefName identifies the data that is to be purged
+     */
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
+
+    /**
      * One time on-demand request to detect drift on the specified entities, using the supplied def.
      * 
      * @param entityContext
@@ -98,6 +120,8 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @throws RuntimeException, IllegalArgumentException if entity or driftDef not found.
      */
     DriftDefinition getDriftDefinition(Subject subject, int driftDefId);
+
+    void updateDriftDefinition(DriftDefinition driftDefinition);
 
     /**
      * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will

@@ -42,9 +42,6 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import difflib.DiffUtils;
-import difflib.Patch;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -63,15 +60,18 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
+import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
+import org.rhq.core.domain.drift.dto.DriftDTO;
+import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -89,6 +89,9 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import difflib.DiffUtils;
+import difflib.Patch;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -522,7 +525,45 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
+    @TransactionAttribute(NOT_SUPPORTED)
+    public void
+    pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
+        DriftDefinition driftDef = driftManager.getDriftDefinition(subject, driftDefId);
+        driftDef.setPinned(true);
+        driftManager.updateDriftDefinition(driftDef);
+
+        DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, snapshotVersion);
+        DriftSnapshot snapshot = getSnapshot(subject, snapshotRequest);
+
+        DriftChangeSetDTO changeSet = new DriftChangeSetDTO();
+        changeSet.setCategory(COVERAGE);
+        changeSet.setVersion(0);
+        changeSet.setDriftDefinitionId(driftDefId);
+        changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
+        changeSet.setResourceId(driftDef.getResource().getId());
+
+        Set<DriftDTO> drifts = new HashSet<DriftDTO>();
+        for (Drift<?, ?> drift : snapshot.getDriftInstances()) {
+            // we need to scrub ids and references to owning change sets
+            DriftDTO driftDTO = new DriftDTO();
+            driftDTO.setCategory(drift.getCategory());
+            driftDTO.setChangeSet(changeSet);
+            driftDTO.setCtime(drift.getCtime());
+            driftDTO.setNewDriftFile(toDTO(drift.getNewDriftFile()));
+            driftDTO.setPath(drift.getPath());
+            driftDTO.setDirectory(drift.getDirectory());
+            drifts.add(driftDTO);
+        }
+        changeSet.setDrifts(drifts);
+
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        try {
+            driftServerPlugin.purgeByDriftDefinitionName(subject,  driftDef.getResource().getId(), driftDef.getName());
+            driftServerPlugin.persistChangeSet(subject, changeSet);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to pin snapshot", e);
+        }
+
         //        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         //        criteria.addFilterId(changeSetId);
         //        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
@@ -545,6 +586,15 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         //        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), changeSet.getResourceId());
         //        DriftAgentService driftService = agent.getDriftAgentService();
         //        driftService.pinSnapshot(changeSet.getResourceId(), config.getName(), snapshot);
+    }
+
+    private DriftFileDTO toDTO(DriftFile file) {
+        DriftFileDTO dto = new DriftFileDTO();
+        dto.setHashId(file.getHashId());
+        dto.setStatus(file.getStatus());
+        dto.setDataSize(file.getDataSize());
+
+        return dto;
     }
 
     @Override
@@ -605,6 +655,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             .generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch, 10);
 
         return new FileDiffReport(patch.getDeltas().size(), deltas);
+    }
+
+    @Override
+    public void updateDriftDefinition(DriftDefinition driftDefinition) {
+        entityManager.merge(driftDefinition);
     }
 
     @Override

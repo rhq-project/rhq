@@ -213,6 +213,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         return resource.getId();
     }
 
+    @Override
+    public void setResourceId(int id) {
+        // This is a no-op because we maintain a JPA association with
+        // the owning resource and therefore use setResource(Resource r)
+    }
+
     public Resource getResource() {
         return resource;
     }

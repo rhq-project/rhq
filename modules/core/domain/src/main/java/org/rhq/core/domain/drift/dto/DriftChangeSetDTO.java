@@ -83,6 +83,11 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable
     }
 
     @Override
+    public void setResourceId(int id) {
+        resourceId = id;
+    }
+
+    @Override
     public Set<DriftDTO> getDrifts() {
         return drifts;
     }

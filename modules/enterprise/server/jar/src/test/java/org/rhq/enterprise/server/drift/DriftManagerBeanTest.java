@@ -46,16 +46,17 @@ import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
-import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -308,6 +309,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(driftDefPojo.getName(), driftDef.getName());
         assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
         assertEquals(driftDefPojo.getInterval(), driftDef.getInterval());
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void pinningSnapshotShouldUpdateDriftDefinition() {
+        DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("pin");
     }
 
     private void deleteDriftFiles() throws Exception {

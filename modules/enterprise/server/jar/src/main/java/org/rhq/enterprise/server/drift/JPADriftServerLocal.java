@@ -27,6 +27,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
@@ -68,6 +69,8 @@ public interface JPADriftServerLocal {
      * @return The Drifts matching the criteria
      */
     PageList<JPADrift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+
+    void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
 
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN 

@@ -145,6 +145,15 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
      */
     int getResourceId();
 
+    /**
+     * Sets the id of the resource to which the drift definition is assigned.
+     * Note that the RHQ server and not the drift server plugins manage the persistence
+     * of the resource
+     *
+     * @param id The {@link org.rhq.core.domain.resource.Resource Resource} id
+     */
+    void setResourceId(int id);
+
     /** @return The entries that comprise this change set */
     Set<D> getDrifts();
 

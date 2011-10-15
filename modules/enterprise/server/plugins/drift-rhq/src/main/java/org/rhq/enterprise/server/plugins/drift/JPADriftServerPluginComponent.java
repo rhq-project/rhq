@@ -99,6 +99,11 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
+    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        getJPADriftServer().persistChangeSet(subject, changeSet);
+    }
+
+    @Override
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         return getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
     }

@@ -120,6 +120,7 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
     @Test(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void saveAndLoadInitialChangeSet() {
         JPADrift drift = new JPADrift(null, "drift.1", FILE_ADDED, null, null);
+        drift.setDirectory("/basedir");
 
         JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift);

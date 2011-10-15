@@ -80,7 +80,7 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     @Enumerated(EnumType.STRING)
     private String path;
 
-    @Column(name = "DIRECTORY", nullable = false)
+    @Column(name = "PATH_DIRECTORY", nullable = false)
     @Enumerated(EnumType.STRING)
     private String directory;
 

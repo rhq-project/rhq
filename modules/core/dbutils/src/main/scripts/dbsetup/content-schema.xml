@@ -730,7 +730,7 @@
         <column name="PATH" type="VARCHAR2" size="1024" required="true"/>
         <!-- the same as PATH less [/]filename.ext. Redundant storage for the purpose of strict directory search.
              this field can be considered transient for serialization purposes -->
-        <column name="DIRECTORY" type="VARCHAR2" size="1024" required="true"/>        
+        <column name="PATH_DIRECTORY" type="VARCHAR2" size="1024" required="true"/>        
         <column name="OLD_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
         <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
     </table>

@@ -34,7 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 public class ErrorHandler {
 
     private static final String NL = "<br/>"; // \n if not going to use html
-    private static final String INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;"; // \t if not going to use html
+    private static final String INDENT = "   "; // &nbsp;&nbsp;&nbsp;&nbsp; if going to use html
 
     protected static final Messages MSG = CoreGUI.getMessages();
 
@@ -67,8 +67,9 @@ public class ErrorHandler {
 
     public static String getAllMessages(Throwable t, boolean includeStackTrace, String newline) {
         StringBuilder results = new StringBuilder();
-        if (newline == null)
+        if (newline == null) {
             newline = NL;
+        }
 
         if (t != null) {
             String[] msgs = getAllMessagesArray(t);

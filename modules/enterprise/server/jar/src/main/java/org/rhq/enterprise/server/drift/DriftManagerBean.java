@@ -56,6 +56,7 @@ import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -546,7 +547,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         for (Drift<?, ?> drift : snapshot.getDriftInstances()) {
             // we need to scrub ids and references to owning change sets
             DriftDTO driftDTO = new DriftDTO();
-            driftDTO.setCategory(drift.getCategory());
+            driftDTO.setCategory(DriftCategory.FILE_ADDED);
             driftDTO.setChangeSet(changeSet);
             driftDTO.setCtime(drift.getCtime());
             driftDTO.setNewDriftFile(toDTO(drift.getNewDriftFile()));

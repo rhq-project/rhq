@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
@@ -34,7 +35,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -200,13 +200,19 @@ public class ManageSnapshotsTest extends DriftServerTest {
             1, changeSets.size());
         DriftChangeSet<?> changeSet = changeSets.get(0);
 
-        List<Drift> expectedDrifts = new LinkedList<Drift>();
-        expectedDrifts.add(drift1);
-        expectedDrifts.add(drift2);
-        List<Drift> actualDrifts = new ArrayList(changeSet.getDrifts());
+        assertEquals("The pinned snapshot version should be reset to zero", 0, changeSet.getVersion());
+        assertEquals("The change set category is wrong", COVERAGE, changeSet.getCategory());
+
+        JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, driftDef);
+        List<? extends Drift> expectedDrifts = asList(
+            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
+            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+
+        List<? extends Drift> actualDrifts = new ArrayList(changeSet.getDrifts());
 
         assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the new initial change set",
-            expectedDrifts, actualDrifts, "id", "changeSet", "newDriftFile");
+            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+
         // we need to compare the newDriftFile properties separately because
         // assertCollectionMatchesNoOrder compares properties via equals() and JPADriftFile
         // does not implement equals.
@@ -263,7 +269,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
         assertTrue("Failed to send request to agent to pin snapshot", agentInvoked.get());
     }
 
-    private Drift findDriftByPath(List<Drift> drifts, String path) {
+    private Drift findDriftByPath(List<? extends Drift> drifts, String path) {
         for (Drift drift : drifts) {
             if (drift.getPath().equals(path)) {
                 return drift;

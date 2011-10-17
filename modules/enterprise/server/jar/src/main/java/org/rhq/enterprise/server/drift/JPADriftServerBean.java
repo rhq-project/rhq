@@ -226,7 +226,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         JPADriftSet driftSet = new JPADriftSet();
 
         for (Drift<?, ?> drift : changeSet.getDrifts()) {
-            JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(), drift.getCtime(),
+            JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(),
                 toJPADriftFile(drift.getOldDriftFile()), toJPADriftFile(drift.getNewDriftFile()));
             driftSet.addDrift(jpaDrift);
         }

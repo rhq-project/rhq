@@ -170,6 +170,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
                 DriftDefinitionTemplate expectedTemplate = new DriftDefinitionTemplate();
                 expectedTemplate.setTemplateDefinition(definition);
+                expectedTemplate.setUserDefined(true);
 
                 assertDriftTemplateEquals("Failed to save template", expectedTemplate, newTemplate);
             }

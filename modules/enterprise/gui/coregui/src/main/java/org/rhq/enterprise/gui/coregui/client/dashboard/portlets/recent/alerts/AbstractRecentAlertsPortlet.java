@@ -117,7 +117,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
     @Override
     public AlertsPortletDataSource getDataSource() {
-        if (null == this.dataSource) {
+        if (this.dataSource == null) {
             this.dataSource = new AlertsPortletDataSource(getContext());
         }
         return this.dataSource;
@@ -218,16 +218,15 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         return customSettingsForm;
     }
 
-    /** 
-     * Takes the current value of the widget and persists it into the configuration object passed in.
+   /**
+    * Takes the current value of the widget and persists it into the configuration object passed in.
     *
-    * @param measurementRangeEditor
-    * @param portletConfig
-    * returns populated configuration object.
+    * @param measurementRangeEditor metric range editor widget
+    * @param portletConfig - the config to be updated
     */
     private void saveMeasurementRangeEditorSettings(final CustomConfigMeasurementRangeEditor measurementRangeEditor,
         Configuration portletConfig) {
-        String selectedValue = null;
+        String selectedValue;
         if ((measurementRangeEditor != null) && (portletConfig != null)) {
             //time range filter. Check for enabled and then persist property. Dealing with compound widget.
             FormItem item = measurementRangeEditor.getItem(CustomConfigMeasurementRangeEditor.ENABLE_RANGE_ITEM);

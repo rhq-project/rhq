@@ -70,8 +70,8 @@ public class MeasurementDataTraitCriteria extends Criteria {
         filterOverrides.put(FILTER_FIELD_GROUP_ID, "schedule.resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
-            + "    JOIN res.explicitGroups ig " //
-            + "   WHERE ig.id = ? )");
+            + "    JOIN res.explicitGroups grp " //
+            + "   WHERE grp.id = ? )");
         filterOverrides.put(FILTER_FIELD_DEFINITION_ID, "schedule.definition.id = ?");
         filterOverrides.put(FILTER_FIELD_MAX_TIMESTAMP, "id.timestamp = " //
             + "( SELECT MAX(mdt.id.timestamp) "

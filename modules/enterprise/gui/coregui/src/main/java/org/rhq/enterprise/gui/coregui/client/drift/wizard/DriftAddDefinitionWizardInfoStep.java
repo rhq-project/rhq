@@ -29,6 +29,8 @@ import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
@@ -64,12 +66,27 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
 
-            SelectItem templateSelect = new SelectItem("template", MSG.view_drift_wizard_addDef_templatePrompt());
-            templateSelect.setTitleOrientation(TitleOrientation.TOP);
-            templateSelect.setAlign(Alignment.LEFT);
-            templateSelect.setWidth(300);
-            templateSelect.setRequired(true);
-            FormUtility.addContextualHelp(templateSelect, MSG.view_drift_wizard_addDef_templateHelp());
+            StaticTextItem descriptionItem = new StaticTextItem("Description", MSG.common_title_description());
+            descriptionItem.setTitleOrientation(TitleOrientation.TOP);
+            descriptionItem.setAlign(Alignment.LEFT);
+            descriptionItem.setWidth(300);
+            formItems.add(descriptionItem);
+
+            SelectItem templateSelectItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
+            templateSelectItem.setTitleOrientation(TitleOrientation.TOP);
+            templateSelectItem.setAlign(Alignment.LEFT);
+            templateSelectItem.setWidth(300);
+            templateSelectItem.setRequired(true);
+            switch (wizard.getEntityContext().getType()) {
+            case SubsystemView:
+                FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_addTemplate_infoStepHelp());
+
+            default:
+                FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_addDef_infoStepHelp());
+            }
+
+            SpacerItem spacerItem = new SpacerItem("Spacer");
+            formItems.add(spacerItem);
 
             Set<DriftDefinitionTemplate> templates = wizard.getType().getDriftDefinitionTemplates();
             final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
@@ -86,32 +103,36 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
 
             Set<String> templatesMapKeySet = templatesMap.keySet();
             String[] templatesMapKeySetArray = templatesMapKeySet.toArray(new String[templatesMap.size()]);
-            templateSelect.setValueMap(templatesMapKeySetArray);
-            if (templatesMapKeySetArray.length == 1) {
-                // there is only one, select it for the user
-                String theOne = templatesMapKeySetArray[0];
-                DriftDefinitionTemplate selectedTemplate = templatesMap.get(theOne);
-                templateSelect.setValue(theOne);
-                wizard.setSelectedTemplate(selectedTemplate);
-                wizard.setNewStartingConfiguration(selectedTemplate.createConfiguration());
-            }
-            templateSelect.addChangedHandler(new ChangedHandler() {
+            templateSelectItem.setValueMap(templatesMapKeySetArray);
+            templateSelectItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
+                    if (null == event || "".equals(event.getValue())) {
+                        return;
                     }
-                    wizard.setSelectedTemplate((DriftDefinitionTemplate) value);
-                    wizard.setNewStartingConfiguration(templatesMap.get(value).createConfiguration());
+
+                    setSelectedTemplate((String) event.getValue(), templatesMap);
                 }
             });
-
-            formItems.add(templateSelect);
+            formItems.add(templateSelectItem);
 
             form.setItems(formItems.toArray(new FormItem[formItems.size()]));
+
+            // set value to first in list  
+            templateSelectItem.setValue(templatesMapKeySetArray[0]);
+            setSelectedTemplate(templatesMapKeySetArray[0], templatesMap);
         }
 
         return form;
+    }
+
+    private void setSelectedTemplate(String key, final HashMap<String, DriftDefinitionTemplate> templatesMap) {
+
+        DriftDefinitionTemplate selectedTemplate = templatesMap.get(key);
+        wizard.setSelectedTemplate(selectedTemplate);
+        wizard.setNewStartingConfiguration(selectedTemplate.createConfiguration());
+        String description = selectedTemplate.getDescription();
+        description = (null == description) ? MSG.common_val_none() : description;
+        form.getItem("Description").setValue(description);
     }
 
     public boolean nextPage() {
@@ -119,7 +140,13 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return MSG.view_drift_wizard_addDef_infoStepName();
+        switch (wizard.getEntityContext().getType()) {
+        case SubsystemView:
+            return MSG.view_drift_wizard_addTemplate_infoStepName();
+
+        default:
+            return MSG.view_drift_wizard_addDef_infoStepName();
+        }
     }
 
     public Configuration getStartingConfiguration() {

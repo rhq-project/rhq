@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionTemplatesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -118,6 +120,10 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
                 //switchToCanvas(DriftDefinitionTemplateTypeView.this, templatesCanvas);
             }
         });
+    }
+
+    protected EnumSet<ResourceTypeRepository.MetadataType> getTypeMetadataTypes() {
+        return EnumSet.of(ResourceTypeRepository.MetadataType.driftDefinitionTemplates);
     }
 
     private void renderTemplateView(final Layout defsHolderLayout, final DriftDefinitionTemplatesView defsView,

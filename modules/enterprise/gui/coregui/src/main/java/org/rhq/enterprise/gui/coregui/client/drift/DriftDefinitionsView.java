@@ -131,7 +131,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
         TableActionEnablement detectNowEnablement = hasWriteAccess ? TableActionEnablement.SINGLE
             : TableActionEnablement.NEVER;
 
-        addTableAction("Add", MSG.common_button_add(), null, new TableAction() {
+        addTableAction("New", MSG.common_button_new(), null, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasWriteAccess;
             }

@@ -103,14 +103,20 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
                 return;
             }
 
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceTypeId,
-                EnumSet.noneOf(ResourceTypeRepository.MetadataType.class),
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceTypeId, getTypeMetadataTypes(),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
                         editTemplates(type, viewPath);
                     }
                 });
         }
+    }
+
+    /**
+     * @return The Set of metadata types required by the implementing class for the selected type.
+     */
+    protected EnumSet<ResourceTypeRepository.MetadataType> getTypeMetadataTypes() {
+        return EnumSet.noneOf(ResourceTypeRepository.MetadataType.class);
     }
 
     private Canvas getGridCanvas() {

@@ -19,6 +19,14 @@
 
 package org.rhq.core.pc.drift;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.util.file.FileUtil.copyFile;
+import static org.rhq.core.util.file.FileUtil.forEachFile;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -39,14 +47,6 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileVisitor;
-
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.util.file.FileUtil.copyFile;
-import static org.rhq.core.util.file.FileUtil.forEachFile;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -120,7 +120,7 @@ public class DriftDetector implements Runnable {
                 if (detectionSummary.isRepeat()) {
                     driftClient.repeatChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
                         detectionSummary.getVersion());
-                } else if (detectionSummary.getType() == COVERAGE || detectionSummary.getDriftChangeSet() != null) {
+                } else if (changesNeedToBeReported(detectionSummary)) {
                     driftClient.sendChangeSetToServer(detectionSummary);
                 }
             } catch (IOException e) {
@@ -149,6 +149,10 @@ public class DriftDetector implements Runnable {
         }
     }
 
+    private boolean changesNeedToBeReported(DriftDetectionSummary detectionSummary) {
+        return detectionSummary.getType() == COVERAGE || detectionSummary.getDriftChangeSet() != null;
+    }
+
     private boolean previousSnapshotExists(DriftDetectionSchedule schedule) {
         File snapshot = changeSetMgr.findChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
             COVERAGE);
@@ -175,6 +179,10 @@ public class DriftDetector implements Runnable {
         final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>();
         final List<FileEntry> deltaEntries = new LinkedList<FileEntry>();
         final ChangeSetReader coverageReader = changeSetMgr.getChangeSetReader(snapshotFile);
+
+        if (!basedir.exists()) {
+            log.warn("The base directory [" + basedir.getAbsolutePath() + "] for " + schedule + " does not exist.");
+        }
 
         int newVersion;
         if (schedule.getDriftDefinition().isPinned()) {
@@ -335,13 +343,23 @@ public class DriftDetector implements Runnable {
 
     private void generateSnapshot(DriftDetectionSummary summary) throws IOException {
         final DriftDetectionSchedule schedule = summary.getSchedule();
+        final DriftDefinition driftDef = schedule.getDriftDefinition();
+        final File basedir = new File(basedir(schedule.getResourceId(), driftDef));
+
+        if (!basedir.exists()) {
+            if (log.isWarnEnabled()) {
+                log.warn("The base directory [" + basedir.getAbsolutePath() + "] for " + schedule + " does not " +
+                    "exist. You may want review the drift definition and verify that the value of the base " +
+                    "directory is in fact correct.");
+            }
+        }
+
         log.debug("Generating coverage change set for " + schedule);
 
         File snapshot = changeSetMgr.findChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
             COVERAGE);
         final ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(snapshot, createHeaders(schedule, COVERAGE, 0));
-        final DriftDefinition driftDef = schedule.getDriftDefinition();
-        final File basedir = new File(basedir(schedule.getResourceId(), driftDef));
+
         if (basedir.isDirectory()) {
 
             forEachFile(basedir, new FilterFileVisitor(basedir, driftDef.getIncludes(), driftDef.getExcludes(),

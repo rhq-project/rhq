@@ -386,6 +386,247 @@
       </resource-configuration>
    </server>
 
+   <server name="server-config"
+           class="PerfTestComponent"
+           discovery="PerfTestDiscoveryComponent"
+           description="A resource that has plugin config and resource config consisting of all types of properties">
+
+      <plugin-configuration>
+         <!-- This group contains a sampling of all of the various types of properties - they are required -->
+         <c:group name="requiredGroup" displayName="Properties that are required">
+            <c:simple-property name="Rstring"     type="string"     default="stringValueDefault"/>
+            <c:simple-property name="RlongString" type="longString" default="longStringValueDefault"/>
+            <c:simple-property name="Rpassword"   type="password"   default="passwordValueDefault"/>
+            <c:simple-property name="Rboolean"    type="boolean"    default="true"/>
+            <c:simple-property name="Rinteger"    type="integer"    default="42"/>
+            <c:simple-property name="Rlong"       type="long"       default="1000000000000"/>
+            <c:simple-property name="Rfloat"      type="float"      default="3.14"/>
+            <c:simple-property name="Rdouble"     type="double"     default="0.123456789"/>
+            <c:simple-property name="Rfile"       type="file"       default="/a/file"/>
+            <c:simple-property name="Rdirectory"  type="directory"  default="/directory"/>
+
+            <c:simple-property name="Renum1" default="blue" description="Few options, renders as radio buttons">
+               <c:property-options>
+                  <c:option value="red"   name="Red"/>
+                  <c:option value="green" name="Green"/>
+                  <c:option value="blue"  name="Blue"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property name="Renum2" default="banana" description="Lots of options, renders as drop down menu">
+               <c:property-options>
+                  <c:option value="apple"      name="Apple"/>
+                  <c:option value="banana"     name="Banana"/>
+                  <c:option value="peach"      name="Peach"/>
+                  <c:option value="strawberry" name="Strawberry"/>
+                  <c:option value="watermelon" name="Watermelon"/>
+                  <c:option value="lemon"      name="Lemon"/>
+                  <c:option value="lime"       name="Lime"/>
+                  <c:option value="orange"     name="Orange"/>
+                  <c:option value="pear"       name="Pear"/>
+                  <c:option value="kiwi"       name="Kiwi"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property required="false" name="Roptional" type="string" default="optionalValueDefault"/>
+
+            <c:map-property name="RopenMap"/>
+
+            <c:map-property name="Rmap">
+               <c:simple-property name="mapMember1" type="string"  default="mapMember1ValueDefault"/>
+               <c:simple-property name="mapMember2" type="integer" default="42"/>
+               <c:simple-property name="mapMember3" type="boolean" default="true"/>
+            </c:map-property>
+
+            <c:list-property name="RlistOfMaps">
+               <c:map-property name="listMember">
+                  <c:simple-property name="mapInListMember1" type="string" default="mapInListMember1ValueDefault"/>
+                  <c:simple-property name="mapInListMember2" type="string" default="mapInListMember2ValueDefault"/>
+                  <c:simple-property name="mapInListMember3" type="string" default="mapInListMember3ValueDefault"/>
+               </c:map-property>
+            </c:list-property>
+         </c:group>
+
+         <!-- This group contains a sampling of all of the various types of properties  - they are optional -->
+         <c:group name="optionalGroup" displayName="Properties that are optional">
+            <c:simple-property required="false" name="Ostring"     type="string"     default="stringValueDefault"/>
+            <c:simple-property required="false" name="OlongString" type="longString" default="longStringValueDefault"/>
+            <c:simple-property required="false" name="Opassword"   type="password"   default="passwordValueDefault"/>
+            <c:simple-property required="false" name="Oboolean"    type="boolean"    default="true"/>
+            <c:simple-property required="false" name="Ointeger"    type="integer"    default="42"/>
+            <c:simple-property required="false" name="Olong"       type="long"       default="1000000000000"/>
+            <c:simple-property required="false" name="Ofloat"      type="float"      default="3.14"/>
+            <c:simple-property required="false" name="Odouble"     type="double"     default="0.123456789"/>
+            <c:simple-property required="false" name="Ofile"       type="file"       default="/a/file"/>
+            <c:simple-property required="false" name="Odirectory"  type="directory"  default="/directory"/>
+
+            <c:simple-property required="false" name="Oenum1" default="blue" description="Few options, renders as radio buttons">
+               <c:property-options>
+                  <c:option value="red"   name="Red"/>
+                  <c:option value="green" name="Green"/>
+                  <c:option value="blue"  name="Blue"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property required="false" name="Oenum2" default="banana" description="Lots of options, renders as drop down menu">
+               <c:property-options>
+                  <c:option value="apple"      name="Apple"/>
+                  <c:option value="banana"     name="Banana"/>
+                  <c:option value="peach"      name="Peach"/>
+                  <c:option value="strawberry" name="Strawberry"/>
+                  <c:option value="watermelon" name="Watermelon"/>
+                  <c:option value="lemon"      name="Lemon"/>
+                  <c:option value="lime"       name="Lime"/>
+                  <c:option value="orange"     name="Orange"/>
+                  <c:option value="pear"       name="Pear"/>
+                  <c:option value="kiwi"       name="Kiwi"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property required="true" name="Orequired" type="string" default="requiredValueDefault"/>
+
+            <c:map-property required="false" name="OopenMap"/>
+
+            <c:map-property required="false" name="Omap">
+               <c:simple-property required="false" name="mapMember1" type="string"  default="mapMember1ValueDefault"/>
+               <c:simple-property required="false" name="mapMember2" type="integer" default="42"/>
+               <c:simple-property required="false" name="mapMember3" type="boolean" default="true"/>
+            </c:map-property>
+
+            <c:list-property required="false" name="OlistOfMaps">
+               <c:map-property required="false" name="listMember">
+                  <c:simple-property required="false" name="mapInListMember1" type="string" default="mapInListMember1ValueDefault"/>
+                  <c:simple-property required="false" name="mapInListMember2" type="string" default="mapInListMember2ValueDefault"/>
+                  <c:simple-property required="false" name="mapInListMember3" type="string" default="mapInListMember3ValueDefault"/>
+               </c:map-property>
+            </c:list-property>
+         </c:group>
+
+         <!-- Throw in a template for good measure. -->
+         <c:template name="PCtemplate1" description="Plugin Configuration Template 1">
+            <c:simple-property name="string" default="PCtemplate1Default"/>
+         </c:template>
+      </plugin-configuration>
+
+      <resource-configuration>
+         <!-- This group contains a sampling of all of the various types of properties - they are required -->
+         <c:group name="requiredGroup" displayName="Properties that are required">
+            <c:simple-property name="Rstring"     type="string"     default="stringValueDefault"/>
+            <c:simple-property name="RlongString" type="longString" default="longStringValueDefault"/>
+            <c:simple-property name="Rpassword"   type="password"   default="passwordValueDefault"/>
+            <c:simple-property name="Rboolean"    type="boolean"    default="true"/>
+            <c:simple-property name="Rinteger"    type="integer"    default="42"/>
+            <c:simple-property name="Rlong"       type="long"       default="1000000000000"/>
+            <c:simple-property name="Rfloat"      type="float"      default="3.14"/>
+            <c:simple-property name="Rdouble"     type="double"     default="0.123456789"/>
+            <c:simple-property name="Rfile"       type="file"       default="/a/file"/>
+            <c:simple-property name="Rdirectory"  type="directory"  default="/directory"/>
+
+            <c:simple-property name="Renum1" default="blue" description="Few options, renders as radio buttons">
+               <c:property-options>
+                  <c:option value="red"   name="Red"/>
+                  <c:option value="green" name="Green"/>
+                  <c:option value="blue"  name="Blue"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property name="Renum2" default="banana" description="Lots of options, renders as drop down menu">
+               <c:property-options>
+                  <c:option value="apple"      name="Apple"/>
+                  <c:option value="banana"     name="Banana"/>
+                  <c:option value="peach"      name="Peach"/>
+                  <c:option value="strawberry" name="Strawberry"/>
+                  <c:option value="watermelon" name="Watermelon"/>
+                  <c:option value="lemon"      name="Lemon"/>
+                  <c:option value="lime"       name="Lime"/>
+                  <c:option value="orange"     name="Orange"/>
+                  <c:option value="pear"       name="Pear"/>
+                  <c:option value="kiwi"       name="Kiwi"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property required="false" name="Roptional" type="string" default="optionalValueDefault"/>
+
+            <c:map-property name="RopenMap"/>
+
+            <c:map-property name="Rmap">
+               <c:simple-property name="mapMember1" type="string"  default="mapMember1ValueDefault"/>
+               <c:simple-property name="mapMember2" type="integer" default="42"/>
+               <c:simple-property name="mapMember3" type="boolean" default="true"/>
+            </c:map-property>
+
+            <c:list-property name="RlistOfMaps">
+               <c:map-property name="listMember">
+                  <c:simple-property name="mapInListMember1" type="string" default="mapInListMember1ValueDefault"/>
+                  <c:simple-property name="mapInListMember2" type="string" default="mapInListMember2ValueDefault"/>
+                  <c:simple-property name="mapInListMember3" type="string" default="mapInListMember3ValueDefault"/>
+               </c:map-property>
+            </c:list-property>
+         </c:group>
+
+         <!-- This group contains a sampling of all of the various types of properties  - they are optional -->
+         <c:group name="optionalGroup" displayName="Properties that are optional">
+            <c:simple-property required="false" name="Ostring"     type="string"     default="stringValueDefault"/>
+            <c:simple-property required="false" name="OlongString" type="longString" default="longStringValueDefault"/>
+            <c:simple-property required="false" name="Opassword"   type="password"   default="passwordValueDefault"/>
+            <c:simple-property required="false" name="Oboolean"    type="boolean"    default="true"/>
+            <c:simple-property required="false" name="Ointeger"    type="integer"    default="42"/>
+            <c:simple-property required="false" name="Olong"       type="long"       default="1000000000000"/>
+            <c:simple-property required="false" name="Ofloat"      type="float"      default="3.14"/>
+            <c:simple-property required="false" name="Odouble"     type="double"     default="0.123456789"/>
+            <c:simple-property required="false" name="Ofile"       type="file"       default="/a/file"/>
+            <c:simple-property required="false" name="Odirectory"  type="directory"  default="/directory"/>
+
+            <c:simple-property required="false" name="Oenum1" default="blue" description="Few options, renders as radio buttons">
+               <c:property-options>
+                  <c:option value="red"   name="Red"/>
+                  <c:option value="green" name="Green"/>
+                  <c:option value="blue"  name="Blue"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property required="false" name="Oenum2" default="banana" description="Lots of options, renders as drop down menu">
+               <c:property-options>
+                  <c:option value="apple"      name="Apple"/>
+                  <c:option value="banana"     name="Banana"/>
+                  <c:option value="peach"      name="Peach"/>
+                  <c:option value="strawberry" name="Strawberry"/>
+                  <c:option value="watermelon" name="Watermelon"/>
+                  <c:option value="lemon"      name="Lemon"/>
+                  <c:option value="lime"       name="Lime"/>
+                  <c:option value="orange"     name="Orange"/>
+                  <c:option value="pear"       name="Pear"/>
+                  <c:option value="kiwi"       name="Kiwi"/>
+               </c:property-options>
+            </c:simple-property>
+
+            <c:simple-property required="true" name="Orequired" type="string" default="requiredValueDefault"/>
+
+            <c:map-property required="false" name="OopenMap"/>
+
+            <c:map-property required="false" name="Omap">
+               <c:simple-property required="false" name="mapMember1" type="string"  default="mapMember1ValueDefault"/>
+               <c:simple-property required="false" name="mapMember2" type="integer" default="42"/>
+               <c:simple-property required="false" name="mapMember3" type="boolean" default="true"/>
+            </c:map-property>
+
+            <c:list-property required="false" name="OlistOfMaps">
+               <c:map-property required="false" name="listMember">
+                  <c:simple-property required="false" name="mapInListMember1" type="string" default="mapInListMember1ValueDefault"/>
+                  <c:simple-property required="false" name="mapInListMember2" type="string" default="mapInListMember2ValueDefault"/>
+                  <c:simple-property required="false" name="mapInListMember3" type="string" default="mapInListMember3ValueDefault"/>
+               </c:map-property>
+            </c:list-property>
+         </c:group>
+
+         <!-- Throw in a template for good measure. -->
+         <c:template name="RCtemplate1" description="Resource Configuration Template 1">
+            <c:simple-property name="string" default="RCtemplate1Default"/>
+         </c:template>
+      </resource-configuration>
+
+   </server>
+
    <help>
       <![CDATA[
          <p>To enable the perftest plugin, start the agent with <tt>-Drhq.perftest.scenario=scenario-name</tt> where the

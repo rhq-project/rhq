@@ -220,6 +220,7 @@ public class DriftDefinition implements Serializable {
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
         name = getNameProperty();
+        description = getDescriptionProperty();
         isEnabled = getIsEnabledProperty();
         interval = getIntervalProperty();
         driftHandlingMode = getDriftHandlingModeProperty();
@@ -328,6 +329,10 @@ public class DriftDefinition implements Serializable {
             throw new IllegalArgumentException("name is null");
         }
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_NAME, name));
+    }
+
+    private String getDescriptionProperty() {
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_DESCRIPTION, null);
     }
 
     private void setDescriptionProperty(String description) {

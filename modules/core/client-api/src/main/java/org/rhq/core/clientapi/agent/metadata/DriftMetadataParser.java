@@ -42,6 +42,7 @@ public class DriftMetadataParser {
         template.setTemplateDefinition(new DriftDefinition(new Configuration()));
 
         initName(descriptor, template);
+        initDescription(descriptor, template);
         initEnabled(template);
         initBasedir(descriptor, template);
         initInterval(descriptor, template);
@@ -62,6 +63,12 @@ public class DriftMetadataParser {
         template.setName(descriptor.getName());
         template.getConfiguration().put(
             new PropertySimple(DriftConfigurationDefinition.PROP_NAME, descriptor.getName()));
+    }
+
+    private void initDescription(DriftDescriptor descriptor, DriftDefinitionTemplate template) {
+        template.setDescription(descriptor.getDescription());
+        template.getConfiguration().put(
+            new PropertySimple(DriftConfigurationDefinition.PROP_DESCRIPTION, descriptor.getDescription()));
     }
 
     private void initBasedir(DriftDescriptor descriptor, DriftDefinitionTemplate template) {

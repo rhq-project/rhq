@@ -125,6 +125,7 @@ public class DriftConfigurationDefinition implements Serializable {
     static {
         INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE.put(createName(INSTANCE, false));
+        INSTANCE.put(createDescription(INSTANCE));
         INSTANCE.put(createEnabled(INSTANCE));
         INSTANCE.put(createDriftHandlingMode(INSTANCE));
         INSTANCE.put(createInterval(INSTANCE));
@@ -135,6 +136,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
         INSTANCE_FOR_EXISTING_CONFIGS.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE_FOR_EXISTING_CONFIGS.put(createName(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createDescription(INSTANCE_FOR_EXISTING_CONFIGS));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createEnabled(INSTANCE_FOR_EXISTING_CONFIGS));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createDriftHandlingMode(INSTANCE_FOR_EXISTING_CONFIGS));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createInterval(INSTANCE_FOR_EXISTING_CONFIGS));
@@ -167,7 +169,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createDescription(ConfigurationDefinition configDef) {
         String name = PROP_DESCRIPTION;
-        String description = "A description of the drift detection definition";
+        String description = "A description of the drift detection definition or template";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -237,10 +239,10 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createPinned(ConfigurationDefinition configDef) {
         String name = PROP_PINNED;
-        String description = "If set, pins the snapshot that the agent uses for comparing files during drift " +
-            "detection. Normally, the agent compares those files being monitored for drift against the latest " +
-            "snapshot. If you pin a snapshot, the agent will use that pinned version to compare against files " +
-            "being monitored for drift";
+        String description = "If set, pins the snapshot that the agent uses for comparing files during drift "
+            + "detection. Normally, the agent compares those files being monitored for drift against the latest "
+            + "snapshot. If you pin a snapshot, the agent will use that pinned version to compare against files "
+            + "being monitored for drift";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.BOOLEAN;
 

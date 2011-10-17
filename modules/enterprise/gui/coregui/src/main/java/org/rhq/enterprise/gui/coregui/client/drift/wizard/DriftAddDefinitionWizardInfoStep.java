@@ -72,6 +72,9 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             descriptionItem.setWidth(300);
             formItems.add(descriptionItem);
 
+            SpacerItem spacerItem = new SpacerItem("Spacer");
+            formItems.add(spacerItem);
+
             SelectItem templateSelectItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
             templateSelectItem.setTitleOrientation(TitleOrientation.TOP);
             templateSelectItem.setAlign(Alignment.LEFT);
@@ -80,13 +83,11 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
             switch (wizard.getEntityContext().getType()) {
             case SubsystemView:
                 FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_addTemplate_infoStepHelp());
+                break;
 
             default:
                 FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_addDef_infoStepHelp());
             }
-
-            SpacerItem spacerItem = new SpacerItem("Spacer");
-            formItems.add(spacerItem);
 
             Set<DriftDefinitionTemplate> templates = wizard.getType().getDriftDefinitionTemplates();
             final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(

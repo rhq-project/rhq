@@ -307,8 +307,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // TODO: Uncomment the below line once we've upgraded to SmartGWT 2.3.
         //listGrid.setRecordCanSelectProperty("foobar");
 
-        if (dataSource != null) {
-            listGrid.setDataSource(dataSource);
+        if (getDataSource() != null) {
+            listGrid.setDataSource(getDataSource());
         }
 
         contents.addMember(listGrid);
@@ -788,7 +788,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
-        String[] dataSourceFieldNames = this.dataSource.getFieldNames();
+        if (getDataSource() == null) {
+            throw new IllegalStateException("setListGridFields() called on " + getClass().getName()
+                + ", which is not a DataSource-backed Table.");
+        }
+        String[] dataSourceFieldNames = getDataSource().getFieldNames();
         Set<String> dataSourceFieldNamesSet = new LinkedHashSet<String>();
         dataSourceFieldNamesSet.addAll(Arrays.asList(dataSourceFieldNames));
         Map<String, ListGridField> listGridFieldsMap = new LinkedHashMap<String, ListGridField>();
@@ -797,7 +801,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
         dataSourceFieldNamesSet.removeAll(listGridFieldsMap.keySet());
 
-        DataSourceField dataSourceIdField = this.dataSource.getField(FIELD_ID);
+        DataSourceField dataSourceIdField = getDataSource().getField(FIELD_ID);
         boolean hideIdField = (!CoreGUI.isDebugMode() && !forceIdField);
         if (dataSourceIdField != null && hideIdField) {
             // setHidden() will not work on the DataSource field - use the listGrid.hideField() instead.
@@ -813,7 +817,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                String datasourceFieldTitle = this.dataSource.getField(FIELD_ID).getTitle();
+                String datasourceFieldTitle = getDataSource().getField(FIELD_ID).getTitle();
                 String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG
                     .common_title_id();
                 listGridIdField = new ListGridField(FIELD_ID, listGridFieldTitle, 55);
@@ -827,7 +831,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             System.arraycopy(fields, 0, newFields, destIndex, fields.length);
             destIndex += fields.length;
             for (String dataSourceFieldName : dataSourceFieldNamesSet) {
-                DataSourceField dataSourceField = this.dataSource.getField(dataSourceFieldName);
+                DataSourceField dataSourceField = getDataSource().getField(dataSourceFieldName);
                 ListGridField listGridField = new ListGridField(dataSourceField.getName());
                 this.listGrid.hideField(dataSourceFieldName);
                 listGridField.setHidden(true);

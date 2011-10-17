@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,8 +34,12 @@ import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -42,13 +47,13 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
+import com.smartgwt.client.widgets.form.validator.Validator;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.EditCompleteEvent;
-import com.smartgwt.client.widgets.grid.events.EditCompleteHandler;
-import com.smartgwt.client.widgets.grid.events.EditFailedEvent;
-import com.smartgwt.client.widgets.grid.events.EditFailedHandler;
+import com.smartgwt.client.widgets.grid.events.RowEditorExitEvent;
+import com.smartgwt.client.widgets.grid.events.RowEditorExitHandler;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -57,11 +62,15 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -271,9 +280,35 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         final ListGridField valueField = new ListGridField(FIELD_VALUE, MSG.common_title_value());
         valueField.setRequired(propertyDefinitionSimple.isRequired());
         valueField.setCanEdit(true);
-        FormItem editorItem = super.buildSimpleField(propertyDefinitionSimple, aggregatePropertySimple);
-        editorItem.setName(MEMBER_VALUES_EDITOR_FIELD_PREFIX + editorItem.getName());
+        final FormItem editorItem = buildEditorFormItem(valueField, propertyDefinitionSimple);
         valueField.setEditorType(editorItem);
+        valueField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null) {
+                    return "";
+                }
+                List<PropertyDefinitionEnumeration> enumeratedValues = propertyDefinitionSimple.getEnumeratedValues();
+                if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
+                    for (PropertyDefinitionEnumeration option : enumeratedValues) {
+                        if (option.getValue().equals(value.toString())) {
+                            return option.getName();
+                        }
+                    }
+                    return value.toString();
+                } else {
+                    switch (propertyDefinitionSimple.getType()) {
+                    case BOOLEAN: {
+                        return BOOLEAN_PROPERTY_ITEM_VALUE_MAP.get(value.toString());
+                    }
+                    case PASSWORD: {
+                        return "******";
+                    }
+                    default:
+                        return value.toString();
+                    }
+                }
+            }
+        });
 
         ListGridField unsetField = new ListGridField(FIELD_UNSET, MSG.view_groupConfigEdit_unset());
         unsetField.setType(ListGridFieldType.BOOLEAN);
@@ -293,9 +328,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                     if (isUnset) {
                         int rowNum = event.getRowNum();
                         memberValuesGrid.setEditValue(rowNum, FIELD_VALUE, (String) null);
-                        valueItem.disable();
                     } else {
-                        valueItem.enable();
                         valueItem.focusInItem();
                     }
                     valueItem.redraw();
@@ -342,10 +375,10 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                     boolean valuesHomogeneous = true;
                     boolean isValid = true;
 
-                    Object firstValue = data[0].getAttributeAsObject(FIELD_VALUE);
+                    String firstValue = data[0].getAttribute(FIELD_VALUE);
                     int i = 0;
                     for (ListGridRecord valueItem : data) {
-                        Object value = valueItem.getAttributeAsObject(FIELD_VALUE);
+                        String value = valueItem.getAttribute(FIELD_VALUE);
                         if (valuesHomogeneous) {
                             if ((value != null && !value.equals(firstValue)) || (value == null && firstValue != null)) {
                                 valuesHomogeneous = false;
@@ -391,6 +424,10 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                         aggregateStaticItem.show();
                     }
 
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_groupConfigEdit_saveReminder(), Severity.Info));
+
+                    // this has the potential to send another message to the message center
                     firePropertyChangedEvent(aggregatePropertySimple, propertyDefinitionSimple, isValid);
                 }
 
@@ -399,20 +436,16 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         });
         footerStrip.addMember(okButton);
 
-        // set up two handlers to track errors in rows
-        memberValuesGrid.addEditCompleteHandler(new EditCompleteHandler() {
-            public void onEditComplete(EditCompleteEvent event) {
+        // track errors in grid - enable/disable OK button accordingly
+        // I tried many ways to get this to work right - this is what I came up with
+        memberValuesGrid.addRowEditorExitHandler(new RowEditorExitHandler() {
+            public void onRowEditorExit(RowEditorExitEvent event) {
+                memberValuesGrid.validateRow(event.getRowNum());
                 if (memberValuesGrid.hasErrors()) {
                     okButton.disable();
                 } else {
                     okButton.enable();
                 }
-            }
-        });
-
-        memberValuesGrid.addEditFailedHandler(new EditFailedHandler() {
-            public void onEditFailed(EditFailedEvent event) {
-                okButton.disable(); // we know we have at least one error, don't allow the OK button to be pressed
             }
         });
 
@@ -440,7 +473,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             PropertySimple masterPropertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
             final FormItem masterValueItem = super.buildSimpleField(propertyDefinitionSimple, masterPropertySimple);
             masterValueItem.setName(MEMBER_VALUES_EDITOR_FIELD_PREFIX + masterValueItem.getName());
-            masterValueItem.setWidth("*");
+            masterValueItem.setValidateOnChange(true);
             masterValueItem.setDisabled(false);
             masterValueItem.setAlign(Alignment.LEFT);
             masterValueItem.setStartRow(false);
@@ -693,5 +726,77 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             }
         }
         return records;
+    }
+
+    /**
+     * Creates the editor type for the given value field. Validators will be added appropriately.
+     *
+     * @param valueField the field that is editable
+     * @param propDef the definition of the property to be edited in the field
+     * @return the editor item
+     */
+    protected FormItem buildEditorFormItem(ListGridField valueField, final PropertyDefinitionSimple propDef) {
+        FormItem editorItem = null;
+
+        // note: we don't have to worry about "read only" properties - if the members
+        // value editor is in read-only mode or viewing read-only properties, the list grid
+        // isn't editable anyway.
+
+        List<PropertyDefinitionEnumeration> enumeratedValues = propDef.getEnumeratedValues();
+        if (enumeratedValues != null && !enumeratedValues.isEmpty()) {
+            LinkedHashMap<String, String> valueOptions = new LinkedHashMap<String, String>();
+            for (PropertyDefinitionEnumeration option : enumeratedValues) {
+                valueOptions.put(option.getValue(), option.getName());
+            }
+
+            if (valueOptions.size() > 5) {
+                editorItem = new SelectItem();
+            } else {
+                // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when
+                //       our listgrid does not have the "unset" boolean field also present. If its just the value
+                //       field, the radio group editor won't show.
+                editorItem = new SelectItem(); // new RadioGroupItem();
+            }
+            editorItem.setValueMap(valueOptions);
+        } else {
+            switch (propDef.getType()) {
+            case STRING:
+            case FILE:
+            case DIRECTORY:
+                editorItem = new TextItem();
+                break;
+            case LONG_STRING:
+                editorItem = new TextAreaItem();
+                break;
+            case PASSWORD:
+                editorItem = new PasswordItem();
+                break;
+            case BOOLEAN:
+                // TODO: we want RadioGroupItem, but smartgwt seems to have a bug and it won't render this when
+                //       our listgrid does not have the "unset" boolean field also present. If its just the value
+                //       field, the radio group editor won't show.
+                // RadioGroupItem radioGroupItem = new RadioGroupItem();
+                // radioGroupItem.setVertical(false);
+                // editorItem = radioGroupItem;
+                editorItem = new SelectItem();
+                editorItem.setValueMap(BOOLEAN_PROPERTY_ITEM_VALUE_MAP);
+                break;
+            case INTEGER:
+            case LONG:
+                editorItem = new TextItem(); // could not get smartgwt listgrid editing to work with IntegerItem
+                break;
+            case FLOAT:
+            case DOUBLE:
+                editorItem = new TextItem(); // could not get smartgwt listgrid editing to work with FloatItem
+                break;
+            }
+        }
+
+        editorItem.setName(MEMBER_VALUES_EDITOR_FIELD_PREFIX + "editor");
+
+        List<Validator> validators = buildValidators(propDef, new PropertySimple());
+        valueField.setValidators(validators.toArray(new Validator[validators.size()]));
+
+        return editorItem;
     }
 }

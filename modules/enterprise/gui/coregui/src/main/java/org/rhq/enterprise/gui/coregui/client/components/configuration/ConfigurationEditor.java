@@ -146,7 +146,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 //
 public class ConfigurationEditor extends LocatableVLayout {
 
-    private static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
+    static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
     static {
         BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.TRUE.toString(), MSG.common_val_yes());
         BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.FALSE.toString(), MSG.common_val_no());

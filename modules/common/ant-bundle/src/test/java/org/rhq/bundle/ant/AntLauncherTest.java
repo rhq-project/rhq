@@ -106,6 +106,9 @@ public class AntLauncherTest {
     }
 
     public void testInstall() throws Exception {
+
+        if (skipNonLinux("testInstall")) return;
+
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
@@ -160,8 +163,19 @@ public class AntLauncherTest {
             "templatized.variable").equals("10000");
     }
 
+    private boolean skipNonLinux(String meth) {
+        if (!System.getProperty("os.name").equals("Linux")) {
+            System.out.println("Skipping " + meth + "() as this only works on Linux");
+            return true;
+        }
+        return false;
+    }
+
     @Test(dependsOnMethods = "testInstall")
     public void testUpgrade() throws Exception {
+
+        if (skipNonLinux("testUpgrade")) return;
+
         // We want to test an upgrade, so do *not* wipe out the deploy dir - our test method @dependsOnMethods testInstall
         // but we do want to add an unrelated file to see that it gets deleted as part of the upgrade
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
@@ -215,6 +229,9 @@ public class AntLauncherTest {
     }
 
     public void testUpgradeNoManageRootDir() throws Exception {
+
+        if (skipNonLinux("testInstall")) return;
+
         // We want to test an upgrade, so do *not* wipe out the deploy dir - let's re-invoke testInstall
         // to get us to an initial state of the v1 bundle installed
         testInstall();

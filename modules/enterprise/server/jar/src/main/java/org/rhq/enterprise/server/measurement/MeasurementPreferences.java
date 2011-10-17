@@ -33,7 +33,7 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
     }
 
     public static class MetricRangePreferences {
-        /* 
+        /*
          * if readOnly is set to true, the beginning and ending range
          * dates are specified with explicit dates.  if readOnly is
          * false, then the time is relative to NOW and is specified as
@@ -62,33 +62,46 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         MetricRangePreferences prefs = new MetricRangePreferences();
 
         prefs.readOnly = getPreference(PREF_METRIC_RANGE_RO, DEFAULT_VALUE_RANGE_RO);
-        if (prefs.readOnly == false) {
+        if (prefs.readOnly == false) { // relative time range
             prefs.lastN = getPreference(PREF_METRIC_RANGE_LASTN, DEFAULT_VALUE_RANGE_LASTN);
             prefs.unit = getPreference(PREF_METRIC_RANGE_UNIT, DEFAULT_VALUE_RANGE_UNIT);
 
             List<Long> range = MeasurementUtils.calculateTimeFrame(prefs.lastN, prefs.unit);
             prefs.begin = range.get(0);
             prefs.end = range.get(1);
-        } else {
+        } else { // explicit dates
             try {
                 List<String> range = getPreferenceAsList(PREF_METRIC_RANGE);
                 if (range.size() != 2) { // our gwt ui now uses |, let's be sure we can support it too
                     range = getPreferenceAsList(PREF_METRIC_RANGE, "|");
                 }
-                prefs.begin = new Long((String) range.get(0));
-                prefs.end = new Long((String) range.get(1));
+                if (range.size() == 2) {
+                    prefs.begin = new Long(range.get(0));
+                    prefs.end = new Long(range.get(1));
+                }
+                else { // we still could not find a valid range BZ 743221
+                    useDefaultAsFallback(prefs);
+                }
             } catch (IllegalArgumentException iae) {
                 // that's OK, range will remain null and we might use the lastN / unit
-                List<Long> range = MeasurementUtils.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
-                    DEFAULT_VALUE_RANGE_UNIT);
-                prefs.begin = range.get(0);
-                prefs.end = range.get(1);
+                useDefaultAsFallback(prefs);
             }
         }
 
         //log.debug("Getting Metric Range Preferences:" + prefs);
 
         return prefs;
+    }
+
+    /**
+     * Set the prefs begin/end to a default as last resort.
+     * @param prefs
+     */
+    private void useDefaultAsFallback(MetricRangePreferences prefs) {
+        List<Long> range = MeasurementUtils.calculateTimeFrame(DEFAULT_VALUE_RANGE_LASTN,
+                DEFAULT_VALUE_RANGE_UNIT);
+        prefs.begin = range.get(0);
+        prefs.end = range.get(1);
     }
 
     public void setMetricRangePreferences(MetricRangePreferences prefs) {

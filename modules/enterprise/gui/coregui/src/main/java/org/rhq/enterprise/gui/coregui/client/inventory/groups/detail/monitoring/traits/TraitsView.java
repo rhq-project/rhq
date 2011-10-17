@@ -51,8 +51,8 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         ListGrid listGrid = getListGrid();
 
         listGrid.setShowAllRecords(true);
-        listGrid.setGroupStartOpen(GroupStartOpen.ALL);
-        listGrid.groupBy(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
+        //listGrid.setGroupStartOpen(GroupStartOpen.ALL);
+        //listGrid.groupBy(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
 
         ListGridField resourceNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME);
         resourceNameField.setCellFormatter(new CellFormatter() {
@@ -67,7 +67,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
                 return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
             }
         });
-        resourceNameField.setCanGroupBy(true);
+        //resourceNameField.setCanGroupBy(true);
 
         AncestryUtil.setupAncestryListGridField(listGrid);
         super.configureTable();

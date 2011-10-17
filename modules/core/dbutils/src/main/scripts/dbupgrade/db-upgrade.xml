@@ -3500,7 +3500,7 @@
                 <schema-alterColumn table="RHQ_DRIFT_FILE" column="STATUS" nullable="FALSE" />
 
                 <!-- RHQ_DRIFT_DEFINITION -->
-                <schema-createSequence name="RHQ_DRIFT_DEF_ID_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_DRIFT_DEFINITION_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_DRIFT_DEFINITION">
                         CREATE TABLE RHQ_DRIFT_DEFINITION (ID INTEGER PRIMARY KEY)

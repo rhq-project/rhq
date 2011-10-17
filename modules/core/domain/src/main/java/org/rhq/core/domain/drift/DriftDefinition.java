@@ -64,7 +64,7 @@ import org.rhq.core.domain.resource.Resource;
  */
 @Entity
 @Table(name = "RHQ_DRIFT_DEFINITION")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEF_ID_SEQ")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEFINITION_ID_SEQ")
 public class DriftDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 

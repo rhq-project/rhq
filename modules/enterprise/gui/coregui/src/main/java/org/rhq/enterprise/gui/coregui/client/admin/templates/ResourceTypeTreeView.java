@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
@@ -40,6 +41,7 @@ import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -47,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -83,10 +86,10 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
     abstract protected ResourceTypeTreeNodeBuilder getNodeBuilderInstance(ListGrid platformsList,
         ListGrid platformServicesList, TreeGrid serversTreeGrid);
 
-    abstract protected void editTemplates(int resourceTypeId, ViewPath viewPath);
+    abstract protected void editTemplates(ResourceType type, ViewPath viewPath);
 
     @Override
-    public void renderView(ViewPath viewPath) {
+    public void renderView(final ViewPath viewPath) {
         if (viewPath.isEnd()) {
             switchToCanvas(this, getGridCanvas());
 
@@ -100,7 +103,13 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
                 return;
             }
 
-            editTemplates(resourceTypeId, viewPath);
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceTypeId,
+                EnumSet.noneOf(ResourceTypeRepository.MetadataType.class),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        editTemplates(type, viewPath);
+                    }
+                });
         }
     }
 

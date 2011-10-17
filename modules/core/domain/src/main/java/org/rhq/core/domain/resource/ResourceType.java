@@ -62,7 +62,6 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.event.EventDefinition;
@@ -108,7 +107,9 @@ import org.rhq.core.domain.util.Summary;
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = TRUE), "//
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = FALSE), "//
         + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = TRUE), "//
-        + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE) "//
+        + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE), "//
+        + "  (SELECT COUNT(ddt) FROM DriftDefinitionTemplate AS ddt WHERE ddt.resourceType = rt AND ddt.isUserDefined = FALSE), "//
+        + "  (SELECT COUNT(ddt) FROM DriftDefinitionTemplate AS ddt WHERE ddt.resourceType = rt AND ddt.isUserDefined = TRUE) "//
         + ")" //
         + "FROM ResourceType AS rt WHERE rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_CATEGORY, query = "SELECT rt FROM ResourceType AS rt "

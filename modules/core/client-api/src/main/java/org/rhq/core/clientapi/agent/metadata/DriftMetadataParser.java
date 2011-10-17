@@ -24,8 +24,8 @@
 package org.rhq.core.clientapi.agent.metadata;
 
 import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor.Basedir;
 import org.rhq.core.clientapi.descriptor.plugin.DriftFilterDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor.Basedir;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -38,6 +38,7 @@ public class DriftMetadataParser {
 
     public DriftDefinitionTemplate parseDriftMetadata(DriftDescriptor descriptor) {
         DriftDefinitionTemplate template = new DriftDefinitionTemplate();
+        template.setUserDefined(false);
         template.setTemplateDefinition(new DriftDefinition(new Configuration()));
 
         initName(descriptor, template);

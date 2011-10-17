@@ -346,4 +346,10 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
         return dto;
     }
+
+    @Override
+    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        // TODO Auto-generated method stub
+
+    }
 }

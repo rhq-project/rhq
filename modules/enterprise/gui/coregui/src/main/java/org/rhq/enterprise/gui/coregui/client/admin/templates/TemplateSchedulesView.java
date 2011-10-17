@@ -24,6 +24,7 @@ import com.smartgwt.client.data.Criteria;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementScheduleListView;
 
 /**
@@ -33,17 +34,20 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  */
 public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
 
-    private static final String TITLE = MSG.view_admin_measTemplates_title();
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID };
 
     private boolean updateExistingSchedules = true;
     private Set<Permission> globalPermissions;
 
-    public TemplateSchedulesView(String locatorId, int resourceTypeId, Set<Permission> globalPermissions) {
-        super(locatorId, TITLE, new TemplateSchedulesDataSource(resourceTypeId), createCriteria(resourceTypeId),
+    public TemplateSchedulesView(String locatorId, ResourceType type, Set<Permission> globalPermissions) {
+        super(locatorId, getTitle(type), new TemplateSchedulesDataSource(type.getId()), createCriteria(type.getId()),
             EXCLUDED_FIELD_NAMES);
 
         this.globalPermissions = globalPermissions;
+    }
+
+    public static String getTitle(ResourceType type) {
+        return MSG.view_adminConfig_metricTemplates() + " [" + type.getName() + "]";
     }
 
     public boolean hasManageMeasurementsPermission() {

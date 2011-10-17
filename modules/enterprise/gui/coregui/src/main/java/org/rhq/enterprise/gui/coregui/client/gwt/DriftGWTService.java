@@ -22,12 +22,14 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
@@ -38,6 +40,8 @@ import org.rhq.core.domain.util.PageList;
  * @author Jay Shaughnessy
  */
 public interface DriftGWTService extends RemoteService {
+
+    void createTemplate(int resourceTypeId, DriftDefinition definition) throws RuntimeException;
 
     /**
      * Delete all named drift definitions for the specified context if the current user has permission to do so (i.e. either
@@ -80,6 +84,16 @@ public interface DriftGWTService extends RemoteService {
     PageList<DriftDefinition> findDriftDefinitionsByCriteria(DriftDefinitionCriteria criteria) throws RuntimeException;
 
     /**
+     * Find all drift definition templates that match the specified criteria.
+     *
+     * @param criteria the criteria
+     *
+     * @return all drift definition templates that matches the specified criteria
+     */
+    PageList<DriftDefinitionTemplate> findDriftDefinitionTemplatesByCriteria(DriftDefinitionTemplateCriteria criteria)
+        throws RuntimeException;
+
+    /**
      * Find all drifts that match the specified criteria.
      *
      * @param criteria the criteria
@@ -112,8 +126,8 @@ public interface DriftGWTService extends RemoteService {
     void pinSnapshot(int driftDefId, int version) throws RuntimeException;
 
     /**
-     * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
-     * be added.  Agents, if available, will be notified of the change. 
+     * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be 
+     * replaced. If not it will be added.  Agents, if available, will be notified of the change. 
      * 
      * @param entityContext
      * @param driftDef

@@ -23,7 +23,6 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -46,8 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -107,22 +104,16 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
     }
 
     @Override
-    protected void editTemplates(int resourceTypeId, final ViewPath viewPath) {
-        final Integer[] idArray = new Integer[] { resourceTypeId };
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(idArray, new TypesLoadedCallback() {
+    protected void editTemplates(final ResourceType type, final ViewPath viewPath) {
 
-            public void onTypesLoaded(final Map<Integer, ResourceType> types) {
-                new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
-                    public void onPermissionsLoaded(Set<Permission> permissions) {
-                        ResourceType rt = types.get(idArray[0]);
-                        final Layout alertCanvas = getCanvas();
-                        String locatorId = extendLocatorId("alertTemplateDef");
-                        final TemplateAlertDefinitionsView defsView = new TemplateAlertDefinitionsView(locatorId, rt,
-                            permissions);
-                        renderTemplateAlertView(alertCanvas, defsView, viewPath);
-                    }
-                });
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                final Layout alertCanvas = getCanvas();
+                String locatorId = extendLocatorId("alertTemplateDef");
+                final TemplateAlertDefinitionsView defsView = new TemplateAlertDefinitionsView(locatorId, type,
+                    permissions);
+                renderTemplateAlertView(alertCanvas, defsView, viewPath);
             }
         });
     }

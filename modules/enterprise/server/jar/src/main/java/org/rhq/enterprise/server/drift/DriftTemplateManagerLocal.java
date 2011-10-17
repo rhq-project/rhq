@@ -22,18 +22,10 @@ package org.rhq.enterprise.server.drift;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
-import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
-import org.rhq.core.domain.util.PageList;
 
 @Local
-public interface DriftTemplateManagerLocal {
-
-    PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
-        DriftDefinitionTemplateCriteria criteria);
-
-    void createTemplate(Subject subject, int resourceTypeId, DriftDefinition definition);
+public interface DriftTemplateManagerLocal extends DriftTemplateManagerRemote {
 
     void updateTemplate(Subject subject, DriftDefinitionTemplate template, boolean applyToDefs);
 

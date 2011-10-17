@@ -63,8 +63,8 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jay Shaughnessy
  */
 @Entity
-@Table(name = "RHQ_DRIFT_CONFIG")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CONFIG_ID_SEQ")
+@Table(name = "RHQ_DRIFT_DEFINITION")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEF_ID_SEQ")
 public class DriftDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -105,8 +105,8 @@ public class DriftDefinition implements Serializable {
     @JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID", referencedColumnName = "ID", nullable = true)
     private DriftDefinitionTemplate template;
 
-    @Column(name = "PINNED", nullable = false)
-    private boolean pinned;
+    @Column(name = "IS_PINNED", nullable = false)
+    private boolean isPinned;
 
     // required for jaxb/web services stuff
     protected DriftDefinition() {
@@ -205,12 +205,12 @@ public class DriftDefinition implements Serializable {
     }
 
     public boolean isPinned() {
-        return pinned;
+        return isPinned;
     }
 
-    public void setPinned(boolean pinned) {
-        this.pinned = pinned;
-        setPinnedProperty(pinned);
+    public void setPinned(boolean isPinned) {
+        this.isPinned = isPinned;
+        setPinnedProperty(isPinned);
     }
 
     public Configuration getConfiguration() {
@@ -223,7 +223,7 @@ public class DriftDefinition implements Serializable {
         isEnabled = getIsEnabledProperty();
         interval = getIntervalProperty();
         driftHandlingMode = getDriftHandlingModeProperty();
-        pinned = getPinnedProperty();
+        isPinned = getIsPinnedProperty();
     }
 
     public Resource getResource() {
@@ -392,7 +392,7 @@ public class DriftDefinition implements Serializable {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
     }
 
-    private boolean getPinnedProperty() {
+    private boolean getIsPinnedProperty() {
         return Boolean.valueOf(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_PINNED, "false"));
     }
 

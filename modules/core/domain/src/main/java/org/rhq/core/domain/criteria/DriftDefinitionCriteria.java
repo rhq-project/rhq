@@ -46,6 +46,7 @@ public class DriftDefinitionCriteria extends Criteria {
 
     private Boolean fetchConfiguration;
     private Boolean fetchResource;
+    private Boolean fetchTemplate;
 
     private PageOrdering sortName;
 
@@ -76,6 +77,10 @@ public class DriftDefinitionCriteria extends Criteria {
 
     public void fetchResource(Boolean fetchResource) {
         this.fetchResource = fetchResource;
+    }
+
+    public void fetchTemplate(Boolean fetchTemplate) {
+        this.fetchTemplate = fetchTemplate;
     }
 
     public void addSortName(PageOrdering sortName) {

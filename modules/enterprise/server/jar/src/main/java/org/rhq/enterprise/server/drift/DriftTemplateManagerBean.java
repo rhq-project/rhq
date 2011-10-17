@@ -51,8 +51,8 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     public PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
         DriftDefinitionTemplateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        CriteriaQueryRunner<DriftDefinitionTemplate> queryRunner =
-            new CriteriaQueryRunner<DriftDefinitionTemplate>(criteria, generator, entityMgr);
+        CriteriaQueryRunner<DriftDefinitionTemplate> queryRunner = new CriteriaQueryRunner<DriftDefinitionTemplate>(
+            criteria, generator, entityMgr);
         PageList<DriftDefinitionTemplate> result = queryRunner.execute();
 
         return result;
@@ -60,12 +60,13 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override
-    public void createTemplate(Subject subject, int resourceTypeId, DriftDefinition definition) {
+    public void createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined, DriftDefinition definition) {
         try {
             ResourceType resourceType = resourceTypeMgr.getResourceTypeById(subject, resourceTypeId);
             DriftDefinitionTemplate template = new DriftDefinitionTemplate();
             template.setName(definition.getName());
             template.setDescription(definition.getDescription());
+            template.setUserDefined(isUserDefined);
             template.setTemplateDefinition(definition);
 
             resourceType.addDriftDefinitionTemplate(template);
@@ -74,9 +75,9 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-
     @Override
     public void updateTemplate(Subject subject, DriftDefinitionTemplate template, boolean applyToDefs) {
+        @SuppressWarnings("unused")
         DriftDefinitionTemplate updatedTemplate = entityMgr.merge(template);
     }
 }

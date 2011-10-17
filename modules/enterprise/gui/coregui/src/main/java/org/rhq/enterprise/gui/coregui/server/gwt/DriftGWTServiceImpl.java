@@ -20,12 +20,14 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
@@ -34,6 +36,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
+import org.rhq.enterprise.server.drift.DriftTemplateManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -43,6 +46,17 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     private static final long serialVersionUID = 1L;
 
     private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
+    private DriftTemplateManagerLocal driftTemplateManager = LookupUtil.getDriftTemplateManager();
+
+    @Override
+    public void createTemplate(int resourceTypeId, DriftDefinition definition) throws RuntimeException {
+        try {
+            this.driftTemplateManager.createTemplate(getSessionSubject(), resourceTypeId, true, definition);
+
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
     @Override
     public int deleteDriftDefinitionsByContext(EntityContext entityContext, String[] driftDefinitionNames)
@@ -107,6 +121,18 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
             PageList<DriftDefinition> results = driftManager.findDriftDefinitionsByCriteria(getSessionSubject(),
                 criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftDefinitionsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<DriftDefinitionTemplate> findDriftDefinitionTemplatesByCriteria(
+        DriftDefinitionTemplateCriteria criteria) throws RuntimeException {
+        try {
+            PageList<DriftDefinitionTemplate> results = driftTemplateManager.findTemplatesByCriteria(
+                getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftDefinitionTemplatesByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -52,7 +52,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private Set<Permission> globalPermissions;
 
     public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType, Set<Permission> globalPermissions) {
-        super(locatorId, "Alert Templates", getCriteria(resourceType));
+        super(locatorId, getTitle(resourceType), getCriteria(resourceType));
         this.resourceType = resourceType;
         this.globalPermissions = globalPermissions;
 
@@ -76,6 +76,10 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         }
+    }
+
+    public static String getTitle(ResourceType type) {
+        return MSG.view_adminConfig_alertDefTemplates() + " [" + type.getName() + "]";
     }
 
     @Override

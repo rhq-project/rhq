@@ -118,9 +118,8 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         }
 
         // purge resource type
-        List results =  em.createQuery("select t from ResourceType t where t.name = :name")
-            .setParameter("name", RESOURCE_TYPE_NAME)
-            .getResultList();
+        List results = em.createQuery("select t from ResourceType t where t.name = :name").setParameter("name",
+            RESOURCE_TYPE_NAME).getResultList();
         if (!results.isEmpty()) {
             ResourceType type = (ResourceType) results.get(0);
             for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
@@ -129,9 +128,8 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
             em.remove(type);
         }
         // purge agent
-        List<Agent> agents = (List<Agent>) em.createQuery("select a from Agent a where a.name = :name")
-            .setParameter("name", AGENT_NAME)
-            .getResultList();
+        List<Agent> agents = (List<Agent>) em.createQuery("select a from Agent a where a.name = :name").setParameter(
+            "name", AGENT_NAME).getResultList();
         if (!agents.isEmpty()) {
             Agent agent = agents.get(0);
             em.remove(agent);
@@ -139,12 +137,9 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void initResourceType() {
-        resourceType = new ResourceTypeBuilder().createResourceType()
-            .withId(0)
-            .withName(DriftTemplateManagerBeanTest.class.getName())
-            .withCategory(SERVER)
-            .withPlugin(DriftTemplateManagerBeanTest.class.getName().toLowerCase())
-            .build();
+        resourceType = new ResourceTypeBuilder().createResourceType().withId(0).withName(
+            DriftTemplateManagerBeanTest.class.getName()).withCategory(SERVER).withPlugin(
+            DriftTemplateManagerBeanTest.class.getName().toLowerCase()).build();
     }
 
     private void initAgent() {
@@ -160,7 +155,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         definition.setInterval(2400L);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), definition);
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -168,8 +163,8 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
                 EntityManager em = getEntityManager();
                 ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
 
-                assertEquals("Failed to add new drift definition to resource type", 1,
-                    updatedType.getDriftDefinitionTemplates().size());
+                assertEquals("Failed to add new drift definition to resource type", 1, updatedType
+                    .getDriftDefinitionTemplates().size());
 
                 DriftDefinitionTemplate newTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
 
@@ -194,7 +189,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         definition.setInterval(2400L);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), definition);
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
 
         // perform the update
         DriftDefinitionTemplate template = loadTemplate(definition.getName());
@@ -223,7 +218,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         definition.setInterval(2400L);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), definition);
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
 
         // create some definitions
         DriftDefinitionTemplate template = loadTemplate(definition.getName());
@@ -254,13 +249,9 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
     private Resource createResource() {
         int index = resources.size();
-        final Resource resource = new ResourceBuilder().createResource()
-            .withId(0)
-            .withName(getClass().getSimpleName() + "_" + index)
-            .withResourceKey(getClass().getSimpleName() + "_" + index)
-            .withUuid(getClass().getSimpleName() + "_" + index)
-            .withResourceType(resourceType)
-            .build();
+        final Resource resource = new ResourceBuilder().createResource().withId(0).withName(
+            getClass().getSimpleName() + "_" + index).withResourceKey(getClass().getSimpleName() + "_" + index)
+            .withUuid(getClass().getSimpleName() + "_" + index).withResourceType(resourceType).build();
 
         resources.add(resource);
 
@@ -288,12 +279,11 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         return templates.get(0);
     }
 
-    private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected,
-        DriftDefinitionTemplate actual) {
-        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected,
-                    actual, "id", "resourceType", "ctime", "templateDefinition");
-                assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(),
-                    actual.getTemplateDefinition());
+    private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {
+        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected, actual,
+            "id", "resourceType", "ctime", "templateDefinition");
+        assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(), actual
+            .getTemplateDefinition());
     }
 
     private void assertDriftDefEquals(String msg, DriftDefinition expected, DriftDefinition actual) {

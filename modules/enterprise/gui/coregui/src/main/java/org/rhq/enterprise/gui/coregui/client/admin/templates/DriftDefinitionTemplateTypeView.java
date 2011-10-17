@@ -23,19 +23,29 @@ package org.rhq.enterprise.gui.coregui.client.admin.templates;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionTemplatesView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -48,6 +58,8 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
     public static final String ATTR_PLUGIN_TEMPLATES = "pluginTemplates";
     public static final String ATTR_USER_TEMPLATES = "userTemplates";
+
+    private Layout canvas;
 
     public DriftDefinitionTemplateTypeView(String locatorId) {
         super(locatorId);
@@ -91,9 +103,65 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
     }
 
     @Override
-    protected void editTemplates(int resourceTypeId, ViewPath viewPath) {
-        // TODO Auto-generated method stub
+    protected void editTemplates(final ResourceType type, final ViewPath viewPath) {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+
+                Layout templatesCanvas = getCanvas();
+                DriftDefinitionTemplatesView view = new DriftDefinitionTemplatesView(extendLocatorId("DriftTemplates"),
+                    type, permissions.contains(Permission.MANAGE_SETTINGS));
+
+                renderTemplateView(templatesCanvas, view, viewPath);
+
+                //prepareSubCanvas(templatesCanvas, view, true);
+                //switchToCanvas(DriftDefinitionTemplateTypeView.this, templatesCanvas);
+            }
+        });
+    }
+
+    private void renderTemplateView(final Layout defsHolderLayout, final DriftDefinitionTemplatesView defsView,
+        final ViewPath viewPath) {
+
+        // Don't show our back button if we are going to a template details pane which has its own back button, in
+        // which case viewPath.viewsLeft() would return 1.
+        boolean showBackButton = (viewPath.viewsLeft() == 0);
+        prepareSubCanvas(defsHolderLayout, defsView, showBackButton);
+
+        new Timer() {
+            final long startTime = System.currentTimeMillis();
+
+            public void run() {
+                if (defsView.isInitialized()) {
+                    defsView.renderView(viewPath.next());
+                    switchToCanvas(DriftDefinitionTemplateTypeView.this, defsHolderLayout);
+
+                } else {
+                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                    if (elapsedMillis < 10000) {
+                        schedule(100); // Reschedule the timer.
+
+                    } else {
+                        Log.error("Initialization of " + defsView.getClass().getName() + " timed out.");
+                        // Make a last-ditch attempt to call renderView() even though the view may not be initialized.
+                        defsView.renderView(viewPath.next());
+                        switchToCanvas(DriftDefinitionTemplateTypeView.this, defsHolderLayout);
+                    }
+                }
+            }
+        }.run(); // fire the timer immediately
+    }
+
+    private Layout getCanvas() {
+        if (this.canvas == null) {
+            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("metricTemplateLayout"));
+            layout.setHeight100();
+            layout.setWidth100();
+            layout.setMargin(5);
+            this.canvas = layout;
+        }
+
+        return this.canvas;
     }
 
     @Override
@@ -122,8 +190,8 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
                 super(composite);
 
-                setAttribute(ATTR_PLUGIN_TEMPLATES, 0);
-                setAttribute(ATTR_USER_TEMPLATES, 0);
+                setAttribute(ATTR_PLUGIN_TEMPLATES, composite.getPluginDriftTemplates());
+                setAttribute(ATTR_USER_TEMPLATES, composite.getUserDriftTemplates());
             }
         }
 
@@ -139,8 +207,8 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
                 super(composite, plugin);
 
-                setAttribute(ATTR_PLUGIN_TEMPLATES, 0);
-                setAttribute(ATTR_USER_TEMPLATES, 0);
+                setAttribute(ATTR_PLUGIN_TEMPLATES, composite.getPluginDriftTemplates());
+                setAttribute(ATTR_USER_TEMPLATES, composite.getUserDriftTemplates());
             }
         }
 

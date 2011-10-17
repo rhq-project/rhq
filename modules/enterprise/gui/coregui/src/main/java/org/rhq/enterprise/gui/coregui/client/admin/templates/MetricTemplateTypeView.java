@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -101,13 +102,13 @@ public class MetricTemplateTypeView extends ResourceTypeTreeView {
     }
 
     @Override
-    protected void editTemplates(final int resourceTypeId, ViewPath viewPath) {
+    protected void editTemplates(final ResourceType type, ViewPath viewPath) {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 Layout metricCanvas = getCanvas();
                 TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(
-                    extendLocatorId("MetricTemplate"), resourceTypeId, permissions);
+                    extendLocatorId("MetricTemplate"), type, permissions);
                 prepareSubCanvas(metricCanvas, templateSchedulesView, true);
                 switchToCanvas(MetricTemplateTypeView.this, metricCanvas);
             }

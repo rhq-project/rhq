@@ -39,7 +39,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -83,6 +82,9 @@ public class DriftDefinitionTemplate implements Serializable {
     @Column(name = "DESCRIPTION", length = 512, nullable = true)
     private String description;
 
+    @Column(name = "IS_USER_DEFINED", nullable = false)
+    private boolean isUserDefined;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "RESOURCE_TYPE_ID")
     private ResourceType resourceType;
@@ -101,6 +103,8 @@ public class DriftDefinitionTemplate implements Serializable {
     // TODO do we want to cascade other operations? - jsanda
     @OneToMany(mappedBy = "template", cascade = CascadeType.PERSIST)
     private Set<DriftDefinition> driftDefinitions = new HashSet<DriftDefinition>();
+
+    private transient DriftDefinition configWrapper;
 
     public int getId() {
         return id;
@@ -130,6 +134,14 @@ public class DriftDefinitionTemplate implements Serializable {
         return description;
     }
 
+    public boolean isUserDefined() {
+        return isUserDefined;
+    }
+
+    public void setUserDefined(boolean isUserDefined) {
+        this.isUserDefined = isUserDefined;
+    }
+
     public void setDescription(String description) {
         this.description = description;
     }
@@ -147,13 +159,18 @@ public class DriftDefinitionTemplate implements Serializable {
     }
 
     public DriftDefinition getTemplateDefinition() {
-        return new DriftDefinition(configuration);
+        if (null == configWrapper) {
+            configWrapper = new DriftDefinition(configuration);
+        }
+
+        return configWrapper;
     }
 
     public void setTemplateDefinition(DriftDefinition templateDefinition) {
         configuration = templateDefinition.getConfiguration().deepCopyWithoutProxies();
         name = templateDefinition.getName();
         description = templateDefinition.getDescription();
+        configWrapper = null;
     }
 
     /**
@@ -203,9 +220,9 @@ public class DriftDefinitionTemplate implements Serializable {
 
     @Override
     public String toString() {
-        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", description: " + description +
-            ", resourceType: " + resourceType + ", changeSetId: " + changeSetId + ", configuration: " + configuration +
-            "]";
+        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", description: " + description
+            + ", resourceType: " + resourceType + ", changeSetId: " + changeSetId + ", configuration: " + configuration
+            + "]";
     }
 
     public String toString(boolean verbose) {
@@ -221,13 +238,13 @@ public class DriftDefinitionTemplate implements Serializable {
         }
 
         if (resourceType != null) {
-            return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType[id: " +
-                resourceType.getId() + ", name: " + resourceType.getName() + ", plugin: " + resourceType.getPlugin() +
-                ", changeSetId: " + changeSetId + ", configuration[id: " + configId + "]]";
+            return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType[id: "
+                + resourceType.getId() + ", name: " + resourceType.getName() + ", plugin: " + resourceType.getPlugin()
+                + ", changeSetId: " + changeSetId + ", configuration[id: " + configId + "]]";
         }
 
-        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType:[null], " +
-            "changeSetId: " + changeSetId + "configuration[id: " + configId + "]]";
+        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType:[null], " + "changeSetId: "
+            + changeSetId + "configuration[id: " + configId + "]]";
     }
 
     /**
@@ -240,13 +257,17 @@ public class DriftDefinitionTemplate implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof DriftDefinitionTemplate)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof DriftDefinitionTemplate))
+            return false;
 
         DriftDefinitionTemplate that = (DriftDefinitionTemplate) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (resourceType != null ? !resourceType.equals(that.resourceType) : that.resourceType != null) return false;
+        if (name != null ? !name.equals(that.name) : that.name != null)
+            return false;
+        if (resourceType != null ? !resourceType.equals(that.resourceType) : that.resourceType != null)
+            return false;
 
         return true;
     }

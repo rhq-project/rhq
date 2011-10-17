@@ -21,6 +21,7 @@ package org.rhq.core.domain.criteria;
 
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 
+@SuppressWarnings("unused")
 public class DriftDefinitionTemplateCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 

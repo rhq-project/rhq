@@ -319,7 +319,7 @@
    <rhq_create_res_hist/>
    <rhq_delete_res_hist/>
    <rhq_drift_def_template/>
-   <rhq_drift_config/>
+   <rhq_drift_definition/>
    <rhq_drift_change_set/>
    <jms_messages/>
    <jms_transactions/>

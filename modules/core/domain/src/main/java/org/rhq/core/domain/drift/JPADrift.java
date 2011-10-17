@@ -116,6 +116,18 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
         this.newDriftFile = newDriftFile;
     }
 
+    public JPADrift(JPADriftChangeSet changeSet, String path, DriftCategory category, long ctime,
+        JPADriftFile oldDriftFile, JPADriftFile newDriftFile) {
+        this.changeSet = changeSet;
+        this.path = path;
+        int i = path.lastIndexOf("/");
+        this.directory = (i != -1) ? path.substring(0, i) : "./";
+        this.category = category;
+        this.ctime = ctime;
+        this.oldDriftFile = oldDriftFile;
+        this.newDriftFile = newDriftFile;
+    }
+
     @Override
     public String getId() {
         return Integer.toString(id);
@@ -133,7 +145,9 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
 
     @PrePersist
     void onPersist() {
-        this.ctime = System.currentTimeMillis();
+        if (ctime == -1) {
+            this.ctime = System.currentTimeMillis();
+        }
     }
 
     @Override

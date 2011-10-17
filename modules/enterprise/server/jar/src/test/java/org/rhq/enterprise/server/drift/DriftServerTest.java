@@ -44,11 +44,10 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     private DriftServerPluginService driftServerPluginService;
 
+    protected TestServerCommunicationsService agentServiceContainer;
+
     @BeforeGroups(groups = "drift.server")
     public void initDriftServer() throws Exception {
-        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.driftService = new TestDefService();
-
         driftServerPluginService = new DriftServerPluginService();
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
@@ -81,6 +80,9 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     @BeforeMethod(groups = {"drift.ejb", "drift.server"})
     public void initDB() {
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.driftService = new TestDefService();
+
         purgeDB();
         executeInTransaction(new TransactionCallback() {
             @Override

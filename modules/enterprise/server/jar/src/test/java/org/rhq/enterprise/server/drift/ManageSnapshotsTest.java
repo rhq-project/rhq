@@ -27,6 +27,16 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.EntityManager;
 
@@ -36,8 +46,10 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -48,6 +60,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.server.EntitySerializer;
 import org.rhq.test.TransactionCallback;
 
 public class ManageSnapshotsTest extends DriftServerTest {
@@ -114,7 +127,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
     }
 
     @Test(groups = {"drift", "drift.ejb", "drift.server"})
-    public void setPinnedFlagOnDriftDef() {
+    public void pinningSnapshotShouldSetDriftDefAsPinned() {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 
         // create initial change set
@@ -144,7 +157,8 @@ public class ManageSnapshotsTest extends DriftServerTest {
     }
 
     @Test(groups = {"drift", "drift.ejb", "drift.server"})
-    public void makePinnedSnapshotVersionZero() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void pinningSnapshotShouldMakeSnapshotTheInitialChangeSet() throws Exception {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::makeSnapshotVersionZero");
 
         // create initial change set
@@ -185,7 +199,77 @@ public class ManageSnapshotsTest extends DriftServerTest {
         assertEquals("All change sets except the change set representing the pinned snapshot should be removed",
             1, changeSets.size());
         DriftChangeSet<?> changeSet = changeSets.get(0);
-        assertEquals("Expected to find two drift entries in pinned change set", 2, changeSet.getDrifts().size());
+
+        List<Drift> expectedDrifts = new LinkedList<Drift>();
+        expectedDrifts.add(drift1);
+        expectedDrifts.add(drift2);
+        List<Drift> actualDrifts = new ArrayList(changeSet.getDrifts());
+
+        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the new initial change set",
+            expectedDrifts, actualDrifts, "id", "changeSet", "newDriftFile");
+        // we need to compare the newDriftFile properties separately because
+        // assertCollectionMatchesNoOrder compares properties via equals() and JPADriftFile
+        // does not implement equals.
+        assertPropertiesMatch(drift1.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(),
+            "The newDriftFile property was not set correctly for " + drift1);
+        assertPropertiesMatch(drift2.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(),
+            "The newDriftFile property was not set correctly for " + drift1);
+    }
+
+    @Test(groups = {"drift", "drift.ejb", "drift.server"})
+    public void pinningSnapshotShouldSendRequestToAgent() {
+        final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
+
+        // create initial change set
+        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        JPADrift drift = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
+
+        JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift);
+
+        final JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
+        changeSet.setInitialDriftSet(driftSet);
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(driftFile1);
+                em.persist(changeSet);
+            }
+        });
+
+        final AtomicBoolean agentInvoked = new AtomicBoolean(false);
+        agentServiceContainer.driftService = new TestDefService() {
+            @Override
+            public void pinSnapshot(int resourceId, String configName, DriftSnapshot snapshot) {
+                try {
+                    agentInvoked.set(true);
+                    // serialize the method arguments here to more closely simulate what
+                    // happens during the call. We cannot send hibernate-proxied objects
+                    // to the agent. This is an attempt to catch that.
+                    ObjectOutputStream stream = new ObjectOutputStream(new ByteArrayOutputStream());
+                    EntitySerializer.writeExternalRemote(resourceId, stream);
+                    EntitySerializer.writeExternalRemote(configName, stream);
+                    EntitySerializer.writeExternalRemote(snapshot, stream);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+
+        driftMgr.pinSnapshot(getOverlord(), driftDef.getId(), 0);
+
+        assertTrue("Failed to send request to agent to pin snapshot", agentInvoked.get());
+    }
+
+    private Drift findDriftByPath(List<Drift> drifts, String path) {
+        for (Drift drift : drifts) {
+            if (drift.getPath().equals(path)) {
+                return drift;
+            }
+        }
+        return null;
     }
 
     private DriftDefinition createAndPersistDriftDef(String name) {

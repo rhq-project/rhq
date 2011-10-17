@@ -564,28 +564,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             throw new RuntimeException("Failed to pin snapshot", e);
         }
 
-        //        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        //        criteria.addFilterId(changeSetId);
-        //        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
-        //        DriftChangeSet<?> changeSet = changeSets.get(0);
-        //
-        //        DriftDefinition config = entityManager.find(DriftDefinition.class, changeSet.getDriftDefinitionId());
-        //        config.setPinned(true);
-        //
-        //        // TODO is this merge call needed? - jsanda
-        //        config = entityManager.merge(config);
-        //
-        //        GenericDriftChangeSetCriteria snapshotCriteria = new GenericDriftChangeSetCriteria();
-        //        snapshotCriteria.addFilterDriftDefinitionId(config.getId());
-        //        snapshotCriteria.addFilterEndVersion(Integer.toString(changeSet.getVersion()));
-        //        DriftSnapshot snapshot = createSnapshot(subject, snapshotCriteria);
-        //
-        //        entityManager.flush();
-        //        entityManager.clear();
-        //
-        //        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), changeSet.getResourceId());
-        //        DriftAgentService driftService = agent.getDriftAgentService();
-        //        driftService.pinSnapshot(changeSet.getResourceId(), config.getName(), snapshot);
+        AgentClient agent = agentManager.getAgentClient(subject, driftDef.getResource().getId());
+        DriftAgentService driftService = agent.getDriftAgentService();
+        driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
     }
 
     private DriftFileDTO toDTO(DriftFile file) {

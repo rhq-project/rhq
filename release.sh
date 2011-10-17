@@ -56,7 +56,7 @@ USAGE:   release.sh OPTIONS
    --scm-strategy=tag|branch              [OPTIONAL]
       Used to directly set the scm strategy.
 
-   --extra-profile                        [OPTIONAL]
+   --extra-profile=extra_profile          [OPTIONAL]
       An extra maven profile to be used for all the maven commands.
 
    --debug-maven                          [OPTIONAL]

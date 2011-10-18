@@ -149,11 +149,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean initialized;
 
     public Table(String locatorId) {
-        this(locatorId, null, null, null, null, false);
+        this(locatorId, null, null, null, null, true);
     }
 
     public Table(String locatorId, String tableTitle) {
-        this(locatorId, tableTitle, null, null, null, false);
+        this(locatorId, tableTitle, null, null, null, true);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria) {
@@ -173,12 +173,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
-        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, false);
+        this(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames, true);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, false);
+        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, (criteria == null));
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
@@ -405,7 +405,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 drawFooter();
             }
 
-            if (!autoFetchData) {
+            if (!autoFetchData && (initialCriteria != null)) {
                 refresh();
             }
         } catch (Exception e) {
@@ -678,26 +678,47 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
      */
     public void refresh() {
-        if (this.listGrid != null) {
-            Criteria criteria = getCurrentCriteria();
-            Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria) + "]...");
-            this.listGrid.setCriteria(criteria);
-            // Only call invalidateCache() and fetchData() if the ListGrid is backed by a DataSource.
-            if (this.listGrid.getDataSource() != null) {
-                this.listGrid.invalidateCache();
-                if (!this.autoFetchData) {
-                    this.listGrid.fetchData(criteria, new DSCallback() {
-                        public void execute(DSResponse response, Object rawData, DSRequest request) {
-                            if (listGrid != null && listGrid.isDrawn() && request.getStartRow() == 0) {
-                                listGrid.scrollToRow(0);
-                                listGrid.markForRedraw();
-                            }
-                        }
-                    });
-                }
-            }
-            this.listGrid.markForRedraw();
+        refresh(false);
+    }
+
+    /**
+     * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
+     * <p/>
+     * If resetPaging is true, resets paging on the grid prior to refreshing the data. resetPaging=true should be
+     * specified when refreshing right after records have been deleted, since the current paging settings may have
+     * become invalid due to the decrease in the total data set size.
+     */
+    public void refresh(boolean resetPaging) {
+        final ListGrid listGrid = getListGrid();
+
+        Criteria criteria = getCurrentCriteria();
+        if (Log.isDebugEnabled()) {
+            Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria)
+                + "]...");
         }
+        listGrid.setCriteria(criteria);
+
+        if (resetPaging) {
+            listGrid.scrollToRow(0);
+        }
+
+        // Only call invalidateCache() and fetchData() if the ListGrid is backed by a DataSource.
+        if (listGrid.getDataSource() != null) {
+            // Invalidate the cached records - if listGrid.getAutoFetchData() is true, this will cause the ListGrid to
+            // automatically call fetchData().
+            listGrid.invalidateCache();
+            if (!this.autoFetchData && (initialCriteria != null)) {
+                listGrid.fetchData(criteria, new DSCallback() {
+                    public void execute(DSResponse response, Object rawData, DSRequest request) {
+                        if (listGrid.isDrawn() && request.getStartRow() == 0) {
+                            listGrid.scrollToRow(0);
+                            listGrid.markForRedraw();
+                        }
+                    }
+                });
+            }
+        }
+        this.listGrid.markForRedraw();
     }
 
     protected Criteria getInitialCriteria() {
@@ -1036,19 +1057,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         field.setHidden(true);
     }
 
-    public void resetSortingAndPaging() {
-        if (listGrid != null) {
-            listGrid.clearSort();
-            listGrid.setSort(sortSpecifiers);
-        }
-    }
-
 
     // -------------- Inner utility classes ------------- //
 
     /**
-     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a {@link Table} 
-     * of results.
+     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a
+     * {@link Table} of results.
      *
      * @author Joseph Marques 
      */
@@ -1058,14 +1072,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         private Table<?> table;
         private SearchBarItem searchBarItem;
         private HiddenItem hiddenItem;
-        private Long lastEnterKeyPressEventTimeMillis;
 
         public TableFilter(Table<?> table) {
             super(table.extendLocatorId("TableFilter"));
             setWidth100();
             setPadding(5);
             this.table = table;
-            //this.table.setTableTitle(null);
         }
 
         @Override

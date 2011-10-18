@@ -203,7 +203,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
-                refresh();
+                refresh(true);
             }
 
             public void onFailure(Throwable caught) {
@@ -220,8 +220,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
-                resetSortingAndPaging();
-                refresh();
+                refresh(true);
             }
 
             public void onFailure(Throwable caught) {

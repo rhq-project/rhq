@@ -100,7 +100,8 @@ public interface DriftManagerRemote {
      *  
      * @param subject
      * @param request
-     * @return The DriftSnapshot
+     * @return The DriftSnapshot Not null but version is set to -1 if the drift definition does not yet
+     * have any snapshots or there are no snapshots that meet the requested snapshot version constraints.
      * @throws IllegalArgumentException if the specified drift definition does not exist
      */
     DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request);

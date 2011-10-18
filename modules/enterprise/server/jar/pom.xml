@@ -80,27 +80,6 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
-         <artifactId>test-utils</artifactId>
-         <version>${project.version}</version>
-         <scope>test</scope>
-          <exclusions>
-              <exclusion>
-                  <groupId>org.testng</groupId>
-                  <artifactId>testng</artifactId>
-              </exclusion>
-          </exclusions>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
          <artifactId>rhq-common-drift</artifactId>
          <version>${project.version}</version>
       </dependency>
@@ -119,20 +98,57 @@
            loaded when testing.  -->
 
       <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.testng</groupId>
+               <artifactId>testng</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.rhq.helpers</groupId>
+        <artifactId>perftest-support</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
          <version>${jboss-embeddable-ejb3.version}</version>
          <scope>test</scope>
       </dependency>
-
-      <dependency>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>rhq-core-client-api</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-      </dependency>
-
 
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
@@ -140,13 +156,6 @@
          <groupId>antlr</groupId>
          <artifactId>antlr</artifactId>
          <version>2.7.7</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
-         <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
@@ -176,23 +185,6 @@
            <artifactId>opencsv</artifactId>
            <version>1.8</version>
            <scope>test</scope>
-       </dependency>
-
-       <dependency>
-        <groupId>org.rhq.helpers</groupId>
-        <artifactId>perftest-support</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant-launcher</artifactId>
-          </exclusion>
-        </exclusions>
        </dependency>
 
        <dependency>
@@ -471,7 +463,6 @@
          <scope>provided</scope>
       </dependency>
 
-
        <dependency>
            <groupId>com.jcraft</groupId>
            <artifactId>jsch</artifactId>
@@ -509,14 +500,13 @@
            <scope>provided</scope>
        </dependency>
 
-
    </dependencies>
 
    <build>
       <finalName>${project.artifactId}</finalName>
 
       <resources>
-         <!-- Redefine which directories to treat like resources(which are filtered). -->
+         <!-- Redefine which directories to treat like resources (which are filtered). -->
          <resource>
            <directory>src/main/filtered-sources/java</directory>
            <filtering>true</filtering>
@@ -631,7 +621,7 @@ Build-OS-Version=${os.version}
                </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->
-               <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
                </additionalClasspathElements>
             </configuration>
          </plugin>

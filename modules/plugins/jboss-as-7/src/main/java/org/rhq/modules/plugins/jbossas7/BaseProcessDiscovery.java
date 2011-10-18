@@ -143,7 +143,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
             initLogEventSourcesConfigProp(logFile, config);
 
-            HostPort managmentPort = getManagementPortFromHostXml();
+            HostPort managmentPort = getManagementPortFromHostXml(commandLine);
             config.put(new PropertySimple("hostname", managmentPort.host));
             config.put(new PropertySimple("port", managmentPort.port));
             //            String javaClazz = psr.getProcessInfo().getName();

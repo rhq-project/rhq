@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -42,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -148,13 +150,12 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem platformsItem = new NavigationItem(PAGE_PLATFORMS, ImageManager.getResourceIcon(
             ResourceCategory.PLATFORM, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
-                //Criteria initialCriteria = new Criteria(
-                //    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name());
-                Criteria initialCriteria = null;
+                Criteria initialCriteria = new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name());
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()),
                     initialCriteria, PAGE_PLATFORMS.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM,
                     Boolean.TRUE));
-                view.setInitialSearchBarSearchText("category=platform");
+                view.setInitialSearchBarSearchText("category=" + ResourceCategory.PLATFORM.name().toLowerCase());
                 return view;
             }
         });
@@ -162,13 +163,12 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, ImageManager.getResourceIcon(
             ResourceCategory.SERVER, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
-                //Criteria initialCriteria = new Criteria(
-                //    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
-                Criteria initialCriteria = null;
+                Criteria initialCriteria = new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_SERVERS.getName()),
                     initialCriteria, PAGE_SERVERS.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
                     Boolean.TRUE));
-                view.setInitialSearchBarSearchText("category=server");
+                view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVER.name().toLowerCase());
                 return view;
             }
         });
@@ -176,13 +176,12 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, ImageManager.getResourceIcon(
             ResourceCategory.SERVICE, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
-                //Criteria initialCriteria = new Criteria(
-                //    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name());
-                Criteria initialCriteria = null;
+                Criteria initialCriteria = new Criteria(
+                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name());
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_SERVICES.getName()),
                     initialCriteria, PAGE_SERVICES.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE,
                     Boolean.TRUE));
-                view.setInitialSearchBarSearchText("category=service");
+                view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVICE.name().toLowerCase());
                 return view;
             }
         });
@@ -190,15 +189,15 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem downServersItem = new NavigationItem(PAGE_UNAVAIL_SERVERS, ImageManager.getResourceIcon(
             ResourceCategory.SERVER, Boolean.FALSE), new ViewFactory() {
             public Canvas createView() {
-                //Criteria initialCriteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
-                //    AvailabilityType.DOWN.name());
-                //initialCriteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
-                Criteria initialCriteria = null;
+                Criteria initialCriteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
+                    AvailabilityType.DOWN.name());
+                initialCriteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_UNAVAIL_SERVERS.getName()),
                     initialCriteria, MSG.view_inventory_unavailableServers(), ImageManager.getResourceLargeIcon(
                         ResourceCategory.SERVER, Boolean.FALSE));
                 // TODO (ips, 10/28/10): Should we include down platforms too?
-                view.setInitialSearchBarSearchText("category=server availability=down");
+                view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVER.name().toLowerCase()
+                    + " availability=" + AvailabilityType.DOWN.name().toLowerCase());
                 return view;
             }
         });

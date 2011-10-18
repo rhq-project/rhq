@@ -278,6 +278,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         if (initialCriteria != null) {
             listGrid.setInitialCriteria(initialCriteria);
         }
+
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
         }
@@ -406,6 +407,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             if (showFooter) {
                 drawFooter();
             }
+
 
             if (!autoFetchData && (initialCriteria != null)) {
                 refresh();

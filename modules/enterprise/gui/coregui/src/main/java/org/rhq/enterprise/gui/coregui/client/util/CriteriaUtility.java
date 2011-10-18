@@ -101,8 +101,11 @@ public class CriteriaUtility {
     }
 
     public static boolean equals(Criteria criteria1, Criteria criteria2) {
+        if (criteria1 == criteria2) {
+            return true;
+        }
         if (criteria1 == null || criteria2 == null) {
-            return (criteria1 == criteria2);
+            return false;
         }
         Set<String> attributes1 = new HashSet<String>(Arrays.asList(criteria1.getAttributes()));
         Set<String> attributes2 = new HashSet<String>(Arrays.asList(criteria2.getAttributes()));

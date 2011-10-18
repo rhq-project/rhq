@@ -138,7 +138,7 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                     setGroupIcons(resultComposite);
 
                     generalProperties = new GeneralProperties(extendLocatorId("genProps"), resultComposite,
-                        ResourceGroupTitleBar.this);
+                        ResourceGroupTitleBar.this, isAutoGroup);
                     generalProperties.setVisible(false);
                     ResourceGroupTitleBar.this.addMember(generalProperties);
                     expandCollapseArrow.addClickHandler(new ClickHandler() {

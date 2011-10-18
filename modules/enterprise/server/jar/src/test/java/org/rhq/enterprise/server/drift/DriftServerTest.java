@@ -42,7 +42,7 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     private ServerPluginsLocal serverPluginsMgr;
 
-    private DriftServerPluginService driftServerPluginService;
+    private static DriftServerPluginService driftServerPluginService;
 
     protected TestServerCommunicationsService agentServiceContainer;
 
@@ -61,14 +61,14 @@ public class DriftServerTest extends AbstractEJB3Test {
         serverPluginsMgr = LookupUtil.getServerPlugins();
     }
 
-    @AfterGroups
-    public void shutDownDriftServer() {
+    @AfterGroups(groups = "drift.server")
+    public void shutDownDriftServer() throws Exception {
+        unprepareServerPluginService();
         driftServerPluginService.stopMasterPluginContainer();
     }
 
     @AfterClass(groups = {"drift.ejb", "drift.server"})
     public void cleanUpDB() throws Exception {
-        unprepareServerPluginService();
         purgeDB();
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -79,9 +79,12 @@ public class DriftServerTest extends AbstractEJB3Test {
     }
 
     @BeforeMethod(groups = {"drift.ejb", "drift.server"})
-    public void initDB() {
+    public void initDB() throws Exception {
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.driftService = new TestDefService();
+
+        unprepareServerPluginService();
+        initDriftServer();
 
         purgeDB();
         executeInTransaction(new TransactionCallback() {

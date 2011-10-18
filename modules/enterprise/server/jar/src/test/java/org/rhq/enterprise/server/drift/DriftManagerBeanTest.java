@@ -84,7 +84,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 // the initDB method.
 //
 // - jsanda
-@Test(groups = "drift-manager", dependsOnGroups = "drift-template")
+@Test(groups = "drift-manager", dependsOnGroups = "drift.server")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;
@@ -309,12 +309,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(driftDefPojo.getName(), driftDef.getName());
         assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
         assertEquals(driftDefPojo.getInterval(), driftDef.getInterval());
-    }
-
-    @Test(enabled = ENABLE_TESTS)
-    public void pinningSnapshotShouldUpdateDriftDefinition() {
-        DriftDefinition driftDef = new DriftDefinition(new Configuration());
-        driftDef.setName("pin");
     }
 
     private void deleteDriftFiles() throws Exception {

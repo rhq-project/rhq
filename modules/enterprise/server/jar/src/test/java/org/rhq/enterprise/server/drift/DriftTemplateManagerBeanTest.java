@@ -33,9 +33,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -51,11 +49,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.test.TransactionCallback;
 
-public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
+public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     private final String RESOURCE_TYPE_NAME = DriftTemplateManagerBeanTest.class.getName();
 
@@ -69,71 +65,31 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
     private DriftManagerLocal driftMgr;
 
-    private List<Resource> resources;
+    private List<Resource> resources = new LinkedList<Resource>();
 
-    @BeforeClass(groups = "drift-template")
+    @BeforeClass(groups = {"drift", "drift.ejb", "drift.server"})
     public void initClass() {
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
-
-        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.driftService = new TestDefService();
     }
 
-    @BeforeMethod(groups = "drift-template")
-    public void initDB() {
-        resources = new LinkedList<Resource>();
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                purgeDB();
-                initResourceType();
-                initAgent();
+    @Override
+    protected void initDB(EntityManager em) {
+        initResourceType();
+        initAgent();
 
-                EntityManager em = getEntityManager();
-                em.persist(resourceType);
-                em.persist(agent);
-            }
-        });
+        em.persist(resourceType);
+        em.persist(agent);
     }
 
-    @AfterClass(groups = "drift-template")
-    public void resetDB() {
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                purgeDB();
-            }
-        });
-        unprepareForTestAgents();
-    }
-
-    @SuppressWarnings("unchecked")
-    private void purgeDB() {
-        EntityManager em = getEntityManager();
-
-        // purge resources
+    @Override
+    protected void purgeDB(EntityManager em) {
         for (Resource resource : resources) {
-            em.remove(resource);
+            deleteEntity(Resource.class, resource.getName(), em);
         }
-
-        // purge resource type
-        List results = em.createQuery("select t from ResourceType t where t.name = :name").setParameter("name",
-            RESOURCE_TYPE_NAME).getResultList();
-        if (!results.isEmpty()) {
-            ResourceType type = (ResourceType) results.get(0);
-            for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
-                em.remove(template);
-            }
-            em.remove(type);
-        }
-        // purge agent
-        List<Agent> agents = (List<Agent>) em.createQuery("select a from Agent a where a.name = :name").setParameter(
-            "name", AGENT_NAME).getResultList();
-        if (!agents.isEmpty()) {
-            Agent agent = agents.get(0);
-            em.remove(agent);
-        }
+        resources.clear();
+        deleteEntity(ResourceType.class, RESOURCE_TYPE_NAME, em);
+        deleteEntity(Agent.class, AGENT_NAME, em);
     }
 
     private void initResourceType() {
@@ -146,7 +102,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
         agent = new Agent(AGENT_NAME, "localhost", 1, "", AGENT_NAME + "_TOKEN");
     }
 
-    @Test(groups = "drift-template")
+    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName("test::createNewTemplate");
@@ -179,7 +135,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
     // Note: This test is going to change substantially in terms of the behavior that it
     // is verifying because it was written before the design has been fully flushed out.
-    @Test(groups = "drift-template")
+    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void updateTemplateNameAndDescription() {
         // first create a template
         final DriftDefinition definition = new DriftDefinition(new Configuration());
@@ -208,7 +164,7 @@ public class DriftTemplateManagerBeanTest extends AbstractEJB3Test {
 
     // Note: This test is going to change substantially in terms of the behavior that it
     // is verifying because it was written before the design has been fully flushed out.
-    @Test(groups = "drift-template")
+    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void updateTemplateEnabledFlagAndIntervalAndApplyToDefs() {
         // create a new template
         final DriftDefinition definition = new DriftDefinition(new Configuration());

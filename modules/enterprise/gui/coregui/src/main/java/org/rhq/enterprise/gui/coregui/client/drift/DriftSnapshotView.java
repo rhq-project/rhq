@@ -51,12 +51,12 @@ import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSecti
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftPinTemplateWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -141,6 +141,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
         addTableAction("PinToDef", MSG.view_drift_button_pinToDef(), MSG.view_drift_button_pinToDef_confirm(),
             new AbstractTableAction(pinEnablement) {
+
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     pinToDefinition();
                 }
@@ -148,6 +149,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
         addTableAction("PinToTemplate", MSG.view_drift_button_pinToTemplate(), MSG
             .view_drift_button_pinToTemplate_confirm(), new AbstractTableAction(pinEnablement) {
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 pinToTemplate();
             }
@@ -157,6 +159,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     private void pinToDefinition() {
         GWTServiceLookup.getDriftService().pinSnapshot(driftDefId, version, new AsyncCallback<Void>() {
             public void onSuccess(Void x) {
+
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_drift_success_pinToDef(String.valueOf(version)), Message.Severity.Info));
                 CoreGUI.goToView(LinkManager.getDriftDefinitionsLink(resourceId));
@@ -169,7 +172,10 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     }
 
     private void pinToTemplate() {
-        // TODO
+        DriftPinTemplateWizard.showWizard(driftDefId, version, DriftSnapshotView.this);
+        // we can refresh the table buttons immediately since the wizard is a dialog, the
+        // user can't access enabled buttons anyway.
+        DriftSnapshotView.this.refreshTableInfo();
     }
 
     private class DriftSnapshotListGrid extends LocatableListGrid {

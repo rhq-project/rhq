@@ -96,6 +96,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
         DriftDefinitionCriteria ddc = new DriftDefinitionCriteria();
         ddc.addFilterId(snapshpotDriftDefId);
         ddc.fetchResource(true);
+        ddc.fetchConfiguration(true);
 
         GWTServiceLookup.getDriftService().findDriftDefinitionsByCriteria(ddc,
             new AsyncCallback<PageList<DriftDefinition>>() {

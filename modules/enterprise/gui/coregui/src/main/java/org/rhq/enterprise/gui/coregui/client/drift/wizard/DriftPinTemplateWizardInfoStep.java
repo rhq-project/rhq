@@ -35,7 +35,9 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -85,8 +87,15 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
             final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
                 templates.size());
             if (!templates.isEmpty()) {
+                // Only use templates that have the same base dir and filters as the definition from which
+                // this snapshot is coming.  Otherwise the file set does not map.
+                DriftDefinitionComparator ddc = new DriftDefinitionComparator(
+                    CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
                 for (DriftDefinitionTemplate template : templates) {
-                    templatesMap.put(template.getName(), template);
+
+                    if (0 == ddc.compare(template.getTemplateDefinition(), wizard.getSnapshotDriftDef())) {
+                        templatesMap.put(template.getName(), template);
+                    }
                 }
             } else {
                 // there should be at least one template for any resource type that supports drift monitoring

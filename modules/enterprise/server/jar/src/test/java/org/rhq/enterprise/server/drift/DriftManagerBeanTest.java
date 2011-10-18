@@ -84,7 +84,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 // the initDB method.
 //
 // - jsanda
-@Test(groups = "drift-manager", dependsOnGroups = "drift.server")
+@Test(dependsOnGroups = "drift")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;

@@ -87,4 +87,5 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         @SuppressWarnings("unused")
         DriftDefinitionTemplate updatedTemplate = entityMgr.merge(template);
     }
+
 }

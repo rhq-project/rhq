@@ -27,10 +27,9 @@ import javax.persistence.NonUniqueResultException;
 
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterGroups;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -38,16 +37,23 @@ import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.TransactionCallback;
 
+@Test(groups = "drift")
 public class DriftServerTest extends AbstractEJB3Test {
 
     private ServerPluginsLocal serverPluginsMgr;
 
-    private static DriftServerPluginService driftServerPluginService;
+    protected DriftServerPluginService driftServerPluginService;
 
     protected TestServerCommunicationsService agentServiceContainer;
 
-    @BeforeGroups(groups = "drift.server")
-    public void initDriftServer() throws Exception {
+    @BeforeMethod
+    public void initServices() throws Exception {
+        initDriftServer();
+        initAgentServices();
+        initDB();
+    }
+
+    private void initDriftServer() throws Exception {
         driftServerPluginService = new DriftServerPluginService();
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
@@ -61,13 +67,28 @@ public class DriftServerTest extends AbstractEJB3Test {
         serverPluginsMgr = LookupUtil.getServerPlugins();
     }
 
-    @AfterGroups(groups = "drift.server")
-    public void shutDownDriftServer() throws Exception {
+    private void initAgentServices() {
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.driftService = new TestDefService();
+    }
+
+    @AfterMethod(inheritGroups = true)
+    public void shutDownServices() throws Exception {
+        shutDownDriftServer();
+        shutDownAgentServices();
+    }
+
+    private void shutDownDriftServer() throws Exception {
         unprepareServerPluginService();
         driftServerPluginService.stopMasterPluginContainer();
     }
 
-    @AfterClass(groups = {"drift.ejb", "drift.server"})
+    private void shutDownAgentServices() {
+        agentServiceContainer = null;
+        unprepareForTestAgents();
+    }
+
+    @AfterClass(inheritGroups = true)
     public void cleanUpDB() throws Exception {
         purgeDB();
         executeInTransaction(new TransactionCallback() {
@@ -78,14 +99,7 @@ public class DriftServerTest extends AbstractEJB3Test {
         });
     }
 
-    @BeforeMethod(groups = {"drift.ejb", "drift.server"})
-    public void initDB() throws Exception {
-        agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.driftService = new TestDefService();
-
-        unprepareServerPluginService();
-        initDriftServer();
-
+    private void initDB() throws Exception {
         purgeDB();
         executeInTransaction(new TransactionCallback() {
             @Override

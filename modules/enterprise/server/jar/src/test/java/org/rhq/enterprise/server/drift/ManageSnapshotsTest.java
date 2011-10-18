@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -79,7 +78,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
 
     private DriftManagerLocal driftMgr;
 
-    @BeforeClass(groups = {"drift", "drift.ejb", "drift.server"})
+    @BeforeClass(inheritGroups = true)
     public void initClass() throws Exception {
         driftMgr = getDriftManager();
     }
@@ -126,7 +125,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
             .build();
     }
 
-    @Test(groups = {"drift", "drift.ejb", "drift.server"})
+    //@Test
     public void pinningSnapshotShouldSetDriftDefAsPinned() {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 
@@ -156,7 +155,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
         assertTrue("Failed to set pinned flag of " + toString(driftDef), updatedDriftDef.isPinned());
     }
 
-    @Test(groups = {"drift", "drift.ejb", "drift.server"})
+    //@Test
     @SuppressWarnings("unchecked")
     public void pinningSnapshotShouldMakeSnapshotTheInitialChangeSet() throws Exception {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::makeSnapshotVersionZero");
@@ -222,7 +221,7 @@ public class ManageSnapshotsTest extends DriftServerTest {
             "The newDriftFile property was not set correctly for " + drift1);
     }
 
-    @Test(groups = {"drift", "drift.ejb", "drift.server"})
+    //@Test
     public void pinningSnapshotShouldSendRequestToAgent() {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 

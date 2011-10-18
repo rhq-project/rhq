@@ -31,7 +31,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class JPADriftServerBeanTest extends DriftServerTest {
 
-    @Test(groups = {"drift", "drift.ejb"})
     public void saveAndLoadFileContent() throws Exception {
         String string = "Testing saving and loading content";
 

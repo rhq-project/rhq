@@ -34,7 +34,6 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
@@ -67,7 +66,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     private List<Resource> resources = new LinkedList<Resource>();
 
-    @BeforeClass(groups = {"drift", "drift.ejb", "drift.server"})
+    @BeforeClass(inheritGroups = true)
     public void initClass() {
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
@@ -102,7 +101,6 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         agent = new Agent(AGENT_NAME, "localhost", 1, "", AGENT_NAME + "_TOKEN");
     }
 
-    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName("test::createNewTemplate");
@@ -135,7 +133,6 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     // Note: This test is going to change substantially in terms of the behavior that it
     // is verifying because it was written before the design has been fully flushed out.
-    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void updateTemplateNameAndDescription() {
         // first create a template
         final DriftDefinition definition = new DriftDefinition(new Configuration());
@@ -164,7 +161,6 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     // Note: This test is going to change substantially in terms of the behavior that it
     // is verifying because it was written before the design has been fully flushed out.
-    @Test(groups = {"drift", "drift.ejb", "drift.server"})
     public void updateTemplateEnabledFlagAndIntervalAndApplyToDefs() {
         // create a new template
         final DriftDefinition definition = new DriftDefinition(new Configuration());

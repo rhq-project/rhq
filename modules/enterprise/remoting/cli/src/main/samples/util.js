@@ -9,9 +9,11 @@
  *   $ login <username> <password>
  *   $ exec -f samples/util.js
  *
- * Note that you must login before you can load the script. 
+ * Note that you must login before you can load the script.
  *
  * author: jsanda@redhat.com
+ *
+ * See also http://johnsanda.blogspot.com/search/label/javascript
  */
 
 
@@ -50,7 +52,7 @@ function foreach(obj, fn) {
 
 /**
  * Iterates over obj similar to foreach. fn should be a predicate that evaluates
- * to true or false. The first match that is found is returned. 
+ * to true or false. The first match that is found is returned.
  */
 function find(obj, fn) {
   if (obj instanceof Array) {

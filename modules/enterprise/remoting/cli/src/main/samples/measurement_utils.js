@@ -1,9 +1,19 @@
+/**
+ * Some functions to work with metrics.
+ * Need util.js to be loaded/present
+ *
+ * @author John Sanda
+ * @see http://johnsanda.blogspot.com/2010/09/updating-metric-collection-schedules.html
+ */
+
+var mm = new MeasurementModule();
+
 testUpdates = {
   context: 'Resource',
   id:       10033,
   schedules: {
-    'Late Collections':                interval(15, minutes),
-    'Failed Collections per Minute':   interval(15, minutes),
+    'Late Collections':                mm.interval(15, mm.time.minutes),
+    'Failed Collections per Minute':   mm.interval(15, mm.time.minutes),
     'Currently Schedule Measurements': 'enabled'
   }
 }
@@ -13,7 +23,7 @@ testGroupUpdates = {
   id:      10031,
   schedules: {
     'Used Swap Space': 'disabled',
-    'Total Memory':    interval(3, minutes)
+    'Total Memory':    mm.interval(3, mm.time.minutes)
   }
 }
 
@@ -63,12 +73,12 @@ function MeasurementModule() {
    */
   this.time = {
     seconds: 1000,
-    minutes: 60 * seconds,
-    hours:   60 * minutes
+    minutes: 60 * this.seconds,
+    hours:   60 * this.minutes
   }
 
   /**
-   * A helper method that calculates a shedule's interval in milliseconds
+   * A helper method that calculates a schedule's interval in milliseconds
    * @param num
    * @param time
    */

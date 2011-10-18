@@ -16,8 +16,9 @@ script itself so that you know which scripts need to be run and in what order.
 Feedback
 --------
 The CLI is still a relatively new, young feature. We welcome and encourage
-feedback. Please send questions, comments, etc. to 
-rhq-users@lists.fedorahosted.org or and/or to rhq-devel.lists.fedorahosted.org.
+feedback. Please send questions, comments, etc. to
+rhq-users@lists.fedorahosted.org or and/or to rhq-devel@lists.fedorahosted.org
+or use the forums at http://community.jboss.org/en/jopr
 
 Thanks
 

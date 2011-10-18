@@ -221,4 +221,15 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public void pinTemplate(int templateId, int snapshotDriftDefId, int snapshotVersion) {
+
+        try {
+            driftTemplateManager.pinTemplate(getSessionSubject(), templateId, snapshotDriftDefId, snapshotVersion);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

@@ -54,6 +54,7 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
         setSteps(steps);
     }
 
+    @Override
     public String getWindowTitle() {
         switch (getEntityContext().getType()) {
         case SubsystemView:
@@ -64,6 +65,7 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
         }
     }
 
+    @Override
     public String getTitle() {
         switch (getEntityContext().getType()) {
         case SubsystemView:
@@ -74,10 +76,12 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
         }
     }
 
+    @Override
     public String getSubtitle() {
         return null;
     }
 
+    @Override
     public void execute() {
         EntityContext context = getEntityContext();
         switch (context.getType()) {

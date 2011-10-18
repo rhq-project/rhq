@@ -61,6 +61,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
@@ -185,7 +186,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             // The criteria has changed since the last fetch request - reset paging.
             Log.debug("Resetting paging on " + getClass().getName() + "...");
             request.setStartRow(0);
-            request.setEndRow(50);
+            request.setEndRow(Table.DATA_PAGE_SIZE);
         }
         this.previousCriteria = request.getCriteria();
 

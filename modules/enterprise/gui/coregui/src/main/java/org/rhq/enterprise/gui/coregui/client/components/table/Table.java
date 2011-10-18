@@ -105,6 +105,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 @SuppressWarnings("unchecked")
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
 
+    public static final int DATA_PAGE_SIZE = 50;
+
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
 
@@ -270,7 +272,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = getListGrid();
+        listGrid = createListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
         if (initialCriteria != null) {
@@ -284,7 +286,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
         listGrid.setSelectionType(getDefaultSelectionStyle());
-        listGrid.setDataPageSize(50); // the default is 75 - lower it to speed up data loading
+        listGrid.setDataPageSize(DATA_PAGE_SIZE); // the default is 75 - lower it to speed up data loading
         // Don't fetch more than 200 records for the sake of an attempt to group-by.
         listGrid.setGroupByMaxRecords(200); // the default is 1000
         // Disable the group-by option in the column header context menu, since group-by requires the entire data set to
@@ -689,6 +691,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * become invalid due to the decrease in the total data set size.
      */
     public void refresh(boolean resetPaging) {
+        if (!isInitialized()) {
+            return;
+        }
+
         final ListGrid listGrid = getListGrid();
 
         Criteria criteria = getCurrentCriteria();
@@ -708,17 +714,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             // automatically call fetchData().
             listGrid.invalidateCache();
             if (!this.autoFetchData && (initialCriteria != null)) {
-                listGrid.fetchData(criteria, new DSCallback() {
-                    public void execute(DSResponse response, Object rawData, DSRequest request) {
-                        if (listGrid.isDrawn() && request.getStartRow() == 0) {
-                            listGrid.scrollToRow(0);
-                            listGrid.markForRedraw();
-                        }
-                    }
-                });
+                listGrid.fetchData(criteria);
             }
         }
-        this.listGrid.markForRedraw();
+        listGrid.markForRedraw();
     }
 
     protected Criteria getInitialCriteria() {
@@ -782,10 +781,25 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.dataSource = dataSource;
     }
 
+    /**
+     * Creates this Table's list grid (called by onInit()). Subclasses can override this if they require a custom
+     * subclass of LocatableListGrid.
+     *
+     * @param locatorId the locatorId that should be set on the returned LocatableListGrid
+     *
+     * @return this Table's list grid (must be an instance of LocatableListGrid)
+     */
+    protected LocatableListGrid createListGrid(String locatorId) {
+        return new LocatableListGrid(locatorId);
+    }
+
+    /**
+     * Returns this Table's list grid - may be null if the Table has not yet been {@link #isInitialized() initialized}.
+     * Subclasses should *not* override this method.
+     *
+     * @return this Table's list grid - may be null if the Table has not yet been {@link #isInitialized() initialized}
+     */
     public ListGrid getListGrid() {
-        if (null == listGrid) {
-            listGrid = new LocatableListGrid(getTableContents().extendLocatorId("ListGrid"));
-        }
         return listGrid;
     }
 

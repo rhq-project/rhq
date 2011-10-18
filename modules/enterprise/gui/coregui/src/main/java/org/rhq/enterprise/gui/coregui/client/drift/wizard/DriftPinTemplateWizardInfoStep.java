@@ -21,11 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -34,8 +35,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
@@ -48,10 +47,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
     private LocatableDynamicForm form;
-    private AbstractDriftAddDefinitionWizard wizard;
-    private Map<String, ConfigurationTemplate> templates;
+    private AbstractDriftPinTemplateWizard wizard;
+    private boolean isConfirmed;
 
-    public DriftPinTemplateWizardInfoStep(AbstractDriftAddDefinitionWizard wizard) {
+    public DriftPinTemplateWizardInfoStep(AbstractDriftPinTemplateWizard wizard) {
         this.wizard = wizard;
     }
 
@@ -59,9 +58,9 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
         if (form == null) {
 
             if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("DriftAddDefInfo"));
+                form = new LocatableDynamicForm(parent.extendLocatorId("DriftPinTemplateInfo"));
             } else {
-                form = new LocatableDynamicForm("DriftAddDefInfo");
+                form = new LocatableDynamicForm("DriftPinTemplateInfo");
             }
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
@@ -80,16 +79,9 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
             templateSelectItem.setAlign(Alignment.LEFT);
             templateSelectItem.setWidth(300);
             templateSelectItem.setRequired(true);
-            switch (wizard.getEntityContext().getType()) {
-            case SubsystemView:
-                FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_addTemplate_infoStepHelp());
-                break;
+            FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_pinTemplate_infoStepHelp());
 
-            default:
-                FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_addDef_infoStepHelp());
-            }
-
-            Set<DriftDefinitionTemplate> templates = wizard.getType().getDriftDefinitionTemplates();
+            Set<DriftDefinitionTemplate> templates = wizard.getResourceType().getDriftDefinitionTemplates();
             final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
                 templates.size());
             if (!templates.isEmpty()) {
@@ -130,28 +122,37 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
         DriftDefinitionTemplate selectedTemplate = templatesMap.get(key);
         wizard.setSelectedTemplate(selectedTemplate);
-        wizard.setNewStartingConfiguration(selectedTemplate.createConfiguration());
         String description = selectedTemplate.getDescription();
         description = (null == description) ? MSG.common_val_none() : description;
         form.getItem("Description").setValue(description);
     }
 
     public boolean nextPage() {
-        return form.validate();
+        if (!form.validate()) {
+            return false;
+        }
+
+        if (isConfirmed) {
+            wizard.execute();
+            return true;
+        }
+
+        String message = wizard.getSelectedTemplate().isPinned() ? MSG.view_drift_wizard_pinTemplate_confirmPinned()
+            : MSG.view_drift_wizard_pinTemplate_confirmNotPinned();
+
+        SC.ask(message, new BooleanCallback() {
+            public void execute(Boolean confirmed) {
+                if (confirmed) {
+                    isConfirmed = true;
+                    nextPage();
+                }
+            }
+        });
+
+        return false;
     }
 
     public String getName() {
-        switch (wizard.getEntityContext().getType()) {
-        case SubsystemView:
-            return MSG.view_drift_wizard_addTemplate_infoStepName();
-
-        default:
-            return MSG.view_drift_wizard_addDef_infoStepName();
-        }
-    }
-
-    public Configuration getStartingConfiguration() {
-        String template = form.getValueAsString("template");
-        return templates.get(template).createConfiguration();
+        return MSG.view_drift_wizard_pinTemplate_infoStepName();
     }
 }

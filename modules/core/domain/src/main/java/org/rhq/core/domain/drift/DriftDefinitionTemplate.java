@@ -183,6 +183,10 @@ public class DriftDefinitionTemplate implements Serializable {
         return changeSetId;
     }
 
+    public boolean isPinned() {
+        return null != changeSetId;
+    }
+
     /**
      * @param changeSetId The id of the change set to which the template is pinned
      */

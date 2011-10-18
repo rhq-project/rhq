@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -50,7 +49,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
         final ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
-        //steps.add(new DriftPinTemplateWizardInfoStep(DriftPinTemplateWizard.this));
+        steps.add(new DriftPinTemplateWizardInfoStep(DriftPinTemplateWizard.this));
 
         setSteps(steps);
     }
@@ -92,7 +91,6 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
     }
 
     public static void showWizard(final int snapshpotDriftDefId, final int snapshotVersion, final Table<?> table) {
-        ResourceCriteria rc = new ResourceCriteria();
 
         // get the relevant DriftDefinition
         DriftDefinitionCriteria ddc = new DriftDefinitionCriteria();

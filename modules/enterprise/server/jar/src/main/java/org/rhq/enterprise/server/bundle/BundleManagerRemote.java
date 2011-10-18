@@ -146,8 +146,8 @@ public interface BundleManagerRemote {
      * can be added.  This call defines a deployment.  The defined deployment can then be
      * scheduled in a separate call.  
      * @param subject user that must have proper permissions
-     * @param BundleVersionId the BundleVersion being deployed by this deployment
-     * @param BundleDestinationId the BundleDestination for the deployment
+     * @param bundleVersionId the BundleVersion being deployed by this deployment
+     * @param bundleDestinationId the BundleDestination for the deployment
      * @param description an optional longer description describing this deployment 
      * @param configuration a Configuration (pojo) to be associated with this deployment. Although
      *        it is not enforceable must be that of the associated BundleVersion.
@@ -166,7 +166,7 @@ public interface BundleManagerRemote {
      * Creates a bundle destination that describes a target for the bundle deployments.
      * 
      * @param subject user must have MANAGE_INVENTORY permission
-     * @param BundleId the Bundle to be deployed to this Destination
+     * @param bundleId the Bundle to be deployed to this Destination
      * @param name a name for this destination. not null or empty
      * @param description an optional longer description describing this destination 
      * @param destBaseDirName The name of the base directory location where the bundle will be deployed.
@@ -174,7 +174,7 @@ public interface BundleManagerRemote {
      *                        This name isn't the directory itself, it refers to the named location as
      *                        defined in the agent plugin's descriptor for the resource's type
      * @param deployDir the root dir for deployments to this destination
-     * @param groupIf the target platforms for deployments to this destination 
+     * @param groupId the target platforms for deployments to this destination 
      * @return the persisted destination
      * @throws Exception
      */

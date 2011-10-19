@@ -468,13 +468,11 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
                     //Subject.id guaranteed to be > 0 then iii)authorization updates for ldap groups necessary
                     //BZ-580127: only do group authz check if one or both of group filter fields is set
-                    Properties options = systemManager.getSystemConfiguration(getOverlord());
-                    String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
-                    String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
-                    if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
+                    if (isLdapAuthorizationEnabled()) {
                         List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
                             .getName()));
-                        log.debug("Updating ldap authorization data for user '" + subject.getName() + "'");
+                        log.debug("Updating LDAP authorization data for user [" + subject.getName()
+                            + "] with LDAP groups [" + groupNames + "]...");
                         ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
                     }
                 } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail 
@@ -499,8 +497,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(java.lang.int)
-      * */
+      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(int)
+      */
     public void logout(int sessionId) {
         sessionManager.invalidate(sessionId);
     }
@@ -779,6 +777,13 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
         return queryRunner.execute();
+    }
+
+    private boolean isLdapAuthorizationEnabled() {
+        Properties options = systemManager.getSystemConfiguration(getOverlord());
+        String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
+        String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
+        return ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0));
     }
 
 }

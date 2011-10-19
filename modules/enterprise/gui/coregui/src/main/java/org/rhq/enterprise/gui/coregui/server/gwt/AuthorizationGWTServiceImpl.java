@@ -83,7 +83,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    public boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) {
+    public boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) throws RuntimeException {
         try {
             boolean result = authorizationManager.hasResourcePermission(getSessionSubject(), permission, resourceIds);
             return result;

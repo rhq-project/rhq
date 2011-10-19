@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.admin;
 
 import java.util.ArrayList;
@@ -45,7 +44,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
@@ -101,7 +99,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
                 canvas.addMember(getServerDetails());
 
-                
                 Configuration config = result.toConfiguration();
                 
                 //convert stuff for the display purposes
@@ -611,4 +608,5 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
         return form;
     }
+
 }

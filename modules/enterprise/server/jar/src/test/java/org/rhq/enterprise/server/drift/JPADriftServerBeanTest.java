@@ -44,8 +44,10 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
+import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -230,6 +232,58 @@ public class JPADriftServerBeanTest extends DriftServerTest {
             findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(), "class", "ctime") ;
         assertPropertiesMatch("The newDriftFile property was not set correctly for " + drift2, drift2.getNewDriftFile(),
             findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(), "class", "ctime") ;
+    }
+
+    public void copyChangeSet() {
+        // first create the change set that will be copied
+        final JPADriftChangeSet changeSet = new JPADriftChangeSet(null, 0, COVERAGE, null);
+        changeSet.setDriftHandlingMode(normal);
+
+        final JPADrift drift1 = new JPADrift(changeSet, "drift.1", FILE_ADDED, null, driftFile1);
+        final JPADrift drift2 = new JPADrift(changeSet, "drift.2", FILE_ADDED, null, driftFile2);
+
+        final JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift1);
+        driftSet.addDrift(drift2);
+
+        // next create the drift definition
+        final DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("test::copyChangeSet");
+        driftDef.setEnabled(true);
+        driftDef.setDriftHandlingMode(normal);
+        driftDef.setInterval(2400L);
+        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+        driftDef.setResource(resource);
+
+        // persist the change set and drift definition
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(driftSet);
+                changeSet.setInitialDriftSet(driftSet);
+                em.persist(changeSet);
+                em.persist(driftDef);
+            }
+        });
+
+        jpaDriftServer.copyChangeSet(getOverlord(), changeSet.getId(), driftDef.getId(), resource.getId());
+
+        // verify that the change set was created for the definition
+        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(driftDef.getId());
+        criteria.addFilterCategory(COVERAGE);
+
+        PageList<JPADriftChangeSet> changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(getOverlord(), criteria);
+
+        assertEquals("Expected to get back one change set", 1,changeSets.size());
+
+        JPADriftChangeSet newChangeSet = changeSets.get(0);
+        Set<JPADrift> expectedDrifts = new HashSet<JPADrift>(asList(drift1, drift2));
+        Set<JPADrift> actualDrifts = newChangeSet.getDrifts();
+
+        assertCollectionMatchesNoOrder("The change set drifts were not copied correctly", expectedDrifts, actualDrifts,
+            "changeSet", "newDriftFile");
     }
 
     private DriftFileDTO toDTo(JPADriftFile driftFile) {

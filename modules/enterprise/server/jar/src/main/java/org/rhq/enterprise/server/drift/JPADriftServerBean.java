@@ -60,6 +60,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
@@ -250,7 +251,16 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        DriftDefinition driftDef = entityManager.find(DriftDefinition.class, driftDefId);
+        JPADriftChangeSet srcChangeSet = entityManager.find(JPADriftChangeSet.class, Integer.parseInt(changeSetId));
+        JPADriftChangeSet destChangeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
+        destChangeSet.setDriftHandlingMode(DriftConfigurationDefinition.DriftHandlingMode.normal);
+        destChangeSet.setInitialDriftSet(srcChangeSet.getInitialDriftSet());
+
+        entityManager.persist(destChangeSet);
+
+        return destChangeSet.getId();
     }
 
     private JPADriftFile toJPADriftFile(DriftFile driftFile) {

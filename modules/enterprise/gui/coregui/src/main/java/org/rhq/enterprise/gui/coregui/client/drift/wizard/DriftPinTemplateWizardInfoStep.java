@@ -20,15 +20,15 @@ package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
-import com.smartgwt.client.util.BooleanCallback;
-import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -42,46 +42,104 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
 public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
-    private LocatableDynamicForm form;
+    static private final String CREATE_TEMPLATE = "create";
+    static private final String SELECT_TEMPLATE = "select";
+
+    private LocatableVLayout canvas;
+    private LocatableDynamicForm radioForm;
     private AbstractDriftPinTemplateWizard wizard;
-    private boolean isConfirmed;
+
+    private RadioGroupItem radioGroupItem;
+
+    private LocatableDynamicForm selectTemplateForm;
+    StaticTextItem selectTemplateDescriptionItem = new StaticTextItem("Description", MSG.common_title_description());
+    SelectItem selectTemplateItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
 
     public DriftPinTemplateWizardInfoStep(AbstractDriftPinTemplateWizard wizard) {
         this.wizard = wizard;
     }
 
     public Canvas getCanvas(Locatable parent) {
-        if (form == null) {
-
+        if (null == canvas) {
             if (parent != null) {
-                form = new LocatableDynamicForm(parent.extendLocatorId("DriftPinTemplateInfo"));
+                canvas = new LocatableVLayout(parent.extendLocatorId("DriftPinTemplateInfo"));
             } else {
-                form = new LocatableDynamicForm("DriftPinTemplateInfo");
+                canvas = new LocatableVLayout("DriftPinTemplateInfo");
             }
-            form.setNumCols(1);
-            List<FormItem> formItems = new ArrayList<FormItem>(2);
 
-            StaticTextItem descriptionItem = new StaticTextItem("Description", MSG.common_title_description());
-            descriptionItem.setTitleOrientation(TitleOrientation.TOP);
-            descriptionItem.setAlign(Alignment.LEFT);
-            descriptionItem.setWidth(300);
-            formItems.add(descriptionItem);
+            canvas.setWidth100();
 
-            SpacerItem spacerItem = new SpacerItem("Spacer");
+            radioForm = new LocatableDynamicForm(canvas.extendLocatorId("Radio"));
+            radioForm.setNumCols(1);
+            radioForm.setWidth100();
+
+            List<FormItem> formItems = new ArrayList<FormItem>();
+
+            LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
+            radioGroupValues.put(CREATE_TEMPLATE, "Pin to New Template (derived from the snapshot's Drift Definition)");
+            radioGroupValues.put(SELECT_TEMPLATE, "Pin to an Existing Template");
+
+            radioGroupItem = new RadioGroupItem("options", "Template Selection"); // TODO I18N
+            radioGroupItem.setRequired(true);
+            radioGroupItem.setAlign(Alignment.LEFT);
+            radioGroupItem.setTitleOrientation(TitleOrientation.TOP);
+            radioGroupItem.setValueMap(radioGroupValues);
+            radioGroupItem.setValue(CREATE_TEMPLATE);
+            wizard.setCreateTemplate(true);
+
+            radioGroupItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    wizard.setCreateTemplate(CREATE_TEMPLATE.equals(event.getValue()));
+
+                    if (wizard.isCreateTemplate()) {
+                        selectTemplateForm.hide();
+                        wizard.getView().getNextButton().setTitle(MSG.common_button_next());
+
+                    } else {
+                        selectTemplateForm.show();
+                        wizard.getView().getNextButton().setTitle(MSG.common_button_finish());
+                    }
+                    radioForm.markForRedraw();
+                }
+            });
+            formItems.add(radioGroupItem);
+
+            formItems.add(new SpacerItem());
+
+            radioForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
+            canvas.addMember(radioForm);
+
+            selectTemplateForm = new LocatableDynamicForm(radioForm.extendLocatorId("SelectForm"));
+            selectTemplateForm.setNumCols(1);
+            selectTemplateForm.setIsGroup(true);
+            selectTemplateForm.setGroupTitle("Existing Templates");
+            selectTemplateForm.setPadding(10);
+            //selectTemplateForm.setMargin(10);
+            selectTemplateForm.hide();
+
+            formItems.clear();
+
+            selectTemplateDescriptionItem.setTitleOrientation(TitleOrientation.TOP);
+            selectTemplateDescriptionItem.setAlign(Alignment.LEFT);
+            selectTemplateDescriptionItem.setWidth(300);
+            formItems.add(selectTemplateDescriptionItem);
+
+            SpacerItem spacerItem = new SpacerItem();
+            spacerItem.setHeight(10);
             formItems.add(spacerItem);
 
-            SelectItem templateSelectItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
-            templateSelectItem.setTitleOrientation(TitleOrientation.TOP);
-            templateSelectItem.setAlign(Alignment.LEFT);
-            templateSelectItem.setWidth(300);
-            templateSelectItem.setRequired(true);
-            FormUtility.addContextualHelp(templateSelectItem, MSG.view_drift_wizard_pinTemplate_infoStepHelp());
+            selectTemplateItem.setTitleOrientation(TitleOrientation.TOP);
+            selectTemplateItem.setAlign(Alignment.LEFT);
+            selectTemplateItem.setWidth(300);
+            selectTemplateItem.setRequired(true);
+            FormUtility.addContextualHelp(selectTemplateItem, MSG.view_drift_wizard_pinTemplate_infoStepHelp());
 
             Set<DriftDefinitionTemplate> templates = wizard.getResourceType().getDriftDefinitionTemplates();
             final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
@@ -105,8 +163,8 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
             Set<String> templatesMapKeySet = templatesMap.keySet();
             String[] templatesMapKeySetArray = templatesMapKeySet.toArray(new String[templatesMap.size()]);
-            templateSelectItem.setValueMap(templatesMapKeySetArray);
-            templateSelectItem.addChangedHandler(new ChangedHandler() {
+            selectTemplateItem.setValueMap(templatesMapKeySetArray);
+            selectTemplateItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     if (null == event || "".equals(event.getValue())) {
                         return;
@@ -115,16 +173,16 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
                     setSelectedTemplate((String) event.getValue(), templatesMap);
                 }
             });
-            formItems.add(templateSelectItem);
-
-            form.setItems(formItems.toArray(new FormItem[formItems.size()]));
+            formItems.add(selectTemplateItem);
+            selectTemplateForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
+            canvas.addMember(selectTemplateForm);
 
             // set value to first in list  
-            templateSelectItem.setValue(templatesMapKeySetArray[0]);
+            selectTemplateItem.setValue(templatesMapKeySetArray[0]);
             setSelectedTemplate(templatesMapKeySetArray[0], templatesMap);
         }
 
-        return form;
+        return canvas;
     }
 
     private void setSelectedTemplate(String key, final HashMap<String, DriftDefinitionTemplate> templatesMap) {
@@ -133,32 +191,15 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
         wizard.setSelectedTemplate(selectedTemplate);
         String description = selectedTemplate.getDescription();
         description = (null == description) ? MSG.common_val_none() : description;
-        form.getItem("Description").setValue(description);
+        selectTemplateForm.getItem("Description").setValue(description);
     }
 
     public boolean nextPage() {
-        if (!form.validate()) {
+        if (!radioForm.validate()) {
             return false;
         }
 
-        if (isConfirmed) {
-            wizard.execute();
-            return true;
-        }
-
-        String message = wizard.getSelectedTemplate().isPinned() ? MSG.view_drift_wizard_pinTemplate_confirmPinned()
-            : MSG.view_drift_wizard_pinTemplate_confirmNotPinned();
-
-        SC.ask(message, new BooleanCallback() {
-            public void execute(Boolean confirmed) {
-                if (confirmed) {
-                    isConfirmed = true;
-                    nextPage();
-                }
-            }
-        });
-
-        return false;
+        return true;
     }
 
     public String getName() {

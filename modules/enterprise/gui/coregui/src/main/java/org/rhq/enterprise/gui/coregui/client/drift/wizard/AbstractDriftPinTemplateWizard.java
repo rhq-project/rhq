@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ResourceType;
@@ -32,6 +33,8 @@ public abstract class AbstractDriftPinTemplateWizard extends AbstractWizard {
     private ResourceType resourceType;
     private DriftDefinition snapshotDriftDef;
     private int snapshotVersion;
+    private boolean createTemplate;
+    private DriftDefinition newDriftDefinition;
 
     private DriftDefinitionTemplate selectedTemplate;
 
@@ -77,6 +80,22 @@ public abstract class AbstractDriftPinTemplateWizard extends AbstractWizard {
 
     public void setSelectedTemplate(DriftDefinitionTemplate template) {
         selectedTemplate = template;
+    }
+
+    public boolean isCreateTemplate() {
+        return createTemplate;
+    }
+
+    public void setCreateTemplate(boolean createTemplate) {
+        this.createTemplate = createTemplate;
+    }
+
+    public DriftDefinition getNewDriftDefinition() {
+        return newDriftDefinition;
+    }
+
+    public void setNewConfiguration(Configuration newDriftDefinitionConfig) {
+        newDriftDefinition = new DriftDefinition(newDriftDefinitionConfig);
     }
 
     public void display() {

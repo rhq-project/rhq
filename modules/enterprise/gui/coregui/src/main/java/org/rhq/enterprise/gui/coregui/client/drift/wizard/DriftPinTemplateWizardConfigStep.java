@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -32,29 +34,33 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Jay Shaughnessy
  */
-public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
+public class DriftPinTemplateWizardConfigStep extends AbstractWizardStep {
 
     private LocatableVLayout vLayout;
     private ConfigurationEditor editor;
-    AbstractDriftAddDefinitionWizard wizard;
-    private Configuration startingConfig;
+    AbstractDriftPinTemplateWizard wizard;
+    private boolean isConfirmed;
 
-    public DriftAddDefinitionWizardConfigStep(AbstractDriftAddDefinitionWizard wizard) {
+    public DriftPinTemplateWizardConfigStep(AbstractDriftPinTemplateWizard wizard) {
         this.wizard = wizard;
     }
 
     public Canvas getCanvas(Locatable parent) {
+        // to skip a step just return null, the wizard framework will then just call nextPage()
+        if (!wizard.isCreateTemplate()) {
+            return null;
+        }
+
         // This VLayout allows us to set overflow on it and be able to scroll the config editor but always
         // be able to see the wizard's next/cancel buttons. This vlayout also provides for easier expansion if we add more items.
-        if (vLayout == null || !wizard.getNewStartingConfiguration().equals(startingConfig)) {
+        if (vLayout == null) {
 
             String locatorId = (null == parent) ? "DriftDefConfig" : parent.extendLocatorId("DriftDefConfig");
             vLayout = new LocatableVLayout(locatorId);
 
             vLayout.setOverflow(Overflow.AUTO);
 
-            // keep a reference to the startingConfig in case the user navs back and changes it
-            startingConfig = wizard.getNewStartingConfiguration();
+            Configuration startingConfig = wizard.getSnapshotDriftDef().getConfiguration();
             ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
             editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
             vLayout.addMember(editor);
@@ -64,11 +70,32 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        if (editor != null && editor.validate()) {
-            wizard.setNewConfiguration(editor.getConfiguration());
+        if (wizard.isCreateTemplate() && (null == editor || !editor.validate())) {
+            return false;
+        }
+
+        if (isConfirmed) {
+            if (wizard.isCreateTemplate()) {
+                wizard.setNewConfiguration(editor.getConfiguration());
+            }
             wizard.execute();
             return true;
         }
+
+        String message = wizard.getSelectedTemplate().isPinned() ? MSG.view_drift_wizard_pinTemplate_confirmPinned()
+            : MSG.view_drift_wizard_pinTemplate_confirmNotPinned();
+
+        SC.ask(message, new BooleanCallback() {
+            public void execute(Boolean confirmed) {
+                if (confirmed) {
+                    isConfirmed = true;
+                    nextPage();
+
+                } else {
+                    wizard.getView().closeDialog();
+                }
+            }
+        });
 
         return false;
     }

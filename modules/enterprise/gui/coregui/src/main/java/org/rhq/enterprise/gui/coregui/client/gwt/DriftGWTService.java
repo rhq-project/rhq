@@ -41,7 +41,7 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface DriftGWTService extends RemoteService {
 
-    void createTemplate(int resourceTypeId, DriftDefinition definition) throws RuntimeException;
+    DriftDefinitionTemplate createTemplate(int resourceTypeId, DriftDefinition definition) throws RuntimeException;
 
     /**
      * Delete all named drift definitions for the specified context if the current user has permission to do so (i.e. either

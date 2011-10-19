@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -50,6 +51,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
         final ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
         steps.add(new DriftPinTemplateWizardInfoStep(DriftPinTemplateWizard.this));
+        steps.add(new DriftPinTemplateWizardConfigStep(DriftPinTemplateWizard.this));
 
         setSteps(steps);
     }
@@ -71,6 +73,31 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
     @Override
     public void execute() {
+        if (isCreateTemplate()) {
+            GWTServiceLookup.getDriftService().createTemplate(getResourceType().getId(), getNewDriftDefinition(),
+                new AsyncCallback<DriftDefinitionTemplate>() {
+
+                    public void onSuccess(DriftDefinitionTemplate result) {
+
+                        pinTemplate(result);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_drift_wizard_addDef_failure(getSelectedTemplate().getName()), caught);
+                        getView().closeDialog();
+                    }
+
+                });
+
+        } else {
+
+            pinTemplate(getSelectedTemplate());
+        }
+    }
+
+    private void pinTemplate(DriftDefinitionTemplate template) {
+
         GWTServiceLookup.getDriftService().pinTemplate(getSelectedTemplate().getId(), getSnapshotDriftDef().getId(),
             getSnapshotVersion(), new AsyncCallback<Void>() {
 
@@ -88,6 +115,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
                     getView().closeDialog();
                 }
             });
+
     }
 
     public static void showWizard(final int snapshpotDriftDefId, final int snapshotVersion, final Table<?> table) {

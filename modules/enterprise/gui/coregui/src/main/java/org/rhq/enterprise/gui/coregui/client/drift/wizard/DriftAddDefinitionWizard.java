@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -111,8 +112,9 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
         case SubsystemView:
             GWTServiceLookup.getDriftService().createTemplate(getType().getId(), getNewDriftDefinition(),
-                new AsyncCallback<Void>() {
-                    public void onSuccess(Void result) {
+                new AsyncCallback<DriftDefinitionTemplate>() {
+                    public void onSuccess(DriftDefinitionTemplate result) {
+
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_drift_wizard_addTemplate_success(getNewDriftDefinition().getName()),
                                 Message.Severity.Info));

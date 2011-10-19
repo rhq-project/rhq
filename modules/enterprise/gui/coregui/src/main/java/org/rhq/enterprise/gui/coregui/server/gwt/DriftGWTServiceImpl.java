@@ -49,10 +49,12 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     private DriftTemplateManagerLocal driftTemplateManager = LookupUtil.getDriftTemplateManager();
 
     @Override
-    public void createTemplate(int resourceTypeId, DriftDefinition definition) throws RuntimeException {
+    public DriftDefinitionTemplate createTemplate(int resourceTypeId, DriftDefinition definition)
+        throws RuntimeException {
         try {
-            this.driftTemplateManager.createTemplate(getSessionSubject(), resourceTypeId, true, definition);
-
+            DriftDefinitionTemplate result = this.driftTemplateManager.createTemplate(getSessionSubject(),
+                resourceTypeId, true, definition);
+            return SerialUtility.prepare(result, "DriftService.createTemplate");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

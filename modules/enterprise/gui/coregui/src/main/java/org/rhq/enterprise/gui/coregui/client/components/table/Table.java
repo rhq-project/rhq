@@ -20,14 +20,13 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -67,6 +66,7 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -74,8 +74,10 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
+import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -101,7 +103,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Ian Springer
  */
 @SuppressWarnings("unchecked")
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
+
+    public static final int DATA_PAGE_SIZE = 50;
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -144,6 +148,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private LocatableToolStrip footer;
     private LocatableToolStrip footerExtraWidgets;
     private LocatableIButton refreshButton;
+    private boolean initialized;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -154,15 +159,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, null, null, true);
+        this(locatorId, tableTitle, criteria, null, null, (criteria == null));
     }
 
     public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(locatorId, tableTitle, null, sortSpecifiers, null, true);
+        this(locatorId, tableTitle, null, sortSpecifiers, null, false);
     }
 
     protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, null, true);
+        this(locatorId, tableTitle, criteria, sortSpecifiers, null, (criteria == null));
     }
 
     public Table(String locatorId, String tableTitle, boolean autoFetchData) {
@@ -175,13 +180,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
-        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, true);
+        this(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, (criteria == null));
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames, boolean autoFetchData) {
         super(locatorId);
 
+        if (criteria != null && autoFetchData) {
+            throw new IllegalArgumentException(
+                "Non-null initialCriteria and autoFetchData=true cannot be specified together, due to a bug in SmartGWT.");
+        }
         setWidth100();
         setHeight100();
         setOverflow(Overflow.HIDDEN);
@@ -219,14 +228,32 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.flexRowDisplay = flexRowDisplay;
     }
 
+    /**
+     * Returns the encompassing canvas that contains all content for this table component.
+     * This content includes the list grid, the buttons, etc.
+     */
+    protected LocatableVLayout getTableContents() {
+        if (null == contents) {
+            contents = new LocatableVLayout(extendLocatorId("Contents"));
+            contents.setWidth100();
+            contents.setHeight100();
+        }
+
+        return contents;
+    }
+
+    protected void configureTableContents(Layout contents) {
+        contents.setWidth100();
+        contents.setHeight100();
+        //contents.setOverflow(Overflow.AUTO);        
+    }
+
     @Override
     protected void onInit() {
         super.onInit();
 
-        contents = new LocatableVLayout(extendLocatorId("Contents"));
-        contents.setWidth100();
-        contents.setHeight100();
-        //contents.setOverflow(Overflow.AUTO);
+        contents = getTableContents();
+        configureTableContents(contents);
         addMember(contents);
 
         filterForm = new TableFilter(this);
@@ -245,12 +272,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+        listGrid = createListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
         if (initialCriteria != null) {
             listGrid.setInitialCriteria(initialCriteria);
         }
+
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
         }
@@ -259,7 +287,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
         listGrid.setSelectionType(getDefaultSelectionStyle());
-        listGrid.setDataPageSize(45); // the default is 75 - lower it to speed up data loading
+        listGrid.setDataPageSize(DATA_PAGE_SIZE); // the default is 75 - lower it to speed up data loading
+        // Don't fetch more than 200 records for the sake of an attempt to group-by.
+        listGrid.setGroupByMaxRecords(200); // the default is 1000
+        // Disable the group-by option in the column header context menu, since group-by requires the entire data set to
+        // by loaded on the client-side, which isn't practical for most of our list views, since they can contain
+        // thousands of records.
+        listGrid.setCanGroupBy(false);
 
         if (flexRowDisplay) {
             //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
@@ -276,11 +310,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // TODO: Uncomment the below line once we've upgraded to SmartGWT 2.3.
         //listGrid.setRecordCanSelectProperty("foobar");
 
-        if (dataSource != null) {
-            listGrid.setDataSource(dataSource);
+        if (getDataSource() != null) {
+            listGrid.setDataSource(getDataSource());
         }
 
         contents.addMember(listGrid);
+
+        this.initialized = true;
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return this.initialized;
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
@@ -328,10 +369,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
+            if (!showFooter) {
+                footer.hide();
+            }
             contents.addMember(footer);
 
-            // The ListGrid has been created and configured
-            // Now give subclasses a chance to configure the table
+            // The ListGrid has been created and configured - now give subclasses a chance to configure the table.
             configureTable();
 
             listGrid.addDoubleClickHandler(new DoubleClickHandler() {
@@ -363,6 +406,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             if (showFooter) {
                 drawFooter();
+            }
+
+
+            if (!autoFetchData && (initialCriteria != null)) {
+                refresh();
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
@@ -403,7 +451,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // logic. This happens in selenium testing or when a user navs away prior to the refresh.
         this.listGrid = null;
 
-        SeleniumUtility.destroyMembers(contents);
+        SeleniumUtility.destroyMembers(getTableContents());
         super.destroy();
     }
 
@@ -614,14 +662,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         titleCanvas.markForRedraw();
     }
 
-    /**
-     * Returns the encompassing canvas that contains all content for this table component.
-     * This content includes the list grid, the buttons, etc.
-     */
-    public Canvas getTableContents() {
-        return this.contents;
-    }
-
     public boolean isShowHeader() {
         return showHeader;
     }
@@ -642,12 +682,44 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
      */
     public void refresh() {
-        if (this.listGrid != null) {
-            Criteria criteria = getCurrentCriteria();
-            this.listGrid.setCriteria(criteria);
-            this.listGrid.invalidateCache();
-            this.listGrid.markForRedraw();
+        refresh(false);
+    }
+
+    /**
+     * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
+     * <p/>
+     * If resetPaging is true, resets paging on the grid prior to refreshing the data. resetPaging=true should be
+     * specified when refreshing right after records have been deleted, since the current paging settings may have
+     * become invalid due to the decrease in the total data set size.
+     */
+    public void refresh(boolean resetPaging) {
+        if (!isInitialized()) {
+            return;
         }
+
+        final ListGrid listGrid = getListGrid();
+
+        Criteria criteria = getCurrentCriteria();
+        if (Log.isDebugEnabled()) {
+            Log.debug(getClass().getName() + ".refresh() using criteria [" + CriteriaUtility.toString(criteria)
+                + "]...");
+        }
+        listGrid.setCriteria(criteria);
+
+        if (resetPaging) {
+            listGrid.scrollToRow(0);
+        }
+
+        // Only call invalidateCache() and fetchData() if the ListGrid is backed by a DataSource.
+        if (listGrid.getDataSource() != null) {
+            // Invalidate the cached records - if listGrid.getAutoFetchData() is true, this will cause the ListGrid to
+            // automatically call fetchData().
+            listGrid.invalidateCache();
+            if (!this.autoFetchData && (initialCriteria != null)) {
+                listGrid.fetchData(criteria);
+            }
+        }
+        listGrid.markForRedraw();
     }
 
     protected Criteria getInitialCriteria() {
@@ -685,59 +757,22 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // If this table has a filter form (table filters OR search bar),
         // we need to refresh it as per the filtering, combined with any fixed criteria.
         if (this.filterForm != null && this.filterForm.hasContent()) {
-
             criteria = this.filterForm.getValuesAsCriteria();
-
             if (this.initialCriteriaFixed) {
                 if (criteria != null) {
                     if (this.initialCriteria != null) {
                         // There is fixed criteria - add it to the filter form criteria.
-                        addCriteria(criteria, this.initialCriteria);
+                        CriteriaUtility.addCriteria(criteria, this.initialCriteria);
                     }
                 } else {
                     criteria = this.initialCriteria;
                 }
             }
         } else if (this.initialCriteriaFixed) {
-
             criteria = this.initialCriteria;
         }
 
         return criteria;
-    }
-
-    // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
-    // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
-    // supports adding array types and Objects.
-    // This method takes the src criteria and adds it to the dest criteria.
-    private static void addCriteria(Criteria dest, Criteria src) {
-        Map otherMap = src.getValues();
-        Set otherKeys = otherMap.keySet();
-        for (Iterator i = otherKeys.iterator(); i.hasNext();) {
-            String field = (String) i.next();
-            Object value = otherMap.get(field);
-
-            if (value instanceof Integer) {
-                dest.addCriteria(field, (Integer) value);
-            } else if (value instanceof Float) {
-                dest.addCriteria(field, (Float) value);
-            } else if (value instanceof String) {
-                dest.addCriteria(field, (String) value);
-            } else if (value instanceof Date) {
-                dest.addCriteria(field, (Date) value);
-            } else if (value instanceof Boolean) {
-                dest.addCriteria(field, (Boolean) value);
-            } else if (value instanceof Integer[]) {
-                dest.addCriteria(field, (Integer[]) value);
-            } else if (value instanceof Double[]) {
-                dest.addCriteria(field, (Double[]) value);
-            } else if (value instanceof String[]) {
-                dest.addCriteria(field, (String[]) value);
-            } else {
-                // this is the magic piece - we need to get attrib as an object and set that value
-                dest.setAttribute(field, src.getAttributeAsObject(field));
-            }
-        }
     }
 
     public DS getDataSource() {
@@ -748,6 +783,24 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.dataSource = dataSource;
     }
 
+    /**
+     * Creates this Table's list grid (called by onInit()). Subclasses can override this if they require a custom
+     * subclass of LocatableListGrid.
+     *
+     * @param locatorId the locatorId that should be set on the returned LocatableListGrid
+     *
+     * @return this Table's list grid (must be an instance of LocatableListGrid)
+     */
+    protected LocatableListGrid createListGrid(String locatorId) {
+        return new LocatableListGrid(locatorId);
+    }
+
+    /**
+     * Returns this Table's list grid - may be null if the Table has not yet been {@link #isInitialized() initialized}.
+     * Subclasses should *not* override this method.
+     *
+     * @return this Table's list grid - may be null if the Table has not yet been {@link #isInitialized() initialized}
+     */
     public ListGrid getListGrid() {
         return listGrid;
     }
@@ -772,7 +825,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * @param fields the fields
      */
     public void setListGridFields(boolean forceIdField, ListGridField... fields) {
-        String[] dataSourceFieldNames = this.dataSource.getFieldNames();
+        if (getDataSource() == null) {
+            throw new IllegalStateException("setListGridFields() called on " + getClass().getName()
+                + ", which is not a DataSource-backed Table.");
+        }
+        String[] dataSourceFieldNames = getDataSource().getFieldNames();
         Set<String> dataSourceFieldNamesSet = new LinkedHashSet<String>();
         dataSourceFieldNamesSet.addAll(Arrays.asList(dataSourceFieldNames));
         Map<String, ListGridField> listGridFieldsMap = new LinkedHashMap<String, ListGridField>();
@@ -781,7 +838,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
         dataSourceFieldNamesSet.removeAll(listGridFieldsMap.keySet());
 
-        DataSourceField dataSourceIdField = this.dataSource.getField(FIELD_ID);
+        DataSourceField dataSourceIdField = getDataSource().getField(FIELD_ID);
         boolean hideIdField = (!CoreGUI.isDebugMode() && !forceIdField);
         if (dataSourceIdField != null && hideIdField) {
             // setHidden() will not work on the DataSource field - use the listGrid.hideField() instead.
@@ -797,7 +854,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                String datasourceFieldTitle = this.dataSource.getField(FIELD_ID).getTitle();
+                String datasourceFieldTitle = getDataSource().getField(FIELD_ID).getTitle();
                 String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG
                     .common_title_id();
                 listGridIdField = new ListGridField(FIELD_ID, listGridFieldTitle, 55);
@@ -811,7 +868,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             System.arraycopy(fields, 0, newFields, destIndex, fields.length);
             destIndex += fields.length;
             for (String dataSourceFieldName : dataSourceFieldNamesSet) {
-                DataSourceField dataSourceField = this.dataSource.getField(dataSourceFieldName);
+                DataSourceField dataSourceField = getDataSource().getField(dataSourceFieldName);
                 ListGridField listGridField = new ListGridField(dataSourceField.getName());
                 this.listGrid.hideField(dataSourceFieldName);
                 listGridField.setHidden(true);
@@ -1016,11 +1073,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         field.setHidden(true);
     }
 
+
     // -------------- Inner utility classes ------------- //
 
     /**
-     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a {@link Table} 
-     * of results.
+     * A subclass of SmartGWT's DynamicForm widget that provides a more convenient interface for filtering a
+     * {@link Table} of results.
      *
      * @author Joseph Marques 
      */
@@ -1036,7 +1094,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             setWidth100();
             setPadding(5);
             this.table = table;
-            //this.table.setTableTitle(null);
         }
 
         @Override
@@ -1072,13 +1129,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             table.refresh();
         }
 
+        @Override
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getKeyName().equals("Enter") == false) {
-                return;
+            if (event.getKeyName().equals("Enter")) {
+                fetchFilteredTableData();
             }
-            fetchFilteredTableData();
         }
 
+        @Override
         public void onChanged(ChangedEvent event) {
             fetchFilteredTableData();
         }
@@ -1089,12 +1147,26 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         @Override
         public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
-            if (event.getCharCode() != KeyCodes.KEY_ENTER) {
-                return;
+            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+                // TODO (ips, 10/14/11): Figure out why this event is being sent twice. However, this is not urgent,
+                //                       since the if check below will prevent the 2nd event from triggering a redundant
+                //                       fetch request.
+                String searchBarValue = searchBarItem.getSearchBar().getValue();
+                String hiddenValue = (String) hiddenItem.getValue();
+                // Only send a fetch request if the user actually changed the search expression.
+                if (!equals(searchBarValue, hiddenValue)) {
+                    hiddenItem.setValue(searchBarValue);
+                    fetchFilteredTableData();
+                }
             }
-            // TODO: figure out why this event is being sent twice
-            hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
-            fetchFilteredTableData();
+        }
+
+        private static boolean equals(String string1, String string2) {
+            if (string1 == null) {
+                return (string2 == null);
+            } else {
+                return (string1.equals(string2));
+            }
         }
     }
 

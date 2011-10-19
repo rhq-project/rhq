@@ -46,6 +46,16 @@ public interface ScheduleQueue {
     boolean addSchedule(DriftDetectionSchedule schedule);
 
     /**
+     * Searches the queue for a schedule with a matching resource id and drift definition
+     * name. If found, a copy of the schedule is returned.
+     *
+     * @param resourceId The resource id of the schedule being sought
+     * @param defName The name of the drift definition in the schedule being sought
+     * @return A copy of the schedule or null if no match is found
+     */
+    DriftDetectionSchedule find(int resourceId, String defName);
+
+    /**
      * Checks the queue for a schedule with specified resource id and drift definition
      * whose name matches the specified definition.
      *
@@ -88,6 +98,18 @@ public interface ScheduleQueue {
     DriftDetectionSchedule remove(int resourceId, DriftDefinition driftDef);
 
     /**
+     * Removes the schedule identified by the resource id and drift definition name.
+     * This method will remove the currently active schedule or a schedule that is on the
+     * queue.
+     *
+     * @param resourceId The resource id
+     * @param defName The drift definition name
+     * @return The {@link DriftDetectionSchedule} that is removed or null if no matching
+     * schedule is found.
+     */
+    DriftDetectionSchedule remove(int resourceId, String defName);
+
+    /**
      * Removes the schedule identified by the resource id and the drift definition name.
      * This method can remove either the active schedule or a schedule on the queue. When
      * the schedule is in the queue, <code>task</code> is executed immediately after the
@@ -113,6 +135,15 @@ public interface ScheduleQueue {
      * schedule is found.
      */
     DriftDetectionSchedule removeAndExecute(int resourceId, DriftDefinition driftDef, Runnable task);
+
+    /**
+     * Removes the schedule
+     * @param resourceId
+     * @param configName
+     * @param task
+     * @return
+     */
+    DriftDetectionSchedule removeAndExecute(int resourceId, String configName, Runnable task);
 
     /**
      * Removes all elements from the queue and deactivates the active schedule.

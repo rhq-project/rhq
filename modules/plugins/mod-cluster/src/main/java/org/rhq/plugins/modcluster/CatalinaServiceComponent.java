@@ -30,11 +30,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.config.JBossWebServerFile;
 
-@SuppressWarnings({ "rawtypes", "deprecation" })
-public class CatalinaServiceComponent extends MBeanResourceComponent {
+@SuppressWarnings({ "deprecation" })
+public class CatalinaServiceComponent extends MBeanResourceComponent<JMXComponent<?>> {
 
     private static final Log log = LogFactory.getLog(CatalinaServiceComponent.class);
 

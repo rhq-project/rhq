@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -30,7 +30,6 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -40,18 +39,14 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
@@ -73,16 +68,15 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
     private static final Criteria INITIAL_CRITERIA = new Criteria();
-    EntityContext context;
-    boolean hasWriteAccess;
-    AlertDataSource dataSource;
+
+    private EntityContext context;
+    private boolean hasWriteAccess;
 
     static {
         AlertPriority[] priorityValues = AlertPriority.values();
         String[] priorityNames = new String[priorityValues.length];
-        int i = 0;
-        for (AlertPriority s : priorityValues) {
-            priorityNames[i++] = s.name();
+        for (int i = 0, priorityValuesLength = priorityValues.length; i < priorityValuesLength; i++) {
+            priorityNames[i] = priorityValues[i].name();
         }
 
         INITIAL_CRITERIA.addCriteria(AlertDataSource.FILTER_PRIORITIES, priorityNames);
@@ -93,29 +87,18 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
-    public AlertHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
-    }
-
     public AlertHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
         this(locatorId, tableTitle, entityContext, false);
     }
 
     protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
         setInitialCriteriaFixed(false);
-        setDataSource(getDataSource());
-    }
-
-    @Override
-    public AlertDataSource getDataSource() {
-        if (null == this.dataSource) {
-            this.dataSource = new AlertDataSource(context);
-        }
-        return this.dataSource;
+        setDataSource(new AlertDataSource(context));
     }
 
     @Override
@@ -220,26 +203,29 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
-                refresh();
+                refresh(true);
             }
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler()
                     .handleError(MSG.view_alerts_delete_failure(Arrays.toString(alertIds)), caught);
+                refreshTableInfo();
             }
         });
     }
 
     void deleteAll() {
-        GWTServiceLookup.getAlertService().deleteAlertsByContext(context, new AsyncCallback<Integer>() {
+        int rpcTimeout = 10000 + getListGrid().getTotalRows();
+        GWTServiceLookup.getAlertService(rpcTimeout).deleteAlertsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_alerts_delete_success(String.valueOf(resultCount)), Message.Severity.Info));
-                refresh();
+                refresh(true);
             }
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alerts_delete_failure_all(), caught);
+                refreshTableInfo();
             }
         });
     }
@@ -261,12 +247,14 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alerts_ack_failure(Arrays.toString(alertIds)), caught);
+                refreshTableInfo();
             }
         });
     }
 
     void acknowledgeAll() {
-        GWTServiceLookup.getAlertService().acknowledgeAlertsByContext(context, new AsyncCallback<Integer>() {
+        int rpcTimeout = 10000 + getListGrid().getTotalRows();
+        GWTServiceLookup.getAlertService(rpcTimeout).acknowledgeAlertsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_alerts_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
@@ -275,6 +263,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alerts_ack_failure_all(), caught);
+                refreshTableInfo();
             }
         });
     }
@@ -287,4 +276,5 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     public EntityContext getContext() {
         return context;
     }
+
 }

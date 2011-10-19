@@ -21,7 +21,6 @@ package org.rhq.plugins.modcluster;
 
 import java.util.Set;
 
-import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -42,50 +41,19 @@ public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponen
         Set<DiscoveredResourceDetails> results = super.discoverResources(context, skipUnknownProps);
 
         for (DiscoveredResourceDetails discoveredResource : results) {
+            EmsBean emsBean = loadBean(context.getParentResourceComponent(), discoveredResource.getResourceKey());
 
-            String name = getBeanConfiguredClassName(context, discoveredResource.getResourceKey());
+            if (emsBean != null) {
+                String name = emsBean.getClassTypeName();
 
-            name = name.substring(name.lastIndexOf(".") + 1);
-            name = name.substring(0, name.lastIndexOf("LoadMetric"));
+                name = name.substring(name.lastIndexOf(".") + 1);
+                name = name.substring(0, name.lastIndexOf("LoadMetric"));
 
-            discoveredResource.setResourceName(name);
-            discoveredResource.setResourceDescription("Load Metric");
+                discoveredResource.setResourceName(name);
+                discoveredResource.setResourceDescription("Load Metric");
+            }
         }
 
         return results;
-    }
-
-    /**
-     * Loads the bean with the given object name.
-     *
-     * Subclasses are free to override this method in order to load the bean.
-     * 
-     * @param objectName the name of the bean to load
-     * @return the bean that is loaded
-     */
-    protected EmsBean loadBean(EmsConnection emsConnection, String objectName) {
-        EmsBean bean = emsConnection.getBean(objectName);
-        if (bean == null) {
-            // In some cases, this resource component may have been discovered by some means other than querying its
-            // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
-            // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
-            // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
-            // bean before giving up.
-            emsConnection.queryBeans(objectName);
-            bean = emsConnection.getBean(objectName);
-        }
-        return bean;
-    }
-
-    /**
-     * @param context
-     * @param objectName
-     * @return
-     */
-    private String getBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent<?>> context, String objectName) {
-        EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
-        EmsBean emsBean = loadBean(connection, objectName);
-
-        return emsBean.getClassTypeName();
     }
 }

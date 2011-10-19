@@ -18,22 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
+import org.rhq.enterprise.server.drift.DriftTemplateManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -43,6 +46,17 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     private static final long serialVersionUID = 1L;
 
     private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
+    private DriftTemplateManagerLocal driftTemplateManager = LookupUtil.getDriftTemplateManager();
+
+    @Override
+    public void createTemplate(int resourceTypeId, DriftDefinition definition) throws RuntimeException {
+        try {
+            this.driftTemplateManager.createTemplate(getSessionSubject(), resourceTypeId, true, definition);
+
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
     @Override
     public int deleteDriftDefinitionsByContext(EntityContext entityContext, String[] driftDefinitionNames)
@@ -113,10 +127,22 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria)
-        throws RuntimeException {
+    public PageList<DriftDefinitionTemplate> findDriftDefinitionTemplatesByCriteria(
+        DriftDefinitionTemplateCriteria criteria) throws RuntimeException {
         try {
-            return driftManager.createSnapshot(subject, criteria);
+            PageList<DriftDefinitionTemplate> results = driftTemplateManager.findTemplatesByCriteria(
+                getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftDefinitionTemplatesByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public DriftSnapshot getSnapshot(DriftSnapshotRequest request) throws RuntimeException {
+        try {
+            DriftSnapshot results = driftManager.getSnapshot(getSessionSubject(), request);
+            return SerialUtility.prepare(results, "DriftService.getSnapshot");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -144,7 +170,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public String getDriftFileBits(String hash) throws RuntimeException {
         try {
-            return driftManager.getDriftFileBits(hash);
+            return driftManager.getDriftFileBits(getSessionSubject(), hash);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -153,7 +179,16 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException {
         try {
-            return driftManager.generateUnifiedDiff(drift);
+            return driftManager.generateUnifiedDiff(getSessionSubject(), drift);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiffByIds(String driftId1, String driftId2) throws RuntimeException {
+        try {
+            return driftManager.generateUnifiedDiffByIds(getSessionSubject(), driftId1, driftId2);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -172,9 +207,29 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException {
         try {
-            return driftManager.isBinaryFile(drift);
+            return driftManager.isBinaryFile(getSessionSubject(), drift);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public void pinSnapshot(int driftDefId, int snapshotVersion) throws RuntimeException {
+        try {
+            driftManager.pinSnapshot(getSessionSubject(), driftDefId, snapshotVersion);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void pinTemplate(int templateId, int snapshotDriftDefId, int snapshotVersion) {
+
+        try {
+            driftTemplateManager.pinTemplate(getSessionSubject(), templateId, snapshotDriftDefId, snapshotVersion);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

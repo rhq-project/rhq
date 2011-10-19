@@ -18,12 +18,13 @@
  */
 package org.rhq.core.domain.drift;
 
+import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-
-import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 
 /**
  * A representation of an agent's drift file monitoring. 
@@ -34,27 +35,117 @@ public class DriftSnapshot implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * The version is initially -1 which indicates that there are no
-     * change sets as opposed to an empty change set.
+    /** The request that generated this snapshot */
+    private DriftSnapshotRequest request;
+
+    /** 
+     * The version of this snapshot.  It may differ from the requested version if the requested version
+     * does not exist.  -1 indicates that the definition does not yet have an initial snapshot. 
      */
     private int version = -1;
 
-    private Map<String, Drift<?, ?>> entries = new TreeMap<String, Drift<?, ?>>();
+    /** Map of directory path to information about that directory.  Includes only directories with drift instances */
+    private Map<String, DriftSnapshotDirectory> directoryMap;
+
+    /** Map of path to Drift instance.  */
+    private Map<String, Drift<?, ?>> driftMap;
+
+    /**
+     * This should not be used. It's to satisfy smartgwt.
+     */
+    public DriftSnapshot() {
+    }
+
+    public DriftSnapshot(DriftSnapshotRequest request) {
+        super();
+        this.request = request;
+        if (this.request.isIncludeDriftDirectories()) {
+            directoryMap = new TreeMap<String, DriftSnapshotDirectory>();
+        }
+        if (this.request.isIncludeDriftInstances()) {
+            driftMap = new TreeMap<String, Drift<?, ?>>();
+        }
+    }
 
     public int getVersion() {
         return version;
     }
 
-    public Collection<Drift<?, ?>> getEntries() {
-        return entries.values();
+    public Collection<Drift<?, ?>> getDriftInstances() {
+        if (null == driftMap) {
+            return null;
+        }
+
+        return driftMap.values();
     }
 
-    public <D extends Drift<?, ?>> DriftSnapshot add(DriftChangeSet<D> changeSet) {
-        for (Drift<?, ?> entry : changeSet.getDrifts()) {
-            entries.remove(entry.getPath());
-            if (entry.getCategory() != FILE_REMOVED) {
-                entries.put(entry.getPath(), entry);
+    public Collection<DriftSnapshotDirectory> getDriftDirectories() {
+        if (null == directoryMap) {
+            return null;
+        }
+
+        return directoryMap.values();
+    }
+
+    //public <D extends Drift<?, ?>> DriftSnapshot addChangeSet(DriftChangeSet<D> changeSet) {
+    // TODO: add to plugin facet a getInstance capability for DriftChangeSet so we can actually
+    //       create a slim DriftChangeSet to set on the Drifts. Without this we'll get class cast
+    //       exceptions.  That's why we currently hijack the passed in DriftChangeSet. When we do that
+    //       perhaps we can get a version that doesn't need to suppress unchecked warnings.
+    /**
+     * MAJOR SIDE_EFFECT! This method will on exit will leave changeSet.getDrifts() null.
+     * 
+     * @param changeSet
+     * @return
+     */
+    @SuppressWarnings("unchecked")
+    public DriftSnapshot addChangeSet(DriftChangeSet changeSet) {
+
+        String dirFilter = request.getDirectory();
+        Set<Drift> drifts = changeSet.getDrifts();
+        changeSet.setDrifts(null);
+
+        for (Drift drift : drifts) {
+            String path = drift.getPath();
+
+            if (request.isIncludeDriftDirectories()) {
+                int i = path.lastIndexOf("/");
+                String key = (i != -1) ? path.substring(0, i) : "";
+                DriftSnapshotDirectory dir = directoryMap.get(key);
+                if (null == dir) {
+                    dir = new DriftSnapshotDirectory(key);
+                    directoryMap.put(key, dir);
+                }
+                switch (drift.getCategory()) {
+                case FILE_ADDED:
+                    dir.incrementAdded();
+                    dir.incrementFiles();
+                    break;
+                case FILE_CHANGED:
+                    dir.incrementChanged();
+                    break;
+                case FILE_REMOVED:
+                    dir.incrementRemoved();
+                    dir.decrementFiles();
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected drift category: " + drift.getCategory().name());
+                }
+            }
+
+            if (request.isIncludeDriftInstances()) {
+
+                if ((null != dirFilter) && (!dirFilter.equals(drift.getDirectory()))) {
+                    continue;
+                }
+
+                if (drift.getCategory() == FILE_REMOVED) {
+                    driftMap.remove(path);
+                } else {
+                    // add drift instance to map, or replace with latest drift instance for the given path
+                    drift.setChangeSet(changeSet);
+                    driftMap.put(drift.getPath(), drift);
+                }
             }
         }
         version = changeSet.getVersion();
@@ -62,23 +153,27 @@ public class DriftSnapshot implements Serializable {
     }
 
     public DriftDiffReport<?> diff(DriftSnapshot right) {
+        if (!(right.request.isIncludeDriftInstances() && this.request.isIncludeDriftInstances())) {
+            throw new IllegalArgumentException("Cannot compare DriftSnapshots that do not contain drift instances");
+        }
+
         DriftSnapshot left = this;
         DriftDiffReport<Drift<?, ?>> diff = new DriftDiffReport<Drift<?, ?>>();
 
-        for (Map.Entry<String, Drift<?, ?>> entry : left.entries.entrySet()) {
-            if (!right.entries.containsKey(entry.getKey())) {
+        for (Map.Entry<String, Drift<?, ?>> entry : left.driftMap.entrySet()) {
+            if (!right.driftMap.containsKey(entry.getKey())) {
                 diff.elementNotInRight(entry.getValue());
             }
         }
 
-        for (Map.Entry<String, Drift<?, ?>> entry : right.entries.entrySet()) {
-            if (!left.entries.containsKey(entry.getKey())) {
+        for (Map.Entry<String, Drift<?, ?>> entry : right.driftMap.entrySet()) {
+            if (!left.driftMap.containsKey(entry.getKey())) {
                 diff.elementNotInLeft(entry.getValue());
             }
         }
 
-        for (Map.Entry<String, Drift<?, ?>> entry : left.entries.entrySet()) {
-            Drift<?, ?> rightDrift = right.entries.get(entry.getKey());
+        for (Map.Entry<String, Drift<?, ?>> entry : left.driftMap.entrySet()) {
+            Drift<?, ?> rightDrift = right.driftMap.get(entry.getKey());
             if (rightDrift != null) {
                 DriftFile leftFile = entry.getValue().getNewDriftFile();
                 DriftFile rightFile = rightDrift.getNewDriftFile();
@@ -90,6 +185,72 @@ public class DriftSnapshot implements Serializable {
         }
 
         return diff;
+    }
+
+    public DriftSnapshotRequest getRequest() {
+        return request;
+    }
+
+    public static class DriftSnapshotDirectory implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        private String directoryPath;
+        private int files = 0;
+        private int added = 0;
+        private int changed = 0;
+        private int removed = 0;
+
+        /** for smartgwt, do not call */
+        public DriftSnapshotDirectory() {
+        }
+
+        public DriftSnapshotDirectory(String directoryPath) {
+            this.directoryPath = directoryPath;
+        }
+
+        public String getDirectoryPath() {
+            return directoryPath;
+        }
+
+        public int getFiles() {
+            return files;
+        }
+
+        protected void decrementFiles() {
+            if (this.files > 0) {
+                --this.files;
+            }
+        }
+
+        protected void incrementFiles() {
+            ++this.files;
+        }
+
+        public int getAdded() {
+            return added;
+        }
+
+        protected void incrementAdded() {
+            ++this.added;
+        }
+
+        public int getChanged() {
+            return changed;
+        }
+
+        protected void incrementChanged() {
+            ++this.changed;
+        }
+
+        public int getRemoved() {
+            return removed;
+        }
+
+        protected void incrementRemoved() {
+            ++this.removed;
+        }
+
     }
 
 }

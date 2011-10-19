@@ -47,7 +47,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
         this.groupId = groupId;
         setDataSource(new GroupMeasurementTableDataSource(groupComposite, groupId));
         //disable fields used when is full screen
-        setShowFooterRefresh(false);
+        setShowFooterRefresh(true);
         setTitle(MSG.common_title_numeric_metrics());
     }
 

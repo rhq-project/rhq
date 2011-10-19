@@ -33,7 +33,6 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
-import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -42,7 +41,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -79,10 +77,10 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
 
     /**
      * Like the above method, but can find ignored, commited or both
-     * @param user
-     * @param statuses
-     * @param pc
-     * @return
+     * @param user the subject
+     * @param statuses the inventory status'
+     * @param pc page control
+     * @return the queued platforms and servers
      */
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(Subject user, EnumSet<InventoryStatus> statuses,
         PageControl pc);
@@ -191,5 +189,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * @param upgradeRequests contains the information about the upgrade of individual resources.
      * @return details on what resources have been upgraded with what data.
      */
-    Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequest);
+    Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests);
+
+    void updateAgentInventoryStatus(String platformsList, String serversList);
 }

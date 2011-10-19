@@ -145,6 +145,7 @@ public class ResourceTreeDatasource extends DataSource {
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
+            criteria.fetchParentResource(true);
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
@@ -229,7 +230,7 @@ public class ResourceTreeDatasource extends DataSource {
         return result.toArray(new TreeNode[result.size()]);
     }
 
-    /**  
+    /**
      * @param resourceNodes ordered such that referenced parent nodes have lower indexes than the referencing child.
      * @return a new List, properly ordered and including AG and Subcategory nodes.
      */
@@ -286,7 +287,7 @@ public class ResourceTreeDatasource extends DataSource {
                     if (autogroupNode.isParentSubcategory()) {
                         // If the parent node of the autogroup node is a subcategory node, make sure the subcategory
                         // node is in the tree prior to the autogroup node.  Note that it could itself be a
-                        // tree of subcategories.   
+                        // tree of subcategories.
                         addSubCategoryNodes(allNodes, allNodeIds, resource);
                     }
                     allNodeIds.add(autoGroupNodeID);
@@ -333,7 +334,7 @@ public class ResourceTreeDatasource extends DataSource {
         /**
          * The parentID will be set to the parent resource at construction.  It can be changed
          * later (prior to tree linkage) if the resource node should logically be set to an
-         * autogroup or subcategory parent.  
+         * autogroup or subcategory parent.
          * @param resource
          * @param isLocked
          */
@@ -479,7 +480,7 @@ public class ResourceTreeDatasource extends DataSource {
          * Generates a backing group name based on the resource type name and parent resource name.  It may not be unique
          * so should not be used to query for the group (use rtId and parentResId). The name may be displayed to the
          * user.
-         * 
+         *
          * @return The name of the backing group.
          */
         public String getBackingGroupName() {
@@ -491,9 +492,9 @@ public class ResourceTreeDatasource extends DataSource {
         }
 
         /**
-         * Given a Resource, generate a unique ID for the AGNode. 
-         * 
-         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent) 
+         * Given a Resource, generate a unique ID for the AGNode.
+         *
+         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent)
          * @return The name string or null if the parentResource is null.
          */
         public static String idOf(Resource resource) {
@@ -503,7 +504,7 @@ public class ResourceTreeDatasource extends DataSource {
 
         /**
          * Given an autogroup's parent Resource and member ResourceType, generate a unique ID for an autogroup TreeNode.
-         * 
+         *
          * @param parentResource requires resourceType field be set.  requires parentResource field be set (null for no parent)
          * @param resourceType the member ResourceType
          *

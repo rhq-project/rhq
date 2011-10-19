@@ -105,6 +105,8 @@ import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.drift.DriftManagerBean;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
+import org.rhq.enterprise.server.drift.DriftTemplateManagerBean;
+import org.rhq.enterprise.server.drift.DriftTemplateManagerLocal;
 import org.rhq.enterprise.server.drift.JPADriftServerBean;
 import org.rhq.enterprise.server.drift.JPADriftServerLocal;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
@@ -457,6 +459,10 @@ public final class LookupUtil {
 
     public static DriftManagerLocal getDriftManager() {
         return lookupLocal(DriftManagerBean.class);
+    }
+
+    public static DriftTemplateManagerLocal getDriftTemplateManager() {
+        return lookupLocal(DriftTemplateManagerBean.class);
     }
 
     public static JPADriftServerLocal getJPADriftServer() {

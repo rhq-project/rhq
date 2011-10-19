@@ -1,7 +1,7 @@
 package org.rhq.core.domain.util;
 
 /**
- * A page control that shows all results. The page number and page size are 0 and @{link #SIZE_UNLIMITED} respectively,
+ * A page control that shows all results. The page number and page size are 0 and {@link #SIZE_UNLIMITED} respectively,
  * and are immutable.
  *
  * @author Ian Springer

@@ -2,6 +2,7 @@
 <plugin name="IRC Server"
         displayName="IRC ServerPlugin"
         package="org.rhq.plugins.irc"
+        description="Allows to monitor properties of IRC (Internet Relay Chat) channels"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -16,7 +17,7 @@
         <plugin-configuration>
             <c:simple-property name="host"/>
             <c:simple-property name="port" type="integer" default="6667"/>
-            <c:simple-property name="botNick" default="JoprBot"/>
+            <c:simple-property name="botNick" default="RhqBot"/>
         </plugin-configuration>
 
 

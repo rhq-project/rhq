@@ -83,6 +83,7 @@
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
             <version>1.0b3</version>
+            <scope>runtime</scope> <!-- needs to be runtime otherwise it will not be included by assembly plugin -->
             <exclusions>
                <exclusion>
                    <groupId>ant</groupId>

@@ -9,7 +9,6 @@
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
-   <groupId>org.rhq</groupId>
    <artifactId>rhq-enterprise-server</artifactId>
    <packaging>ejb</packaging>
 
@@ -81,27 +80,6 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
-         <artifactId>test-utils</artifactId>
-         <version>${project.version}</version>
-         <scope>test</scope>
-          <exclusions>
-              <exclusion>
-                  <groupId>org.testng</groupId>
-                  <artifactId>testng</artifactId>
-              </exclusion>
-          </exclusions>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
          <artifactId>rhq-common-drift</artifactId>
          <version>${project.version}</version>
       </dependency>
@@ -118,7 +96,53 @@
            reasons.  Maven orders the [test] classpath in the order listed in the pom.  We specifically
            need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
            loaded when testing.  -->
-           
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+               <groupId>org.testng</groupId>
+               <artifactId>testng</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.rhq.helpers</groupId>
+        <artifactId>perftest-support</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
       <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
@@ -126,28 +150,12 @@
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>rhq-core-client-api</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-      </dependency>
-
-
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
          <groupId>antlr</groupId>
          <artifactId>antlr</artifactId>
          <version>2.7.7</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
-         <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
@@ -177,23 +185,6 @@
            <artifactId>opencsv</artifactId>
            <version>1.8</version>
            <scope>test</scope>
-       </dependency>
-
-       <dependency>
-        <groupId>org.rhq.helpers</groupId>
-        <artifactId>perftest-support</artifactId>
-        <version>${project.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>ant</groupId>
-            <artifactId>ant-launcher</artifactId>
-          </exclusion>
-        </exclusions>
        </dependency>
 
        <dependency>
@@ -270,6 +261,13 @@
       <dependency>
          <groupId>hibernate-annotations</groupId>
          <artifactId>hibernate-annotations</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
@@ -465,11 +463,41 @@
          <scope>provided</scope>
       </dependency>
 
-
        <dependency>
            <groupId>com.jcraft</groupId>
            <artifactId>jsch</artifactId>
            <version>0.1.29</version>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxrs</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jettison-provider</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-links</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.el</groupId>
+           <artifactId>jboss-el</artifactId>
+           <version>2.0.1.GA</version>
+           <scope>provided</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.freemarker</groupId>
+           <artifactId>freemarker</artifactId>
+           <version>2.3.18</version>
+           <scope>provided</scope>
        </dependency>
 
    </dependencies>
@@ -478,7 +506,7 @@
       <finalName>${project.artifactId}</finalName>
 
       <resources>
-         <!-- Redefine which directories to treat like resources(which are filtered). -->
+         <!-- Redefine which directories to treat like resources (which are filtered). -->
          <resource>
            <directory>src/main/filtered-sources/java</directory>
            <filtering>true</filtering>
@@ -576,7 +604,7 @@ Build-OS-Version=${os.version}
          </plugin>
 
          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
+           <artifactId>maven-surefire-plugin</artifactId>
             <!-- Everything but the web service tests, this is the standard test execution -->
            <configuration>
                <excludes>
@@ -593,7 +621,7 @@ Build-OS-Version=${os.version}
                </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->
-               <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
                </additionalClasspathElements>
             </configuration>
          </plugin>
@@ -632,7 +660,7 @@ Build-OS-Version=${os.version}
                </execution>
             </executions>
          </plugin>
-      
+
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>

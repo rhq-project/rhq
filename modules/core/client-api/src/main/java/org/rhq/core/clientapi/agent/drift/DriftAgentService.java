@@ -24,6 +24,7 @@ import java.util.List;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 
 /**
  * The interface to agent's drift subsystem which allows the server to request
@@ -127,9 +128,11 @@ public interface DriftAgentService {
      *
      * @param resourceId The id of the resource to which the referenced drift definition
      * belongs.
-     * @param driftDefName The name of the drift definition to which the content
+     * @param defName The name of the drift definition to which the content
      * belongs.
      * @param token A token that is used to identify the content zip file
      */
-    void ackChangeSetContent(int resourceId, String driftDefName, String token);
+    void ackChangeSetContent(int resourceId, String defName, String token);
+
+    void pinSnapshot(int resourceId, String defName, DriftSnapshot snapshot);
 }

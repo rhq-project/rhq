@@ -54,18 +54,34 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
         setSteps(steps);
     }
 
+    @Override
     public String getWindowTitle() {
-        return MSG.view_drift_wizard_addDef_windowTitle();
+        switch (getEntityContext().getType()) {
+        case SubsystemView:
+            return MSG.view_drift_wizard_addTemplate_windowTitle();
+
+        default:
+            return MSG.view_drift_wizard_addDef_windowTitle();
+        }
     }
 
+    @Override
     public String getTitle() {
-        return MSG.view_drift_wizard_addDef_title(getType().getName());
+        switch (getEntityContext().getType()) {
+        case SubsystemView:
+            return MSG.view_drift_wizard_addTemplate_title(getType().getName());
+
+        default:
+            return MSG.view_drift_wizard_addDef_title(getType().getName());
+        }
     }
 
+    @Override
     public String getSubtitle() {
         return null;
     }
 
+    @Override
     public void execute() {
         EntityContext context = getEntityContext();
         switch (context.getType()) {
@@ -93,10 +109,29 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
             break;
 
+        case SubsystemView:
+            GWTServiceLookup.getDriftService().createTemplate(getType().getId(), getNewDriftDefinition(),
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_drift_wizard_addTemplate_success(getNewDriftDefinition().getName()),
+                                Message.Severity.Info));
+                        getView().closeDialog();
+                        DriftAddDefinitionWizard.this.table.refresh();
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_drift_wizard_addTemplate_failure(getNewDriftDefinition().getName()), caught);
+                        getView().closeDialog();
+                    }
+                });
+
+            break;
+
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
         }
-
     }
 
     public static void showWizard(final EntityContext context, final Table<?> table) {
@@ -115,7 +150,7 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
                     final Resource resource = result.get(0);
 
-                    // bypass type cache because this is infrequent an we don't need to cache the
+                    // bypass type cache because this is infrequent and we don't need to cache the
                     // drift def templates
                     ResourceTypeCriteria rtc = new ResourceTypeCriteria();
                     rtc.addFilterId(resource.getResourceType().getId());
@@ -137,7 +172,6 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
                                 CoreGUI.getErrorHandler().handleError(MSG.widget_typeTree_loadFail(), caught);
                             }
                         });
-
                 }
 
                 public void onFailure(Throwable caught) {

@@ -35,6 +35,10 @@ public class DriftDetectionSummary {
 
     private File driftChangeSet;
 
+    private boolean repeat;
+
+    private int version;
+
     public DriftDetectionSchedule getSchedule() {
         return schedule;
     }
@@ -73,6 +77,22 @@ public class DriftDetectionSummary {
 
     public void setDriftChangeSet(File driftChangeSet) {
         this.driftChangeSet = driftChangeSet;
+    }
+
+    public boolean isRepeat() {
+        return repeat;
+    }
+
+    public void setRepeat(boolean repeat) {
+        this.repeat = repeat;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
     }
 
 }

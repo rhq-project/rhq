@@ -14,6 +14,22 @@
        </authentication>
     </application-policy>
 
+    <!-- Policy for REST. This allows to have the servlet-ejb-container integration to forward the authenticated JEE
+         Subject to be forwarded to the EJB layer -->
+    <application-policy name="REST">
+       <authentication>
+          <login-module code = "org.jboss.security.auth.spi.DatabaseServerLoginModule" flag = "required">
+             <module-option name = "dsJndiName">java:/RHQDS</module-option>
+             <module-option name = "principalsQuery">SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?</module-option>
+             <module-option name = "rolesQuery">SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?</module-option>
+             <module-option name = "hashAlgorithm">MD5</module-option>
+             <module-option name = "hashEncoding">base64</module-option>
+          </login-module>
+       </authentication>
+
+    </application-policy>
+
+
 <!-- security domains for encrypted dataseouce passwords -->
  <application-policy name = "XADSRealm">
        <authentication>

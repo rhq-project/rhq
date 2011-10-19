@@ -27,8 +27,8 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -43,8 +43,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
  */
 @Local
 public interface JPADriftServerLocal {
-
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
     /**
      * Simple get method for a JPADriftFile. Does not return the content.
@@ -71,6 +69,10 @@ public interface JPADriftServerLocal {
      * @return The Drifts matching the criteria
      */
     PageList<JPADrift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+
+    String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
+
+    String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId);
 
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN 

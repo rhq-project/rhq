@@ -313,13 +313,29 @@ public class FileUtil {
     }
 
     /**
-     * Ensure that the path uses only forward slash like @{link java.io.File(String,String)} 
+     * Ensure that the path uses only forward slash.
      * @param path
      * @return forward-slashed path, or null if path is null
      */
     public static String useForwardSlash(String path) {
 
         return (null != path) ? path.replace('\\', '/') : null;
+    }
+
+    /**
+     * Return just the filename portion (the portion right of the last path separator string)
+     * @param path
+     * @param separator
+     * @return null if path is null, otherwise the trimmed filename  
+     */
+    public static String getFileName(String path, String separator) {
+        if (null == path) {
+            return null;
+        }
+
+        int i = path.lastIndexOf(separator);
+
+        return (i < 0) ? path.trim() : path.substring(++i).trim();
     }
 
     /**

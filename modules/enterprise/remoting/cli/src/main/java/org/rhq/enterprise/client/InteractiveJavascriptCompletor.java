@@ -51,7 +51,6 @@ import org.rhq.enterprise.client.utility.ReflectionUtility;
  *
  * @author Greg Hinkle
  */
-@SuppressWarnings("unchecked")
 public class InteractiveJavascriptCompletor implements Completor {
 
     private Map<String, Object> services;
@@ -91,7 +90,8 @@ public class InteractiveJavascriptCompletor implements Completor {
         this.services = services;
     }
 
-    public int complete(String s, int i, List list) {
+    @SuppressWarnings("unchecked")
+    public int complete(String s, int i, @SuppressWarnings("rawtypes") List list) {
         try {
             if (lastComplete != null && lastComplete.equals(s)) {
                 recomplete++;
@@ -167,7 +167,7 @@ public class InteractiveJavascriptCompletor implements Completor {
      * @param list
      * @return location of relative completion
      */
-    public int contextComplete(Object baseObject, String s, int i, List list) {
+    public int contextComplete(Object baseObject, String s, int i, List<String> list) {
         String temp = s.split("\\(", 2)[0];
         if (temp.contains(".")) {
             String[] call = temp.split("\\.", 2);
@@ -204,7 +204,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                 int x = 0;
                 for (String key : matches.keySet()) {
 
-                    List matchList = matches.get(key);
+                    List<Object> matchList = matches.get(key);
 
                     if (recomplete == 2) {
                         List<Method> methods = new ArrayList<Method>();
@@ -314,11 +314,11 @@ public class InteractiveJavascriptCompletor implements Completor {
      * @param method
      * @return
      */
-    public int completeParameters(Object baseObject, String params, int i, List list, Method method) {
+    public int completeParameters(Object baseObject, String params, int i, List<String> list, Method method) {
 
         String[] paramList = params.split(",");
 
-        Class[] c = method.getParameterTypes();
+        Class<?>[] c = method.getParameterTypes();
 
         String lastParam = paramList[paramList.length - 1];
         int paramIndex = paramList.length - 1;
@@ -348,8 +348,8 @@ public class InteractiveJavascriptCompletor implements Completor {
         } else {
 
             if (baseObject instanceof Map && method.getName().equals("get") && method.getParameterTypes().length == 1) {
-                Class keyType = method.getParameterTypes()[0];
-                for (Object key : ((Map) baseObject).keySet()) {
+                //unused Class<?> keyType = method.getParameterTypes()[0];
+                for (Object key : ((Map<?, ?>) baseObject).keySet()) {
                     String lookupChoice = "\'" + String.valueOf(key) + "\'";
                     if (lookupChoice.startsWith(lastParam)) {
                         list.add(lookupChoice);
@@ -360,7 +360,7 @@ public class InteractiveJavascriptCompletor implements Completor {
                 }
 
             } else {
-                Class parameterType = c[paramIndex];
+                Class<?> parameterType = c[paramIndex];
 
                 Map<String, Object> matches = getContextMatches(lastParam, parameterType);
 
@@ -406,7 +406,7 @@ public class InteractiveJavascriptCompletor implements Completor {
      * @param typeFilter
      * @return
      */
-    private Map<String, Object> getContextMatches(String start, Class typeFilter) {
+    private Map<String, Object> getContextMatches(String start, Class<?> typeFilter) {
         Map<String, Object> found = new HashMap<String, Object>();
         if (context != null) {
             for (int scope : context.getScopes()) {
@@ -424,7 +424,7 @@ public class InteractiveJavascriptCompletor implements Completor {
 
             if (typeFilter.isEnum()) {
                 for (Object ec : typeFilter.getEnumConstants()) {
-                    Enum e = (Enum) ec;
+                    Enum<?> e = (Enum<?>) ec;
                     String code = typeFilter.getSimpleName() + "." + e.name();
                     if (code.startsWith(start)) {
                         found.put(typeFilter.getSimpleName() + "." + e.name(), e);
@@ -438,9 +438,9 @@ public class InteractiveJavascriptCompletor implements Completor {
     private Map<String, List<Object>> getContextMatches(Object baseObject, String start) {
         Map<String, List<Object>> found = new HashMap<String, List<Object>>();
 
-        Class baseObjectClass = null;
+        Class<?> baseObjectClass = null;
         if (baseObject instanceof Class) {
-            baseObjectClass = (Class) baseObject;
+            baseObjectClass = (Class<?>) baseObject;
         } else {
             baseObjectClass = baseObject.getClass();
         }
@@ -462,9 +462,9 @@ public class InteractiveJavascriptCompletor implements Completor {
             for (PropertyDescriptor desc : descriptors) {
                 if (desc.getName().startsWith(start) && (!IGNORED_METHODS.contains(desc.getName()))) {
 
-                    List list = found.get(desc.getName());
+                    List<Object> list = found.get(desc.getName());
                     if (list == null) {
-                        list = new ArrayList();
+                        list = new ArrayList<Object>();
                         found.put(desc.getName(), list);
                     }
                     list.add(desc);
@@ -481,13 +481,13 @@ public class InteractiveJavascriptCompletor implements Completor {
 
                     Method m = desc.getMethod();
                     boolean isProxy = isProxyMethod(baseObject, m);
-                    Class[] parameters = m.getParameterTypes();
+                    Class<?>[] parameters = m.getParameterTypes();
                     boolean startsWithSubject = ((parameters.length > 0) && parameters[0].equals(Subject.class));
                     if ((isProxy && startsWithSubject) || !startsWithSubject) {
 
-                        List list = found.get(desc.getName());
+                        List<Object> list = found.get(desc.getName());
                         if (list == null) {
-                            list = new ArrayList();
+                            list = new ArrayList<Object>();
                             found.put(desc.getName(), list);
                         }
                         list.add(m);
@@ -505,14 +505,15 @@ public class InteractiveJavascriptCompletor implements Completor {
 
         // If its our service proxy lookup the original interface that has the annotations
         if (isProxyMethod(object, m)) {
-            Class[] params = m.getParameterTypes();
-            Class[] newParams = new Class[params.length + 1];
+            Class<?>[] params = m.getParameterTypes();
+            Class<?>[] newParams = new Class[params.length + 1];
             System.arraycopy(params, 0, newParams, 1, params.length);
             newParams[0] = Subject.class;
 
             try {
-                m = ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface().getDeclaredMethod(
-                    m.getName(), newParams);
+                m =
+                    ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface().getDeclaredMethod(
+                        m.getName(), newParams);
             } catch (NoSuchMethodException nsme) {
                 //
             }
@@ -569,8 +570,9 @@ public class InteractiveJavascriptCompletor implements Completor {
         if (object instanceof Proxy) {
             if (Proxy.getInvocationHandler(object) instanceof RemoteClientProxy) {
                 try {
-                    m = ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface()
-                        .getDeclaredMethod(m.getName(), m.getParameterTypes());
+                    m =
+                        ((RemoteClientProxy) Proxy.getInvocationHandler(object)).getRemoteInterface()
+                            .getDeclaredMethod(m.getName(), m.getParameterTypes());
                 } catch (NoSuchMethodException e) {
                     result = true;
                 }

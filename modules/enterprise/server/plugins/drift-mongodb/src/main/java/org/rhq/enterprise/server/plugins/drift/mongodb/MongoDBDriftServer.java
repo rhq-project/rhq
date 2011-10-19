@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -51,9 +54,8 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -71,9 +73,6 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
@@ -143,26 +142,26 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                     entry.setPath(path);
 
                     switch (fileEntry.getType()) {
-                        case FILE_ADDED:
-                            entry.setNewFileHash(fileEntry.getNewSHA());
-                            if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
-                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
-                            }
-                            break;
-                        case FILE_CHANGED:
-                            entry.setOldFileHash(fileEntry.getOldSHA());
-                            entry.setNewFileHash(fileEntry.getNewSHA());
-                            if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
-                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
-                            }
-                            if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
-                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
-                            }
-                            break;
-                        default:  // FILE_REMOVED
-                            if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
-                                missingContent.add(newDriftFile(fileEntry.getOldSHA()));
-                }
+                    case FILE_ADDED:
+                        entry.setNewFileHash(fileEntry.getNewSHA());
+                        if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
+                            missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                        }
+                        break;
+                    case FILE_CHANGED:
+                        entry.setOldFileHash(fileEntry.getOldSHA());
+                        entry.setNewFileHash(fileEntry.getNewSHA());
+                        if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
+                            missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                        }
+                        if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
+                            missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                        }
+                        break;
+                    default: // FILE_REMOVED
+                        if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
+                            missingContent.add(newDriftFile(fileEntry.getOldSHA()));
+                        }
                     }
                     changeSet.add(entry);
 
@@ -289,11 +288,6 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
-        return null;
-    }
-
-    @Override
     public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
         // TODO implement me!        
     }
@@ -305,7 +299,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public String getDriftFileBits(String hash) {
+    public String getDriftFileBits(Subject subject, String hash) {
         return null;
     }
 
@@ -351,5 +345,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         dto.setNewDriftFile(fileDTO);
 
         return dto;
+    }
+
+    @Override
+    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        // TODO Auto-generated method stub
+
     }
 }

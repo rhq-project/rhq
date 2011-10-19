@@ -635,6 +635,13 @@
             </xs:element>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="description" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  A summary of the drift definition template to be displayed to the user.
+               </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>        
     </xs:complexType>
 
     <xs:complexType name="DriftIncludes">

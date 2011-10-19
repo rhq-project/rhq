@@ -56,11 +56,14 @@ public class GeneralProperties extends LocatableVLayout {
     private ResourceGroupGWTServiceAsync resourceGroupService = GWTServiceLookup.getResourceGroupService();
     private ResourceGroupComposite groupComposite;
     private final ResourceGroupTitleBar titleBar;
+    private boolean isAutoGroup;
 
-    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar) {
+    public GeneralProperties(String locatorId, ResourceGroupComposite groupComposite, ResourceGroupTitleBar titleBar,
+                             boolean isAutoGroup) {
         super(locatorId);
         this.groupComposite = groupComposite;
         this.titleBar = titleBar;
+        this.isAutoGroup = isAutoGroup;
     }
 
     @Override
@@ -79,7 +82,7 @@ public class GeneralProperties extends LocatableVLayout {
 
         boolean isDynaGroup = (group.getGroupDefinition() != null);
         boolean hasInventoryPermission = (this.groupComposite.getResourcePermission().isInventory());
-        boolean isEditable = (!isDynaGroup && hasInventoryPermission);
+        boolean isEditable = (!isDynaGroup && !isAutoGroup && hasInventoryPermission);
 
         StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
         StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);

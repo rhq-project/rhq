@@ -87,6 +87,8 @@ public class AlertDefinitionCriteria extends Criteria {
 
         sortOverrides.put(SORT_FIELD_RESOURCE_ID, "resource.id");
         sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
+
+        fetchGroupAlertDefinition = true; // fetch group alert def by default
     }
 
     @Override

@@ -268,7 +268,7 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         criteria.fetchConfigurationDefinition(true);
         criteria.fetchTags(true);
 
-        bundleManager.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+        bundleManager.findBundleVersionsByCriteriaWithDestinationFilter(criteria, new AsyncCallback<PageList<BundleVersion>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
             }

@@ -16,9 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 package org.rhq.core.domain.drift;
 
 import static java.util.Collections.emptyList;
+import static javax.persistence.FetchType.LAZY;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -29,7 +31,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -62,8 +63,8 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jay Shaughnessy
  */
 @Entity
-@Table(name = "RHQ_DRIFT_CONFIG")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CONFIG_ID_SEQ")
+@Table(name = "RHQ_DRIFT_DEFINITION")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_DEFINITION_ID_SEQ")
 public class DriftDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -75,8 +76,11 @@ public class DriftDefinition implements Serializable {
     @Column(name = "CTIME", nullable = false)
     private Long ctime = -1L;
 
-    @Column(name = "NAME", nullable = false)
+    @Column(name = "NAME", nullable = false, length = 128)
     private String name;
+
+    @Column(name = "DESCRIPTION", nullable = true, length = 512)
+    private String description;
 
     @Column(name = "IS_ENABLED", nullable = false)
     private boolean isEnabled;
@@ -90,12 +94,19 @@ public class DriftDefinition implements Serializable {
     private long interval;
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = LAZY, optional = false)
     private Configuration configuration;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(optional = true)
     private Resource resource = null;
+
+    @ManyToOne(optional = true, fetch = LAZY)
+    @JoinColumn(name = "DRIFT_DEF_TEMPLATE_ID", referencedColumnName = "ID", nullable = true)
+    private DriftDefinitionTemplate template;
+
+    @Column(name = "IS_PINNED", nullable = false)
+    private boolean isPinned;
 
     // required for jaxb/web services stuff
     protected DriftDefinition() {
@@ -127,12 +138,23 @@ public class DriftDefinition implements Serializable {
     }
 
     public void setName(String name) {
-        if (null == name) {
-            throw new IllegalArgumentException("Drift congig name can not be null");
+        name = (null != name) ? name.trim() : name;
+
+        if (null == name || "".equals(name)) {
+            throw new IllegalArgumentException("Drift congig name can not be null or empty");
         }
 
         this.name = name;
         this.setNameProperty(name);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+        setDescriptionProperty(description);
     }
 
     public boolean isEnabled() {
@@ -182,16 +204,27 @@ public class DriftDefinition implements Serializable {
         this.setIntervalProperty(interval);
     }
 
+    public boolean isPinned() {
+        return isPinned;
+    }
+
+    public void setPinned(boolean isPinned) {
+        this.isPinned = isPinned;
+        setPinnedProperty(isPinned);
+    }
+
     public Configuration getConfiguration() {
         return configuration;
     }
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
-        this.name = this.getNameProperty();
-        this.isEnabled = this.getIsEnabledProperty();
-        this.interval = this.getIntervalProperty();
-        this.driftHandlingMode = this.getDriftHandlingModeProperty();
+        name = getNameProperty();
+        description = getDescriptionProperty();
+        isEnabled = getIsEnabledProperty();
+        interval = getIntervalProperty();
+        driftHandlingMode = getDriftHandlingModeProperty();
+        isPinned = getIsPinnedProperty();
     }
 
     public Resource getResource() {
@@ -203,6 +236,14 @@ public class DriftDefinition implements Serializable {
         if (this.resource != null) {
             this.resource.getDriftDefinitions().add(this);
         }
+    }
+
+    public DriftDefinitionTemplate getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(DriftDefinitionTemplate template) {
+        this.template = template;
     }
 
     @Override
@@ -290,6 +331,14 @@ public class DriftDefinition implements Serializable {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_NAME, name));
     }
 
+    private String getDescriptionProperty() {
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_DESCRIPTION, null);
+    }
+
+    private void setDescriptionProperty(String description) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_DESCRIPTION, description));
+    }
+
     public BaseDirectory getBasedir() {
         PropertyMap map = configuration.getMap(DriftConfigurationDefinition.PROP_BASEDIR);
         if (map == null) {
@@ -346,6 +395,14 @@ public class DriftDefinition implements Serializable {
 
     private void setIntervalProperty(Long interval) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
+    }
+
+    private boolean getIsPinnedProperty() {
+        return Boolean.valueOf(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_PINNED, "false"));
+    }
+
+    private void setPinnedProperty(boolean pinned) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED, pinned));
     }
 
     private DriftHandlingMode getDriftHandlingModeProperty() {

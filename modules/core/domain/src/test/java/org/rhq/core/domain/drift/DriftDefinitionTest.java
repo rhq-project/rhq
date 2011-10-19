@@ -1,11 +1,23 @@
-package org.rhq.core.domain.drift;
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.testng.Assert.assertEquals;
+package org.rhq.core.domain.drift;
 
 import java.util.List;
 
@@ -18,6 +30,15 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
+
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 public class DriftDefinitionTest {
     @Test
@@ -59,6 +80,36 @@ public class DriftDefinitionTest {
         assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different drift handling mode than " + dc2;
 
         dc1.setDriftHandlingMode(DriftHandlingMode.normal); // put them back to the same value
+
+        // change the description of dc1
+        dc1.setDescription("description 1");
+        assert comparator.compare(dc1, dc2) > 0 : dc1 + " description is different from dc2's";
+
+        // set the descriptions to be the same
+        dc2.setDescription(dc1.getDescription());
+        assert comparator.compare(dc1, dc2) == 0 : dc1 + " description should equal description of " + dc2;
+
+        // make dc1 description null
+        dc1.setDescription(null);
+        assert comparator.compare(dc1, dc2) < 0 : dc1 + " description is null and " + dc2 + " description is not null";
+
+        // make both dc1 and dc2 descriptions non-null and different
+        dc1.setDescription("description 1");
+        dc2.setDescription("description 2");
+        assert comparator.compare(dc1, dc2) < 0 : dc1 + " description is different from description of " + dc2;
+
+        // make descriptions same again
+        dc1.setDescription(null);
+        dc2.setDescription(null);
+
+        // Make dc1 pinned
+        dc1.setPinned(true);
+        assert comparator.compare(dc1, dc2) > 0 : dc1 + " is pinned";
+
+        // make both dc1 and dc2 pinned to the same versions
+        dc2.setPinned(true);
+        assert comparator.compare(dc1, dc2) == 0 : dc1 + " should be equal to " + dc2;
+
         dc1.setName("zzzzz" + dc2.getName());
         assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different name than " + dc2;
 
@@ -93,11 +144,13 @@ public class DriftDefinitionTest {
         dc1.setInterval(1000L);
         dc1.setDriftHandlingMode(DriftHandlingMode.normal);
         dc1.setName("the-name");
+        dc1.setPinned(true);
 
         dc2.setEnabled(true);
         dc2.setInterval(1000L);
         dc2.setDriftHandlingMode(DriftHandlingMode.normal);
         dc2.setName("the-name");
+        dc2.setPinned(true);
 
         getCompareBaseInfoAndIncludesExcludes(comparator, dc1, dc2);
     }
@@ -258,6 +311,17 @@ public class DriftDefinitionTest {
         mode = DriftHandlingMode.plannedChanges;
         driftDef.setDriftHandlingMode(mode);
         assertEquals(driftDef.getDriftHandlingMode(), mode, "Failed to get drift definition drift handling mode");
+    }
+
+    @Test
+    public void isPinned() {
+        Configuration config = new Configuration();
+        config.put(new PropertySimple(DriftConfigurationDefinition.PROP_PINNED, true));
+        DriftDefinition driftDef = new DriftDefinition(config);
+        assertTrue(driftDef.isPinned(), "Expected drift definition to be pinned");
+
+        driftDef.setPinned(false);
+        assertFalse(driftDef.isPinned(), "Expected drift definition not to be pinned");
     }
 
     @Test

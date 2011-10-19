@@ -346,9 +346,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 try {
                     operationManager.unscheduleGroupOperation(overlord, schedule.getJobId().toString(), group.getId());
                 } catch (UnscheduleException e) {
-                    log
-                        .warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]",
-                            e);
+                    log.warn("Failed to unschedule job [" + schedule + "] for a group being deleted [" + group + "]", e);
                 }
             }
         } catch (Exception e) {
@@ -797,8 +795,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions 
                  */
                 String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
-                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@", resourceIdsToAdd
-                        .size());
+                    ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
+                    resourceIdsToAdd.size());
                 insertImplicitStatement = conn.prepareStatement(insertImplicitQueryString);
                 insertImplicitStatement.setInt(1, implicitRecursiveGroupId);
                 JDBCUtil.bindNTimes(insertImplicitStatement, ArrayUtils.unwrapCollection(resourceIdsToAdd), 2);
@@ -860,9 +858,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         ResourceGroup group = getResourceGroupById(subject, groupId, category);
         Set<Resource> res = group.getExplicitResources();
         if (res != null && res.size() > 0) {
-            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager).createFilter(res,
-                "where this.inventoryStatus = :inventoryStatus").setParameter("inventoryStatus",
-                InventoryStatus.COMMITTED).list();
+            List<Resource> resources = PersistenceUtility.getHibernateSession(entityManager)
+                .createFilter(res, "where this.inventoryStatus = :inventoryStatus")
+                .setParameter("inventoryStatus", InventoryStatus.COMMITTED).list();
 
             return resources;
         } else {
@@ -1157,7 +1155,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                     long implicitCount = rs.getLong(3);
                     double implicitAvail = rs.getDouble(4);
                     int groupKey = rs.getInt(5);
-                    Object[] next = new Object[]{explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey};
+                    Object[] next = new Object[] { explicitCount, explicitAvail, implicitCount, implicitAvail, groupKey };
                     rawResults.add(next);
                 }
             } finally {
@@ -1388,9 +1386,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         if (((Number) data[2]).longValue() > 0) {
             composite = new ResourceGroupComposite( //
                 ((Number) data[0]).longValue(), //
-                ((Number) data[1]).doubleValue(), //
+                data[1] == null ? 0.0 : ((Number) data[1]).doubleValue(), //
                 ((Number) data[2]).longValue(), //
-                ((Number) data[3]).doubleValue(), //
+                data[3] == null ? 0.0 : ((Number) data[3]).doubleValue(), //
                 group, facets);
         } else {
             composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);

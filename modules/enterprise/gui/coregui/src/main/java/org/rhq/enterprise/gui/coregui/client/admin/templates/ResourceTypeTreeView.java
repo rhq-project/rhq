@@ -18,20 +18,21 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -39,26 +40,16 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.alert.definitions.TemplateAlertDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
-import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -72,15 +63,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ResourceTypeTreeView extends LocatableVLayout implements BookmarkableView {
+public abstract class ResourceTypeTreeView extends LocatableVLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Templates", MSG.view_adminConfig_templates());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
-        + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
+        + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/";
 
     private Layout gridCanvas;
-    private Layout alertTemplateCanvas;
-    private Layout metricTemplateCanvas;
 
     public ResourceTypeTreeView(String locatorId) {
         super(locatorId);
@@ -89,28 +77,25 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
         setHeight100();
     }
 
+    abstract protected String getEditLink(String id);
+
+    abstract protected TitleBar getTitleBar();
+
+    abstract protected Collection<ListGridField> getAdditionalListGridFields(boolean isTreeGrid);
+
+    abstract protected ResourceTypeTreeNodeBuilder getNodeBuilderInstance(ListGrid platformsList,
+        ListGrid platformServicesList, TreeGrid serversTreeGrid);
+
+    abstract protected void editTemplates(ResourceType type, ViewPath viewPath);
+
     @Override
-    public void renderView(ViewPath viewPath) {
+    public void renderView(final ViewPath viewPath) {
         if (viewPath.isEnd()) {
             switchToCanvas(this, getGridCanvas());
-        } else {
-            // we must be asked to go to a specific resource type
-            // the path must be one of "Alert/#####" or "Metric/#####"
-            // where ##### is a resource type ID
-            ViewId typeOfTemplatePath = viewPath.getCurrent();
-            final boolean isAlertTemplate; // true=alert template; false=metric template
-            if ("Alert".equals(typeOfTemplatePath.getPath())) {
-                isAlertTemplate = true;
-            } else if ("Metric".equals(typeOfTemplatePath.getPath())) {
-                isAlertTemplate = false;
-            } else {
-                CoreGUI.getErrorHandler()
-                    .handleError(MSG.widget_typeTree_badTemplateType(typeOfTemplatePath.getPath()));
-                return;
-            }
 
-            viewPath.next();
+        } else {
             final int resourceTypeId;
+
             try {
                 resourceTypeId = viewPath.getCurrentAsInt();
             } catch (Exception e) {
@@ -118,19 +103,27 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 return;
             }
 
-            if (isAlertTemplate) {
-                editAlertTemplate(resourceTypeId, viewPath);
-            } else {
-                editMetricTemplate(resourceTypeId);
-            }
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceTypeId, getTypeMetadataTypes(),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(ResourceType type) {
+                        editTemplates(type, viewPath);
+                    }
+                });
         }
+    }
+
+    /**
+     * @return The Set of metadata types required by the implementing class for the selected type.
+     */
+    protected EnumSet<ResourceTypeRepository.MetadataType> getTypeMetadataTypes() {
+        return EnumSet.noneOf(ResourceTypeRepository.MetadataType.class);
     }
 
     private Canvas getGridCanvas() {
         if (this.gridCanvas == null) {
             LocatableVLayout layout = new LocatableVLayout(extendLocatorId("gridLayout"));
 
-            TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_templates(), ImageManager.getMetricEditIcon());
+            TitleBar titleBar = getTitleBar();
             titleBar.setExtraSpace(10);
             layout.addMember(titleBar);
 
@@ -160,34 +153,10 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             this.gridCanvas = layout;
 
             // this will asynchronously populate the grids with the appropriate data
-            new ResourceTypeTreeNodeBuilder(platformsList, platformServicesList, serversTreeGrid);
+            getNodeBuilderInstance(platformsList, platformServicesList, serversTreeGrid);
         }
 
         return this.gridCanvas;
-    }
-
-    private Layout getAlertTemplateCanvas() {
-        if (this.alertTemplateCanvas == null) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("alertTemplateLayout"));
-            layout.setHeight100();
-            layout.setWidth100();
-            layout.setMargin(5);
-            this.alertTemplateCanvas = layout;
-        }
-
-        return this.alertTemplateCanvas;
-    }
-
-    private Layout getMetricTemplateCanvas() {
-        if (this.metricTemplateCanvas == null) {
-            LocatableVLayout layout = new LocatableVLayout(extendLocatorId("metricTemplateLayout"));
-            layout.setHeight100();
-            layout.setWidth100();
-            layout.setMargin(5);
-            this.metricTemplateCanvas = layout;
-        }
-
-        return this.metricTemplateCanvas;
     }
 
     /**
@@ -197,19 +166,20 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
      * @param parentCanvas parent to show the given canvas
      * @param canvasToShow the canvas to show in the parent
      */
-    private void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
+    protected void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
         SeleniumUtility.destroyMembers(parentCanvas);
 
         parentCanvas.addMember(canvasToShow);
         parentCanvas.markForRedraw();
     }
 
-    private void prepareSubCanvas(Layout parentCanvas, Canvas canvasToShow, boolean showBackButton) {
+    protected void prepareSubCanvas(Layout parentCanvas, Canvas canvasToShow, boolean showBackButton) {
         SeleniumUtility.destroyMembers(parentCanvas);
 
         if (showBackButton) {
-            String backLink = LinkManager.getAdminTemplatesLink().substring(1); // strip the #
-            BackButton backButton = new BackButton(extendLocatorId("BackButton"), "Back to List", backLink);
+            String backLink = getEditLink(null).substring(1); // strip the #
+            BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
+                backLink);
             parentCanvas.addMember(backButton);
         }
 
@@ -217,152 +187,49 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
         parentCanvas.markForRedraw();
     }
 
-    private void editAlertTemplate(int resourceTypeId, final ViewPath viewPath) {
-        final Integer[] idArray = new Integer[] { resourceTypeId };
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(idArray, new TypesLoadedCallback() {
-
-            public void onTypesLoaded(final Map<Integer, ResourceType> types) {
-                new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-
-                    public void onPermissionsLoaded(Set<Permission> permissions) {
-                        ResourceType rt = types.get(idArray[0]);
-                        Layout alertCanvas = getAlertTemplateCanvas();
-                        String locatorId = extendLocatorId("alertTemplateDef");
-                        TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt, permissions);
-                        def.renderView(viewPath.next());
-                        prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
-                        switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
-                    }
-                });
-            }
-        });
-    }
-
-    private void editMetricTemplate(final int resourceTypeId) {
-        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-
-            public void onPermissionsLoaded(Set<Permission> permissions) {
-                Layout metricCanvas = getMetricTemplateCanvas();
-                TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(
-                    extendLocatorId("MetricTemplate"), resourceTypeId, permissions);
-                prepareSubCanvas(metricCanvas, templateSchedulesView, true);
-                switchToCanvas(ResourceTypeTreeView.this, metricCanvas);
-            }
-        });
-    }
-
     public class CustomResourceTypeListGrid extends LocatableListGrid {
-        private HLayout rollOverCanvas;
-        private ListGridRecord rollOverRecord;
 
         public CustomResourceTypeListGrid(String locatorId) {
             super(locatorId);
 
             setWrapCells(true);
             setFixedRecordHeights(false);
-            setShowRollOverCanvas(true);
             setEmptyMessage(MSG.common_msg_loading());
             setSelectionType(SelectionStyle.NONE);
+
+            ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
             final ListGridField nameField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
                 .common_title_name());
             nameField.setShowValueIconOnly(false);
+            fields.add(nameField);
 
             final ListGridField pluginField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
                 .common_title_plugin());
-            final ListGridField categoryField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
-                .common_title_category());
-            categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
-            final ListGridField enabledAlertTemplatesField = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, MSG
-                    .view_adminTemplates_enabledAlertTemplates());
-            final ListGridField disabledAlertTemplatesField = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, MSG
-                    .view_adminTemplates_disabledAlertTemplates());
-            final ListGridField enabledMetricTemplatesField = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, MSG
-                    .view_adminTemplates_enabledMetricTemplates());
-            final ListGridField disabledMetricTemplatesField = new ListGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, MSG
-                    .view_adminTemplates_disabledMetricTemplates());
-
+            fields.add(pluginField);
             pluginField.setHidden(true);
-            categoryField.setHidden(true);
+
+            fields.addAll(getAdditionalListGridFields(false));
+
+            ListGridField editField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT, MSG
+                .common_title_edit());
+            editField.setType(ListGridFieldType.IMAGE);
+            editField.setAlign(Alignment.CENTER);
+            editField.addRecordClickHandler(new RecordClickHandler() {
+
+                public void onRecordClick(RecordClickEvent event) {
+                    CoreGUI
+                        .goToView(getEditLink(event.getRecord().getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID)));
+                }
+            });
+            fields.add(editField);
 
             nameField.setWidth("*");
-            pluginField.setWidth("10%");
-            categoryField.setWidth("5%");
-            enabledAlertTemplatesField.setWidth("10%");
-            disabledAlertTemplatesField.setWidth("10%");
-            enabledMetricTemplatesField.setWidth("10%");
-            disabledMetricTemplatesField.setWidth("10%");
+            pluginField.setWidth("20%");
+            // note that the additional fields should set their own width
+            editField.setWidth("70");
 
-            enabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
-            disabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
-            enabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
-            disabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
-
-            setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField,
-                enabledMetricTemplatesField, disabledMetricTemplatesField);
-        }
-
-        @Override
-        protected Canvas getRollOverCanvas(Integer rowNum, Integer colNum) {
-            rollOverRecord = this.getRecord(rowNum);
-            String typeLocator = "unused";
-
-            // If locators are enabled (i.e. this is a selenium test env) ensure we have a usable locator, so
-            // don't reuse the rollover canvas, create a new one for the current type.
-            if (!SeleniumUtility.isUseDefaultIds()) {
-                typeLocator = rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN) + "_"
-                    + rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_NAME);
-
-                if (null != rollOverCanvas) {
-                    Canvas temp = rollOverCanvas;
-                    rollOverCanvas = null;
-                    temp.markForDestroy();
-                }
-            }
-
-            if (rollOverCanvas == null) {
-                rollOverCanvas = new HLayout(3);
-                rollOverCanvas.setSnapTo("TR");
-                rollOverCanvas.setWidth(50);
-                rollOverCanvas.setHeight(22);
-
-                LocatableImgButton metricTemplateImg = new LocatableImgButton(extendLocatorId("Metric_" + typeLocator));
-                metricTemplateImg.setShowDown(false);
-                metricTemplateImg.setShowRollOver(false);
-                metricTemplateImg.setLayoutAlign(Alignment.CENTER);
-                metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
-                metricTemplateImg.setPrompt(MSG.view_adminTemplates_editMetricTemplate());
-                metricTemplateImg.setHeight(16);
-                metricTemplateImg.setWidth(16);
-                metricTemplateImg.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Metric/" + getRollOverId());
-                    }
-                });
-
-                LocatableImgButton alertTemplateImg = new LocatableImgButton(extendLocatorId("Alert_" + typeLocator));
-                alertTemplateImg.setShowDown(false);
-                alertTemplateImg.setShowRollOver(false);
-                alertTemplateImg.setLayoutAlign(Alignment.CENTER);
-                alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
-                alertTemplateImg.setPrompt(MSG.view_adminTemplates_editAlertTemplate());
-                alertTemplateImg.setHeight(16);
-                alertTemplateImg.setWidth(16);
-                alertTemplateImg.addClickHandler(new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent event) {
-                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + getRollOverId());
-                    }
-                });
-
-                rollOverCanvas.addMember(metricTemplateImg);
-                rollOverCanvas.addMember(alertTemplateImg);
-            }
-            return rollOverCanvas;
+            setFields(fields.toArray(new ListGridField[fields.size()]));
         }
 
         @Override
@@ -374,112 +241,49 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 return super.getValueIcon(field, value, record);
             }
         }
-
-        private int getRollOverId() {
-            return Integer.parseInt(rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
-        }
     }
 
     public class CustomResourceTypeTreeGrid extends LocatableTreeGrid {
-        private HLayout rollOverCanvas;
-        private ListGridRecord rollOverRecord;
 
         public CustomResourceTypeTreeGrid(String locatorId) {
             super(locatorId);
 
             setWrapCells(true);
             setFixedRecordHeights(false);
-            setShowRollOverCanvas(true);
             setEmptyMessage(MSG.common_msg_loading());
             setSelectionType(SelectionStyle.NONE);
             setAnimateFolders(false);
 
+            ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
+
             final TreeGridField nameField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_NAME, MSG
                 .common_title_name());
+            fields.add(nameField);
+
             final TreeGridField pluginField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_PLUGIN, MSG
                 .common_title_plugin());
-            final TreeGridField categoryField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_CATEGORY, MSG
-                .common_title_category());
-            categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
-            final TreeGridField enabledAlertTemplatesField = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_ALERT_TEMPLATES, MSG
-                    .view_adminTemplates_enabledAlertTemplates());
-            final TreeGridField disabledAlertTemplatesField = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_ALERT_TEMPLATES, MSG
-                    .view_adminTemplates_disabledAlertTemplates());
-            final TreeGridField enabledMetricTemplatesField = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_ENABLED_METRIC_TEMPLATES, MSG
-                    .view_adminTemplates_enabledMetricTemplates());
-            final TreeGridField disabledMetricTemplatesField = new TreeGridField(
-                ResourceTypeTreeNodeBuilder.ATTRIB_DISABLED_METRIC_TEMPLATES, MSG
-                    .view_adminTemplates_disabledMetricTemplates());
+            fields.add(pluginField);
 
-            categoryField.setHidden(true);
+            fields.addAll(getAdditionalListGridFields(true));
+
+            ListGridField editField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT, MSG
+                .common_title_edit());
+            editField.setType(ListGridFieldType.IMAGE);
+            editField.setAlign(Alignment.CENTER);
+            editField.addRecordClickHandler(new RecordClickHandler() {
+
+                public void onRecordClick(RecordClickEvent event) {
+                    // TODO
+                }
+            });
+            fields.add(editField);
 
             nameField.setWidth("*");
-            pluginField.setWidth("10%");
-            categoryField.setWidth("5%");
-            enabledAlertTemplatesField.setWidth("10%");
-            disabledAlertTemplatesField.setWidth("10%");
-            enabledMetricTemplatesField.setWidth("10%");
-            disabledMetricTemplatesField.setWidth("10%");
+            pluginField.setWidth("20%");
+            // note that the additional fields should set their own width
+            editField.setWidth("70");
 
-            enabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledAlertTemplates());
-            disabledAlertTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledAlertTemplates());
-            enabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
-            disabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
-
-            setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField,
-                enabledMetricTemplatesField, disabledMetricTemplatesField);
-        }
-
-        @Override
-        protected Canvas getRollOverCanvas(Integer rowNum, Integer colNum) {
-            rollOverRecord = this.getRecord(rowNum);
-
-            if (rollOverCanvas == null) {
-                rollOverCanvas = new HLayout(3);
-                rollOverCanvas.setSnapTo("TR");
-                rollOverCanvas.setWidth(50);
-                rollOverCanvas.setHeight(22);
-
-                LocatableImgButton metricTemplateImg = new LocatableImgButton(extendLocatorId("Metric_" + rowNum));
-                metricTemplateImg.setShowDown(false);
-                metricTemplateImg.setShowRollOver(false);
-                metricTemplateImg.setLayoutAlign(Alignment.CENTER);
-                metricTemplateImg.setSrc(ImageManager.getMetricEditIcon());
-                metricTemplateImg.setPrompt(MSG.view_adminTemplates_editMetricTemplate());
-                metricTemplateImg.setHeight(16);
-                metricTemplateImg.setWidth(16);
-                metricTemplateImg.addClickHandler(new ClickHandler() {
-                    public void onClick(ClickEvent event) {
-                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Metric/" + getRollOverId());
-                    }
-                });
-
-                LocatableImgButton alertTemplateImg = new LocatableImgButton(extendLocatorId("Alert_" + rowNum));
-                alertTemplateImg.setShowDown(false);
-                alertTemplateImg.setShowRollOver(false);
-                alertTemplateImg.setLayoutAlign(Alignment.CENTER);
-                alertTemplateImg.setSrc(ImageManager.getAlertEditIcon());
-                alertTemplateImg.setPrompt(MSG.view_adminTemplates_editAlertTemplate());
-                alertTemplateImg.setHeight(16);
-                alertTemplateImg.setWidth(16);
-                alertTemplateImg.addClickHandler(new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent event) {
-                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + getRollOverId());
-                    }
-                });
-
-                rollOverCanvas.addMember(metricTemplateImg);
-                rollOverCanvas.addMember(alertTemplateImg);
-            }
-            return rollOverCanvas;
-        }
-
-        private int getRollOverId() {
-            return Integer.parseInt(rollOverRecord.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID));
+            setFields(fields.toArray(new ListGridField[fields.size()]));
         }
 
         @Override

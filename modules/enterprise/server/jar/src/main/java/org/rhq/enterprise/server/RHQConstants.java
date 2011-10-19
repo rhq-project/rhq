@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server;
 
+import org.rhq.core.domain.common.composite.SystemProperty;
+
 /**
  * Global constants file to be used for config Properties, as well as any other constant used across subsystems
  *
@@ -32,83 +34,88 @@ public class RHQConstants {
     public static final String PERSISTENCE_UNIT_NAME = "rhqpu";
     public static final String TRANSACTION_MANAGER_JNDI_NAME = "java:/TransactionManager";
 
-    // JAAS settings   
-    public static final String JAASProvider = "CAM_JAAS_PROVIDER";
+    // JAAS settings      
+    @Deprecated public static final String JAASProvider = SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName();
+    //these are values that correspond to the booleans of the JAASProvider that actually go into the database..
     public static final String JDBCJAASProvider = "JDBC";
     public static final String LDAPJAASProvider = "LDAP";
 
     // LDAP JAAS properties
-    public static final String LDAPFactory = "CAM_LDAP_NAMING_FACTORY_INITIAL";
-    public static final String LDAPUrl = "CAM_LDAP_NAMING_PROVIDER_URL";
-    public static final String LDAPProtocol = "CAM_LDAP_PROTOCOL";
-    public static final String LDAPLoginProperty = "CAM_LDAP_LOGIN_PROPERTY";
-    public static final String LDAPFilter = "CAM_LDAP_FILTER";
-    public static final String LDAPGroupFilter = "CAM_LDAP_GROUP_FILTER";
-    public static final String LDAPGroupMember = "CAM_LDAP_GROUP_MEMBER";
-    public static final String LDAPBaseDN = "CAM_LDAP_BASE_DN";
-    public static final String LDAPBindDN = "CAM_LDAP_BIND_DN";
-    public static final String LDAPBindPW = "CAM_LDAP_BIND_PW";
+    @Deprecated public static final String LDAPFactory = SystemProperty.LDAP_NAMING_FACTORY.getInternalName();
+    @Deprecated public static final String LDAPUrl = SystemProperty.LDAP_NAMING_PROVIDER_URL.getInternalName();
+    @Deprecated public static final String LDAPProtocol = SystemProperty.USE_SSL_FOR_LDAP.getInternalName();
+    //these are the two values in the database that correspond to the booleans of "USE_SSL_FOR_LDAP"
+    public static final String LDAP_PROTOCOL_UNSECURED = "";
+    public static final String LDAP_PROTOCOL_SECURED = "ssl";
+    
+    @Deprecated public static final String LDAPLoginProperty = SystemProperty.LDAP_LOGIN_PROPERTY.getInternalName();
+    @Deprecated public static final String LDAPFilter = SystemProperty.LDAP_FILTER.getInternalName();
+    @Deprecated public static final String LDAPGroupFilter = SystemProperty.LDAP_GROUP_FILTER.getInternalName();
+    @Deprecated public static final String LDAPGroupMember = SystemProperty.LDAP_GROUP_MEMBER.getInternalName();
+    @Deprecated public static final String LDAPBaseDN = SystemProperty.LDAP_BASE_DN.getInternalName();
+    @Deprecated public static final String LDAPBindDN = SystemProperty.LDAP_BIND_DN.getInternalName();
+    @Deprecated public static final String LDAPBindPW = SystemProperty.LDAP_BIND_PW.getInternalName();
 
     // DRIFT Server properties
-    public static final String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
+    @Deprecated public static final String ACTIVE_DRIFT_PLUGIN = SystemProperty.ACTIVE_DRIFT_PLUGIN.getInternalName();
 
     // Base URL for the application - (i think this is only used for alert emails)
-    public static final String BaseURL = "CAM_BASE_URL";
+    @Deprecated public static final String BaseURL = SystemProperty.BASE_URL.getInternalName();
 
     // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
-    public static final String AgentMaxQuietTimeAllowed = "AGENT_MAX_QUIET_TIME_ALLOWED";
+    @Deprecated public static final String AgentMaxQuietTimeAllowed = SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName();
 
     // Are we allowing automatic AgentUpdate binary download
-    public static final String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
+    @Deprecated public static final String EnableAgentAutoUpdate = SystemProperty.AGENT_AUTO_UPDATE_ENABLED.getInternalName();
 
     // Are we rendering a special "debug" menu for administrators?
-    public static final String EnableDebugMode = "ENABLE_DEBUG_MODE";
+    @Deprecated public static final String EnableDebugMode = SystemProperty.DEBUG_MODE_ENABLED.getInternalName();
 
     // Are we rendering features which are marked as experimental for this installation?
-    public static final String EnableExperimentalFeatures = "ENABLE_EXPERIMENTAL_FEATURES";
+    @Deprecated public static final String EnableExperimentalFeatures = SystemProperty.EXPERIMENTAL_FEATURES_ENABLED.getInternalName();
 
     // How long do we keep data compressed in hourly intervals?
-    public static final String DataPurge1Hour = "CAM_DATA_PURGE_1H";
+    @Deprecated public static final String DataPurge1Hour = SystemProperty.DATA_PURGE_1H_PERIOD.getInternalName();
 
     // How long do we keep data compressed in 6 hour intervals?
-    public static final String DataPurge6Hour = "CAM_DATA_PURGE_6H";
+    @Deprecated public static final String DataPurge6Hour = SystemProperty.DATA_PURGE_6H_PERIOD.getInternalName();
 
     // How long do we keep data compressed in 1 day intervals?
-    public static final String DataPurge1Day = "CAM_DATA_PURGE_1D";
+    @Deprecated public static final String DataPurge1Day = SystemProperty.DATA_PURGE_1D_PERIOD.getInternalName();
 
     // How often to perform database maintenance
-    public static final String DataMaintenance = "CAM_DATA_MAINTENANCE";
+    @Deprecated public static final String DataMaintenance = SystemProperty.DATA_MAINTENANCE_PERIOD.getInternalName();
 
     // Whether or not to reindex nightly
-    public static final String DataReindex = "DATA_REINDEX_NIGHTLY";
+    @Deprecated public static final String DataReindex = SystemProperty.DATA_REINDEX_NIGHTLY.getInternalName();
 
     // How long do we keep rt data
-    public static final String RtDataPurge = "RT_DATA_PURGE";
+    @Deprecated public static final String RtDataPurge = SystemProperty.RT_DATA_PURGE_PERIOD.getInternalName();
 
     // How long do we keep alerts
-    public static final String AlertPurge = "ALERT_PURGE";
+    @Deprecated public static final String AlertPurge = SystemProperty.ALERT_PURGE_PERIOD.getInternalName();
 
     // How long do we keep event data
-    public static final String EventPurge = "EVENT_PURGE";
+    @Deprecated public static final String EventPurge = SystemProperty.EVENT_PURGE_PERIOD.getInternalName();
 
     // How long do we keep orphaned drift files
-    public static final String DriftFilePurge = "DRIFT_FILE_PURGE";
+    @Deprecated public static final String DriftFilePurge = SystemProperty.DRIFT_FILE_PURGE_PERIOD.getInternalName();
 
     // How long do we keep trait data
-    public static final String TraitPurge = "TRAIT_PURGE";
+    @Deprecated public static final String TraitPurge = SystemProperty.TRAIT_PURGE_PERIOD.getInternalName();
 
     // How long do we keep availability data
-    public static final String AvailabilityPurge = "AVAILABILITY_PURGE";
+    @Deprecated public static final String AvailabilityPurge = SystemProperty.AVAILABILITY_PURGE_PERIOD.getInternalName();
 
     // Baseline config options
     // The frequency to run auto-baselines, if 0, never auto-calculate baselines
-    public static final String BaselineFrequency = "CAM_BASELINE_FREQUENCY";
+    @Deprecated public static final String BaselineFrequency = SystemProperty.BASE_LINE_FREQUENCY.getInternalName();
 
     // How much data to include
-    public static final String BaselineDataSet = "CAM_BASELINE_DATASET";
+    @Deprecated public static final String BaselineDataSet = SystemProperty.BASE_LINE_DATASET.getInternalName();
 
     //allow plugin initiated resource name & description upgrades (resource key is always upgradable)
-    public static final String AllowResourceGenericPropertiesUpgrade = "RESOURCE_GENERIC_PROPERTIES_UPGRADE";
+    @Deprecated public static final String AllowResourceGenericPropertiesUpgrade = SystemProperty.ALLOW_RESOURCE_GENERIC_PROPERTIES_UPGRADE.getInternalName();
 
     /////////////////////////////////////////////////////
     // the settings below are not used today and can probably be removed at some point

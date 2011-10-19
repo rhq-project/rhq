@@ -31,20 +31,19 @@ import java.util.Set;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 
 public class DriftServerServiceImpl implements DriftServerService {
     @Override
     public void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addChangeSet(resourceId, zipSize, zipStream);
+            Subject overlord = getSubjectManager().getOverlord();
+            driftManager.addChangeSet(overlord, resourceId, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -55,10 +54,17 @@ public class DriftServerServiceImpl implements DriftServerService {
         InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addFiles(resourceId, driftDefinitionName, token, zipSize, zipStream);
+            Subject overlord = getSubjectManager().getOverlord();
+            driftManager.addFiles(overlord, resourceId, driftDefinitionName, token, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+        DriftManagerLocal driftManager = getDriftManager();
+        driftManager.processRepeatChangeSet(resourceId, driftDefName, version);
     }
 
     @Override
@@ -85,16 +91,16 @@ public class DriftServerServiceImpl implements DriftServerService {
 
     @Override
     public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
-        DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterDriftDefinitionId(driftDefinitionId);
-        criteria.addSortVersion(PageOrdering.ASC);
-
         Subject overlord = getSubjectManager().getOverlord();
 
-        try {
-            return getDriftManager().createSnapshot(overlord, criteria);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return getDriftManager().getSnapshot(overlord, new DriftSnapshotRequest(driftDefinitionId));
+    }
+
+    @Override
+    public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
+        Subject overlord = getSubjectManager().getOverlord();
+
+        return getDriftManager().getSnapshot(overlord,
+            new DriftSnapshotRequest(driftDefinitionId, endVersion, startVersion, null, false, true));
     }
 }

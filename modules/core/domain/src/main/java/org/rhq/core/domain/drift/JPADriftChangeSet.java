@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.drift;
 
+import static javax.persistence.CascadeType.MERGE;
+import static javax.persistence.CascadeType.PERSIST;
+
 import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -48,7 +51,38 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 
 /**
- * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet.
+ * <p>
+ * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet. A change
+ * set instance has slightly different behavior based on whether or not it is version zero,
+ * that is the initial change set. This is due to the way in which pinned templates are
+ * supported.
+ * </p>
+ * <p>
+ * All change sets belong to a drift definition, and the definition is created from a
+ * {@link DriftDefinitionTemplate}. Templates can be pinned or unpinned. Each change set
+ * encapsulates a collection of changes that are represented by {@link JPADrift}.
+ * When a template is pinned there is a corresponding pinned snapshot that belongs to the
+ * template. Each definition created from that template uses that same pinned snapshot. In
+ * terms of implementation, the pinned snapshot is always change set version zero. As an
+ * optimization (of the default driftserver plugin data model design), the pinned snapshot
+ * is shared among definitions to avoid the overhead of making copies of what could
+ * potentially be very large numbers of Drift entities.
+ * </p>
+ * <p>
+ * When an instance of this class represents change set version zero, different fields will
+ * be "live" (i.e., non-null and in use) versus when it is not the initial change set.
+ * </p>
+ * <p>
+ * <strong>Note:</strong> Because persistence of this entity is managed by a drift server
+ * plugin, other entities managed by the RHQ core server cannot maintain direct references
+ * or JPA associations to this class. This restriction is necessary because entities managed
+ * by the RHQ core server interact with instance of this class through its drift entity
+ * interface which may have multiple implementation. Those implementations need not even
+ * be based on a RDBMS. Even though this entity is managed via a drift server plugin, it
+ * can maintain direct references and JPA associations to entities managed by the RHQ
+ * core server since they reside in the same database. That is however an implementation
+ * detail only of this class. It cannot be exposed in the drift interfaces.
+ * </p>
  *   
  * @author Jay Shaughnessy
  * @author John Sanda 
@@ -89,24 +123,38 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @Enumerated(EnumType.STRING)
     private DriftChangeSetCategory category;
 
-    @JoinColumn(name = "DRIFT_CONFIG_ID", referencedColumnName = "ID", nullable = false)
-    // @ManyToOne(optional = false)
+    @JoinColumn(name = "DRIFT_DEFINITION_ID", referencedColumnName = "ID")
     // TODO: remove this eager load, the drift tree build should be written to not need this
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER)
     private DriftDefinition driftDefinition;
 
     // Note, this is mode at the time of the changeset processing. We cant use driftDefinition.mode because
     // that is the "live" setting.
-    @Column(name = "DRIFT_CONFIG_MODE", nullable = false)
+    @Column(name = "DRIFT_HANDLING_MODE", nullable = false)
     @Enumerated(EnumType.STRING)
     private DriftHandlingMode driftHandlingMode;
 
-    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(optional = false)
+    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID")
+    @ManyToOne
     private Resource resource;
 
+    /**
+     * The set of drift entries that make up this change set. If this instance of
+     * JPADriftChangeSet is change set version zero, then this field will be null because
+     * the drifts for the initial change set are accessed through a {@link JPADriftSet}.
+     */
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
     private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
+
+    /**
+     * This field is null unless this instance of JPADriftChangeSet is the initial change
+     * set. If the change set belongs to a definition that was created from a pinned
+     * template, then the {@link JPADriftSet} will be shared by all definitions created
+     * from the template.
+     */
+    @ManyToOne(optional = true, cascade = { PERSIST, MERGE })
+    @JoinColumn(name = "DRIFT_SET_ID", referencedColumnName = "ID")
+    private JPADriftSet initialDriftSet;
 
     protected JPADriftChangeSet() {
     }
@@ -117,7 +165,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         this.version = version;
         this.category = category;
         this.driftDefinition = driftDefinition;
-        this.driftHandlingMode = driftDefinition.getDriftHandlingMode();
+        if (driftDefinition != null) {
+            this.driftHandlingMode = driftDefinition.getDriftHandlingMode();
+        }
     }
 
     @Override
@@ -162,7 +212,16 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     @Override
     public int getResourceId() {
+        if (resource == null) {
+            return 0;
+        }
         return resource.getId();
+    }
+
+    @Override
+    public void setResourceId(int id) {
+        // This is a no-op because we maintain a JPA association with
+        // the owning resource and therefore use setResource(Resource r)
     }
 
     public Resource getResource() {
@@ -191,22 +250,42 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     @Override
     public int getDriftDefinitionId() {
-        return this.driftDefinition.getId();
+        if (driftDefinition == null) {
+            return 0;
+        }
+        return driftDefinition.getId();
     }
 
     @Override
     public void setDriftDefinitionId(int id) {
-        this.driftDefinition.setId(id);
+        driftDefinition.setId(id);
     }
 
     @Override
     public Set<JPADrift> getDrifts() {
-        return drifts;
+        if (version > 0) {
+            return drifts;
+        }
+
+        // TODO do we need to check for null here?
+        // If this is the initial change set, initialDriftSet should be non-null so I am
+        // not sure whether or not a null check is necessary here.
+        //
+        // jsanda
+        return initialDriftSet.getDrifts();
     }
 
     @Override
     public void setDrifts(Set<JPADrift> drifts) {
         this.drifts = drifts;
+    }
+
+    public JPADriftSet getInitialDriftSet() {
+        return initialDriftSet;
+    }
+
+    public void setInitialDriftSet(JPADriftSet driftSet) {
+        initialDriftSet = driftSet;
     }
 
     @Override

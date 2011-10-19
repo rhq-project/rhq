@@ -22,7 +22,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -35,7 +34,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  *
  * @author Stefan Negrea
  */
-public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends MBeanResourceDiscoveryComponent<T> {
+public class ClassNameMBeanDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 
@@ -45,7 +44,7 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends
      * @see org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext, boolean)
      */
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context,
         boolean skipUnknownProps) {
 
         Set<DiscoveredResourceDetails> results = super.discoverResources(context, skipUnknownProps);
@@ -64,9 +63,12 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends
      * @param objectName
      * @return
      */
-    public boolean isBeanConfiguredClassName(ResourceDiscoveryContext<T> context, String objectName) {
-        EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
-        EmsBean emsBean = loadBean(connection, objectName);
+    public boolean isBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent<?>> context, String objectName) {
+        EmsBean emsBean = loadBean(context.getParentResourceComponent(), objectName);
+        if (emsBean == null) {
+            return false;
+        }
+
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
         try {
@@ -81,28 +83,5 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends
         } finally {
             Thread.currentThread().setContextClassLoader(cl);
         }
-    }
-
-    /**
-     * Loads the bean with the given object name.
-     *
-     * Subclasses are free to override this method in order to load the bean.
-     * 
-     * @param objectName the name of the bean to load
-     * @return the bean that is loaded
-     */
-    protected EmsBean loadBean(EmsConnection emsConnection, String objectName) {
-        EmsBean bean = emsConnection.getBean(objectName);
-        if (bean == null) {
-            // In some cases, this resource component may have been discovered by some means other than querying its
-            // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
-            // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
-            // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
-            // bean before giving up.
-            emsConnection.queryBeans(objectName);
-            bean = emsConnection.getBean(objectName);
-        }
-
-        return bean;
     }
 }

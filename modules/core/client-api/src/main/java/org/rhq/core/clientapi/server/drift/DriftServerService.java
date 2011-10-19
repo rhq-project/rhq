@@ -117,7 +117,13 @@ public interface DriftServerService {
     @Asynchronous(guaranteedDelivery = true)
     void sendFilesZip(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream);
 
+    @Asynchronous
+    void repeatChangeSet(int resourceId, String driftDefName, int version);
+
     Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds);
 
     DriftSnapshot getCurrentSnapshot(int driftDefinitionId);
+
+    DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion);
+
 }

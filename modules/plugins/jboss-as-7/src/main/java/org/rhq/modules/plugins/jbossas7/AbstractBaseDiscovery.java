@@ -103,8 +103,9 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
      * @return an Object containing host and port
      * @see #readStandaloneOrHostXml(org.rhq.core.system.ProcessInfo, boolean) on how to obtain the parsed xml
+     * @param commandLine Command line arguments of the process to
      */
-    protected HostPort getManagementPortFromHostXml() {
+    protected HostPort getManagementPortFromHostXml(String[] commandLine) {
         if (hostXml==null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
         Element host =  hostXml.getDocumentElement();
@@ -127,11 +128,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
                 String tmp = mgmtInterface.getAttribute("port");
                 int port = Integer.valueOf(tmp);
                 HostPort hp = new HostPort();
-                hp.isLocal=true;
+                hp.isLocal=true; // TODO adjust when host != localhost
                 hp.port = port;
 
                 String nIf = mgmtInterface.getAttribute("interface");
-                hp.host = getInterface(nIf);
+                hp.host = getInterface(nIf, commandLine);
                 return hp;
             }
         }
@@ -140,10 +141,12 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
 
     /**
      * Try to obtain the management interface IP from the host/standalone.xml files
+     *
      * @param nIf Interface to look for
+     * @param commandLine Command line arguments of the process
      * @return IP address to use
      */
-    private String getInterface(String nIf) {
+    private String getInterface(String nIf, String[] commandLine) {
         if (hostXml==null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
@@ -177,7 +180,9 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
                         if (nodeName.equals("any-ipv4-address"))
                             return "0.0.0.0";
 
-                        return ((Element) nl.item(j)).getAttribute("value");
+                        String value = ((Element) nl.item(j)).getAttribute("value");
+                        value = replaceExpression(value, commandLine);
+                        return value;
 
                         // TODO check for <any> and so on
                     }
@@ -186,6 +191,54 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
 
         }
         return null;  // TODO: Customise this generated block
+    }
+
+    /**
+     * Check if the passed value has an expression in the form of ${var} or ${var:default},
+     * try to resolve it. Resolution is done by looking at the command line to see if
+     * there are -bmanagement or -Djboss.bind.address.management arguments present
+     *
+     * @param value a hostname or hostname expression
+     * @param commandLine The command line from the process
+     * @return resolved value
+     */
+    private String replaceExpression(String value, String[] commandLine) {
+        if (!value.contains("${"))
+            return value;
+
+        // remove ${ }
+        value = value.substring(2,value.length()-1);
+        String fallback = "localhost";
+        String expression;
+        if (value.contains(":")) {
+            int i = value.indexOf(":");
+            expression = value.substring(0,i);
+            fallback = value.substring(i+1);
+        }
+        else {
+            expression = value;
+        }
+        /*
+         * Now try to find the expression in the arguments.
+         * AS 7 unfortunately is "too clever" and we need to look for
+         * -D jboss.bind.address.management
+         * or
+         * -b management
+         * to find the management port
+         */
+
+        String ret=null;
+        for (String line: commandLine) {
+            if (line.contains("-bmanagement") || line.contains("jboss.bind.address.management")) {
+                ret = line.substring(line.indexOf("=")+1);
+                break;
+            }
+        }
+        if (ret==null)
+            ret = fallback;
+
+        return ret;
+
     }
 
     /**

@@ -83,7 +83,7 @@ import org.rhq.core.domain.util.Summary;
  * Represents an RHQ managed resource (i.e. a platform, server, or service).
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
@@ -1820,6 +1820,8 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     // this should only ever be called once, during initial persistence
     public void initCurrentAvailability() {
-        this.currentAvailability = new ResourceAvailability(this, null);
+        if (this.currentAvailability == null) {
+            this.currentAvailability = new ResourceAvailability(this, null);
+        }
     }
 }

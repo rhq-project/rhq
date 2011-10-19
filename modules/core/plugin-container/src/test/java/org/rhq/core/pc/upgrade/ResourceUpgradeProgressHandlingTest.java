@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.pc.upgrade;
 
 import static org.testng.Assert.assertEquals;
@@ -34,10 +33,10 @@ import org.rhq.test.pc.PluginContainerSetup;
  * @author Lukas Krejci
  */
 @Test
-public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureHandlingTest {
+public class ResourceUpgradeProgressHandlingTest extends AbstractResourceUpgradeHandlingTest {
 
     //test names
-    private static final String DUPLICIT_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST = "DuplicitResourceKeysHandledCorrectly";
+    private static final String DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST = "DuplicateResourceKeysHandledCorrectly";
     private static final String PARENT_RESOURCE_STARTED_UPGRADED_WHEN_CHILD_RESOURCE_BEING_UPGRADED_TEST = "ParentResourceStartedUpgradedWhenChildResourceBeingUpgraded";
     
     //plugin names
@@ -99,10 +98,10 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
 
     @Test
     @PluginContainerSetup(plugins = { UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME,
-        PARENT_DEP_V1_PLUGIN_NAME }, sharedGroup = DUPLICIT_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearDataDir = true, numberOfInitialDiscoveries = 2)
-    public void testDuplicitResourceKeysHandledCorrectly_V1() throws Exception {
+        PARENT_DEP_V1_PLUGIN_NAME }, sharedGroup = DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearDataDir = true, numberOfInitialDiscoveries = 2)
+    public void testDuplicateResourceKeysHandledCorrectly_V1() throws Exception {
         final FakeServerInventory inventory = new FakeServerInventory();
-        setServerSideFake(DUPLICIT_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, inventory);
+        setServerSideFake(DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, inventory);
 
         context.checking(new Expectations() {
             {
@@ -120,11 +119,11 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
             "The V1 inventory should have 2 test resources.");
     }
 
-    @Test(dependsOnMethods = "testDuplicitResourceKeysHandledCorrectly_V1")
+    @Test(dependsOnMethods = "testDuplicateResourceKeysHandledCorrectly_V1")
     @PluginContainerSetup(plugins = { UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME, BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME,
-        PARENT_DEP_V2_PLUGIN_NAME }, sharedGroup = DUPLICIT_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 2)
-    public void testDuplicitResourceKeysHandledCorrectly_V2() throws Exception {
-        final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(DUPLICIT_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST);
+        PARENT_DEP_V2_PLUGIN_NAME }, sharedGroup = DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST, clearInventoryDat = false, numberOfInitialDiscoveries = 2)
+    public void testDuplicateResourceKeysHandledCorrectly_V2() throws Exception {
+        final FakeServerInventory inventory = (FakeServerInventory) getServerSideFake(DUPLICATE_RESOURCE_KEYS_HANDLED_CORRECTLY_TEST);
 
         context.checking(new Expectations() {
             {

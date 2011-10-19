@@ -28,6 +28,7 @@ import javax.jws.WebService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
  * @author John Mazzitelli
@@ -58,28 +59,43 @@ public interface SystemManagerRemote {
         @WebParam(name = "subject") Subject subject);
 
     /**
+     * @deprecated use {@link #getSystemSettings(Subject)} instead
+     */
+    @WebMethod
+    @Deprecated
+    Properties getSystemConfiguration( //
+        @WebParam(name = "subject") Subject subject);
+
+    /**
      * Get the server cloud configuration. These are the server configurations that will be
      * the same for all servers in the HA server cloud.
      *
      * @param subject user making the request
      *
-     * @return Properties
+     * @return the settings
+     */
+    SystemSettings getSystemSettings(
+        @WebParam(name = "subject") Subject subject);
+       
+    /**
+     * @deprecated use {@link #setSystemSettings(Subject, SystemSettings)} instead
      */
     @WebMethod
-    Properties getSystemConfiguration( //
-        @WebParam(name = "subject") Subject subject);
-
+    @Deprecated
+    void setSystemConfiguration( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "properties") Properties properties, //
+        @WebParam(name = "skipValidation") boolean skipValidation) throws Exception;
+    
     /**
      * Set the server cloud configuration.  The given properties will be the new settings
      * for all servers in the HA server cloud.
      *
      * @param subject        the user who wants to change the settings
-     * @param properties     the new system configuration settings
-     * @param skipValidation if true, validation will not be performed on the properties
+     * @param settings     the new system configuration settings
      */
     @WebMethod
-    void setSystemConfiguration( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "properties") Properties properties, //
-        @WebParam(name = "skipValidation") boolean skipValidation) throws Exception;
+    void setSystemSettings(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "settings") SystemSettings settings) throws Exception;        
 }

@@ -20,6 +20,7 @@
 package org.rhq.bindings;
 
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -89,16 +90,26 @@ public class StandardBindings extends HashMap<String, Object> {
         PageControl pc = new PageControl();
         pc.setPageNumber(-1);
 
-        managers = rhqFacade.getManagers();
-
+        //these are generic and don't require an RHQ facade...
         put(UNLIMITED_PC, pc);
         put(PAGE_CONTROL, PageControl.getUnlimitedInstance());
         put(EXPORTER, new Exporter());
-        put(SUBJECT, rhqFacade.getSubject());
         put(PRETTY, new TabularWriter(output));
-        put(SCRIPT_UTIL, new ScriptUtil(rhqFacade));
-        put(PROXY_FACTORY, new ResourceClientFactory(rhqFacade, output));
         put(ASSERT, new ScriptAssert());
+
+        //script utils can handle a null facade
+        put(SCRIPT_UTIL, new ScriptUtil(rhqFacade));
+        
+        if (rhqFacade != null) {
+            managers = rhqFacade.getManagers();
+
+            put(SUBJECT, rhqFacade.getSubject());
+            put(PROXY_FACTORY, new ResourceClientFactory(rhqFacade, output));
+        } else {
+            managers = Collections.emptyMap();
+            put(SUBJECT, null);
+            put(PROXY_FACTORY, null);
+        }
 
         putAll(managers);
 
@@ -118,8 +129,8 @@ public class StandardBindings extends HashMap<String, Object> {
     }
 
     public void postInject(ScriptEngine scriptEngine) {        
-        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL, get(SCRIPT_UTIL));
-        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT, get(ASSERT));
+        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL);
+        ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT);
     }
     
     public Map.Entry<String, PageControl> getUnlimitedPC() {

@@ -44,6 +44,7 @@ import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.drift.DriftManagerRemote;
+import org.rhq.enterprise.server.drift.DriftTemplateManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -278,6 +279,10 @@ public class RemoteClient implements RhqFacade {
 
     public DriftManagerRemote getDriftManager() {
         return RemoteClientProxy.getProcessor(this, RhqManagers.DriftManager);
+    }
+
+    public DriftTemplateManagerRemote getDriftTemplateManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.DriftTemplateManager);
     }
 
     public RepoManagerRemote getRepoManager() {

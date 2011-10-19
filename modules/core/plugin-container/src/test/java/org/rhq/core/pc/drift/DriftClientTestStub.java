@@ -10,15 +10,26 @@ class DriftClientTestStub implements DriftClient {
 
     private boolean failingOnSendChangeSet;
 
+    private int sendChangeSetInvocationCount;
+
     @Override
     public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
+        ++sendChangeSetInvocationCount;
         if (failingOnSendChangeSet) {
             throw new RuntimeException("Failed to send change set to server");
         }
     }
 
+    public int getSendChangeSetInvocationCount() {
+        return sendChangeSetInvocationCount;
+    }
+
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir) {
+    }
+
+    @Override
+    public void repeatChangeSet(int resourceId, String driftDefName, int version) {
     }
 
     @Override

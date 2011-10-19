@@ -78,9 +78,10 @@
                displayName="Script Prefix"
                type="string"
                required="false"
-               description="A prefix applied to script execution commands. Typically a sudo
-                                            for applicable platforms. The prefix is applied verbatim. As such, a
-                                            sudo user must be configured appropriately. Ignored if not set." />
+               description="A prefix applied to script execution commands; this prefix is applied verbatim.
+                            The full path of the executable is required (e.g. /usr/bin/sudo). For applicable platforms,
+                            this is typically a sudo command, so a sudo user must be configured appropriately for the specified command.
+                            Ignored if not set."/>
             <c:simple-property
                name="startScript"
                displayName="Start Script"

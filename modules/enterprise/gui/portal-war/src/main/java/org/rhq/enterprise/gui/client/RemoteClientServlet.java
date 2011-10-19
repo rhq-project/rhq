@@ -29,6 +29,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
@@ -41,11 +43,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * client this servlet serves up.
  */
 public class RemoteClientServlet extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
+
     private static final String RHQ_SERVER_VERSION = "rhq-server.version";
     private static final String RHQ_SERVER_BUILD_NUMBER = "rhq-server.build-number";
     private static final String RHQ_CLIENT_MD5 = "rhq-client.md5";
-
-    private static final long serialVersionUID = 1L;
 
     // the system property that defines how many concurrent downloads we will allow
     private static String SYSPROP_CLIENT_DOWNLOADS_LIMIT = "rhq.server.client-downloads-limit";
@@ -62,15 +65,17 @@ public class RemoteClientServlet extends HttpServlet {
 
     private static int numActiveDownloads = 0;
 
+    private Log log = LogFactory.getLog(this.getClass());
+
     @Override
     public void init() throws ServletException {
-        log("Starting the remote client servlet");
+        log.info("Starting the RHQ remote client servlet...");
 
         // make sure we have a binary distro file; log its location
         try {
-            log("Remote Client Binary File: " + getRemoteClientZip());
+            log.info("Remote Client Binary File: " + getRemoteClientZip());
         } catch (Throwable t) {
-            log("Remote client is not available for deployment. Cause: " + t.toString());
+            log.error("Remote client is not available for deployment - cause: " + t);
             return;
         }
 
@@ -79,16 +84,14 @@ public class RemoteClientServlet extends HttpServlet {
             File versionFile = getVersionFile();
 
             // log the version info - this also makes sure we can read it back in
-            log(versionFile + ": " + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
-
+            log.debug(versionFile + ":\n" + new String(StreamUtil.slurp(new FileInputStream(versionFile))));
         } catch (Throwable t) {
-            log("Cannot determine the remote client version information", t);
+            log.error("Cannot determine the remote client version information.", t);
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
         // seeing odd browser caching issues, even though we set Last-Modified. so force no caching for now
         disableBrowserCache(resp);
 
@@ -149,7 +152,7 @@ public class RemoteClientServlet extends HttpServlet {
                 zipStream.close();
             }
         } catch (Throwable t) {
-            log("Failed to stream remote client zip", t);
+            log.error("Failed to stream remote client zip.", t);
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to stream remote client zip");
         }
@@ -187,7 +190,7 @@ public class RemoteClientServlet extends HttpServlet {
             byte[] versionData = StreamUtil.slurp(stream);
             resp.getOutputStream().write(versionData);
         } catch (Throwable t) {
-            log("Failed to stream version info", t);
+            log.error("Failed to stream version info.", t);
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to stream version info");
         }
@@ -202,8 +205,8 @@ public class RemoteClientServlet extends HttpServlet {
             limit = Integer.parseInt(limitStr);
         } catch (Exception e) {
             limit = DEFAULT_CLIENT_DOWNLOADS_LIMIT;
-            log("Remote Client downloads limit system property [" + SYSPROP_CLIENT_DOWNLOADS_LIMIT
-                + "] is either not set or invalid [" + limitStr + "] - limit will be [" + limit + "]");
+            log.warn("Remote Client downloads limit system property [" + SYSPROP_CLIENT_DOWNLOADS_LIMIT
+                + "] is either not set or invalid [" + limitStr + "] - limit will be [" + limit + "].");
         }
 
         return limit;
@@ -253,7 +256,7 @@ public class RemoteClientServlet extends HttpServlet {
             } finally {
                 try {
                     versionFileOutputStream.close();
-                } catch (Exception e) {
+                } catch (Exception ignore) {
                 }
             }
         }
@@ -269,4 +272,5 @@ public class RemoteClientServlet extends HttpServlet {
             return false;
         }
     }
+
 }

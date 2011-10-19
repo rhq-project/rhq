@@ -1,0 +1,2 @@
+#!/bin/sh
+java -cp target/rhq-jboss-as-7-plugin-4.1.0-SNAPSHOT.jar:/im/rhq/modules/enterprise/agent/target/rhq-agent/lib/commons-logging-1.1.0.jboss.jar:/Users/hrupp/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar:/Users/hrupp/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar org.rhq.modules.plugins.jbossas7.Domain2Descriptor $*

@@ -73,10 +73,17 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
      */
     private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
         Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
-        String engineObjectName = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue();
-        EmsBean engineBean = this.loadBean(engineObjectName, context.getParentResourceComponent());
 
-        return (String) engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
+        String[] engineObjectNames = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue().split("\\|");
+
+        for (String engineObjectName : engineObjectNames) {
+            EmsBean engineBean = this.loadBean(context.getParentResourceComponent(), engineObjectName);
+            if (engineBean != null) {
+                return engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -87,18 +94,24 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
      * @param objectName the name of the bean to load
      * @return the bean that is loaded
      */
-    protected EmsBean loadBean(String objectName, MBeanResourceComponent context) {
+    protected EmsBean loadBean(MBeanResourceComponent<?> context, String objectName) {
         EmsConnection emsConnection = context.getEmsConnection();
-        EmsBean bean = emsConnection.getBean(objectName);
-        if (bean == null) {
-            // In some cases, this resource component may have been discovered by some means other than querying its
-            // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
-            // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
-            // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
-            // bean before giving up.
-            emsConnection.queryBeans(objectName);
-            bean = emsConnection.getBean(objectName);
+
+        if (emsConnection != null) {
+            EmsBean bean = emsConnection.getBean(objectName);
+            if (bean == null) {
+                // In some cases, this resource component may have been discovered by some means other than querying its
+                // parent's EMSConnection (e.g. ApplicationDiscoveryComponent uses a filesystem to discover EARs and
+                // WARs that are not yet deployed). In such cases, getBean() will return null, since EMS won't have the
+                // bean in its cache. To cover such cases, make an attempt to query the underlying MBeanServer for the
+                // bean before giving up.
+                emsConnection.queryBeans(objectName);
+                bean = emsConnection.getBean(objectName);
+            }
+
+            return bean;
         }
-        return bean;
+
+        return null;
     }
 }

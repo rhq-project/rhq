@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>(free mem, schedule 10003)</title>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <script type="text/javascript" src="js/d3.layout.js"></script>
+    <script type="text/javascript" src="js/d3.time.js"></script>
+    <style type="text/css">
+
+svg {
+  width: 800px;
+  height: 600px;
+  border: solid 1px #ccc;
+  font: 10px sans-serif;
+  shape-rendering: crispEdges;
+}
+
+    </style>
+  </head>
+  <body>
+  <h2> (free mem, schedule 10003)</h2>
+
+  <br/>
+  <div id="one"/>
+    <script type="text/javascript">
+
+// Width and height of the chart to print
+var w = 800,
+    h = 600;
+
+// div#one is the div with the id 'one' ( <div id="one"/>)
+var svg = d3.select("body").select("div#one").append("svg:svg")
+    .attr("width", w)
+    .attr("height", h);
+//  .append("svg:g");
+//    .attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")");
+
+
+d3.json(
+  '/rest/1/metric/data/10003.json?hideEmpty=true',
+  function (jsondata) {
+
+      var points = jsondata.metricAggregate.dataPoints;
+      var minVal = jsondata.metricAggregate.min;
+      var maxVal = jsondata.metricAggregate.max;
+      var avgVal = jsondata.metricAggregate.avg;
+      var minTs = jsondata.metricAggregate.minTimeStamp;
+      var maxTs = jsondata.metricAggregate.maxTimeStamp;
+
+      var minTsD = new Date(minTs);
+      var maxTsD = new Date(maxTs);
+      console.log(minTs, minTsD, maxTs, maxTsD);
+
+      // X axis goes from lowest to highest timestamp
+      var x = d3.time.scale().domain([minTsD,maxTsD]).range([0,w]);
+      // Y axis goes from lowest to highest value
+      var y = d3.scale.linear().domain([minVal, maxVal]).rangeRound([0,h]);
+
+//      console.log(jsondata.metricAggregate);
+
+
+      // Line for the average
+      var avgLine = svg.append("svg:line")
+        .attr("x1",x(new Date(minTs)))
+        .attr("y1",h-y(avgVal))
+        .attr("x2",x(new Date(maxTs)))
+        .attr("y2",h-y(avgVal))
+        .attr("stroke","lighgrey")
+        .attr("stroke-dasharray","2,2");
+
+      // TODO if present add lines for baselines
+
+      // data() loops over all entries in 'points' above for the remaining statements
+      var bars = svg.selectAll("bars").data(points);
+
+      var currX = function(d) { return x(new Date(d.timeStamp)) };
+
+      var circleLow = bars.enter().append("svg:circle")
+        .attr("cx",currX)
+        .attr("cy",function(d) {return h-y(d.low)})
+        .attr("r",2)
+        .attr("stroke","lightgreen")
+        .attr("fill","lightgreen");
+
+      var circleHigh = bars.enter().append("svg:circle")
+        .attr("cx",currX)
+        .attr("cy",function(d) {return h-y(d.high)})
+        .attr("r",2)
+        .attr("stroke","lightgreen")
+        .attr("fill","lightgreen");
+
+      var circleVal = bars.enter().append("svg:circle")
+        .attr("cx",currX)
+        .attr("cy",function(d) {return h-y(d.value)})
+        .attr("r",3)
+        .attr("stroke","lightpink")
+        .attr("fill","lightpink");
+
+      var line = bars.enter().append("svg:line")
+          .attr("x1",currX)
+          .attr("x2",currX)
+          .attr("y1",function(d) {return h-y(d.low)})
+          .attr("y2",function(d) {return h-y(d.high)})
+          .attr("stroke","blue");
+});
+
+    </script>
+  </body>
+</html>

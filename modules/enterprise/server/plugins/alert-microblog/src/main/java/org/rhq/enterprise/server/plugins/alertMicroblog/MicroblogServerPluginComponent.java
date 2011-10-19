@@ -76,8 +76,7 @@ public class MicroblogServerPluginComponent extends CustomAlertSenderBackingBean
         this.twitter = new TwitterFactory().getInstance();
         this.twitter.setOAuthConsumer(consumerKey, consumerSecret);
 
-        //      log.debug("The MicroblogServerPluginComponent has been initialized!!! : " + this);
-        log.info("Twitter using consumerKey [" + consumerKey + "] and consumerSecret: [" + consumerSecret + "]");
+        log.debug("Twitter using consumerKey [" + consumerKey + "] and consumerSecret: [" + consumerSecret + "]");
     }
 
     private String getAuthorizationURL() throws TwitterException {
@@ -93,7 +92,6 @@ public class MicroblogServerPluginComponent extends CustomAlertSenderBackingBean
         if (this.context.getDataDirectory().exists() || this.context.getDataDirectory().mkdir()) {
 
             filePath = this.context.getDataDirectory().getAbsolutePath() + "/OAuthAccessToken_" + token.getUserId() + ".ser";
-//            filePath = this.context.getDataDirectory().getAbsolutePath() + "/OAuthAccessToken.ser";
             
             // merge the PLugin Configuration to store the token file path reference.
             // this property will be user by Microblog AlertSender to load the accessToken from file system
@@ -131,7 +129,7 @@ public class MicroblogServerPluginComponent extends CustomAlertSenderBackingBean
                 AccessToken accessToken = null;
                 String pin = operationConfig.getSimpleValue("pin", null);
 
-                log.info("using PIN [" + pin + "]");
+                log.debug("using PIN [" + pin + "]");
 
                 if (pin != null && pin.length() > 0) {
                     accessToken = this.twitter.getOAuthAccessToken(requestToken, pin);
@@ -139,10 +137,10 @@ public class MicroblogServerPluginComponent extends CustomAlertSenderBackingBean
                     accessToken = this.twitter.getOAuthAccessToken();
                 }
 
-                log.info("ScreenName: " + twitter.getScreenName());
-                log.info("TwitterId: [" + twitter.verifyCredentials().getId() + "]");
-                log.info("token: [" + accessToken.getToken() + "]");
-                log.info("tokenSecret: [" + accessToken.getTokenSecret() + "]");
+                log.debug("ScreenName: " + twitter.getScreenName());
+                log.debug("TwitterId: [" + twitter.verifyCredentials().getId() + "]");
+                log.debug("token: [" + accessToken.getToken() + "]");
+                log.debug("tokenSecret: [" + accessToken.getTokenSecret() + "]");
 
                 // Save the accessToken for future use by this plugin.
                 String filePath = storeAccessToken(accessToken);

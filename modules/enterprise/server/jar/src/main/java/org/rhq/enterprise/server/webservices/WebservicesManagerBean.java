@@ -52,6 +52,7 @@ import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -1193,6 +1194,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
         systemManager.setSystemConfiguration(subject, properties, skipValidation);
     }
 
+    public SystemSettings getSystemSettings(Subject subject) {
+        return systemManager.getSystemSettings(subject);
+    }
+
+    public void setSystemSettings(Subject subject, SystemSettings settings) throws Exception {
+        systemManager.setSystemSettings(subject, settings);
+    }
+    
     //SYSTEMMANAGER: END ------------------------------------
 
     //SYNCHRONIZATIONMANANGER: BEGIN -------------------------

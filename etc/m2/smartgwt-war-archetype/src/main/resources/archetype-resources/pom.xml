@@ -6,10 +6,10 @@
     
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>${project.groupId}</groupId>
+    <groupId>${groupId}</groupId>
     <artifactId>${artifactId}</artifactId>
     <packaging>war</packaging>
-    <version>${project.version}</version>
+    <version>${version}</version>
 
     <name>SmartGWT WAR</name>
 
@@ -41,7 +41,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- GWT dependencies (from Smart or JBoss repo) -->
+        <!-- SmartGWT dependencies (from SmartGWT repo) -->
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt</artifactId>
@@ -123,6 +123,23 @@
 
         </plugins>
     </build>
+
+    <repositories>
+
+            <repository>
+               <id>smartgwt-releases</id>
+               <name>SmartGWT Repository</name>
+               <url>http://www.smartclient.com/maven2/</url>
+               <releases>
+                 <enabled>true</enabled>
+                 <updatePolicy>never</updatePolicy>
+               </releases>
+               <snapshots>
+                 <enabled>false</enabled>
+               </snapshots>
+            </repository>
+
+    </repositories>
 
 </project>
 

@@ -68,7 +68,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
     private EntityContext context;
     private boolean hasWriteAccess;
     private DriftDefinitionDataSource dataSource;
-    private boolean useCarouselDetailsView;
+    private boolean useEditDetailsView;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -131,7 +131,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
         TableActionEnablement detectNowEnablement = hasWriteAccess ? TableActionEnablement.SINGLE
             : TableActionEnablement.NEVER;
 
-        addTableAction("Add", MSG.common_button_add(), null, new TableAction() {
+        addTableAction("New", MSG.common_button_new(), null, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
                 return hasWriteAccess;
             }
@@ -238,7 +238,7 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
         // we have two detail views for drift defs, the config editor and the carousel. figure out which one we're
         // dealing with. The default is the carousel, anything further in the path we assume to be /Edit 
         if (!viewPath.isEnd()) {
-            this.useCarouselDetailsView = viewPath.isNextEnd();
+            this.useEditDetailsView = !viewPath.isNextEnd() && "Edit".equals(viewPath.getNext().getPath());
         }
 
         super.renderView(viewPath);
@@ -246,11 +246,11 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
 
     @Override
     public Canvas getDetailsView(Integer driftDefId) {
-        if (this.useCarouselDetailsView) {
-            return new DriftCarouselView(extendLocatorId("Carousel"), context, driftDefId, hasWriteAccess);
+        if (this.useEditDetailsView) {
+            return new DriftDefinitionEditView(extendLocatorId("DefinitionEdit"), context, driftDefId, hasWriteAccess);
         }
 
-        return new DriftDefinitionEditView(extendLocatorId("DefintionEdit"), context, driftDefId, hasWriteAccess);
+        return new DriftCarouselView(extendLocatorId("Carousel"), context, driftDefId, hasWriteAccess);
     }
 
     public EntityContext getContext() {

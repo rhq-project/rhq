@@ -1,0 +1,212 @@
+#========================================================================================
+# Usage:
+# Include in any script file as script dependency.
+#
+# Description:
+# Library of common functions used between multiple release related scripts.
+#
+# Options:
+# N/A
+#========================================================================================
+
+
+
+#========================================================================================
+# Description: Display an error message and abort the script.
+#========================================================================================
+abort()
+{
+   echo >&2
+   for ARG in "$@"; do
+      echo "$ARG" >&2
+      echo "">&2
+   done
+   exit 1
+}
+
+
+#========================================================================================
+# Description: Prints an array of variables passed in as arguments.
+#========================================================================================
+print_variables()
+{
+   for variable in "$@"
+   do 
+      temp_var='eval "echo \$$variable"'
+      eval_temp_var=`eval $temp_var`
+
+      if [ -z "$eval_temp_var" ]; then
+        echo "$variable is NOT defined!"
+      else
+       echo "$variable=$eval_temp_var"
+      fi
+   done
+}
+
+
+#========================================================================================
+# Description: Prints the eval result of each array element passed in.
+#========================================================================================
+print_program_versions()
+{
+   for variable in "$@"
+   do 
+     eval $variable
+     echo
+   done  
+}
+
+
+#========================================================================================
+# Description: Validates that a compatible version of Java 6 is installed.
+#========================================================================================
+validate_java_6()
+{
+   # Make sure JAVA_HOME points to a valid JDK 1.6+ install.
+
+   if [ -z "$JAVA_HOME" ]; then
+      abort "JAVA_HOME environment variable is not set - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
+   fi
+
+   if [ ! -d "$JAVA_HOME" ]; then
+      abort "JAVA_HOME ($JAVA_HOME) does not exist or is not a directory - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
+   fi
+
+   echo "Prepending $JAVA_HOME/bin to PATH..."
+   PATH="$JAVA_HOME/bin:$PATH"
+
+   if ! which java >/dev/null 2>&1; then
+      abort "java not found in PATH ($PATH) - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
+   fi
+
+   if ! which javac >/dev/null 2>&1; then
+      abort "javac not found in PATH ($PATH) - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
+   fi
+
+   if ! javap java.util.Deque >/dev/null 2>&1; then
+      abort "java.util.Deque not found - Java version appears to be less than 1.6 - Jave version must be 1.6 or later."
+   fi
+}
+
+
+#========================================================================================
+# Description: Validates that a compatible version of Java 5 is installed.
+#========================================================================================
+validate_java_5()
+{
+   echo "nothing executed here"
+   # spinder 8/30/11: commenting out the JAVA5 support, but leaving logic in place for when we need the same backwards 
+   # compatibility logic for JD6 vs. JDK7 support.
+   # If this is an enterprise release, make sure JAVA5_HOME points to a valid JDK 1.5 install. 
+   # We need this to validate only Java 5 or earlier APIs are used in all modules, except the CLI, which requires Java 6.
+   #
+   #if [ "$RELEASE_TYPE" = "enterprise" ]; then
+   #    if [ -z "$JAVA5_HOME" ]; then
+   #       abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+   #    fi
+   #
+   #    if [ ! -d "$JAVA5_HOME" ]; then
+   #       abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+   #    fi
+   #
+   #    if [ ! -x "$JAVA5_HOME/bin/java" ]; then
+   #       abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+   #    fi
+   #
+   #    if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
+   #       abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
+   #    fi
+   #
+   #    if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
+   #       abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
+   #    fi
+   #
+   #    if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
+   #       abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
+   #    fi
+   #fi
+}
+
+
+#========================================================================================
+# Description: Validates that a compatible version of Maven is installed.
+#========================================================================================
+validate_maven()
+{
+   # Make sure M2_HOME points to a valid Maven 2.1.x or 2.2.x install.
+   MINIMUM_MAVEN_VERSION="2.1.0"
+
+   if [ -z "$M2_HOME" ]; then
+      abort "M2_HOME environment variable is not set - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
+   fi
+
+   if [ ! -d "$M2_HOME" ]; then
+      abort "M2_HOME ($M2_HOME) does not exist or is not a directory - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
+   fi
+
+   echo "Prepending $M2_HOME/bin to PATH..."
+   PATH="$M2_HOME/bin:$PATH"
+
+   if ! which mvn >/dev/null 2>&1; then
+      abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
+   fi
+
+   mvn -version >/dev/null
+   [ $? -ne 0 ] && abort "mvn --version failed with exit code $?."
+   MAVEN_VERSION=`mvn -version | head -1 | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
+   if echo $MAVEN_VERSION | grep -Ev "^(2\.[12]|3\.0)"; then
+      abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x, 2.2.x, or 3.0.x is supported. Please update the value of M2_HOME, then try again."
+   fi
+}
+
+
+#========================================================================================
+# Description: Validates that a compatible version of Git is installed.
+#========================================================================================
+validate_git()
+{
+   # Make sure git 1.6.x or 1.7.x is in the PATH.
+
+   if ! which git >/dev/null 2>&1; then
+      abort "git not found in PATH ($PATH)."
+   fi
+
+   git --version >/dev/null
+   [ $? -ne 0 ] && abort "git --version failed with exit code $?."
+   GIT_VERSION=`git --version | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
+   if echo $GIT_VERSION | grep -v "^1.[67]"; then
+      abort "Unsupported git version - $GIT_VERSION. Only git 1.6.x or 1.7.x are supported. Please add a directory containing a supported version of git to your PATH, then try again."
+   fi
+}
+
+
+#========================================================================================
+# Description: Prints the input string centered.
+#========================================================================================
+print_centered()
+{
+	max_length=90
+	string_length=${#1}
+
+	if [ $string_length -ge `expr $max_length - 2` ]
+	then 
+		echo $1
+		return 0
+	fi
+
+	left_side=`expr $max_length - $string_length`
+	left_side=`expr $left_side / 2`
+
+	is_odd_number=$(( $string_length % 2 ))	
+	if [ $is_odd_number -eq 0 ]
+	then
+		right_side=$left_side 
+	else
+   	    right_side=`expr $left_side + 1 `
+	fi
+
+	eval "printf '=%.0s' {1..${left_side}}"
+	printf " $1 "
+	eval "printf '=%.0s' {1..${right_side}}"
+	printf "\n"
+}

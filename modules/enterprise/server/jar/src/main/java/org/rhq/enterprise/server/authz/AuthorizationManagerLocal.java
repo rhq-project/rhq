@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -242,4 +243,5 @@ public interface AuthorizationManagerLocal {
      * @return true if subject is able to update the repo, false otherwise
      */
     boolean canUpdateRepo(Subject subject, int repoId);
+
 }

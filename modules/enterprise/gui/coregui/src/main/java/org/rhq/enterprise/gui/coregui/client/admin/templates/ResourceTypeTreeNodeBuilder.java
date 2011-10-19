@@ -32,6 +32,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
@@ -42,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ResourceTypeTreeNodeBuilder {
+public abstract class ResourceTypeTreeNodeBuilder {
     static private final Messages MSG = CoreGUI.getMessages();
 
     public static final String ATTRIB_ID = "id";
@@ -50,10 +51,11 @@ public class ResourceTypeTreeNodeBuilder {
     public static final String ATTRIB_NAME = "name";
     public static final String ATTRIB_PLUGIN = "plugin";
     public static final String ATTRIB_CATEGORY = "category";
-    public static final String ATTRIB_ENABLED_METRIC_TEMPLATES = "enabledMetricTemplates";
-    public static final String ATTRIB_DISABLED_METRIC_TEMPLATES = "disabledMetricTemplates";
-    public static final String ATTRIB_ENABLED_ALERT_TEMPLATES = "enabledAlertTemplates";
-    public static final String ATTRIB_DISABLED_ALERT_TEMPLATES = "disabledAlertTemplates";
+    public static final String ATTRIB_EDIT = "edit";
+
+    abstract ResourceTypeListGridRecord getGridRecordInstance(ResourceTypeTemplateCountComposite composite);
+
+    abstract ResourceTypeTreeNode getTreeNodeInstance(ResourceTypeTemplateCountComposite composite, String plugin);
 
     public ResourceTypeTreeNodeBuilder(final ListGrid platformsGrid, final ListGrid platformServicesGrid,
         final TreeGrid serversGrid) {
@@ -78,10 +80,10 @@ public class ResourceTypeTreeNodeBuilder {
                         if (isEmpty(parentTypes)) {
                             if (type.getCategory() == ResourceCategory.PLATFORM) {
                                 // no parents but is a platform - these are our main, top-level platforms
-                                platformsRecords.add(new ResourceTypeListGridRecord(composite));
+                                platformsRecords.add(getGridRecordInstance(composite));
                             } else {
                                 // no parents but not a platform - these are our top-level servers
-                                treeNodes.add(new ResourceTypeTreeNode(composite, type.getPlugin()));
+                                treeNodes.add(getTreeNodeInstance(composite, type.getPlugin()));
                             }
                         } else {
                             // has parents; if all the direct parents are top level platforms
@@ -102,7 +104,8 @@ public class ResourceTypeTreeNodeBuilder {
                             }
 
                             if (isPlatformService) {
-                                platformServicesRecords.add(new ResourceTypeListGridRecord(composite));
+                                platformServicesRecords.add(getGridRecordInstance(composite));
+
                             } else {
                                 // in some cases, a top level server is limited to which platforms it can run on.
                                 // therefore, the parents will not be null/empty (as would be the case if the top level
@@ -115,8 +118,8 @@ public class ResourceTypeTreeNodeBuilder {
                                     boolean isPlatform = (parentType.getCategory() == ResourceCategory.PLATFORM && isEmpty(parentType
                                         .getParentResourceTypes()));
                                     if (!isPlatform || !gotPlatform) {
-                                        treeNodes.add(new ResourceTypeTreeNode(composite, String.valueOf(parentType
-                                            .getId())));
+                                        treeNodes
+                                            .add(getTreeNodeInstance(composite, String.valueOf(parentType.getId())));
                                     }
                                     if (isPlatform) {
                                         gotPlatform = true;
@@ -147,7 +150,7 @@ public class ResourceTypeTreeNodeBuilder {
 
         private int id;
 
-        private ResourceTypeListGridRecord(ResourceTypeTemplateCountComposite composite) {
+        protected ResourceTypeListGridRecord(ResourceTypeTemplateCountComposite composite) {
             ResourceType resourceType = composite.getType();
             this.id = resourceType.getId();
 
@@ -155,10 +158,7 @@ public class ResourceTypeTreeNodeBuilder {
             setAttribute(ATTRIB_NAME, resourceType.getName());
             setAttribute(ATTRIB_PLUGIN, resourceType.getPlugin());
             setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().name());
-            setAttribute(ATTRIB_ENABLED_ALERT_TEMPLATES, composite.getEnabledAlertCount());
-            setAttribute(ATTRIB_DISABLED_ALERT_TEMPLATES, composite.getDisabledAlertCount());
-            setAttribute(ATTRIB_ENABLED_METRIC_TEMPLATES, composite.getEnabledMetricCount());
-            setAttribute(ATTRIB_DISABLED_METRIC_TEMPLATES, composite.getDisabledMetricCount());
+            setAttribute(ATTRIB_EDIT, ImageManager.getEditIcon());
         }
 
         @Override
@@ -183,7 +183,7 @@ public class ResourceTypeTreeNodeBuilder {
         private String id;
         private String parentId;
 
-        private ResourceTypeTreeNode(ResourceTypeTemplateCountComposite composite, String parentId) {
+        protected ResourceTypeTreeNode(ResourceTypeTemplateCountComposite composite, String parentId) {
             ResourceType resourceType = composite.getType();
 
             String id = String.valueOf(resourceType.getId());
@@ -198,10 +198,7 @@ public class ResourceTypeTreeNodeBuilder {
             setAttribute(ATTRIB_NAME, resourceType.getName());
             setAttribute(ATTRIB_PLUGIN, resourceType.getPlugin());
             setAttribute(ATTRIB_CATEGORY, resourceType.getCategory().name());
-            setAttribute(ATTRIB_ENABLED_ALERT_TEMPLATES, composite.getEnabledAlertCount());
-            setAttribute(ATTRIB_DISABLED_ALERT_TEMPLATES, composite.getDisabledAlertCount());
-            setAttribute(ATTRIB_DISABLED_METRIC_TEMPLATES, composite.getEnabledMetricCount());
-            setAttribute(ATTRIB_ENABLED_METRIC_TEMPLATES, composite.getDisabledMetricCount());
+            setAttribute(ATTRIB_EDIT, ImageManager.getEditIcon());
         }
 
         @Override

@@ -20,10 +20,15 @@ package org.jboss.on.plugins.tomcat.test;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.Resource;
@@ -32,9 +37,6 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
 
 /**
  * @author Fady Matar
@@ -88,19 +90,26 @@ public class TomcatPluginTest {
     }
 
     private Set<Resource> findResource(Resource parent, String typeName) {
-        Set<Resource> found = new HashSet<Resource>();
-        Resource platform = parent;
-        for (Resource resource : platform.getChildResources()) {
-            log.info("Discovered resource of type: " + resource.getResourceType().getName());
-            if (resource.getResourceType().getName().equals(typeName)) {
-                found.add(resource);
+        Set<Resource> foundResources = new HashSet<Resource>();
+
+        Queue<Resource> discoveryQueue = new LinkedList<Resource>();
+        discoveryQueue.add(parent);
+
+        while (!discoveryQueue.isEmpty()) {
+            Resource currentResource = discoveryQueue.poll();
+
+            log.info("Discovered resource of type: " + currentResource.getResourceType().getName());
+            if (currentResource.getResourceType().getName().equals(typeName)) {
+                foundResources.add(currentResource);
             }
-            if (resource.getChildResources() != null) {
-                for (Resource child : found) {
-                    found.addAll(findResource(child, typeName));
+
+            if (currentResource.getChildResources() != null) {
+                for (Resource child : currentResource.getChildResources()) {
+                    discoveryQueue.add(child);
                 }
             }
         }
-        return found;
+
+        return foundResources;
     }
 }

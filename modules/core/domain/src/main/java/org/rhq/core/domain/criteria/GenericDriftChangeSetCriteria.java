@@ -18,8 +18,12 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.io.Serializable;
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
+import java.io.Serializable;
+import java.util.List;
+
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
@@ -56,11 +60,19 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
 
     private DriftChangeSetCategory filterCategory;
 
+    private List<DriftCategory> filterDriftCategories;
+
+    private String filterDriftDirectory;
+
+    private String filterDriftPath;
+
     private boolean fetchDrifts;
 
     private PageOrdering sortVersion;
 
     private PageControl pageControl;
+
+    private boolean strict;
 
     @Override
     public void addFilterId(String filterId) {
@@ -138,7 +150,7 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     }
 
     @Override
-    public Integer getFilterDriftDefintionId() {
+    public Integer getFilterDriftDefinitionId() {
         return filterDriftDefId;
     }
 
@@ -150,6 +162,40 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     @Override
     public DriftChangeSetCategory getFilterCategory() {
         return filterCategory;
+    }
+
+    @Override
+    public void addFilterDriftCategories(DriftCategory... filterDriftCategories) {
+        this.filterDriftCategories = getListIgnoringNulls(filterDriftCategories);
+    }
+
+    @Override
+    public List<DriftCategory> getFilterDriftCategories() {
+        return filterDriftCategories;
+    }
+
+    @Override
+    public void addFilterDriftPath(String filterDriftPath) {
+        this.filterDriftPath = filterDriftPath;
+    }
+
+    @Override
+    public String getFilterDriftPath() {
+        return this.filterDriftPath;
+    }
+
+    @Override
+    public void addFilterDriftDirectory(String filterDriftDirectory) {
+        // this requires strict equality
+        if (null != filterDriftDirectory) {
+            setStrict(true);
+        }
+        this.filterDriftDirectory = filterDriftDirectory;
+    }
+
+    @Override
+    public String getFilterDriftDirectory() {
+        return this.filterDriftDirectory;
     }
 
     @Override
@@ -181,4 +227,15 @@ public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeS
     public void setPageControl(PageControl pageControl) {
         this.pageControl = pageControl;
     }
+
+    @Override
+    public void setStrict(boolean strict) {
+        this.strict = strict;
+    }
+
+    @Override
+    public boolean isStrict() {
+        return this.strict;
+    }
+
 }

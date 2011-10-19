@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,13 +27,15 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Used to pass information on pagination and sorting to data lookup methods. Used by PersistenceUtility to apply these
- * conditions to queries.
+ * Used to pass information on pagination and sorting to data lookup methods.
+ * {@link org.rhq.core.server.PersistenceUtility} provides several methods
+ * that can be called to apply PageControls to various types of queries.
  *
  * @author Greg Hinkle
  * @author Joseph Marques
  */
 public class PageControl implements Serializable, Cloneable {
+
     private static final long serialVersionUID = 1L;
 
     private static final int MAX_ORDERING_FIELD_COUNT = 3;
@@ -42,9 +44,8 @@ public class PageControl implements Serializable, Cloneable {
 
     private int pageNumber = 0;
     private int pageSize = PageControl.SIZE_MAX;
-    private LinkedList<OrderingField> orderingFields;
-
     private Integer firstRecord;
+    private LinkedList<OrderingField> orderingFields;
 
     public PageControl() {
         this.orderingFields = new LinkedList<OrderingField>();
@@ -57,9 +58,8 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public static PageControl getExplicitPageControl(int firstRecord, int recordCount) {
-        PageControl pc = new PageControl();
+        PageControl pc = new PageControl(-1, recordCount);
         pc.firstRecord = firstRecord;
-        pc.pageSize = recordCount;
         return pc;
     }
 
@@ -144,6 +144,9 @@ public class PageControl implements Serializable, Cloneable {
 
     public void setFirstRecord(Integer firstRecord) {
         this.firstRecord = firstRecord;
+        if (this.firstRecord != null) {
+            this.pageNumber = -1;
+        }
     }
 
     public PageOrdering getPrimarySortOrder() {
@@ -257,9 +260,12 @@ public class PageControl implements Serializable, Cloneable {
 
     public void reset() {
         // allow the pageSize to remain, which keeps unlimited views with unlimited paging
-        setPageNumber(0);
-        this.orderingFields = new LinkedList<OrderingField>();
+        pageNumber = 0;
+        firstRecord = null;
+        orderingFields = new LinkedList<OrderingField>();
     }
+
+    // TODO (ips, 10/12/11): Incorporate firstRecord field into equals() and hashCode().
 
     @Override
     public boolean equals(Object o) {
@@ -291,8 +297,12 @@ public class PageControl implements Serializable, Cloneable {
     @Override
     public String toString() {
         StringBuilder buf = new StringBuilder("PageControl[");
-        buf.append("page=").append(pageNumber).append(", ");
-        buf.append("size=").append(pageSize);
+        if (firstRecord != null) {
+            buf.append("firstRow=").append(firstRecord);
+        } else {
+            buf.append("page=").append(pageNumber);
+        }
+        buf.append(", size=").append(pageSize);
         int i = 0;
         if (orderingFields.size() > 0) {
             buf.append(", sort[");
@@ -312,4 +322,5 @@ public class PageControl implements Serializable, Cloneable {
     public Object clone() {
         return new PageControl(pageNumber, pageSize, getOrderingFieldsAsArray());
     }
+
 }

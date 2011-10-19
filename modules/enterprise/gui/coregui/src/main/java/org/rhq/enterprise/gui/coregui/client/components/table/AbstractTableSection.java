@@ -40,6 +40,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
+import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -58,13 +59,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends Table<DS> implements BookmarkableView {
+public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends Table<DS> implements BookmarkableView,
+    InitializableView {
 
     private VLayout detailsHolder;
     private Canvas detailsView;
     private String basePath;
     private boolean escapeHtmlInDetailsLinkColumn;
     private boolean initialDisplay;
+    private boolean initialized;
 
     protected AbstractTableSection(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
@@ -122,6 +125,13 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
         if (null != detailsView) {
             switchToDetailsView();
         }
+
+        this.initialized = true;
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return super.isInitialized() && this.initialized;
     }
 
     /**

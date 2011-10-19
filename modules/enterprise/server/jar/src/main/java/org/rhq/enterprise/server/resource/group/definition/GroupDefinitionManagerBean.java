@@ -112,8 +112,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
                 groupDefinitionManager.calculateGroupMembership(subject, groupDefinitionId);
                 success = true;
             } catch (Throwable t) {
-                /* 
-                 * be paranoid about capturing any and all kinds of errors, to give a chances for 
+                /*
+                 * be paranoid about capturing any and all kinds of errors, to give a chances for
                  * all recalculations to complete in this (heart)beat of the recalculation thread
                  */
                 log.error("Error recalculating DynaGroups for GroupDefinition[id=" + groupDefinitionId + "]", t);
@@ -186,7 +186,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
             throw new GroupDefinitionUpdateException(gdnfe.getMessage());
         }
         if (groupDefinition.isRecursive() == true && attachedGroupDefinition.isRecursive() == false) {
-            // making a recursive group into a "normal" group 
+            // making a recursive group into a "normal" group
             changeType = RecursivityChangeType.AddedRecursion;
         } else if (groupDefinition.isRecursive() == false && attachedGroupDefinition.isRecursive() == true) {
             // making a "normal" group into a recursive group
@@ -237,6 +237,10 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
         if (description.length() > 100) {
             throw new GroupDefinitionException("Description is limited to 100 characters");
+        }
+
+        if (name.contains("<") || name.contains("$") || name.contains("'") || name.contains("{") || name.contains("[")) {
+            throw new GroupDefinitionException("Name must not contain <,$,',[,{ characters");
         }
 
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);
@@ -298,10 +302,10 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
 
             /*
              * do one group at a time, to help prevent xaction timeouts
-             * 
+             *
              * note: we don't need to pass the overlord here because all group definition / dynagroup functionality
              *       is hidden behind the MANAGE_INVENTORY permission, which is sufficient for all operations on a
-             *       resource group including creation, deletion, and membership changes 
+             *       resource group including creation, deletion, and membership changes
              */
             Integer nextResourceGroupId = groupDefinitionManager.calculateGroupMembership_helper(subject,
                 groupDefinitionId, result);
@@ -326,10 +330,10 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal {
         /*
          * and ids that are left over are doomed, but since deleting a resource group is related to the size of the
          * group, remove each group in it's own transaction
-         * 
+         *
          * note: we don't need to pass the overlord here because all group definition / dynagroup functionality
          *       is hidden behind the MANAGE_INVENTORY permission, which is sufficient for all operations on a
-         *       resource group including creation, deletion, and membership changes 
+         *       resource group including creation, deletion, and membership changes
          */
         for (Integer doomedGroupId : doomedResourceGroupIds) {
             groupDefinitionManager.removeManagedResource_helper(subject, groupDefinitionId, doomedGroupId);

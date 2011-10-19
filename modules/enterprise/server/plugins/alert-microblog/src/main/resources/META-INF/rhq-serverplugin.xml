@@ -12,7 +12,7 @@
         This alert sender plugin is used to send notifications via Microblogging
         services that use a Twitter-like API like laconi.ca / identi.ca or twitter itself.
         NOTE: This plugin needs Internet access to verify Twitter/OAuth information. 
-        So make sure RHQ Server has Internet access or provide a Http Proxy configuration. 
+        So make sure RHQ Server has Internet access or provide a Http Proxy configuration.
     </serverplugin:help>
 
     <serverplugin:plugin-component class="MicroblogServerPluginComponent">

@@ -18,10 +18,17 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_CHILDREN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_DESCENDANTS;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -40,6 +47,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -50,10 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreate
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.*;
 
 /**
  * @author Greg Hinkle
@@ -212,28 +217,20 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 new AbstractTableAction(TableActionEnablement.ALWAYS) {
                     @Override
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
-                        winModal.setTitle(MSG.view_tabs_common_group_membership());
-                        winModal.setOverflow(Overflow.VISIBLE);
-                        winModal.setShowMinimizeButton(false);
-                        winModal.setIsModal(true);
-                        winModal.setShowModalMask(true);
-                        winModal.setWidth(700);
-                        winModal.setHeight(450);
-                        winModal.setAutoCenter(true);
-                        winModal.setShowResizer(true);
-                        winModal.setCanDragResize(true);
-                        winModal.centerInPage();
-                        winModal.addCloseClickHandler(new CloseClickHandler() {
-                            @Override
-                            public void onCloseClick(CloseClientEvent event) {
-                                winModal.markForDestroy();
-                            }
-                        });
-
                         ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
                             ResourceGroupListView.this.extendLocatorId("MembershipView"),
                             ResourceGroupListView.this.resourceIdToModify.intValue());
+
+                        final PopupWindow winModal = new PopupWindow(extendLocatorId("MembershipWindow"),
+                            membershipView);
+                        winModal.setTitle(MSG.view_tabs_common_group_membership());
+                        winModal.setWidth(700);
+                        winModal.setHeight(450);
+                        winModal.addCloseClickHandler(new CloseClickHandler() {
+                            public void onCloseClick(CloseClientEvent event) {
+                                refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
+                            }
+                        });
 
                         membershipView.setSaveButtonHandler(new ClickHandler() {
                             @Override
@@ -243,7 +240,6 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                             }
                         });
 
-                        winModal.addItem(membershipView);
                         winModal.show();
                     }
                 });
@@ -266,8 +262,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId,
         boolean canModifyMembership) {
 
-        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
-            .valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
+        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId",
+            String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);
         }

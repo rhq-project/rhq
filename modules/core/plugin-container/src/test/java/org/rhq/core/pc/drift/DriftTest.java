@@ -19,13 +19,6 @@
 
 package org.rhq.core.pc.drift;
 
-import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.IOUtils.write;
-import static org.apache.commons.io.IOUtils.writeLines;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,10 +29,17 @@ import java.util.Random;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
+
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
  * A base test class that provides a framework for drift related tests. DriftTest sets up
@@ -192,16 +192,16 @@ public class DriftTest {
     }
 
     /**
-     * Returns the previous snapshot file for the specified drift definition for the
-     * resource with the id that can be obtained from {@link #resourceId()}.
+     * Returns the previous version snapshot file. This file is generated when an initial
+     * snapshot has already been generated and drift is subsequently detected.
      *
-     * @param config The drift definition name
-     * @return The previous snapshot file
+     * @param driftDefinitionName The drift definition name
+     * @return The previous version snapshot file
      * @throws Exception
      */
-    protected File previousChangeSet(String config) throws IOException {
-        File changeSet = changeSet(config, COVERAGE);
-        return new File(changeSet.getParentFile(), changeSet.getName() + ".previous");
+    protected File previousSnapshot(String driftDefinitionName) throws Exception {
+        File driftDefDir = changeSetDir(driftDefinitionName);
+        return new File(driftDefDir, "changeset.txt.previous");
     }
 
     protected File changeSetDir(String driftDefName) throws Exception {
@@ -259,6 +259,22 @@ public class DriftTest {
         config.setInterval(defaultInterval);
 
         return config;
+    }
+
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type) {
+        return createHeaders(driftDef, type, 0);
+    }
+
+    protected Headers createHeaders(DriftDefinition driftDef, DriftChangeSetCategory type, int version) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId());
+        headers.setDriftDefinitionId(driftDef.getId());
+        headers.setDriftDefinitionName(driftDef.getName());
+        headers.setBasedir(resourceDir.getAbsolutePath());
+        headers.setType(type);
+        headers.setVersion(version);
+
+        return headers;
     }
 
 }

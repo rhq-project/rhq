@@ -37,24 +37,14 @@
                <h:outputText value="${msg['error.Error.YouCan']} " />
                <h:outputLink value="#" id="showTraceDetails">
                   <h:outputText value="${msg['error.Error.StackTraceHereLink']} " />
-                  <rich:componentControl for="traceDetailsModalPanel" attachTo="showTraceDetails" 
+                  <rich:componentControl for="traceDetailsModalPanel" attachTo="showTraceDetails"
                                          operation="show" event="onclick"/>
                </h:outputLink>
-               <h:outputText value="${msg['error.Error.ReturnTo']} " />
-               <h:outputLink value="javascript:history.back(1)">
-                  <h:outputText value="${msg['error.Error.PreviousPageLink']} " />
-               </h:outputLink>
-               <h:outputLink value="/Dashboard.do">
-                  <h:outputText value="${msg['error.Error.DashboardLink']} " />
-               </h:outputLink>
-               <h:outputLink value="/rhq/inventory/browseResources.xhtml?subtab=all">
-                  <h:outputText value="${msg['error.Error.ResourceHubLink']}" />
-               </h:outputLink> 
             </td>
          </tr>
       </table>
 
-      <rich:modalPanel id="traceDetailsModalPanel" width="800" height="550" style="overflow: auto;" 
+      <rich:modalPanel id="traceDetailsModalPanel" width="800" height="550" style="overflow: auto;"
                        onmaskclick="#{rich:component('traceDetailsModalPanel')}.hide()">
          <f:facet name="header">
             <h:outputText value="Trace Details"/>
@@ -74,12 +64,12 @@
                      </table>
                   </td>
                </tr>
-               <tr> 
+               <tr>
                   <td class="BlockContent">
                      <blockquote><h:outputText value="#{frame.righty}" /></blockquote>
                   </td>
-               </tr> 
-               <tr> 
+               </tr>
+               <tr>
                   <td class="BlockBottomLine">
                      <img src="/images/spacer.gif" width="1" height="1" border="0" />
                   </td>

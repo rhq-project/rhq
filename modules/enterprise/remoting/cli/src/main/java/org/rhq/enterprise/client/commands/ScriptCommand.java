@@ -67,6 +67,17 @@ public class ScriptCommand implements ClientCommand {
     private boolean inMultilineScript = false;
 
     public ScriptEngine getScriptEngine() {
+        if (jsEngine == null) {
+            try {
+                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Arrays
+                    .asList(getLibDir())), null);
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
         return jsEngine;
     }
 
@@ -135,7 +146,7 @@ public class ScriptCommand implements ClientCommand {
 
         try {
 
-            Object result = jsEngine.eval(script.toString());
+            Object result = getScriptEngine().eval(script.toString());
             inMultilineScript = false;
             script = new StringBuilder();
             if (result != null) {
@@ -167,33 +178,26 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public void initBindings(ClientMain client) {
-        if (jsEngine == null) {
-            bindings = new StandardBindings(client.getPrintWriter(), client.getRemoteClient());
-
-            try {
-                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Arrays
-                    .asList(getLibDir())), bindings);
-                jsEngine.eval("1+1");
-            } catch (ScriptException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
+        bindings = new StandardBindings(client.getPrintWriter(), client.getRemoteClient());
         bindings.getSubject().setValue(client.getSubject());
         bindings.getPretty().getValue().setWidth(client.getConsoleWidth());
-        bindings.getProxyFactory().setValue(new EditableResourceClientFactory(client));
+        if (client.getRemoteClient() != null) {
+            bindings.getProxyFactory().setValue(new EditableResourceClientFactory(client));
+        } else {
+            bindings.getProxyFactory().setValue(null);
+        }
 
         //non-standard bindings        
         bindings.put("configurationEditor", new ConfigurationEditor(client));
         bindings.put("rhq", new Controller(client));
 
-        ScriptEngineFactory.injectStandardBindings(jsEngine, bindings, false);
+        ScriptEngine engine = getScriptEngine();
+        
+        ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
 
         ScriptEngineFactory
-            .bindIndirectionMethods(jsEngine, "configurationEditor", bindings.get("configurationEditor"));
-        ScriptEngineFactory.bindIndirectionMethods(jsEngine, "rhq", bindings.get("rhq"));
+            .bindIndirectionMethods(engine, "configurationEditor");
+        ScriptEngineFactory.bindIndirectionMethods(engine, "rhq");
     }
 
     private void executeUtilScripts() {
@@ -201,7 +205,7 @@ public class ScriptCommand implements ClientCommand {
         InputStreamReader reader = new InputStreamReader(stream);
 
         try {
-            jsEngine.eval(reader);
+            getScriptEngine().eval(reader);
         } catch (ScriptException e) {
             log.warn("An error occurred while executing test_utils.js", e);
         }
@@ -229,7 +233,7 @@ public class ScriptCommand implements ClientCommand {
             bindNamedArgs(cmdLine);
         }
 
-        jsEngine.put("script", new File(cmdLine.getScriptFileName()).getName());
+        getScriptEngine().put("script", new File(cmdLine.getScriptFileName()).getName());
     }
 
     private void bindArgsArray(ScriptCmdLine cmdLine) {
@@ -240,19 +244,19 @@ public class ScriptCommand implements ClientCommand {
             args[i++] = arg.getValue();
         }
 
-        jsEngine.put("args", args);
+        getScriptEngine().put("args", args);
     }
 
     private void bindNamedArgs(ScriptCmdLine cmdLine) {
         for (ScriptArg arg : cmdLine.getArgs()) {
             NamedScriptArg namedArg = (NamedScriptArg) arg;
-            jsEngine.put(namedArg.getName(), namedArg.getValue());
+            getScriptEngine().put(namedArg.getName(), namedArg.getValue());
         }
     }
 
     private boolean executeScriptFile(Reader reader, ClientMain client) {
         try {
-            Object result = jsEngine.eval(reader);
+            Object result = getScriptEngine().eval(reader);
             if (result != null) {
                 if (client.isInteractiveMode()) {
                     new TabularWriter(client.getPrintWriter()).print(result);
@@ -283,7 +287,7 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public ScriptContext getContext() {
-        return jsEngine.getContext();
+        return getScriptEngine().getContext();
     }
 
     private File getLibDir() {

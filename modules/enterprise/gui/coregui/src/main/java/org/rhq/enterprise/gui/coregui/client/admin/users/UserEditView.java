@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -36,6 +38,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -44,10 +49,11 @@ import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEdito
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 /**
- * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
- * {@link Principal}).
+ * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and if the user is authenticated via RHQ and
+ * not LDAP, the password of the associated {@link Principal}).
  *
  * @author Ian Springer
  */
@@ -59,6 +65,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private SubjectRoleSelector roleSelector;
 
     private boolean loggedInUserHasManageSecurityPermission;
+    private boolean ldapAuthorizationEnabled;
 
     public UserEditView(String locatorId, int subjectId) {
         super(locatorId, new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
@@ -68,15 +75,42 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
+        // Step 1 of async init: load current user's global permissions.
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
             public void onPermissionsLoaded(Set<Permission> permissions) {
-                if (permissions != null) {
-                    UserEditView.this.loggedInUserHasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
-                    Subject sessionSubject = UserSessionManager.getSessionSubject();
-                    boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-                    boolean isReadOnly = (!UserEditView.this.loggedInUserHasManageSecurityPermission && !isEditingSelf);
-                    init(isReadOnly);
+                if (permissions == null) {
+                    // TODO: i18n
+                    CoreGUI.getErrorHandler().handleError("Failed to load global permissions for current user. Perhaps the Server is down.");
+                    return;
+                }
+
+                UserEditView.this.loggedInUserHasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
+                Subject sessionSubject = UserSessionManager.getSessionSubject();
+                boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
+                final boolean isReadOnly = (!UserEditView.this.loggedInUserHasManageSecurityPermission && !isEditingSelf);
+
+                // Step 2 of async init: check if LDAP authz is enabled in system settings.
+                if (UserEditView.this.loggedInUserHasManageSecurityPermission) {
+                    GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
+                        public void onFailure(Throwable caught) {
+                            // TODO: i18n
+                            CoreGUI.getErrorHandler().handleError("Failed to determine if LDAP authorization is enabled. Perhaps the Server is down.",
+                                caught);
+                        }
+
+                        public void onSuccess(SystemSettings systemSettings) {
+                            String groupFilter = systemSettings.get(SystemProperty.LDAP_GROUP_FILTER);
+                            String groupMember = systemSettings.get(SystemProperty.LDAP_GROUP_MEMBER);
+                            UserEditView.this.ldapAuthorizationEnabled =
+                                (((groupFilter != null) && groupFilter.trim().length() > 0) ||
+                                    ((groupMember != null) && groupMember.trim().length() > 0));
+                            Log.debug("LDAP authorization is " + ((ldapAuthorizationEnabled) ? "" : "not ") + "enabled.");
+
+                            // Step 3 of async init: call super.init() to draw the editor.
+                            UserEditView.this.init(isReadOnly);
+                        }
+                    });
                 }
             }
         });
@@ -105,7 +139,8 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             ListGridRecord[] roleListGridRecords = toListGridRecordArray(roleRecords);
             boolean rolesAreReadOnly = areRolesReadOnly(record);
 
-            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, rolesAreReadOnly);
+            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords,
+                rolesAreReadOnly);
             this.roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
                     UserEditView.this.onItemChanged();
@@ -118,13 +153,18 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     // In general, a user with MANAGE_SECURITY can update assigned roles, with two exceptions:
     //
-    //    1) an LDAP user's assigned roles cannot be modified except when mapping LDAP groups to LDAP roles,
-    //       which is not done via this view.
+    //    1) if LDAP authorization is enabled, an LDAP-authenticated user's assigned roles cannot be modified directly;
+    //       instead an "LDAP role" is automatically assigned to the user if the user is a member of one or more of the
+    //       LDAP groups associated with that role; a user with MANAGE_SECURITY can assign LDAP groups to an LDAP role
+    //       by editing the role
     //    2) rhqadmin's roles cannot be changed - the superuser role is all rhqadmin should ever need.
     //
     private boolean areRolesReadOnly(Record record) {
-        boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!this.loggedInUserHasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
+        if (!this.loggedInUserHasManageSecurityPermission) {
+            return true;
+        }
+        boolean isLdapAuthenticatedUser = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
+        return (getRecordId() == SUBJECT_ID_RHQADMIN) || (isLdapAuthenticatedUser && this.ldapAuthorizationEnabled);
     }
 
     @Override
@@ -143,11 +183,10 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
 
         StaticTextItem isLdapItem = new StaticTextItem(UsersDataSource.Field.LDAP);
         items.add(isLdapItem);
-
-        boolean isLdap = Boolean.valueOf(form.getValueAsString(UsersDataSource.Field.LDAP));
+        boolean isLdapAuthenticatedUser = Boolean.valueOf(form.getValueAsString(UsersDataSource.Field.LDAP));
 
         // Only display the password fields for non-LDAP users (i.e. users that have an associated RHQ Principal).
-        if (!this.isReadOnly() && !isLdap) {
+        if (!this.isReadOnly() && !isLdapAuthenticatedUser) {
             PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
             passwordItem.setShowTitle(true);
             items.add(passwordItem);

@@ -41,6 +41,7 @@ public class ScriptAssert {
         this.scriptEngine = scriptEngine;
     }
 
+    @NoTopLevelIndirection
     public void init(ScriptEngine engine) {
         this.scriptEngine = engine;
     }

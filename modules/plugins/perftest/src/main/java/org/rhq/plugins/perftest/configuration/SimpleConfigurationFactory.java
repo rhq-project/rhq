@@ -78,17 +78,22 @@ public class SimpleConfigurationFactory implements ConfigurationFactory {
     private static PropertySimple generatePropertySimple(PropertyDefinitionSimple propertyDefinitionSimple)
     {
         String value = null;
-        switch (propertyDefinitionSimple.getType()) {
-            case STRING: value = "blah"; break;
-            case LONG_STRING: value = "line 1\nline 2\nline 3\n"; break;
-            case PASSWORD: value = "secret"; break;
-            case BOOLEAN: value = "true"; break;
-            case INTEGER: value = "42"; break;
-            case LONG: value = "55555555555555555555555"; break;
-            case FLOAT: value = "3.14"; break;
-            case DOUBLE: value = "333333333333333333333333.0"; break;
-            case FILE: value = "C:/autoexec.bat"; break;
-            case DIRECTORY: value = "/usr/bin"; break;
+        if (propertyDefinitionSimple.getEnumeratedValues() != null
+            && !propertyDefinitionSimple.getEnumeratedValues().isEmpty()) {
+            value = propertyDefinitionSimple.getEnumeratedValues().get(0).getValue(); // pick the first one
+        } else {
+            switch (propertyDefinitionSimple.getType()) {
+                case STRING: value = "blah"; break;
+                case LONG_STRING: value = "line 1\nline 2\nline 3\n"; break;
+                case PASSWORD: value = "secret"; break;
+                case BOOLEAN: value = "true"; break;
+                case INTEGER: value = "42"; break;
+                case LONG: value = "55555555555555555555555"; break;
+                case FLOAT: value = "3.14"; break;
+                case DOUBLE: value = "333333333333333333333333.0"; break;
+                case FILE: value = "C:/autoexec.bat"; break;
+                case DIRECTORY: value = "/usr/bin"; break;
+            }
         }
         return new PropertySimple(propertyDefinitionSimple.getName(), value);
     }

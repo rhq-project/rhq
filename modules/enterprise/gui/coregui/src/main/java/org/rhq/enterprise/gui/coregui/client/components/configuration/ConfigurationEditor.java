@@ -146,7 +146,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 //
 public class ConfigurationEditor extends LocatableVLayout {
 
-    private static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
+    static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
     static {
         BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.TRUE.toString(), MSG.common_val_yes());
         BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.FALSE.toString(), MSG.common_val_no());
@@ -1339,10 +1339,12 @@ public class ConfigurationEditor extends LocatableVLayout {
                 || (propertySimple.getParentList() != null)) {
                 valueItem.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent changedEvent) {
-                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                        updatePropertySimpleValue(changedEvent.getItem(), changedEvent.getValue(), propertySimple,
+                            propertyDefinitionSimple);
                         // Only fire a prop value change event if the prop's a top-level simple or a simple within a
                         // top-level map.
-                        if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
+                        if (shouldFireEventOnPropertyValueChange(changedEvent.getItem(), propertyDefinitionSimple,
+                            propertySimple)) {
                             boolean isValid = changedEvent.getItem().validate();
                             firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
                         }
@@ -1384,13 +1386,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
-    protected boolean fireEventOnPropertyValueChange(PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple) {
+    protected boolean shouldFireEventOnPropertyValueChange(FormItem formItem,
+        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
         PropertyMap parentMap = propertySimple.getParentMap();
         return propertySimple.getConfiguration() != null || (parentMap != null && parentMap.getConfiguration() != null);
     }
 
-    protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
+    protected void updatePropertySimpleValue(FormItem formItem, Object value, PropertySimple propertySimple,
         PropertyDefinitionSimple propertyDefinitionSimple) {
         propertySimple.setErrorMessage(null);
         propertySimple.setValue(value);
@@ -1443,7 +1445,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
                     valueItem.setDisabled(isUnset);
                     if (isUnset) {
-                        updatePropertySimpleValue(null, propertySimple, propertyDefinitionSimple);
+                        updatePropertySimpleValue(unsetItem, null, propertySimple, propertyDefinitionSimple);
                         setValue(valueItem, null);
                     } else {
                         valueItem.focusInItem();

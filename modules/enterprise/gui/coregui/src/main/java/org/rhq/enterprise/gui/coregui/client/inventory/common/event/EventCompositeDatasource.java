@@ -239,7 +239,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
     }
 
     /**
-     * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
+     * Additional processing to support entity-specific or cross-resource views, and something that can be overridden.
      */
     protected void dataRetrieved(final PageList<EventComposite> result, final DSResponse response,
         final DSRequest request) {
@@ -320,8 +320,10 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
         criteria.addFilterSourceName((String) criteriaMap.get("source"));
         criteria.addFilterDetail((String) criteriaMap.get("detail"));
-
-        criteria.addFilterSeverities(severities);
+        // There's no need to add a severities filter to the criteria if the user specified all severities.
+        if (severities.length != EventSeverity.values().length) {
+            criteria.addFilterSeverities(severities);
+        }
 
         criteria.addFilterEntityContext(entityContext);
 

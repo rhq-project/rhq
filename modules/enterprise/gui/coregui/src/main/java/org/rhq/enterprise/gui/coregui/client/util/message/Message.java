@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.EnumSet;
 
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * A message to be displayed to the user in one or more places.
@@ -30,6 +31,9 @@ import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
  * @author Ian Springer
  */
 public class Message {
+    private static final String BR = "=~br/~=";
+    private static final String PRE_OPEN = "=~pre~=";
+    private static final String PRE_CLOSE = "=~/pre~=";
     protected String conciseMessage;
     protected String detailedMessage;
     protected Date fired = new Date();
@@ -113,14 +117,27 @@ public class Message {
     }
 
     public Message(String conciseMessage, Throwable details, Severity severity, EnumSet<Option> options) {
-        this(conciseMessage, ErrorHandler.getAllMessages(details, true), severity, options);
+        this(conciseMessage, PRE_OPEN + ErrorHandler.getAllMessages(details, true, BR) + PRE_CLOSE, severity, options);
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {
-        this.conciseMessage = conciseMessage;
-        this.detailedMessage = detailedMessage;
+        this.conciseMessage = StringUtility.escapeHtml(conciseMessage);
+        String escapedDetailedMessage = StringUtility.escapeHtml(detailedMessage);
+        this.detailedMessage = makeRestrictedHtmlMessage(escapedDetailedMessage);
         this.severity = (severity != null) ? severity : Severity.Info;
         this.options = (options != null) ? options : EnumSet.noneOf(Option.class);
+    }
+
+    /**
+     * Given a sanitized message with HTML tags escaped, this will put back some HTML tags that we know we
+     * still want.
+     * 
+     * @param escapedDetailedMessage the message with escaped HTML characters
+     * @return the escaped message, but with some HTML tags possibly now included
+     */
+    private String makeRestrictedHtmlMessage(String escapedDetailedMessage) {
+        return (escapedDetailedMessage != null) ? escapedDetailedMessage.replaceAll(BR, "<br/>")
+            .replaceAll(PRE_OPEN, "<pre>").replaceAll(PRE_CLOSE, "</pre>") : null;
     }
 
     public String getConciseMessage() {

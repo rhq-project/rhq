@@ -39,6 +39,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.resource.Resource;
 
@@ -49,9 +50,9 @@ import org.rhq.core.domain.resource.Resource;
  *
  * This provides historical data regarding when a resource was up or down.  To get the current availability
  * of a resource, it is best to use the {@link ResourceAvailability} entity instead.
- *  
+ *
  * @see ResourceAvailability
- * 
+ *
  * @author Heiko W. Rupp
  * @author John Mazzitelli
  */
@@ -114,6 +115,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  WHERE a.resource.id IN ( :resourceIds )") })
 @SequenceGenerator(name = "Generator", sequenceName = "RHQ_AVAILABILITY_ID_SEQ")
 @Table(name = "RHQ_AVAILABILITY")
+@XmlRootElement
 public class Availability implements Serializable {
     private static final long serialVersionUID = 1L;
 

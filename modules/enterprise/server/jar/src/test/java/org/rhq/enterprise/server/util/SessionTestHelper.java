@@ -29,12 +29,15 @@ import javax.persistence.EntityManager;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.authz.Permission.Target;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -89,9 +92,23 @@ public class SessionTestHelper {
 
         // We want to return the attached object but sessionmanager.put will return a detached copy of newSubject.
         // Copy over the sessionId and pass back the attached Subject.
-        Subject sessionSubject = SessionManager.getInstance().put(newSubject, 1000 * 300);
+        Subject sessionSubject = SessionManager.getInstance().put(newSubject, 1000 * 60 * 10); // 10 mins timeout
         newSubject.setSessionId(sessionSubject.getSessionId());
         return newSubject;
+    }
+
+    public static void simulateLogin(Subject subject) {
+        Subject sessionSubject = SessionManager.getInstance().put(subject, 1000 * 60 * 10); // 10 mins timeout
+        subject.setSessionId(sessionSubject.getSessionId());
+        return;
+    }
+
+    public static void simulateLogout(Subject subject) {
+        Integer sessionId = subject.getSessionId();
+        if (sessionId != null) {
+            SessionManager.getInstance().invalidate(sessionId);
+        }
+        return;
     }
 
     public static Role createNewRoleForSubject(EntityManager em, Subject subject, String roleName) {
@@ -132,7 +149,14 @@ public class SessionTestHelper {
     }
 
     public static ResourceGroup createNewCompatibleGroupForRole(EntityManager em, Role role, String groupName) {
-        ResourceType type = createNewResourceType(em);
+        return createNewCompatibleGroupForRole(em, role, groupName, null);
+    }
+
+    public static ResourceGroup createNewCompatibleGroupForRole(EntityManager em, Role role, String groupName,
+        ResourceType type) {
+        if (type == null) {
+            type = createNewResourceType(em);
+        }
         return createNewGroupForRoleHelper(em, role, groupName, type, false);
     }
 
@@ -169,6 +193,11 @@ public class SessionTestHelper {
 
     public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName) {
         ResourceType type = group.getResourceType();
+        return createNewResourceForGroup(em, group, resourceName, type, true);
+    }
+
+    public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName,
+        ResourceType type, boolean doFlush) {
 
         if (type == null) {
             type = createNewResourceType(em);
@@ -177,6 +206,8 @@ public class SessionTestHelper {
         resourceName = preprocess(resourceName);
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
+        resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        resource.setCurrentAvailability(new ResourceAvailability(resource, AvailabilityType.UP));
 
         group.addExplicitResource(resource);
         resource.getExplicitGroups().add(group);
@@ -188,7 +219,9 @@ public class SessionTestHelper {
         resource.getImplicitGroups().add(group);
 
         em.persist(resource);
-        em.flush();
+        if (doFlush) {
+            em.flush();
+        }
 
         return resource;
     }
@@ -208,12 +241,21 @@ public class SessionTestHelper {
     }
 
     public static Resource createNewResource(EntityManager em, String resourceName) {
+        return createNewResource(em, resourceName, null);
+    }
+
+    public static Resource createNewResource(EntityManager em, String resourceName, ResourceType type) {
+        if (type == null) {
+            type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
+            em.persist(type);
+        }
+
         resourceName = preprocess(resourceName);
-        ResourceType type = new ResourceType(preprocess("testType"), "testPlugin", ResourceCategory.PLATFORM, null);
         Resource resource = new Resource(resourceName, resourceName, type);
         resource.setUuid("" + new Random().nextInt());
+        resource.setInventoryStatus(InventoryStatus.COMMITTED);
+        resource.setCurrentAvailability(new ResourceAvailability(resource, AvailabilityType.UP));
 
-        em.persist(type);
         em.persist(resource);
         em.flush();
 

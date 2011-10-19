@@ -394,7 +394,9 @@ public class InstalledPluginsUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Preparing to purge agent plugins: " +
                 pluginNames + ". This may take a few minutes since all type definitions from the plugins must " +
                 "first be purged from the system. The plugins will still be visible on this page until they have " +
-                "been purged.");
+                "been purged. Please note that you must not re-install the plugin while the purge is running, " +
+                "as this is going to fail. Wait for re-add until the purge is done."
+            );
         } catch (Exception e) {
             processException("Failed to purge agent plugins", e);
         }
@@ -432,7 +434,7 @@ public class InstalledPluginsUIBean {
     }
 
     /**
-     * Throws a permission exception if the user is not allowed to access this functionality. 
+     * Throws a permission exception if the user is not allowed to access this functionality.
      */
     private void hasPermission() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();

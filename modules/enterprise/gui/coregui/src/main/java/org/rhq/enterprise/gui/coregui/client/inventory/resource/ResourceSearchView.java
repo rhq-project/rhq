@@ -127,9 +127,10 @@ public class ResourceSearchView extends Table {
 
         final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
+        setInitialCriteriaFixed(false);
     }
 
-    // surpress unchecked warnings because the subclasses may have different generic types for the datasource
+    // suppress unchecked warnings because the subclasses may have different generic types for the datasource
     protected RPCDataSource getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }

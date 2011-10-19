@@ -36,6 +36,8 @@ public class ResourceTypeTemplateCountComposite implements Serializable, Compara
     private long disabledMetricCount;
     private long enabledAlertCount;
     private long disabledAlertCount;
+    private long pluginDriftTemplates;
+    private long userDriftTemplates;
     private String pluginInfo;
 
     // no arg constructor required by gwt
@@ -43,13 +45,15 @@ public class ResourceTypeTemplateCountComposite implements Serializable, Compara
     }
 
     public ResourceTypeTemplateCountComposite(ResourceType type, long enabledMetricCount, long disabledMetricCount,
-        long enabledAlertCount, long disabledAlertCount) {
+        long enabledAlertCount, long disabledAlertCount, long pluginDriftTemplates, long userDriftTemplates) {
         super();
         this.type = type;
         this.enabledMetricCount = enabledMetricCount;
         this.disabledMetricCount = disabledMetricCount;
         this.enabledAlertCount = enabledAlertCount;
         this.disabledAlertCount = disabledAlertCount;
+        this.pluginDriftTemplates = pluginDriftTemplates;
+        this.userDriftTemplates = userDriftTemplates;
     }
 
     public ResourceType getType() {
@@ -76,6 +80,14 @@ public class ResourceTypeTemplateCountComposite implements Serializable, Compara
         return this.type.compareTo(other.type);
     }
 
+    public long getPluginDriftTemplates() {
+        return pluginDriftTemplates;
+    }
+
+    public long getUserDriftTemplates() {
+        return userDriftTemplates;
+    }
+
     public String getPluginInfo() {
         return pluginInfo;
     }
@@ -87,7 +99,8 @@ public class ResourceTypeTemplateCountComposite implements Serializable, Compara
     @Override
     public String toString() {
         return "ResourceTypeTemplateCountComposite[ " + "type[" + "id=" + getType().getId() + ", " + "name="
-            + getType().getName() + "], " + "metricTemplateCounts(" + enabledMetricCount + " / " + disabledMetricCount
-            + "), " + "metricAlertCounts(" + enabledAlertCount + " / " + disabledAlertCount + ") ]";
+            + getType().getName() + "], " + ", disabledMetricCount=" + disabledMetricCount + ", enabledAlertCount="
+            + enabledAlertCount + ", enabledMetricCount=" + enabledMetricCount + ", pluginDriftTemplates="
+            + pluginDriftTemplates + ",  userDriftTemplates=" + userDriftTemplates + "]";
     }
 }

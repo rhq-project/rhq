@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +31,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -91,6 +94,19 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         addDataSourceFields();
     }
 
+    @Override
+    protected List<DataSourceField> addDataSourceFields() {
+        List<DataSourceField> fields = super.addDataSourceFields();
+
+        DataSourceField idField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
+        idField.setPrimaryKey(true);
+        idField.setCanEdit(false);
+        idField.setHidden(true);
+        fields.add(idField);
+
+        return fields;
+    }
+
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
@@ -98,7 +114,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
         ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
@@ -118,6 +134,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
+        conditionField.setCanSortClientOnly(true);
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
@@ -176,10 +193,10 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                     String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return SeleniumUtility.getLocatableHref(url, value.toString(), null);
                 }
             });
             resourceNameField.setShowHover(true);
@@ -241,7 +258,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     }
 
     /**
-     * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
+     * Additional processing to support entity-specific or cross-resource views, and something that can be overridden.
      */
     protected void dataRetrieved(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
         switch (entityContext.type) {
@@ -311,15 +328,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     @Override
     protected AlertCriteria getFetchCriteria(DSRequest request) {
         AlertPriority[] prioritiesFilter = getArrayFilter(request, FILTER_PRIORITIES, AlertPriority.class);
-
         if (prioritiesFilter == null || prioritiesFilter.length == 0) {
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
-
-        criteria.addFilterPriorities(prioritiesFilter);
+        // There's no need to add a priorities filter to the criteria if the user specified all priorities.
+        if (prioritiesFilter.length != AlertPriority.values().length) {
+            criteria.addFilterPriorities(prioritiesFilter);
+        }
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 
@@ -328,20 +346,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
     @Override
     protected String getSortFieldForColumn(String columnName) {
+        String sortField;
         if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
-            return "alertDefinition.resource.ancestry";
+            sortField = "alertDefinition.resource.ancestry";
         }
-        if ("status".equals(columnName)) {
-            return "acknowledgeTime";
+        else if ("status".equals(columnName)) {
+            sortField = "acknowledgeTime";
+        } else {
+            sortField = super.getSortFieldForColumn(columnName);
         }
-        if ("conditionText".equals(columnName)) {
-            // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
-            // on this ListGridField. To me that should mean any sorting done client side on this field should
-            // not be passed in on the Request, but it seems to be...
-            return null;
-        }
-
-        return super.getSortFieldForColumn(columnName);
+        return sortField;
     }
 
     @Override

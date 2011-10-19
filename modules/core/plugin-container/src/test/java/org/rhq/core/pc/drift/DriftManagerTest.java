@@ -392,12 +392,21 @@ public class DriftManagerTest extends DriftTest {
         }
 
         @Override
+        public void repeatChangeSet(int resourceId, String driftDefName, int version) {
+        }
+
+        @Override
         public Map<Integer, List<DriftDefinition>> getDriftDefinitions(Set<Integer> resourceIds) {
             return null;
         }
 
         @Override
         public DriftSnapshot getCurrentSnapshot(int driftDefinitionId) {
+            return null;
+        }
+
+        @Override
+        public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
             return null;
         }
     }

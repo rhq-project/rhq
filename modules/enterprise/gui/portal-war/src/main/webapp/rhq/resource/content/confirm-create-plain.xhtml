@@ -70,10 +70,7 @@
          <ui:remove><!-- Table of packages that are to be deployed in this request. --></ui:remove>
          <rich:panel>
             <f:facet name="header"><h:outputText value="Review Packages"/></f:facet>
-            <p>The following packages will be deployed. For each package, the plugin may be able to generate a
-            list of what steps will be performed in the deployment. Click the 'view' button on the desired package
-            to request the instructions from the agent. Note that this will make a live call to the agent
-            and thus may take some time.</p>
+            <p>The following packages will be deployed.</p>
 
             <ui:param name="packagesToDeployDataModel" value="#{DeployPackagesUIBean.dataModel}"/>
             <rich:dataTable id="packagesToDeployDataTable"
@@ -81,7 +78,7 @@
                             value="#{packagesToDeployDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="20%, 15%, 15%, 10%, 32%, 8%"
+                            columnsWidth="20%, 15%, 15%, 10%, 40%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -137,18 +134,6 @@
                   </f:facet>
 
                   <h:outputText value="#{item.packageVersion.shortDescription}" escape="false"/>
-               </rich:column>
-
-               <rich:column style="text-align: center;">
-                  <f:facet name="header">
-                     <h:outputText styleClass="headerText" value="Instructions"/>
-                  </f:facet>
-
-                  <h:commandLink style="margin-top: 10px;" value="VIEW"
-                                 action="#{InstallationStepsUIBean.loadSteps}">
-                     <f:param name="selectedPackageId" value="#{item.packageVersion.id}"/>
-                  </h:commandLink>
-
                </rich:column>
 
                <f:facet name="footer">

@@ -31,6 +31,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -173,8 +174,9 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                             MSG.view_reports_alertDefinitions_resTypeLoadError());
                                     } else {
                                         int typeId = result.get(0).getResourceType().getId();
-                                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + typeId + "/"
-                                            + templateId);
+                                        CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(
+                                            AlertDefinitionTemplateTypeView.VIEW_ID.getName(), String.valueOf(typeId))
+                                            + "/" + templateId);
                                     }
                                 }
 
@@ -186,7 +188,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                             });
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef.getResourceGroup()), "Alert", "Definitions")
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef
+                            .getResourceGroup()), "Alert", "Definitions")
                             + "/" + groupAlertDef.getId());
                     }
                 }

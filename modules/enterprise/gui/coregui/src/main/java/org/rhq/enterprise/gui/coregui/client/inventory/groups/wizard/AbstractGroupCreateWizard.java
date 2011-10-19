@@ -86,8 +86,7 @@ public abstract class AbstractGroupCreateWizard extends AbstractWizard {
                 }
 
                 public void onSuccess(ResourceGroup result) {
-                    String groupUrl = LinkManager.getResourceGroupLink(result.getId());
-                    String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise(groupUrl);
+                    String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise();
                     String detailedMessage = MSG.view_groupCreateWizard_createSuccessful_full(result.getGroupCategory()
                         .name().toLowerCase(), result.getName(), String
                         .valueOf(memberStep.getSelectedResourceIds().length));
@@ -103,7 +102,7 @@ public abstract class AbstractGroupCreateWizard extends AbstractWizard {
      * Subclasses can override this in order to perform additional tasks once the group is created.
      * Use this to do things like refresh other parts of the UI that need to see the new group
      * that was created.
-     * 
+     *
      * @param group the new group that was created
      */
     protected void groupCreateCallback(ResourceGroup group) {

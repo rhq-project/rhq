@@ -122,9 +122,7 @@ public class LoginCommand implements ClientCommand {
 
     private void bindSubject(ClientMain client, Subject subject) {
         ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
-        ScriptEngine scriptEngine = cmd.getScriptEngine();
-        scriptEngine.put("subject", subject);
-        scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE).putAll(client.getRemoteClient().getManagers());
+        cmd.initBindings(client);
     }
 
     public String getSyntax() {

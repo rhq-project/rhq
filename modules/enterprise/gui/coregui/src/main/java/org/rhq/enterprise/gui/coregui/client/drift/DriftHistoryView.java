@@ -156,8 +156,9 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         return new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                Integer driftDefId = record.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_DEF_ID);
                 String driftId = getId(record);
-                String url = LinkManager.getDriftHistoryLink(resourceId, driftId);
+                String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
                 return SeleniumUtility.getLocatableHref(url, formattedValue, null);
             }

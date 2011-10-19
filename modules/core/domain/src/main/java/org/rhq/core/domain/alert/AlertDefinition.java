@@ -289,7 +289,7 @@ public class AlertDefinition implements Serializable {
     private Integer parentId = new Integer(0);
 
     @JoinColumn(name = "GROUP_ALERT_DEF_ID")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private AlertDefinition groupAlertDefinition;
 
     // do not cascade remove - group removal will be detaching children alert defs from the group def,

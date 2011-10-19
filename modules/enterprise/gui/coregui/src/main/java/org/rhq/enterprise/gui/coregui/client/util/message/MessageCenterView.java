@@ -87,13 +87,13 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     }
 
     /**
-     * This will popup a non-modal dialog window with the messages in a list.
+     * This will popup a non-modal window with the messages in a list.
      */
     public void showMessageCenterWindow() {
         try {
             if (window == null) {
                 window = new MessageCenterWindow("MessageCenterViewWindow");
-                window.addItem(this);
+                window.addItem(this); // Use addItem(), not addMember(), when adding a widget to a Window!
                 window.addCloseClickHandler(new CloseClickHandler() {
                     @Override
                     public void onCloseClick(CloseClientEvent event) {

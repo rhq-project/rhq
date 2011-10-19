@@ -71,14 +71,14 @@ public class MicroblogSender extends AlertSender {
             "d2iwloVgHSghDfEmPWzjxAKdtp18TEvcBJsyaqBjst0");
         String accessTokenFilePath = preferences.getSimpleValue("accessTokenFilePath", "/path/to/token.ser");
 
-        log.info("loading accessToken from " + accessTokenFilePath);
 
         try {
             TwitterFactory tFactory = new TwitterFactory();
             AccessToken accessToken = restoreAccessToken(accessTokenFilePath);
 
-            log.info("token: [" + accessToken.getToken() + "]");
-            log.info("tokenSecret: [" + accessToken.getTokenSecret() + "]");
+            log.debug("loading accessToken from " + accessTokenFilePath);
+            log.debug("token: [" + accessToken.getToken() + "]");
+            log.debug("tokenSecret: [" + accessToken.getTokenSecret() + "]");
 
             Twitter twitter = tFactory.getInstance();
             twitter.setOAuthConsumer(consumerKey, consumerSecret);

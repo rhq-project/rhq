@@ -66,7 +66,7 @@ public class DurationItem extends CanvasItem {
     /**
      * @param name
      * @param title
-     * @param supportedUnits when specified, the Set's most granular TimeUnit will be the valueUnit (@{link {@link #getValueUnit()})
+     * @param supportedUnits when specified, the Set's most granular TimeUnit will be the valueUnit ({@link #getValueUnit()})
      * @param supportsIterations
      * @param isReadOnly
      * @param parentWidget
@@ -81,8 +81,8 @@ public class DurationItem extends CanvasItem {
     /**
      * @param name
      * @param title
-     * @param valueUnit the TimeUnit for to the item value (@{link {@link #getValueUnit()}). If null the default is used.
-     * If provided will override the default.  The default is the supportedUnit Set's  most granular TimeUnit (@{link {@link #getValueUnit()}).
+     * @param valueUnit the TimeUnit for to the item value ({@link #getValueUnit()}). If null the default is used.
+     * If provided will override the default.  The default is the supportedUnit Set's  most granular TimeUnit ({@link #getValueUnit()}).
      * @param supportedUnits
      * @param supportsIterations
      * @param isReadOnly

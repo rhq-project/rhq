@@ -228,7 +228,7 @@ public class ChangeSetReaderImplTest {
     void assertFileEntryEquals(FileEntry actual, FileEntry expected) {
         assertEquals(actual.getType(), expected.getType(), "The first column, the entry type, is wrong");
         assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The second column, the new SHA-256, is wrong");
-        assertEquals(actual.getOldSHA(), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
+        assertEquals(actual.getOldSHA (), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
         assertEquals(actual.getFile(), expected.getFile(), "The fourth column, the file name, is wrong");
     }
 

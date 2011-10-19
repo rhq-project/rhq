@@ -263,6 +263,6 @@ public class ResourceGroupComposite implements Serializable {
             + this.resourceGroup.getName() //
             + ", implicit[up/down/avail=," + this.implicitUp + "/" + this.implicitDown + "/" + this.implicitAvail + "]"
             + ", explicit[up/down/avail=," + this.explicitUp + "/" + this.explicitDown + "/" + this.explicitAvail + "]"
-            + ", facets=" + this.resourceFacets + "]";
+            + ", facets=" + ((this.resourceFacets == null) ? "none" : this.resourceFacets.getFacets()) + "]";
     }
 }

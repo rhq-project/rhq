@@ -72,7 +72,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
             ProcessInfo processInfo = psr.getProcessInfo();
             readStandaloneOrHostXml(processInfo, true);
             String hostName = findHostName();
-            HostPort managementHostPort = getManagementPortFromHostXml();
+            HostPort managementHostPort = getManagementPortFromHostXml(processInfo.getCommandLine());
 
             List<ServerInfo> serverNames = getServersFromHostXml();
             for (ServerInfo serverInfo : serverNames) {

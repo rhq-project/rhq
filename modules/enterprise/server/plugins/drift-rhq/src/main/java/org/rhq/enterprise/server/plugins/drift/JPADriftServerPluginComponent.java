@@ -33,7 +33,6 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageList;
@@ -77,11 +76,6 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
-        return getJPADriftServer().createSnapshot(subject, criteria);
-    }
-
-    @Override
     public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
         DriftChangeSetCriteria criteria) {
         PageList<JPADriftChangeSet> results = getJPADriftServer().findDriftChangeSetsByCriteria(subject, criteria);
@@ -105,6 +99,16 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
+    public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        return getJPADriftServer().persistChangeSet(subject, changeSet);
+    }
+
+    @Override
+    public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {
+        return getJPADriftServer().copyChangeSet(subject, changeSetId, driftDefId, resourceId);
+    }
+
+    @Override
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         return getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
     }
@@ -125,7 +129,7 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public String getDriftFileBits(String hash) {
+    public String getDriftFileBits(Subject subject, String hash) {
         return getJPADriftServer().getDriftFileBits(hash);
     }
 }

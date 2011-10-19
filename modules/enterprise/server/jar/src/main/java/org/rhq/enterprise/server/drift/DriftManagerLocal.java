@@ -26,16 +26,29 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDetails;
-import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 @Local
-public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerRemote {
+public interface DriftManagerLocal extends DriftManagerRemote {
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
+
+    DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
+
+    DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+
+    void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
@@ -47,7 +60,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The change-set zip file stream
      * @throws Exception
      */
-    void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    void addChangeSet(Subject subject, int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the drift file zip. Upon successful
@@ -58,11 +71,13 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The drift files zip file stream
      * @throws Exception
      */
-    void addFiles(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream)
+    void addFiles(Subject subject, int resourceId, String driftDefName, String token, long zipSize,
+        InputStream zipStream) throws Exception;
+
+    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token, File changeSetFilesZip)
         throws Exception;
 
-    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
-        File changeSetFilesZip) throws Exception;
+    void processRepeatChangeSet(int resourceId, String driftDefName, int version);
 
     /**
      * Remove the provided driftDef (identified by name) on the specified entityContext.
@@ -77,6 +92,16 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * This is for internal use only - do not call it unless you know what you are doing.
      */
     void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId);
+
+    /**
+     * When a user wants to completely remove all data related to a drift definition,
+     * this method will be called to give the plugin a chance to clean up any data related
+     * to the drift definition that is going to be deleted.
+     * @param Subject
+     * @param resourceId the resource whose drift definition is being purged
+     * @param driftDefName identifies the data that is to be purged
+     */
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
 
     /**
      * One time on-demand request to detect drift on the specified entities, using the supplied def.
@@ -97,6 +122,8 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @throws RuntimeException, IllegalArgumentException if entity or driftDef not found.
      */
     DriftDefinition getDriftDefinition(Subject subject, int driftDefId);
+
+    void updateDriftDefinition(DriftDefinition driftDefinition);
 
     /**
      * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
@@ -123,18 +150,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
-    String getDriftFileBits(String hash);
-
-    /**
-     * Generates a unified diff of the two files references by drift. In the case of a
-     * modified file, a Drift object references the current and previous versions of the
-     * file. This method generates a diff of the two versions.
-     *
-     * @param drift Specifies the two files that will be compared
-     * @return A report containing a unified diff of the two versions of the file
-     * referenced by drift
-     */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
+    String getDriftFileBits(Subject subject, String hash);
 
     /**
      * Returns an object that encapsulates the information needed for viewing drift details
@@ -145,5 +161,9 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
-    boolean isBinaryFile(Drift<?, ?> drift);
+    void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion);
+
+    String persistSnapshot(Subject subject, DriftSnapshot snapshot, DriftChangeSet<? extends Drift<?, ?>> changeSet);
+
+    boolean isBinaryFile(Subject subject, Drift<?, ?> drift);
 }

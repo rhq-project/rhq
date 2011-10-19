@@ -42,21 +42,21 @@ import org.testng.annotations.Test;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.Headers;
-import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
-import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -75,9 +75,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * 
  * !!! Actually, this is really testing only the JPA impl, it does not actually go through the
  * !!! configured drift server plugin.  To enhance this to do that then you may need to model this
- * !!! mode like BundleManagerBeanTest 
+ * !!! mode like BundleManagerBeanTest
  */
-@Test(groups = "drift-manager")
+// Tests in this class **must** be run after the drift-template group. More specifically,
+// tests in this class need to be run after DriftTemplateManagerBeanTest. If test methods
+// in this class run first, for reasons I have yet to understand, DriftTemplateManagerBeanTest.initDB
+// will fail with a ClassNotFoundException for an anonymous inner class that is created in
+// the initDB method.
+//
+// - jsanda
+@Test(dependsOnGroups = "drift")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;
@@ -420,36 +427,4 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         return digestGenerator.calcDigestString(s);
     }
 
-    private class TestDefService implements DriftAgentService {
-
-        @Override
-        public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
-            return true;
-        }
-
-        @Override
-        public void scheduleDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
-
-        }
-
-        @Override
-        public void detectDrift(int resourceId, DriftDefinition DriftDefinition) {
-        }
-
-        @Override
-        public void unscheduleDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
-        }
-
-        @Override
-        public void updateDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
-        }
-
-        @Override
-        public void ackChangeSet(int resourceId, String driftDefName) {
-        }
-
-        @Override
-        public void ackChangeSetContent(int resourceId, String driftDefName, String token) {
-        }
-    }
 }

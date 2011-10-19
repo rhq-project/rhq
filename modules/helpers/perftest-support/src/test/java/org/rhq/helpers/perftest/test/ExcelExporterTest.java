@@ -18,34 +18,20 @@
  */
 package org.rhq.helpers.perftest.test;
 
-import org.apache.poi.hssf.record.formula.functions.T;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.rhq.helpers.perftest.support.reporting.ExcelExporter;
 import org.rhq.helpers.perftest.support.reporting.PerformanceReportExporter;
 import org.rhq.helpers.perftest.support.testng.PerformanceReporting;
-import org.testng.IClass;
-import org.testng.ITestClass;
-import org.testng.ITestMethodFinder;
-import org.testng.ITestNGMethod;
-import org.testng.ITestResult;
-import org.testng.TestClass;
 import org.testng.TestListenerAdapter;
 import org.testng.TestNG;
 import org.testng.annotations.Test;
-import org.testng.internal.ClassImpl;
-import org.testng.internal.NoOpTestClass;
-import org.testng.internal.RunInfo;
-import org.testng.internal.TestResult;
-import org.testng.internal.annotations.IAnnotationFinder;
-import org.testng.xml.XmlClass;
-import org.testng.xml.XmlTest;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Test basic functionality of the ExcelExporter
@@ -55,7 +41,6 @@ import java.util.Map;
  */
 @Test(groups = "PERF")
 public class ExcelExporterTest {
-
 
     /**
      * Test writing a workbook twice.
@@ -115,6 +100,6 @@ public class ExcelExporterTest {
         if (file.exists()) {
             assert file.delete();
         }
-
     }
+
 }

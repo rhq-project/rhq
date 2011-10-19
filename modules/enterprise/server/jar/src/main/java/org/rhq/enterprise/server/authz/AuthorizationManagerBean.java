@@ -285,20 +285,13 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
     }
 
     public boolean isSystemSuperuser(Subject subject) {
-        if (subject == null) {
-            return false;
-        }
-
         // We know that our overlord is always id=1 and the rhqadmin user is always id=2.
-        return ((subject.getId() == SUBJECT_ID_OVERLORD) || (subject.getId() == SUBJECT_ID_RHQADMIN));
+        return (subject != null) && ((subject.getId() == SUBJECT_ID_OVERLORD) || (subject.getId() == SUBJECT_ID_RHQADMIN));
     }
 
     public boolean isOverlord(Subject subject) {
-        if (subject == null) {
-            return false;
-        }
-
-        return (subject.getId() == SUBJECT_ID_OVERLORD);
+        // We know that our overlord is always id=1.
+        return (subject != null) && (subject.getId() == SUBJECT_ID_OVERLORD);
     }
 
     public boolean canUpdateRepo(Subject subject, int repoId) {
@@ -325,4 +318,5 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Long num = (Long) q.getSingleResult();
         return num > 0;
     }
+
 }

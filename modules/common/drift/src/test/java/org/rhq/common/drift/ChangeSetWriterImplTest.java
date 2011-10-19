@@ -19,6 +19,13 @@
 
 package org.rhq.common.drift;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.List;
+
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
@@ -26,13 +33,6 @@ import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.testng.Assert.assertEquals;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.List;
-
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 public class ChangeSetWriterImplTest {
 

@@ -39,8 +39,7 @@ public class CatalinaServiceComponent extends MBeanResourceComponent<JMXComponen
 
     private static final Log log = LogFactory.getLog(CatalinaServiceComponent.class);
 
-    private static final String SERVER_HOME_DIR = "serverHomeDir";
-    private static final String CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/jboss-web.deployer/server.xml";
+    private final static String MOD_CLUSTER_CONFIG_FILE = "modclusterConfigFile";
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -110,10 +109,10 @@ public class CatalinaServiceComponent extends MBeanResourceComponent<JMXComponen
             .getParentResourceComponent();
 
         PropertySimple property = modClusterComponent.getResourceContext().getPluginConfiguration()
-            .getSimple(SERVER_HOME_DIR);
+            .getSimple(MOD_CLUSTER_CONFIG_FILE);
 
         if (property != null) {
-            String fileName = property.getStringValue() + CONFIGURATION_FILE_RELATIVE_PATH;
+            String fileName = property.getStringValue();
             return new JBossWebServerFile(fileName);
         }
 

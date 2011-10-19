@@ -66,27 +66,6 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
     }
 
     /**
-     * Retrieves the jvm route for the node from the parent context.
-     * 
-     * @param context the discovery context
-     * @return node's jvm route
-     */
-    private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
-        Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
-
-        String[] engineObjectNames = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue().split("\\|");
-
-        for (String engineObjectName : engineObjectNames) {
-            EmsBean engineBean = this.loadBean(context.getParentResourceComponent(), engineObjectName);
-            if (engineBean != null) {
-                return engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Loads the bean with the given object name.
      *
      * Subclasses are free to override this method in order to load the bean.
@@ -110,6 +89,27 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
             }
 
             return bean;
+        }
+
+        return null;
+    }
+
+    /**
+     * Retrieves the jvm route for the node from the parent context.
+     * 
+     * @param context the discovery context
+     * @return node's jvm route
+     */
+    private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
+        Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
+
+        String[] engineObjectNames = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue().split("\\|");
+
+        for (String engineObjectName : engineObjectNames) {
+            EmsBean engineBean = this.loadBean(context.getParentResourceComponent(), engineObjectName);
+            if (engineBean != null) {
+                return engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
+            }
         }
 
         return null;

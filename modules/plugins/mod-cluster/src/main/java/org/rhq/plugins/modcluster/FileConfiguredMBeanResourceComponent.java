@@ -43,8 +43,7 @@ public class FileConfiguredMBeanResourceComponent extends ClassNameMBeanComponen
 
     private static final String BEAN_CLASS_NAME_PROPERTY = "className";
     private static final String DEPENDENCY_BEAN_CLASS_NAME_PROPERTY = "dependencyClassName";
-    private static final String SERVER_HOME_DIR = "serverHomeDir";
-    private static final String CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml";
+    private final static String MOD_CLUSTER_CONFIG_FILE = "modclusterConfigFile";
 
     /**
      * This default setup of configuration properties can map to mbean attributes
@@ -88,35 +87,6 @@ public class FileConfiguredMBeanResourceComponent extends ClassNameMBeanComponen
         updateResourceConfiguration(report, false);
     }
 
-    private ModClusterBeanFile getModClusterBeanFileInstance() throws Exception {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        String beanClassName = pluginConfig.getSimple(BEAN_CLASS_NAME_PROPERTY).getStringValue();
-
-        String fileName = this.getServerHomeDirectory() + CONFIGURATION_FILE_RELATIVE_PATH;
-
-        if (pluginConfig.getSimple(DEPENDENCY_BEAN_CLASS_NAME_PROPERTY) != null) {
-            String dependencyBeanClassName = pluginConfig.getSimple(DEPENDENCY_BEAN_CLASS_NAME_PROPERTY)
-                .getStringValue();
-            return new ModClusterBeanFile(beanClassName, dependencyBeanClassName, fileName);
-        }
-
-        return new ModClusterBeanFile(beanClassName, fileName);
-    }
-
-    private String getServerHomeDirectory() {
-        ModClusterServerComponent modClusterComponent = (ModClusterServerComponent) this.resourceContext
-            .getParentResourceComponent();
-
-        PropertySimple property = modClusterComponent.getResourceContext().getPluginConfiguration()
-            .getSimple(SERVER_HOME_DIR);
-
-        if (property != null) {
-            return property.getStringValue();
-        }
-
-        return null;
-    }
-
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report, boolean ignoreReadOnly) {
         ConfigurationDefinition configurationDefinition = this.getResourceContext().getResourceType()
@@ -152,4 +122,32 @@ public class FileConfiguredMBeanResourceComponent extends ClassNameMBeanComponen
         }
     }
 
+    private ModClusterBeanFile getModClusterBeanFileInstance() throws Exception {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String beanClassName = pluginConfig.getSimple(BEAN_CLASS_NAME_PROPERTY).getStringValue();
+
+        String fileName = this.getModClusterConfigFile();
+
+        if (pluginConfig.getSimple(DEPENDENCY_BEAN_CLASS_NAME_PROPERTY) != null) {
+            String dependencyBeanClassName = pluginConfig.getSimple(DEPENDENCY_BEAN_CLASS_NAME_PROPERTY)
+                .getStringValue();
+            return new ModClusterBeanFile(beanClassName, dependencyBeanClassName, fileName);
+        }
+
+        return new ModClusterBeanFile(beanClassName, fileName);
+    }
+
+    private String getModClusterConfigFile() {
+        ModClusterServerComponent modClusterComponent = (ModClusterServerComponent) this.resourceContext
+            .getParentResourceComponent();
+
+        PropertySimple property = modClusterComponent.getResourceContext().getPluginConfiguration()
+            .getSimple(MOD_CLUSTER_CONFIG_FILE);
+
+        if (property != null) {
+            return property.getStringValue();
+        }
+
+        return null;
+    }
 }

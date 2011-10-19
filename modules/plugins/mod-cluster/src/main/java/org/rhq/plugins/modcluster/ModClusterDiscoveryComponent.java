@@ -36,28 +36,31 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class ModClusterDiscoveryComponent extends MBeanResourceDiscoveryComponent {
 
-    private final static String JBOSS_SERVER_HOME_DIR = "serverHomeDir";
+    private final static String MOD_CLUSTER_CONFIG_FILE = "modclusterConfigFile";
+    private static final String JBOSS_AS4_CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/jboss-web.deployer/server.xml";
+    private static final String JBOSS_AS5_CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml";
 
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> tempSet = super.discoverResources(context);
 
         for (DiscoveredResourceDetails detail : tempSet) {
-            String serverHomeDirectory = findServerHomeDirectory(context.getParentResourceComponent());
-            detail.getPluginConfiguration().put(new PropertySimple(JBOSS_SERVER_HOME_DIR, serverHomeDirectory));
+            String configurationFile = findConfigurationFile(context.getParentResourceComponent());
+            detail.getPluginConfiguration().put(new PropertySimple(MOD_CLUSTER_CONFIG_FILE, configurationFile));
         }
 
         return tempSet;
     }
 
     @SuppressWarnings("static-access")
-    public String findServerHomeDirectory(ResourceComponent parentResourceComponent) {
+    private String findConfigurationFile(ResourceComponent parentResourceComponent) {
         try {
             if (parentResourceComponent instanceof ApplicationServerComponent) {
                 ApplicationServerComponent parentComponent = (ApplicationServerComponent) parentResourceComponent;
 
                 return parentComponent.getResourceContext().getPluginConfiguration().getSimple("serverHomeDir")
-                    .getStringValue();
+                    .getStringValue()
+                    + JBOSS_AS5_CONFIGURATION_FILE_RELATIVE_PATH;
 
             }
         } catch (java.lang.NoClassDefFoundError e) {
@@ -70,7 +73,8 @@ public class ModClusterDiscoveryComponent extends MBeanResourceDiscoveryComponen
                 JBossASServerComponent parentComponent = (JBossASServerComponent) parentResourceComponent;
 
                 return parentComponent.getPluginConfiguration()
-                    .getSimple(parentComponent.CONFIGURATION_PATH_CONFIG_PROP).getStringValue();
+                    .getSimple(parentComponent.CONFIGURATION_PATH_CONFIG_PROP).getStringValue()
+                    + JBOSS_AS4_CONFIGURATION_FILE_RELATIVE_PATH;
             }
         } catch (java.lang.NoClassDefFoundError e) {
             //Do absolutely nothing, that means the class loader does not have this module loaded.

@@ -20,7 +20,7 @@
          <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
          <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine|Catalina:type=Engine" />
          <c:simple-property name="nameTemplate" default="mod_cluster" />
-         <c:simple-property name="serverHomeDir"/>
+         <c:simple-property name="modclusterConfigFile"/>
       </plugin-configuration>
 
       <operation name="reset" displayName="Reset the node" description="Move this application server out of an error state." />

@@ -37,21 +37,6 @@ import org.rhq.plugins.modcluster.model.ProxyInfo;
 @SuppressWarnings({ "rawtypes" })
 public class ModClusterServerComponent extends MBeanResourceComponent {
 
-    @SuppressWarnings("unchecked")
-    @Override
-    protected void getValues(MeasurementReport report, Set requests, EmsBean bean) {
-        for (MeasurementScheduleRequest request : (Set<MeasurementScheduleRequest>) requests) {
-            if (request.getName().equals("ProxyInformation")) {
-                String rawProxyInfo = JBossHelper.getRawProxyInfo(bean);
-                report.addData(new MeasurementDataTrait(request, rawProxyInfo));
-                requests.remove(request);
-                break;
-            }
-        }
-
-        super.getValues(report, requests, bean);
-    }
-
     @Override
     public AvailabilityType getAvailability() {
         String rawProxyInfo = JBossHelper.getRawProxyInfo(getEmsBean());
@@ -66,5 +51,20 @@ public class ModClusterServerComponent extends MBeanResourceComponent {
         }
 
         return super.getAvailability();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void getValues(MeasurementReport report, Set requests, EmsBean bean) {
+        for (MeasurementScheduleRequest request : (Set<MeasurementScheduleRequest>) requests) {
+            if (request.getName().equals("ProxyInformation")) {
+                String rawProxyInfo = JBossHelper.getRawProxyInfo(bean);
+                report.addData(new MeasurementDataTrait(request, rawProxyInfo));
+                requests.remove(request);
+                break;
+            }
+        }
+
+        super.getValues(report, requests, bean);
     }
 }

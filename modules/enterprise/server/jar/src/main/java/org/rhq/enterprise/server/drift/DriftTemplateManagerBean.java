@@ -85,15 +85,10 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             resourceType.addDriftDefinitionTemplate(template);
             entityMgr.persist(template);
 
-            // return the filled out entity
-            entityMgr.persist(template);
-            result = template;
-
+            return template;
         } catch (ResourceTypeNotFoundException e) {
             throw new RuntimeException("Failed to create template", e);
         }
-
-        return result;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

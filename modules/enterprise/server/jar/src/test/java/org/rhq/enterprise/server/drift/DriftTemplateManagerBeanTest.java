@@ -80,7 +80,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
         final DriftDefinitionTemplate newTemplate = templateMgr.createTemplate(getOverlord(), resourceType.getId(),
-                    true, definition);
+            true, definition);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -97,6 +97,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
                 expectedTemplate.setUserDefined(true);
 
                 assertDriftTemplateEquals("Failed to save template", expectedTemplate, newTemplate);
+                assertTrue("The template should have its id set", newTemplate.getId() > 0);
             }
         });
     }

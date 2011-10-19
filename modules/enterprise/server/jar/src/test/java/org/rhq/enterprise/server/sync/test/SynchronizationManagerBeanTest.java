@@ -73,6 +73,7 @@ import org.rhq.core.domain.sync.ImportConfiguration;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -100,43 +101,44 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
     private static final String PLUGIN_NAME = "SynchronizationManagerBeanTest";
     private static final String METRIC_NAME = "SynchronizationManagerBeanTest";
 
-    private static class DBChanges {
+    private static class TestData {
         public Properties systemSettings;
         public ResourceType fakeType;
         public Resource fakePlatform;
+        public DriftServerPluginService driftServerPluginService;
     }
 
-    private DBChanges dbChanges;
+    private TestData testData;
 
     //I just don't get why this can't be a @BeforeTest
     //but when it was declared as such (together with tearDown() being an @AfterTest)
     //no tests would work. I have no idea why...
     private void setup() throws Exception {
-        dbChanges = new DBChanges();
+        testData = new TestData();
         getTransactionManager().begin();
         try {
             EntityManager em = getEntityManager();
 
             //add our new metric template that we are going to perform the tests with
-            dbChanges.fakeType = new ResourceType(RESOURCE_TYPE_NAME, PLUGIN_NAME, ResourceCategory.PLATFORM, null);
+            testData.fakeType = new ResourceType(RESOURCE_TYPE_NAME, PLUGIN_NAME, ResourceCategory.PLATFORM, null);
 
             MeasurementDefinition mdef =
                 new MeasurementDefinition(METRIC_NAME, MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE,
                     DataType.MEASUREMENT, true, 600000, DisplayType.SUMMARY);
-            dbChanges.fakeType.addMetricDefinition(mdef);
+            testData.fakeType.addMetricDefinition(mdef);
 
-            em.persist(dbChanges.fakeType);
+            em.persist(testData.fakeType);
 
-            dbChanges.fakePlatform = new Resource(RESOURCE_TYPE_NAME, RESOURCE_TYPE_NAME, dbChanges.fakeType);
-            dbChanges.fakePlatform.setUuid(UUID.randomUUID().toString());
-            dbChanges.fakePlatform.setInventoryStatus(InventoryStatus.COMMITTED);
+            testData.fakePlatform = new Resource(RESOURCE_TYPE_NAME, RESOURCE_TYPE_NAME, testData.fakeType);
+            testData.fakePlatform.setUuid(UUID.randomUUID().toString());
+            testData.fakePlatform.setInventoryStatus(InventoryStatus.COMMITTED);
 
-            MeasurementSchedule sched = new MeasurementSchedule(mdef, dbChanges.fakePlatform);
+            MeasurementSchedule sched = new MeasurementSchedule(mdef, testData.fakePlatform);
             sched.setInterval(600000);
 
-            dbChanges.fakePlatform.addSchedule(sched);
+            testData.fakePlatform.addSchedule(sched);
 
-            em.persist(dbChanges.fakePlatform);
+            em.persist(testData.fakePlatform);
 
             em.persist(sched);
 
@@ -148,41 +150,51 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             throw e;
         }
 
+        //we need this because the drift plugins are referenced from the system settings that we use in our tests
+        testData.driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(testData.driftServerPluginService);
+        testData.driftServerPluginService.startMasterPluginContainer();
+        
         synchronizationManager = LookupUtil.getSynchronizationManager();
 
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
         //make sure the system manager is in sync w/ the db we just changed in dbsetup
         systemManager.loadSystemConfigurationCache();
 
-        dbChanges.systemSettings = systemManager.getSystemConfiguration(freshUser());
+        testData.systemSettings = systemManager.getSystemConfiguration(freshUser());
         export = synchronizationManager.exportAllSubsystems(freshUser());
     }
 
     private void tearDown() throws Exception {
         getTransactionManager().begin();
         try {
-            LookupUtil.getSystemManager().setSystemConfiguration(freshUser(), dbChanges.systemSettings, true);
+            LookupUtil.getSystemManager().setSystemConfiguration(freshUser(), testData.systemSettings, true);
 
             EntityManager em = getEntityManager();
 
             MeasurementSchedule sched =
-                em.find(MeasurementSchedule.class, dbChanges.fakePlatform.getSchedules().iterator().next().getId());
+                em.find(MeasurementSchedule.class, testData.fakePlatform.getSchedules().iterator().next().getId());
             em.remove(sched);
 
-            Resource attachedPlatform = em.find(Resource.class, dbChanges.fakePlatform.getId());
+            Resource attachedPlatform = em.find(Resource.class, testData.fakePlatform.getId());
             em.remove(attachedPlatform);
 
-            ResourceType attachedType = em.find(ResourceType.class, dbChanges.fakeType.getId());
+            ResourceType attachedType = em.find(ResourceType.class, testData.fakeType.getId());
             em.remove(attachedType);
 
+            em.flush();
+            
             getTransactionManager().commit();
         } catch (Exception e) {
             getTransactionManager().rollback();
             throw e;
         }
 
+        unprepareServerPluginService();
+        testData.driftServerPluginService.stopMasterPluginContainer();
+        
         export = null;
-        dbChanges = null;
+        testData = null;
         synchronizationManager = null;
     }
 

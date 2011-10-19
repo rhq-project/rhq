@@ -30,9 +30,11 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface DriftTemplateManagerRemote {
 
-    PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject, DriftDefinitionTemplateCriteria criteria);
+    PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
+        DriftDefinitionTemplateCriteria criteria);
 
-    void createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined, DriftDefinition definition);
+    DriftDefinitionTemplate createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined,
+        DriftDefinition definition);
 
     void pinTemplate(Subject subject, int templateId, int snapshotDriftDefId, int snapshotVersion);
 }

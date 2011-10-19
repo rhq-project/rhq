@@ -69,7 +69,8 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override
-    public void createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined, DriftDefinition definition) {
+    public DriftDefinitionTemplate createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined,
+        DriftDefinition definition) {
         try {
             ResourceType resourceType = resourceTypeMgr.getResourceTypeById(subject, resourceTypeId);
             DriftDefinitionTemplate template = new DriftDefinitionTemplate();
@@ -79,8 +80,11 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             template.setTemplateDefinition(definition);
 
             resourceType.addDriftDefinitionTemplate(template);
+
+            return template;
         } catch (ResourceTypeNotFoundException e) {
             // TODO handle exception
+            throw new RuntimeException("Failed to create template", e);
         }
     }
 

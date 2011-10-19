@@ -119,6 +119,12 @@
    <!-- try to make server-a and its children representative of "average" resources -->
    <server name="server-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server A">
 
+      <subcategories>
+         <subcategory name="subcategory0">
+            <subcategory name="childSubcategory0"/>
+         </subcategory>
+      </subcategories>
+
       <plugin-configuration>
          <c:simple-property name="property0"/>
          <c:simple-property name="property1"/>
@@ -127,16 +133,24 @@
          <c:simple-property name="property4"/>
       </plugin-configuration>
 
-      <metric displayName="Metric 0" property="metric0" defaultOn="false"/>
-      <metric displayName="Metric 1" property="metric1" defaultOn="false"/>
-      <metric displayName="Metric 2" property="metric2" defaultOn="false"/>
-      <metric displayName="Metric 3" property="metric3" defaultOn="false"/>
-      <metric displayName="Metric 4" property="metric4" defaultOn="true" displayType="detail"/>
-      <metric displayName="Metric 5" property="metric5" defaultOn="true" displayType="detail"/>
-      <metric displayName="Metric 6" property="metric6" defaultOn="true" displayType="detail"/>
-      <metric displayName="Metric 7" property="metric7" defaultOn="true" displayType="summary"/>
-      <metric displayName="Metric 8" property="metric8" defaultOn="true" displayType="summary"/>
-      <metric displayName="Metric 9" property="metric9" defaultOn="true" displayType="summary"/>
+      <operation name="operation0"/>
+
+      <metric property="metric0" defaultOn="true" displayType="summary"/>
+      <metric property="metric1" defaultOn="true" displayType="summary"/>
+      <metric property="metric2" defaultOn="true" displayType="summary"/>
+      <metric property="metric3" defaultOn="true" displayType="summary"/>
+      <metric property="metric4" defaultOn="true" displayType="summary"/>
+      <metric property="metric5" defaultOn="true" displayType="summary"/>
+      <metric property="metric6" defaultOn="true" displayType="summary"/>
+      <metric property="metric7" defaultOn="true" displayType="summary"/>
+      <metric property="metric8" defaultOn="true" displayType="summary"/>
+      <metric property="metric9" defaultOn="true" displayType="summary"/>
+
+      <metric property="trait000" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait001" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait002" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait003" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait004" defaultOn="true" dataType="trait" displayType="summary"/>
 
       <event name="PerfTestEventType" description="a test event type"/>
 
@@ -146,17 +160,33 @@
       <content name="artifact3" displayName="Artifact 3" category="configuration"/>
       <content name="artifact4" displayName="Artifact 4" category="configuration"/>
 
-      <service name="service-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service A">
+      <service name="service-a" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent"
+               description="Nested Service A" subCategory="childSubcategory0">
 
          <plugin-configuration>
-            <c:simple-property name="childProperty0"/>
-            <c:simple-property name="childProperty1"/>
-            <c:simple-property name="childProperty2"/>
+            <c:simple-property name="childProperty0" default="red"/>
+            <c:simple-property name="childProperty1" default="green"/>
+            <c:simple-property name="childProperty2" default="blue"/>
          </plugin-configuration>
 
-         <metric property="childMetric0" defaultOn="false"/>
-         <metric property="childMetric1" defaultOn="true" displayType="detail"/>
+         <operation name="childOperation0"/>
+
+         <metric property="childMetric0" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric1" defaultOn="true" displayType="summary"/>
          <metric property="childMetric2" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric3" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric4" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric5" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric6" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric7" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric8" defaultOn="true" displayType="summary"/>
+         <metric property="childMetric9" defaultOn="true" displayType="summary"/>
+
+         <metric property="childTrait000" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait001" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait002" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait003" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait004" defaultOn="true" dataType="trait" displayType="summary"/>
 
          <content name="childArtifact0" displayName="Child Artifact 0" category="configuration"/>
 
@@ -164,76 +194,72 @@
 
               <!-- This group contains a sampling of all of the various types of properties. -->
               <c:group name="group1" displayName="Group 1">
-                  <c:simple-property name="string" type="string"/>
-                  <c:simple-property name="longString" type="longString"/>
-                  <c:simple-property name="password" type="password"/>
-                  <c:simple-property name="boolean" type="boolean"/>
-                  <c:simple-property name="integer" type="integer"/>
-                  <c:simple-property name="long" type="long"/>
-                  <c:simple-property name="float" type="float"/>
-                  <c:simple-property name="double" type="double"/>
-                  <c:simple-property name="file" type="file"/>
-                  <c:simple-property name="directory" type="directory"/>
+                  <c:simple-property name="string" type="string" default="blah"/>
+                  <c:simple-property name="longString" type="longString" default="blah blah blah"/>
+                  <c:simple-property name="password" type="password" default="secret"/>
+                  <c:simple-property name="boolean" type="boolean" default="true"/>
+                  <c:simple-property name="integer" type="integer" default="42"/>
+                  <c:simple-property name="long" type="long" default="1000000000000"/>
+                  <c:simple-property name="float" type="float" default="3.14"/>
+                  <c:simple-property name="double" type="double" default="0.123456789"/>
+                  <c:simple-property name="file" type="file" default="/etc/passwd"/>
+                  <c:simple-property name="directory" type="directory" default="/tmp"/>
 
-                  <c:simple-property name="enum" default="Blue">
+                  <c:simple-property name="enum" default="blue">
                       <c:property-options>
                           <c:option value="red" name="Red"/>
-                          <c:option value="blue" name="Blue"/>
                           <c:option value="green" name="Green"/>
+                          <c:option value="blue" name="Blue"/>
                       </c:property-options>
                   </c:simple-property>
 
-                  <c:simple-property name="optional" required="false"/>
-                  <c:simple-property name="readOnly" readOnly="true"/>
+                  <c:simple-property name="optional" required="false" default="boo"/>
+                  <c:simple-property name="readOnly" readOnly="true" default="fixed"/>
 
                   <c:map-property name="openMap"/>
 
                   <c:map-property name="map">
-                      <c:simple-property name="mapMember1"/>
-                      <c:simple-property name="mapMember2"/>
-                      <c:simple-property name="mapMember3"/>
+                      <c:simple-property name="mapMember1" default="value1"/>
+                      <c:simple-property name="mapMember2" default="value2"/>
+                      <c:simple-property name="mapMember3" default="value3"/>
                   </c:map-property>
 
                   <c:list-property name="listOfMaps">
                       <c:map-property name="listMember">
-                          <c:simple-property name="mapInListMember1"/>
-                          <c:simple-property name="mapInListMember2"/>
-                          <c:simple-property name="mapInListMember3"/>
+                          <c:simple-property name="mapInListMember1" default="value1"/>
+                          <c:simple-property name="mapInListMember2" default="value2"/>
+                          <c:simple-property name="mapInListMember3" default="value3"/>
                       </c:map-property>
                   </c:list-property>
               </c:group>
 
               <!-- This group just contains a whole bunch of props to give this config some bulk. -->
               <c:group name="group2" displayName="Group 2">
-                  <c:simple-property name="string1"/>
-                  <c:simple-property name="string2"/>
-                  <c:simple-property name="string3"/>
-                  <c:simple-property name="string4"/>
-                  <c:simple-property name="string5"/>
-                  <c:simple-property name="string6"/>
-                  <c:simple-property name="string7"/>
-                  <c:simple-property name="string8"/>
-                  <c:simple-property name="string9"/>
-                  <c:simple-property name="string10"/>
-                  <c:simple-property name="string11"/>
-                  <c:simple-property name="string12"/>
-                  <c:simple-property name="string13"/>
-                  <c:simple-property name="string14"/>
-                  <c:simple-property name="string15"/>
-                  <c:simple-property name="string16"/>
-                  <c:simple-property name="string17"/>
-                  <c:simple-property name="string18"/>
-                  <c:simple-property name="string19"/>
-                  <c:simple-property name="string20"/>
+                  <c:simple-property name="string1" default="foo"/>
+                  <c:simple-property name="string2" default="foo"/>
+                  <c:simple-property name="string3" default="foo"/>
+                  <c:simple-property name="string4" default="foo"/>
+                  <c:simple-property name="string5" default="foo"/>
+                  <c:simple-property name="string6" default="foo"/>
+                  <c:simple-property name="string7" default="foo"/>
+                  <c:simple-property name="string8" default="foo"/>
+                  <c:simple-property name="string9" default="foo"/>
+                  <c:simple-property name="string10" default="foo"/>
+                  <c:simple-property name="string11" default="foo"/>
+                  <c:simple-property name="string12" default="foo"/>
+                  <c:simple-property name="string13" default="foo"/>
+                  <c:simple-property name="string14" default="foo"/>
+                  <c:simple-property name="string15" default="foo"/>
+                  <c:simple-property name="string16" default="foo"/>
+                  <c:simple-property name="string17" default="foo"/>
+                  <c:simple-property name="string18" default="foo"/>
+                  <c:simple-property name="string19" default="foo"/>
+                  <c:simple-property name="string20" default="foo"/>
               </c:group>
 
-              <!-- Throw in a couple templates too. -->
+              <!-- Throw in a template for good measure. -->
               <c:template name="template1" description="Template 1">
                   <c:simple-property name="string" default="template1Value"/>
-              </c:template>
-
-              <c:template name="template2" description="Template 2">
-                  <c:simple-property name="string" default="template2Value"/>
               </c:template>
 
          </resource-configuration>
@@ -242,7 +268,6 @@
             <plugin-configuration>
                <c:simple-property name="grandchildProperty0"/>
             </plugin-configuration>
-            <metric property="grandchildMetric0" defaultOn="true" displayType="detail"/>
          </service>
 
       </service>
@@ -306,17 +331,24 @@
 
    <server name="server-c" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server C"/>
 
-   <!-- used to perftest measurement collection -->
+   <!-- used to perftest measurement collection w/ the following schedules:
+          5 metrics every 10 mins == 0.5 metrics per minute, per service-d-metrics Resource
+          3 traits every 1 hour == 0.05 traits per minute, per service-d-metrics Resource
+   -->
    <server name="server-d" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server D">
       <service name="service-d-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service D With Metrics">
-         <metric property="metric000" defaultOn="true" displayType="summary" defaultInterval="200000"/>
-         <metric property="metric001" defaultOn="true" displayType="summary" defaultInterval="300000"/>
-         <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="400000"/>
-         <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="500000"/>
-         <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="600000"/>
-         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="2000000"/>
-         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3000000"/>
+         <metric property="metric000" defaultOn="true" displayType="summary" defaultInterval="570000"/>
+         <metric property="metric001" defaultOn="true" displayType="summary" defaultInterval="570000"/>
+         <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="600000"/>
+         <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="630000"/>
+         <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="630000"/>
+
+         <metric property="trait000"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3570000"/>
+         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3600000"/>
+         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3630000"/>
+
          <metric displayName="CallTime" property="calltime" defaultOn="false" dataType="calltime" defaultInterval="2400000" units="milliseconds"/>
+
          <event name="PerfTestEventType" description="a test event type"/>
       </service>
    </server>

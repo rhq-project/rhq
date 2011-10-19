@@ -18,12 +18,25 @@
  */
 package org.rhq.enterprise.server.plugins.alertMicroblog;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
 import twitter4j.conf.PropertyConfiguration;
 
 import org.apache.commons.logging.Log;
@@ -32,7 +45,12 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.ControlFacet;
+import org.rhq.enterprise.server.plugin.pc.ControlResults;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,47 +65,72 @@ public class MicroblogSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        String user = preferences.getSimpleValue("user",null);
-        String password = preferences.getSimpleValue("password",null);
-        String baseUrl = preferences.getSimpleValue("microblogServerUrl","http://twitter.com/");
-        if (!baseUrl.endsWith("/"))
-           baseUrl = baseUrl +"/";
-       Properties props = new Properties();
-       props.put(PropertyConfiguration.SOURCE,"Jopr");
-       props.put(PropertyConfiguration.HTTP_USER_AGENT,"Jopr");
-       props.put(PropertyConfiguration.REST_BASE_URL,baseUrl);
-       twitter4j.conf.Configuration tconf = new PropertyConfiguration(props);
+        SenderResult result;
+        String consumerKey = preferences.getSimpleValue("consumerKey", "iXCqk1vR2vKksDHkulZQ");
+        String consumerSecret = preferences.getSimpleValue("consumerSecret",
+            "d2iwloVgHSghDfEmPWzjxAKdtp18TEvcBJsyaqBjst0");
+        String accessTokenFilePath = preferences.getSimpleValue("accessTokenFilePath", "/path/to/token.ser");
 
-        TwitterFactory tFactory = new TwitterFactory(tconf);
+        log.info("loading accessToken from " + accessTokenFilePath);
 
-        Twitter twitter = tFactory.getInstance(user,password);
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        StringBuilder b = new StringBuilder("Alert ");
-        b.append(alert.getId()).append(":'"); // Alert id
-        b.append(alert.getAlertDefinition().getResource().getName());
-        b.append("' (");
-        b.append(alert.getAlertDefinition().getResource().getId());
-        b.append("): ");
-        b.append(alertManager.prettyPrintAlertConditions(alert, true));
-        b.append("-by @JBossJopr"); // TODO not for production :-)
-        // TODO use some alert url shortening service
-
-        SenderResult result ;
-        String txt = "user@baseUrl [" + user + "@" + baseUrl + "]:";
         try {
+            TwitterFactory tFactory = new TwitterFactory();
+            AccessToken accessToken = restoreAccessToken(accessTokenFilePath);
+
+            log.info("token: [" + accessToken.getToken() + "]");
+            log.info("tokenSecret: [" + accessToken.getTokenSecret() + "]");
+
+            Twitter twitter = tFactory.getInstance();
+            twitter.setOAuthConsumer(consumerKey, consumerSecret);
+            twitter.setOAuthAccessToken(accessToken);
+
+            AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+            StringBuilder b = new StringBuilder("Alert ");
+            b.append(alert.getId()).append(":'"); // Alert id
+            b.append(alert.getAlertDefinition().getResource().getName());
+            b.append("' (");
+            b.append(alert.getAlertDefinition().getResource().getId());
+            b.append("): ");
+            b.append(alertManager.prettyPrintAlertConditions(alert, true));
+            b.append("-by " + this.alertParameters.getSimpleValue("twittedBy", "@RHQ")); // TODO not for production :-)
+            // TODO use some alert url shortening service
+
             String msg = b.toString();
-            if (msg.length()>140)
-                msg = msg.substring(0,140);
+            if (msg.length() > 140)
+                msg = msg.substring(0, 140);
 
             Status status = twitter.updateStatus(msg);
 
-            result = SenderResult.getSimpleSuccess("Send notification to " + txt + ", msg-id: " + status.getId());
+            result = SenderResult.getSimpleSuccess("Send notification - msg-id: " + status.getId());
         } catch (TwitterException e) {
 
-            log.warn("Notification via Microblog failed for " + txt + " ", e);
+            log.warn("Notification via Microblog failed!", e);
             result = SenderResult.getSimpleFailure("Sending failed :" + e.getMessage());
 
+        } catch (IOException e) {
+            log.error("Notification via Microblog failed!", e);
+            result = SenderResult.getSimpleFailure("Sending failed :" + e.getMessage());
         }
         return result;
     }
+
+    private AccessToken restoreAccessToken(String tokenFilePath) throws IOException {
+        //use buffering
+        InputStream file = new FileInputStream(tokenFilePath);
+        InputStream buffer = new BufferedInputStream(file);
+        ObjectInput input = new ObjectInputStream(buffer);
+
+        AccessToken token = null;
+
+        try {
+            token = (AccessToken) input.readObject();
+        } catch (ClassNotFoundException e) {
+            log.error("Erro reading token from disk: ", e);
+        } finally {
+            input.close();
+        }
+
+        return token;
+    }
+
 }

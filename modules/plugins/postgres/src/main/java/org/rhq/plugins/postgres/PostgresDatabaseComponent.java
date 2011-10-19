@@ -46,11 +46,11 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.plugins.database.DatabaseComponent;
 
-public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServerComponent>, MeasurementFacet,
+public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServerComponent<?>>, MeasurementFacet,
     CreateChildResourceFacet, OperationFacet {
     private Log log = LogFactory.getLog(PostgresDatabaseComponent.class);
 
-    private ResourceContext<PostgresServerComponent> resourceContext;
+    private ResourceContext<PostgresServerComponent<?>> resourceContext;
 
     private Connection databaseConnection;
 
@@ -89,7 +89,7 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
         this.databaseConnection = null;
     }
 
-    public void start(ResourceContext<PostgresServerComponent> context) {
+    public void start(ResourceContext<PostgresServerComponent<?>> context) {
         this.resourceContext = context;
     }
 
@@ -113,15 +113,18 @@ public class PostgresDatabaseComponent implements DatabaseComponent<PostgresServ
             statement.setString(1, this.resourceContext.getPluginConfiguration().getSimple("databaseName")
                 .getStringValue());
             ResultSet results = statement.executeQuery();
+            try {
+                if (!results.next()) {
+                    throw new RuntimeException("Couldn't get the data"); // TODO Error handling system
+                }
 
-            if (!results.next()) {
-                throw new RuntimeException("Couldn't get the data"); // TODO Error handling system
-            }
-
-            for (MeasurementScheduleRequest request : metrics) {
-                // Only size expected
-                double val = results.getDouble(request.getName());
-                report.addData(new MeasurementDataNumeric(request, val));
+                for (MeasurementScheduleRequest request : metrics) {
+                    // Only size expected
+                    double val = results.getDouble(request.getName());
+                    report.addData(new MeasurementDataNumeric(request, val));
+                }
+            } finally {
+                results.close();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

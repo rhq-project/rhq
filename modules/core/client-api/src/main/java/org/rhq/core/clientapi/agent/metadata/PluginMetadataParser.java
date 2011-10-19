@@ -442,7 +442,7 @@ public class PluginMetadataParser {
         // 2) Classes
         // 3) Plugin config
         // 4) Resource config
-        // 5) Drift config
+        // 5) Drift definition
         // 6) Metrics
         // 7) Control operations
         // 8) Process matches (for process scan auto-discovery)
@@ -491,17 +491,17 @@ public class PluginMetadataParser {
                     .getName(), resourceDescriptor.getResourceConfiguration()));
             }
 
-            Set<String> driftConfigNames = new HashSet<String>();
+            Set<String> driftDefNames = new HashSet<String>();
             DriftMetadataParser driftMetadataParser = new DriftMetadataParser();
-            for (DriftDescriptor descriptor : resourceDescriptor.getDriftConfiguration()) {
-                if (driftConfigNames.contains(descriptor.getName())) {
-                    throw new InvalidPluginDescriptorException("Duplicate drift configuration name detected ["
+            for (DriftDescriptor descriptor : resourceDescriptor.getDriftDefinition()) {
+                if (driftDefNames.contains(descriptor.getName())) {
+                    throw new InvalidPluginDescriptorException("Duplicate drift definition name detected ["
                         + descriptor.getName() + "]");
                 }
-                driftConfigNames.add(descriptor.getName());
-                resourceType.addDriftConfigurationTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
+                driftDefNames.add(descriptor.getName());
+                resourceType.addDriftDefinitionTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
             }
-            driftConfigNames = null; // don't need this anymore
+            driftDefNames = null; // don't need this anymore
 
             int displayPosition = 1;
             for (MetricDescriptor metricDescriptor : resourceDescriptor.getMetric()) {

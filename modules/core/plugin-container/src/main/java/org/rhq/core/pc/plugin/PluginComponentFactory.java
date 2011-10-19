@@ -89,6 +89,20 @@ public class PluginComponentFactory implements ContainerService {
             log.debug("Creating discovery component [" + className + "] for resource type [" + typeName + ']');
         }
 
+        ClassLoader classLoader = getDiscoveryComponentClassLoader(parentResourceContainer, pluginName);
+
+        ResourceDiscoveryComponent discoveryComponent = (ResourceDiscoveryComponent) instantiateClass(classLoader,
+            className);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Created discovery component [" + className + "] for resource type [" + typeName + ']');
+        }
+
+        return discoveryComponent;
+    }
+
+    public ClassLoader getDiscoveryComponentClassLoader(ResourceContainer parentResourceContainer, String pluginName)
+            throws PluginContainerException {
         // Determine what classloader to use to load the discovery component class. If the parent resource for newly
         // discovered resources is the root platform (or if the discovered resource is going TO BE the root platform),
         // we can just use the plugin classloader. If discovered resources will be children of a top level server or
@@ -109,15 +123,7 @@ public class PluginComponentFactory implements ContainerService {
                 classLoader = classLoaderMgr.obtainDiscoveryClassLoader(pluginName, parentClassLoader);
             }
         }
-
-        ResourceDiscoveryComponent discoveryComponent = (ResourceDiscoveryComponent) instantiateClass(classLoader,
-            className);
-
-        if (log.isDebugEnabled()) {
-            log.debug("Created discovery component [" + className + "] for resource type [" + typeName + ']');
-        }
-
-        return discoveryComponent;
+        return classLoader;
     }
 
     /**

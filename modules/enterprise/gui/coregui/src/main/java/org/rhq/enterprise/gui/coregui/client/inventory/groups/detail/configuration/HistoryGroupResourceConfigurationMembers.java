@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -81,7 +82,7 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(this.group.getId(), null);
+        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);

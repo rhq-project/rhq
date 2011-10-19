@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -36,6 +35,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.GroupBundleDeploymentCriteria;
@@ -88,11 +88,9 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupBundleDeploymentsPortlet(String locatorId) {
+    public GroupBundleDeploymentsPortlet(String locatorId, int groupId) {
         super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        int groupId = AbstractActivityView.groupIdLookup(currentPage);
+
         this.groupId = groupId;
     }
 
@@ -140,8 +138,13 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new GroupBundleDeploymentsPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new GroupBundleDeploymentsPortlet(locatorId, context.getGroupId());
         }
     }
 

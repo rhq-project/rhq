@@ -183,7 +183,7 @@ public class ApacheDirectiveRegExpression {
             return nodeParams;
         }
         
-        if (name.equals("Allow") | name.equals("Deny")){
+        if (name.equals("Allow") || name.equals("Deny")){
                 nodeParams.add("from");
         }
         //each regex is applied as long as it matches something

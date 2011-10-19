@@ -63,6 +63,7 @@ public class FileListView extends LocatableVLayout {
     private void viewFiles(PageList<BundleFile> files) {
 
         Table table = new Table(extendLocatorId("BundleFiles"), MSG.view_bundle_bundleFiles());
+        table.setShowFooterRefresh(false);
 
         ListGridField id = new ListGridField(ID, MSG.common_title_id());
         ListGridField name = new ListGridField(NAME, MSG.common_title_name());

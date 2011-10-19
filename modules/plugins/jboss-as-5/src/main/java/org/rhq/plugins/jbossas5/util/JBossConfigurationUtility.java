@@ -58,7 +58,7 @@ public class JBossConfigurationUtility
             if (url.getProtocol().equals("file"))
             {
                 File file = (new File(url.getFile())).getCanonicalFile();
-                url = file.toURL();
+                url = file.toURI().toURL();
             }
         }
         catch (Exception e)

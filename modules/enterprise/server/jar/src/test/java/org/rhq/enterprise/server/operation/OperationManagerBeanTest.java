@@ -1576,7 +1576,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
                 em.persist(resource);
 
-                ResourceGroup group = new ResourceGroup("testgroup" + System.currentTimeMillis(), resourceType);
+                ResourceGroup group = new ResourceGroup("testgroupOMB" + System.currentTimeMillis(), resourceType);
                 em.persist(group);
                 group.addExplicitResource(resource);
             } catch (Exception e) {

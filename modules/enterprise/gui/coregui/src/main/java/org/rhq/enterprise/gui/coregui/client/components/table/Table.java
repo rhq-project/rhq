@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -95,11 +95,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * trivial, you must get it peer reviewed. Send out your proposed changes
  * to the dev mailing list and ask for comments. Any problems introduced to
  * this class are magnified because it is used in so many UI views and problems
- * are hard to detect due to the varies ways it is used.
+ * are hard to detect due to the various ways it is used.
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
     protected static final String FIELD_ID = "id";
@@ -107,7 +108,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     private LocatableVLayout contents;
 
-    private HTMLFlow title;
+    private HTMLFlow titleCanvas;
 
     private HLayout titleLayout;
     private Canvas titleComponent;
@@ -123,7 +124,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showFooterRefresh = true;
     private boolean showFilterForm = true;
 
-    private String tableTitle;
+    private String titleString;
     private Criteria initialCriteria;
     private boolean initialCriteriaFixed = true;
     private SortSpecifier[] sortSpecifiers;
@@ -142,6 +143,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
     private LocatableToolStrip footer;
     private LocatableToolStrip footerExtraWidgets;
+    private LocatableIButton refreshButton;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -184,7 +186,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setHeight100();
         setOverflow(Overflow.HIDDEN);
 
-        this.tableTitle = tableTitle;
+        this.titleString = tableTitle;
         this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
@@ -257,6 +259,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
         listGrid.setSelectionType(getDefaultSelectionStyle());
+        listGrid.setDataPageSize(45); // the default is 75 - lower it to speed up data loading
 
         if (flexRowDisplay) {
             //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
@@ -294,8 +297,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
 
             // Title
-            this.title = new HTMLFlow();
-            setTableTitle(this.tableTitle);
+            this.titleCanvas = new HTMLFlow();
+            updateTitleCanvas(this.titleString);
 
             if (showHeader) {
                 titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
@@ -411,7 +414,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             titleLayout.addMember(img);
         }
 
-        titleLayout.addMember(title);
+        titleLayout.addMember(titleCanvas);
 
         if (titleComponent != null) {
             titleLayout.addMember(new LayoutSpacer());
@@ -440,8 +443,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 button.setOverflow(Overflow.VISIBLE);
                 button.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
+                        disableAllFooterControls();
                         if (tableAction.confirmMessage != null) {
-
                             String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
                                 .getSelection().length));
 
@@ -449,6 +452,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                                 public void execute(Boolean confirmed) {
                                     if (confirmed) {
                                         tableAction.action.executeAction(listGrid.getSelection(), null);
+                                    } else {
+                                        refreshTableInfo();
                                     }
                                 }
                             });
@@ -468,9 +473,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 for (final String key : menuEntries.keySet()) {
                     MenuItem item = new MenuItem(key);
                     item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
-
-                        @Override
                         public void onClick(MenuItemClickEvent event) {
+                            disableAllFooterControls();
                             tableAction.getAction().executeAction(listGrid.getSelection(), menuEntries.get(key));
                         }
                     });
@@ -496,9 +500,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         footer.addMember(new LayoutSpacer());
 
         if (isShowFooterRefresh()) {
-            IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+            this.refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
+                    disableAllFooterControls();
                     refresh();
                 }
             });
@@ -526,6 +531,21 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         refreshTableInfo();
     }
 
+    public void disableAllFooterControls() {
+        for (TableActionInfo tableAction : tableActions) {
+            tableAction.actionCanvas.disable();
+        }
+        for (Canvas extraWidget : extraWidgetsAboveFooter) {
+            extraWidget.disable();
+        }
+        for (Canvas extraWidget : extraWidgetsInMainFooter) {
+            extraWidget.disable();
+        }
+        if (isShowFooterRefresh() && this.refreshButton != null) {
+            this.refreshButton.disable();
+        }
+    }
+
     /**
      * Subclasses can use this as a chance to configure the list grid after it has been
      * created but before it has been drawn to the DOM. This is also the proper place to add table
@@ -538,6 +558,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     public void setFilterFormItems(FormItem... formItems) {
         setShowHeader(false);
         this.filterForm.setItems(formItems);
+        this.filterForm.setNumCols(4);
     }
 
     /**
@@ -548,15 +569,49 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     }
 
-    public String getTitle() {
-        return this.tableTitle;
+    public String getTitleString() {
+        return this.titleString;
     }
 
-    public void setTitle(String title) {
-        this.tableTitle = title;
-        if (this.title != null) {
-            setTableTitle(title);
+    /**
+     * Set the Table's title string. This will subsequently call {@link #updateTitleCanvas(String)}.
+     * @param titleString
+     */
+    public void setTitleString(String titleString) {
+        this.titleString = titleString;
+        if (this.titleCanvas != null) {
+            updateTitleCanvas(titleString);
         }
+    }
+
+    public Canvas getTitleCanvas() {
+        return this.titleCanvas;
+    }
+
+    /**
+     * To set the Table's title, call {@link #setTitleString(String)}. This is primarily declared for purposes of
+     * override.
+     * @param titleString
+     */
+    public void updateTitleCanvas(String titleString) {
+        if (titleString == null) {
+            titleString = "";
+        }
+        if (titleString.length() > 0) {
+            titleCanvas.setWidth100();
+            titleCanvas.setHeight(35);
+            titleCanvas.setContents(titleString);
+            titleCanvas.setPadding(4);
+            titleCanvas.setStyleName("HeaderLabel");
+        } else {
+            titleCanvas.setWidth100();
+            titleCanvas.setHeight(0);
+            titleCanvas.setContents(null);
+            titleCanvas.setPadding(0);
+            titleCanvas.setStyleName("normal");
+        }
+
+        titleCanvas.markForRedraw();
     }
 
     /**
@@ -593,6 +648,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
+    }
+
+    protected Criteria getInitialCriteria() {
+        return initialCriteria;
+    }
+
+    /**
+     * Can be called in constructor to reset initialCriteria.
+     * @param initialCriteria
+     */
+    protected void setInitialCriteria(Criteria initialCriteria) {
+        this.initialCriteria = initialCriteria;
     }
 
     protected boolean isInitialCriteriaFixed() {
@@ -643,7 +710,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.
-    @SuppressWarnings("unchecked")
     private static void addCriteria(Criteria dest, Criteria src) {
         Map otherMap = src.getValues();
         Set otherKeys = otherMap.keySet();
@@ -672,27 +738,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 dest.setAttribute(field, src.getAttributeAsObject(field));
             }
         }
-    }
-
-    public void setTableTitle(String titleString) {
-        if (titleString == null) {
-            titleString = "";
-        }
-        if (titleString.length() > 0) {
-            title.setWidth100();
-            title.setHeight(35);
-            title.setContents(titleString);
-            title.setPadding(4);
-            title.setStyleName("HeaderLabel");
-        } else {
-            title.setWidth100();
-            title.setHeight(0);
-            title.setContents(null);
-            title.setPadding(0);
-            title.setStyleName("normal");
-        }
-
-        title.markForRedraw();
     }
 
     public DS getDataSource() {
@@ -782,14 +827,32 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.titleComponent = canvas;
     }
 
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
     public void addTableAction(String locatorId, String title, TableAction tableAction) {
         this.addTableAction(locatorId, title, null, null, tableAction);
     }
 
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
     public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
         this.addTableAction(locatorId, title, confirmation, null, tableAction);
     }
 
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
     public void addTableAction(String locatorId, String title, String confirmation,
         LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
         // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
@@ -812,6 +875,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     /**
      * Adds extra widgets to the bottom of the table view.
+     * <br/><br/>
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
      *
      * @param widget the new widget to add to the table view
      * @param aboveFooter if true, the widget will be placed in a second toolstrip just above the main footer.
@@ -861,33 +929,38 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return this.tableActionDisableOverride;
     }
 
-    protected void refreshTableInfo() {
-        if (showFooter && null != this.listGrid) {
+    public void refreshTableInfo() {
+        if (this.showFooter && (this.listGrid != null)) {
             if (this.tableActionDisableOverride) {
                 this.listGrid.setSelectionType(SelectionStyle.NONE);
             } else {
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            int selectionCount = this.listGrid.getSelection().length;
-            for (TableActionInfo tableAction : tableActions) {
+            //int selectionCount = this.listGrid.getSelection().length;
+            for (TableActionInfo tableAction : this.tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
                         .getSelection()));
                     tableAction.actionCanvas.setDisabled(!enabled);
                 }
             }
-            for (Canvas extraWidget : extraWidgetsAboveFooter) {
+            for (Canvas extraWidget : this.extraWidgetsAboveFooter) {
+                extraWidget.enable();
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            for (Canvas extraWidget : extraWidgetsInMainFooter) {
+            for (Canvas extraWidget : this.extraWidgetsInMainFooter) {
+                extraWidget.enable();
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
             refreshRowCount();
+            if (isShowFooterRefresh() && this.refreshButton != null) {
+                this.refreshButton.enable();
+            }
         }
     }
 

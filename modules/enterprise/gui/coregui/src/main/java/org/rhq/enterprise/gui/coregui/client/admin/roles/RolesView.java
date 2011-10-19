@@ -26,9 +26,9 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  */
 public class RolesView extends TableSection<RolesDataSource> implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.view_adminSecurity_roles());
+    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.common_title_roles());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
@@ -58,7 +58,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     private boolean initialized;
 
     public RolesView(String locatorId) {
-        super(locatorId, MSG.view_adminSecurity_roles());
+        super(locatorId, MSG.common_title_roles());
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
@@ -85,7 +85,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-                createDeleteAction());
+            createDeleteAction());
 
         super.configureTable();
     }
@@ -184,7 +184,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     }
 
     @Override
-    public Canvas getDetailsView(int roleId) {
+    public Canvas getDetailsView(Integer roleId) {
         return new RoleEditView(extendLocatorId("Detail"), roleId);
     }
 

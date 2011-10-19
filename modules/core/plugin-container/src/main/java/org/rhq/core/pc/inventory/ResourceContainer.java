@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,11 +49,11 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.drift.DriftDetectionSchedule;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -66,6 +67,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * @author John Mazzitelli
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public class ResourceContainer implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -89,7 +91,7 @@ public class ResourceContainer implements Serializable {
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private Set<DriftDetectionSchedule> driftSchedules = new HashSet<DriftDetectionSchedule>();
+    private Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
 
     // transient fields
     private transient ResourceComponent resourceComponent;
@@ -244,14 +246,28 @@ public class ResourceContainer implements Serializable {
         }
     }
 
-    public Set<DriftDetectionSchedule> getDriftSchedules() {
+    public Collection<DriftDefinition> getDriftDefinitions() {
         synchronized (this) {
-            return driftSchedules;
+            return driftDefinitions.values();
         }
     }
 
-    public void setDriftSchedules(Set<DriftDetectionSchedule> schedules) {
-        driftSchedules = schedules;
+    public boolean containsDriftDefinition(DriftDefinition d) {
+        synchronized (this) {
+            return driftDefinitions.containsKey(d.getName());
+        }
+    }
+
+    public void addDriftDefinition(DriftDefinition d) {
+        synchronized (this) {
+            driftDefinitions.put(d.getName(), d);
+        }
+    }
+
+    public void removeDriftDefinition(DriftDefinition d) {
+        synchronized (this) {
+            driftDefinitions.remove(d.getName());
+        }
     }
 
     public ResourceComponentState getResourceComponentState() {
@@ -315,7 +331,6 @@ public class ResourceContainer implements Serializable {
      *
      * @throws PluginContainerException if the component does not exist or does not implement the interface
      */
-    @SuppressWarnings("unchecked")
     public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout,
         boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
         if (onlyIfStarted) {

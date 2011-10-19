@@ -47,7 +47,7 @@ import org.rhq.plugins.virt.LibVirtConnection.HVInfo;
  *
  * @author Greg Hinkle
  */
-public class VirtualizationHostComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet,
+public class VirtualizationHostComponent implements ResourceComponent<ResourceComponent<?>>, MeasurementFacet, ConfigurationFacet,
     CreateChildResourceFacet {
 
     private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);

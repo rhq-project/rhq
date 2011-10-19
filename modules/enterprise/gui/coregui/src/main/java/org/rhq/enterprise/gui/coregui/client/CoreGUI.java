@@ -33,6 +33,7 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.KeyCallback;
@@ -41,10 +42,12 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
@@ -53,13 +56,15 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisticsView;
+import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.List;
 
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ GUI.
@@ -108,6 +113,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private RootCanvas rootCanvas;
     private MenuBarView menuBarView;
     private Footer footer;
+    private int rpcTimeout;
+    private ProductInfo productInfo;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -119,6 +126,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         String enableLocators = Location.getParameter("enableLocators");
         if ((null != enableLocators) && Boolean.parseBoolean(enableLocators)) {
             SeleniumUtility.setUseDefaultIds(false);
+        }
+
+        rpcTimeout = -1;
+        String rpcTimeoutParam =  Location.getParameter("rpcTimeout");
+        if (rpcTimeoutParam != null) {
+            try {
+                rpcTimeout = Integer.parseInt(rpcTimeoutParam) * 1000;
+            } catch (NumberFormatException ignored) {
+                // nada
+            }
         }
 
         coreGUI = this;
@@ -149,6 +166,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         // Remove loading image, which can be seen if LoginView doesn't completely cover it.
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
+    }
+
+    public int getRpcTimeout() {
+        return rpcTimeout;
     }
 
     public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
@@ -245,6 +266,29 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     public static CoreGUI get() {
         return coreGUI;
+    }
+
+    public void init() {
+        if (productInfo == null) {
+            GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
+                    buildCoreUI();
+                }
+
+                public void onSuccess(ProductInfo result) {
+                    productInfo = result;
+                    Window.setTitle(productInfo.getName());
+                    buildCoreUI();
+                }
+            });
+        } else {
+            buildCoreUI();
+        }
+    }
+
+    public ProductInfo getProductInfo() {
+        return productInfo;
     }
 
     public void buildCoreUI() {
@@ -383,6 +427,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         } else {
             if (view.matches(TREE_NAV_VIEW_PATTERN)) {
                 // e.g. "Resource/10001" or "Resource/AutoGroup/10003"
+                // TODO: need to support string IDs "Drift/History/0id_abcdefghijk"
+                // TODO: see StringIDTableSection.ID_PREFIX
+                // TODO: remember \D is a non-digit, and \d is a digit
+                // TODO: String suffix = currentViewPath.replaceFirst("\\D*[^/]*", ""); // this might be OK if 0id_ starts with a digit
+                // TODO: suffix = suffix.replaceFirst("((\\d.*)|(0id_[^/]*))", "");
                 if (!currentViewPath.startsWith(view)) {
                     // The Node that was selected is not the same Node that was previously selected - it
                     // may not even be the same node type. For example, the user could have moved from a
@@ -410,6 +459,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         return MSGCONST;
     }
 
+    public void reset() {
+        messageCenter.reset();
+        footer.reset();
+    }
+
     private class RootCanvas extends VLayout implements BookmarkableView {
         private ViewId currentViewId;
         private Canvas currentCanvas;
@@ -419,22 +473,25 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             setHeight100();
         }
 
+        // TODO (ips, 09/06/11): i18n the title.
         private String getViewPathTitle(ViewPath viewPath) {
-            // default title is the path minus any IDs we find. That should give a least some nice default title.
+            // Set the default title to the view path minus any IDs.
             StringBuilder viewPathTitle = new StringBuilder();
-            for (ViewId viewId : viewPath.getViewPath()) {
-                // none of our path elements start with a digit that is NOT an ID; if we see an ID, skip it
-                if (!Character.isDigit(viewId.getPath().charAt(0))) {
-                    if (viewPathTitle.length() > 0) {
+            String productName = (productInfo != null) ? productInfo.getName() : "RHQ";
+            List<ViewId> viewIds = viewPath.getViewPath();
+            if (!viewIds.isEmpty()) {
+                viewPathTitle.append(productName).append(": ");
+                viewPathTitle.append(viewIds.get(0));
+                for (int i = 1, viewPathSize = viewIds.size(); i < viewPathSize; i++) {
+                    ViewId viewId = viewIds.get(i);
+                    // None of our path elements start with a digit that is NOT an ID, so if we see an ID, skip it.
+                    if (!Character.isDigit(viewId.getPath().charAt(0))) {
                         viewPathTitle.append(" | ");
+                        viewPathTitle.append(viewId.getPath());
                     }
-                    viewPathTitle.append(viewId.getPath());
                 }
             }
-            if (viewPathTitle.length() == 0) {
-                viewPathTitle.append("Core Application");
-            }
-            return "RHQ: " + viewPathTitle.toString();
+            return viewPathTitle.toString();
         }
 
         public void initCanvas() {
@@ -524,10 +581,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                         }
                     }.run(); // fire the timer immediately
                 } else {
-                    if (this.currentCanvas instanceof BookmarkableView) {
-                        ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
-                    } else {
-                        this.currentCanvas.markForRedraw();
+                    if (this.currentCanvas != null) {
+                        if (this.currentCanvas instanceof BookmarkableView) {
+                            ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
+                        } else {
+                            this.currentCanvas.markForRedraw();
+                        }
                     }
                 }
             }

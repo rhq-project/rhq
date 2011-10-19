@@ -32,7 +32,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author Lukas Krejci
  */
-public class NothingDiscoveringDiscoveryComponent<T extends ResourceComponent> implements ResourceDiscoveryComponent<T> {
+public class NothingDiscoveringDiscoveryComponent<T extends ResourceComponent<?>> implements
+    ResourceDiscoveryComponent<T> {
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context)
         throws InvalidPluginConfigurationException, Exception {

@@ -26,18 +26,16 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
-import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.RhqDrift;
-import org.rhq.core.domain.drift.RhqDriftChangeSet;
-import org.rhq.core.domain.drift.RhqDriftFile;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDetails;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 @Local
-public interface DriftManagerLocal extends DriftManagerRemote {
+public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerRemote {
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
@@ -60,134 +58,92 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param zipStream The drift files zip file stream
      * @throws Exception
      */
-    void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    void addFiles(int resourceId, String driftDefName, String token, long zipSize, InputStream zipStream)
+        throws Exception;
+
+    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
+        File changeSetFilesZip) throws Exception;
 
     /**
-     * Remove the specified drift in its own transaction. This is used for chunking transactions and
-     * should not be exposed in a Remote interface.
-     * 
-     * @param subject
-     * @param 
-     * @param driftConfig
-     * 
-     * @return the number of Drift records deleted
-     */
-    int deleteDriftsInNewTransaction(Subject subject, String... driftIds);
-
-    /**
-     * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
-     *  
-     * @param subject
-     * @param 
-     * @param driftConfig
-     *
-     * @return the number of Drift records deleted
-     */
-    int deleteDrifts(Subject subject, String[] driftIds);
-
-    /**
-     * Remove all drifts on the specified entity context.
-     *  
-     * @param subject
-     * @param entityContext the context
-     * 
-     * @return the number of Drift records deleted
-     */
-    int deleteDriftsByContext(Subject subject, EntityContext entityContext);
-
-    /**
-     * Remove the provided driftConfig (identified by name) on the specified entityContext.
+     * Remove the provided driftDef (identified by name) on the specified entityContext.
      * Agents, if available, will be notified of the change. 
      * @param subject
      * @param entityContext
-     * @param driftConfigName
+     * @param driftDefName
      */
-    void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
+    void deleteDriftDefinition(Subject subject, EntityContext entityContext, String driftDefName);
 
     /**
-     * Simple get method for a RhqDriftFile. Does not return the content.
-     * @param subject
-     * @param sha256
-     * @return The RhqDriftFile sans content.
+     * This is for internal use only - do not call it unless you know what you are doing.
      */
-    RhqDriftFile getDriftFile(Subject subject, String sha256);
+    void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId);
 
     /**
-     * Standard criteria based fetch method
-     * @param subject
-     * @param criteria
-     * @return The DriftChangeSets matching the criteria
-     */
-    PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria);
-
-    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftJPACriteria criteria);
-
-    /**
-     * Standard criteria based fetch method
-     * @param subject
-     * @param criteria
-     * @return The Drifts matching the criteria
-     */
-    PageList<RhqDrift> findDriftsByCriteria(Subject subject, DriftJPACriteria criteria);
-
-    /**
-     * Get the specified drift configuration for the specified context.
+     * One time on-demand request to detect drift on the specified entities, using the supplied def.
      * 
      * @param entityContext
-     * @param driftConfigId
-     * @return The drift configuration
-     * @throws RuntimeException, IllegalArgumentException if entity or driftConfig not found.
+     * @param driftDef
+     * @throws RuntimeException
      */
-    DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId);
+    void detectDrift(Subject subject, EntityContext context, DriftDefinition driftDef);
+
+    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
 
     /**
-     * This method stores the provided change-set file for the resource. The version will be incremented based
-     * on the max version of existing change-sets for the resource. The change-set will be processed generating
-     * requests for drift file content and/or drift instances as required.
-     *  
-     * @param resourceId The resource for which the change-set is being reported.
-     * @param changeSetZip The change-set zip file
-     * @throws Exception
+     * Get the specified drift definition. Note, the full Configuration is fetched. 
+     * 
+     * @param driftDefId
+     * @return The drift definition
+     * @throws RuntimeException, IllegalArgumentException if entity or driftDef not found.
      */
-    void storeChangeSet(int resourceId, File changeSetZip) throws Exception;
+    DriftDefinition getDriftDefinition(Subject subject, int driftDefId);
 
     /**
-     * This method stores the provided drift files. The files should correspond to requested drift files.
-     * The unzipped files will have their sha256 generated. Those not corresponding to needed content will
-     * be logged and ignored.
-     *  
-     * @param filesZip The change-set zip file
-     * @throws Exception
-     */
-    void storeFiles(File filesZip) throws Exception;
-
-    /**
-     * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
+     * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
      * @param subject
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      */
-    void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
-
-    // TODO, the stuff below is very preliminary and will change
+    void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef);
 
     /**
-     * SUPPORTS DRIFT RHQ SERVER PLUGIN 
-     * @param driftFile
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     * 
+     * @param subject
+     * @param purgeMillis only those unused drift files that are older than this (in epoch millis) will be purged.
+     * @return number of orphaned drife files that were removed
+     */
+    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(String hash);
+
+    /**
+     * Generates a unified diff of the two files references by drift. In the case of a
+     * modified file, a Drift object references the current and previous versions of the
+     * file. This method generates a diff of the two versions.
+     *
+     * @param drift Specifies the two files that will be compared
+     * @return A report containing a unified diff of the two versions of the file
+     * referenced by drift
+     */
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
+
+    /**
+     * Returns an object that encapsulates the information needed for viewing drift details
+     *
+     * @param subject
+     * @param driftId
      * @return
-     * @throws Exception
      */
-    RhqDriftFile persistDriftFile(RhqDriftFile driftFile) throws Exception;
+    DriftDetails getDriftDetails(Subject subject, String driftId);
 
-    /**
-     * SUPPORTS DRIFT RHQ SERVER PLUGIN
-     * @param driftFile
-     * @param data
-     * @throws Exception
-     */
-    void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception;
-
-    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
-
+    boolean isBinaryFile(Drift<?, ?> drift);
 }

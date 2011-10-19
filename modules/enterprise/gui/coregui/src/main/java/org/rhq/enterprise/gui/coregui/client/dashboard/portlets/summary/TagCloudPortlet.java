@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -39,7 +40,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "TagCloud";
     // A default displayed, persisted name for the portlet    
-    public static final String NAME = MSG.view_portlet_defaultName_tagCloud();
+    public static final String NAME = MSG.common_title_tag_cloud();
 
     public TagCloudPortlet(String locatorId) {
         super(locatorId);
@@ -56,7 +57,7 @@ public class TagCloudPortlet extends TagCloudView implements Portlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new TagCloudPortlet(locatorId);
         }

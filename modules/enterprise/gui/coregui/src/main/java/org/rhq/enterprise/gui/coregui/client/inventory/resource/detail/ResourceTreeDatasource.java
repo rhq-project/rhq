@@ -184,12 +184,47 @@ public class ResourceTreeDatasource extends DataSource {
      */
     public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData) {
         List<ResourceTreeNode> resourceNodes = new ArrayList<ResourceTreeNode>(resources.size());
+        //        boolean nullFound = false;
         for (Resource resource : resources) {
+            //            if (null != resource.getParentResource() && null == resource.getParentResource().getName()) {
+            //                CoreGUI.getMessageCenter().notify(
+            //                    new Message(" *** Null parent name for " + resource + " parent " + resource.getParentResource(),
+            //                        Severity.Info));
+            //                nullFound = true;
+            //            }
             ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));
             resourceNodes.add(node);
         }
+        //        if (!nullFound) {
+        //            CoreGUI.getMessageCenter().notify(new Message(" *** No Null parent names found", Severity.Info));
+        //        }
 
         List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes);
+
+        //        nullFound = false;
+        //        for (TreeNode node : result) {
+        //            if (node instanceof ResourceTreeNode) {
+        //                ResourceTreeNode rtNode = (ResourceTreeNode) node;
+        //                if (null != rtNode.getResource().getParentResource()
+        //                    && null == rtNode.getResource().getParentResource().getName()) {
+        //                    CoreGUI.getMessageCenter().notify(
+        //                        new Message(" *** Null parent name for resource tree node " + rtNode.getResource() + " parent "
+        //                            + rtNode.getResource(), Severity.Info));
+        //                    nullFound = true;
+        //                }
+        //            } else if (node instanceof AutoGroupTreeNode) {
+        //                AutoGroupTreeNode rtNode = (AutoGroupTreeNode) node;
+        //                if (null == rtNode.getParentResource().getName()) {
+        //                    CoreGUI.getMessageCenter().notify(
+        //                        new Message(" *** Null parent name for autogroup tree node " + rtNode.getParentResource(),
+        //                            Severity.Info));
+        //                    nullFound = true;
+        //                }
+        //            }
+        //        }
+        //        if (!nullFound) {
+        //            CoreGUI.getMessageCenter().notify(new Message(" *** No Null tree node parent names found", Severity.Info));
+        //        }
 
         return result.toArray(new TreeNode[result.size()]);
     }

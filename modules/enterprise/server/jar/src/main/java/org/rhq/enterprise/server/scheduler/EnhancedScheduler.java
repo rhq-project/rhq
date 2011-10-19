@@ -24,7 +24,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 
 /**
- * An enhanced scheduler interface that provides the normal scheduler API with some additional convienence methods.
+ * An enhanced scheduler interface that provides the normal scheduler API with some additional convenience methods.
  *
  * @author John Mazzitelli
  */

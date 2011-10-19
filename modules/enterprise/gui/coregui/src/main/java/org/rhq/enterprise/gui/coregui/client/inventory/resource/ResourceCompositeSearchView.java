@@ -48,6 +48,9 @@ import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
+/**
+ * @author Jay Shaughnessy
+ */
 public class ResourceCompositeSearchView extends ResourceSearchView {
 
     private final ResourceComposite parentResourceComposite;
@@ -67,14 +70,13 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, null, criteria, title, headerIcons);
     }
 
-    // surpress unchecked warnings because the superclass has different generic types for the datasource
+    // suppress unchecked warnings because the superclass has different generic types for the datasource
     @SuppressWarnings("unchecked")
     @Override
     protected RPCDataSource getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected void configureTable() {
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
@@ -115,54 +117,76 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
 
-                        ResourceCompositeSearchView.this.refresh();
+                        // refresh the entire gui so it encompasses any relevant tree view. Don't call this.refresh()
+                        // because CoreGUI.refresh is more comprehensive.
+                        CoreGUI.refresh();
                     }
                 });
             }
         });
 
         if (this.parentResourceComposite.getResourcePermission().isCreateChildResources()) {
-            ResourceType parentType = parentResourceComposite.getResource().getResourceType();
+            addImportButton();
+        }
 
-            // manual import type menu
-            LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>();
+        super.configureTable();
+    }
 
-            for (ResourceType childType : parentType.getChildResourceTypes()) {
-                if (childType.isSupportsManualAdd()) {
-                    importTypeValueMap.put(childType.getName(), childType);
-                }
+    @SuppressWarnings("unchecked")
+    private void addImportButton() {
+        ResourceType parentType = parentResourceComposite.getResource().getResourceType();
+
+        // manual import type menu
+        // TODO: Use TreeMap instead, so the types will be sorted by name.
+        LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>();
+
+        for (ResourceType childType : parentType.getChildResourceTypes()) {
+            if (childType.isSupportsManualAdd()) {
+                importTypeValueMap.put(childType.getName(), childType);
             }
+        }
+        if (!importTypeValueMap.isEmpty()) {
             addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
                 new AbstractTableAction(TableActionEnablement.ALWAYS) {
 
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
                             (ResourceType) actionValue);
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        ResourceCompositeSearchView.this.refreshTableInfo();
                     }
                 });
-
-            // creatable child type menu
-            LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>();
-
-            for (ResourceType childType : parentType.getChildResourceTypes()) {
-                if (childType.isCreatable()) {
-                    createTypeValueMap.put(childType.getName(), childType);
-                }
-            }
-            if (!createTypeValueMap.isEmpty()) {
-                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
-                    createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
-
-                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                            ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
-                                (ResourceType) actionValue);
-                        }
-                    });
-            }
-
         }
 
-        super.configureTable();
+        // creatable child type menu
+        // TODO: Use TreeMap instead, so the types will be sorted by name.
+        LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>();
+
+        for (ResourceType childType : parentType.getChildResourceTypes()) {
+            if (childType.isCreatable()) {
+                createTypeValueMap.put(childType.getName(), childType);
+            }
+        }
+        if (!createTypeValueMap.isEmpty()) {
+            addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null, createTypeValueMap,
+                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
+                            (ResourceType) actionValue);
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        ResourceCompositeSearchView.this.refreshTableInfo();
+                    }
+                });
+        }
+    }
+
+    protected void onUninventorySuccess() {
+        // refresh the entire gui so it encompasses any relevant tree view. Don't call this.refresh()
+        // because CoreGUI.refresh is more comprehensive.
+        CoreGUI.refresh();
     }
 
     public ResourceComposite getParentResourceComposite() {
@@ -173,7 +197,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
-            .valueOf(parentResourceComposite.getResource().getId())), MSG.view_inventory_resources_title_children());
+            .valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
     }
 
 }

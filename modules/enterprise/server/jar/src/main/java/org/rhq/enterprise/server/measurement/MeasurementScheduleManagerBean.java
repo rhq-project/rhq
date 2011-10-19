@@ -21,12 +21,22 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
+import java.util.UUID;
+
+import org.quartz.Trigger;
+import org.quartz.Scheduler;
+import org.quartz.JobDetail;
+import org.quartz.JobDataMap;
+import org.quartz.SimpleTrigger;
+import org.quartz.SchedulerException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -342,6 +352,14 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             updateExistingSchedules);
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(Subject subject,
+        int[] measurementDefinitionIds, long collectionInterval, boolean enable, boolean updateExistingSchedules) {
+
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, enable,
+            collectionInterval, updateExistingSchedules);
+    }
+
     /**
      * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
      * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried
@@ -498,6 +516,17 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 for (Integer resourceId : reqMap.keySet()) {
                     Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
 
+                    // Ignore resources that are not actually associated with an agent. For example,
+                    // those with an UNINVENTORIED status. 
+                    if (null == agent) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Ignoring measurement schedule change for non-agent-related resource ["
+                                + resourceId + "]. It is probably waiting to be uninventoried.");
+                        }
+
+                        continue;
+                    }
+
                     Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
                     if (agentUpdate == null) {
                         agentUpdate = new HashSet<ResourceMeasurementScheduleRequest>();
@@ -522,10 +551,20 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     }
                 }
             }
-
         } catch (Exception e) {
-            log.error("Error updating measurement definitions: ", e);
-            throw new MeasurementException("Error updating measurement definitions: " + e.getMessage());
+            String errorMessage = "Error updating measurement definitions";
+            SQLException sqle = null;
+            if (e instanceof SQLException) {
+                sqle = (SQLException) e;
+            } else if (e.getCause() instanceof SQLException) {
+                sqle = (SQLException) e.getCause();
+            }
+            if (sqle != null) {
+                String s = JDBCUtil.convertSQLExceptionToString((SQLException) e);
+                errorMessage += ": " + s;
+            }
+            log.error(errorMessage, e);
+            throw new MeasurementException("Error updating measurement definitions: " + e);
         } finally {
             JDBCUtil.safeClose(defUpdateStmt);
             JDBCUtil.safeClose(schedUpdateStmt);
@@ -550,7 +589,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         query.setParameter("interval", collectionInterval);
         int affectedRows = query.executeUpdate();
 
-        notifyAgentsOfScheduleUpdates(context, measurementScheduleSubQuery);
+        scheduleJobToPushScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
 
         return affectedRows;
     }
@@ -567,7 +606,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Query query = entityManager.createQuery(updateQuery);
         int affectedRows = query.executeUpdate();
 
-        notifyAgentsOfScheduleUpdates(context, measurementScheduleSubQuery);
+        scheduleJobToPushScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
 
         return affectedRows;
     }
@@ -584,20 +623,104 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         Query query = entityManager.createQuery(updateQuery);
         int affectedRows = query.executeUpdate();
 
-        notifyAgentsOfScheduleUpdates(context, measurementScheduleSubQuery);
+        scheduleJobToPushScheduleUpdatesToAgents(context, measurementScheduleSubQuery);
 
         return affectedRows;
     }
 
-    @SuppressWarnings("unchecked")
-    private void notifyAgentsOfScheduleUpdates(EntityContext context, String measurementScheduleSubQuery) {
+    public static final String TRIGGER_NAME = "TriggerName";
+    public static final String TRIGGER_GROUP_NAME = "TriggerGroupName";
+    public static final String SCHEDULE_SUBQUERY = "ScheduleSubQuery";
+    public static final String ENTITYCONTEXT_RESOURCEID = "EntityContext.resourceId";
+    public static final String ENTITYCONTEXT_GROUPID = "EntityContext.groupId";
+    public static final String ENTITYCONTEXT_PARENT_RESOURCEID = "EntityContext.parentResourceId";
+    public static final String ENTITYCONTEXT_RESOURCETYPEID = "EntityContext.resourceTypeId";
 
+    private void scheduleJobToPushScheduleUpdatesToAgents(EntityContext entityContext, String scheduleSubQuery) {
+        Scheduler scheduler;
+        try {
+            scheduler = LookupUtil.getSchedulerBean();
+
+            final String DEFAULT_AGENT_JOB = "AGENT NOTIFICATION JOB";
+            final String DEFAULT_AGENT_GROUP = "AGENT NOTIFICATION GROUP";
+            final String DEFAULT_AGENT_TRIGGER = "AGENT NOTIFICATION TRIGGER";
+
+            final String randomSuffix = UUID.randomUUID().toString();
+
+            final String jobName = DEFAULT_AGENT_JOB + " - " + randomSuffix;
+            JobDetail jobDetail = new JobDetail(
+                jobName,
+                DEFAULT_AGENT_GROUP,
+                NotifyAgentsOfScheduleUpdatesJob.class);
+
+            final String triggerName = DEFAULT_AGENT_TRIGGER + " - " + randomSuffix;
+            SimpleTrigger simpleTrigger = new SimpleTrigger(
+                triggerName,
+                DEFAULT_AGENT_GROUP,
+                new Date());
+
+            JobDataMap jobDataMap = simpleTrigger.getJobDataMap();
+            jobDataMap.put(TRIGGER_NAME, triggerName);
+            jobDataMap.put(TRIGGER_GROUP_NAME, DEFAULT_AGENT_GROUP);
+            jobDataMap.put(SCHEDULE_SUBQUERY, scheduleSubQuery);
+            jobDataMap.put(ENTITYCONTEXT_RESOURCEID, Integer.toString(entityContext.getResourceId()));
+            jobDataMap.put(ENTITYCONTEXT_GROUPID, Integer.toString(entityContext.getGroupId()));
+            jobDataMap.put(ENTITYCONTEXT_PARENT_RESOURCEID, Integer.toString(entityContext.getParentResourceId()));
+            jobDataMap.put(ENTITYCONTEXT_RESOURCETYPEID, Integer.toString(entityContext.getResourceTypeId()));
+
+            if (isJobScheduled(scheduler, DEFAULT_AGENT_JOB, DEFAULT_AGENT_GROUP)) {
+                simpleTrigger.setJobName(DEFAULT_AGENT_JOB);
+                simpleTrigger.setJobGroup(DEFAULT_AGENT_GROUP);
+                scheduler.scheduleJob(simpleTrigger);
+            } else {
+                scheduler.scheduleJob(jobDetail, simpleTrigger);
+            }
+        } catch (RuntimeException e) {
+            // lookup wrapper throws runtime exceptions, no distinction between
+            // types, so fallback and do the best we can.
+            log.error("Failed to schedule agents update notification.", e);
+            notifyAgentsOfScheduleUpdates(entityContext, scheduleSubQuery);
+        } catch (SchedulerException e) {
+            // should never happen, but fallback gracefully...
+            log.error("Failed to schedule agents update notification.", e);
+            notifyAgentsOfScheduleUpdates(entityContext, scheduleSubQuery);
+        }
+    }
+
+    private boolean isTriggerScheduled(Scheduler scheduler, String name, String group) {
+        boolean isScheduled = false;
+        try {
+            Trigger trigger = scheduler.getTrigger(name, group);
+            if (trigger != null) {
+                isScheduled = true;
+            }
+        } catch (SchedulerException se) {
+            log.error("Error getting trigger", se);
+        }
+        return isScheduled;
+    }
+
+    private boolean isJobScheduled(Scheduler scheduler, String name, String group) {
+        boolean isScheduled = false;
+        try {
+            JobDetail jobDetail = scheduler.getJobDetail(name, group);
+            if (jobDetail != null) {
+                isScheduled = true;
+            }
+        } catch (SchedulerException se) {
+            log.error("Error getting job detail", se);
+        }
+        return isScheduled;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void notifyAgentsOfScheduleUpdates(EntityContext entityContext, String scheduleSubQuery) {
         List<Integer> agentIds = new ArrayList<Integer>();
         try {
             String agentsQueryString = "" //
                 + "SELECT DISTINCT ms.resource.agent.id " //
                 + "  FROM MeasurementSchedule ms " //
-                + " WHERE ms.id IN ( " + measurementScheduleSubQuery + " ) ";
+                + " WHERE ms.id IN ( " + scheduleSubQuery + " ) ";
             if (log.isDebugEnabled()) {
                 log.debug("agentsQueryString: " + agentsQueryString);
             }
@@ -617,7 +740,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             + "       ms.definition.dataType, " //
             + "       ms.definition.rawNumericType " //
             + "  FROM MeasurementSchedule ms " //
-            + " WHERE ms.id IN ( " + measurementScheduleSubQuery + " ) " //
+            + " WHERE ms.id IN ( " + scheduleSubQuery + " ) " //
             + "   AND ms.resource.agent.id = :agentId";
         if (log.isDebugEnabled()) {
             log.debug("scheduleRequestQueryString: " + scheduleRequestQueryString);
@@ -639,10 +762,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 MeasurementScheduleRequest requestData = new MeasurementScheduleRequest( //
                     (Integer) nextScheduleDataSet[1], // scheduleId
                     (String) nextScheduleDataSet[2], // definitionName,
-                    (Long) nextScheduleDataSet[3], // interval, 
-                    (Boolean) nextScheduleDataSet[4], // enabled, 
-                    (DataType) nextScheduleDataSet[5], // dataType, 
-                    (NumericType) nextScheduleDataSet[6]); // awNumericType
+                    (Long) nextScheduleDataSet[3], // interval,
+                    (Boolean) nextScheduleDataSet[4], // enabled,
+                    (DataType) nextScheduleDataSet[5], // dataType,
+                    (NumericType) nextScheduleDataSet[6]); // rawNumericType
                 resourceRequest.addMeasurementScheduleRequest(requestData);
             }
 
@@ -668,11 +791,18 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             }
 
             if (markResources) {
-                markResources(context, nextAgentId);
+                markResources(entityContext, nextAgentId);
             }
         }
     }
 
+    /**
+     * The mtime on the Resources will tell the Agent it needs to pull down the
+     * latest schedules next time it performs an Agent-Server sync.
+     *
+     * @param context the entity context
+     * @param agentId the agent id
+     */
     private void markResources(EntityContext context, int agentId) {
         ResourceCriteria criteria = new ResourceCriteria();
         if (context.type == EntityContext.Type.Resource) {
@@ -982,28 +1112,32 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
             Map<Integer, ResourceMeasurementScheduleRequest> scheduleRequestMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
             ResultSet results = resultsStatement.executeQuery();
-            while (results.next()) {
-                Integer resourceId = (Integer) results.getInt(1);
-                Integer scheduleId = (Integer) results.getInt(2);
-                String definitionName = (String) results.getString(3);
-                Long interval = (Long) results.getLong(4);
-                Boolean enabled = (Boolean) results.getBoolean(5);
-                DataType dataType = DataType.values()[results.getInt(6)];
-                NumericType rawNumericType = NumericType.values()[results.getInt(7)];
-                if (results.wasNull()) {
-                    rawNumericType = null;
-                }
+            try {
+                while (results.next()) {
+                    Integer resourceId = (Integer) results.getInt(1);
+                    Integer scheduleId = (Integer) results.getInt(2);
+                    String definitionName = (String) results.getString(3);
+                    Long interval = (Long) results.getLong(4);
+                    Boolean enabled = (Boolean) results.getBoolean(5);
+                    DataType dataType = DataType.values()[results.getInt(6)];
+                    NumericType rawNumericType = NumericType.values()[results.getInt(7)];
+                    if (results.wasNull()) {
+                        rawNumericType = null;
+                    }
 
-                ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
-                if (scheduleRequest == null) {
-                    scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
-                    scheduleRequestMap.put(resourceId, scheduleRequest);
-                    allSchedules.add(scheduleRequest);
-                }
+                    ResourceMeasurementScheduleRequest scheduleRequest = scheduleRequestMap.get(resourceId);
+                    if (scheduleRequest == null) {
+                        scheduleRequest = new ResourceMeasurementScheduleRequest(resourceId);
+                        scheduleRequestMap.put(resourceId, scheduleRequest);
+                        allSchedules.add(scheduleRequest);
+                    }
 
-                MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
-                    interval, enabled, dataType, rawNumericType);
-                scheduleRequest.addMeasurementScheduleRequest(requestData);
+                    MeasurementScheduleRequest requestData = new MeasurementScheduleRequest(scheduleId, definitionName,
+                        interval, enabled, dataType, rawNumericType);
+                    scheduleRequest.addMeasurementScheduleRequest(requestData);
+                }
+            } finally {
+                results.close();
             }
         } finally {
             if (resultsStatement != null) {
@@ -1388,3 +1522,4 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     //    }
 
 }
+

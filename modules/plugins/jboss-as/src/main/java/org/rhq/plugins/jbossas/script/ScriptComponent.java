@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -52,7 +53,7 @@ import org.rhq.plugins.jbossas.JBossASServerComponent;
  *
  * @author Ian Springer
  */
-public class ScriptComponent implements ResourceComponent<JBossASServerComponent>, OperationFacet {
+public class ScriptComponent implements ResourceComponent<JBossASServerComponent<?>>, OperationFacet {
     public static final String PATH_CONFIG_PROP = "path";
     public static final String ENVIRONMENT_VARIABLES_CONFIG_PROP = "environmentVariables";
 
@@ -65,9 +66,9 @@ public class ScriptComponent implements ResourceComponent<JBossASServerComponent
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceContext<JBossASServerComponent> resourceContext;
+    private ResourceContext<JBossASServerComponent<?>> resourceContext;
 
-    public void start(ResourceContext<JBossASServerComponent> resourceContext) {
+    public void start(ResourceContext<JBossASServerComponent<?>> resourceContext) {
         this.resourceContext = resourceContext;
     }
 

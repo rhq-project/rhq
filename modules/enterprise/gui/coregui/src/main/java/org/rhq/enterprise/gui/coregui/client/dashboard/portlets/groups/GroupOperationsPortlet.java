@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -36,6 +35,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -110,16 +110,10 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
     protected String locatorId;
 
-    public GroupOperationsPortlet(String locatorId) {
+    public GroupOperationsPortlet(String locatorId, int groupId) {
         super(locatorId);
         this.locatorId = locatorId;
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        //String[] elements = currentPage.split("/");
-        int groupId = AbstractActivityView.groupIdLookup(currentPage);
         this.groupId = groupId;
-        //populate basepath
-        baseViewPath = AbstractActivityView.groupPathLookup(currentPage);
     }
 
     @Override
@@ -299,8 +293,13 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new GroupOperationsPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new GroupOperationsPortlet(locatorId, context.getGroupId());
         }
     }
 
@@ -354,7 +353,6 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
 
     private ResourceGroupComposite composite;
 
-    @SuppressWarnings("unchecked")
     public GroupOperationsCriteriaHistoryListView(String locatorId, GroupOperationsCriteriaDataSource dataSource,
         String title, Criteria criteria, ResourceGroupComposite composite) {
         super(locatorId, composite);
@@ -363,13 +361,12 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
         setShowFooterRefresh(false); //disable footer refresh
     }
 
-    @SuppressWarnings("unchecked")
     public void setDatasource(GroupOperationsCriteriaDataSource datasource) {
         super.setDataSource(datasource);
     }
 
     @Override
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         super.refreshTableInfo();
         if (getTableInfo() != null) {
             int count = getListGrid().getSelection().length;

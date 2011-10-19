@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.EmsBeanName;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -48,13 +49,13 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Jason Dobies
  * @author Ian Springer
  */
-public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
     private final Log log = LogFactory.getLog(this.getClass());
 
     // MBeanResourceDiscoveryComponent Overridden Methods  --------------------------------------------
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
         Set<DiscoveredResourceDetails> resourceDetails = super.discoverResources(context);
 
         /*
@@ -62,7 +63,8 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
          * corresponding jboss.web:type=Connector,* primary connector MBeans.
          */
         EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
-        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility("jboss.web:type=GlobalRequestProcessor,name=%name%");
+        ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(
+            "jboss.web:type=GlobalRequestProcessor,name=%name%");
         List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
 
         // We can't populate the name and scheme in the plugin config if the GlobalRequestProcessor MBeans aren't
@@ -104,7 +106,8 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
         for (DiscoveredResourceDetails resource : resourceDetails) {
             Configuration pluginConfiguration = resource.getPluginConfiguration();
 
-            String dirtyAddress = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS).getStringValue();
+            String dirtyAddress = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS)
+                .getStringValue();
 
             String cleanAddress;
             if (dirtyAddress.startsWith("%2F")) {
@@ -119,21 +122,20 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
             }
 
             String port = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_PORT).getStringValue();
-            
-            // Add the address to the Resource name (e.g. "Tomcat Connector (127.0.0.1:8080)").
-           
-                String resourceName = resource.getResourceName();
-                //resourceName = resourceName.replace("(", "(" + cleanAddress + ":");
-                resource.setResourceName(resourceName);
 
-            
+            // Add the address to the Resource name (e.g. "Tomcat Connector (127.0.0.1:8080)").
+
+            String resourceName = resource.getResourceName();
+            //resourceName = resourceName.replace("(", "(" + cleanAddress + ":");
+            resource.setResourceName(resourceName);
 
             String scheme = schemeMap.get(port);
             pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_SCHEMA, scheme));
 
             // Update the "address" and "dash" plugin config props, or remove them if not needed.
             if (addressPresentMap.containsKey(port)) {
-                pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, cleanAddress));
+                pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS,
+                    cleanAddress));
                 pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, "-"));
             } else {
                 pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, ""));

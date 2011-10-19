@@ -34,7 +34,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 public abstract class AbstractGroupConfigurationUpdateCriteria extends AbstractConfigurationUpdateCriteria {
     private static final long serialVersionUID = 1L;
 
+    public static final String FETCH_FIELD_CONFIGURATION_UPDATES = "configurationUpdates";
+
     private List<Integer> filterResourceGroupIds; // requires override
+
+    private boolean fetchConfigurationUpdates;
 
     public AbstractGroupConfigurationUpdateCriteria() {
         filterOverrides.put("resourceGroupIds", "group.id IN ( ? )");
@@ -42,5 +46,9 @@ public abstract class AbstractGroupConfigurationUpdateCriteria extends AbstractC
 
     public void addFilterResourceGroupIds(List<Integer> filterResourceGroupIds) {
         this.filterResourceGroupIds = filterResourceGroupIds;
+    }
+
+    public void fetchConfigurationUpdates(boolean fetchConfigurationUpdates) {
+        this.fetchConfigurationUpdates = fetchConfigurationUpdates;
     }
 }

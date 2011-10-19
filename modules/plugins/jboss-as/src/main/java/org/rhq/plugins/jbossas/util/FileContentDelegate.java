@@ -105,16 +105,22 @@ public class FileContentDelegate {
                 Manifest manifest;
                 if (manifestFile.exists()) {
                     FileInputStream inputStream = new FileInputStream(manifestFile);
-                    manifest = new Manifest(inputStream);
-                    inputStream.close();
+                    try {
+                        manifest = new Manifest(inputStream);
+                    } finally {
+                        inputStream.close();
+                    }
                 } else {
                     manifest = new Manifest();
                 }
                 Attributes attribs = manifest.getMainAttributes();
                 attribs.putValue("RHQ-Sha256", shaString);
                 FileOutputStream outputStream = new FileOutputStream(manifestFile);
-                manifest.write(outputStream);
-                outputStream.close();
+                try {
+                    manifest.write(outputStream);
+                } finally {
+                    outputStream.close();
+                }
             } else {
                 FileUtil.writeFile(content, contentFile);
             }

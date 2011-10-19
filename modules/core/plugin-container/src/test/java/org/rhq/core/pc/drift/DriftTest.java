@@ -1,23 +1,45 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
+
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Random;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
-
-import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.IOUtils.writeLines;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
  * A base test class that provides a framework for drift related tests. DriftTest sets up
@@ -82,12 +104,17 @@ public class DriftTest {
     protected File resourceDir;
 
     /**
-     * The default interval assigned to drift configurations created using
-     * {@link #driftConfiguration(String, String)}
+     * The default interval assigned to drift definitions created using
+     * {@link #driftDefinition(String, String)}
      */
-    protected long defaultInterval = 1800L;  // 30 minutes;
+    protected long defaultInterval = 1800L; // 30 minutes;
 
     private MessageDigestGenerator digestGenerator;
+
+    /**
+     * Used for creating random files in {@link #createRandomFile(java.io.File, String)}
+     */
+    private Random random = new Random();
 
     /**
      * Deletes the base output directory (which is the name of the test class), removing
@@ -98,7 +125,7 @@ public class DriftTest {
      */
     @BeforeClass
     public void initResourcesAndChangeSetsDirs() throws Exception {
-        File basedir = new File("target", getClass().getSimpleName());
+        File basedir = basedir();
         deleteDirectory(basedir);
         basedir.mkdir();
 
@@ -120,6 +147,10 @@ public class DriftTest {
     public void setUp(Method test) {
         resourceDir = mkdir(resourcesDir, test.getName() + "-" + nextResourceId());
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
+    }
+
+    protected File basedir() {
+        return new File("target", getClass().getSimpleName());
     }
 
     /** @return The current or last resource id generated */
@@ -147,11 +178,11 @@ public class DriftTest {
     }
 
     /**
-     * Returns the change set file for the specified drift configuration for the resource
+     * Returns the change set file for the specified drift definition for the resource
      * with the id that can be obtained from {@link #resourceId}. The type argument
      * determines whether a coverage or drift change set file is returned.
      *
-     * @param config The drift configuration name
+     * @param config The drift definition name
      * @param type Determines whether a coverage or drift change set file is to be returned
      * @return The change set file
      * @throws IOException
@@ -160,8 +191,21 @@ public class DriftTest {
         return changeSetMgr.findChangeSet(resourceId(), config, type);
     }
 
-    protected File changeSetDir(String driftConfigName) throws Exception {
-        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftConfigName);
+    /**
+     * Returns the previous snapshot file for the specified drift definition for the
+     * resource with the id that can be obtained from {@link #resourceId()}.
+     *
+     * @param config The drift definition name
+     * @return The previous snapshot file
+     * @throws Exception
+     */
+    protected File previousChangeSet(String config) throws IOException {
+        File changeSet = changeSet(config, COVERAGE);
+        return new File(changeSet.getParentFile(), changeSet.getName() + ".previous");
+    }
+
+    protected File changeSetDir(String driftDefName) throws Exception {
+        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftDefName);
         dir.mkdirs();
         return dir;
     }
@@ -172,8 +216,23 @@ public class DriftTest {
      * @return The SHA-256 hash as a string
      * @throws IOException
      */
-    protected String sha256(File file) throws IOException {
-        return digestGenerator.calcDigestString(file);
+    protected String sha256(File file) {
+        try {
+            return digestGenerator.calcDigestString(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to calculate SHA-256 hash for " + file.getPath(), e);
+        }
+    }
+
+    protected File createRandomFile(File dir, String fileName) throws Exception {
+        File file = new File(dir, fileName);
+        FileOutputStream stream = new FileOutputStream(file);
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        write(bytes, stream);
+        stream.close();
+
+        return file;
     }
 
     protected void writeChangeSet(File changeSetDir, String... changeSet) throws Exception {
@@ -184,21 +243,22 @@ public class DriftTest {
     }
 
     /**
-     * Creates a {@link DriftConfiguration} with the specified basedir. The file system is
+     * Creates a {@link DriftDefinition} with the specified basedir. The file system is
      * used as the context for the basedir which means the path specified is used as is.
      * The interval property is set to {@link #defaultInterval}.
      *
-     * @param name The configuration name
+     * @param name The definition name
      * @param basedir An absolute path of the base directory
-     * @return The drift configuration object
+     * @return The drift definition object
      */
-    protected DriftConfiguration driftConfiguration(String name, String basedir) {
-        DriftConfiguration config = new DriftConfiguration(new Configuration());
+    protected DriftDefinition driftDefinition(String name, String basedir) {
+        DriftDefinition config = new DriftDefinition(new Configuration());
         config.setName(name);
-        config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
+        config.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, basedir));
         config.setEnabled(true);
         config.setInterval(defaultInterval);
 
         return config;
     }
+
 }

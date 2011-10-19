@@ -131,7 +131,7 @@ public class CallTimeView extends LocatableLayout {
             }
         });
         ListGridField maximum = new ListGridField("maximum", MSG.view_resource_monitor_calltime_maximum(), 70);
-        ListGridField total = new ListGridField("total", MSG.view_resource_monitor_calltime_total(), 70);
+        ListGridField total = new ListGridField("total", MSG.common_title_total(), 70);
 
         table.getListGrid().setFields(callDestination, count, minimum, average, maximum, total);
 

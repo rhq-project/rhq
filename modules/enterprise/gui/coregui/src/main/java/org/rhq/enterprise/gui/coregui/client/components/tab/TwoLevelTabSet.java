@@ -23,6 +23,7 @@ import java.util.Map;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.History;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
@@ -124,7 +125,8 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         SubTab currentSubTab = tab.getLayout().getCurrentSubTab();
         if (null != currentSubTab) {
             TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent(tab.getName(), tab.getLayout()
-                .getCurrentSubTab().getName(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentCanvas());
+                .getCurrentSubTab().getName(), tabSelectedEvent.getTabNum(), tab.getLayout().getCurrentCanvas(),
+                History.getToken());
             m.fireEvent(event);
         }
     }

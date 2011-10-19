@@ -1,5 +1,7 @@
 package org.rhq.core.domain.drift;
 
+import static org.apache.commons.io.IOUtils.toInputStream;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,8 +23,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 
-import static org.apache.commons.io.IOUtils.toInputStream;
-
 public class DriftFileTest extends AbstractEJB3Test {
 
     static private final MessageDigestGenerator digestGen = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
@@ -36,12 +36,12 @@ public class DriftFileTest extends AbstractEJB3Test {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                getEntityManager().createQuery("delete from RhqDriftFile").executeUpdate();
+                getEntityManager().createQuery("delete from JPADriftFile").executeUpdate();
             }
         });
     }
 
-    // Note, this test is more of a general Blob handling test. A real RhqDriftFile never has its content updated.
+    // Note, this test is more of a general Blob handling test. A real JPADriftFile never has its content updated.
     // But this is a useful test to just ensure Blob handling is working as expected.
     @Test(groups = { "integration.ejb3", "driftFile" })
     public void updateDriftFileData() throws Exception {
@@ -49,7 +49,7 @@ public class DriftFileTest extends AbstractEJB3Test {
         String hashId = digestGen.calcDigestString(content);
 
         // Create the initial driftFile
-        final DriftFileBits df1 = new DriftFileBits();
+        final JPADriftFileBits df1 = new JPADriftFileBits();
         df1.setHashId(hashId);
         df1.setDataSize((long) content.length());
         df1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
@@ -66,7 +66,7 @@ public class DriftFileTest extends AbstractEJB3Test {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() {
-                DriftFileBits df2 = getEntityManager().find(DriftFileBits.class, df1.getHashId());
+                JPADriftFileBits df2 = getEntityManager().find(JPADriftFileBits.class, df1.getHashId());
                 df2.setData(Hibernate.createBlob(toInputStream(newContent), newContent.length()));
                 getEntityManager().merge(df2);
             }
@@ -77,7 +77,7 @@ public class DriftFileTest extends AbstractEJB3Test {
             @Override
             public void execute() {
                 try {
-                    DriftFileBits df3 = getEntityManager().find(DriftFileBits.class, df1.getHashId());
+                    JPADriftFileBits df3 = getEntityManager().find(JPADriftFileBits.class, df1.getHashId());
                     String expected = newContent;
                     String actual = IOUtils.toString(df3.getData());
 
@@ -101,7 +101,7 @@ public class DriftFileTest extends AbstractEJB3Test {
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 1, (char) ('a' + i));
-            final DriftFileBits driftFile = new DriftFileBits();
+            final JPADriftFileBits driftFile = new JPADriftFileBits();
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
             driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
@@ -117,12 +117,12 @@ public class DriftFileTest extends AbstractEJB3Test {
         }
 
         final List<Blob> blobs = new ArrayList<Blob>();
-        final List<DriftFileBits> driftFiles = new ArrayList<DriftFileBits>();
+        final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
         for (final String hashId : driftFileHashIds) {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    DriftFileBits driftFileBits = getEntityManager().find(DriftFileBits.class, hashId);
+                    JPADriftFileBits driftFileBits = getEntityManager().find(JPADriftFileBits.class, hashId);
                     blobs.add(driftFileBits.getBlob());
                     driftFiles.add(driftFileBits);
                 }
@@ -141,7 +141,7 @@ public class DriftFileTest extends AbstractEJB3Test {
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
-            final DriftFileBits driftFile = new DriftFileBits();
+            final JPADriftFileBits driftFile = new JPADriftFileBits();
             final int driftFileNum = i;
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
@@ -159,18 +159,18 @@ public class DriftFileTest extends AbstractEJB3Test {
             } catch (Exception e) {
                 // expected for file 2 or higher
                 if (driftFileNum == 0) {
-                    fail("Should not be able to store RhqDriftFile with same hashId more than once.");
+                    fail("Should not be able to store JPADriftFile with same hashId more than once.");
                 }
             }
         }
 
         final List<Blob> blobs = new ArrayList<Blob>();
-        final List<DriftFileBits> driftFiles = new ArrayList<DriftFileBits>();
+        final List<JPADriftFileBits> driftFiles = new ArrayList<JPADriftFileBits>();
         for (final String hashId : driftFileHashIds) {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    DriftFileBits driftFileBits = getEntityManager().find(DriftFileBits.class, hashId);
+                    JPADriftFileBits driftFileBits = getEntityManager().find(JPADriftFileBits.class, hashId);
                     blobs.add(driftFileBits.getBlob());
                     driftFiles.add(driftFileBits);
                 }

@@ -41,7 +41,7 @@ import org.rhq.enterprise.agent.Version;
  *
  * @author John Mazzitelli
  */
-public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscoveryComponent<AgentServerComponent> {
+public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscoveryComponent<AgentServerComponent<?>> {
     private final Log log = LogFactory.getLog(AgentJavaServiceWrapperDiscoveryComponent.class);
 
     /**
@@ -73,7 +73,7 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
      *
      * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
      */
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<AgentServerComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<AgentServerComponent<?>> context) {
         log.info("Discovering RHQ Agent's JSW service...");
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
@@ -115,7 +115,7 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
      *
      * @return <code>true</code> if this method discovers the JSW; <code>false</code> if not
      */
-    private boolean findInAgentHome(ResourceDiscoveryContext<AgentServerComponent> context, String version,
+    private boolean findInAgentHome(ResourceDiscoveryContext<AgentServerComponent<?>> context, String version,
         String baseName, HashSet<DiscoveredResourceDetails> discoveries) {
 
         try {
@@ -136,7 +136,7 @@ public class AgentJavaServiceWrapperDiscoveryComponent implements ResourceDiscov
         }
     }
 
-    private DiscoveredResourceDetails createDetails(ResourceDiscoveryContext<AgentServerComponent> context,
+    private DiscoveredResourceDetails createDetails(ResourceDiscoveryContext<AgentServerComponent<?>> context,
         String version, File discoveredLocation) {
 
         String key = "jsw"; // this is a singleton resource; only ever one of these

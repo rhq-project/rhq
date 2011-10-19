@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.persistence.EntityManager;
 
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -632,10 +633,14 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(2000); // wait for the test agent to complete the request
 
         // at this point in time, the round trip messaging is done and we have the agent response
+        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        criteria.addFilterResourceIds(resource.getId());
+        criteria.fetchConfiguration(true);
+        criteria.addSortCreatedTime(PageOrdering.ASC);
+
         List<ResourceConfigurationUpdate> requests;
 
-        requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            configUpdatesPageControl);
+        requests = configurationManager.findResourceConfigurationUpdatesByCriteria(overlord, criteria);
 
         assert requests.size() == 1;
         assert requests.get(0) != null;
@@ -688,46 +693,51 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
-        // create a couple configs in history
+        // create a few configs in history
         Configuration configuration1 = new Configuration();
         configuration1.put(new PropertySimple("myboolean", "true"));
+        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
+        Thread.sleep(3000); // wait for the test agent to complete the request
 
         Configuration configuration2 = new Configuration();
         configuration2.put(new PropertySimple("myboolean", "false"));
+        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
+        Thread.sleep(3000); // wait for the test agent to complete the request
 
         Configuration configuration3 = new Configuration();
         configuration3.put(new PropertySimple("myboolean", "TRUE"));
-
-        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
-        Thread.sleep(2000); // wait for the test agent to complete the request
-        configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
-        Thread.sleep(2000); // wait for the test agent to complete the request
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration3);
-        Thread.sleep(2000); // wait for the test agent to complete the request
+        Thread.sleep(3000); // wait for the test agent to complete the request
 
-        List<ResourceConfigurationUpdate> history;
-        history = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            configUpdatesPageControl);
-
+        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        criteria.addFilterResourceIds(resource.getId());
+        criteria.fetchConfiguration(true);
+        criteria.addSortCreatedTime(PageOrdering.ASC);
+        List<ResourceConfigurationUpdate> history =
+                configurationManager.findResourceConfigurationUpdatesByCriteria(overlord, criteria);
         assert history != null;
         assert history.size() == 3;
 
         Configuration currentConfiguration = history.get(2).getConfiguration();
         PropertySimple mybool = currentConfiguration.getSimple("myboolean");
         assert mybool != null;
-        assert "TRUE".equals(mybool.getStringValue()) : "actual: " + mybool.getStringValue();
+        assertEquals("TRUE", mybool.getStringValue());
 
         // now grab one of the earlier configurations and rollback to it
         Configuration rollbackToHere = history.get(1).getConfiguration(); // the "false" one
         mybool = rollbackToHere.getSimple("myboolean");
         assert mybool != null;
-        assert "false".equals(mybool.getStringValue()) : "actual: " + mybool.getStringValue();
+        assertEquals("false", mybool.getStringValue());
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), rollbackToHere);
-        Thread.sleep(2000); // wait for the test agent to complete the request
+        Thread.sleep(3000); // wait for the test agent to complete the request
 
-        history = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            configUpdatesPageControl);
+        criteria = new ResourceConfigurationUpdateCriteria();
+        criteria.addFilterResourceIds(resource.getId());
+        criteria.fetchConfiguration(true);
+        criteria.addSortCreatedTime(PageOrdering.ASC);
+
+        history = configurationManager.findResourceConfigurationUpdatesByCriteria(overlord, criteria);
         assert history != null;
         assert history.size() == 4;
         ResourceConfigurationUpdate newConfigUpdate = history.get(3); // the last one is the new one
@@ -735,7 +745,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert newConfiguration.getId() != rollbackToHere.getId();
         mybool = newConfiguration.getSimple("myboolean");
         assert mybool != null;
-        assert "false".equals(mybool.getStringValue());
+        assertEquals("false", mybool.getStringValue());
         assert mybool.getErrorMessage() == null;
 
         ResourceConfigurationUpdate current = configurationManager.getLatestResourceConfigurationUpdate(overlord,
@@ -764,9 +774,9 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configuration2.put(new PropertySimple("myboolean", "true"));
 
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration1);
-        Thread.sleep(2000); // wait for the test agent to complete the request
+        Thread.sleep(6000); // wait for the test agent to complete the request
         configurationManager.updateResourceConfiguration(overlord, resource.getId(), configuration2);
-        Thread.sleep(2000); // wait for the test agent to complete the request
+        Thread.sleep(6000); // wait for the test agent to complete the request
 
         // at this point in time, the round trip messaging is done and we have the agent response
         List<ResourceConfigurationUpdate> requests;
@@ -878,8 +888,12 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         // now get the current configs/requests and
         // make sure we deleted the only one configuration that succeeded, leaving one update record
-        requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-            configUpdatesPageControl);
+        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+        criteria.addFilterResourceIds(resource.getId());
+        criteria.fetchConfiguration(true);
+        criteria.addSortCreatedTime(PageOrdering.ASC);
+
+        requests = configurationManager.findResourceConfigurationUpdatesByCriteria(overlord, criteria);
 
         assert requests.size() == 1;
 

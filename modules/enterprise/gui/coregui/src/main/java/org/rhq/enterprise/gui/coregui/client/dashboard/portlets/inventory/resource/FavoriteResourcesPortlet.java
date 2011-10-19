@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -121,7 +122,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new FavoriteResourcesPortlet(locatorId);
         }

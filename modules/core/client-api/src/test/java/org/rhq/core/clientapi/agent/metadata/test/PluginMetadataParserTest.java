@@ -20,8 +20,8 @@ package org.rhq.core.clientapi.agent.metadata.test;
 
 import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +39,11 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
-import org.rhq.core.domain.drift.DriftConfiguration.Filter;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.resource.ResourceType;
 
 @Test
@@ -360,25 +360,25 @@ public class PluginMetadataParserTest {
     }
 
     @Test
-    void createDriftConfigurationBasedir() throws Exception {
+    void createDriftDefinitionBasedir() throws Exception {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
-            "    <drift-configuration name='test1'>" + //
+            "    <drift-definition name='test1'>" + //
             "      <basedir>" + //
             "          <value-context>pluginConfiguration</value-context>" + //
             "          <value-name>var.lib.test1</value-name>" + //
             "      </basedir>" + //
-            "    </drift-configuration>" + //
+            "    </drift-definition>" + //
             "  </server>" + //
             "</plugin>");
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
-                DriftConfiguration dc = new DriftConfiguration(driftTemplate.getConfiguration());
+                DriftDefinition dc = new DriftDefinition(driftTemplate.getConfiguration());
                 BaseDirectory basedir = dc.getBasedir();
                 assertEquals(basedir.getValueContext(), BaseDirValueContext.pluginConfiguration, "Bad value context");
                 assertEquals(basedir.getValueName(), "var.lib.test1", "Bad value name");
@@ -387,19 +387,19 @@ public class PluginMetadataParserTest {
     }
 
     @Test
-    void createDriftConfigurationInvalidBasedir() throws Exception {
+    void createDriftDefinitionInvalidBasedir() throws Exception {
         try {
             toPluginDescriptor("" + //
                 "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
                 "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
                 "    xmlns='urn:xmlns:rhq-plugin'>" + //
                 "  <server name='TestServer'>" + //
-                "    <drift-configuration name='test1'>" + //
+                "    <drift-definition name='test1'>" + //
                 "      <basedir>" + //
                 "          <value-context>saywhat</value-context>" + // this is an invalid context
                 "          <value-name>var.lib.test1</value-name>" + //
                 "      </basedir>" + //
-                "    </drift-configuration>" + //
+                "    </drift-definition>" + //
                 "  </server>" + //
                 "</plugin>");
             assert false : "should not have reached here, the XML itself was invalid and should not have parsed";
@@ -409,22 +409,22 @@ public class PluginMetadataParserTest {
     }
 
     @Test
-    void createDriftConfigurationIntervalDefault() throws Exception {
+    void createDriftDefinitionIntervalDefault() throws Exception {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
-            "    <drift-configuration name='test1'>" + //
+            "    <drift-definition name='test1'>" + //
             "      <basedir>" + //
             "          <value-context>pluginConfiguration</value-context>" + //
             "          <value-name>var.lib.test1</value-name>" + //
             "      </basedir>" + //
-            "    </drift-configuration>" + //
+            "    </drift-definition>" + //
             "  </server>" + //
             "</plugin>");
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 assertEquals(driftTemplate.getConfiguration().getSimpleValue(
@@ -436,23 +436,23 @@ public class PluginMetadataParserTest {
     }
 
     @Test
-    void createDriftConfigurationIntervalDefaultWithSpecifiedValue() throws Exception {
+    void createDriftDefinitionIntervalDefaultWithSpecifiedValue() throws Exception {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
-            "    <drift-configuration name='test1'>" + //
+            "    <drift-definition name='test1'>" + //
             "      <basedir>" + //
             "          <value-context>pluginConfiguration</value-context>" + //
             "          <value-name>var.lib.test1</value-name>" + //
             "      </basedir>" + //
             "      <interval>3600</interval>" + //
-            "    </drift-configuration>" + //
+            "    </drift-definition>" + //
             "  </server>" + //
             "</plugin>");
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 assertEquals(driftTemplate.getConfiguration().getSimpleValue(
@@ -464,13 +464,13 @@ public class PluginMetadataParserTest {
     }
 
     @Test
-    void createDriftConfigurationIncludesDefaultWithSpecifiedValue() throws Exception {
+    void createDriftDefinitionIncludesDefaultWithSpecifiedValue() throws Exception {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
-            "    <drift-configuration name='test1'>" + //
+            "    <drift-definition name='test1'>" + //
             "      <basedir>" + //
             "          <value-context>pluginConfiguration</value-context>" + //
             "          <value-name>var.lib.test1</value-name>" + //
@@ -479,11 +479,11 @@ public class PluginMetadataParserTest {
             "        <include path='lib' pattern='*.jar'/>" + //
             "        <include path='conf' pattern='*.xml'/>" + //
             "      </includes>" + //
-            "    </drift-configuration>" + //
+            "    </drift-definition>" + //
             "  </server>" + //
             "</plugin>");
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
@@ -519,13 +519,13 @@ public class PluginMetadataParserTest {
     }
 
     @Test
-    void createDriftConfigurationExcludesDefaultWithSpecifiedValue() throws Exception {
+    void createDriftDefinitionExcludesDefaultWithSpecifiedValue() throws Exception {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
-            "    <drift-configuration name='test1'>" + //
+            "    <drift-definition name='test1'>" + //
             "      <basedir>" + //
             "          <value-context>pluginConfiguration</value-context>" + //
             "          <value-name>var.lib.test1</value-name>" + //
@@ -535,11 +535,11 @@ public class PluginMetadataParserTest {
             "        <exclude path='lib' pattern='*.jar'/>" + //
             "        <exclude path='conf' pattern='*.xml'/>" + //
             "      </excludes>" + //
-            "    </drift-configuration>" + //
+            "    </drift-definition>" + //
             "  </server>" + //
             "</plugin>");
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
@@ -575,18 +575,18 @@ public class PluginMetadataParserTest {
     }
 
     /**
-     * This also tests DriftConfiguration POJO.
+     * This also tests DriftDefinition POJO.
      * 
      * @throws Exception
      */
     @Test
-    void createDriftConfigurationMultipleAndTestDriftConfiguration() throws Exception {
+    void createDriftDefinitionMultipleAndTestDriftDefinition() throws Exception {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
-            "    <drift-configuration name='test1'>" + //
+            "    <drift-definition name='test1'>" + //
             "      <basedir>" + //
             "          <value-context>pluginConfiguration</value-context>" + //
             "          <value-name>var.lib.test1</value-name>" + //
@@ -596,8 +596,8 @@ public class PluginMetadataParserTest {
             "        <include path='ilib' pattern='*.ijar'/>" + //
             "        <include path='iconf' pattern='*.ixml'/>" + //
             "      </includes>" + //
-            "    </drift-configuration>" + //
-            "    <drift-configuration name='test2'>" + //
+            "    </drift-definition>" + //
+            "    <drift-definition name='test2'>" + //
             "      <basedir>" + //
             "          <value-context>resourceConfiguration</value-context>" + //
             "          <value-name>var.lib.test2</value-name>" + //
@@ -607,8 +607,8 @@ public class PluginMetadataParserTest {
             "        <exclude path='elib' pattern='*.ejar'/>" + //
             "        <exclude path='econf' pattern='*.exml'/>" + //
             "      </excludes>" + //
-            "    </drift-configuration>" + //
-            "    <drift-configuration name='test3'>" + //
+            "    </drift-definition>" + //
+            "    <drift-definition name='test3'>" + //
             "      <basedir>" + //
             "          <value-context>measurementTrait</value-context>" + //
             "          <value-name>var.lib.test3</value-name>" + //
@@ -622,24 +622,24 @@ public class PluginMetadataParserTest {
             "        <exclude path='elib' pattern='*.ejar'/>" + //
             "        <exclude path='econf' pattern='*.exml'/>" + //
             "      </excludes>" + //
-            "    </drift-configuration>" + //
-            "    <drift-configuration name='test4'>" + //
+            "    </drift-definition>" + //
+            "    <drift-definition name='test4'>" + //
             "      <basedir>" + //
             "          <value-context>fileSystem</value-context>" + //
             "          <value-name>/wot/gorilla</value-name>" + //
             "      </basedir>" + //
             "      <interval>44444</interval>" + //
-            "    </drift-configuration>" + //
+            "    </drift-definition>" + //
             "  </server>" + //
             "</plugin>");
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test1", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 11111L);
+                assertEquals(dconfig.getInterval(), 11111L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.pluginConfiguration);
                 assertEquals(dconfig.getBasedir().getValueName(), "var.lib.test1");
 
@@ -651,7 +651,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(includes, "Expected to find default property set for <includes>");
                 assertEquals(includes.size(), 2, "Expected <includes> property list to have two property elements.");
 
-                DriftConfiguration.Filter include1 = includes.get(0);
+                Filter include1 = includes.get(0);
                 String path1 = include1.getPath();
                 String pattern1 = include1.getPattern();
 
@@ -661,7 +661,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <include>");
                 assertEquals(pattern1, "*.ijar", "The value is wrong for the pattern of the first <include>");
 
-                DriftConfiguration.Filter include2 = includes.get(1);
+                Filter include2 = includes.get(1);
                 String path2 = include2.getPath();
                 String pattern2 = include2.getPattern();
 
@@ -673,13 +673,13 @@ public class PluginMetadataParserTest {
             }
         });
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test2", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test2", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 22222L);
+                assertEquals(dconfig.getInterval(), 22222L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.resourceConfiguration);
                 assertEquals(dconfig.getBasedir().getValueName(), "var.lib.test2");
 
@@ -691,7 +691,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(excludes, "Expected to find default property set for <excludes>");
                 assertEquals(excludes.size(), 2, "Expected <excludes> property list to have two property elements.");
 
-                DriftConfiguration.Filter exclude1 = excludes.get(0);
+                Filter exclude1 = excludes.get(0);
                 String path1 = exclude1.getPath();
                 String pattern1 = exclude1.getPattern();
 
@@ -701,7 +701,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <exclude>");
                 assertEquals(pattern1, "*.ejar", "The value is wrong for the pattern of the first <exclude>");
 
-                DriftConfiguration.Filter exclude2 = excludes.get(1);
+                Filter exclude2 = excludes.get(1);
                 String path2 = exclude2.getPath();
                 String pattern2 = exclude2.getPattern();
 
@@ -713,13 +713,13 @@ public class PluginMetadataParserTest {
             }
         });
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test3", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test3", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 33333L);
+                assertEquals(dconfig.getInterval(), 33333L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.measurementTrait);
                 assertEquals(dconfig.getBasedir().getValueName(), "var.lib.test3");
 
@@ -728,7 +728,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(includes, "Expected to find default property set for <includes>");
                 assertEquals(includes.size(), 2, "Expected <includes> property list to have two property elements.");
 
-                DriftConfiguration.Filter include1 = includes.get(0);
+                Filter include1 = includes.get(0);
                 String path1 = include1.getPath();
                 String pattern1 = include1.getPattern();
 
@@ -738,7 +738,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <include>");
                 assertEquals(pattern1, "*.ijar", "The value is wrong for the pattern of the first <include>");
 
-                DriftConfiguration.Filter include2 = includes.get(1);
+                Filter include2 = includes.get(1);
                 String path2 = include2.getPath();
                 String pattern2 = include2.getPattern();
 
@@ -753,7 +753,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(excludes, "Expected to find default property set for <excludes>");
                 assertEquals(excludes.size(), 2, "Expected <excludes> property list to have two property elements.");
 
-                DriftConfiguration.Filter exclude1 = excludes.get(0);
+                Filter exclude1 = excludes.get(0);
                 path1 = exclude1.getPath();
                 pattern1 = exclude1.getPattern();
 
@@ -763,7 +763,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <exclude>");
                 assertEquals(pattern1, "*.ejar", "The value is wrong for the pattern of the first <exclude>");
 
-                DriftConfiguration.Filter exclude2 = excludes.get(1);
+                Filter exclude2 = excludes.get(1);
                 path2 = exclude2.getPath();
                 pattern2 = exclude2.getPattern();
 
@@ -775,13 +775,13 @@ public class PluginMetadataParserTest {
             }
         });
 
-        verifyDriftConfiguration(descriptor, "TestServer", "test4", new AssertDriftTemplateRunnable() {
+        verifyDriftDefinition(descriptor, "TestServer", "test4", new AssertDriftTemplateRunnable() {
             @Override
             public void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception {
                 Configuration config = driftTemplate.getConfiguration();
-                DriftConfiguration dconfig = new DriftConfiguration(config);
+                DriftDefinition dconfig = new DriftDefinition(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 44444L);
+                assertEquals(dconfig.getInterval(), 44444L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.fileSystem);
                 assertEquals(dconfig.getBasedir().getValueName(), "/wot/gorilla");
 
@@ -798,32 +798,32 @@ public class PluginMetadataParserTest {
         void assertDriftTemplate(ConfigurationTemplate driftTemplate) throws Exception;
     }
 
-    private void verifyDriftConfiguration(PluginDescriptor descriptor, String resourceTypeName, String driftConfigName,
+    private void verifyDriftDefinition(PluginDescriptor descriptor, String resourceTypeName, String driftDefName,
         AssertDriftTemplateRunnable test) throws Exception {
 
         Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>(0);
         PluginMetadataParser parser = new PluginMetadataParser(descriptor, parsersByPlugin);
         ResourceType resourceType = findResourceType(parser, resourceTypeName);
-        Set<ConfigurationTemplate> driftTemplates = resourceType.getDriftConfigurationTemplates();
+        Set<ConfigurationTemplate> driftTemplates = resourceType.getDriftDefinitionTemplates();
         ConfigurationTemplate driftTemplate = null;
         for (ConfigurationTemplate template : driftTemplates) {
-            if (template.getName().equals(driftConfigName)) {
+            if (template.getName().equals(driftDefName)) {
                 driftTemplate = template;
                 break;
             }
         }
-        assertNotNull(driftTemplate, "Failed to find drift configuration template [" + driftConfigName
+        assertNotNull(driftTemplate, "Failed to find drift definition template [" + driftDefName
             + "]. The name attribute may not have been parsed correctly.");
 
         PropertySimple name = driftTemplate.getConfiguration().getSimple(DriftConfigurationDefinition.PROP_NAME);
         PropertySimple enabled = driftTemplate.getConfiguration().getSimple(DriftConfigurationDefinition.PROP_ENABLED);
 
-        assertNotNull(name, "Expected to find a simple property <name> for the drift configuration name");
-        assertEquals(name.getStringValue(), driftConfigName,
-            "The value is wrong for the <name> property that represents the drift configuration name");
+        assertNotNull(name, "Expected to find a simple property <name> for the drift definition name");
+        assertEquals(name.getStringValue(), driftDefName,
+            "The value is wrong for the <name> property that represents the drift definition name");
 
-        assertNotNull(enabled, "Expected to find simple property <enabled> for the drift configuration");
-        assertFalse(enabled.getBooleanValue(), "The <enabled> property should be set to a default value of false");
+        assertNotNull(enabled, "Expected to find simple property <enabled> for the drift definition");
+        assertTrue(enabled.getBooleanValue(), "The <enabled> property should be set to a default value of true");
 
         test.assertDriftTemplate(driftTemplate);
     }

@@ -55,6 +55,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -70,7 +71,7 @@ import org.rhq.plugins.postgres.util.PostgresqlConfFile;
  *
  * @author Greg Hinkle
  */
-public class PostgresServerComponent implements DatabaseComponent, ConfigurationFacet, MeasurementFacet,
+public class PostgresServerComponent<T extends ResourceComponent<?>> implements DatabaseComponent<T>, ConfigurationFacet, MeasurementFacet,
     OperationFacet, CreateChildResourceFacet {
     private static Log log = LogFactory.getLog(PostgresServerComponent.class);
 
@@ -272,16 +273,25 @@ public class PostgresServerComponent implements DatabaseComponent, Configuration
              try {
                 if (property.endsWith("startTime")) {
                    // db start time
-                   ResultSet rs = getConnection().createStatement().executeQuery("SELECT pg_postmaster_start_time()");
-                   if (rs.next())
-                     report.addData(new MeasurementDataTrait(request, rs.getTimestamp(1).toString()));
-
+                    ResultSet rs = getConnection().createStatement().executeQuery("SELECT pg_postmaster_start_time()");
+                    try {
+                        if (rs.next()) {
+                            report.addData(new MeasurementDataTrait(request, rs.getTimestamp(1).toString()));
+                        }
+                    } finally {
+                        rs.close();
+                    }
                 }
                 else if (property.endsWith("backends")) {
-                   // number of connected backends
-                   ResultSet rs = getConnection().createStatement().executeQuery("select count(*) from pg_stat_activity");
-                   if (rs.next())
-                     report.addData(new MeasurementDataNumeric(request, (double)rs.getLong(1)));
+                    // number of connected backends
+                    ResultSet rs = getConnection().createStatement().executeQuery("select count(*) from pg_stat_activity");
+                    try {
+                        if (rs.next()) {
+                            report.addData(new MeasurementDataNumeric(request, (double) rs.getLong(1)));
+                        }
+                    } finally {
+                        rs.close();
+                    }
                 }
 
              }

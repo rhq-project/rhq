@@ -35,6 +35,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.jdbc.JDBCUtil;
 
 
 /**
@@ -75,8 +76,10 @@ public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, Man
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
                                                       ResourceDiscoveryContext resourceDiscoveryContext)
             throws InvalidPluginConfigurationException {
+        
+        Connection connection = null;
         try {
-            Connection connection = OracleServerComponent.buildConnection(pluginConfig);
+            connection = OracleServerComponent.buildConnection(pluginConfig);
             DatabaseMetaData dbmd = connection.getMetaData();
             String version = dbmd.getDatabaseMajorVersion() + "." + dbmd.getDatabaseMinorVersion();
             DiscoveredResourceDetails details = createResourceDetails(resourceDiscoveryContext, pluginConfig,
@@ -85,6 +88,8 @@ public class OracleDiscoveryComponent implements ResourceDiscoveryComponent, Man
         } catch (Exception e) {
             log.warn("Could not connect to oracle with supplied configuration", e);
             throw new InvalidPluginConfigurationException("Unable to connect to Oracle",e);
+        } finally {
+            JDBCUtil.safeClose(connection);
         }
     }
 

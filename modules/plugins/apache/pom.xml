@@ -13,7 +13,7 @@
    <packaging>jar</packaging>
 
    <name>RHQ Apache Plugin</name>
-   <description>a plugin for managing Apache web servers (1.3 or 2.0)</description>
+   <description>a plugin for managing Apache web servers (1.3 and later)</description>
 
    <scm>
       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/apache/</connection>
@@ -80,7 +80,6 @@
 
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
             <executions>
                <execution>
                   <id>copy-rhq-plugins</id>
@@ -178,7 +177,7 @@
                               <delete dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}" />
                               
                               <unzip dest="target/itest/lib">
-                                 <fileset dir="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}" includes="*.zip" />
+                                 <fileset dir="${augeas.zip.location}" includes="${augeas.zip.mask}" />
                                  <patternset>
                                     <include name="**/lib*/*.so" />
                                     <include name="**/lib*/*.so.*" />
@@ -187,8 +186,8 @@
                               <!-- by default deploy the 32bit augeas libs -->
                               <move todir="target/itest/lib/">
                                 <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib">
-                                    <include name="**/*.so"/>
-                                    <include name="**/*.so.*"/>
+                                    <include name="**/*.so" />
+                                    <include name="**/*.so.*" />
                                 </fileset>
                               </move>
                               <if>
@@ -200,8 +199,8 @@
                                       <!-- overwrite with 64bits if needed -->
                                       <move todir="target/itest/lib/">
                                         <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib64">
-                                            <include name="**/*.so"/>
-                                            <include name="**/*.so.*"/>
+                                            <include name="**/*.so" />
+                                            <include name="**/*.so.*" />
                                         </fileset>
                                       </move>
                                   </then>
@@ -265,7 +264,6 @@
 
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
                  <executions>
 
                      <execution>

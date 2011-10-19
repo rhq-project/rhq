@@ -625,6 +625,26 @@ public interface AgentConfigurationConstants {
     long DEFAULT_PLUGINS_MEASUREMENT_COLLECTION_INITIAL_DELAY = PluginContainerConfiguration.MEASUREMENT_COLLECTION_INITIAL_DELAY_DEFAULT;
 
     /**
+     * Defines, in seconds, the initial delay before the first drift detection scan is run.
+     */
+    String PLUGINS_DRIFT_DETECTION_INITIAL_DELAY = PROPERTY_NAME_PREFIX + "plugins.drift-detection.initial-delay-secs";
+
+    /**
+     * The default initial delay of the first drift detection scan, in seconds.
+     */
+    long DEFAULT_PLUGINS_DRIFT_DETECTION_INITIAL_DELAY = PluginContainerConfiguration.DRIFT_DETECTION_INITIAL_DELAY_DEFAULT;
+
+    /**
+     * Defines, in seconds, how often a drift detection scan is run.
+     */
+    String PLUGINS_DRIFT_DETECTION_PERIOD = PROPERTY_NAME_PREFIX + "plugins.drift-detection.period-secs";
+
+    /**
+     * The default time period between each drift detection scan, in seconds.
+     */
+    long DEFAULT_PLUGINS_DRIFT_DETECTION_PERIOD = PluginContainerConfiguration.DRIFT_DETECTION_PERIOD_DEFAULT;
+
+    /**
      * If defined, this is to be the size of the content discovery thread pool. If not defined, the plugin container
      * should default to something it considers appropriate.
      */

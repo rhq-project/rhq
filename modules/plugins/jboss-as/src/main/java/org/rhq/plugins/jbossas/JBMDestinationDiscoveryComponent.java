@@ -35,10 +35,10 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Heiko W. Rupp
  *
  */
-public class JBMDestinationDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class JBMDestinationDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
 
         // Discover Queues and Topics via JMX
         Set<DiscoveredResourceDetails> results = super.discoverResources(context);

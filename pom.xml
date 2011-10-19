@@ -53,6 +53,7 @@
     <product.supportEmail>info@rhq-project.org</product.supportEmail>
     <product.version>${project.version}</product.version>
     <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>
+    <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 
     <doUpdate>false</doUpdate>
 
@@ -85,7 +86,7 @@
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.2.0</ojdbc5.version>
-    <ems.version>1.2.15.1</ems.version>
+    <ems.version>1.2.16</ems.version>
     <postgresql.version>9.0-801.jdbc4</postgresql.version>
     <h2.version>1.2.139</h2.version>
     <jtds.version>1.2.2</jtds.version>
@@ -99,9 +100,15 @@
     <commons-codec.version>1.4</commons-codec.version>
     <testng.version>5.13.1</testng.version>
     <cobertura.version>1.9.4.1</cobertura.version>
-    <augeas.version>0.7.1.1</augeas.version>
-    <augeas.zip.version>0.7.1</augeas.zip.version>
+    <augeas.version>0.9.0</augeas.version>
+    <augeas.classifier>el5</augeas.classifier>
+    <augeas.zip.version>0.9.0</augeas.zip.version>
+    <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
+    <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
+
+    <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
+    <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
 
     <!--
        defaults for datasource used by integration tests -
@@ -158,7 +165,7 @@
       host name changes are/should be uncommon in a typical deployment, they
       are more common in a cloud deployment such as EC2. And in a cloud
       deployment like EC2, we want to turn this behavior on to ensure that
-      the server endpoint accurately reflects the current machine address. 
+      the server endpoint accurately reflects the current machine address.
     -->
     <rhq.sync.endpoint-address>false</rhq.sync.endpoint-address>
 
@@ -532,7 +539,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
-           <version>2.1</version>
+           <version>2.3</version>
          </plugin>
          <plugin>
            <artifactId>maven-deploy-plugin</artifactId>
@@ -564,7 +571,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-javadoc-plugin</artifactId>
-           <version>2.7</version>
+           <version>2.8</version>
          </plugin>
          <plugin>
            <artifactId>maven-plugin-plugin</artifactId>
@@ -588,7 +595,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-site-plugin</artifactId>
-           <version>2.2</version>
+           <version>3.0</version>
          </plugin>
          <plugin>
            <artifactId>maven-source-plugin</artifactId>
@@ -596,7 +603,7 @@
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.6</version>
+            <version>2.9</version>
             <configuration>
                <argLine>-Xms16M -Xmx256M</argLine>
             </configuration>
@@ -653,7 +660,6 @@
            </execution>
          </executions>
       </plugin>
-
 
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
@@ -849,7 +855,7 @@
       </plugin>
 
        <!-- As of v1.0 of the buildnumber plugin, the create goal doesn't work,
-            and the create-timestamp goal doesn't provide a way to specify 
+            and the create-timestamp goal doesn't provide a way to specify
             a locale or a timezone, so comment this out for now and instead use
             our own homemade mix of antrun and properties-file plugin executions
             (just below this commented out block). (ips, 06/28/11)
@@ -891,69 +897,28 @@
        </plugin>
        -->
 
-        <plugin>
+       <plugin>
           <artifactId>maven-antrun-plugin</artifactId>
           <executions>
-              <execution>
-                  <id>write-build-properties-file</id>
-                  <goals>
-                      <goal>run</goal>
-                  </goals>
-                  <phase>generate-sources</phase>
-                  <configuration>
-                      <tasks>
-                          <mkdir dir="target" />                          
 
-                          <tstamp>
-                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
-                          </tstamp>                          
-                          <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
+             <execution>
+                <id>javadoc-dist</id>
+                <phase>site</phase>
+                <inherited>false</inherited>
+                <configuration>
+                   <tasks>
+                      <property name="apidocs.dir" value="target/apidocs" />
 
-                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
-                             <arg value="log"/>
-                             <arg value="--pretty=format:%h"/>
-                             <arg value="-n1"/>
-                          </exec>
-                          <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
-                      </tasks>
-                  </configuration>
-              </execution>
+                      <copy dir="modules/core/domain/target/site/apidocs" todir="${apidocs.dir}/domain"/>
+                   </tasks>
+                </configuration>
+                <goals>
+                   <goal>run</goal>
+                </goals>
+             </execution>
 
-              <execution>
-                  <id>echo-build-properties</id>
-                  <phase>compile</phase>
-                  <goals>
-                      <goal>run</goal>
-                  </goals>
-                  <configuration>
-                      <tasks>
-                          <echo level="debug">buildTime = ${buildTime}</echo>
-                          <echo level="debug">buildNumber = ${buildNumber}</echo>
-                      </tasks>
-                  </configuration>
-              </execution>
           </executions>
-      </plugin>
-
-      <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>properties-maven-plugin</artifactId>
-          <executions>
-              <execution>
-                  <id>read-build-properties-file</id>
-                  <phase>process-sources</phase>
-                  <goals>
-                      <goal>read-project-properties</goal>
-                  </goals>
-                  <configuration>
-                      <files>
-                          <file>${project.build.directory}/build.properties</file>                                  
-                      </files>
-                      <quiet>true</quiet>
-                  </configuration>
-              </execution>
-          </executions>
-      </plugin>
+       </plugin>
 
     </plugins>
 
@@ -1023,6 +988,7 @@
 
 
   <profiles>
+
     <profile>
         <id>ojdbc-driver</id>
         <activation>
@@ -1104,7 +1070,7 @@
       </profile>
 
       <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used.
-           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are 
+           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are
            used. -->
       <profile>
          <id>check-java-api</id>
@@ -1146,7 +1112,7 @@
           </build>
       </profile>
 
-      <!-- This profile should be enabled when a release is being published. 
+      <!-- This profile should be enabled when a release is being published.
            It will ensure that sources and javadoc jars are built and published
            for each source module. -->
       <profile>
@@ -1182,20 +1148,223 @@
             </plugins>
          </build>
       </profile>
+      
+      <!-- These plugins i)need to be active by default 
+       					 ii)need to be in a profile so that deactivation is possible for brew builds
+       					  
+         Profile activation for 'build-properties' and 'brew-generate-build-number' need to be mutually exclusive.       					 
+       					 -->
+	  <profile>
+	    <id>build-properties</id>
+          <activation>
+              <file>
+                  <exists>.git</exists>
+              </file>
+          </activation>
+	    <build>
+           <plugins>
+               <plugin>
+		          <artifactId>maven-antrun-plugin</artifactId>
+		          <executions>
+		              <execution>
+		                  <id>write-build-properties-file</id>
+		                  <goals>
+		                      <goal>run</goal>
+		                  </goals>
+		                  <phase>generate-sources</phase>
+		                  <configuration>
+		                      <tasks>
+		                          <mkdir dir="target" />
+		
+		                          <tstamp>
+		                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
+		                          </tstamp>
+		                          <echo file="${product.buildPropertiesFile}">buildTime = ${buildTime}${line.separator}</echo>
+		
+		                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
+		                             <arg value="log" />
+		                             <arg value="--pretty=format:%h" />
+		                             <arg value="-n1" />
+		                          </exec>
+		                          <echo file="${product.buildPropertiesFile}" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
+		                      </tasks>
+		                  </configuration>
+		              </execution>
+		
+		              <execution>
+		                  <id>echo-build-properties</id>
+		                  <phase>compile</phase>
+		                  <goals>
+		                      <goal>run</goal>
+		                  </goals>
+		                  <configuration>
+		                      <tasks>
+		                          <echo level="debug">buildTime = ${buildTime}</echo>
+		                          <echo level="debug">buildNumber = ${buildNumber}</echo>
+		                      </tasks>
+		                  </configuration>
+		              </execution>
+		          </executions>
+		      </plugin>
+              <plugin>
+	           <groupId>org.codehaus.mojo</groupId>
+	           <artifactId>exec-maven-plugin</artifactId>
+	           <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
+	                      upgrade to that version. -->
+	           <version>1.1</version>
+	         </plugin>
+           
+             <plugin>
+		          <groupId>org.codehaus.mojo</groupId>
+		          <artifactId>properties-maven-plugin</artifactId>
+		          <executions>
+		              <execution>
+		                  <id>read-build-properties-file</id>
+		                  <phase>process-sources</phase>
+		                  <goals>
+		                      <goal>read-project-properties</goal>
+		                  </goals>
+		                  <configuration>
+		                      <files>
+		                          <file>${product.buildPropertiesFile}</file>
+		                      </files>
+		                      <quiet>true</quiet>
+		                  </configuration>
+		              </execution>
+		          </executions>
+		      </plugin>
+           </plugins>
+        </build>
+	  </profile>
 
+      <!-- Profile activated when -Dbrew=true passed in. Profile activation for 'build-properties' and 'brew-generate-build-number' 
+      		need to be mutually exclusive.  -->	  
+      <profile>
+            <id>brew-generate-build-number</id>
+            <activation>
+                <property>
+                    <name>brew</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>write-build-properties-file</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <tasks>
+                                        <tstamp>
+                                            <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US"
+                                                    timezone="GMT"/>
+                                        </tstamp>
+                                        <mkdir dir="target"/>
+                                        <echo file="${product.buildPropertiesFile}">buildTime = ${buildTime}${line.separator}</echo>
+                                        <echo file="${product.buildPropertiesFile}" append="true">buildNumber = ${rhq.build.number}${line.separator}</echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>echo-build-properties</id>
+                                <phase>compile</phase>
+                                <inherited>false</inherited>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <tasks>
+                                        <echo level="debug">buildTime = ${buildTime}</echo>
+                                        <echo level="debug">buildNumber = ${rhq.build.number}</echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>properties-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>read-build-properties</id>
+                                <phase>process-sources</phase>
+                                <goals>
+                                    <goal>read-project-properties</goal>
+                                </goals>
+                                <configuration>
+                                    <files>
+                                        <file>${product.buildPropertiesFile}</file>
+                                    </files>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+	  
   </profiles>
 
 
     <reporting>
         <plugins>
+<!--
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
 
+                <configuration>
+                   <author>false</author>
+                   <breakiterator>true</breakiterator>
+                   <verbose>true</verbose>
+                </configuration>
+
+                <reportSets>
+
+                  <reportSet>
+                    <id>agent-plugin</id>
+                    <configuration>
+                      <doctitle>RHQ ${project.version} Agent Plugin API</doctitle>                    
+                      <destDir>agentPlugin-apidocs</destDir>
+                      <subpackages>org.rhq.core.domain:org.rhq.core.util:org.rhq.core.system:org.rhq.core.pluginapi</subpackages>
+                    </configuration>
+                    <reports>
+                      <report>aggregate</report>
+                    </reports>
+                  </reportSet>
+
+                  <reportSet>
+                    <id>remote</id>
+                    <configuration>
+                      <doctitle>RHQ ${project.version} Remote API</doctitle>                    
+                      <windowtitle>RHQ ${project.version} Remote API</windowtitle>                    
+                      <destDir>remote-apidocs</destDir>
+                      <subpackages>org.rhq.core.domain:org.rhq.enterprise.server:org.rhq.enterprise.client</subpackages>
+                      <links>                         
+                         <link>http://java.sun.com/javaee/5/docs/api/</link>
+                      </links>
+                    </configuration>
+                    <reports>
+                      <report>aggregate</report>
+                    </reports>
+                  </reportSet>
+
+                </reportSets>
+            </plugin>
+-->
+<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.2</version>
+                <version>2.3</version>
                 <inherited>true</inherited>
             </plugin>
-
+-->
+<!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -1207,28 +1376,21 @@
                 </configuration>
                 <inherited>true</inherited>
             </plugin>
-
+-->
+<!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>jdepend-maven-plugin</artifactId>
                 <version>2.0-beta-2</version>
             </plugin>
+-->
 <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
-                <configuration>
-                    <aggregate>true</aggregate>
-                    <additionalJOption>-J-Xmx768m</additionalJOption>
-                </configuration>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>2.9</version>
             </plugin>
 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.6</version>
-            </plugin>
 <!--
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -1237,12 +1399,14 @@
                 <inherited>true</inherited>
             </plugin>
 -->
+<!--
             <plugin>
-                <!-- must be last plugin in the list -->
+                <!- - must be last plugin in the list - ->
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>dashboard-maven-plugin</artifactId>
                 <version>1.0.0-beta-1</version>
             </plugin>
+-->
         </plugins>
     </reporting>
 
@@ -1256,6 +1420,10 @@
 
     <developers>
         <developer>
+            <name>Robert Buck</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
             <name>Charles Crouch</name>
             <timezone>-6</timezone>
         </developer>
@@ -1267,8 +1435,11 @@
             </roles>
         </developer>
         <developer>
-            <name>Filip Drabeck</name>
+            <name>Filip Drabek</name>
             <timezone>+1</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Greg Hinkle</name>
@@ -1301,6 +1472,10 @@
             <name>John 'Mazz' Mazzitelli</name>
             <timezone>-5</timezone>
             <url>http://management-platform.blogspot.com</url>
+        </developer>
+        <developer>
+            <name>Stefan Negrea</name>
+            <timezone>-6</timezone>
         </developer>
         <developer>
             <name>Simeon Pinder</name>
@@ -1346,6 +1521,25 @@
         <contributor>
             <name>Rafael Torres Coelho Soares</name>
             <timezone>-7</timezone>
+        </contributor>
+        <contributor>
+            <name>Elias Ross</name>
+        </contributor>
+        <contributor>
+            <name>Fusayuki Minamoto</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Liju Jijun</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Zhongqianglee</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Frank Brüseke</name>
+            <timezone>+1</timezone>
         </contributor>
     </contributors>
 

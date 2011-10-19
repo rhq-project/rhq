@@ -44,6 +44,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
@@ -59,7 +60,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class JMXServerComponent implements JMXComponent {
+public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXComponent<T> {
     private static Log log = LogFactory.getLog(JMXServerComponent.class);
 
     private EmsConnection connection;

@@ -90,6 +90,7 @@ import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -122,8 +123,8 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 * @author Jason Dobies
 * @author Ian Springer
 */
-public class JBossASServerComponent implements MeasurementFacet, OperationFacet, JMXComponent,
-    CreateChildResourceFacet, ApplicationServerComponent, ContentFacet, SupportFacet {
+public class JBossASServerComponent<T extends ResourceComponent<?>> implements MeasurementFacet, OperationFacet,
+    JMXComponent<T>, CreateChildResourceFacet, ApplicationServerComponent, ContentFacet, SupportFacet {
     // Constants  --------------------------------------------
 
     private static final String LOCALHOST = "localhost";
@@ -404,8 +405,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     // OperationFacet Implementation  --------------------------------------------
 
     public OperationResult invokeOperation(String name, Configuration configuration) throws InterruptedException {
-        JBossASServerSupportedOperations operation = Enum.valueOf(JBossASServerSupportedOperations.class, name
-            .toUpperCase());
+        JBossASServerSupportedOperations operation = Enum.valueOf(JBossASServerSupportedOperations.class,
+            name.toUpperCase());
         return operationsDelegate.invoke(operation, configuration);
     }
 
@@ -1149,14 +1150,15 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
                 // Since the connection is attempted each time it's used, failure to connect could result in log
                 // file spamming. Log it once for every 10 consecutive times it's encountered.
                 if (consecutiveConnectionErrors % 10 == 0) {
-                    log.warn("Could not establish connection to the JBoss AS instance ["
-                        + (consecutiveConnectionErrors + 1) + "] times for resource ["
-                        + resourceContext.getResourceKey() + "]", e);
+                    log.warn(
+                        "Could not establish connection to the JBoss AS instance [" + (consecutiveConnectionErrors + 1)
+                            + "] times for resource [" + resourceContext.getResourceKey() + "]", e);
                 }
 
                 if (log.isDebugEnabled())
-                    log.debug("Could not connect to the JBoss AS instance for resource ["
-                        + resourceContext.getResourceKey() + "]", e);
+                    log.debug(
+                        "Could not connect to the JBoss AS instance for resource [" + resourceContext.getResourceKey()
+                            + "]", e);
 
                 consecutiveConnectionErrors++;
 

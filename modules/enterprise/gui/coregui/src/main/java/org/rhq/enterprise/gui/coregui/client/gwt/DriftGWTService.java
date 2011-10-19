@@ -22,14 +22,16 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDetails;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -37,66 +39,26 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface DriftGWTService extends RemoteService {
 
-    /**
-     * Delete the drifts with the specified ids if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If any of the ids do not correspond to drift entities that exist, those ids will be gracefully ignored.
-     *
-     * @param driftIds the ids of the drifts to be deleted
-     * @return the number of drifts deleted
-     */
-    int deleteDrifts(String[] driftIds) throws RuntimeException;
+    DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) throws RuntimeException;
 
     /**
-     * Delete all drifts for the specified context if the current user has permission to do so (i.e. either
+     * Delete all named drift definitions for the specified context if the current user has permission to do so (i.e. either
      * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If the entity does not correspond to an existing entity, it will be gracefully ignored.
      *
      * @param entityContext the context for deletion
-     * @return the number of drifts deleted
+     * @param driftDefNames the names of the definitions to delete
+     * @return the number of drift definisions deleted
      */
-    int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException;
+    int deleteDriftDefinitionsByContext(EntityContext entityContext, String[] driftDefNames) throws RuntimeException;
 
     /**
-     * Delete the drift configs with the specified ids if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drift configs, then none of them  will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If any of the ids do not correspond to drift entities that exist, those ids will be gracefully ignored.
-     *
-     * @param driftConfigIds the ids of the drift configs to be deleted
-     * @return the number of drift configs deleted
-     */
-    int deleteDriftConfigurations(int[] driftConfigIds) throws RuntimeException;
-
-    /**
-     * Delete all drift configurations for the specified context if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If the entity does not correspond to an existing entity, it will be gracefully ignored.
-     *
-     * @param entityContext the context for deletion
-     * @return the number of drift configs deleted
-     */
-    int deleteDriftConfigurationsByContext(EntityContext entityContext) throws RuntimeException;
-
-    /**
-     * One time on-demand request to detect drift on the specified entities, using the supplied config.
+     * One time on-demand request to detect drift on the specified entities, using the supplied def.
      * 
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      * @throws RuntimeException
      */
-    void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
+    void detectDrift(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException;
 
     /**
      * Find all drift changesets that match the specified criteria.
@@ -105,7 +67,19 @@ public interface DriftGWTService extends RemoteService {
      *
      * @return all drift changesets that matches the specified criteria
      */
-    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria) throws RuntimeException;
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(GenericDriftChangeSetCriteria criteria)
+        throws RuntimeException;
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria) throws RuntimeException;
+
+    /**
+     * Find all drift definitions that match the specified criteria.
+     *
+     * @param criteria the criteria
+     *
+     * @return all drift definitions that matches the specified criteria
+     */
+    PageList<DriftDefinition> findDriftDefinitionsByCriteria(DriftDefinitionCriteria criteria) throws RuntimeException;
 
     /**
      * Find all drifts that match the specified criteria.
@@ -114,29 +88,32 @@ public interface DriftGWTService extends RemoteService {
      *
      * @return all drifts that match the specified criteria
      */
-    PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException;
-
-    PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria);
-
-    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(GenericDriftCriteria criteria) throws RuntimeException;
 
     /**
-     * Get the specified drift configuration for the specified context.
+     * Get the specified drift definition.
      * 
-     * @param entityContext
-     * @param driftConfigId
+     * @param driftDefId
      * @return
      * @throws RuntimeException
      */
-    DriftConfiguration getDriftConfiguration(EntityContext entityContext, int driftConfigId) throws RuntimeException;
+    DriftDefinition getDriftDefinition(int driftDefId) throws RuntimeException;
 
     /**
-     * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
+     * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
      * 
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      */
-    void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig);
+    void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException;
+
+    String getDriftFileBits(String hash) throws RuntimeException;
+
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException;
+
+    boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException;
+
+    DriftDetails getDriftDetails(String driftId) throws RuntimeException;
 
 }

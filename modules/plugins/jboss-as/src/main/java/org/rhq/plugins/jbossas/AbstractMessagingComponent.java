@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 
 package org.rhq.plugins.jbossas;
 
@@ -59,7 +59,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * Common base class for Messaging related stuff
  * @author Heiko W. Rupp
  */
-public abstract class AbstractMessagingComponent extends MBeanResourceComponent<JBossASServerComponent> implements
+public abstract class AbstractMessagingComponent extends MBeanResourceComponent<JBossASServerComponent<?>> implements
     CreateChildResourceFacet {
 
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("^(.*:.*):(.*)$");
@@ -73,7 +73,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
 
     protected Log LOG = null;
 
-    public void start(ResourceContext<JBossASServerComponent> resourceContext, XMLConfigurationEditor editor) {
+    public void start(ResourceContext<JBossASServerComponent<?>> resourceContext, XMLConfigurationEditor editor) {
         super.start(resourceContext);
         this.resourceType = resourceContext.getResourceType();
         xmlEditor = editor;
@@ -126,7 +126,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
         JBossASServerComponent jasco = getOurJBossASComponent();
         File deploymentFile = jasco.getDeploymentFilePath(resourceKey);
         Configuration loadedConfiguration = xmlEditor.loadConfiguration(deploymentFile, this.name);
-        if (loadedConfiguration==null)
+        if (loadedConfiguration == null)
             return null;
         String boundJNDIName = DeploymentUtility.getJndiNameBinding(getEmsBean());
         loadedConfiguration.put(new PropertySimple("JNDIBinding", boundJNDIName));
@@ -158,9 +158,8 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
         String mBeanName = report.getConfiguration().getSimpleValue(MBEAN_NAME_PROP, null);
         boolean mBeanNameChanged = false;
         if (!mBeanName.equals(this.name)) {
-            LOG
-                .info("The MBEan Name for this Topic/Queue has been changed. This change will appear in the <mbean> tag for"
-                    + "this Topic/Queue.");
+            LOG.info("The MBEan Name for this Topic/Queue has been changed. This change will appear in the <mbean> tag for"
+                + "this Topic/Queue.");
 
             // User has changed the name, so update the plugin configuration.
             PropertySimple nameProp = getResourceContext().getPluginConfiguration().getSimple(PLUGIN_CONFIG_NAME_PROP);
@@ -169,8 +168,7 @@ public abstract class AbstractMessagingComponent extends MBeanResourceComponent<
         }
 
         if ((deploymentFile == null) || !deploymentFile.exists()) {
-            deploymentFile = new File(jasco.getConfigurationPath(), name
-                + ".xml");
+            deploymentFile = new File(jasco.getConfigurationPath(), name + ".xml");
         }
 
         xmlEditor.updateConfiguration(deploymentFile, this.name, report);

@@ -44,11 +44,11 @@ import org.rhq.plugins.database.DatabaseQueryUtility;
 /**
  * @author Greg Hinkle
  */
-public class PostgresUserComponent implements DatabaseComponent<PostgresServerComponent>, MeasurementFacet,
+public class PostgresUserComponent implements DatabaseComponent<PostgresServerComponent<?>>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet {
-    private ResourceContext<PostgresServerComponent> resourceContext;
+    private ResourceContext<PostgresServerComponent<?>> resourceContext;
 
-    public void start(ResourceContext<PostgresServerComponent> resourceContext) {
+    public void start(ResourceContext<PostgresServerComponent<?>> resourceContext) {
         this.resourceContext = resourceContext;
     }
 
@@ -151,7 +151,8 @@ public class PostgresUserComponent implements DatabaseComponent<PostgresServerCo
             + " ";
 
         if (type != UpdateType.DROP) {
-            if (config.getSimpleValue("password",null) != null && config.getSimpleValue("password",null).length() != 0) {
+            String password = config.getSimpleValue("password",null);
+            if (password != null && password.length() != 0) {
                 sql += " WITH PASSWORD '" + config.getSimpleValue("password",null) + "' ";
             }
 

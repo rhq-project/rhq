@@ -29,6 +29,10 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
+/**
+ * @author Jay Shaughnessy
+ *
+ */
 public class GetDeploymentConfigStep extends AbstractWizardStep {
 
     private final BundleDeployWizard wizard;
@@ -62,11 +66,8 @@ public class GetDeploymentConfigStep extends AbstractWizardStep {
                 Configuration startingConfig;
                 if (wizard.getLiveDeployment() == null) {
                     ConfigurationTemplate defaultTemplate = configDef.getDefaultTemplate();
-                    if (defaultTemplate == null) {
-                        startingConfig = new Configuration();
-                    } else {
-                        startingConfig = defaultTemplate.createConfiguration();
-                    }
+                    startingConfig = (defaultTemplate != null) ? defaultTemplate.createConfiguration() :
+                            new Configuration();
                 } else {
                     startingConfig = getNormalizedLiveConfig(configDef);
                 }

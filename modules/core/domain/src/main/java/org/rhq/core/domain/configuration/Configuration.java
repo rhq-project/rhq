@@ -607,7 +607,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     /**
-     * NOTE: An Configuration containing a null map is considered equal to a Configuration containing an empty map.
+     * NOTE: A Configuration containing a null map is considered equal to a Configuration containing an empty map.
      */
     @Override
     public boolean equals(Object obj) {

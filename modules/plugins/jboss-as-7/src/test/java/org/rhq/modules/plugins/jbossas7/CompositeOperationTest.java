@@ -18,14 +18,11 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
 
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -39,13 +36,10 @@ public class CompositeOperationTest {
 
     public void serializationTest() throws Exception {
 
-        List<PROPERTY_VALUE> address=new ArrayList<PROPERTY_VALUE>(3);
-        PROPERTY_VALUE part = new PROPERTY_VALUE("subsystem","web");
-        address.add(part);
-        part = new PROPERTY_VALUE("connector","http");
-        address.add(part);
-        part = new PROPERTY_VALUE("profile","default");
-        address.add(part);
+        Address address= new Address();
+        address.add("subsystem","web");
+        address.add("connector","http");
+        address.add("profile","default");
 
         CompositeOperation op = new CompositeOperation();
 
@@ -68,18 +62,19 @@ public class CompositeOperationTest {
     public void serializationTest2() throws Exception {
 
 
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
+        Address deploymentsAddress = new Address();
         String TEST_WAR = "test.war";
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        deploymentsAddress.add("deployment", TEST_WAR);
         Operation step1 = new Operation("add",deploymentsAddress);
         String bytes_value = "123";
         step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
         step1.addAdditionalProperty("name", TEST_WAR);
 
-        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group","main-server-group"));
-        serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
-        Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+        Address serverGroupAddress = new Address();
+        serverGroupAddress.add("server-group","main-server-group");
+        serverGroupAddress.add("deployment", TEST_WAR);
+        Operation step2 = new Operation("add",serverGroupAddress);
+        step2.addAdditionalProperty("enabled","true");
 
 
         Operation step3 = new Operation("remove",serverGroupAddress);

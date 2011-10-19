@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-
 <alert-plugin
         name="alert-microblog"
         displayName="Alert:Microblog"
@@ -12,28 +10,50 @@
 
     <serverplugin:help>
         This alert sender plugin is used to send notifications via Microblogging
-        services that use a Twitter-like API like laconi.ca / identi.ca or twitter itself
+        services that use a Twitter-like API like laconi.ca / identi.ca or twitter itself.
+        NOTE: This plugin needs Internet access to verify Twitter/OAuth information. 
+        So make sure RHQ Server has Internet access or provide a Http Proxy configuration. 
     </serverplugin:help>
 
-    <!-- startup & tear down listener, + scheduled jobs
-    <serverplugin:plugin-component class="Foo" />
-    -->
-
-
+    <serverplugin:plugin-component class="MicroblogServerPluginComponent">
+    	<serverplugin:control name="GET_OAUTH_REQUEST_URL" displayName="Get OAuth Request Url" description="Get an OAuth Request URL">
+    		<serverplugin:results>
+		        <c:simple-property name="authorizationURL" required="true" displayName="OAuth Request Url" type="string" description="Use this URL in your brownser to get a OAuth reqeust Token. Then copy/paste your token in OAuth Request Token field."/>
+    		</serverplugin:results>
+    	</serverplugin:control>
+    	<serverplugin:control name="GET_ACCESS_TOKEN" displayName="Get Access Token" description="Get Access Token from OAuth">
+    	    <serverplugin:parameters>
+		        <!--  c:simple-property name="requestToken" required="true" displayName="OAuth Request Token" type="string" description="After get your request Token (through OAuth Request Ur operation) copy/paste it here."/ -->
+		        <c:simple-property name="pin" required="false" displayName="OAuth PIN" type="string" description="Optional. Inform this only if you received one."/>
+    	    </serverplugin:parameters>
+    		<serverplugin:results>
+		        <c:simple-property name="twitterScreenName" displayName="Twitter Account Name" type="string"/>
+		        <c:simple-property name="accessToken" displayName="OAuth Access Token for Twitter" type="longString" description="This token will be stored to be userd by Microblog Alert Sender."/>
+		        <c:simple-property name="accessTokenFilePath" displayName="OAuth Access Token file path" type="string" description="The OAuth Access Token File"/>
+    		</serverplugin:results>
+    	</serverplugin:control>
+    </serverplugin:plugin-component>
+    
     <!-- Global preferences for all mircoblog alerts -->
     <serverplugin:plugin-configuration>
         <c:simple-property name="microblogServerUrl" displayName="Microblog server URL" type="string"
                            default="http://twitter.com/"
                 description="Base URL of the Microblog server (twitter.com for twitter, http://identi.ca/api for Status.net)"/>
-        <c:simple-property name="user" displayName="User name" type="string" />
-        <c:simple-property name="password" displayName="Password" type="password"/>
 
+        <c:simple-property name="consumerKey" required="true" displayName="OAuth Consumer Key" type="password" description="The OAuth key defined for your App on https://dev.twitter.com. NOTE: You don't need to change this. RHQ will use its own Twitter oficcial App information."/>
+        <c:simple-property name="consumerSecret" required="true" displayName="OAuth Consumer Secret" type="password" description="The OAuth secret defined for your App on https://dev.twitter.com. NOTE: You don't need to change this. RHQ will use its own Twitter oficcial App information."/>
+        <c:simple-property name="accessTokenFilePath" required="false" displayName="OAuth Access Token file path" type="string" description="The OAuth Access Token File"/>
     </serverplugin:plugin-configuration>
-
+    
     <!-- How does this sender show up in drop downs etc -->
     <short-name>Microblog</short-name>
 
     <!-- Class that does the actual sending -->
-    <plugin-class>MicroblogSender</plugin-class>
-
+    <plugin-class>MicroblogSender</plugin-class>	
+    
+    <alert-configuration>
+        <c:simple-property name="twittedBy" displayName="From" type="string"
+                           default="@RHQ" description="This alert will be signed by"/>
+    </alert-configuration> 
+	
 </alert-plugin>

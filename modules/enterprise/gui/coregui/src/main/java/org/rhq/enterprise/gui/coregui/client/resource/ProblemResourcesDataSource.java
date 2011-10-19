@@ -58,7 +58,7 @@ public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceCom
 
     public enum Field {
 
-        ALERTS("numAlerts", MSG.dataSource_problemResources_field_alerts()),
+        ALERTS("numAlerts", MSG.common_title_alerts()),
 
         AVAILABILITY("availabilityType", MSG.common_title_availability()),
 

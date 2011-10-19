@@ -154,62 +154,64 @@ public class CreateNewPackageChildResourceUIBean {
         }
 
         try {
-            InputStream packageContentStream;
             try {
                 log.debug("Streaming new package bits from uploaded file: " + fileItem.getFile());
-                packageContentStream = new FileInputStream(fileItem.getFile());
+                InputStream packageContentStream = new FileInputStream(fileItem.getFile());
+                try {
+                    if (isSupportsArchitecture()) {
+                        // pull in architecture selection
+                        selectedArchitectureId = getSelectedArchitectureId();
+                    }
+
+                    // Collect data for create call
+                    Resource parentResource = EnterpriseFacesContextUtility.getResource();
+                    Configuration deployTimeConfiguration = getConfiguration();
+                    String packageName = fileItem.getFileName();
+
+                    // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
+                    if (packageName != null) {
+                        packageName = packageName.replace('\\', '/');
+                        if (packageName.length() > 2 && packageName.charAt(1) == ':') {
+                            packageName = packageName.substring(2);
+                        }
+                        packageName = new File(packageName).getName();
+                    }
+
+                    try {
+                        ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
+
+                        // RHQ-666 - Changed to not request the resource name from the user; simply pass null
+                        // JON 2.0 RC3 - use timestamp versioning; pass null for version
+                        //                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                        //                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
+                        //                    packageContentStream);
+                        if (packageUploadDetails != null) {
+                            resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                                pluginConfiguration, packageName, getVersion(), selectedArchitectureId,
+                                deployTimeConfiguration, packageContentStream, packageUploadDetails);
+                        } else {
+                            resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
+                                pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
+                                packageContentStream);
+
+                        }
+
+                    } catch (NoResultException nre) {
+                        //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
+                    } catch (Exception e) {
+                        String errorMessages = ThrowableUtil.getAllMessages(e);
+                        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                            "Failed to send create resource request to agent. Cause: " + errorMessages);
+                        log.error("Failed to create new child Resource of type [" + getResourceType() + "].", e);
+                        return OUTCOME_SUCCESS_OR_FAILURE;
+                    }
+                } finally {
+                    packageContentStream.close();
+                }
             } catch (IOException e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to retrieve the input stream. Cause: " + errorMessages);
-                return OUTCOME_SUCCESS_OR_FAILURE;
-            }
-
-            if (isSupportsArchitecture()) {
-                // pull in architecture selection
-                selectedArchitectureId = getSelectedArchitectureId();
-            }
-
-            // Collect data for create call
-            Resource parentResource = EnterpriseFacesContextUtility.getResource();
-            Configuration deployTimeConfiguration = getConfiguration();
-            String packageName = fileItem.getFileName();
-
-            // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
-            if (packageName != null) {
-                packageName = packageName.replace('\\', '/');
-                if (packageName.length() > 2 && packageName.charAt(1) == ':') {
-                    packageName = packageName.substring(2);
-                }
-                packageName = new File(packageName).getName();
-            }
-
-            try {
-                ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-
-                // RHQ-666 - Changed to not request the resource name from the user; simply pass null
-                // JON 2.0 RC3 - use timestamp versioning; pass null for version
-                //                resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                //                    pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
-                //                    packageContentStream);
-                if (packageUploadDetails != null) {
-                    resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                        pluginConfiguration, packageName, getVersion(), selectedArchitectureId,
-                        deployTimeConfiguration, packageContentStream, packageUploadDetails);
-                } else {
-                    resourceFactoryManager.createResource(user, parentResource.getId(), getResourceTypeId(), null,
-                        pluginConfiguration, packageName, null, selectedArchitectureId, deployTimeConfiguration,
-                        packageContentStream);
-
-                }
-
-            } catch (NoResultException nre) {
-                //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
-            } catch (Exception e) {
-                String errorMessages = ThrowableUtil.getAllMessages(e);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to send create resource request to agent. Cause: " + errorMessages);
-                log.error("Failed to create new child Resource of type [" + getResourceType() + "].", e);
+                        "Failed to retrieve the input stream. Cause: " + errorMessages);
                 return OUTCOME_SUCCESS_OR_FAILURE;
             }
 
@@ -297,10 +299,10 @@ public class CreateNewPackageChildResourceUIBean {
         if (configDef != null) {
             deployTimeConfigurationTemplates = configDef.getDefaultTemplate();
         }
+
         Configuration deployTimeConfiguration = (deployTimeConfigurationTemplates != null) ? deployTimeConfigurationTemplates
             .createConfiguration()
             : new Configuration();
-
         return deployTimeConfiguration;
     }
 

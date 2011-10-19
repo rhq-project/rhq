@@ -51,7 +51,6 @@ public class RHQConstants {
 
     // DRIFT Server properties
     public static final String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
-    public static final String DRIFT_PLUGINS = "DRIFT_PLUGINS";
 
     // Base URL for the application - (i think this is only used for alert emails)
     public static final String BaseURL = "CAM_BASE_URL";
@@ -91,6 +90,9 @@ public class RHQConstants {
 
     // How long do we keep event data
     public static final String EventPurge = "EVENT_PURGE";
+
+    // How long do we keep orphaned drift files
+    public static final String DriftFilePurge = "DRIFT_FILE_PURGE";
 
     // How long do we keep trait data
     public static final String TraitPurge = "TRAIT_PURGE";

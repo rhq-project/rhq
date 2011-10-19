@@ -96,7 +96,6 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -122,6 +121,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.sync.ExportReport;
+import org.rhq.core.domain.sync.ImportConfiguration;
+import org.rhq.core.domain.sync.ImportConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -161,6 +163,9 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
+import org.rhq.enterprise.server.sync.ImportException;
+import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
+import org.rhq.enterprise.server.sync.ValidationException;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -207,6 +212,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private SynchronizationManagerLocal synchronizationManager = LookupUtil.getSynchronizationManager();
 
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
@@ -318,6 +324,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
         return bundleManager.createBundleVersionViaFile(subject, distributionFile);
+    }
+
+    public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
+        return bundleManager.createBundleVersionViaByteArray(subject, fileBytes);
     }
 
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
@@ -586,16 +596,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
-
-    // DRIFTMANAGER: BEGIN ----------------------------------
-
-    @Override
-    public void detectDrift(Subject subject, EntityContext entityContext, DriftConfiguration driftConfiguration)
-        throws Exception {
-        driftManager.detectDrift(subject, entityContext, driftConfiguration);
-    }
-
-    // DRIFTMANAGER: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -1195,6 +1195,30 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //SYSTEMMANAGER: END ------------------------------------
 
+    //SYNCHRONIZATIONMANANGER: BEGIN -------------------------
+
+    public ExportReport exportAllSubsystems(Subject subject) {
+        return synchronizationManager.exportAllSubsystems(subject);
+    }
+
+    public void validate(Subject subject, byte[] exportFile) throws ValidationException {
+        synchronizationManager.validate(subject, exportFile);
+    }
+
+    public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
+        return synchronizationManager.getImportConfigurationDefinitionOfAllSynchronizers();
+    }
+
+    public ImportConfigurationDefinition getImportConfigurationDefinition(String importerClass) {
+        return synchronizationManager.getImportConfigurationDefinition(importerClass);
+    }
+
+    public void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations)
+        throws ValidationException, ImportException {
+        synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
+    }
+
+    //SYNCHRONIZATIONMANANGER: END -------------------------
     private void checkParametersPassedIn(Subject subject, Criteria criteria) {
         if (subject == null) {
             throw new IllegalArgumentException("Subject cannot be null.");

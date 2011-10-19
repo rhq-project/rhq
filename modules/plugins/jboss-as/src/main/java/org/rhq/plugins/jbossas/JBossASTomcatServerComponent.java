@@ -48,12 +48,12 @@ import org.rhq.plugins.jmx.JMXComponent;
  * @author John Mazzitelli
  */
 public class JBossASTomcatServerComponent implements MeasurementFacet, OperationFacet, ConfigurationFacet,
-    JMXComponent<JMXComponent> {
+    JMXComponent<JMXComponent<?>> {
     private static Log log = LogFactory.getLog(JBossASTomcatServerComponent.class);
 
-    private ResourceContext<JMXComponent> resourceContext;
+    private ResourceContext<JMXComponent<?>> resourceContext;
 
-    public void start(ResourceContext<JMXComponent> context) {
+    public void start(ResourceContext<JMXComponent<?>> context) {
         resourceContext = context;
     }
 
@@ -99,7 +99,7 @@ public class JBossASTomcatServerComponent implements MeasurementFacet, Operation
         return this.resourceContext.getParentResourceComponent().getEmsConnection();
     }
 
-    ResourceContext<JMXComponent> getResourceContext() {
+    ResourceContext<JMXComponent<?>> getResourceContext() {
         return resourceContext;
     }
 }

@@ -41,7 +41,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Note, plugins are registered in new transactions. For tests, this means
  * you can't do everything in a trans and roll back at the end. You must clean up manually.
  */
-public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBase {
 
     @Override
     protected String getSubsystemDirectory() {

@@ -64,7 +64,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  *
  * @author Ian Springer
  */
-public class ApplicationComponent extends MBeanResourceComponent<JBossASServerComponent> implements ContentFacet,
+public class ApplicationComponent extends MBeanResourceComponent<JBossASServerComponent<?>> implements ContentFacet,
     DeleteResourceFacet, OperationFacet {
     private static final String BACKUP_FILE_EXTENSION = ".rej";
     public static final String RHQ_SHA256 = "RHQ-Sha256";

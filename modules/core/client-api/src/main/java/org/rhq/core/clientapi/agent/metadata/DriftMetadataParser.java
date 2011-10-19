@@ -49,14 +49,17 @@ public class DriftMetadataParser {
     }
 
     private ConfigurationTemplate createTemplate(String name) {
-        ConfigurationTemplate template = new ConfigurationTemplate(name, name + " drift configuration default template");
+        ConfigurationTemplate template = new ConfigurationTemplate(name, name + " drift definition default template");
         template.setConfiguration(new Configuration());
 
         return template;
     }
 
     private void initEnabled(ConfigurationTemplate template) {
-        template.getConfiguration().put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED, false));
+        template.getConfiguration()
+            .put(
+                new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED,
+                    DriftConfigurationDefinition.DEFAULT_ENABLED));
     }
 
     private void initName(DriftDescriptor descriptor, ConfigurationTemplate template) {

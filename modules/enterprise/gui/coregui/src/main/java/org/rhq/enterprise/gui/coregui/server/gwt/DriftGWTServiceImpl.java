@@ -20,19 +20,20 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDetails;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
-import org.rhq.enterprise.server.drift.DriftServerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -43,61 +44,34 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
 
     private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
 
-    private DriftServerLocal driftServer = LookupUtil.getDriftServer();
-
     @Override
-    public int deleteDrifts(String[] driftIds) throws RuntimeException {
+    public int deleteDriftDefinitionsByContext(EntityContext entityContext, String[] driftDefinitionNames)
+        throws RuntimeException {
         try {
-            return this.driftManager.deleteDrifts(getSessionSubject(), driftIds);
+            for (String driftDefName : driftDefinitionNames) {
+                this.driftManager.deleteDriftDefinition(getSessionSubject(), entityContext, driftDefName);
+            }
+            return driftDefinitionNames.length;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException {
+    public void detectDrift(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException {
         try {
-            return this.driftManager.deleteDriftsByContext(getSessionSubject(), entityContext);
+            this.driftManager.detectDrift(getSessionSubject(), entityContext, driftDef);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public int deleteDriftConfigurations(int[] driftConfigIds) throws RuntimeException {
+    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(GenericDriftChangeSetCriteria criteria)
+        throws RuntimeException {
         try {
-            // TODO
-            //return this.driftManager.deleteDriftConfigurations(getSessionSubject(), driftConfigIds);
-            return 0;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public int deleteDriftConfigurationsByContext(EntityContext entityContext) throws RuntimeException {
-        try {
-            // TODO
-            //return this.driftManager.deleteDriftConfigurationsByContext(getSessionSubject(), entityContext);
-            return 0;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) {
-        try {
-            this.driftServer.detectDrift(getSessionSubject(), entityContext, driftConfig);
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria) {
-        try {
-            PageList<DriftChangeSet> results = driftServer.findDriftChangeSetsByCriteria(getSessionSubject(), criteria);
+            PageList<? extends DriftChangeSet<?>> results = driftManager.findDriftChangeSetsByCriteria(
+                getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftChangeSetsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -105,9 +79,9 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException {
+    public PageList<? extends Drift<?, ?>> findDriftsByCriteria(GenericDriftCriteria criteria) throws RuntimeException {
         try {
-            PageList<Drift> results = driftServer.findDriftsByCriteria(getSessionSubject(), criteria);
+            PageList<? extends Drift<?, ?>> results = driftManager.findDriftsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -115,9 +89,11 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria) {
+    public PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria)
+        throws RuntimeException {
         try {
-            PageList<DriftComposite> results = driftServer.findDriftCompositesByCriteria(getSessionSubject(), criteria);
+            PageList<DriftComposite> results = driftManager
+                .findDriftCompositesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftCompositesByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -125,30 +101,78 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
-        try {
-            return driftServer.createSnapshot(subject, criteria);
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public DriftConfiguration getDriftConfiguration(EntityContext entityContext, int driftConfigId)
+    public PageList<DriftDefinition> findDriftDefinitionsByCriteria(DriftDefinitionCriteria criteria)
         throws RuntimeException {
         try {
-            DriftConfiguration driftConfig = driftServer.getDriftConfiguration(getSessionSubject(), entityContext,
-                driftConfigId);
-            return SerialUtility.prepare(driftConfig, "DriftService.getDriftConfiguration");
+            PageList<DriftDefinition> results = driftManager.findDriftDefinitionsByCriteria(getSessionSubject(),
+                criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftDefinitionsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) {
+    public DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria)
+        throws RuntimeException {
         try {
-            this.driftServer.updateDriftConfiguration(getSessionSubject(), entityContext, driftConfig);
+            return driftManager.createSnapshot(subject, criteria);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public DriftDefinition getDriftDefinition(int driftDefId) throws RuntimeException {
+        try {
+            DriftDefinition driftDef = driftManager.getDriftDefinition(getSessionSubject(), driftDefId);
+            return SerialUtility.prepare(driftDef, "DriftService.getDriftDefinition");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException {
+        try {
+            this.driftManager.updateDriftDefinition(getSessionSubject(), entityContext, driftDef);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) throws RuntimeException {
+        try {
+            return driftManager.getDriftFileBits(hash);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) throws RuntimeException {
+        try {
+            return driftManager.generateUnifiedDiff(drift);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public DriftDetails getDriftDetails(String driftId) throws RuntimeException {
+        try {
+            DriftDetails details = driftManager.getDriftDetails(getSessionSubject(), driftId);
+            return SerialUtility.prepare(details, "DriftService.getDriftDetails");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public boolean isBinaryFile(Drift<?, ?> drift) throws RuntimeException {
+        try {
+            return driftManager.isBinaryFile(drift);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

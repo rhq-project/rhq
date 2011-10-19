@@ -135,6 +135,10 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         }
     }
 
+    public void reset() {
+        clearMessage(true);
+    }
+
     public void clearMessage(boolean clearSticky) {
         this.currentMessage = null;
         setLabelEmpty();

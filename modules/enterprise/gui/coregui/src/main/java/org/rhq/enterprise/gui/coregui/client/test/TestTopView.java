@@ -78,7 +78,9 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
+    private static final ViewName PAGE_NUMBER_FORMAT_TEST = new ViewName("NumberFormatTest");
     private static final ViewName PAGE_ASYNC = new ViewName("Async");
+    private static final ViewName PAGE_RPC = new ViewName("Rpc");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -223,6 +225,12 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildMiscSection() {
+        NavigationItem numberFormatItem = new NavigationItem(PAGE_NUMBER_FORMAT_TEST, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestNumberFormatView(extendLocatorId(PAGE_NUMBER_FORMAT_TEST.getName()));
+            }
+        });
+
         NavigationItem pluralizationItem = new NavigationItem(PAGE_PLURALIZATION_TEST, null, new ViewFactory() {
             public Canvas createView() {
                 return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST.getName()));
@@ -235,7 +243,13 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, asyncItem);
+        NavigationItem rpcItem = new NavigationItem(PAGE_RPC, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestRpcView(extendLocatorId(PAGE_RPC.getName()));
+            }
+        });
+
+        return new NavigationSection(MISC_SECTION_VIEW_ID, numberFormatItem, pluralizationItem, asyncItem, rpcItem);
     }
 
 }

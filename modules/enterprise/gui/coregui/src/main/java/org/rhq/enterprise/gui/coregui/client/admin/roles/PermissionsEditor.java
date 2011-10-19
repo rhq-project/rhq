@@ -249,13 +249,13 @@ public class PermissionsEditor extends LocatableVStack {
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_createChildResources(),
-            "subsystems/inventory/Inventory", Permission.VIEW_RESOURCE, MSG
+            "subsystems/inventory/CreateChild", Permission.VIEW_RESOURCE, MSG
                 .view_adminRoles_permissions_permReadDesc_createChildResources(), Permission.CREATE_CHILD_RESOURCES,
             MSG.view_adminRoles_permissions_permWriteDesc_createChildResources());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_deleteChildResources(),
-            "subsystems/inventory/Inventory", Permission.VIEW_RESOURCE, MSG
+            "subsystems/inventory/DeleteChild", Permission.VIEW_RESOURCE, MSG
                 .view_adminRoles_permissions_permReadDesc_deleteChildResources(), Permission.DELETE_RESOURCE, MSG
                 .view_adminRoles_permissions_permWriteDesc_deleteChildResources());
         records.add(record);

@@ -68,8 +68,10 @@ public abstract class AbstractCacheElement<T> {
         if (value == null) {
             if ((operator == AlertConditionOperator.CHANGES) || (operator == AlertConditionOperator.CHANGES_TO)
                 || (operator == AlertConditionOperator.CHANGES_FROM)) {
-                log.debug("Possible invalid Cache Element: " + "condition with id=" + conditionId + " "
-                    + "and operator='" + operator.toString() + "' " + "passed a null value argument");
+                if (log.isDebugEnabled()) {
+                    log.debug("Possible invalid Cache Element: " + "condition with id=" + conditionId + " "
+                        + "and operator='" + operator.toString() + "' " + "passed a null value argument");
+                }
             } else {
                 throw new InvalidCacheElementException("Invalid Cache Element: " + "condition with id=" + conditionId
                     + " " + "and operator='" + operator.toString() + "' " + "requires a non-null value");

@@ -44,27 +44,26 @@ import org.rhq.core.system.SystemInfo;
  * 
  * @author Lukas Krejci
  */
-@SuppressWarnings("rawtypes")
-public class ResourceUpgradeContext<T extends ResourceComponent> extends ResourceContext<T> {
+public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends ResourceContext<T> {
 
     private final Configuration resourceConfiguration;
     private final String name;
     private final String description;
     private ResourceContext<?> parentResourceContext;
-    
+
     /**
      * @see ResourceContext#ResourceContext(Resource, ResourceComponent, ResourceDiscoveryComponent, SystemInfo, File, File, String, EventContext, OperationContext, ContentContext, Executor, PluginContainerDeployment)
      */
-    public ResourceUpgradeContext(Resource resource, ResourceContext<?> parentResourceContext, T parentResourceComponent,
-        ResourceDiscoveryComponent resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
-        File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
-        ContentContext contentContext, Executor availCollectorThreadPool,
+    public ResourceUpgradeContext(Resource resource, ResourceContext<?> parentResourceContext,
+        T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
+        File temporaryDirectory, File dataDirectory, String pluginContainerName, EventContext eventContext,
+        OperationContext operationContext, ContentContext contentContext, Executor availCollectorThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
-        
-        super(resource, parentResourceComponent, resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
-            pluginContainerName, eventContext, operationContext, contentContext, availCollectorThreadPool,
-            pluginContainerDeployment);
-        
+
+        super(resource, parentResourceComponent, resourceDiscoveryComponent, systemInfo, temporaryDirectory,
+            dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
+            availCollectorThreadPool, pluginContainerDeployment);
+
         this.parentResourceContext = parentResourceContext;
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();
@@ -72,9 +71,9 @@ public class ResourceUpgradeContext<T extends ResourceComponent> extends Resourc
     }
 
     public ResourceContext<?> getParentResourceContext() {
-        return parentResourceContext;        
+        return parentResourceContext;
     }
-    
+
     public Configuration getResourceConfiguration() {
         return resourceConfiguration;
     }

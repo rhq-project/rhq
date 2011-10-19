@@ -79,6 +79,7 @@
 
 <ui:param name="tableBorder" value="0" /> <!-- used for quick debugging -->
 <ui:param name="context" value="#{IndicatorChartsUIBean.context}" />
+<ui:param name="groupType" value="#{IndicatorChartsUIBean.groupType}" />
 <c:forEach var="metric" varStatus="status" items="#{IndicatorChartsUIBean.data}">
 
    <li id="#{metric.metricToken}">
@@ -111,8 +112,22 @@
           <h:outputText value="#{metric.label} " />
           &nbsp;&nbsp;
           <c:choose>
-             <c:when test="#{context.groupId > 0}">
+             <c:when test="#{context.groupId > 0 and groupType == 'group'}">
                 <h:outputLink target="_top" value="/coregui/CoreGUI.html#ResourceGroup/#{metric.groupId}">
+                   <h:outputFormat value="#{msg['common.value.parenthesis']}">
+                      <f:param value="#{metric.metricSource}" />
+                   </h:outputFormat>
+                </h:outputLink>
+             </c:when>
+             <c:when test="#{context.groupId > 0 and groupType == 'auto'}">
+                <h:outputLink target="_top" value="/coregui/CoreGUI.html#Resource/AutoGroup/#{context.groupId}">
+                   <h:outputFormat value="#{msg['common.value.parenthesis']}">
+                      <f:param value="#{metric.metricSource}" />
+                   </h:outputFormat>
+                </h:outputLink>
+             </c:when>
+             <c:when test="#{context.groupId > 0 and groupType == 'cluster'}">
+                <h:outputLink target="_top" value="/coregui/CoreGUI.html#ResourceGroup/AutoCluster/#{metric.groupId}">
                    <h:outputFormat value="#{msg['common.value.parenthesis']}">
                       <f:param value="#{metric.metricSource}" />
                    </h:outputFormat>

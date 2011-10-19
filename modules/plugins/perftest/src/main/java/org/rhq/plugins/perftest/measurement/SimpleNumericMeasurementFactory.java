@@ -22,18 +22,22 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
+import java.util.Random;
+
 /**
- * The simplest algorithm for generating measurement values
+ * Create mock numeric data.
  *
- * @author Jason Dobies
+ * @author Ian Springer
  */
 public class SimpleNumericMeasurementFactory implements MeasurementFactory {
-    // MeasurementFactory Implementation  --------------------------------------------
+
+    private static final Random RANDOM = new Random();
 
     public MeasurementData nextValue(MeasurementScheduleRequest request) {
-        double value = request.getScheduleId();
+        // generate a random value between 95,000 and 105,000
+        double value = 100000 + (RANDOM.nextInt(10000) - 5000);
 
-        MeasurementDataNumeric data = new MeasurementDataNumeric(request, value);
-        return data;
+        return new MeasurementDataNumeric(request, value);
     }
+
 }

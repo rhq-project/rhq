@@ -1,5 +1,7 @@
 package org.rhq.core.pc.drift;
 
+import static org.rhq.core.util.file.FileUtil.copyFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -8,12 +10,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.common.drift.ChangeSetReader;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
-
-import static org.rhq.core.util.file.FileUtil.copyFile;
 
 public class DriftFilesSender implements Runnable {
 
@@ -23,7 +22,7 @@ public class DriftFilesSender implements Runnable {
 
     private Headers headers;
 
-    private List<DriftFile> driftFiles;
+    private List<? extends DriftFile> driftFiles;
 
     private ChangeSetManager changeSetMgr;
 
@@ -37,7 +36,7 @@ public class DriftFilesSender implements Runnable {
         this.headers = headers;
     }
 
-    public void setDriftFiles(List<DriftFile> driftFiles) {
+    public void setDriftFiles(List<? extends DriftFile> driftFiles) {
         this.driftFiles = driftFiles;
     }
 
@@ -52,7 +51,7 @@ public class DriftFilesSender implements Runnable {
     @Override
     public void run() {
         try {
-            File changeSet = changeSetMgr.findChangeSet(resourceId, headers.getDriftConfigurationName());
+            File changeSet = changeSetMgr.findChangeSet(resourceId, headers.getDriftDefinitionName());
             File contentDir = new File(changeSet.getParentFile(), "content");
             contentDir.mkdir();
 
@@ -64,24 +63,19 @@ public class DriftFilesSender implements Runnable {
                     copyFile(file, new File(contentDir, driftFile.getHashId()));
                 }
             }
-            driftClient.sendChangeSetContentToServer(resourceId, headers.getDriftConfigurationName(), contentDir);
+            driftClient.sendChangeSetContentToServer(resourceId, headers.getDriftDefinitionName(), contentDir);
         } catch (IOException e) {
             log.error("Failed to send drift files.", e);
         }
     }
 
     private File find(DriftFile driftFile) throws IOException {
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, headers.getDriftConfigurationName());
-        DirectoryEntry dirEntry = reader.readDirectoryEntry();
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, headers.getDriftDefinitionName());
 
-        while (dirEntry != null) {
-            for (FileEntry fileEntry : dirEntry) {
-                if (fileEntry.getNewSHA().equals(driftFile.getHashId())) {
-                    File dir = new File(headers.getBasedir(), dirEntry.getDirectory());
-                    return new File(dir, fileEntry.getFile());
-                }
+        for (FileEntry entry : reader) {
+            if (entry.getNewSHA().equals(driftFile.getHashId())) {
+                return new File(headers.getBasedir(), entry.getFile());
             }
-            dirEntry = reader.readDirectoryEntry();
         }
         return null;
     }

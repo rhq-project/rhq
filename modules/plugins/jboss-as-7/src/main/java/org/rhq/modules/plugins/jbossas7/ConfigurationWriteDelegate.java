@@ -18,9 +18,7 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +43,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
-import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
-import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
@@ -88,7 +83,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     /**
      * Write the configuration back to the AS. Care must be taken, not to send properties that
      * are read-only, as AS will choke on them.
-     * @param report
+     * @param report Report containing the new configuration
      */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
@@ -146,31 +141,28 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (propDef.isReadOnly())
             return;
 
-        boolean isSpecial = false;
-
-        Property prop;
         // Handle the special case
         if (propDef instanceof PropertyDefinitionList && propDef.getName().equals("*")) {
             propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
-            PropertyList pl = (PropertyList) conf.get("*");
-            prop = pl.getList().get(0);
-            isSpecial = true;
-        }
-        else {
-            prop = conf.get(propDef.getName());
-        }
+            PropertyList pl = (PropertyList) conf.get("*");  // TODO loop over the list content
 
-        if (prop instanceof PropertySimple) {
-            updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
-        }
-        else if (prop instanceof PropertyList) {
-            updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef);
+            for (Property prop2 : pl.getList()) {
+                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef);
+            }
         }
         else {
-            if(isSpecial)
-                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop, (PropertyDefinitionMap) propDef);
-            else
+            // Normal cases
+            Property prop = conf.get(propDef.getName());
+
+            if (prop instanceof PropertySimple) {
+                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
+            }
+            else if (prop instanceof PropertyList) {
+                updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef);
+            }
+            else {
                 updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef);
+            }
         }
     }
 

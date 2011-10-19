@@ -232,7 +232,10 @@
         <propertySimple>
             <id>10867</id>
             <name>snmpAgentHost</name>
-            <stringValue>${unresolvable.host}</stringValue>
+            <!-- this has to rename a resolvable host name so that the apache server component is able to start.
+                 the SNMP module configuration file inside apache is configured with an unresolvable hostname
+                 and therefore the SNMP is not available for the plugin to use. -->
+            <stringValue>${servername}</stringValue>
         </propertySimple>
         <propertySimple>
             <id>10866</id>

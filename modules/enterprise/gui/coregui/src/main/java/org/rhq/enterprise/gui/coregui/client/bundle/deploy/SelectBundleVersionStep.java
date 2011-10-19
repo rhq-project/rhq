@@ -40,6 +40,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
+/**
+ * @author Jay Shaughnessy
+ *
+ */
 public class SelectBundleVersionStep extends AbstractWizardStep {
 
     static private final String LATEST_VERSION = "latest";

@@ -24,12 +24,12 @@ package org.rhq.enterprise.gui.coregui.client.content.repository.tree;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
@@ -59,7 +59,7 @@ public class ContentRepositoryTreeView extends LocatableTreeGrid {
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
                 String path = event.getNode().getAttribute("id").replaceAll(":", "/");
-                History.newItem("Bundles/Repository/" + path);
+                CoreGUI.goToView("Bundles/Repository/" + path);
             }
         });
     }

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.TreeSet;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 
@@ -29,11 +30,15 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * This step displays a config editor for the user to enter the new Resource's initial Resource or plugin configuration.
+ *
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
@@ -42,6 +47,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
     private boolean noConfigurationNeeded = false; // if true, it has been determined the user doesn't have to set any config
     private LocatableVLayout vLayout;
     private ConfigurationEditor editor;
+    private Configuration startingConfig;
     private DurationItem timeoutItem;
     AbstractResourceFactoryWizard wizard;
 
@@ -50,18 +56,14 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
     }
 
     public Canvas getCanvas(Locatable parent) {
-        if (vLayout == null) {
+        boolean newCanvas = this.vLayout == null;
+
+        if (newCanvas) {
             String locatorId = (null == parent) ? "ResourceFactoryConfig" : parent
                 .extendLocatorId("ResourceFactoryConfig");
-            vLayout = new LocatableVLayout(locatorId);
+            this.vLayout = new LocatableVLayout(locatorId);
 
-            ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
-            if (def != null) {
-                Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
-                editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
-                vLayout.addMember(editor);
-            }
-
+            // only create the timeout member 1 time, even if we end up recreating the config editor
             TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
             supportedUnits.add(TimeUnit.SECONDS);
             supportedUnits.add(TimeUnit.MINUTES);
@@ -75,6 +77,45 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
             timeoutForm.setMargin(10);
             vLayout.addMember(timeoutForm);
         }
+
+        // if this is a newCanvas, or if the starting config has changed, create a new config editor. The starting
+        // config (i.e. template) may have changed if the user, via the previous button, backed up and changed the
+        // selected template. 
+        if (newCanvas || this.startingConfig != wizard.getNewResourceStartingConfiguration()) {
+
+            final ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
+            if (def != null) {
+
+                this.startingConfig = wizard.getNewResourceStartingConfiguration();
+
+                if (!newCanvas) {
+                    Canvas doomedConfigEditor = this.vLayout.getMember(0);
+                    this.vLayout.removeMember(doomedConfigEditor);
+                    doomedConfigEditor.destroy();
+                }
+
+                this.startingConfig = wizard.getNewResourceStartingConfiguration();
+
+                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+                configurationService.getOptionValuesForConfigDefinition(def,
+                    new AsyncCallback<ConfigurationDefinition>() {
+
+                        public void onFailure(Throwable throwable) {
+                            editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+                            editor.setAllPropertiesWritable(true);
+                            vLayout.addMember(editor, 0);
+
+                        }
+
+                        public void onSuccess(ConfigurationDefinition result) {
+                            editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), result, startingConfig);
+                            editor.setAllPropertiesWritable(true);
+                            vLayout.addMember(editor, 0);
+                        }
+                    });
+            }
+        }
+
         return vLayout;
     }
 

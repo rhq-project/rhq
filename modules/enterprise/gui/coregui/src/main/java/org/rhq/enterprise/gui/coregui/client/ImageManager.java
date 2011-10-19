@@ -8,6 +8,8 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.DeleteResourceStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -79,7 +81,21 @@ public class ImageManager {
         return "[SKIN]/actions/undo.png";
     }
 
+    /**
+     * Returns a drift icon given the category of the drift.
+     * Note that if the category is null, it will be assumed the drift icon
+     * should be one that indicates the file is "new" (presumably from
+     * a coverage change set report - that is, its the first time the file
+     * has been seen).
+     * 
+     * @param category
+     * @return path to icon
+     */
     public static String getDriftCategoryIcon(DriftCategory category) {
+        if (category == null) {
+            return "subsystems/drift/Drift_new_16.png";
+        }
+
         switch (category) {
         case FILE_ADDED:
             return "subsystems/drift/Drift_add_16.png";
@@ -512,5 +528,51 @@ public class ImageManager {
 
     public static String getConfigureIcon() {
         return "subsystems/configure/Configure_16.png";
+    }
+
+    public static String getChildCreateIcon() {
+        return "subsystems/inventory/CreateChild_16.png";
+    }
+
+    public static String getChildCreateIcon(CreateResourceStatus createStatus) {
+        if (createStatus == null) {
+            return getChildCreateIcon();
+        } else {
+            switch (createStatus) {
+            case SUCCESS: {
+                return "subsystems/inventory/CreateChild_success_16.png";
+            }
+            case IN_PROGRESS: {
+                return getChildCreateIcon();
+            }
+            default: {
+                // all others will use the failure icon
+                return "subsystems/inventory/CreateChild_failed_16.png";
+            }
+            }
+        }
+    }
+
+    public static String getChildDeleteIcon() {
+        return "subsystems/inventory/DeleteChild_16.png";
+    }
+
+    public static String getChildDeleteIcon(DeleteResourceStatus deleteStatus) {
+        if (deleteStatus == null) {
+            return getChildDeleteIcon();
+        } else {
+            switch (deleteStatus) {
+            case SUCCESS: {
+                return "subsystems/inventory/DeleteChild_success_16.png";
+            }
+            case IN_PROGRESS: {
+                return getChildDeleteIcon();
+            }
+            default: {
+                // all others will use the failure icon
+                return "subsystems/inventory/DeleteChild_failed_16.png";
+            }
+            }
+        }
     }
 }

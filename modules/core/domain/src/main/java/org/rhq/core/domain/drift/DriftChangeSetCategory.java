@@ -23,12 +23,27 @@
 package org.rhq.core.domain.drift;
 
 /**
- * Type of change set report. 
+ * Type of change set report. There are two types of change sets, coverage and drift. A
+ * coverage change set is in effect a snapshot of the files that are being monitored for
+ * drift detection. A drift change set on the hand, represents a delta between one or more
+ * files on disk and their versions in the previous change set.
+ * <p/>
+ * A DriftChangeSetCategory has a single representation which is suitable for persisting
+ * in a database.
  *
  * @author Jay Shaughnesssy
  */
 public enum DriftChangeSetCategory {
-    COVERAGE("C"), // Reports only on files being covered by a drift configuration.
+    /**
+     * A coverage change set is a snapshot of the files that are being monitored for drift
+     * detection.
+     */
+    COVERAGE("C"), // Reports only on files being covered by a drift definition.
+
+    /**
+     * A drift change set represents a change between one or more files and their versions
+     * in the previous change set.
+     */
     DRIFT("D"); // Reports on actual drift.
 
     private final String code;
@@ -37,10 +52,18 @@ public enum DriftChangeSetCategory {
         this.code = code;
     }
 
+    /** @return The single character code */
     public String code() {
         return code;
     }
 
+    /**
+     * Parses the single character code into a DriftChangeSetCategory object.
+     *
+     * @param code A single character code
+     * @return The corresponding DriftChangeSetCategory
+     * @throws IllegalArgumentException if the code is not recognized
+     */
     public static DriftChangeSetCategory fromCode(String code) {
         for (DriftChangeSetCategory type : DriftChangeSetCategory.values()) {
             if (type.code.equals(code)) {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,11 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
+
 /**
- * Category is assigned with the following preference assuming multiple categories can be satisfied with the available context information:
+ * Category is assigned with the following preference assuming multiple categories can be satisfied with the available
+ * context information:
  * <pre>
  * ResourceGroup
  * AutoGroup
@@ -41,7 +44,7 @@ public class EntityContext implements Serializable {
         Resource, // 
         ResourceTemplate, //
         ResourceGroup, // 
-        AutoGroup, //
+        AutoGroup, // TODO: Deprecated, used in portal war
         SubsystemView;
     }
 
@@ -52,7 +55,31 @@ public class EntityContext implements Serializable {
     public int parentResourceId;
     public int resourceTypeId;
 
+    // further decoration available for the ResourceGroup context      
+    private boolean isAutoCluster = false;
+    private boolean isAutoGroup = false;
+
     public EntityContext() {
+    }
+
+    public boolean isResource() {
+        return Type.Resource == type;
+    }
+
+    public boolean isResourceGroup() {
+        return Type.ResourceGroup == type;
+    }
+
+    public boolean isAutoCluster() {
+        return Type.ResourceGroup == type && isAutoCluster;
+    }
+
+    public boolean isAutoGroup() {
+        return Type.ResourceGroup == type && isAutoGroup;
+    }
+
+    public boolean isSubsystemView() {
+        return Type.SubsystemView == type;
     }
 
     public Type getType() {
@@ -109,6 +136,27 @@ public class EntityContext implements Serializable {
         return new EntityContext(null, groupId, null, null);
     }
 
+    public static EntityContext forGroup(int groupId, boolean isAutoCluster, boolean isAutoGroup) {
+        EntityContext context = new EntityContext(null, groupId, null, null);
+        context.isAutoCluster = isAutoCluster;
+        context.isAutoGroup = isAutoGroup;
+        return context;
+    }
+
+    public static EntityContext forGroup(ResourceGroup group) {
+        EntityContext context = new EntityContext(null, group.getId(), null, null);
+        context.isAutoCluster = group.getClusterResourceGroup() != null;
+        context.isAutoGroup = group.getSubject() != null;
+        
+        if (context.isAutoGroup) {
+            context.parentResourceId = group.getAutoGroupParentResource().getId();
+            context.resourceTypeId = group.getResourceType().getId();
+        }
+        
+        return context;
+    }
+    
+    // TODO: deprecated
     public static EntityContext forAutoGroup(int parentResourceId, int resourceTypeId) {
         return new EntityContext(null, null, parentResourceId, resourceTypeId);
     }

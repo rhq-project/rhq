@@ -18,19 +18,35 @@
  */
 package org.rhq.modules.integrationTests.jbossas7plugin;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.util.ValidationEventCollector;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
+import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
+import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
+import org.rhq.core.clientapi.descriptor.DescriptorPackages;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ASUploadConnection;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
@@ -82,8 +98,7 @@ public abstract class AbstractIntegrationTest {
 
     Operation addDeployment(String deploymentName,String bytes_value)
     {
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", deploymentName));
+        Address deploymentsAddress = new Address("deployment", deploymentName);
         Operation op = new Operation("add",deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -95,4 +110,69 @@ public abstract class AbstractIntegrationTest {
 
         return op;
     }
+
+
+    private static final String DESCRIPTOR_FILENAME = "rhq-plugin.xml";
+    private Log log = LogFactory.getLog(getClass());
+    private PluginDescriptor pluginDescriptor;
+
+
+    void loadPluginDescriptor() throws Exception {
+        try {
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            URL descriptorUrl = classLoader.getResource("META-INF" + File.separator + DESCRIPTOR_FILENAME);
+            log.info("Loading plugin descriptor at: " + descriptorUrl);
+
+            JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
+
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            ValidationEventCollector vec = new ValidationEventCollector();
+            unmarshaller.setEventHandler(vec);
+            pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorUrl.openStream());
+        } catch (Throwable t) {
+            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
+            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    protected ConfigurationDefinition loadServerDescriptor(String serverName) throws InvalidPluginDescriptorException {
+        List<ServerDescriptor> servers = pluginDescriptor.getServers();
+
+        ServerDescriptor serverDescriptor = findServer(serverName, servers);
+        assert serverDescriptor != null : "Server descriptor not found in test plugin descriptor";
+
+        return ConfigurationMetadataParser.parse("null", serverDescriptor.getResourceConfiguration());
+    }
+
+    protected ConfigurationDefinition loadServiceDescriptor(String serviceName) throws InvalidPluginDescriptorException {
+        List<ServiceDescriptor> services = pluginDescriptor.getServices();
+
+        ServiceDescriptor serviceDescriptor = findService(serviceName, services);
+        assert serviceDescriptor != null : "Service descriptor not found in plugin descriptor";
+
+        return ConfigurationMetadataParser.parse("null", serviceDescriptor.getResourceConfiguration());
+    }
+
+    private ServerDescriptor findServer(String name, List<ServerDescriptor> servers) {
+        for (ServerDescriptor server : servers) {
+            if (server.getName().equals(name)) {
+                return server;
+            }
+        }
+
+        return null;
+    }
+
+    private ServiceDescriptor findService(String name, List<ServiceDescriptor> services) {
+        for (ServiceDescriptor service : services) {
+            if (service.getName().equals(name)) {
+                return service;
+            }
+        }
+
+        return null;
+    }
+
 }

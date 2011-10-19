@@ -21,6 +21,7 @@ package org.rhq.plugins.agent;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -29,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.util.SnapshotReport;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Performs some slight customizations of the snapshot report utility such as taking a snapshot of the live
@@ -82,11 +84,12 @@ public class AgentSnapshotReport extends SnapshotReport {
         try {
             File configDir = new File(this.agentInstallDir, "conf");
             File liveConfigFile = new File(configDir, "live-agent-configuration.properties");
-            FileOutputStream fos = new FileOutputStream(liveConfigFile);
+            OutputStream fos = null;
             try {
-                this.agentConfiguration.store(new BufferedOutputStream(fos), null);
+                fos = new BufferedOutputStream(new FileOutputStream(liveConfigFile));
+                this.agentConfiguration.store(fos, null);
             } finally {
-                fos.close();
+                StreamUtil.safeClose(fos);
             }
             return liveConfigFile;
         } catch (Exception e) {

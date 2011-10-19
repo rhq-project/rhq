@@ -46,7 +46,8 @@ import org.rhq.plugins.iis.util.Win32ServiceControlDelegate;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class IISServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
+public class IISServerComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet,
+    OperationFacet {
 
     private static final String WINDOWS_SERVICE_NAME = "W3SVC";
     private static final long SERVICE_CONTROL_TIMEOUT = 30000L;

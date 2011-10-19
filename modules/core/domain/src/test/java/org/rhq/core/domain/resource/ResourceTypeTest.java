@@ -86,10 +86,10 @@ public class ResourceTypeTest extends UnitilsTestNG {
 
     @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     @SuppressWarnings("unchecked")
-    public void findDriftConfigurationTemplates() {
+    public void findDriftDefinitionTemplates() {
         ResourceType type = entityMgr.find(ResourceType.class, -8);
 
-        assertEquals(type.getDriftConfigurationTemplates().size(), 2);
+        assertEquals(type.getDriftDefinitionTemplates().size(), 2);
     }
 
     void assertDeletedTypesIgnored(List<ResourceType> types) {

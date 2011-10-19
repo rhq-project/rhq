@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,14 +28,13 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -63,8 +62,8 @@ public class PluginConfigurationHistoryDataSource extends
     }
 
     @Override
-    protected String getGroupConfigurationUpdateHistoryLink(Integer groupId, Number value) {
-        return LinkManager.getGroupPluginConfigurationUpdateHistoryLink(groupId, value.intValue());
+    protected String getGroupConfigurationUpdateHistoryLink(Integer groupId, Number value) {        
+        return LinkManager.getGroupPluginConfigurationUpdateHistoryLink(EntityContext.forGroup(groupId), value.intValue());
     }
 
     @Override
@@ -156,20 +155,22 @@ public class PluginConfigurationHistoryDataSource extends
     }
 
     @Override
+    protected PluginConfigurationUpdateCriteria createFetchCriteria() {
+        return new PluginConfigurationUpdateCriteria();
+    }
+
+    @Override
     protected PluginConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
-        PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
-        criteria.fetchConfiguration(true);
+        PluginConfigurationUpdateCriteria criteria = super.getFetchCriteria(request);
+
         criteria.fetchResource(true);
         criteria.fetchGroupConfigurationUpdate(true);
 
-        PageControl pc = getPageControl(request);
-        pc.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
-        criteria.setPageControl(pc);
-
-        final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
+        final Integer resourceId = getFilter(request, CriteriaField.RESOURCE_ID, Integer.class);
         if (resourceId != null) {
             criteria.addFilterResourceIds(resourceId);
         }
         return criteria;
     }
+
 }

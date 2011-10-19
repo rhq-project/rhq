@@ -37,10 +37,10 @@ public class GwtRelativeDurationConverter {
         int dayOfYearEvent = Integer.parseInt(dayFormatter.format(new Date(eventMillis)));
         String result = null;
         //add additional check to fix when dayOfYear and dayOfYearToday is same but month apart.
-        if ((dayOfYearEvent == dayOfYearToday) & ((now - eventMillis) < MILLIS_IN_DAY)) {
+        if ((dayOfYearEvent == dayOfYearToday) && ((now - eventMillis) < MILLIS_IN_DAY)) {
             // <time>
             result = formatter.format(new Date(eventMillis));
-        } else if ((dayOfYearEvent == dayOfYearToday - 1) & ((now - eventMillis) < MILLIS_IN_DAY * 28)) {
+        } else if ((dayOfYearEvent == dayOfYearToday - 1) && ((now - eventMillis) < MILLIS_IN_DAY * 28)) {
             // "yesterday" <time>
             result = MSG.common_label_yesterday() + ", " + formatter.format(new Date(eventMillis));
         } else {

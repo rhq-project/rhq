@@ -101,10 +101,10 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
-import org.rhq.enterprise.server.util.HibernateDetachUtility.SerializationType;
 
 /**
  * Manages the creation and usage of bundles.
@@ -547,6 +547,23 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info);
 
         return bundleVersion;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
+
+        File tmpFile = File.createTempFile("bundleDistroBits", ".zip");
+        try {
+            StreamUtil.copy(new ByteArrayInputStream(fileBytes), new FileOutputStream(tmpFile));
+            BundleVersion bundleVersion = createBundleVersionViaFile(subject, tmpFile);
+            return bundleVersion;
+        } finally {
+            if (tmpFile != null) {
+                tmpFile.delete();
+            }
+        }
     }
 
     @Override

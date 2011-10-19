@@ -26,6 +26,7 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
@@ -67,7 +68,7 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(this.group.getId(), null);
+        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -139,7 +140,7 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
                                         resourceId, label, configuration);
                                     if (configuration == null || configuration.getProperties().isEmpty()) {
                                         throw new RuntimeException(
-                                            "One or more null or empty member connection settings was returned by the Server.");
+                                            "The server did not return the configuration for one or more member resources.");
                                     }
                                     memberConfigurations.add(memberConfiguration);
                                 }

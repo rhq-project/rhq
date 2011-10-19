@@ -55,7 +55,8 @@ public class IndicatorChartsUIBean {
     List<MetricDisplaySummary> data = new ArrayList<MetricDisplaySummary>();
     List<String> views;
     String view;
-
+    String groupType;
+    
     public EntityContext getContext() {
         return context;
     }
@@ -72,6 +73,10 @@ public class IndicatorChartsUIBean {
         return view;
     }
 
+    public String getGroupType() {
+        return groupType;
+    }
+    
     public IndicatorChartsUIBean() {
         log.debug("Creating " + IndicatorChartsUIBean.class.getSimpleName());
         WebUser user = EnterpriseFacesContextUtility.getWebUser();
@@ -81,16 +86,26 @@ public class IndicatorChartsUIBean {
             HttpServletRequest request = FacesContextUtility.getRequest();
 
             context = WebUtility.getEntityContext(request);
+            groupType = WebUtility.getOptionalRequestParameter(request, "groupType", "group");
             view = viewManager.getSelectedView(subject, context);
             views = viewManager.getViewNames(subject, context);
 
             if (context.type == EntityContext.Type.Resource) {
                 data = chartsManager.getMetricDisplaySummariesForResource(subject, context.resourceId, view);
             } else if (context.type == EntityContext.Type.ResourceGroup) {
+                //when invoked from the GWT GUI, this is where we read the data for autogroups as well.
+                //the data is correct, because the autogroups are backed by a "real" group now (as opposed to pre RHQ 3)
+                //For the UI to correctly generate the links to various subsystems, we now employ the "groupType" property
+                //that is being passed from the GWT GUI (namely ResourceGroupDetailView#updateMonitoringTab()), where it is 
+                //known what type of group we're dealing with.
+                //This is so that we don't have to read the group from the database here yet again to determine
+                //its type. 
+                //Yes, this is slightly hacky and error-prone but here's hoping the JSF UI won't survive much longer. 
                 data = chartsManager.getMetricDisplaySummariesForCompatibleGroup(subject, context.groupId, view);
             } else if (context.type == EntityContext.Type.AutoGroup) {
                 data = chartsManager.getMetricDisplaySummariesForAutoGroup(subject, context.parentResourceId,
                     context.resourceTypeId, view);
+                groupType = "auto";
             }
 
             // re-persist just in case we created the list for the first time

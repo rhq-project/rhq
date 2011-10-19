@@ -65,7 +65,7 @@ public class TestHelper {
 
 	public static boolean compareValues(String value, String type, Object obj) {
 
-		if (value == null & obj == null)
+		if (value == null && obj == null)
 			return true;
 
 		if (type.equals("int")) {

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,11 +38,11 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -61,8 +62,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria> {
+public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftCriteria> {
 
+    public static final String CATEGORY_ICON_NEW = ImageManager.getDriftCategoryIcon(null);
     public static final String CATEGORY_ICON_ADD = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED);
     public static final String CATEGORY_ICON_CHANGE = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_CHANGED);
     public static final String CATEGORY_ICON_REMOVE = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_REMOVED);
@@ -70,14 +72,18 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     public static final String ATTR_ID = "id";
     public static final String ATTR_CTIME = "ctime";
     public static final String ATTR_CATEGORY = "category";
-    public static final String ATTR_PATH = "path";
     public static final String ATTR_CHANGESET_VERSION = "changeSetVersion";
+    public static final String ATTR_CHANGESET_DEF_NAME = "changSetDef";
+    public static final String ATTR_PATH = "path";
 
     public static final String FILTER_CATEGORIES = "categories";
+    public static final String FILTER_DEFINITION = "definition";
+    public static final String FILTER_PATH = "path";
+    public static final String FILTER_SNAPSHOT = "snapshot";
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
-    private EntityContext entityContext;
+    protected EntityContext entityContext;
 
     public DriftDataSource() {
         this(EntityContext.forSubsystemView());
@@ -103,8 +109,10 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CTIME));
         fields.add(ctimeField);
 
-        ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG
-            .view_drift_table_changeSet());
+        ListGridField changeSetDefField = new ListGridField(ATTR_CHANGESET_DEF_NAME, MSG.common_title_definition());
+        fields.add(changeSetDefField);
+
+        ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG.view_drift_table_snapshot());
         fields.add(changeSetVersionField);
 
         ListGridField categoryField = new ListGridField(ATTR_CATEGORY, MSG.common_title_category());
@@ -121,6 +129,8 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
                     return MSG.view_drift_category_fileChanged();
                 } else if (CATEGORY_ICON_REMOVE.equals(cat)) {
                     return MSG.view_drift_category_fileRemoved();
+                } else if (CATEGORY_ICON_NEW.equals(cat)) {
+                    return MSG.view_drift_category_fileNew();
                 } else {
                     return ""; // will never get here
                 }
@@ -169,7 +179,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final DriftCriteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final GenericDriftCriteria criteria) {
         if (criteria == null) {
             // the user selected no categories in the filter - it makes sense from the UI perspective to show 0 rows
             response.setTotalRows(0);
@@ -185,6 +195,20 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
             }
 
             public void onSuccess(PageList<DriftComposite> result) {
+                // only get the desired def names (substring match)
+                // note - this does not alter the PageList row count, which, I think, makes this
+                //        ok without messing up paging.
+                String defFilter = getFilter(request, FILTER_DEFINITION, String.class);
+                if (null != defFilter && !defFilter.isEmpty()) {
+                    defFilter = defFilter.toLowerCase();
+                    for (Iterator<DriftComposite> i = result.getValues().iterator(); i.hasNext();) {
+                        DriftComposite composite = i.next();
+                        if (!composite.getDriftDefinitionName().toLowerCase().contains(defFilter)) {
+                            i.remove();
+                        }
+                    }
+                }
+
                 dataRetrieved(result, response, request);
             }
         });
@@ -256,16 +280,49 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     }
 
     @Override
-    protected DriftCriteria getFetchCriteria(DSRequest request) {
+    protected GenericDriftCriteria getFetchCriteria(DSRequest request) {
         DriftCategory[] categoriesFilter = getArrayFilter(request, FILTER_CATEGORIES, DriftCategory.class);
 
         if (categoriesFilter == null || categoriesFilter.length == 0) {
-            return null; // user didn't select any priorities - return null to indicate no data should be displayed
+            return null; // user didn't select any categories - return null to indicate no data should be displayed
         }
 
-        DriftJPACriteria criteria = new DriftJPACriteria();
+        String changeSetFilter = getFilter(request, FILTER_SNAPSHOT, String.class);
+        String pathFilter = getFilter(request, FILTER_PATH, String.class);
+
+        // NOTE! This criteria does not allow for query-time definition name filtering. That filter is applied lazily
+        // to the query results.
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        // grab the change set for the drift
         criteria.fetchChangeSet(true);
+
+        // only get the desired drift categories
         criteria.addFilterCategories(categoriesFilter);
+
+        // only get the desired changeset version (substring match)
+        if (null != changeSetFilter && !changeSetFilter.isEmpty()) {
+            try {
+                Integer version = Integer.valueOf(changeSetFilter);
+                criteria.addFilterChangeSetStartVersion(version);
+                criteria.addFilterChangeSetEndVersion(version);
+            } catch (Exception e) {
+                // ignore the specified filter, it's an invalid integer
+                // do not fetch tracking entries from the coverage changeset
+                criteria.addFilterChangeSetStartVersion(1);
+            }
+        } else {
+            // do not fetch tracking entries from the coverage changeset 
+            criteria.addFilterChangeSetStartVersion(1);
+        }
+
+        // only get the desired paths (substring match)
+        if (null != pathFilter && !pathFilter.isEmpty()) {
+            criteria.addFilterPath(pathFilter);
+        }
+
+        // do not get planned drifts
+        criteria.addFilterDriftHandlingModes(DriftHandlingMode.normal);
 
         switch (entityContext.getType()) {
         case Resource:
@@ -301,11 +358,19 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
 
     public static ListGridRecord convert(DriftComposite from) {
         ListGridRecord record = new ListGridRecord();
-        Drift drift = from.getDrift();
-        record.setAttribute(ATTR_ID, Integer.valueOf(drift.getId()));
+        Drift<?, ?> drift = from.getDrift();
+        record.setAttribute(ATTR_ID, drift.getId());
         record.setAttribute(ATTR_CTIME, new Date(drift.getCtime()));
-        record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(drift.getCategory()));
+        switch (drift.getChangeSet().getCategory()) {
+        case COVERAGE:
+            record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(null));
+            break;
+        case DRIFT:
+            record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(drift.getCategory()));
+            break;
+        }
         record.setAttribute(ATTR_PATH, drift.getPath());
+        record.setAttribute(ATTR_CHANGESET_DEF_NAME, from.getDriftDefinitionName());
         record.setAttribute(ATTR_CHANGESET_VERSION, drift.getChangeSet().getVersion());
 
         // for ancestry handling     

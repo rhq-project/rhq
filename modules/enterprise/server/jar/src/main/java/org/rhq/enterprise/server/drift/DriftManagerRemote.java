@@ -19,31 +19,66 @@
 package org.rhq.enterprise.server.drift;
 
 import javax.ejb.Remote;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.enterprise.server.system.ServerVersion;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.util.PageList;
 
-@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
-@WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface DriftManagerRemote {
 
+    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) throws Exception;
+
     /**
-     * One time on-demand request to detect drift on the specified entities, using the supplied config.
-     * 
-     * @param entityContext
-     * @param driftConfig
-     * @throws RuntimeException
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The DriftChangeSets matching the criteria
      */
-    @WebMethod
-    void detectDrift(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "entityContext") EntityContext entityContext, //
-        @WebParam(name = "driftConfiguration") DriftConfiguration driftConfiguration) throws Exception;
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria)
+        throws Exception;
+
+    /**
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The Drifts matching the criteria
+     */
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) throws Exception;
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(String hash);
+
+    /**
+     * Generates a unified diff of the two files references by drift. In the case of a
+     * modified file, a Drift object references the current and previous versions of the
+     * file. This method generates a diff of the two versions.
+     *
+     * @param drift Specifies the two files that will be compared
+     * @return A report containing a unified diff of the two versions of the file
+     * referenced by drift
+     */
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
+
+    /**
+     * Generates a unified diff of the two files referenced by drift1 and drift2. More
+     * specifically, the files referenced by {@link org.rhq.core.domain.drift.Drift#getNewDriftFile()}
+     * are compared.
+     *
+     * @param drift1 References the first file to be compared
+     * @param drift2 References the second file to be compared
+     * @return A report containing a unified diff of the two files compared
+     */
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2);
+
 }

@@ -219,7 +219,7 @@ public class ClientMain {
      * @return flag indicating status of realtime check.
      */
     public boolean loggedIn() {
-        return subject != null && remoteClient != null & remoteClient.isLoggedIn();
+        return subject != null && remoteClient != null && remoteClient.isLoggedIn();
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
@@ -39,10 +40,11 @@ import org.rhq.core.system.ProcessInfo;
  * in the area of processes and host.xml
  * @author Heiko W. Rupp
  */
-public abstract class AbstractBaseDiscovery<T extends ResourceComponent> implements ResourceDiscoveryComponent<T> {
+public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T> {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
     static final int DEFAULT_MGMT_PORT = 9990;
+    private static final String JBOSS_AS_PREFIX = "jboss-as-";
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
 
@@ -60,8 +62,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             InputStream is = new FileInputStream(hostXmlFile);
-            hostXml = builder.parse(is);
-            is.close();
+            try {
+                hostXml = builder.parse(is);
+            } finally {
+                is.close();
+            }
         } catch (Exception e) {
             e.printStackTrace();  // TODO: Customise this generated block
         }
@@ -126,8 +131,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                 hp.port = port;
 
                 String nIf = mgmtInterface.getAttribute("interface");
-                String hostName = getInterface(nIf);
-                hp.host = hostName;
+                hp.host = getInterface(nIf);
                 return hp;
             }
         }
@@ -173,8 +177,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                         if (nodeName.equals("any-ipv4-address"))
                             return "0.0.0.0";
 
-                        String x = ((Element) nl.item(j)).getAttribute("value");
-                        return x;
+                        return ((Element) nl.item(j)).getAttribute("value");
 
                         // TODO check for <any> and so on
                     }
@@ -243,16 +246,27 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
             home = getHomeDirFromCommandLine(processInfo.getCommandLine());
         StringBuilder builder = new StringBuilder(home);
         if (isDomain)
-            builder.append("/domain");
+            builder.append(File.separator).append(AS7Mode.DOMAIN.getBaseDir());
         else
-            builder.append("/standalone");
-        builder.append("/configuration");
+            builder.append(File.separator).append(AS7Mode.STANDALONE.getBaseDir());
+        builder.append(File.separator).append("configuration");
         if (isDomain)
-            builder.append("/host.xml");
+            builder.append(File.separator).append(AS7Mode.HOST.getDefaultXmlFile());
         else
-            builder.append("/standalone.xml");
+            builder.append(File.separator).append(AS7Mode.STANDALONE.getDefaultXmlFile());
         return builder.toString();
 
+    }
+
+    protected String determineServerVersionFromHomeDir(String homeDir) {
+        String version;
+        String tmp = homeDir.substring(homeDir.lastIndexOf("/")+1);
+        if (tmp.startsWith("jboss-as-")) {
+            version = tmp.substring(JBOSS_AS_PREFIX.length());
+        } else {
+            version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
+        }
+        return version;
     }
 
     /**

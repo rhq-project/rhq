@@ -110,8 +110,15 @@ public class CliSender extends AlertSender<CliComponent> {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
         ScriptEngine engine = null;
+        Subject subjectWithSession = null;
+        final SessionManager sessionManager = SessionManager.getInstance();
+
         try {
             final Config config = getConfig();
+
+            // simulate the login by getting a session ID
+            config.subject = sessionManager.put(config.subject, pluginComponent.getScriptTimeout() * 1000);
+            subjectWithSession = config.subject;
 
             result.setSummary(createSummary(config, SUMMARY_TEMPLATE));
 
@@ -133,11 +140,7 @@ public class CliSender extends AlertSender<CliComponent> {
             Thread scriptRunner = new Thread(new Runnable() {
                 public void run() {
                     try {
-                        //fake the login
-                        config.subject = SessionManager.getInstance().put(config.subject,
-                            pluginComponent.getScriptTimeout() * 1000);
                         sandbox.eval(rdr);
-                        SessionManager.getInstance().invalidate(config.subject.getSessionId());
                     } catch (ScriptException e) {
                         exceptionHolder.scriptException = e;
                     }
@@ -187,6 +190,9 @@ public class CliSender extends AlertSender<CliComponent> {
             result.addFailureMessage(ThrowableUtil.getAllMessages(e, true, remainingResultSize(result)));
             return result;
         } finally {
+            if (subjectWithSession != null) {
+                sessionManager.invalidate(subjectWithSession.getSessionId());
+            }
             if (engine != null) {
                 returnEngine(engine);
             }

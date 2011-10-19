@@ -33,11 +33,15 @@ public enum ResourceGroupDataSourceField {
 
     DESCRIPTION("description", CoreGUI.getMessages().common_title_description()),
 
-    TYPE("typeName", CoreGUI.getMessages().common_title_type()),
+    TYPE("resourceTypeName", CoreGUI.getMessages().common_title_type()),
 
     PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),
 
-    CATEGORY("groupCategory", CoreGUI.getMessages().common_title_category());
+    CATEGORY("groupCategory", CoreGUI.getMessages().common_title_category()),
+
+    AVAIL_CHILDREN("availabilityChildren", CoreGUI.getMessages().view_inventory_groups_children()),
+
+    AVAIL_DESCENDANTS("availabilityDescendants", CoreGUI.getMessages().view_inventory_groups_descendants());
 
     /**
      * Corresponds to a property name of Resource

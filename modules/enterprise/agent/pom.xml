@@ -188,6 +188,9 @@ Build-Number=${buildNumber}
                    <property name="jaxb-impl.version" value="${jaxb-impl.version}" />
                    <property name="jline.version" value="${jline.version}" />
                    <property name="augeas.version" value="${augeas.version}" />
+                   <property name="augeas.classifier" value="${augeas.classifier}"/>
+                   <property name="augeas.zip.location" value="${augeas.zip.location}"/>
+                   <property name="augeas.zip.mask" value="${augeas.zip.mask}"/>
                    <property name="augeas.zip.version" value="${augeas.zip.version}" />
                 </ant>
               </tasks>
@@ -324,6 +327,41 @@ Build-Number=${buildNumber}
           </plugins>
        </build>
      </profile>
+     <profile>
+      <id>install-and-deploy-zip</id>
+      <activation>
+        <property>
+          <name>brew</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>attach-installed-file-for-deployment</id>
+                <phase>install</phase>
+                <goals>
+                  <goal>attach-artifact</goal>
+                </goals>
+                <configuration>
+                  <artifacts> 
+                    <artifact>
+                      <type>zip</type>
+                      <file>${project.build.directory}/${project.artifactId}-${project.version}.zip</file>
+                    </artifact>
+                  </artifacts> 
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+     
  </profiles>
 
   <repositories>

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -34,6 +33,7 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -85,11 +85,8 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
         CONFIG_INCLUDE.add(Constant.RESULT_COUNT);
     }
 
-    public GroupPkgHistoryPortlet(String locatorId) {
+    public GroupPkgHistoryPortlet(String locatorId, int groupId) {
         super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        int groupId = AbstractActivityView.groupIdLookup(currentPage);
         this.groupId = groupId;
     }
 
@@ -137,8 +134,13 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new GroupPkgHistoryPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new GroupPkgHistoryPortlet(locatorId, context.getGroupId());
         }
     }
 
@@ -232,8 +234,8 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
                         StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
                             "subsystems/content/Package_16.png", null);
                         String title = history.getPackageVersion().getFileName() + ":";
-                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
-                            + "&selectedHistoryId=" + history.getId();
+                        //String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
+                        //   + "&selectedHistoryId=" + history.getId();
                         //spinder 4/27/11: diabling links as they point into portal.war content pages
                         //                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
                         StaticTextItem link = AbstractActivityView.newTextItem(title);

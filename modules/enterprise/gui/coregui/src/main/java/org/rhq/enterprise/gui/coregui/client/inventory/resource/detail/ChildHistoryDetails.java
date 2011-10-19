@@ -126,7 +126,7 @@ public class ChildHistoryDetails extends LocatableVLayout {
             createdResourceType.setValue(MSG.common_status_unknown());
         }
 
-        TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_title_error());
+        TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_severity_error());
         errorMessage.setValue(history.getErrorMessage());
         errorMessage.setTitleOrientation(TitleOrientation.TOP);
         errorMessage.setColSpan(2);
@@ -202,7 +202,7 @@ public class ChildHistoryDetails extends LocatableVLayout {
             deletedResourceType.setValue(MSG.common_status_unknown());
         }
 
-        TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_title_error());
+        TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_severity_error());
         errorMessage.setValue(history.getErrorMessage());
         errorMessage.setTitleOrientation(TitleOrientation.TOP);
         errorMessage.setColSpan(2);

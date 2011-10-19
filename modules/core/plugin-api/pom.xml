@@ -75,6 +75,47 @@
    </dependencies>
 
    <profiles>
+
+      <profile>
+         <id>javadoc</id>
+         <activation>
+            <property>
+               <name>javadoc.outputDirectory</name>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+
+                  <executions>
+                     <execution>
+                        <id>agent-plugin-api</id>
+                        <phase>compile</phase>
+                        <goals>
+                           <goal>javadoc</goal>
+                        </goals>
+                        <configuration>
+                           <doctitle>RHQ ${project.version} Agent Plugin API</doctitle>
+                           <windowtitle>RHQ ${project.version} Agent Plugin API</windowtitle>
+                           <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
+                           <destDir>plugin-api</destDir>
+                           <author>false</author>
+                           <breakiterator>true</breakiterator>
+                           <links>
+                              <link>../domain/</link>
+                              <link>../system/</link>
+                           </links>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <profile>
         <id>cobertura</id>
         <activation>

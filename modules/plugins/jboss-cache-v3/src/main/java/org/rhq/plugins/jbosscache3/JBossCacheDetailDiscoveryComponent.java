@@ -45,7 +45,7 @@ import org.rhq.plugins.jbossas5.ProfileServiceComponent;
  * 
  */
 public class JBossCacheDetailDiscoveryComponent implements
-		ResourceDiscoveryComponent<ProfileServiceComponent> {
+		ResourceDiscoveryComponent<ProfileServiceComponent<?>> {
     public static String CACHE_JMX_NAME = "jmx-resource";
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -53,7 +53,7 @@ public class JBossCacheDetailDiscoveryComponent implements
 	private ProfileServiceComponent parentComponent;
 
 	public Set<DiscoveredResourceDetails> discoverResources(
-			ResourceDiscoveryContext<ProfileServiceComponent> context)
+			ResourceDiscoveryContext<ProfileServiceComponent<?>> context)
 			throws InvalidPluginConfigurationException, Exception {
 
 		ResourceType resourceType = context.getResourceType();

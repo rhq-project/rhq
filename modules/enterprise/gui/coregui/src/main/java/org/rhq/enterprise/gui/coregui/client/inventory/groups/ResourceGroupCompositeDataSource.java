@@ -18,12 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
-
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -47,6 +41,9 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.*;
 
 /**
  * @author Joseph Marques
@@ -105,7 +102,12 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
+                    if (caught.getMessage().contains("SearchExpressionException")) {
+                        Message message = new Message("Invalid search expression.", Message.Severity.Error);
+                        CoreGUI.getMessageCenter().notify(message);
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
+                    }
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
@@ -139,15 +141,14 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         String nameAttrib = from.getAttribute(NAME.propertyName());
         String descriptionAttrib = from.getAttribute(DESCRIPTION.propertyName());
         String typeNameAttrib = from.getAttribute(TYPE.propertyName());
-        String pluginNameAttrib = from.getAttribute(PLUGIN.propertyName());
-        ResourceType rt = null;
 
         ResourceGroup rg = new ResourceGroup(nameAttrib);
         rg.setId(idAttrib);
         rg.setDescription(descriptionAttrib);
-        if (null != typeNameAttrib) {
-            rt = new ResourceType();
+        if (typeNameAttrib != null) {
+            ResourceType rt = new ResourceType();
             rt.setName(typeNameAttrib);
+            String pluginNameAttrib = from.getAttribute(PLUGIN.propertyName());
             rt.setPlugin(pluginNameAttrib);
             rg.setResourceType(rt);
         }
@@ -177,8 +178,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         record.setAttribute("implicitUp", String.valueOf(from.getImplicitUp()));
         record.setAttribute("implicitDown", String.valueOf(from.getImplicitDown()));
 
-        record.setAttribute("availabilityChildren", getExplicitFormatted(from));
-        record.setAttribute("availabilityDescendents", getImplicitFormatted(from));
+        record.setAttribute(AVAIL_CHILDREN.propertyName(), getExplicitFormatted(from));
+        record.setAttribute(AVAIL_DESCENDANTS.propertyName(), getImplicitFormatted(from));
 
         if (from.getResourceGroup().getResourceType() != null) {
             record.setAttribute("resourceType", from.getResourceGroup().getResourceType());

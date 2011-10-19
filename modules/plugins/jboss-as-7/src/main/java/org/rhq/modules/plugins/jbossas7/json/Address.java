@@ -19,9 +19,10 @@
 package org.rhq.modules.plugins.jbossas7.json;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * An address in AS7
@@ -29,30 +30,53 @@ import java.util.List;
  */
 public class Address {
 
+    /** List of individual path components */
     List<PROPERTY_VALUE> path;
+
+    /** Create an empty address */
     public Address() {
         path = new ArrayList<PROPERTY_VALUE>();
     }
 
+    /**
+     * Create an Address with an intial path element
+     * @param key key part of the path
+     * @param value value part of the path
+     */
     public Address(String key, String value) {
         this();
         add(key,value);
     }
 
+    /**
+     * Construct an Addres by cloning another
+     * @param other Address to clone
+     */
     public Address(Address other) {
         this();
         if (other!=null && other.path!=null)
             path.addAll(other.path);
     }
 
-    public Address(List<PROPERTY_VALUE> other) {
+    /**
+     * Construct an address from the passed list of path segments of property values. Should not be used
+     * outside the json package
+     * @param property_values list of values, each describing a key-value pair of a path
+     */
+    Address(List<PROPERTY_VALUE> property_values) {
         this();
-        if (other!=null)
-            path.addAll(other);
+        if (property_values!=null)
+            path.addAll(property_values);
     }
 
+    /**
+     * Construct an Address from a path in the form (key=value)?(,key=value)*
+     * @param path Path string to parse
+     */
     public Address(String path) {
         this();
+        if (path==null || path.isEmpty())
+            return;
         String[] components = path.split(",");
         for (String component : components) {
             String tmp = component.trim();
@@ -70,6 +94,11 @@ public class Address {
 
     }
 
+    /**
+     * Add a key value pair to the path
+     * @param key Key part of this path element
+     * @param value Value part of this path element
+     */
     public void add(String key, String value) {
         path.add(new PROPERTY_VALUE(key,value));
     }
@@ -93,5 +122,60 @@ public class Address {
 
         builder.append('}');
         return builder.toString();
+    }
+
+    /**
+     * Returns the Address as a string
+     * @return list of key value pairs for this path
+     */
+    @JsonIgnore
+    public String getPath() {
+        StringBuilder builder = new StringBuilder();
+        Iterator<PROPERTY_VALUE> iter = path.iterator();
+        while (iter.hasNext()) {
+            PROPERTY_VALUE val = iter.next();
+            builder.append(val.getKey()).append('=').append(val.getValue());
+            if (iter.hasNext())
+                builder.append(',');
+        }
+        return builder.toString();
+
+    }
+
+    /**
+     * Add a whole address to the given path
+     * @param address Other address
+     * @see #Address(Address)
+     */
+    public void add(Address address) {
+        if (address!=null && address.path!=null)
+            this.path.addAll(address.path);
+    }
+
+    /**
+     * Indicates if this Address has path elements
+     * @return true if the address has no path elements
+     */
+    @JsonIgnore
+    public boolean isEmpty() {
+        return path.isEmpty();
+    }
+
+    /**
+     * Returns the number of path elements of this address
+     * @return the number of path elements of this address
+     */
+    public int size() {
+        return path.size();
+    }
+
+    /**
+     * Returns the n'th path element of the address
+     * @param n Number of the wanted path element
+     * @return A string representation of the wanted element
+     */
+    public String get(int n) {
+        PROPERTY_VALUE property_value = path.get(n);
+        return property_value.getKey() + "=" + property_value.getValue();
     }
 }

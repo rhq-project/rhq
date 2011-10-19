@@ -40,12 +40,12 @@
       </bundle-target>
 '>
  <!ENTITY driftConfig '
-      <drift-configuration name="File System">
+      <drift-definition name="File System">
           <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/</value-name>
           </basedir>
-      </drift-configuration>
+      </drift-definition>
 '>
  <!ENTITY metrics '      
       <metric displayName="Hostname"

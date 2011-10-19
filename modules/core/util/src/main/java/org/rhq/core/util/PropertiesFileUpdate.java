@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.util;
 
 import java.io.BufferedReader;
@@ -78,10 +78,17 @@ public class PropertiesFileUpdate {
         // if the given property is new (doesn't exist in the file yet) just append it and return
         // if the property exists, update the value in place (ignore if the value isn't really changing)
         if (!existingProps.containsKey(key)) {
-            PrintStream ps = new PrintStream(new FileOutputStream(file, true), true, "8859_1");
-            ps.println(key + "=" + value);
-            ps.flush();
-            ps.close();
+            FileOutputStream fos = new FileOutputStream(file, true);
+            try {
+                PrintStream ps = new PrintStream(fos, true, "8859_1");
+                try {
+                    ps.println(key + "=" + value);
+                } finally {
+                    ps.close();
+                }
+            } finally {
+                fos.close();
+            }
         } else if (!value.equals(existingProps.getProperty(key))) {
             Properties newProp = new Properties();
             newProp.setProperty(key, value);
@@ -133,6 +140,7 @@ public class PropertiesFileUpdate {
                 out.println(line);
             } else {
                 String existingKey = line.substring(0, equalsSign);
+                existingKey = trimString(existingKey, false, true);
                 if (!propsToUpdate.containsKey(existingKey)) {
                     out.println(line); // property that is not being updated; leave it alone and write it out as-is
                 } else {
@@ -174,10 +182,32 @@ public class PropertiesFileUpdate {
 
         if (file.exists()) {
             FileInputStream is = new FileInputStream(file);
-            props.load(is);
-            is.close();
+            try {
+                props.load(is);
+            } finally {
+                is.close();
+            }
         }
 
         return props;
+    }
+
+    private String trimString(String str, boolean trimStart, boolean trimEnd) {
+        int start = 0;
+        int end = str.length();
+
+        if (trimStart) {
+            while ((start < end) && (str.charAt(start) == ' ')) {
+                start++;
+            }
+        }
+
+        if (trimEnd) {
+            while ((start < end) && (str.charAt(end - 1) == ' ')) {
+                end--;
+            }
+        }
+
+        return ((start > 0) || (end < str.length())) ? str.substring(start, end) : str;
     }
 }

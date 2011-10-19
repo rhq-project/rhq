@@ -42,7 +42,7 @@ import javax.persistence.Table;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries({
+@NamedQueries( {
     @NamedQuery(name = AlertConditionLog.QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID, //
     query = "SELECT acl " //
         + "    FROM AlertConditionLog AS acl " //
@@ -63,15 +63,16 @@ import javax.persistence.Table;
         + "                       FROM Alert a " //
         + "                       JOIN a.conditionLogs ac" // 
         + "                      WHERE a.id IN ( :alertIds ) )"),
+    // deletes condition logs via the alert def, not alerts, because not every condition log may not
+    // yet be associated with an alert. Also, avoids joining with the potentially large alert table
     @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCES, //
     query = "DELETE AlertConditionLog acl " //
-        + "   WHERE acl.alert.id IN ( SELECT alert.id " //
-        + "                             FROM AlertDefinition ad " //
-        + "                             JOIN ad.alerts alert " //
+        + "   WHERE acl.condition.id IN ( SELECT ac.id " //
+        + "                             FROM AlertCondition ac " //
+        + "                             JOIN ac.alertDefinition ad " //
         + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
-    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE,
-    query = "DELETE AlertConditionLog log "
-        + "  WHERE  log.alert.id IN (SELECT alert.id "
+    @NamedQuery(name = AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE, // 
+    query = "DELETE AlertConditionLog log " + "  WHERE  log.alert.id IN (SELECT alert.id "
         + "                          FROM   AlertDefinition alertDef "
         + "                          JOIN   alertDef.alerts alert "
         + "                          WHERE  alertDef.resourceType.id = :resourceTypeId)"),

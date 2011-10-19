@@ -22,10 +22,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.buttons;
 
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableStretchImgButton;
 
 /**
@@ -43,7 +43,7 @@ public class BackButton extends LocatableStretchImgButton {
         setTitle("<b>" + title + "</b>");
         addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                History.newItem((anchor.startsWith("#")) ? anchor.substring(1) : anchor);
+                CoreGUI.goToView(anchor);
             }
         });
         setAutoFit(true);

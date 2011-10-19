@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.tree.Tree;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ClusterKey;
@@ -33,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTreeView.ResourceGroupEnhancedTreeNode;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
 public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
@@ -41,7 +43,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
         super(locatorId);
     }
 
-    public void showContextMenu(ResourceGroupEnhancedTreeNode node) {
+    public void showContextMenu(final Tree tree, final ResourceGroupEnhancedTreeNode node) {
 
         if (node.isAutoClusterNode()) {
             final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
@@ -55,7 +57,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
                     @Override
                     public void onSuccess(ResourceGroup result) {
-                        showContextMenu(result);
+                        showContextMenu(tree, node, result);
                     }
                 });
 
@@ -72,7 +74,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
                     @Override
                     public void onSuccess(PageList<ResourceGroup> result) {
-                        showContextMenu(result.get(0));
+                        showContextMenu(tree, node, result.get(0));
                     }
                 });
         }

@@ -661,6 +661,13 @@ public class AgentConfiguration {
 
         long[] ret_params = isClientSenderCommandSpoolFileParamsValueValid(value);
 
+        // If the config was invalid, immediately fall back to our default just so we don't bomb out with a NPE later.
+        // We are guaranteed not to get a null returned if we pass in the hardcoded default params.
+        // The above method will have already logged a warning for us.
+        if (ret_params == null) {
+            ret_params = isClientSenderCommandSpoolFileParamsValueValid(AgentConfigurationConstants.DEFAULT_CLIENT_SENDER_COMMAND_SPOOL_FILE_PARAMS);
+        }
+
         return ret_params;
     }
 
@@ -1132,6 +1139,13 @@ public class AgentConfiguration {
             AgentConfigurationConstants.PLUGINS_MEASUREMENT_COLL_THREADPOOL_SIZE,
             AgentConfigurationConstants.DEFAULT_PLUGINS_MEASUREMENT_COLL_THREADPOOL_SIZE);
 
+        // get the drift settings
+        long drift_period = m_preferences.getLong(AgentConfigurationConstants.PLUGINS_DRIFT_DETECTION_PERIOD,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_DRIFT_DETECTION_PERIOD);
+        long drift_initial_delay = m_preferences.getLong(
+            AgentConfigurationConstants.PLUGINS_DRIFT_DETECTION_INITIAL_DELAY,
+            AgentConfigurationConstants.DEFAULT_PLUGINS_DRIFT_DETECTION_INITIAL_DELAY);
+
         // determine how many operation invoker threads should be in the threadpool that is used to execute operations
         int op_threadpool_size = m_preferences.getInt(
             AgentConfigurationConstants.PLUGINS_OPERATION_INVOKER_THREADPOOL_SIZE,
@@ -1210,6 +1224,8 @@ public class AgentConfiguration {
         config.setAvailabilityScanPeriod(avail_scan_period);
         config.setMeasurementCollectionThreadPoolSize(meas_threadpool_size);
         config.setMeasurementCollectionInitialDelay(meas_scan_initial_delay);
+        config.setDriftDetectionInitialDelay(drift_initial_delay);
+        config.setDriftDetectionPeriod(drift_period);
         config.setOperationInvokerThreadPoolSize(op_threadpool_size);
         config.setOperationInvocationTimeout(op_timeout);
         config.setContentDiscoveryThreadPoolSize(con_threadpool_size);
@@ -1228,7 +1244,6 @@ public class AgentConfiguration {
 
         return config;
     }
-
 
     /**
      * This returns the agent's security token that it needs to send with its commands to the server. If <code>

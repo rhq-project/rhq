@@ -33,6 +33,10 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
+/**
+ * @author Jay Shaughnessy
+ *
+ */
 public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
     // Initial Deployment, No Bundle Selected

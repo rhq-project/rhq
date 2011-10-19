@@ -100,7 +100,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                         try {
                             window.hide();
                         } catch (Throwable e) {
-                            Log.warn("Cannot destroy message center", e);
+                            Log.warn("Cannot hide message center", e);
                         }
                     }
                 });
@@ -127,11 +127,18 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         }
     }
 
+    public void reset() {
+        if (window != null) {
+            window.hide();
+        }
+        refresh();
+    }
+
     @Override
     protected void configureTable() {
         getListGrid().setEmptyMessage(MSG.view_messageCenter_noRecentMessages());
 
-        setTableTitle(MSG.view_messageCenter_lastNMessages(String.valueOf(CoreGUI.getMessageCenter().getMaxMessages())));
+        updateTitleCanvas(MSG.view_messageCenter_lastNMessages(String.valueOf(CoreGUI.getMessageCenter().getMaxMessages())));
 
         ListGridField severityField = new ListGridField(FIELD_SEVERITY);
         severityField.setType(ListGridFieldType.ICON);
@@ -252,7 +259,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                     try {
                         Integer maxSize = (Integer) actionValue;
                         CoreGUI.getMessageCenter().setMaxMessages(maxSize.intValue());
-                        setTableTitle(MSG.view_messageCenter_lastNMessages(maxSize.toString()));
+                        updateTitleCanvas(MSG.view_messageCenter_lastNMessages(maxSize.toString()));
                         refresh();
                     } catch (Throwable e) {
                         Log.error("Cannot set max messages", e);

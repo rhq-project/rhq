@@ -20,7 +20,7 @@
 package org.rhq.enterprise.server.drift;
 
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -93,7 +93,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
         DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
         changeSetDTO.setCategory(COVERAGE);
-        changeSetDTO.setDriftHandlingMode(plannedChanges);
+        changeSetDTO.setDriftHandlingMode(normal);
         changeSetDTO.setVersion(0);
 
         String newChangeSetId = driftMgr.persistSnapshot(subject, snapshot, changeSetDTO);

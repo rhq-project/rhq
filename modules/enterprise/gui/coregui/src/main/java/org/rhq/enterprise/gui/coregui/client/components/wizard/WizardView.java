@@ -255,36 +255,49 @@ public class WizardView extends LocatableVLayout {
         }
         currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
 
-        // after the canvas is drawn, enable the wizard buttons (unlikely a user will notice, but useful
-        // for keeping automated testing from advancing too quickly).
-        currentCanvas.addDrawHandler(new DrawHandler() {
-
-            @Override
-            public void onDraw(DrawEvent event) {
-                boolean last = (stepIndex == (wizardSteps.size() - 1));
-                if (last) {
-                    nextButton.setTitle(MSG.common_button_finish());
-                } else {
-                    nextButton.setTitle(MSG.common_button_next());
-                }
-
-                cancelButton.setDisabled(false);
-                previousButton.setDisabled(stepIndex == 0);
-                nextButton.setDisabled(false);
-
-                for (IButton button : customButtons) {
-                    button.setDisabled(false);
-                }
-
-                markForRedraw();
+        // if null advance to the next step by automatically "clicking" the Next button
+        if (null == currentCanvas) {
+            if (step.nextPage()) {
+                wizardSteps.get(currentStep).nextPage();
             }
-        });
 
-        createdCanvases.add(currentCanvas);
-        contentLayout.addMember(currentCanvas);
+            cancelButton.setDisabled(false);
+            previousButton.setDisabled(stepIndex == 0);
+            nextButton.setDisabled(false);
 
-        // clean any message from a previous step
-        hideMessage();
+        } else {
+
+            // after the canvas is drawn, enable the wizard buttons (unlikely a user will notice, but useful
+            // for keeping automated testing from advancing too quickly).
+            currentCanvas.addDrawHandler(new DrawHandler() {
+
+                @Override
+                public void onDraw(DrawEvent event) {
+                    boolean last = (stepIndex == (wizardSteps.size() - 1));
+                    if (last) {
+                        nextButton.setTitle(MSG.common_button_finish());
+                    } else {
+                        nextButton.setTitle(MSG.common_button_next());
+                    }
+
+                    cancelButton.setDisabled(false);
+                    previousButton.setDisabled(stepIndex == 0);
+                    nextButton.setDisabled(false);
+
+                    for (IButton button : customButtons) {
+                        button.setDisabled(false);
+                    }
+
+                    markForRedraw();
+                }
+            });
+
+            createdCanvases.add(currentCanvas);
+            contentLayout.addMember(currentCanvas);
+
+            // clean any message from a previous step
+            hideMessage();
+        }
 
         markForRedraw();
     }

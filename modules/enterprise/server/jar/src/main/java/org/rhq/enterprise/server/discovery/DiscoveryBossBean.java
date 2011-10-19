@@ -28,6 +28,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.Date;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -43,6 +45,11 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SimpleTrigger;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
@@ -83,6 +90,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * SLSB that provides the interface point to the discovery subsystem for the UI layer and the discovery server service.
@@ -91,7 +99,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  * @author Greg Hinkle
  */
 @Stateless
-public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
+public class DiscoveryBossBean implements DiscoveryBossLocal {
 
     private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
@@ -275,38 +283,109 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // This is done is a separate transaction to stop failures in the agent from rolling back the transaction
         discoveryBoss.updateInventoryStatus(user, status, platforms, servers);
 
-        // on status change request an agent sync on the affected resources.  The agent will sync status and determine
-        // what other sync work needs to be performed. Synchronize the platforms, then the servers, omitting servers
-        // under synced platforms since they will have been handled already.
+        scheduleAgentInventoryOperationJob(platforms, servers);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
+                + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
+        }
+    }
+
+    private boolean isJobScheduled(Scheduler scheduler, String name, String group) {
+        boolean isScheduled = false;
+        try {
+            JobDetail jobDetail = scheduler.getJobDetail(name, group);
+            if (jobDetail != null) {
+                isScheduled = true;
+            }
+        } catch (SchedulerException se) {
+            log.error("Error getting job detail", se);
+        }
+        return isScheduled;
+    }
+
+    private void scheduleAgentInventoryOperationJob(List<Resource> platforms, List<Resource> servers) {
+        Scheduler scheduler = LookupUtil.getSchedulerBean();
+        try {
+            final String DEFAULT_JOB_NAME = "AgentInventoryUpdateJob";
+            final String DEFAULT_JOB_GROUP = "AgentInventoryUpdateGroup";
+            final String TRIGGER_PREFIX = "AgentInventoryUpdateTrigger";
+
+            final String randomSuffix = UUID.randomUUID().toString();
+
+            final String triggerName = TRIGGER_PREFIX + " - " + randomSuffix;
+            SimpleTrigger trigger = new SimpleTrigger(triggerName, DEFAULT_JOB_GROUP,
+                    new Date());
+
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap.put(AgentInventoryStatusUpdateJob.KEY_TRIGGER_NAME, triggerName);
+            jobDataMap.put(AgentInventoryStatusUpdateJob.KEY_TRIGGER_GROUP_NAME, DEFAULT_JOB_GROUP);
+            AgentInventoryStatusUpdateJob.externalizeJobValues(jobDataMap,
+                    AgentInventoryStatusUpdateJob.PLATFORMS_COMMA_LIST, platforms);
+            AgentInventoryStatusUpdateJob.externalizeJobValues(jobDataMap,
+                    AgentInventoryStatusUpdateJob.SERVERS_COMMA_LIST, servers);
+
+            trigger.setJobName(DEFAULT_JOB_NAME);
+            trigger.setJobGroup(DEFAULT_JOB_GROUP);
+            trigger.setJobDataMap(jobDataMap);
+
+            if (isJobScheduled(scheduler, DEFAULT_JOB_NAME, DEFAULT_JOB_GROUP)) {
+                scheduler.scheduleJob(trigger);
+            } else {
+                JobDetail jobDetail = new JobDetail(DEFAULT_JOB_NAME, DEFAULT_JOB_GROUP,
+                        AgentInventoryStatusUpdateJob.class);
+                scheduler.scheduleJob(jobDetail, trigger);
+            }
+        } catch (SchedulerException e) {
+            log.error("Failed to schedule agent inventory update operation.", e);
+            updateAgentInventoryStatus(platforms, servers);
+        }
+    }
+
+    /**
+     * Synchronize the agents inventory status for platforms, and then the servers,
+     * omitting servers under synced platforms since they will have been handled
+     * already. On status change request an agent sync on the affected resources.
+     * The agent will sync status and determine what other sync work needs to be
+     * performed.
+     *
+     * @param platforms the inventoried platforms
+     * @param servers   the inventoried servers
+     */
+    public void updateAgentInventoryStatus(List<Resource> platforms, List<Resource> servers) {
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
                 agentClient.getDiscoveryAgentService().synchronizeInventory(
-                    entityManager.find(ResourceSyncInfo.class, platform.getId()));
+                        entityManager.find(ResourceSyncInfo.class, platform.getId()));
             } catch (Exception e) {
                 log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
-                    + "]", e);
+                        + "]", e);
             }
         }
-
         for (Resource server : servers) {
             // Only update servers if they haven't already been updated at the platform level
             if (!platforms.contains(server.getParentResource())) {
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 try {
                     agentClient.getDiscoveryAgentService().synchronizeInventory(
-                        entityManager.find(ResourceSyncInfo.class, server.getId()));
+                            entityManager.find(ResourceSyncInfo.class, server.getId()));
                 } catch (Exception e) {
                     log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
-                        + "]", e);
+                            + "]", e);
                 }
             }
         }
+    }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Inventory status set to [" + status + "] for [" + platforms.size() + "] platforms and ["
-                + servers.size() + "] servers in [" + (System.currentTimeMillis() - start) + "]ms");
-        }
+    public void updateAgentInventoryStatus(String platformsCsvList, String serversCsvList) {
+        List<Resource> platforms = new ArrayList<Resource>();
+        AgentInventoryStatusUpdateJob.internalizeJobValues(entityManager, platformsCsvList, platforms);
+
+        List<Resource> servers = new ArrayList<Resource>();
+        AgentInventoryStatusUpdateJob.internalizeJobValues(entityManager, serversCsvList, servers);
+
+        updateAgentInventoryStatus(platforms, servers);
     }
 
     /**
@@ -501,7 +580,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * @param existingResource
+     * @param resource
      * @param upgradeRequest
      * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
      * @return response to the upgrade request detailing what has been accepted on the server side
@@ -973,7 +1052,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         updateInventoryStatus(subject, platforms, servers, target);
     }
 
-    private static <T> boolean needsUpgrade(T oldValue, T newValue) {
+    private <T> boolean needsUpgrade(T oldValue, T newValue) {
         return newValue != null && (oldValue == null || !newValue.equals(oldValue));
     }
 

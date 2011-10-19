@@ -580,7 +580,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         try {
-            driftServerPlugin.purgeByDriftDefinitionName(subject, driftDef.getResource().getId(), driftDef.getName());
             return driftServerPlugin.persistChangeSet(subject, changeSetDTO);
         } catch (Exception e) {
             throw new RuntimeException("Failed to pin snapshot", e);

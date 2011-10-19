@@ -62,7 +62,9 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.common.composite.SystemProperty;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
@@ -115,7 +117,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
-    private static Properties systemConfigurationCache = null;
+    private static SystemSettings cachedSystemSettings = null;
     private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
 
     @SuppressWarnings("unchecked")
@@ -176,20 +178,74 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Deprecated
     public Properties getSystemConfiguration(Subject subject) {
-
-        if (systemConfigurationCache == null) {
-            loadSystemConfigurationCache();
-        }
-
         Properties copy = new Properties();
-        copy.putAll(systemConfigurationCache);
+        copy.putAll(getSystemSettings(subject).toMap());
         return copy;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public SystemSettings getSystemSettings(Subject subject) {
-        return new SystemSettings(toMap(getSystemConfiguration(subject)), getDriftServerPlugins());
+        if (cachedSystemSettings == null) {
+            loadSystemConfigurationCache();
+        }
+
+        return new SystemSettings(cachedSystemSettings);
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void setSystemSettings(Subject subject, SystemSettings settings) {
+        setSystemSettings(settings, false);
+    }
+
+    private void setSystemSettings(SystemSettings settings, boolean skipValidation) {
+        // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
+        @SuppressWarnings("unchecked")
+        List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
+            .getResultList();
+
+        Map<String, SystemConfiguration> existingConfigMap = new HashMap<String, SystemConfiguration>();
+
+        for (SystemConfiguration config : configs) {
+            existingConfigMap.put(config.getPropertyKey(), config);
+        }
+
+        // verify each new setting and persist them to the database
+        // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is        
+        for (Map.Entry<SystemProperty, String> e : settings.entrySet()) {
+            SystemProperty prop = e.getKey();
+            String value = e.getValue();
+
+            if (skipValidation == false) {
+                verifyNewSystemConfigurationProperty(prop, value, settings);
+            }
+
+            SystemConfiguration existingConfig = existingConfigMap.get(prop.getInternalName());
+            if (existingConfig == null) {
+                value = transformSystemConfigurationProperty(prop, value, false);
+                existingConfig = new SystemConfiguration(prop.getInternalName(), value);
+                entityManager.persist(existingConfig);
+            } else {
+                if ((existingConfig.getPropertyValue() == null) || !existingConfig.getPropertyValue().equals(value)) {
+                    //SystemProperty#isReadOnly should be a superset of the "fReadOnly" field in the database
+                    //but let's just be super paranoid here...
+                    if (prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue())) {
+                        throw new IllegalArgumentException("The setting [" + prop.getInternalName()
+                            + "] is read-only - you cannot change its current value!");
+                    }
+                    value = transformSystemConfigurationProperty(prop, value, false);
+                    existingConfig.setPropertyValue(value);
+                    entityManager.merge(existingConfig);
+                }
+            }
+        }
+
+        //let the cache be reloaded once it's needed.
+        //we can't assume that the caller provided the full set of properties we
+        //have in the database, so let's just make sure we reinit the cache
+        //from there...
+        cachedSystemSettings = null;
     }
 
     private Map<String, String> toMap(Properties props) {
@@ -200,6 +256,18 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return map;
     }
 
+    private void transformToSystemSettingsFormat(Map<String, String> map) {
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            SystemProperty prop = SystemProperty.getByInternalName(e.getKey());
+            if (prop != null) {
+                //this is a legacy method that supplies values in the DB-specific format.
+                //we therefore have to transform the values as if they came from the database.
+                String value = transformSystemConfigurationProperty(prop, e.getValue(), true);
+                e.setValue(value);
+            }
+        }        
+    }
+    
     private Map<String, String> getDriftServerPlugins() {
         DriftServerPluginManager pluginMgr = getDriftServerPluginManager();
         Map<String, String> plugins = new HashMap<String, String>();
@@ -235,102 +303,118 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @SuppressWarnings("unchecked")
     public void loadSystemConfigurationCache() {
-        // After this is done, the systemConfigurationCache contains the latest config.
+        // After this is done, the cachedSystemSettings contains the latest config.
         List<SystemConfiguration> configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL)
             .getResultList();
 
-        Properties properties = new Properties();
+        SystemSettings settings = new SystemSettings();
 
         for (SystemConfiguration config : configs) {
-            transformSystemConfigurationProperty(config);
+            SystemProperty prop = SystemProperty.getByInternalName(config.getPropertyKey());
+            if (prop == null) {
+                log.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
+                    + "].");
+                continue;
+            }
+
             if (config.getPropertyValue() == null) {
                 // for some reason, the configuration is not found in the DB, so fallback to the persisted default.
                 // if there isn't even a persisted default, just use an empty string.
                 String defaultValue = config.getDefaultPropertyValue();
-                properties.put(config.getPropertyKey(), (defaultValue != null) ? defaultValue : "");
+                defaultValue = transformSystemConfigurationProperty(prop, defaultValue, true);
+                settings.put(prop, (defaultValue != null) ? defaultValue : "");
             } else {
-                properties.put(config.getPropertyKey(), config.getPropertyValue());
+                String value = config.getPropertyValue();
+                value = transformSystemConfigurationProperty(prop, value, true);
+                settings.put(prop, value);
             }
         }
 
-        systemConfigurationCache = properties;
+        settings.setDriftPlugins(getDriftServerPlugins());
+
+        cachedSystemSettings = settings;
     }
 
-    @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Deprecated
     public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception {
-        // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
-        List<SystemConfiguration> configs;
-        configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
+        Map<String, String> map = toMap(properties);
+        
+        transformToSystemSettingsFormat(map);
+        
+        SystemSettings settings = SystemSettings.fromMap(map);
 
-        Map<String, SystemConfiguration> existingConfigMap = new HashMap<String, SystemConfiguration>();
-
-        for (SystemConfiguration config : configs) {
-            existingConfigMap.put(config.getPropertyKey(), config);
-        }
-
-        // verify each new setting and persist them to the database
-        // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
-        for (Object key : properties.keySet()) {
-            String name = (String) key;
-            String value = properties.getProperty(name);
-
-            if (skipValidation == false) {
-                verifyNewSystemConfigurationProperty(name, value, properties);
-            }
-
-            SystemConfiguration existingConfig = existingConfigMap.get(name);
-            if (existingConfig == null) {
-                existingConfig = new SystemConfiguration(name, value);
-                transformSystemConfigurationProperty(existingConfig);
-                entityManager.persist(existingConfig);
-            } else {
-                if ((existingConfig.getPropertyValue() == null) || !existingConfig.getPropertyValue().equals(value)) {
-                    if (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue()) {
-                        throw new IllegalArgumentException("The setting [" + name
-                            + "] is read-only - you cannot change its current value!");
-                    }
-                    existingConfig.setPropertyValue(value);
-                    transformSystemConfigurationProperty(existingConfig);
-                    entityManager.merge(existingConfig);
-                }
-            }
-        }
-
-        //let the cache be reloaded once it's needed.
-        //we can't assume that the caller provided the full set of properties we
-        //have in the database, so let's just make sure we reinit the cache
-        //from there...
-        systemConfigurationCache = null;
+        setSystemSettings(settings, skipValidation);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException {
-        for(Object key : properties.keySet()) {
-            String name = (String) key;
-            String value = properties.getProperty(name);
-            
-            verifyNewSystemConfigurationProperty(name, value, properties);
+    public void validateSystemConfiguration(Subject subject, Properties properties)
+        throws InvalidSystemConfigurationException {
+        Map<String, String> map = toMap(properties);
+        
+        transformToSystemSettingsFormat(map);
+        
+        SystemSettings settings = SystemSettings.fromMap(map);
+        for (Map.Entry<SystemProperty, String> e : settings.entrySet()) {
+            SystemProperty prop = e.getKey();
+            String value = e.getValue();
+
+            verifyNewSystemConfigurationProperty(prop, value, settings);
         }
     }
-    
+
     /**
      * Call this to transform a system property to a more appropriate value.
      * @param prop
      */
-    private void transformSystemConfigurationProperty(SystemConfiguration prop) {
-        // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
-        String propName = prop.getPropertyKey();
-        if (RHQConstants.EnableAgentAutoUpdate.equals(propName) || RHQConstants.EnableDebugMode.equals(propName)
-            || RHQConstants.DataReindex.equals(propName) || RHQConstants.EnableExperimentalFeatures.equals(propName)) {
-            String booleanValue = prop.getPropertyValue();
-            if ("0".equals(booleanValue)) {
-                prop.setPropertyValue(Boolean.FALSE.toString());
-            } else if ("1".equals(booleanValue)) {
-                prop.setPropertyValue(Boolean.TRUE.toString());
+    private String transformSystemConfigurationProperty(SystemProperty prop, String value, boolean fromDb) {        
+        if (fromDb) {
+            // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
+            switch (prop) {
+            case LDAP_BASED_JAAS_PROVIDER:
+                if (RHQConstants.JDBCJAASProvider.equals(value)) {
+                    return Boolean.toString(false);
+                } else if (RHQConstants.LDAPJAASProvider.equals(value)) {
+                    return Boolean.toString(true);
+                }
+                break;
+            case USE_SSL_FOR_LDAP:
+                if (RHQConstants.LDAP_PROTOCOL_SECURED.equals(value)) {
+                    return Boolean.toString(true);
+                } else {
+                    return Boolean.toString(false);
+                }
+            default:
+                if (prop.getType() == PropertySimpleType.BOOLEAN) {
+                    if ("0".equals(value)) {
+                        return Boolean.FALSE.toString();
+                    } else if ("1".equals(value)) {
+                        return Boolean.TRUE.toString();
+                    }
+                }
+            }            
+        } else {
+            //toDB
+            //the 0,1 -> true false scenario is no problem here, because the values are stored
+            //as string anyway (so no conversion is done). I assume the above is a historical
+            //code that could be safely eliminated.
+            switch(prop) {
+            case LDAP_BASED_JAAS_PROVIDER:
+                if (Boolean.parseBoolean(value)) {
+                    return RHQConstants.LDAPJAASProvider;
+                } else {
+                    return RHQConstants.JDBCJAASProvider;
+                }
+            case USE_SSL_FOR_LDAP:
+                if (Boolean.parseBoolean(value)) {
+                    return RHQConstants.LDAP_PROTOCOL_SECURED;
+                } else {
+                    return RHQConstants.LDAP_PROTOCOL_UNSECURED;
+                }
             }
         }
-        return;
+        
+        return value;
     }
 
     /**
@@ -342,21 +426,21 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * @param properties the full set of system configurations, in case the changed value needs to be compared against
      *                   other values
      */
-    private void verifyNewSystemConfigurationProperty(String name, String value, Properties properties) {
-        if (RHQConstants.BaselineDataSet.equals(name)) {
+    private void verifyNewSystemConfigurationProperty(SystemProperty property, String value, SystemSettings settings) {
+        if (property == SystemProperty.BASE_LINE_DATASET) {
             // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that
             long baselineDataSet = Long.parseLong(value);
             if (baselineDataSet > (1000L * 60 * 60 * 24 * 14)) {
                 throw new InvalidSystemConfigurationException("Baseline dataset must be less than 14 days");
             }
-        } else if (RHQConstants.BaselineFrequency.equals(name)) {
+        } else if (property == SystemProperty.BASE_LINE_FREQUENCY) {
             long baselineFrequency = Long.parseLong(value);
-            long baselineDataSet = Long.parseLong(properties.getProperty(RHQConstants.BaselineDataSet));
+            long baselineDataSet = Long.parseLong(settings.get(SystemProperty.BASE_LINE_DATASET));
             if (baselineFrequency > baselineDataSet) {
                 throw new InvalidSystemConfigurationException(
                     "baseline computation frequency must not be larger than baseline data set");
             }
-        } else if (RHQConstants.AgentMaxQuietTimeAllowed.endsWith(name)) {
+        } else if (property == SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED) {
             long time = Long.parseLong(value);
             if (time < 1000L * 60 * 2) {
                 throw new InvalidSystemConfigurationException("Agent Max Quiet Time Allowed must be at least 2 minutes");
@@ -587,7 +671,12 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     public boolean isDebugModeEnabled() {
         try {
             Subject su = this.subjectManager.getOverlord();
-            return Boolean.valueOf(getSystemConfiguration(su).getProperty(RHQConstants.EnableDebugMode, "false"));
+            String setting = getSystemSettings(su).get(
+                SystemProperty.DEBUG_MODE_ENABLED);
+            if (setting == null) {
+                setting = "false";
+            }
+            return Boolean.valueOf(setting);
         } catch (Throwable t) {
             return false; // paranoid catch-all
         }
@@ -596,8 +685,12 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     public boolean isExperimentalFeaturesEnabled() {
         try {
             Subject su = this.subjectManager.getOverlord();
-            return Boolean.valueOf(getSystemConfiguration(su).getProperty(RHQConstants.EnableExperimentalFeatures,
-                "false"));
+            String setting = getSystemSettings(su).get(
+                SystemProperty.EXPERIMENTAL_FEATURES_ENABLED);
+            if (setting == null) {
+                setting = "false";
+            }
+            return Boolean.valueOf(setting);
         } catch (Throwable t) {
             return false; // paranoid catch-all
         }

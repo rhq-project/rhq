@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
+import org.rhq.core.domain.common.composite.SystemProperty;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -74,40 +75,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     private ConfigurationEditor editor;
     private IButton saveButton;
 
-    private interface Constant {
-        // note: all these names of simple properties must match those in the server's RHQConstants
-        String BaseURL = "CAM_BASE_URL";
-        String AgentMaxQuietTimeAllowed = "AGENT_MAX_QUIET_TIME_ALLOWED";
-        String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
-        String EnableDebugMode = "ENABLE_DEBUG_MODE";
-        String EnableExperimentalFeatures = "ENABLE_EXPERIMENTAL_FEATURES";
-        String DataMaintenance = "CAM_DATA_MAINTENANCE";
-        String AvailabilityPurge = "AVAILABILITY_PURGE";
-        String AlertPurge = "ALERT_PURGE";
-        String TraitPurge = "TRAIT_PURGE";
-        String RtDataPurge = "RT_DATA_PURGE";
-        String EventPurge = "EVENT_PURGE";
-        String DriftFilePurge = "DRIFT_FILE_PURGE";
-        String DataReindex = "DATA_REINDEX_NIGHTLY";
-        String BaselineFrequency = "CAM_BASELINE_FREQUENCY";
-        String BaselineDataSet = "CAM_BASELINE_DATASET";
-
-        String JAASProvider = "CAM_JAAS_PROVIDER"; // value must be one of JDBCJAASProvider or LDAPJAASProvider
-        String JDBCJAASProvider = "JDBC"; // this isn't really a property name, its a value for the JAASProvider property
-        String LDAPJAASProvider = "LDAP"; // this isn't really a property name, its a value for the JAASProvider property
-        String LDAPUrl = "CAM_LDAP_NAMING_PROVIDER_URL";
-        String LDAPProtocol = "CAM_LDAP_PROTOCOL"; // must be either "ssl" or empty string ("")
-        String LDAPLoginProperty = "CAM_LDAP_LOGIN_PROPERTY";
-        String LDAPFilter = "CAM_LDAP_FILTER";
-        String LDAPGroupFilter = "CAM_LDAP_GROUP_FILTER";
-        String LDAPGroupMember = "CAM_LDAP_GROUP_MEMBER";
-        String LDAPBaseDN = "CAM_LDAP_BASE_DN";
-        String LDAPBindDN = "CAM_LDAP_BIND_DN";
-        String LDAPBindPW = "CAM_LDAP_BIND_PW";
-
-        String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
-    }
-
     public SystemSettingsView(String locatorId) {
         super(locatorId);
         setHeight100();
@@ -134,50 +101,39 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
                 canvas.addMember(getServerDetails());
 
-                Configuration config = new Configuration();
-                for (Map.Entry<String, String> entry : result.getSystemConfiguration().entrySet()) {
-                    String name = entry.getKey();
-                    String value = (entry.getValue() == null) ? "" : entry.getValue();
+                
+                Configuration config = result.toConfiguration();
+                
+                //convert stuff for the display purposes
+                PropertySimple prop = config.getSimple(SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName());
+                prop.setStringValue(convertMillisToMinutes(prop.getStringValue()));
+                
+                prop = config.getSimple(SystemProperty.DATA_MAINTENANCE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToHours(prop.getStringValue()));
+                
+                prop = config.getSimple(SystemProperty.AVAILABILITY_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                    // some of our properties are actually different values on the server than how they are to be
-                    // visualized in the UI.
-                    // -- JAASProvider is a boolean in the UI but is "LDAP" if it was true and "JDBC" if it was false
-                    // -- LDAPProtocol is a boolean in the UI but is "ssl" if true and "" if it was false
-                    // -- some other numerical values need to be converted from milliseconds
-                    if (Constant.JAASProvider.equals(name)) {
-                        value = Boolean.toString(value.equals(Constant.LDAPJAASProvider));
-                    } else if (Constant.LDAPProtocol.equals(name)) {
-                        value = Boolean.toString(value.equalsIgnoreCase("ssl"));
-                    } else if (Constant.AgentMaxQuietTimeAllowed.equals(name)) {
-                        value = convertMillisToMinutes(value);
-                    } else if (Constant.DataMaintenance.equals(name)) {
-                        value = convertMillisToHours(value);
-                    } else if (Constant.AvailabilityPurge.equals(name) || Constant.AlertPurge.equals(name)
-                        || Constant.TraitPurge.equals(name) || Constant.RtDataPurge.equals(name)
-                        || Constant.EventPurge.equals(name) || Constant.DriftFilePurge.equals(name)
-                        || Constant.BaselineFrequency.equals(name) || Constant.BaselineDataSet.equals(name)) {
-                        value = convertMillisToDays(value);
-                    } else if (Constant.EnableAgentAutoUpdate.equals(name)) {
-                        if (value.trim().length() == 0) {
-                            value = "false"; // if, for some reason, this value was empty, use false - let the user explicitly enable it
-                        }
-                    } else if (Constant.EnableDebugMode.equals(name)) {
-                        if (value.trim().length() == 0) {
-                            value = "false";
-                        }
-                    } else if (Constant.EnableExperimentalFeatures.equals(name)) {
-                        if (value.trim().length() == 0) {
-                            value = "false";
-                        }
-                    } else if (Constant.DataReindex.equals(name)) {
-                        if (value.trim().length() == 0) {
-                            value = "true";
-                        }
-                    }
+                prop = config.getSimple(SystemProperty.ALERT_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                    PropertySimple prop = new PropertySimple(name, value);
-                    config.put(prop);
-                }
+                prop = config.getSimple(SystemProperty.TRAIT_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
+                prop = config.getSimple(SystemProperty.RT_DATA_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
+                prop = config.getSimple(SystemProperty.EVENT_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
+                prop = config.getSimple(SystemProperty.DRIFT_FILE_PURGE_PERIOD.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
+                prop = config.getSimple(SystemProperty.BASE_LINE_FREQUENCY.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
+
+                prop = config.getSimple(SystemProperty.BASE_LINE_DATASET.getInternalName());
+                prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
                 // build our config definition and populate our config editor
                 editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config,
@@ -229,38 +185,26 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
                 // some of our properties actually need different values on the server than how they were
                 // visualized in the UI.
-                // -- JAASProvider is a boolean in the UI but must be "LDAP" if it was true and "JDBC" if it was false
-                // -- LDAPProtocol is a boolean in the UI but must be "ssl" if true and "" if it was false
                 // -- some other numerical values need to be converted to milliseconds
-                if (Constant.JAASProvider.equals(simple.getName())) {
-                    if (Boolean.parseBoolean(value)) {
-                        value = Constant.LDAPJAASProvider;
-                    } else {
-                        value = Constant.JDBCJAASProvider;
-                    }
-                } else if (Constant.LDAPProtocol.equals(simple.getName())) {
-                    if (Boolean.parseBoolean(value)) {
-                        value = "ssl";
-                    } else {
-                        value = "";
-                    }
-                } else if (Constant.AgentMaxQuietTimeAllowed.equals(simple.getName())) {
+                if (SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName().equals(simple.getName())) {
                     value = convertMinutesToMillis(value);
-                } else if (Constant.DataMaintenance.equals(simple.getName())) {
+                } else if (SystemProperty.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())) {
                     value = convertHoursToMillis(value);
-                } else if (Constant.AvailabilityPurge.equals(simple.getName())
-                    || Constant.AlertPurge.equals(simple.getName()) || Constant.TraitPurge.equals(simple.getName())
-                    || Constant.RtDataPurge.equals(simple.getName()) || Constant.EventPurge.equals(simple.getName())
-                    || Constant.DriftFilePurge.equals(simple.getName())
-                    || Constant.BaselineFrequency.equals(simple.getName())
-                    || Constant.BaselineDataSet.equals(simple.getName())) {
+                } else if (SystemProperty.AVAILABILITY_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemProperty.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemProperty.TRAIT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemProperty.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemProperty.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemProperty.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemProperty.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
+                    || SystemProperty.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
                     value = convertDaysToMillis(value);
                 }
 
                 props.put(simple.getName(), value);
             }
 
-            GWTServiceLookup.getSystemService().setSystemConfiguration(props, false, new AsyncCallback<Void>() {
+            SystemSettings settings = SystemSettings.fromMap(props);
+
+            GWTServiceLookup.getSystemService().setSystemSettings(settings, new AsyncCallback<Void>() {
                 @Override
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
@@ -280,27 +224,27 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     }
 
     private String convertMinutesToMillis(String num) {
-        return String.valueOf(Long.parseLong(num) * 60 * 1000);
+        return num == null ? "0" : String.valueOf(Long.parseLong(num) * 60 * 1000);
     }
 
     private String convertHoursToMillis(String num) {
-        return String.valueOf(Long.parseLong(num) * 60 * 60 * 1000);
+        return num == null ? "0" : String.valueOf(Long.parseLong(num) * 60 * 60 * 1000);
     }
 
     private String convertDaysToMillis(String num) {
-        return String.valueOf(Long.parseLong(num) * 24 * 60 * 60 * 1000);
+        return num == null ? "0" : String.valueOf(Long.parseLong(num) * 24 * 60 * 60 * 1000);
     }
 
     private String convertMillisToMinutes(String num) {
-        return String.valueOf(Long.parseLong(num) / (60 * 1000));
+        return num == null ? "0" : String.valueOf(Long.parseLong(num) / (60 * 1000));
     }
 
     private String convertMillisToHours(String num) {
-        return String.valueOf(Long.parseLong(num) / (60 * 60 * 1000));
+        return num == null ? "0" : String.valueOf(Long.parseLong(num) / (60 * 60 * 1000));
     }
 
     private String convertMillisToDays(String num) {
-        return String.valueOf(Long.parseLong(num) / (24 * 60 * 60 * 1000));
+        return num == null ? "0" : String.valueOf(Long.parseLong(num) / (24 * 60 * 60 * 1000));
     }
 
     /**
@@ -316,246 +260,255 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     private ConfigurationDefinition getSystemSettingsDefinition(Configuration config, Map<String, String> driftPlugins) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
-        ///////////////////////////////////
-        // General Configuration Properties
-
         PropertyGroupDefinition generalGroup = new PropertyGroupDefinition("general");
         generalGroup.setDisplayName(MSG.view_admin_systemSettings_group_general());
         generalGroup.setDefaultHidden(false);
         generalGroup.setOrder(0);
 
-        PropertyDefinitionSimple baseUrl = new PropertyDefinitionSimple(Constant.BaseURL, MSG
-            .view_admin_systemSettings_BaseURL_desc(), true, PropertySimpleType.STRING);
-        baseUrl.setDisplayName(MSG.view_admin_systemSettings_BaseURL_name());
-        baseUrl.setPropertyGroupDefinition(generalGroup);
-        baseUrl.setDefaultValue("http://localhost:7080");
-        def.put(baseUrl);
-
-        PropertyDefinitionSimple agentMaxQuietTimeAllowed = new PropertyDefinitionSimple(
-            Constant.AgentMaxQuietTimeAllowed, MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_desc(), true,
-            PropertySimpleType.INTEGER);
-        agentMaxQuietTimeAllowed.setDisplayName(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_name());
-        agentMaxQuietTimeAllowed.setPropertyGroupDefinition(generalGroup);
-        agentMaxQuietTimeAllowed.addConstraints(new IntegerRangeConstraint(Long.valueOf(2), null)); // don't allow less than 2m since it will cause too many false backfills 
-        agentMaxQuietTimeAllowed.setDefaultValue("15");
-        def.put(agentMaxQuietTimeAllowed);
-
-        PropertyDefinitionSimple enableAgentAutoUpdate = new PropertyDefinitionSimple(Constant.EnableAgentAutoUpdate,
-            MSG.view_admin_systemSettings_EnableAgentAutoUpdate_desc(), true, PropertySimpleType.BOOLEAN);
-        enableAgentAutoUpdate.setDisplayName(MSG.view_admin_systemSettings_EnableAgentAutoUpdate_name());
-        enableAgentAutoUpdate.setPropertyGroupDefinition(generalGroup);
-        enableAgentAutoUpdate.setDefaultValue("true");
-        def.put(enableAgentAutoUpdate);
-
-        PropertyDefinitionSimple enableDebugMode = new PropertyDefinitionSimple(Constant.EnableDebugMode, MSG
-            .view_admin_systemSettings_EnableDebugMode_desc(), true, PropertySimpleType.BOOLEAN);
-        enableDebugMode.setDisplayName(MSG.view_admin_systemSettings_EnableDebugMode_name());
-        enableDebugMode.setPropertyGroupDefinition(generalGroup);
-        enableDebugMode.setDefaultValue("false");
-        def.put(enableDebugMode);
-
-        PropertyDefinitionSimple enableExperimentalFeatures = new PropertyDefinitionSimple(
-            Constant.EnableExperimentalFeatures, MSG.view_admin_systemSettings_EnableExperimentalFeatures_desc(), true,
-            PropertySimpleType.BOOLEAN);
-        enableExperimentalFeatures.setDisplayName(MSG.view_admin_systemSettings_EnableExperimentalFeatures_name());
-        enableExperimentalFeatures.setPropertyGroupDefinition(generalGroup);
-        enableExperimentalFeatures.setDefaultValue("false");
-        def.put(enableExperimentalFeatures);
-
-        ////////////////////////////////////////
-        // Data Manager Configuration Properties
-
         PropertyGroupDefinition dataManagerGroup = new PropertyGroupDefinition("datamanager");
         dataManagerGroup.setDisplayName(MSG.view_admin_systemSettings_group_dataMgr());
         dataManagerGroup.setDefaultHidden(false);
         dataManagerGroup.setOrder(1);
-
-        PropertyDefinitionSimple dataMaintenance = new PropertyDefinitionSimple(Constant.DataMaintenance, MSG
-            .view_admin_systemSettings_DataMaintenance_desc(), true, PropertySimpleType.INTEGER);
-        dataMaintenance.setDisplayName(MSG.view_admin_systemSettings_DataMaintenance_name());
-        dataMaintenance.setPropertyGroupDefinition(dataManagerGroup);
-        dataMaintenance.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        dataMaintenance.setDefaultValue("1");
-        def.put(dataMaintenance);
-
-        PropertyDefinitionSimple availabilityPurge = new PropertyDefinitionSimple(Constant.AvailabilityPurge, MSG
-            .view_admin_systemSettings_AvailabilityPurge_desc(), true, PropertySimpleType.INTEGER);
-        availabilityPurge.setDisplayName(MSG.view_admin_systemSettings_AvailabilityPurge_name());
-        availabilityPurge.setPropertyGroupDefinition(dataManagerGroup);
-        availabilityPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        availabilityPurge.setDefaultValue("365");
-        def.put(availabilityPurge);
-
-        PropertyDefinitionSimple alertPurge = new PropertyDefinitionSimple(Constant.AlertPurge, MSG
-            .view_admin_systemSettings_AlertPurge_desc(), true, PropertySimpleType.INTEGER);
-        alertPurge.setDisplayName(MSG.view_admin_systemSettings_AlertPurge_name());
-        alertPurge.setPropertyGroupDefinition(dataManagerGroup);
-        alertPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        alertPurge.setDefaultValue("31");
-        def.put(alertPurge);
-
-        PropertyDefinitionSimple traitPurge = new PropertyDefinitionSimple(Constant.TraitPurge, MSG
-            .view_admin_systemSettings_TraitPurge_desc(), true, PropertySimpleType.INTEGER);
-        traitPurge.setDisplayName(MSG.view_admin_systemSettings_TraitPurge_name());
-        traitPurge.setPropertyGroupDefinition(dataManagerGroup);
-        traitPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        traitPurge.setDefaultValue("365");
-        def.put(traitPurge);
-
-        PropertyDefinitionSimple rtDataPurge = new PropertyDefinitionSimple(Constant.RtDataPurge, MSG
-            .view_admin_systemSettings_RtDataPurge_desc(), true, PropertySimpleType.INTEGER);
-        rtDataPurge.setDisplayName(MSG.view_admin_systemSettings_RtDataPurge_name());
-        rtDataPurge.setPropertyGroupDefinition(dataManagerGroup);
-        rtDataPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        rtDataPurge.setDefaultValue("31");
-        def.put(rtDataPurge);
-
-        PropertyDefinitionSimple eventPurge = new PropertyDefinitionSimple(Constant.EventPurge, MSG
-            .view_admin_systemSettings_EventPurge_desc(), true, PropertySimpleType.INTEGER);
-        eventPurge.setDisplayName(MSG.view_admin_systemSettings_EventPurge_name());
-        eventPurge.setPropertyGroupDefinition(dataManagerGroup);
-        eventPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        eventPurge.setDefaultValue("14");
-        def.put(eventPurge);
-
-        PropertyDefinitionSimple driftFilePurge = new PropertyDefinitionSimple(Constant.DriftFilePurge, MSG
-            .view_admin_systemSettings_DriftFilePurge_desc(), true, PropertySimpleType.INTEGER);
-        driftFilePurge.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
-        driftFilePurge.setPropertyGroupDefinition(dataManagerGroup);
-        driftFilePurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        driftFilePurge.setDefaultValue("31");
-        def.put(driftFilePurge);
-
-        PropertyDefinitionSimple dataReindex = new PropertyDefinitionSimple(Constant.DataReindex, MSG
-            .view_admin_systemSettings_DataReindex_desc(), true, PropertySimpleType.BOOLEAN);
-        dataReindex.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
-        dataReindex.setPropertyGroupDefinition(dataManagerGroup);
-        dataReindex.setDefaultValue("true");
-        def.put(dataReindex);
-
-        //////////////////////////////////////////////
-        // Automatic Baseline Configuration Properties
-
+        
         PropertyGroupDefinition baselineGroup = new PropertyGroupDefinition("baseline");
         baselineGroup.setDisplayName(MSG.view_admin_systemSettings_group_baseline());
         baselineGroup.setDefaultHidden(false);
         baselineGroup.setOrder(2);
 
-        PropertyDefinitionSimple baselineFrequency = new PropertyDefinitionSimple(Constant.BaselineFrequency, MSG
-            .view_admin_systemSettings_BaselineFrequency_desc(), true, PropertySimpleType.INTEGER);
-        baselineFrequency.setDisplayName(MSG.view_admin_systemSettings_BaselineFrequency_name());
-        baselineFrequency.setPropertyGroupDefinition(baselineGroup);
-        baselineFrequency.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
-        baselineFrequency.setDefaultValue("3");
-        def.put(baselineFrequency);
-
-        PropertyDefinitionSimple baselineDataSet = new PropertyDefinitionSimple(Constant.BaselineDataSet, MSG
-            .view_admin_systemSettings_BaselineDataSet_desc(), true, PropertySimpleType.INTEGER);
-        baselineDataSet.setDisplayName(MSG.view_admin_systemSettings_BaselineDataSet_name());
-        baselineDataSet.setPropertyGroupDefinition(baselineGroup);
-        baselineDataSet.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our raw tables don't hold more 
-        baselineDataSet.setDefaultValue("7");
-        def.put(baselineDataSet);
-
-        ////////////////////////////////
-        // LDAP Configuration Properties
-
         PropertyGroupDefinition ldapGroup = new PropertyGroupDefinition("ldap");
         ldapGroup.setDisplayName(MSG.view_admin_systemSettings_group_ldap());
-        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(Constant.JAASProvider, "false"))); // show if LDAP is in use
+        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName(), "false"))); // show if LDAP is in use
         ldapGroup.setOrder(3);
 
-        PropertyDefinitionSimple jaasProvider = new PropertyDefinitionSimple(Constant.JAASProvider, MSG
-            .view_admin_systemSettings_JAASProvider_desc(), true, PropertySimpleType.BOOLEAN);
-        jaasProvider.setDisplayName(MSG.view_admin_systemSettings_JAASProvider_name());
-        jaasProvider.setPropertyGroupDefinition(ldapGroup);
-        jaasProvider.setDefaultValue("false");
-        def.put(jaasProvider);
-
-        PropertyDefinitionSimple ldapUrl = new PropertyDefinitionSimple(Constant.LDAPUrl, MSG
-            .view_admin_systemSettings_LDAPUrl_desc(), true, PropertySimpleType.STRING);
-        ldapUrl.setDisplayName(MSG.view_admin_systemSettings_LDAPUrl_name());
-        ldapUrl.setPropertyGroupDefinition(ldapGroup);
-        ldapUrl.setDefaultValue("ldap://localhost");
-        def.put(ldapUrl);
-
-        PropertyDefinitionSimple ldapProtocol = new PropertyDefinitionSimple(Constant.LDAPProtocol, MSG
-            .view_admin_systemSettings_LDAPProtocol_desc(), true, PropertySimpleType.BOOLEAN);
-        ldapProtocol.setDisplayName(MSG.view_admin_systemSettings_LDAPProtocol_name());
-        ldapProtocol.setPropertyGroupDefinition(ldapGroup);
-        ldapProtocol.setDefaultValue("false");
-        def.put(ldapProtocol);
-
-        PropertyDefinitionSimple ldapLoginProperty = new PropertyDefinitionSimple(Constant.LDAPLoginProperty, MSG
-            .view_admin_systemSettings_LDAPLoginProperty_desc(), false, PropertySimpleType.STRING);
-        ldapLoginProperty.setDisplayName(MSG.view_admin_systemSettings_LDAPLoginProperty_name());
-        ldapLoginProperty.setPropertyGroupDefinition(ldapGroup);
-        ldapLoginProperty.setDefaultValue("cn");
-        def.put(ldapLoginProperty);
-
-        PropertyDefinitionSimple ldapFilter = new PropertyDefinitionSimple(Constant.LDAPFilter, MSG
-            .view_admin_systemSettings_LDAPFilter_desc(), false, PropertySimpleType.STRING);
-        ldapFilter.setDisplayName(MSG.view_admin_systemSettings_LDAPFilter_name());
-        ldapFilter.setPropertyGroupDefinition(ldapGroup);
-        ldapFilter.setDefaultValue("");
-        def.put(ldapFilter);
-
-        PropertyDefinitionSimple ldapGroupFilter = new PropertyDefinitionSimple(Constant.LDAPGroupFilter, MSG
-            .view_admin_systemSettings_LDAPGroupFilter_desc(), false, PropertySimpleType.STRING);
-        ldapGroupFilter.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupFilter_name());
-        ldapGroupFilter.setPropertyGroupDefinition(ldapGroup);
-        ldapGroupFilter.setDefaultValue("rhqadmin");
-        def.put(ldapGroupFilter);
-
-        PropertyDefinitionSimple ldapGroupMember = new PropertyDefinitionSimple(Constant.LDAPGroupMember, MSG
-            .view_admin_systemSettings_LDAPGroupMember_desc(), false, PropertySimpleType.STRING);
-        ldapGroupMember.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
-        ldapGroupMember.setPropertyGroupDefinition(ldapGroup);
-        ldapGroupMember.setDefaultValue("");
-        def.put(ldapGroupMember);
-
-        PropertyDefinitionSimple ldapBaseDN = new PropertyDefinitionSimple(Constant.LDAPBaseDN, MSG
-            .view_admin_systemSettings_LDAPBaseDN_desc(), false, PropertySimpleType.STRING);
-        ldapBaseDN.setDisplayName(MSG.view_admin_systemSettings_LDAPBaseDN_name());
-        ldapBaseDN.setPropertyGroupDefinition(ldapGroup);
-        ldapBaseDN.setDefaultValue("o=RedHat,c=US");
-        def.put(ldapBaseDN);
-
-        PropertyDefinitionSimple ldapBindDN = new PropertyDefinitionSimple(Constant.LDAPBindDN, MSG
-            .view_admin_systemSettings_LDAPBindDN_desc(), false, PropertySimpleType.STRING);
-        ldapBindDN.setDisplayName(MSG.view_admin_systemSettings_LDAPBindDN_name());
-        ldapBindDN.setPropertyGroupDefinition(ldapGroup);
-        ldapBindDN.setDefaultValue("");
-        def.put(ldapBindDN);
-
-        PropertyDefinitionSimple ldapBindPW = new PropertyDefinitionSimple(Constant.LDAPBindPW, MSG
-            .view_admin_systemSettings_LDAPBindPW_desc(), false, PropertySimpleType.PASSWORD);
-        ldapBindPW.setDisplayName(MSG.view_admin_systemSettings_LDAPBindPW_name());
-        ldapBindPW.setPropertyGroupDefinition(ldapGroup);
-        ldapBindPW.setDefaultValue("");
-        def.put(ldapBindPW);
-
-        ///////////////////////////////////////////
-        // Drift Server Configuration Properties //
-        ///////////////////////////////////////////
         PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift");
         driftGroup.setDisplayName(MSG.view_admin_systemSettings_group_drift());
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
+        
+        for(SystemProperty prop : SystemProperty.values()) {
+            
+            //don't include the readonly properties in the configuration editor
+            if (prop.isReadOnly()) {
+                continue;
+            }
+            
+            PropertyDefinitionSimple pd = prop.createPropertyDefinition();
+            
+            def.put(pd);
+            
+            switch(prop) {
 
-        PropertyDefinitionSimple activeDriftServer = new PropertyDefinitionSimple(Constant.ACTIVE_DRIFT_PLUGIN, MSG
-            .view_admin_systemSettings_ActiveDriftServerPlugin_desc(), true, PropertySimpleType.STRING);
-        activeDriftServer.setDisplayName(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_name());
-        activeDriftServer.setPropertyGroupDefinition(driftGroup);
+            ///////////////////////////////////
+            // General Configuration Properties
 
-        List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
-        for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
-            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey()));
+            case BASE_URL:
+                pd.setDescription(MSG.view_admin_systemSettings_BaseURL_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_BaseURL_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue("http://localhost:7080");
+                break;
+            case AGENT_MAX_QUIET_TIME_ALLOWED:
+                pd.setDescription(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(2), null)); // don't allow less than 2m since it will cause too many false backfills 
+                pd.setDefaultValue("15");
+                break;
+            case AGENT_AUTO_UPDATE_ENABLED:
+                pd.setDescription(MSG.view_admin_systemSettings_EnableAgentAutoUpdate_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_EnableAgentAutoUpdate_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue("true");
+                break;
+            case DEBUG_MODE_ENABLED:
+                pd.setDescription(MSG.view_admin_systemSettings_EnableDebugMode_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_EnableDebugMode_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue("false");
+                break;
+            case EXPERIMENTAL_FEATURES_ENABLED:
+                pd.setDescription(MSG.view_admin_systemSettings_EnableExperimentalFeatures_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_EnableExperimentalFeatures_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.setDefaultValue("false");
+                break;
+
+            ////////////////////////////////////////
+            // Data Manager Configuration Properties
+                
+            case DATA_MAINTENANCE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_DataMaintenance_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_DataMaintenance_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("1");
+                break;
+                
+            case AVAILABILITY_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_AvailabilityPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_AvailabilityPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("365");
+                break;
+                
+            case ALERT_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_AlertPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_AlertPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("31");
+                break;
+                
+            case TRAIT_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_TraitPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_TraitPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("365");
+                break;
+                
+            case RT_DATA_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_RtDataPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_RtDataPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("31");
+                break;
+                
+            case EVENT_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_EventPurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_EventPurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("14");
+                break;
+                
+            case DRIFT_FILE_PURGE_PERIOD:
+                pd.setDescription(MSG.view_admin_systemSettings_DriftFilePurge_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("31");
+                break;
+                
+            case DATA_REINDEX_NIGHTLY:
+                pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
+                pd.setPropertyGroupDefinition(dataManagerGroup);
+                pd.setDefaultValue("true");
+                break;
+                
+            //////////////////////////////////////////////
+            // Automatic Baseline Configuration Properties
+
+            case BASE_LINE_FREQUENCY:
+                pd.setDescription(MSG.view_admin_systemSettings_BaselineFrequency_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_BaselineFrequency_name());
+                pd.setPropertyGroupDefinition(baselineGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
+                pd.setDefaultValue("3");
+                break;
+                
+            case BASE_LINE_DATASET:
+                pd.setDescription(MSG.view_admin_systemSettings_BaselineDataSet_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_BaselineDataSet_name());
+                pd.setPropertyGroupDefinition(baselineGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our raw tables don't hold more 
+                pd.setDefaultValue("7");
+                break;
+
+            ////////////////////////////////
+            // LDAP Configuration Properties
+
+            case LDAP_BASED_JAAS_PROVIDER:
+                pd.setDescription(MSG.view_admin_systemSettings_JAASProvider_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_JAASProvider_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
+                break;
+                
+            case LDAP_NAMING_PROVIDER_URL:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPUrl_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPUrl_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("ldap://localhost");
+                break;
+                
+            case USE_SSL_FOR_LDAP:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPProtocol_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPProtocol_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
+                break;
+                
+            case LDAP_LOGIN_PROPERTY:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPLoginProperty_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPLoginProperty_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("cn");
+                break;
+                
+            case LDAP_FILTER:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPFilter_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPFilter_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("");
+                break;
+                
+            case LDAP_GROUP_FILTER:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupFilter_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupFilter_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("rhqadmin");
+                break;
+             
+            case LDAP_GROUP_MEMBER:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupMember_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("");
+                break;
+                
+            case LDAP_BASE_DN:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPBaseDN_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBaseDN_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("o=RedHat,c=US");
+                break;
+                
+            case LDAP_BIND_DN:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPBindDN_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindDN_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("");
+                break;
+                
+            case LDAP_BIND_PW:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPBindPW_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindPW_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("");
+                break;
+
+            ///////////////////////////////////////////
+            // Drift Server Configuration Properties //
+            ///////////////////////////////////////////
+                
+            case ACTIVE_DRIFT_PLUGIN:
+                pd.setDescription(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_name());
+                pd.setPropertyGroupDefinition(driftGroup);
+                
+                List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
+                for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
+                    options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey()));
+                }
+
+                pd.setEnumeratedValues(options, false);
+                break;
+            }
         }
-
-        activeDriftServer.setEnumeratedValues(options, false);
-
-        def.put(activeDriftServer);
 
         //
         // if the config is missing any properties for which we have defaults, set them to their defaults

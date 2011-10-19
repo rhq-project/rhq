@@ -76,20 +76,9 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     @Override
-    public HashMap<String, String> getSystemConfiguration() throws RuntimeException {
+    public void setSystemSettings(SystemSettings settings) throws RuntimeException {
         try {
-            Properties props = systemManager.getSystemConfiguration(getSessionSubject());
-            return convertFromProperties(props);
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public void setSystemConfiguration(HashMap<String, String> map, boolean skipValidation) throws RuntimeException {
-        try {
-            Properties props = convertToProperties(map);
-            systemManager.setSystemConfiguration(getSessionSubject(), props, skipValidation);
+            systemManager.setSystemSettings(getSessionSubject(), settings);
             systemManager.reconfigureSystem(getSessionSubject());
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

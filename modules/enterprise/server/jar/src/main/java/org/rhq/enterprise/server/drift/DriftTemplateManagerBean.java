@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -29,6 +32,9 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftSnapshotRequest;
+import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -46,6 +52,9 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
     @EJB
     ResourceTypeManagerLocal resourceTypeMgr;
+
+    @EJB
+    DriftManagerLocal driftMgr;
 
     @Override
     public PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
@@ -71,14 +80,24 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
             resourceType.addDriftDefinitionTemplate(template);
         } catch (ResourceTypeNotFoundException e) {
+            // TODO handle exception
         }
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override
-    public void pinTemplate(Subject subject, int templateId, int snapshotDriftDefId, int snapshotVersion) {
+    public void pinTemplate(Subject subject, int templateId, int driftDefId, int snapshotVersion) {
+        DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
+        DriftSnapshot snapshot = driftMgr.getSnapshot(subject, new DriftSnapshotRequest(driftDefId, snapshotVersion));
+        DriftDefinition resourceDef = driftMgr.getDriftDefinition(subject, driftDefId);
 
-        //TODO
+        DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
+        changeSetDTO.setCategory(COVERAGE);
+        changeSetDTO.setDriftHandlingMode(plannedChanges);
+        changeSetDTO.setVersion(0);
+
+        String newChangeSetId = driftMgr.persistSnapshot(subject, snapshot, changeSetDTO);
+        template.setChangeSetId(newChangeSetId);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

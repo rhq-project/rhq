@@ -99,8 +99,8 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
-        getJPADriftServer().persistChangeSet(subject, changeSet);
+    public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        return getJPADriftServer().persistChangeSet(subject, changeSet);
     }
 
     @Override

@@ -541,24 +541,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
         changeSet.setResourceId(driftDef.getResource().getId());
 
-        Set<DriftDTO> drifts = new HashSet<DriftDTO>();
-        for (Drift<?, ?> drift : snapshot.getDriftInstances()) {
-            // we need to scrub ids and references to owning change sets
-            DriftDTO driftDTO = new DriftDTO();
-            driftDTO.setCategory(DriftCategory.FILE_ADDED);
-            driftDTO.setChangeSet(changeSet);
-            driftDTO.setCtime(drift.getCtime());
-            driftDTO.setNewDriftFile(toDTO(drift.getNewDriftFile()));
-            driftDTO.setPath(drift.getPath());
-            driftDTO.setDirectory(drift.getDirectory());
-            drifts.add(driftDTO);
-        }
-        changeSet.setDrifts(drifts);
-
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         try {
-            driftServerPlugin.purgeByDriftDefinitionName(subject, driftDef.getResource().getId(), driftDef.getName());
-            driftServerPlugin.persistChangeSet(subject, changeSet);
+            driftServerPlugin.purgeByDriftDefinitionName(subject,  driftDef.getResource().getId(), driftDef.getName());
+            persistSnapshot(subject, snapshot, changeSet);
         } catch (Exception e) {
             throw new RuntimeException("Failed to pin snapshot", e);
         }
@@ -566,6 +552,39 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         AgentClient agent = agentManager.getAgentClient(subject, driftDef.getResource().getId());
         DriftAgentService driftService = agent.getDriftAgentService();
         driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
+    }
+
+    @TransactionAttribute(NOT_SUPPORTED)
+    public String persistSnapshot(Subject subject, DriftSnapshot snapshot,
+        DriftChangeSet<? extends Drift<?, ?>> changeSet) {
+        DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
+        changeSetDTO.setCategory(changeSet.getCategory());
+        changeSetDTO.setDriftHandlingMode(changeSet.getDriftHandlingMode());
+        changeSetDTO.setVersion(changeSet.getVersion());
+        changeSetDTO.setDriftDefinitionId(changeSet.getDriftDefinitionId());
+        changeSetDTO.setResourceId(changeSet.getResourceId());
+
+        Set<DriftDTO> drifts = new HashSet<DriftDTO>();
+        for (Drift<?, ?> drift : snapshot.getDriftInstances()) {
+            // we need to scrub ids and references to owning change sets
+            DriftDTO driftDTO = new DriftDTO();
+            driftDTO.setCategory(DriftCategory.FILE_ADDED);
+            driftDTO.setChangeSet(changeSetDTO);
+            driftDTO.setCtime(drift.getCtime());
+            driftDTO.setNewDriftFile(toDTO(drift.getNewDriftFile()));
+            driftDTO.setPath(drift.getPath());
+            driftDTO.setDirectory(drift.getDirectory());
+            drifts.add(driftDTO);
+        }
+        changeSetDTO.setDrifts(drifts);
+
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        try {
+            driftServerPlugin.purgeByDriftDefinitionName(subject, driftDef.getResource().getId(), driftDef.getName());
+            return driftServerPlugin.persistChangeSet(subject, changeSetDTO);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to pin snapshot", e);
+        }
     }
 
     private DriftFileDTO toDTO(DriftFile file) {

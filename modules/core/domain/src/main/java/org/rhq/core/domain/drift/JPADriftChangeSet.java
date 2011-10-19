@@ -123,9 +123,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @Enumerated(EnumType.STRING)
     private DriftChangeSetCategory category;
 
-    @JoinColumn(name = "DRIFT_DEFINITION_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "DRIFT_DEFINITION_ID", referencedColumnName = "ID")
     // TODO: remove this eager load, the drift tree build should be written to not need this
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER)
     private DriftDefinition driftDefinition;
 
     // Note, this is mode at the time of the changeset processing. We cant use driftDefinition.mode because
@@ -134,8 +134,8 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @Enumerated(EnumType.STRING)
     private DriftHandlingMode driftHandlingMode;
 
-    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(optional = false)
+    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID")
+    @ManyToOne
     private Resource resource;
 
     /**
@@ -165,7 +165,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         this.version = version;
         this.category = category;
         this.driftDefinition = driftDefinition;
-        this.driftHandlingMode = driftDefinition.getDriftHandlingMode();
+        if (driftDefinition != null) {
+            this.driftHandlingMode = driftDefinition.getDriftHandlingMode();
+        }
     }
 
     @Override

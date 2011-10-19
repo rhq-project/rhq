@@ -715,8 +715,8 @@
         <!-- Version 0 is initial change-set -->
         <column name="VERSION" type="INTEGER" required="true"/>
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                         
-        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
-        <column name="DRIFT_DEFINITION_ID" type="INTEGER" required="true" references="RHQ_DRIFT_DEFINITION"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="DRIFT_DEFINITION_ID" type="INTEGER" required="false" references="RHQ_DRIFT_DEFINITION"/>
         <!--  the drift handling mode at changeset creation time -->
         <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>        
     </table>

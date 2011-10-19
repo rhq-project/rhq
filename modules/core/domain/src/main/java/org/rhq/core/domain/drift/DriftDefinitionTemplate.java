@@ -217,6 +217,10 @@ public class DriftDefinitionTemplate implements Serializable {
         return new DriftDefinition(configuration.deepCopyWithoutProxies());
     }
 
+    public boolean isPinned() {
+        return changeSetId != null;
+    }
+
     @PrePersist
     void onPersist() {
         this.ctime = System.currentTimeMillis();

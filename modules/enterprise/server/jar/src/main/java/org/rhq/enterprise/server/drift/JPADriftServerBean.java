@@ -210,19 +210,26 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     @Override
-    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
-        Resource resource = getResource(changeSet.getResourceId());
+    public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        JPADriftChangeSet jpaChangeSet;
 
-        DriftDefinition driftDef = null;
-        for (DriftDefinition def : resource.getDriftDefinitions()) {
-            if (def.getId() == changeSet.getDriftDefinitionId()) {
-                driftDef = def;
-                break;
+        if (isTemplateChangeSet(changeSet)) {
+            jpaChangeSet = new JPADriftChangeSet(null, changeSet.getVersion(), changeSet.getCategory(), null);
+            jpaChangeSet.setDriftHandlingMode(changeSet.getDriftHandlingMode());
+        } else {
+            Resource resource = getResource(changeSet.getResourceId());
+            DriftDefinition driftDef = null;
+
+            for (DriftDefinition def : resource.getDriftDefinitions()) {
+                if (def.getId() == changeSet.getDriftDefinitionId()) {
+                    driftDef = def;
+                    break;
+                }
             }
+
+            jpaChangeSet = new JPADriftChangeSet(resource, changeSet.getVersion(), changeSet.getCategory(), driftDef);
         }
 
-        JPADriftChangeSet jpaChangeSet = new JPADriftChangeSet(resource, changeSet.getVersion(),
-            changeSet.getCategory(), driftDef);
         JPADriftSet driftSet = new JPADriftSet();
 
         for (Drift<?, ?> drift : changeSet.getDrifts()) {
@@ -233,6 +240,12 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         entityManager.persist(driftSet);
         jpaChangeSet.setInitialDriftSet(driftSet);
         entityManager.persist(jpaChangeSet);
+
+        return jpaChangeSet.getId();
+    }
+
+    private boolean isTemplateChangeSet(DriftChangeSet<?> changeSet) {
+        return changeSet.getResourceId() == 0 && changeSet.getDriftDefinitionId() == 0;
     }
 
     private JPADriftFile toJPADriftFile(DriftFile driftFile) {

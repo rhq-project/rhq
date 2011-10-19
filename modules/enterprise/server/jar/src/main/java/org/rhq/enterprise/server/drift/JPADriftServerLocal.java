@@ -70,7 +70,7 @@ public interface JPADriftServerLocal {
      */
     PageList<JPADrift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
-    void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
+    String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
 
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN 

@@ -25,9 +25,7 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
@@ -42,7 +40,6 @@ import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -53,28 +50,11 @@ import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
-import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.shared.ResourceBuilder;
-import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.EntitySerializer;
 import org.rhq.test.TransactionCallback;
 
 public class ManageSnapshotsTest extends DriftServerTest {
-
-    private final String RESOURCE_TYPE_NAME = getClass().getSimpleName() + "_RESOURCE_TYPE";
-
-    private final String AGENT_NAME = getClass().getSimpleName() + "_AGENT";
-
-    private final String RESOURCE_NAME = getClass().getSimpleName() + "_RESOURCE";
-
-    private ResourceType resourceType;
-
-    private Agent agent;
-
-    private Resource resource;
 
     private DriftManagerLocal driftMgr;
 
@@ -83,49 +63,6 @@ public class ManageSnapshotsTest extends DriftServerTest {
         driftMgr = getDriftManager();
     }
 
-    @Override
-    protected void initDB(EntityManager em) {
-        initResourceType();
-        initAgent();
-        initResource();
-
-        em.persist(resourceType);
-        em.persist(agent);
-        resource.setAgent(agent);
-        em.persist(resource);
-    }
-
-    @Override
-    protected void purgeDB(EntityManager em) {
-        deleteEntity(Resource.class, RESOURCE_NAME, em);
-        deleteEntity(Agent.class, AGENT_NAME, em);
-        deleteEntity(ResourceType.class, RESOURCE_TYPE_NAME, em);
-    }
-
-    private void initResourceType() {
-        resourceType = new ResourceTypeBuilder().createResourceType()
-            .withId(0)
-            .withName(RESOURCE_TYPE_NAME)
-            .withCategory(SERVER)
-            .withPlugin(RESOURCE_TYPE_NAME.toLowerCase())
-            .build();
-    }
-
-    private void initAgent() {
-        agent = new Agent(AGENT_NAME, "localhost", 1, "", AGENT_NAME + "_TOKEN");
-    }
-
-    private void initResource() {
-        resource = new ResourceBuilder().createResource()
-            .withId(0)
-            .withName(RESOURCE_NAME)
-            .withResourceKey(RESOURCE_NAME)
-            .withUuid(RESOURCE_NAME)
-            .withResourceType(resourceType)
-            .build();
-    }
-
-    //@Test
     public void pinningSnapshotShouldSetDriftDefAsPinned() {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 
@@ -155,7 +92,6 @@ public class ManageSnapshotsTest extends DriftServerTest {
         assertTrue("Failed to set pinned flag of " + toString(driftDef), updatedDriftDef.isPinned());
     }
 
-    //@Test
     @SuppressWarnings("unchecked")
     public void pinningSnapshotShouldMakeSnapshotTheInitialChangeSet() throws Exception {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::makeSnapshotVersionZero");
@@ -221,7 +157,6 @@ public class ManageSnapshotsTest extends DriftServerTest {
             "The newDriftFile property was not set correctly for " + drift1);
     }
 
-    //@Test
     public void pinningSnapshotShouldSendRequestToAgent() {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 
@@ -268,15 +203,6 @@ public class ManageSnapshotsTest extends DriftServerTest {
         assertTrue("Failed to send request to agent to pin snapshot", agentInvoked.get());
     }
 
-    private Drift findDriftByPath(List<? extends Drift> drifts, String path) {
-        for (Drift drift : drifts) {
-            if (drift.getPath().equals(path)) {
-                return drift;
-            }
-        }
-        return null;
-    }
-
     private DriftDefinition createAndPersistDriftDef(String name) {
         final DriftDefinition driftDef = new DriftDefinition(new Configuration());
         driftDef.setName(name);
@@ -296,11 +222,4 @@ public class ManageSnapshotsTest extends DriftServerTest {
         return driftDef;
     }
 
-    private Subject getOverlord() {
-        return getSubjectManager().getOverlord();
-    }
-
-    private String toString(DriftDefinition def) {
-        return "DriftDefinition[id: " + def.getId() + ", name: " + def.getName() + "]";
-    }
 }

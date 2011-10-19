@@ -19,15 +19,19 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,30 +39,25 @@ import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
-import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.drift.JPADrift;
+import org.rhq.core.domain.drift.JPADriftChangeSet;
+import org.rhq.core.domain.drift.JPADriftFile;
+import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.shared.ResourceBuilder;
-import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.test.TransactionCallback;
 
 public class DriftTemplateManagerBeanTest extends DriftServerTest {
-
-    private final String RESOURCE_TYPE_NAME = DriftTemplateManagerBeanTest.class.getName();
-
-    private final String AGENT_NAME = DriftTemplateManagerBeanTest.class.getName() + "_AGENT";
-
-    private ResourceType resourceType;
-
-    private Agent agent;
 
     private DriftTemplateManagerLocal templateMgr;
 
@@ -66,39 +65,10 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     private List<Resource> resources = new LinkedList<Resource>();
 
-    @BeforeClass(inheritGroups = true)
+    @BeforeClass
     public void initClass() {
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
-    }
-
-    @Override
-    protected void initDB(EntityManager em) {
-        initResourceType();
-        initAgent();
-
-        em.persist(resourceType);
-        em.persist(agent);
-    }
-
-    @Override
-    protected void purgeDB(EntityManager em) {
-        for (Resource resource : resources) {
-            deleteEntity(Resource.class, resource.getName(), em);
-        }
-        resources.clear();
-        deleteEntity(ResourceType.class, RESOURCE_TYPE_NAME, em);
-        deleteEntity(Agent.class, AGENT_NAME, em);
-    }
-
-    private void initResourceType() {
-        resourceType = new ResourceTypeBuilder().createResourceType().withId(0).withName(
-            DriftTemplateManagerBeanTest.class.getName()).withCategory(SERVER).withPlugin(
-            DriftTemplateManagerBeanTest.class.getName().toLowerCase()).build();
-    }
-
-    private void initAgent() {
-        agent = new Agent(AGENT_NAME, "localhost", 1, "", AGENT_NAME + "_TOKEN");
     }
 
     public void createNewTemplate() {
@@ -175,7 +145,6 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
         // create some definitions
         DriftDefinitionTemplate template = loadTemplate(definition.getName());
-        Resource resource = createResource();
 
         final DriftDefinition def1 = template.createDefinition();
         def1.setName("def 1");
@@ -196,28 +165,86 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template, true);
     }
 
-    private Subject getOverlord() {
-        return getSubjectManager().getOverlord();
-    }
+    @SuppressWarnings("unchecked")
+    public void pinSnapshotToTemplate() throws Exception {
+        // First create the template
+        final DriftDefinition templateDef = new DriftDefinition(new Configuration());
+        templateDef.setName("test::pinSnapshotToTemplate");
+        templateDef.setEnabled(true);
+        templateDef.setDriftHandlingMode(normal);
+        templateDef.setInterval(2400L);
+        templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-    private Resource createResource() {
-        int index = resources.size();
-        final Resource resource = new ResourceBuilder().createResource().withId(0).withName(
-            getClass().getSimpleName() + "_" + index).withResourceKey(getClass().getSimpleName() + "_" + index)
-            .withUuid(getClass().getSimpleName() + "_" + index).withResourceType(resourceType).build();
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, templateDef);
+        DriftDefinitionTemplate template = loadTemplate(templateDef.getName());
 
-        resources.add(resource);
+        // next create the resource level drift definition and a couple change
+        // sets from which we will generate the snapshot
+        final DriftDefinition resourceDef = new DriftDefinition(templateDef.getConfiguration());
+
+        // create initial change set
+        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        JPADrift drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
+
+        JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift1);
+
+        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, resourceDef);
+        changeSet0.setInitialDriftSet(driftSet);
+
+        // create change set v1
+        final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
+        final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, resourceDef);
+        final JPADrift drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
 
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
-                resource.setAgent(agent);
-                em.persist(resource);
+                em.persist(resourceDef);
+                em.persist(driftFile1);
+                em.persist(driftFile2);
+                em.persist(changeSet0);
+                em.persist(changeSet1);
+                em.persist(drift2);
             }
         });
 
-        return resource;
+        // now we pin the snapshot to the template
+        templateMgr.pinTemplate(getOverlord(), template.getId(), resourceDef.getId(), 1);
+
+        // verify that the template is now pinned
+        DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
+
+        assertTrue("Template should be marked pinned", updatedTemplate.isPinned());
+
+        // Lastly verify that the change set was persisted
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterId(updatedTemplate.getChangeSetId());
+
+        PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
+            criteria);
+
+        assertEquals("Expected to find change set for pinned template", 1, changeSets.size());
+
+        JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
+        List<? extends Drift> expectedDrifts = asList(
+            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
+            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+
+        DriftChangeSet<?> actualChangeSet = changeSets.get(0);
+        List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
+
+        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
+            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+
+        // we need to compare the newDriftFile properties separately because
+        // assertCollectionMatchesNoOrder compares properties via equals() and JPADriftFile
+        // does not implement equals.
+        assertPropertiesMatch(drift1.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.1").getNewDriftFile(),
+            "The newDriftFile property was not set correctly for " + drift1);
+        assertPropertiesMatch(drift2.getNewDriftFile(), findDriftByPath(actualDrifts, "drift.2").getNewDriftFile(),
+            "The newDriftFile property was not set correctly for " + drift1);
     }
 
     private DriftDefinitionTemplate loadTemplate(String name) {

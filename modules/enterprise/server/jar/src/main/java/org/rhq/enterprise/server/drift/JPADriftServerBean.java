@@ -248,6 +248,11 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         return changeSet.getResourceId() == 0 && changeSet.getDriftDefinitionId() == 0;
     }
 
+    @Override
+    public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     private JPADriftFile toJPADriftFile(DriftFile driftFile) {
         if (driftFile == null) {
             return null;

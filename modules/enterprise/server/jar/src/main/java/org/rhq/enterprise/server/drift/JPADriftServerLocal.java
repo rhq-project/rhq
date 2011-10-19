@@ -72,6 +72,8 @@ public interface JPADriftServerLocal {
 
     String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
 
+    String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId);
+
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN 
      * @param driftFile

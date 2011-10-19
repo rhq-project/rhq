@@ -212,6 +212,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     @Override
     public int getResourceId() {
+        if (resource == null) {
+            return 0;
+        }
         return resource.getId();
     }
 
@@ -247,12 +250,15 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     @Override
     public int getDriftDefinitionId() {
-        return this.driftDefinition.getId();
+        if (driftDefinition == null) {
+            return 0;
+        }
+        return driftDefinition.getId();
     }
 
     @Override
     public void setDriftDefinitionId(int id) {
-        this.driftDefinition.setId(id);
+        driftDefinition.setId(id);
     }
 
     @Override

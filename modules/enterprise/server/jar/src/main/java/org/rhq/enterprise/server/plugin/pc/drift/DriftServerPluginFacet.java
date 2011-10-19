@@ -106,6 +106,18 @@ public interface DriftServerPluginFacet {
      */
     String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
 
+    /**
+     * Creates a copy of the specified, existing change set. The new change set will be
+     * persisted. The new change set will belong to the specified drift definition.
+     *
+     * @param subject
+     * @param changeSetId
+     * @param driftDefId
+     * @param resourceId
+     * @return
+     */
+    String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId);
+
     void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 
     /**

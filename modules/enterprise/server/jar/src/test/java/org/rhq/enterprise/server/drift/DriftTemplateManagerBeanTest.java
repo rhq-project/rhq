@@ -79,18 +79,18 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         definition.setInterval(2400L);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
+        final DriftDefinitionTemplate newTemplate = templateMgr.createTemplate(getOverlord(), resourceType.getId(),
+                    true, definition);
 
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
+
                 ResourceType updatedType = em.find(ResourceType.class, resourceType.getId());
 
                 assertEquals("Failed to add new drift definition to resource type", 1, updatedType
                     .getDriftDefinitionTemplates().size());
-
-                DriftDefinitionTemplate newTemplate = updatedType.getDriftDefinitionTemplates().iterator().next();
 
                 DriftDefinitionTemplate expectedTemplate = new DriftDefinitionTemplate();
                 expectedTemplate.setTemplateDefinition(definition);

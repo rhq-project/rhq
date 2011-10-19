@@ -83,6 +83,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             template.setTemplateDefinition(definition);
 
             resourceType.addDriftDefinitionTemplate(template);
+            entityMgr.persist(template);
 
             // return the filled out entity
             entityMgr.persist(template);

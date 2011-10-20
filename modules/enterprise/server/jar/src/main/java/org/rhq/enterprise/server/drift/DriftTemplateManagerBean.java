@@ -72,8 +72,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     public DriftDefinitionTemplate createTemplate(Subject subject, int resourceTypeId, boolean isUserDefined,
         DriftDefinition definition) {
 
-        DriftDefinitionTemplate result = null;
-
         try {
             ResourceType resourceType = resourceTypeMgr.getResourceTypeById(subject, resourceTypeId);
             DriftDefinitionTemplate template = new DriftDefinitionTemplate();

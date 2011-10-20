@@ -37,7 +37,6 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
-import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 @Local
 public interface DriftManagerLocal extends DriftManagerRemote {

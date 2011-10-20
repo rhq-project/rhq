@@ -19,6 +19,12 @@
 
 package org.rhq.core.pc.drift;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -55,12 +61,6 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
-
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -147,12 +147,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         log.debug("Rescheduling drift detection for " + r);
-        for (DriftDefinition c : container.getDriftDefinitions()) {
+        for (DriftDefinition d : container.getDriftDefinitions()) {
             try {
-                syncWithServer(r, c);
-                schedulesQueue.addSchedule(new DriftDetectionSchedule(r.getId(), c));
+                syncWithServer(r, d);
+                schedulesQueue.addSchedule(new DriftDetectionSchedule(r.getId(), d));
             } catch (IOException e) {
-                log.error("Failed to sync with server for " + toString(r, c) + ". Drift detection will not be "
+                log.error("Failed to sync with server for " + toString(d) + ". Drift detection will not be "
                     + "scheduled.", e);
             }
         }
@@ -163,9 +163,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     private void syncWithServer(Resource resource, DriftDefinition driftDefinition) throws IOException {
-        Headers headers = createHeaders(resource, driftDefinition);
+        Headers headers = createHeaders(driftDefinition);
         if (!changeSetMgr.changeSetExists(resource.getId(), headers)) {
-            log.info("No snapshot found for " + toString(resource, driftDefinition) + ". Downloading snapshot from "
+            log.info("No snapshot found for " + toString(driftDefinition) + ". Downloading snapshot from "
                 + "server");
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
 
@@ -178,7 +178,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 // this point we just return and allow the agent to generate the
                 // initial snapshot file.
                 if (log.isDebugEnabled()) {
-                    log.debug("The server does not have any change sets for " + toString(resource, driftDefinition)
+                    log.debug("The server does not have any change sets for " + toString(driftDefinition)
                         + ". An initial snapshot needs to be generated.");
                 }
                 return;
@@ -187,7 +187,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             headers.setVersion(snapshot.getVersion());
 
             log.info("Preparing to write snapshot at version " + snapshot.getVersion() + " to disk for " +
-                toString(resource, driftDefinition));
+                toString(driftDefinition));
             File currentSnapshotFile = changeSetMgr.findChangeSet(resource.getId(), driftDefinition.getName(),
                 COVERAGE);
             writeSnapshotToFile(snapshot, currentSnapshotFile, headers);
@@ -199,7 +199,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 DriftSnapshot pinnedSnapshot = driftServer.getSnapshot(driftDefinition.getId(), 0, 0);
                 Headers pinnedHeaders = createHeaders(resource.getId(), driftDefinition);
                 File pinnedSnapshotFile = new File(currentSnapshotFile.getParent(), "snapshot.pinned");
-                log.info("Preparing to write pinned snapshot to disk for " + toString(resource, driftDefinition));
+                log.info("Preparing to write pinned snapshot to disk for " + toString(driftDefinition));
                 writeSnapshotToFile(pinnedSnapshot, pinnedSnapshotFile, pinnedHeaders);
 
                 if (snapshot.getVersion() > 0) {
@@ -209,7 +209,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     DriftSnapshot deltaSnapshot = driftServer.getSnapshot(driftDefinition.getId(),
                         snapshot.getVersion(), snapshot.getVersion());
                     File deltaFile = new File(currentSnapshotFile.getParentFile(), "drift-changeset.txt");
-                    Headers deltaHeaders = createHeaders(resource, driftDefinition);
+                    Headers deltaHeaders = createHeaders(driftDefinition);
                     deltaHeaders.setType(DRIFT);
                     writeSnapshotToFile(deltaSnapshot, deltaFile, deltaHeaders);
                 }
@@ -253,13 +253,14 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
     }
 
-    private Headers createHeaders(Resource resource, DriftDefinition driftDefinition) {
+    private Headers createHeaders(DriftDefinition driftDefinition) {
+        int resourceId = driftDefinition.getResource().getId();
         Headers headers = new Headers();
-        headers.setResourceId(resource.getId());
+        headers.setResourceId(resourceId);
         headers.setDriftDefinitionId(driftDefinition.getId());
         headers.setType(COVERAGE);
         headers.setDriftDefinitionName(driftDefinition.getName());
-        headers.setBasedir(getAbsoluteBaseDirectory(resource.getId(), driftDefinition).getAbsolutePath());
+        headers.setBasedir(getAbsoluteBaseDirectory(resourceId, driftDefinition).getAbsolutePath());
         return headers;
     }
 
@@ -342,10 +343,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             driftServer.sendChangesetZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(
                 new FileInputStream(zipFile))));
         } catch (IOException e) {
-            throw new DriftDetectionException("Failed to set change set for " + toString(resourceId, driftDefinition)
+            throw new DriftDetectionException("Failed to set change set for " + toString(driftDefinition)
                 + " to server");
         } catch (RuntimeException e) {
-            throw new DriftDetectionException("Failed to set change set for " + toString(resourceId, driftDefinition)
+            throw new DriftDetectionException("Failed to set change set for " + toString(driftDefinition)
                 + " to server");
         }
     }
@@ -500,9 +501,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void updateDriftDetection(int resourceId, DriftDefinition driftDefinition) {
-        log.info("Received request to update schedule for [resourceId: " + resourceId + ", driftDefinitionId: "
-            + driftDefinition.getId() + ", driftDefinitionName: " + driftDefinition.getName() + "]");
+    public void updateDriftDetection(DriftDefinition driftDefinition) {
+        log.info("Recived request to update schedule for " + toString(driftDefinition));
+        int resourceId = driftDefinition.getResource().getId();
         DriftDetectionSchedule updatedSchedule = schedulesQueue.update(resourceId, driftDefinition);
         if (updatedSchedule == null) {
             updatedSchedule = new DriftDetectionSchedule(resourceId, driftDefinition);
@@ -527,10 +528,39 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
-        ResourceContainer container = inventoryMgr.getResourceContainer(resourceId);
+        ResourceContainer container = inventoryMgr.getResourceContainer(driftDefinition.getResource().getId());
         if (container != null) {
             container.addDriftDefinition(driftDefinition);
         }
+    }
+
+    @Override
+    public void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
+        File currentSnapshot = changeSetMgr.findChangeSet(driftDef.getResource().getId(), driftDef.getName(),
+            COVERAGE);
+        File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+        Headers headers = createHeaders(driftDef);
+
+        try {
+            writeSnapshotToFile(driftSnapshot, currentSnapshot, headers);
+        } catch (IOException e) {
+            log.error("An error occurred while writing snapshot file [" + currentSnapshot.getPath() + "] to disk", e);
+            // TODO do we need to report the error to the server?
+            currentSnapshot.delete();
+            return;
+        }
+
+        try {
+            StreamUtil.copy(new BufferedInputStream(new FileInputStream(currentSnapshot)), new BufferedOutputStream(
+                new FileOutputStream(pinnedSnapshot)), true);
+        } catch (IOException e) {
+            log.error("An error occurred while writing snapshot file [" + pinnedSnapshot.getPath() + "] to disk", e);
+            currentSnapshot.delete();
+            pinnedSnapshot.delete();
+            return;
+        }
+
+        updateDriftDetection(driftDef);
     }
 
     @Override
@@ -713,12 +743,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         writer.close();
     }
 
-    private String toString(Resource r, DriftDefinition d) {
-        return toString(r.getId(), d);
-    }
-
-    private String toString(int resourceId, DriftDefinition d) {
-        return "DriftDefinition[id: " + d.getId() + ", resourceId: " + resourceId + ", name: " + d.getName() + "]";
+    private String toString( DriftDefinition d) {
+        return "DriftDefinition[id: " + d.getId() + ", resourceId: " + d.getResource().getId() + ", name: " +
+            d.getName() + "]";
     }
 
     private String toString(int resourceId, String defName) {

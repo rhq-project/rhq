@@ -267,6 +267,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(driftDefPojo.getBasedir(), driftDef.getBasedir());
         assertEquals(120L, driftDef.getInterval());
 
+        driftDefPojo = new DriftDefinition(driftDef.getConfiguration().deepCopyWithoutProxies());
         driftDefPojo.setName("testDriftDef-2");
         driftDefPojo.setInterval(30L);
         driftDefPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/baz"));

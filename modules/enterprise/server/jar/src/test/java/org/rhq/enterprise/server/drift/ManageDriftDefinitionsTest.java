@@ -31,6 +31,7 @@ import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.EntityManager;
 
@@ -46,6 +47,7 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -143,8 +145,18 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         });
 
         // Create and persist a resource-level definition.
-        DriftDefinition definition = template.createDefinition();
+        final DriftDefinition definition = template.createDefinition();
         definition.setTemplate(template);
+
+        final AtomicBoolean agentInvoked = new AtomicBoolean(false);
+
+        agentServiceContainer.driftService = new TestDefService() {
+            @Override
+            public void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
+                agentInvoked.set(true);
+            }
+        };
+
         driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), definition);
 
         DriftDefinition newDef = loadDefinition(definition.getName());
@@ -173,7 +185,8 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
             (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
 
-        // TODO lastly verify that the agent is called
+        // lastly verify that the agent is called
+        assertTrue("Failed to send drift definition along with snapshot to agent", agentInvoked.get());
     }
 
     private DriftDefinition loadDefinition(String name) {

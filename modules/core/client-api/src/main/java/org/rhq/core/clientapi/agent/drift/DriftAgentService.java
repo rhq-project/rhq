@@ -99,11 +99,12 @@ public interface DriftAgentService {
      * Requests that the agent update its processing of the specified driftDefinition.  The filters
      * are unchanged, but something else may have changed (enablement/interval, etc).
      *
-     * @param resourceId The id of the resource for which the request is being made
      * @param driftDefinition The updated driftDefinition.
      * @see DriftDefinition
      */
-    void updateDriftDetection(int resourceId, DriftDefinition driftDefinition);
+    void updateDriftDetection(DriftDefinition driftDefinition);
+
+    void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot driftSnapshot);
 
     /**
      * This method is invoked to inform the agent that the server has successfully

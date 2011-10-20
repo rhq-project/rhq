@@ -51,7 +51,11 @@ class TestDefService implements DriftAgentService {
     }
 
     @Override
-    public void updateDriftDetection(int resourceId, DriftDefinition DriftDefinition) {
+    public void updateDriftDetection(DriftDefinition DriftDefinition) {
+    }
+
+    @Override
+    public void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
     }
 
     @Override

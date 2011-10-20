@@ -688,7 +688,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                     // you cannot update drift def that changes basedir/includes/excludes from the original.
                     // the user must delete the drift def and create a new one, as opposed to trying to update the existing one.
                     if (comparator.compare(driftDef, dc) == 0) {
-                        dc.setConfiguration(driftDef.getConfiguration());
+                        dc.setConfiguration(driftDef.getConfiguration().deepCopyWithoutProxies());
                         isUpdated = true;
                         break;
                     } else {
@@ -706,7 +706,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                 // drift server plugin.
                 entityManager.persist(driftDef);
                 DriftDefinitionTemplate template = driftDef.getTemplate();
-                if (template.isPinned()) {
+                if (template != null && template.isPinned()) {
                     DriftServerPluginFacet driftServerPlugin = getServerPlugin();
                     driftServerPlugin.copyChangeSet(subject, template.getChangeSetId(), driftDef.getId(), resourceId);
                 }
@@ -721,7 +721,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();
             try {
-                service.updateDriftDetection(resourceId, driftDef);
+                if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
+                    DriftSnapshot snapshot = driftManager.getSnapshot(subject, new DriftSnapshotRequest(
+                        driftDef.getId()));
+                    service.updateDriftDetection(driftDef, snapshot);
+                } else {
+                    service.updateDriftDetection(driftDef);
+                }
             } catch (Exception e) {
                 log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftDef + "]", e);
             }

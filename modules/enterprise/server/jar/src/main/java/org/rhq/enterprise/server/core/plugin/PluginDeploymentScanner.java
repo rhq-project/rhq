@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core.plugin;
 
 import java.io.File;
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -57,13 +60,14 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     /** what looks for new or changed agent plugins */
     private ServerPluginScanner serverPluginScanner = new ServerPluginScanner();
 
+    @NotNull
     public Long getScanPeriod() {
-        return Long.valueOf(this.scanPeriod);
+        return this.scanPeriod;
     }
 
-    public void setScanPeriod(Long ms) {
+    public void setScanPeriod(@Nullable Long ms) {
         if (ms != null) {
-            this.scanPeriod = ms.longValue();
+            this.scanPeriod = ms;
         } else {
             this.scanPeriod = 300000L;
         }
@@ -230,7 +234,11 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                     if (!fileMd5.equals(realPluginFileMd5)) {
                         if (file.lastModified() > realPluginFile.lastModified()) {
                             FileUtil.copyFile(file, realPluginFile);
-                            realPluginFile.setLastModified(file.lastModified());
+                            boolean succeeded = realPluginFile.setLastModified(file.lastModified());
+                            if (!succeeded) {
+                                log.error("Failed to set mtime to [" + new Date(file.lastModified()) + "] on file ["
+                                    + realPluginFile + "].");
+                            }
                             log.info("Found plugin jar at [" + file.getAbsolutePath() + "] and placed it at ["
                                 + realPluginFile.getAbsolutePath() + "]");
                         }
@@ -249,4 +257,5 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
 
         return;
     }
+
 }

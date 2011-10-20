@@ -21,6 +21,8 @@ package org.rhq.core.domain.plugin;
 
 import java.io.Serializable;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Encapsulates informaton that can uniquely identify a plugin.
  * 
@@ -111,6 +113,7 @@ public class PluginKey implements Serializable {
         return pluginName;
     }
 
+    @Nullable
     public String getPluginType() {
         return pluginType;
     }

@@ -16,10 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.server.plugin.pc;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -148,7 +146,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * This method informs the plugin container that all of its plugins have been loaded.
      * Once this is called, the plugin container can assume all plugins that it will
-     * ever know about have been {@link #loadPlugin(ServerPluginEnvironment) loaded}.
+     * ever know about have been {@link #loadPlugin(ServerPluginEnvironment, boolean)} loaded}.
      */
     public synchronized void start() {
         log.debug("Server plugin container starting");
@@ -356,7 +354,7 @@ public abstract class AbstractTypeServerPluginContainer {
      * @param params parameters to pass to the control operation; may be <code>null</code>
      * @return the results of the invocation
      * 
-     * @throws if failed to obtain the plugin component and invoke the control. This usually means an
+     * @throws Exception if failed to obtain the plugin component and invoke the control. This usually means an
      *         abnormal error occurred - if the control operation merely failed to do what it needed to do,
      *         the error will be reported in the returned results, not as a thrown exception.
      */
@@ -451,7 +449,7 @@ public abstract class AbstractTypeServerPluginContainer {
         // build the data map for the job, setting some values we need, plus adding the callback data for the plugin itself
         JobDataMap jobData = new JobDataMap();
         jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_NAME, pluginKey.getPluginName());
-        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_TYPE, pluginKey.getPluginType().toString());
+        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_TYPE, pluginKey.getPluginType());
         jobData.put(AbstractJobWrapper.DATAMAP_JOB_ID, schedule.getJobId());
         jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TYPE, schedule.getScheduleType().getTypeName());
         jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TRIGGER, schedule.getScheduleType().getScheduleTrigger());

@@ -40,8 +40,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
@@ -92,7 +94,7 @@ public class ServerPluginScanner {
      * 
      * This will also check to see if previously registered plugins changed their state.
      *
-     * @throws Exception
+     * @throws Exception on unexpected errors
      */
     void registerServerPlugins() throws Exception {
         for (File file : this.scanned) {
@@ -121,7 +123,7 @@ public class ServerPluginScanner {
             if (pluginWithDescriptor != null) {
                 try {
                     log.info("Plugin file [" + undeployedFile + "] has been undeployed. It will be deleted.");
-                    List<Integer> id = Arrays.asList(new Integer(undeployedPlugin.getId()));
+                    List<Integer> id = Arrays.asList(undeployedPlugin.getId());
                     serverPluginsManager.undeployServerPlugins(LookupUtil.getSubjectManager().getOverlord(), id);
                 } finally {
                     this.serverPluginsOnFilesystem.remove(undeployedFile);
@@ -148,7 +150,7 @@ public class ServerPluginScanner {
                         if (pluginLoadTime != null) {
                             long configChangeTimestamp = serverPluginsManager
                                 .getLastConfigurationChangeTimestamp(installedPlugin.getId());
-                            if (configChangeTimestamp > pluginLoadTime.longValue()) {
+                            if (configChangeTimestamp > pluginLoadTime) {
                                 // since the last time the plugin was loaded, its configuration has changed, reload it to pick up the new config 
                                 log.info("Detected a config change to plugin [" + key + "]. It will be reloaded and "
                                     + ((installedPlugin.isEnabled()) ? "[enabled]" : "[disabled]"));
@@ -170,7 +172,7 @@ public class ServerPluginScanner {
      * This method just scans the filesystem and DB for server plugin changes but makes
      * no attempt to register the plugins.
      * 
-     * @throws Exception
+     * @throws Exception on unexpected errors
      */
     void serverPluginScan() throws Exception {
         log.debug("Scanning for server plugins");
@@ -202,7 +204,7 @@ public class ServerPluginScanner {
      * it only means this is the first time we've seen it since this object has been instantiated.
      * This method will check to see if the database record matches the new plugin file and if so, does nothing.
      * 
-     * @param file the new server plugin file
+     * @param pluginFile the new server plugin file
      */
     private void registerServerPlugin(File pluginFile) {
         try {
@@ -242,7 +244,10 @@ public class ServerPluginScanner {
             if (PluginStatusType.DELETED == status) {
                 log.warn("Plugin file [" + pluginFile + "] has been detected but that plugin with name [" + pluginName
                     + "] was previously undeployed. Will not re-register that plugin and the file will be deleted.");
-                pluginFile.delete();
+                boolean succeeded = pluginFile.delete();
+                if (!succeeded) {
+                    log.error("Failed to delete obsolete plugin file [" + pluginFile + "].");
+                }
             } else {
                 // now attempt to register the plugin. "dbPlugin" will be the new updated plugin; but if
                 // the scanned plugin does not obsolete the current plugin, then dbPlugin will be the old, still valid, plugin.
@@ -261,7 +266,7 @@ public class ServerPluginScanner {
         Configuration defaults = null;
         ConfigurationDefinition def = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(descriptor);
         if (def != null) {
-            defaults = def.getDefaultTemplate().createConfiguration();
+            defaults = createDefaultConfiguration(def);
         }
         return defaults;
     }
@@ -270,9 +275,14 @@ public class ServerPluginScanner {
         Configuration defaults = null;
         ConfigurationDefinition def = ServerPluginDescriptorMetadataParser.getScheduledJobsDefinition(descriptor);
         if (def != null) {
-            defaults = def.getDefaultTemplate().createConfiguration();
+            defaults = createDefaultConfiguration(def);
         }
         return defaults;
+    }
+
+    private Configuration createDefaultConfiguration(ConfigurationDefinition def) {
+        ConfigurationTemplate defaultTemplate = def.getDefaultTemplate();
+        return (defaultTemplate != null) ? defaultTemplate.createConfiguration() : new Configuration();
     }
 
     /**
@@ -385,10 +395,10 @@ public class ServerPluginScanner {
      * Creates a {@link ServerPlugin} object for the given plugin jar and caches it.
      * @param pluginJar information about this plugin jar will be cached
      * @param md5 if known, this is the plugin jar's MD5, <code>null</code> if not known
-     * @return the plugin jar files's information that has been cached
+     * @return the plugin jar file's information that has been cached
      * @throws Exception if failed to get information about the plugin
      */
-    private ServerPlugin cacheFilesystemServerPluginJar(File pluginJar, String md5) throws Exception {
+    private ServerPlugin cacheFilesystemServerPluginJar(File pluginJar, @Nullable String md5) throws Exception {
         if (md5 == null) { // don't calculate the MD5 is we've already done it before
             md5 = MessageDigestGenerator.getDigestString(pluginJar);
         }
@@ -495,10 +505,12 @@ public class ServerPluginScanner {
                     } else {
                         log.warn("Failed to delete the obsolete (to-be-updated) server plugin: " + currentFile);
                     }
-                    currentFile = null;
                 } else if (obsoletePlugin == null) {
                     // the db is up-to-date, but update the cache so we don't check MD5 or parse the descriptor again
-                    currentFile.setLastModified(mtime);
+                    boolean succeeded = currentFile.setLastModified(mtime);
+                    if (!succeeded) {
+                        log.error("Failed to set mtime to [" + new Date(mtime) + "] on file [" + currentFile + "].");
+                    }
                     pluginWithDescriptor.plugin.setMtime(mtime);
                     pluginWithDescriptor.plugin.setVersion(version);
                     pluginWithDescriptor.plugin.setMd5(md5);
@@ -539,7 +551,10 @@ public class ServerPluginScanner {
                     InputStream content = rs.getBinaryStream(1);
                     StreamUtil.copy(content, new FileOutputStream(file));
                     rs.close();
-                    file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
+                    boolean succeeded = file.setLastModified(plugin.getMtime());// so our file matches the database mtime
+                    if (!succeeded) {
+                        log.error("Failed to set mtime to [" + plugin.getMtime() + "] on file [" + file + "].");
+                    }
                     updatedFiles.add(file);
 
                     // we are writing a new file to the filesystem, cache it since we know about it now

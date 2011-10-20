@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -90,13 +90,18 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
         this.isSystemRole = RolesDataSource.isSystemRoleId(getRecordId());
 
+        // Step 1 of async init: load current user's global permissions.
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            @Override
             public void onPermissionsLoaded(Set<Permission> perms) {
-                if (perms != null) {
-                    RoleEditView.this.hasManageSecurityPermission = perms.contains(Permission.MANAGE_SECURITY);
-                    checkIfLdapConfigured();
+                if (perms == null) {
+                    // TODO: i18n
+                    CoreGUI.getErrorHandler().handleError("Failed to load global permissions for current user. Perhaps the Server is down.");
+                    return;
                 }
+                RoleEditView.this.hasManageSecurityPermission = perms.contains(Permission.MANAGE_SECURITY);
+
+                // Step 2 of async init: check if LDAP is configured.
+                checkIfLdapConfigured();
             }
         });
     }
@@ -110,13 +115,14 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         GWTServiceLookup.getLdapService().checkLdapConfiguredStatus(new AsyncCallback<Boolean>() {
             public void onSuccess(Boolean isLdapConfigured) {
                 RoleEditView.this.isLdapConfigured = isLdapConfigured;
+
+                // Step 3 of async init: call super.init().
                 init();
             }
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
-                RoleEditView.this.isLdapConfigured = false;
-                init();
+                return;
             }
         });
     }

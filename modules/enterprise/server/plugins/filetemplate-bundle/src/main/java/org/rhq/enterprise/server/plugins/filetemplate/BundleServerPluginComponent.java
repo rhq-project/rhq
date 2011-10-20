@@ -37,7 +37,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.bundle.filetemplate.recipe.RecipeContext;
 import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -181,21 +180,8 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
 
         StringBuilder str = new StringBuilder();
         str.append("plugin-key=").append(this.context.getPluginEnvironment().getPluginKey()).append(",");
-        str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()).append(",");
-        str.append("plugin-config=[").append(getPluginConfigurationString()).append(']'); // do not append ,
+        str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()).append(']');
         return str.toString();
-    }
-
-    private String getPluginConfigurationString() {
-        String results = "";
-        Configuration config = this.context.getPluginConfiguration();
-        for (PropertySimple prop : config.getSimpleProperties().values()) {
-            if (results.length() > 0) {
-                results += ", ";
-            }
-            results = results + prop.getName() + "=" + prop.getStringValue();
-        }
-        return results;
     }
 
     private static class RecipeVisitor implements ZipUtil.ZipEntryVisitor {

@@ -18,11 +18,14 @@
  */
 package org.rhq.enterprise.server.system;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -30,11 +33,27 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class SystemManagerBeanTest extends AbstractEJB3Test {
     private Subject overlord;
     private SystemManagerLocal systemManager;
+    private DriftServerPluginService driftServerPluginService;
 
+    @BeforeClass
+    public void setupServer() {
+        systemManager = LookupUtil.getSystemManager();
+        
+        //we need this because the drift plugins are referenced from the system settings that we use in our tests
+        driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.startMasterPluginContainer();        
+    }
+
+    @AfterClass
+    public void tearDownServer() throws Exception {
+        unprepareServerPluginService();
+        driftServerPluginService.stopMasterPluginContainer();
+    }
+    
     @BeforeMethod
     public void beforeMethod() {
         overlord = LookupUtil.getSubjectManager().getOverlord();
-        systemManager = LookupUtil.getSystemManager();
     }
 
     public void testGetSystemConfiguration() {

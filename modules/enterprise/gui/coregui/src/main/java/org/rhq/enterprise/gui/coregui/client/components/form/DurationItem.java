@@ -126,8 +126,7 @@ public class DurationItem extends CanvasItem {
             IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
             integerRangeValidator.setMin(1);
             valueItem.setValidators(integerRangeValidator);
-            valueItem.setValidateOnChange(getValidateOnChange());
-            valueItem.setValidateOnExit(getValidateOnExit());
+            valueItem.setValidateOnChange(true);
 
             valueItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -167,6 +166,16 @@ public class DurationItem extends CanvasItem {
         }
 
         setCanvas(this.form);
+    }
+
+    @Override
+    public void setValidateOnChange(Boolean validateOnChange) {
+        form.setValidateOnChange(validateOnChange);
+    }
+
+    @Override
+    public void setValidateOnExit(Boolean validateOnExit) {
+        form.setValidateOnChange(validateOnExit);
     }
 
     public void setValue(Integer value, UnitType unitType) {
@@ -212,7 +221,12 @@ public class DurationItem extends CanvasItem {
     private Long calculateValue() {
         IntegerItem valueItem = (IntegerItem) this.form.getItem(FIELD_VALUE);
         Object value = valueItem.getValue();
-        Long integerValue = TypeConversionUtility.toLong(value);
+        Long integerValue = null;
+        try {
+            integerValue = TypeConversionUtility.toLong(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
         Long convertedValue = null;
         if (integerValue != null) {
             TimeUnit unit = getInputTimeUnit();

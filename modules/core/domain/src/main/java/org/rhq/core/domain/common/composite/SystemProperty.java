@@ -142,6 +142,11 @@ public enum SystemProperty {
     }
     
     public boolean validateValue(String value) {
+        if (value == null) {
+            //null values are not allowed
+            return false;
+        }
+        
         switch (type) {
         case STRING:
         case PASSWORD:

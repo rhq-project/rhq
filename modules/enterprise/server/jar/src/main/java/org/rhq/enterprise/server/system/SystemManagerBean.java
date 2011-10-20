@@ -227,14 +227,28 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 existingConfig = new SystemConfiguration(prop.getInternalName(), value);
                 entityManager.persist(existingConfig);
             } else {
-                if ((existingConfig.getPropertyValue() == null) || !existingConfig.getPropertyValue().equals(value)) {
+                //make sure we compare the new value with a database-agnostic value
+                //it is important to compare in the database-agnostic format instead
+                //of database specific because the conversion isn't reflective.   
+                //Some legacy code somewhere is (or just used to) store booleans as "0"s and "1"s
+                //even though they are stored as strings and thus don't suffer from Oracle's
+                //lack of support for boolean data type. If we encounter such values, we convert
+                //them to "false"/"true" and store that value to database. This is a one way operation
+                //and therefore we need to compare the database-agnostic (i.e. "true"/"false") and
+                //not database specific.
+                String existingValue = transformSystemConfigurationProperty(prop, existingConfig.getPropertyValue(), true);
+                
+                if ((existingValue == null && value != null) || !existingValue.equals(value)) {
                     //SystemProperty#isReadOnly should be a superset of the "fReadOnly" field in the database
                     //but let's just be super paranoid here...
                     if (prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue())) {
                         throw new IllegalArgumentException("The setting [" + prop.getInternalName()
-                            + "] is read-only - you cannot change its current value!");
+                            + "] is read-only - you cannot change its current value! Current value is [" + existingConfig.getPropertyValue() + "] while the new value was [" + value + "].");
                     }
+                    
+                    //transform to the database-specific format
                     value = transformSystemConfigurationProperty(prop, value, false);
+                    
                     existingConfig.setPropertyValue(value);
                     entityManager.merge(existingConfig);
                 }

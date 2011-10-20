@@ -239,10 +239,10 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapUsername = prop.getProperty(RHQConstants.LDAPBindDN);
         ldapPassword = prop.getProperty(RHQConstants.LDAPBindPW);
 
-        String ldapProtocol = prop.getProperty(RHQConstants.LDAPProtocol);
-        ldapSsl = ldapProtocol.equals("ssl");
+        String value = prop.getProperty(SystemProperty.USE_SSL_FOR_LDAP.getInternalName());
+        ldapSsl = Boolean.TRUE.toString().equals(value);
 
-        String value = prop.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+        value = prop.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
         ldapEnabled = (value != null) ? Boolean.valueOf(value) : false;
 
         String resourceGenericPropertiesUpgradeAllowed = prop.getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade);

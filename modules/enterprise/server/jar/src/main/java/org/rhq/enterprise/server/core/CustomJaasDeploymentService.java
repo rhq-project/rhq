@@ -66,9 +66,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void installJaasModules() {
         try {
             log.info("Installing RHQ Server's JAAS login modules");
-            Properties conf = LookupUtil.getSystemManager().getSystemConfiguration(
+            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            registerJaasModules(conf);
+            registerJaasModules(systemConfig);
         } catch (Exception e) {
             log.fatal("Error deploying JAAS login modules", e);
             throw new RuntimeException(e);
@@ -101,13 +101,13 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void postDeregister() {
     }
 
-    private void registerJaasModules(Properties conf) throws Exception {
+    private void registerJaasModules(Properties systemConfig) throws Exception {
         List<AppConfigurationEntry> configEntries = new ArrayList<AppConfigurationEntry>();
         AppConfigurationEntry ace;
         Map<String, String> configOptions;
 
         try {
-            configOptions = getJdbcOptions(conf);
+            configOptions = getJdbcOptions(systemConfig);
             ace = new AppConfigurationEntry(JDBCLoginModule.class.getName(),
                 AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
 
@@ -115,19 +115,19 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             this.log.info("Enabling RHQ JDBC JAAS Provider...");
             configEntries.add(ace);
 
-            String value = conf.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+            String value = systemConfig.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
             boolean isLdapAuthenticationEnabled = (value != null) ? Boolean.valueOf(value) : false;
 
             if (isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
-                configOptions = getJdbcOptions(conf);
+                configOptions = getJdbcOptions(systemConfig);
                 ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
                 this.log.info("Enabling RHQ JDBC Principal Check JAAS Provider...");
                 configEntries.add(ace);
 
                 // this is the LDAP module that checks the LDAP for auth
-                configOptions = getLdapOptions(conf);
+                configOptions = getLdapOptions(systemConfig);
                 try {
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
@@ -164,7 +164,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
         configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(RHQConstants.LDAPFactory));
         configOptions.put(Context.PROVIDER_URL, conf.getProperty(RHQConstants.LDAPUrl));
-        configOptions.put(Context.SECURITY_PROTOCOL, conf.getProperty(RHQConstants.LDAPProtocol));
+        String value = conf.getProperty(SystemProperty.USE_SSL_FOR_LDAP.getInternalName());
+        boolean ldapSsl = Boolean.TRUE.toString().equals(value);
+        configOptions.put(Context.SECURITY_PROTOCOL, (ldapSsl) ? "ssl" : null);
         configOptions.put("LoginProperty", conf.getProperty(RHQConstants.LDAPLoginProperty));
         configOptions.put("Filter", conf.getProperty(RHQConstants.LDAPFilter));
         configOptions.put("GroupFilter", conf.getProperty(RHQConstants.LDAPGroupFilter));
@@ -190,7 +192,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         }
 
         String protocol = options.get(Context.SECURITY_PROTOCOL);
-        if ((protocol != null) && protocol.equals("ssl")) {
+        if ("ssl".equals(protocol)) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {
                 env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());

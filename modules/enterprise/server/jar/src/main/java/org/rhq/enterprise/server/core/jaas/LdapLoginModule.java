@@ -236,7 +236,7 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
 
         // Setup SSL if requested
         String protocol = env.getProperty(Context.SECURITY_PROTOCOL);
-        if ((protocol != null) && protocol.equals("ssl")) {
+        if ("ssl".equals(protocol)) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {
                 env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());

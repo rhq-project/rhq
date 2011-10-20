@@ -49,6 +49,8 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.common.composite.SystemProperty;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -86,14 +88,14 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     private SystemManagerLocal systemManager;
 
     public Set<Map<String, String>> findAvailableGroups() {
-        Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
+        Properties systemConfig = systemManager.getSystemConfiguration(subjectManager.getOverlord());
         Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
 
         //retrieve the filters.
-        String groupFilter = (String) options.get(RHQConstants.LDAPGroupFilter);
+        String groupFilter = (String) systemConfig.get(RHQConstants.LDAPGroupFilter);
         if ((groupFilter != null) && (!groupFilter.trim().isEmpty())) {
             String filter = String.format("(%s)", groupFilter);
-            return buildGroup(options, filter);
+            return buildGroup(systemConfig, filter);
         }
         return emptyAvailableGroups;
     }
@@ -256,26 +258,26 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Map<String, String> findLdapUserDetails(String userName) {
-        Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
+        Properties systemConfig = systemManager.getSystemConfiguration(subjectManager.getOverlord());
         HashMap<String, String> userDetails = new HashMap<String, String>();
         // Load our LDAP specific properties
-        Properties env = getProperties(options);
+        Properties env = getProperties(systemConfig);
 
         // Load the BaseDN
-        String baseDN = (String) options.get(RHQConstants.LDAPBaseDN);
+        String baseDN = (String) systemConfig.get(RHQConstants.LDAPBaseDN);
 
         // Load the LoginProperty
-        String loginProperty = (String) options.get(RHQConstants.LDAPLoginProperty);
+        String loginProperty = (String) systemConfig.get(RHQConstants.LDAPLoginProperty);
         if (loginProperty == null) {
             // Use the default
             loginProperty = "cn";
         }
         // Load any information we may need to bind
-        String bindDN = (String) options.get(RHQConstants.LDAPBindDN);
-        String bindPW = (String) options.get(RHQConstants.LDAPBindPW);
+        String bindDN = (String) systemConfig.get(RHQConstants.LDAPBindDN);
+        String bindPW = (String) systemConfig.get(RHQConstants.LDAPBindPW);
 
         // Load any search filter
-        String searchFilter = (String) options.get(RHQConstants.LDAPFilter);
+        String searchFilter = (String) systemConfig.get(RHQConstants.LDAPFilter);
         if (bindDN != null) {
             env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
             env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
@@ -335,23 +337,23 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
      * @throws NamingException
      * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#validatePassword(java.lang.String,java.lang.String)
      */
-    protected Set<Map<String, String>> buildGroup(Properties options, String filter) {
+    protected Set<Map<String, String>> buildGroup(Properties systemConfig, String filter) {
         Set<Map<String, String>> ret = new HashSet<Map<String, String>>();
         // Load our LDAP specific properties
-        Properties env = getProperties(options);
+        Properties env = getProperties(systemConfig);
 
         // Load the BaseDN
-        String baseDN = (String) options.get(RHQConstants.LDAPBaseDN);
+        String baseDN = (String) systemConfig.get(RHQConstants.LDAPBaseDN);
 
         // Load the LoginProperty
-        String loginProperty = (String) options.get(RHQConstants.LDAPLoginProperty);
+        String loginProperty = (String) systemConfig.get(RHQConstants.LDAPLoginProperty);
         if (loginProperty == null) {
             // Use the default
             loginProperty = "cn";
         }
         // Load any information we may need to bind
-        String bindDN = (String) options.get(RHQConstants.LDAPBindDN);
-        String bindPW = (String) options.get(RHQConstants.LDAPBindPW);
+        String bindDN = (String) systemConfig.get(RHQConstants.LDAPBindDN);
+        String bindPW = (String) systemConfig.get(RHQConstants.LDAPBindPW);
         if (bindDN != null) {
             env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
             env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
@@ -416,15 +418,16 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
      *
      * @return properties that are to be used when connecting to LDAP server
      */
-    private Properties getProperties(Properties options) {
-        Properties env = new Properties(options);
+    private Properties getProperties(Properties systemConfig) {
+        Properties env = new Properties(systemConfig);
         // Set our default factory name if one is not given
         String factoryName = env.getProperty(RHQConstants.LDAPFactory);
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, factoryName);
 
         // Setup SSL if requested
-        String protocol = env.getProperty(RHQConstants.LDAPProtocol);
-        if ((protocol != null) && protocol.equals("ssl")) {
+        String value = env.getProperty(SystemProperty.USE_SSL_FOR_LDAP.getInternalName());
+        boolean ldapSsl = Boolean.TRUE.toString().equals(value);
+        if (ldapSsl) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {
                 env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());
@@ -435,7 +438,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         // Set the LDAP url
         String providerUrl = env.getProperty(RHQConstants.LDAPUrl);
         if (providerUrl == null) {
-            providerUrl = "ldap://localhost:" + (((protocol != null) && protocol.equals("ssl")) ? "636" : "389");
+            int port = (ldapSsl) ? 636 : 389;
+            providerUrl = "ldap://localhost:" + port;
         }
 
         env.setProperty(Context.PROVIDER_URL, providerUrl);

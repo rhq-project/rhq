@@ -29,7 +29,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
@@ -130,9 +129,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
                 public boolean isEnabled(ListGridRecord[] selection) {
                     if (super.isEnabled(selection)) {
                         for (ListGridRecord record : selection) {
-                            DriftDefinitionTemplate template = (DriftDefinitionTemplate) record
-                                .getAttributeAsObject(DriftDefinitionTemplateDataSource.ATTR_ENTITY);
-                            if (!template.isUserDefined()) {
+                            if (!record.getAttributeAsBoolean(DriftDefinitionTemplateDataSource.ATTR_IS_USER_DEFINED)
+                                .booleanValue()) {
                                 break;
                             }
                         }

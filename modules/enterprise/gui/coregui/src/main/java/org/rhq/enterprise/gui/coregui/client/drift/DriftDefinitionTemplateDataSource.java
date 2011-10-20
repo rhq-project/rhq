@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -34,29 +33,28 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
+import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefinitionTemplate, ResourceTypeCriteria> {
+public class DriftDefinitionTemplateDataSource extends
+    RPCDataSource<DriftDefinitionTemplate, DriftDefinitionTemplateCriteria> {
 
-    public static final String ATTR_ENTITY = "object";
-    public static final String ATTR_ID = "id";
+    // columns
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_DEFINED_BY = "definedBy";
     public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
@@ -64,13 +62,20 @@ public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefini
     public static final String ATTR_EDIT = "edit";
     public static final String ATTR_INTERVAL = "interval";
     public static final String ATTR_NAME = "name";
+    public static final String ATTR_NUM_DEFINITIONS = "numDefinitions";
     public static final String ATTR_PINNED = "pinned";
+
+    // non-columns
+    // public static final String ATTR_ENTITY = "object";
+    public static final String ATTR_ID = "id";
+    public static final String ATTR_IS_PINNED = "isPinned";
+    public static final String ATTR_IS_USER_DEFINED = "isUserDefined";
 
     public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
     public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
 
     private int resourceTypeId;
-    private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
+    private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
     public DriftDefinitionTemplateDataSource(int resourceTypeId) {
         this.resourceTypeId = resourceTypeId;
@@ -93,6 +98,25 @@ public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefini
         ListGridField definedByField = new ListGridField(ATTR_DEFINED_BY, MSG.view_adminTemplates_definedBy());
         fields.add(definedByField);
 
+        ListGridField numDefinitionsField = new ListGridField(ATTR_NUM_DEFINITIONS, "Definitions");
+        fields.add(numDefinitionsField);
+
+        ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
+        pinnedField.setType(ListGridFieldType.IMAGE);
+        pinnedField.setAlign(Alignment.CENTER);
+        pinnedField.addRecordClickHandler(new RecordClickHandler() {
+
+            public void onRecordClick(RecordClickEvent event) {
+
+                if (event.getRecord().getAttributeAsBoolean(ATTR_IS_PINNED)) {
+                    CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID
+                        .getName(), String.valueOf(resourceTypeId))
+                        + "/" + event.getRecord().getAttribute(ATTR_ID));
+                }
+            }
+        });
+        fields.add(pinnedField);
+
         ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
@@ -110,19 +134,6 @@ public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefini
         baseDirField.setCanSort(false);
         fields.add(baseDirField);
 
-        ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
-        pinnedField.setType(ListGridFieldType.IMAGE);
-        pinnedField.setAlign(Alignment.CENTER);
-        pinnedField.addRecordClickHandler(new RecordClickHandler() {
-
-            public void onRecordClick(RecordClickEvent event) {
-                CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID
-                    .getName(), String.valueOf(resourceTypeId))
-                    + "/" + event.getRecord().getAttribute(ATTR_ID));
-            }
-        });
-        fields.add(pinnedField);
-
         ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
@@ -138,42 +149,43 @@ public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefini
 
         nameField.setWidth("20%");
         definedByField.setWidth("10%");
+        numDefinitionsField.setWidth(70);
+        pinnedField.setWidth(70);
         enabledField.setWidth(60);
         driftHandlingModeField.setWidth("10%");
-        intervalField.setWidth(100);
+        intervalField.setWidth(70);
         baseDirField.setWidth("*");
         editField.setWidth(70);
-        pinnedField.setWidth(70);
 
         return fields;
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final ResourceTypeCriteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final DriftDefinitionTemplateCriteria criteria) {
 
-        this.typeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
+        driftService.findDriftDefinitionTemplatesByCriteria(criteria,
+            new AsyncCallback<PageList<DriftDefinitionTemplate>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
 
-            public void onSuccess(PageList<ResourceType> result) {
-                dataRetrieved(result, response, request);
-            }
-        });
+                public void onSuccess(PageList<DriftDefinitionTemplate> result) {
+                    dataRetrieved(result, response, request);
+                }
+            });
     }
 
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<ResourceType> result, final DSResponse response, final DSRequest request) {
+    protected void dataRetrieved(final PageList<DriftDefinitionTemplate> result, final DSResponse response,
+        final DSRequest request) {
 
-        ResourceType type = result.get(0);
-        Set<DriftDefinitionTemplate> templates = type.getDriftDefinitionTemplates();
-
-        response.setData(buildRecords(templates));
-        response.setTotalRows(templates.size());
+        response.setData(buildRecords(result));
+        response.setTotalRows(result.getTotalSize());
         processResponse(request.getRequestId(), response);
     }
 
@@ -193,31 +205,22 @@ public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefini
     }
 
     @Override
-    protected ResourceTypeCriteria getFetchCriteria(DSRequest request) {
+    protected DriftDefinitionTemplateCriteria getFetchCriteria(DSRequest request) {
 
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterId(this.resourceTypeId);
+        DriftDefinitionTemplateCriteria criteria = new DriftDefinitionTemplateCriteria();
+        criteria.addFilterResourceTypeId(resourceTypeId);
 
-        criteria.fetchDriftDefinitionTemplates(true);
+        // I'm fetching these only to get the count of defs for the template. If it ends up being too slow
+        // then we'll probably need to create a criteria method that returns a composite.
+        criteria.fetchDriftDefinitions(true);
         criteria.setPageControl(getPageControl(request));
 
         return criteria;
     }
 
-    /*
-    @Override
-    protected String getSortFieldForColumn(String columnName) {
-        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
-            return "ancestry";
-        }
-
-        return super.getSortFieldForColumn(columnName);
-    }
-    */
-
     @Override
     public DriftDefinitionTemplate copyValues(Record from) {
-        return (DriftDefinitionTemplate) from.getAttributeAsObject(ATTR_ENTITY);
+        return null;
     }
 
     @Override
@@ -227,25 +230,31 @@ public class DriftDefinitionTemplateDataSource extends RPCDataSource<DriftDefini
 
     public static ListGridRecord convert(DriftDefinitionTemplate from) {
         ListGridRecord record = new ListGridRecord();
+        DriftDefinition templateDef = from.getTemplateDefinition();
 
-        record.setAttribute(ATTR_ENTITY, from);
+        // column attrs
 
-        record.setAttribute(ATTR_ID, from.getId());
         record.setAttribute(ATTR_NAME, from.getName());
         record
             .setAttribute(ATTR_DEFINED_BY, from.isUserDefined() ? MSG.common_title_user() : MSG.common_title_plugin());
-
-        DriftDefinition templateDef = from.getTemplateDefinition();
-
+        record.setAttribute(ATTR_NUM_DEFINITIONS, String.valueOf(from.getDriftDefinitions().size()));
+        record.setAttribute(ATTR_PINNED, templateDef.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
+            .getUnpinnedIcon());
+        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(templateDef.isEnabled()));
         record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(templateDef
             .getDriftHandlingMode()));
         record.setAttribute(ATTR_INTERVAL, String.valueOf(templateDef.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(templateDef.getBasedir()));
-        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(templateDef.isEnabled()));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
-        record.setAttribute(ATTR_PINNED, templateDef.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
-            .getUnpinnedIcon());
+
+        // non-column attrs used in processing
+
+        // don't store the entity unless necessary, it's just overhead
+        // record.setAttribute(ATTR_ENTITY, from);
+        record.setAttribute(ATTR_ID, from.getId());
+        record.setAttribute(ATTR_IS_PINNED, templateDef.isPinned());
+        record.setAttribute(ATTR_IS_USER_DEFINED, from.isUserDefined());
 
         return record;
     }

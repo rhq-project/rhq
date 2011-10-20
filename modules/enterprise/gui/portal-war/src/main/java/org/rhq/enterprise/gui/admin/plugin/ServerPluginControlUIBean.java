@@ -163,14 +163,15 @@ public class ServerPluginControlUIBean implements Serializable {
 
     public String invokeControl() {
         try {
-            this.results = this.serverPluginsBean.invokeServerPluginControl(this.serverPluginKey, this.control,
-                getParamsConfiguration());
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            this.results = this.serverPluginsBean.invokeServerPluginControl(subject, this.serverPluginKey,
+                this.control, getParamsConfiguration());
             if (this.results.isSuccess()) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                     "Plugin invoked the control operation successfully");
             } else {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Plugin reported an error: "
-                    + this.results.getError());
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Plugin reported an error: " + this.results.getError());
             }
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to invoke the plugin control", e);

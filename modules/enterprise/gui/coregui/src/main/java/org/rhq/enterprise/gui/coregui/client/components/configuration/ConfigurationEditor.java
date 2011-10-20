@@ -390,6 +390,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void reset() {
         this.configuration = this.originalConfiguration;
+        this.originalConfiguration = null; // so reload gets another copy
         reload();
     }
 

@@ -37,7 +37,6 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -46,6 +45,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 @Stateless
 public class PluginManagerBean implements PluginManagerLocal {
@@ -308,6 +308,12 @@ public class PluginManagerBean implements PluginManagerLocal {
         return;
     }
 
+    @Override
+    public File getPluginDropboxDirectory() {
+        File dir = LookupUtil.getPluginDeploymentScanner().getUserPluginDir();
+        return dir;
+    }
+
     private Plugin getPluginFromListById(List<Plugin> plugins, int id) {
         for (Plugin plugin : plugins) {
             if (id == plugin.getId()) {
@@ -341,8 +347,8 @@ public class PluginManagerBean implements PluginManagerLocal {
         log.debug("Registering " + plugin);
         long startTime = System.currentTimeMillis();
 
-//        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
-//            pluginFile, forceUpdate);
+        //        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
+        //            pluginFile, forceUpdate);
         boolean newOrUpdated = pluginMgr.installPluginJar(subject, plugin, pluginDescriptor, pluginFile);
         boolean typesUpdated = pluginMgr.registerPluginTypes(plugin, pluginDescriptor, newOrUpdated, forceUpdate);
 
@@ -353,7 +359,6 @@ public class PluginManagerBean implements PluginManagerLocal {
         long endTime = System.currentTimeMillis();
         log.debug("Finished registering " + plugin + " in " + (endTime - startTime) + " ms");
     }
-
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

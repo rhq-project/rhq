@@ -13,15 +13,7 @@
     ]]></serverplugin:help>
 
     <serverplugin:plugin-component class="BundleServerPluginComponent">
-        <serverplugin:control name="testControl" description="A test control operation">
-        </serverplugin:control>
     </serverplugin:plugin-component>
-
-    <!-- custom global config - unrelated to schedules  -->
-    <serverplugin:plugin-configuration>
-        <c:simple-property name="myCustomBundleProperty" type="string" required="true" default="custom-bundle-prop-value"
-                           description="A property my bundle plugin needs to be properly configured" />
-    </serverplugin:plugin-configuration>
 
     <bundle type="File Template Bundle"/>
 

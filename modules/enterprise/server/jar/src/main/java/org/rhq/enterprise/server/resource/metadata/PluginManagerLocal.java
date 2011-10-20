@@ -41,7 +41,6 @@ public interface PluginManagerLocal {
      */
     List<Plugin> findAllDeletedPlugins();
 
-
     /**
      * @return All plugins that are scheduled to be purged.
      */
@@ -129,12 +128,19 @@ public interface PluginManagerLocal {
         throws Exception;
 
     /** Exists only to for transactional boundary reasons. Not for general consumption. */
-//    boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
-//        boolean forceUpdate) throws Exception;
+    //    boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
+    //        boolean forceUpdate) throws Exception;
     boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception;
 
     /** Exists only for transactional boundary reasons. Not for general consumption. */
-    boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
-        File pluginFile) throws Exception;
+    boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor, File pluginFile)
+        throws Exception;
+
+    /**
+     * Returns the directory where plugins can be dropped for inclusion into the system.
+     * 
+     * @return directory where the plugin dropbox is located
+     */
+    File getPluginDropboxDirectory();
 }

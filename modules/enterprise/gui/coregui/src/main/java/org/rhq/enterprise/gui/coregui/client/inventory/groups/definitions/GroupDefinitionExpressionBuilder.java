@@ -43,8 +43,8 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.Criteria.Restriction;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -206,7 +206,7 @@ public class GroupDefinitionExpressionBuilder extends LocatableWindow {
                 }
             }
         });
-        GWTServiceLookup.getPluginService().getInstalledPlugins(new AsyncCallback<ArrayList<Plugin>>() {
+        GWTServiceLookup.getPluginService().getAgentPlugins(false, new AsyncCallback<ArrayList<Plugin>>() {
             @Override
             public void onSuccess(ArrayList<Plugin> result) {
                 plugins.clear();

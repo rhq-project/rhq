@@ -54,24 +54,21 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
 
     public static final ViewName SECTION_SECURITY_VIEW_ID = new ViewName("Security", MSG.view_admin_security());
     public static final ViewName SECTION_TOPOLOGY_VIEW_ID = new ViewName("Topology", MSG.view_admin_topology());
-    public static final ViewName SECTION_CONFIGURATION_VIEW_ID = new ViewName("Configuration", MSG
-        .view_admin_configuration());
+    public static final ViewName SECTION_CONFIGURATION_VIEW_ID = new ViewName("Configuration",
+        MSG.view_admin_configuration());
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
     private static final ViewName PAGE_SERVERS_VIEW_ID = new ViewName("Servers", MSG.view_adminTopology_servers());
     private static final ViewName PAGE_AGENTS_VIEW_ID = new ViewName("Agents", MSG.view_adminTopology_agents());
-    private static final ViewName PAGE_AFFINITY_GROUPS_VIEW_ID = new ViewName("AffinityGroups", MSG
-        .view_adminTopology_affinityGroups());
-    private static final ViewName PAGE_PARTITION_EVENTS_VIEW_ID = new ViewName("PartitionEvents", MSG
-        .view_adminTopology_partitionEvents());
-
-    // TODO this iframe page view id should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_PLUGINS_VIEW_ID = new ViewName("Plugins", MSG.view_adminConfig_plugins());
+    private static final ViewName PAGE_AFFINITY_GROUPS_VIEW_ID = new ViewName("AffinityGroups",
+        MSG.view_adminTopology_affinityGroups());
+    private static final ViewName PAGE_PARTITION_EVENTS_VIEW_ID = new ViewName("PartitionEvents",
+        MSG.view_adminTopology_partitionEvents());
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources", MSG
-        .view_adminContent_contentSources());
+    private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources",
+        MSG.view_adminContent_contentSources());
     private static final ViewName PAGE_REPOS_VIEW_ID = new ViewName("Repositories", MSG.common_title_repositories());
 
     public AdministrationView() {
@@ -181,30 +178,30 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
         systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
 
-        NavigationItem alertTemplatesItem = new NavigationItem(AlertDefinitionTemplateTypeView.VIEW_ID, ImageManager
-            .getAlertIcon(), new ViewFactory() {
-            public Canvas createView() {
-                return new AlertDefinitionTemplateTypeView(extendLocatorId(AlertDefinitionTemplateTypeView.VIEW_ID
-                    .getName()));
-            }
-        });
+        NavigationItem alertTemplatesItem = new NavigationItem(AlertDefinitionTemplateTypeView.VIEW_ID,
+            ImageManager.getAlertIcon(), new ViewFactory() {
+                public Canvas createView() {
+                    return new AlertDefinitionTemplateTypeView(
+                        extendLocatorId(AlertDefinitionTemplateTypeView.VIEW_ID.getName()));
+                }
+            });
         alertTemplatesItem.setRefreshRequired(true); // we always need a new page
 
-        NavigationItem driftTemplatesItem = new NavigationItem(DriftDefinitionTemplateTypeView.VIEW_ID, ImageManager
-            .getDriftIcon(), new ViewFactory() {
-            public Canvas createView() {
-                return new DriftDefinitionTemplateTypeView(extendLocatorId(DriftDefinitionTemplateTypeView.VIEW_ID
-                    .getName()));
-            }
-        });
+        NavigationItem driftTemplatesItem = new NavigationItem(DriftDefinitionTemplateTypeView.VIEW_ID,
+            ImageManager.getDriftIcon(), new ViewFactory() {
+                public Canvas createView() {
+                    return new DriftDefinitionTemplateTypeView(
+                        extendLocatorId(DriftDefinitionTemplateTypeView.VIEW_ID.getName()));
+                }
+            });
         driftTemplatesItem.setRefreshRequired(true); // we always need a new page        
 
-        NavigationItem metricTemplatesItem = new NavigationItem(MetricTemplateTypeView.VIEW_ID, ImageManager
-            .getMetricEditIcon(), new ViewFactory() {
-            public Canvas createView() {
-                return new MetricTemplateTypeView(extendLocatorId(MetricTemplateTypeView.VIEW_ID.getName()));
-            }
-        });
+        NavigationItem metricTemplatesItem = new NavigationItem(MetricTemplateTypeView.VIEW_ID,
+            ImageManager.getMetricEditIcon(), new ViewFactory() {
+                public Canvas createView() {
+                    return new MetricTemplateTypeView(extendLocatorId(MetricTemplateTypeView.VIEW_ID.getName()));
+                }
+            });
         metricTemplatesItem.setRefreshRequired(true); // we always need a new page        
 
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, "global/Download_16.png",
@@ -214,16 +211,22 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem pluginsItem = new NavigationItem(PAGE_PLUGINS_VIEW_ID, "global/Plugin_16.png",
+        NavigationItem agentPluginsItem = new NavigationItem(AgentPluginTableView.VIEW_ID, "global/Plugin_16.png",
             new ViewFactory() {
                 public Canvas createView() {
-                    return new FullHTMLPane(extendLocatorId(PAGE_PLUGINS_VIEW_ID.getName()),
-                        "/rhq/admin/plugin/plugin-list-plain.xhtml?nomenu=true");
+                    return new AgentPluginTableView(extendLocatorId(AgentPluginTableView.VIEW_ID.getName()));
+                }
+            }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
+
+        NavigationItem serverPluginsItem = new NavigationItem(ServerPluginTableView.VIEW_ID, "global/Plugin_16.png",
+            new ViewFactory() {
+                public Canvas createView() {
+                    return new ServerPluginTableView(extendLocatorId(ServerPluginTableView.VIEW_ID.getName()));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
-            driftTemplatesItem, metricTemplatesItem, downloadsItem, pluginsItem);
+            driftTemplatesItem, metricTemplatesItem, downloadsItem, agentPluginsItem, serverPluginsItem);
     }
 
     private NavigationSection buildContentSection() {

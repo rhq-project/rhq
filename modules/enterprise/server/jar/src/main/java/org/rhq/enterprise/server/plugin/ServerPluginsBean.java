@@ -43,9 +43,11 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -147,7 +149,6 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return query.getResultList();
     }
 
-    @SuppressWarnings("unchecked")
     public long getLastConfigurationChangeTimestamp(int pluginId) {
         Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_CONFIG_MTIMES);
         query.setParameter("id", pluginId);
@@ -592,6 +593,23 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return allPlugins;
     }
 
+    @Override
+    public ConfigurationDefinition getServerPluginConfigurationDefinition(PluginKey pluginKey) throws Exception {
+        ServerPluginDescriptorType descriptor = getServerPluginDescriptor(pluginKey);
+        ConfigurationDefinition def;
+        def = ConfigurationMetadataParser.parse("pc:" + pluginKey.getPluginName(), descriptor.getPluginConfiguration());
+        return def;
+    }
+
+    @Override
+    public ConfigurationDefinition getServerPluginScheduledJobsDefinition(PluginKey pluginKey) throws Exception {
+        ServerPluginDescriptorType descriptor = getServerPluginDescriptor(pluginKey);
+        ConfigurationDefinition def;
+        def = ConfigurationMetadataParser.parse("jobs:" + pluginKey.getPluginName(), descriptor.getScheduledJobs());
+        return def;
+    }
+
+    @Override
     public List<ControlDefinition> getServerPluginControlDefinitions(PluginKey pluginKey) throws Exception {
 
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
@@ -611,8 +629,10 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
     }
 
-    public ControlResults invokeServerPluginControl(PluginKey pluginKey, String controlName, Configuration params)
-        throws Exception {
+    @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public ControlResults invokeServerPluginControl(Subject subject, PluginKey pluginKey, String controlName,
+        Configuration params) throws Exception {
 
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();

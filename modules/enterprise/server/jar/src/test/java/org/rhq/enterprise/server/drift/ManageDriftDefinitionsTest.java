@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
@@ -26,6 +27,10 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 
@@ -34,6 +39,9 @@ import org.testng.annotations.BeforeClass;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
@@ -71,7 +79,7 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
             templateDef);
 
         // create and persist the definition
-        DriftDefinition definition = new DriftDefinition(template.getConfiguration());
+        DriftDefinition definition = template.createDefinition();
         definition.setTemplate(template);
         driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), definition);
 
@@ -84,7 +92,8 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         assertEquals("The template association was not set on the definition", template, newDef.getTemplate());
     }
 
-    public void createDefinitionFromPinnedTemplate() {
+    @SuppressWarnings("unchecked")
+    public void createDefinitionFromPinnedTemplate() throws Exception {
         // We first need to create a pinned template. Users can only create a pinned
         // template from a snapshot of an existing resource-level drift definition.
         // We are going to take a bit of a short cut though by directly creating
@@ -142,6 +151,29 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
 
         // verify that the definition is marked as pinned
         assertTrue("The drift definition should be marked as pinned", newDef.isPinned());
+
+        // verify that the initial change set is generated for the definition
+        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(definition.getId());
+        criteria.addFilterCategory(COVERAGE);
+        criteria.fetchDrifts(true);
+
+        PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
+            criteria);
+        assertEquals("Expected to find one change set", 1, changeSets.size());
+
+        JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
+        List<? extends Drift> expectedDrifts = asList(
+            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
+            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+
+        DriftChangeSet<?> actualChangeSet = changeSets.get(0);
+        List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
+
+        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
+            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+
+        // TODO lastly verify that the agent is called
     }
 
     private DriftDefinition loadDefinition(String name) {

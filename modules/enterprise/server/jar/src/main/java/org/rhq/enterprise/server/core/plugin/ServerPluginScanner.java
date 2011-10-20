@@ -39,8 +39,8 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -508,8 +508,8 @@ public class ServerPluginScanner {
                 } else if (obsoletePlugin == null) {
                     // the db is up-to-date, but update the cache so we don't check MD5 or parse the descriptor again
                     boolean succeeded = currentFile.setLastModified(mtime);
-                    if (!succeeded) {
-                        log.error("Failed to set mtime to [" + new Date(mtime) + "] on file [" + currentFile + "].");
+                    if (!succeeded && log.isDebugEnabled()) {
+                        log.debug("Failed to set mtime to [" + new Date(mtime) + "] on file [" + currentFile + "].");
                     }
                     pluginWithDescriptor.plugin.setMtime(mtime);
                     pluginWithDescriptor.plugin.setVersion(version);
@@ -552,8 +552,8 @@ public class ServerPluginScanner {
                     StreamUtil.copy(content, new FileOutputStream(file));
                     rs.close();
                     boolean succeeded = file.setLastModified(plugin.getMtime());// so our file matches the database mtime
-                    if (!succeeded) {
-                        log.error("Failed to set mtime to [" + plugin.getMtime() + "] on file [" + file + "].");
+                    if (!succeeded && log.isDebugEnabled()) {
+                        log.debug("Failed to set mtime to [" + plugin.getMtime() + "] on file [" + file + "].");
                     }
                     updatedFiles.add(file);
 

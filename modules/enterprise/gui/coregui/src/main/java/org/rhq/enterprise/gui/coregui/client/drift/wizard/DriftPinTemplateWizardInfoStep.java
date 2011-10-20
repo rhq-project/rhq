@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -56,10 +57,7 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
     private LocatableDynamicForm radioForm;
     private AbstractDriftPinTemplateWizard wizard;
 
-    private RadioGroupItem radioGroupItem;
-
     private LocatableDynamicForm selectTemplateForm;
-    StaticTextItem selectTemplateDescriptionItem = new StaticTextItem("Description", MSG.common_title_description());
     SelectItem selectTemplateItem = new SelectItem("Template", MSG.view_drift_wizard_addDef_templatePrompt());
 
     public DriftPinTemplateWizardInfoStep(AbstractDriftPinTemplateWizard wizard) {
@@ -78,18 +76,41 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
             radioForm = new LocatableDynamicForm(canvas.extendLocatorId("Radio"));
             radioForm.setNumCols(1);
-            radioForm.setWidth100();
+            // These settings (as opposed to setWidth100()) allow for contentual help to be better placed
+            radioForm.setAutoWidth();
+            radioForm.setOverflow(Overflow.VISIBLE);
 
             List<FormItem> formItems = new ArrayList<FormItem>();
 
-            LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
-            radioGroupValues.put(CREATE_TEMPLATE, "Pin to New Template (derived from the snapshot's Drift Definition)");
-            radioGroupValues.put(SELECT_TEMPLATE, "Pin to an Existing Template");
+            // Make the radio item title a separate item in the form in order to add contextual help
+            // to the right of the title text.  We could also add it to the radio item but then it floats to
+            // the right of the last radio button option (I'll leave that commented below if for some reason
+            // we want to switch to that approach.
+            StaticTextItem radioTitleItem = new StaticTextItem("RadioTitle");
+            radioTitleItem.setShowTitle(false);
+            radioTitleItem.setTitleOrientation(TitleOrientation.TOP);
+            radioTitleItem.setAlign(Alignment.LEFT);
+            // The css style "formTitle" is what should work here, but for some reason I wasn't getting the
+            // proper color. So instead I grabbed the color from the smartgwt css and declared it explicitly.
+            //radioTitleItem.setCellStyle("formTitle");
+            radioTitleItem.setValue("<span style=\"font-weight: bold; color: #003168\">"
+                + MSG.view_drift_wizard_pinTemplate_infoStepRadioTitle() + " :</span>");
+            FormUtility.addContextualHelp(radioTitleItem, MSG.view_drift_wizard_pinTemplate_infoStepRadioHelp());
+            formItems.add(radioTitleItem);
 
-            radioGroupItem = new RadioGroupItem("options", "Template Selection"); // TODO I18N
+            LinkedHashMap<String, String> radioGroupValues = new LinkedHashMap<String, String>();
+            radioGroupValues.put(CREATE_TEMPLATE, MSG.view_drift_wizard_pinTemplate_infoStepNewTemplate());
+            radioGroupValues.put(SELECT_TEMPLATE, MSG.view_drift_wizard_pinTemplate_infoStepExistingTemplate());
+
+            RadioGroupItem radioGroupItem;
+            radioGroupItem = new RadioGroupItem("RadioOptions");
+            // The title is mocked as a separate item above
+            radioGroupItem.setShowTitle(false);
+            //uncomment if we decide to show the title for some reason
+            //radioGroupItem.setTitleOrientation(TitleOrientation.TOP);
+            radioGroupItem.setWrap(false);
             radioGroupItem.setRequired(true);
             radioGroupItem.setAlign(Alignment.LEFT);
-            radioGroupItem.setTitleOrientation(TitleOrientation.TOP);
             radioGroupItem.setValueMap(radioGroupValues);
             radioGroupItem.setValue(CREATE_TEMPLATE);
             wizard.setCreateTemplate(true);
@@ -119,13 +140,14 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
             selectTemplateForm = new LocatableDynamicForm(radioForm.extendLocatorId("SelectForm"));
             selectTemplateForm.setNumCols(1);
             selectTemplateForm.setIsGroup(true);
-            selectTemplateForm.setGroupTitle("Existing Templates");
+            selectTemplateForm.setGroupTitle(MSG.view_drift_wizard_pinTemplate_infoStepSelectTitle());
             selectTemplateForm.setPadding(10);
-            //selectTemplateForm.setMargin(10);
             selectTemplateForm.hide();
 
             formItems.clear();
 
+            StaticTextItem selectTemplateDescriptionItem = new StaticTextItem("Description", MSG
+                .common_title_description());
             selectTemplateDescriptionItem.setTitleOrientation(TitleOrientation.TOP);
             selectTemplateDescriptionItem.setAlign(Alignment.LEFT);
             selectTemplateDescriptionItem.setWidth(300);

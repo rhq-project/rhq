@@ -63,7 +63,8 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
     @Override
     public String getTitle() {
-        return MSG.view_drift_wizard_pinTemplate_title();
+        return MSG.view_drift_wizard_pinTemplate_title(String.valueOf(getSnapshotVersion()), getSnapshotDriftDef()
+            .getName(), getResourceType().getName());
     }
 
     @Override

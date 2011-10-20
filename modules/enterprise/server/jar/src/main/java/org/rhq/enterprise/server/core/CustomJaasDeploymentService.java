@@ -111,7 +111,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
 
             // We always add the JDBC provider to the auth config
-            this.log.info("Enabling RHQ JDBC JAAS Provider");
+            this.log.info("Enabling RHQ JDBC JAAS Provider...");
             configEntries.add(ace);
 
             String provider = conf.getProperty(RHQConstants.JAASProvider);
@@ -121,7 +121,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 configOptions = getJdbcOptions(conf);
                 ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                this.log.info("Enabling RHQ JDBC-2 JAAS Provider");
+                this.log.info("Enabling RHQ JDBC Principal Check JAAS Provider...");
                 configEntries.add(ace);
 
                 // this is the LDAP module that checks the LDAP for auth
@@ -130,10 +130,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
                         AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                    this.log.info("Enabling RHQ LDAP JAAS Provider");
+                    this.log.info("Enabling RHQ LDAP JAAS Provide...r");
                     configEntries.add(ace);
                 } catch (NamingException e) {
-                    this.log.info("Disabling RHQ LDAP JAAS Provider: " + e.getMessage(), e);
+                    this.log.info("Disabling RHQ LDAP JAAS Provider: " + e, e);
                 }
             }
 

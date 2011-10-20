@@ -96,15 +96,13 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
         eventContext.registerEventPoller(eventPoller, 63);
 
         Properties props = new Properties();
-        props.put(PropertyConfiguration.SOURCE,"Jopr");
+        //props.put(PropertyConfiguration.SOURCE,"Jopr");
         props.put(PropertyConfiguration.HTTP_USER_AGENT,"Jopr");
         props.put(PropertyConfiguration.SEARCH_BASE_URL, searchBase);
         props.put(PropertyConfiguration.REST_BASE_URL, serverUrl);
         twitter4j.conf.Configuration tconf = new PropertyConfiguration(props);
 
         tFactory = new TwitterFactory(tconf);
-
-
     }
 
 
@@ -113,11 +111,8 @@ public class FeedComponent implements ResourceComponent<TwitterComponent>, Measu
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
     public void stop() {
-
-
         eventContext.unregisterEventPoller(TOPIC_EVENT);
     }
-
 
 
     /**

@@ -28,10 +28,8 @@ import twitter4j.Paging;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
+import twitter4j.auth.AuthorizationFactory;
 import twitter4j.conf.PropertyConfiguration;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -56,7 +54,6 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  */
 public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>, OperationFacet, MeasurementFacet
 {
-   private final Log log = LogFactory.getLog(this.getClass());
 
    private static final String TWIT_EVENT = "TwitterEvent";
    private static final int NOT_YET_SET = -1;
@@ -116,7 +113,7 @@ public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>
         eventPoller = new TwitterEventPoller(TWIT_EVENT);
         eventContext.registerEventPoller(eventPoller, 53);
        Properties props = new Properties();
-       props.put(PropertyConfiguration.SOURCE,"Jopr");
+       //props.put(PropertyConfiguration.SOURCE,"Jopr");
        props.put(PropertyConfiguration.HTTP_USER_AGENT,"Jopr");
        props.put(PropertyConfiguration.SEARCH_BASE_URL,searchBaseUrl);
        props.put(PropertyConfiguration.REST_BASE_URL,serverUrl);
@@ -143,10 +140,11 @@ public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>
      */
     public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
+       Twitter twitter = createTwitterInstance();
+
        for (MeasurementScheduleRequest req : metrics) {
           if (req.getName().equals("tweetCount")) {
 
-             Twitter twitter = tFactory.getInstance(username,password); // TODO server url?
 //             Twitter twitter = new Twitter(username,password,serverUrl);
              Paging paging = new Paging();
              if (lastId == NOT_YET_SET) {
@@ -158,7 +156,7 @@ public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>
                 paging.setCount(100);
              }
              List<Status> statuses;
-             statuses = twitter.getFriendsTimeline(paging );
+             statuses = twitter.getHomeTimeline(paging);
              if (lastId>0) {
                 MeasurementDataNumeric res;
                 res = new MeasurementDataNumeric(req, (double) statuses.size());
@@ -170,13 +168,20 @@ public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>
                 lastId = statuses.get(0).getId(); // This is always newest first
           }
           else if (req.getName().equals("followerCount")) {
-              Twitter twitter = tFactory.getInstance(username,password); // TODO server url?
-              int count = twitter.getFollowersIDs().getIDs().length;
+              int count = twitter.getFollowersIDs(-1).getIDs().length;
               MeasurementDataNumeric res;
               res = new MeasurementDataNumeric(req,(double)count);
               report.addData(res);
           }
        }
+    }
+
+    private Twitter createTwitterInstance() {
+        Properties props = new Properties();
+        props.setProperty(PropertyConfiguration.USER, username);
+        props.setProperty(PropertyConfiguration.PASSWORD, password);
+        PropertyConfiguration propConfig = new PropertyConfiguration(props);
+        return tFactory.getInstance(AuthorizationFactory.getInstance(propConfig));
     }
 
 
@@ -191,13 +196,15 @@ public class TwitterComponent implements ResourceComponent<ResourceComponent<?>>
     public OperationResult invokeOperation(String name,
                                            Configuration configuration) throws Exception {
         if (name!=null && name.equals("postStatus")) {
-            if (username==null || password==null)
+            if (username==null || password==null) {
                 throw new IllegalArgumentException("User or password were not set");
+            }
 
             String message = configuration.getSimpleValue("message",null);
 
-            Twitter twitter = tFactory.getInstance(username,password);
+            Twitter twitter = createTwitterInstance();
             Status status = twitter.updateStatus(message);
+            @SuppressWarnings({"UnnecessaryLocalVariable"})
             OperationResult result = new OperationResult("Posted " + status.getText());
 
             return result;

@@ -325,6 +325,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterCategory(COVERAGE);
         criteria.addFilterVersion("0");
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
+        criteria.addFilterId(request.getChangeSetId());
         criteria.fetchDrifts(true);
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
@@ -723,7 +724,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             try {
                 if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
                     DriftSnapshot snapshot = driftManager.getSnapshot(subject, new DriftSnapshotRequest(
-                        driftDef.getId()));
+                        driftDef.getTemplate().getChangeSetId()));
                     service.updateDriftDetection(driftDef, snapshot);
                 } else {
                     service.updateDriftDetection(driftDef);

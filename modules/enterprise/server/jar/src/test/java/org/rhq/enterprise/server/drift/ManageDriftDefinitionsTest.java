@@ -112,7 +112,7 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         driftSet.addDrift(drift1);
         driftSet.addDrift(drift2);
 
-        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, null);
+        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(null, 0, COVERAGE, null);
         changeSet0.setInitialDriftSet(driftSet);
         changeSet0.setDriftHandlingMode(DriftConfigurationDefinition.DriftHandlingMode.normal);
 

@@ -72,9 +72,11 @@ public abstract class AncestryUtil {
     }
 
     /**
-     * Convenience method that creates a standard ancestry ListGridField where the field already exists
+     * Convenience method that configures a standard ancestry ListGridField where the field already exists
      * in the given list grid.
      * 
+     * @param listGrid the list grid containing the standard ancestry field to be configured
+     *
      * @return ancestry field
      */
     public static ListGridField setupAncestryListGridField(ListGrid listGrid) {
@@ -107,7 +109,7 @@ public abstract class AncestryUtil {
      * Get the complete set of resource types in the ancestries provided. This is useful for
      * being able to load all the types in advance of generating decoded values.
      *  
-     * @return
+     * @return the complete set of resource types in the ancestries provided
      */
     public static HashSet<Integer> getAncestryTypeIds(Collection<String> ancestries) {
         HashSet<Integer> result = new HashSet<Integer>();
@@ -225,29 +227,35 @@ public abstract class AncestryUtil {
         return sbResources.toString();
     }
 
-    public static String getAncestryHoverHTML(ListGridRecord listGridRecord, int width) {
+    public static String getAncestryHoverHTML(ListGridRecord record, int width) {
+        // ListGrid sometimes passes in null if it's in the middle of fetching new data. In this case, return null to
+        // tell the ListGrid to not display any tooltip.
+        if (record == null) {
+            return null;
+        }
+
         // See if we cached the HTML as an attribute on the record on a previous call to this method.
-        String ancestryHover = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY_HOVER);
+        String ancestryHover = record.getAttributeAsString(RESOURCE_ANCESTRY_HOVER);
         if (ancestryHover != null) {
             return ancestryHover;
         }
 
-        String resourceName = getResourceName(listGridRecord);
+        String resourceName = getResourceName(record);
 
-        MapWrapper typesWrapper = (MapWrapper) listGridRecord.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
+        MapWrapper typesWrapper = (MapWrapper) record.getAttributeAsObject(RESOURCE_ANCESTRY_TYPES);
         if (typesWrapper == null) {
-            // This means the record hasn't been loaded yet, so return null to tell the ListGrid to not display any
-            // tooltip.
+            // This means the record hasn't been fully loaded yet, so return null to tell the ListGrid to not display
+            // any tooltip.
             return null;
         }
         Map<Integer, ResourceType> types = typesWrapper.getMap();
-        Integer resourceTypeId = listGridRecord.getAttributeAsInt(RESOURCE_TYPE_ID);
-        String ancestry = listGridRecord.getAttributeAsString(RESOURCE_ANCESTRY);
+        Integer resourceTypeId = record.getAttributeAsInt(RESOURCE_TYPE_ID);
+        String ancestry = record.getAttributeAsString(RESOURCE_ANCESTRY);
 
         String result = getAncestryHoverHTMLString(resourceName, ancestry, resourceTypeId, types, width);
 
         // Cache the HTML as an attribute on the record.
-        listGridRecord.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
+        record.setAttribute(RESOURCE_ANCESTRY_HOVER, result);
         return result;
     }
 
@@ -334,6 +342,12 @@ public abstract class AncestryUtil {
      * @return the long name for the resource
      */
     public static String getResourceHoverHTML(Record record, int width) {
+        // ListGrid sometimes passes in null if it's in the middle of fetching new data. In this case, return null to
+        // tell the ListGrid to not display any tooltip.
+        if (record == null) {
+            return null;
+        }
+
         // See if we cached the HTML as an attribute on the record on a previous call to this method.
         String resourceHover = record.getAttributeAsString(RESOURCE_HOVER);
         if (resourceHover != null) {
@@ -392,8 +406,8 @@ public abstract class AncestryUtil {
         return resourceName;
     }
 
-    // We do not want smartgwt to see we are storing our map into an attribute because it barfs on our key/value pairs
-    // so instead we have to wrap it in a non-Map POJO Object so smartgwt just handles it as a java.lang.Object.
+    // We do not want SmartGWT to see we are storing our map into an attribute because it barfs on our key/value pairs
+    // so instead we have to wrap it in a non-Map POJO Object so SmartGWT just handles it as a java.lang.Object.
     public static class MapWrapper {
         private Map<Integer, ResourceType> map;
 

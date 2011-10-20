@@ -30,6 +30,15 @@ import java.util.Stack;
 /**
  * Generic implementation of version comparison.
  *
+ * OSGi versions match this syntax:
+ *    version ::= major('.'minor('.'micro('.'qualifier)?)?)?
+ *    major ::= digit+
+ *    minor ::= digit+
+ *    micro ::= digit+
+ *    qualifier ::= (alpha|digit|'_'|'-')+
+ *    digit ::= [0..9]
+ *    alpha ::= [a..zA..Z]
+ *
  * NOTE: This class is a copy of r658725 of http://svn.apache.org/repos/asf/maven/artifact/trunk/src/main/java/org/apache/maven/artifact/versioning/ComparableVersion.java.
  *
  * @author <a href="mailto:kenney@apache.org">Kenney Westerhof</a>

@@ -325,7 +325,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addFilterCategory(COVERAGE);
         criteria.addFilterVersion("0");
         criteria.addFilterDriftDefinitionId(request.getDriftDefinitionId());
-        criteria.addFilterId(request.getChangeSetId());
         criteria.fetchDrifts(true);
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
@@ -700,7 +699,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             }
 
             if (!isUpdated) {
-                driftDef.setResource(resource);
+                resource.addDriftDefinition(driftDef);
                 // We call persist here because if this definition is created
                 // from a pinned template, then we need to generate the initial
                 // change set. And we need the definition id to pass to the
@@ -723,8 +722,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             DriftAgentService service = agentClient.getDriftAgentService();
             try {
                 if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
-                    DriftSnapshot snapshot = driftManager.getSnapshot(subject, new DriftSnapshotRequest(
-                        driftDef.getTemplate().getChangeSetId()));
+                    DriftSnapshot snapshot = getSnapshot(subject, new DriftSnapshotRequest(
+                        driftDef.getId()));
                     service.updateDriftDetection(driftDef, snapshot);
                 } else {
                     service.updateDriftDetection(driftDef);

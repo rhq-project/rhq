@@ -152,8 +152,11 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
 
         agentServiceContainer.driftService = new TestDefService() {
             @Override
-            public void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
+            public void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot snapshot) {
                 agentInvoked.set(true);
+                assertNotNull("Expected snapshot drift instances collection to be non-null",
+                    snapshot.getDriftInstances());
+                assertEquals("Expected snapshot to contain two drift entries", 2, snapshot.getDriftInstances().size());
             }
         };
 

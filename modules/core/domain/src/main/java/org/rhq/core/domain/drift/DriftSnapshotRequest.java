@@ -36,8 +36,7 @@ public class DriftSnapshotRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Integer driftDefinitionId;
-    private String changeSetId;
+    private int driftDefinitionId;
     private Integer version;
     private Integer startVersion;
     private String directory;
@@ -69,12 +68,6 @@ public class DriftSnapshotRequest implements Serializable {
         this(driftDefinitionId, version, null, directory, false, true);
     }
 
-    public DriftSnapshotRequest(String changesetId) {
-        this.changeSetId = changesetId;
-        startVersion = 0;
-        includeDriftInstances = true;
-    }
-
     /**
      * @param driftDefinitionId
      * @param version null or < 0 or > most recent will default to most recent
@@ -101,10 +94,6 @@ public class DriftSnapshotRequest implements Serializable {
 
     public Integer getDriftDefinitionId() {
         return driftDefinitionId;
-    }
-
-    public String getChangeSetId() {
-        return changeSetId;
     }
 
     public Integer getVersion() {

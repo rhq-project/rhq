@@ -28,7 +28,6 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 
 /**

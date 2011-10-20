@@ -96,7 +96,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     public void pinTemplate(Subject subject, int templateId, int driftDefId, int snapshotVersion) {
         DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
         DriftSnapshot snapshot = driftMgr.getSnapshot(subject, new DriftSnapshotRequest(driftDefId, snapshotVersion));
-        DriftDefinition resourceDef = driftMgr.getDriftDefinition(subject, driftDefId);
 
         DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
         changeSetDTO.setCategory(COVERAGE);

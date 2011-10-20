@@ -348,8 +348,14 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public void persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+    public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        return null;
         // TODO Auto-generated method stub
+    }
 
+    @Override
+    public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

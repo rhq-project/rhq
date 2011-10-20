@@ -36,6 +36,7 @@ import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
 
 import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
@@ -84,6 +85,7 @@ public class MasterServerPluginContainer {
      */
     public synchronized void initialize(MasterServerPluginContainerConfiguration config) {
         try {
+            List<Throwable> caughtExceptions = new ArrayList<Throwable>();
             log.debug("Master server plugin container is being initialized with config: " + config);
 
             this.configuration = config;
@@ -120,8 +122,9 @@ public class MasterServerPluginContainer {
                 try {
                     pc.initialize();
                     log.debug("Master PC initialized server plugin container for plugin type [" + pluginType + "]");
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.warn("Failed to initialize server plugin container for plugin type [" + pluginType + "]", e);
+                    caughtExceptions.add(e);
                     iterator.remove();
                 }
             }
@@ -148,13 +151,15 @@ public class MasterServerPluginContainer {
                             boolean enabled = !allDisabledPlugins.contains(pluginKey);
                             pc.loadPlugin(env, enabled);
                             log.info("Preloaded server plugin [" + pluginName + "]");
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             log.warn("Failed to preload server plugin [" + pluginName + "] from URL [" + pluginUrl
                                 + "]", e);
+                            caughtExceptions.add(e);
                         }
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.warn("Failed to preload server plugin [" + pluginName
                             + "]; cannot get its classloader from URL [ " + pluginUrl + "]", e);
+                        caughtExceptions.add(e);
                     }
                 } else {
                     log.warn("There is no server plugin container to support plugin: " + pluginUrl);
@@ -174,12 +179,22 @@ public class MasterServerPluginContainer {
                 try {
                     pc.start();
                     log.info("Master PC started server plugin container for plugin type [" + pluginType + "]");
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     log.warn("Failed to start server plugin container for plugin type [" + pluginType + "]", e);
+                    caughtExceptions.add(e);
                 }
             }
 
-            log.info("Master server plugin container has been initialized");
+            if (caughtExceptions.isEmpty()) {
+                log.info("Master server plugin container has been initialized");
+            } else {
+                log.warn("Master server plugin container has been initialized but it detected some problems. "
+                    + "Parts of the server may not operate correctly due to these errors.");
+                int i = 1;
+                for (Throwable t : caughtExceptions) {
+                    log.warn("Problem #" + (i++) + ": " + ThrowableUtil.getAllMessages(t));
+                }
+            }
 
         } catch (Throwable t) {
             shutdown();

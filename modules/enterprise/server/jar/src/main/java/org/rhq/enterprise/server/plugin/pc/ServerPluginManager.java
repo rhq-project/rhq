@@ -175,7 +175,12 @@ public class ServerPluginManager {
 
         if (enabled) {
             // tell the plugin we are loading it
-            ServerPluginComponent component = createServerPluginComponent(env);
+            ServerPluginComponent component = null;
+            try {
+                component = createServerPluginComponent(env);
+            } catch (Throwable t) {
+                throw new Exception("Plugin component failed to be created for server plugin [" + pluginName + "]", t);
+            }
             if (component != null) {
                 ServerPluginContext context = getServerPluginContext(env);
                 log.debug("Initializing plugin component for server plugin [" + pluginName + "]");
@@ -530,16 +535,25 @@ public class ServerPluginManager {
 
         log.debug("Loading server plugin class [" + className + "]...");
 
+        Class<?> clazz;
         try {
-            Class<?> clazz = Class.forName(className, initialize, loader);
-            log.debug("Loaded server plugin class [" + clazz + "]. initialized=[" + initialize + ']');
-            return clazz;
+            clazz = Class.forName(className, initialize, loader);
         } catch (ClassNotFoundException e) {
             throw new Exception("Could not find plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
+        } catch (NoClassDefFoundError e) {
+            throw new Exception("No class definition for plugin class [" + className + "] from plugin environment ["
+                + environment + "]", e);
         } catch (NullPointerException npe) {
             throw new Exception("Plugin class was 'null' in plugin environment [" + environment + "]", npe);
+        } catch (Error e) {
+            // wrap error (e.g. NoClassDefFoundError) so anyone catching Exception will catch this
+            throw new Exception("Can not load plugin class [" + className + "] from plugin environment [" + environment
+                + "]", e);
         }
+
+        log.debug("Loaded server plugin class [" + clazz + "]. initialized=[" + initialize + ']');
+        return clazz;
     }
 
     /**

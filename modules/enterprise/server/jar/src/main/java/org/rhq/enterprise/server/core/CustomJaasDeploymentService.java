@@ -35,6 +35,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.common.composite.SystemProperty;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
@@ -43,7 +44,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
- * Deploy the JAAS login modules that are configured. JDBC login module is always deployed, however, the LDAP login
+ * Deploy the JAAS login modules that are configured. The JDBC login module is always deployed, however, the LDAP login
  * module is only deployed if LDAP is enabled in the RHQ configuration.
  */
 public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
@@ -114,9 +115,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             this.log.info("Enabling RHQ JDBC JAAS Provider...");
             configEntries.add(ace);
 
-            String provider = conf.getProperty(RHQConstants.JAASProvider);
+            String value = conf.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+            boolean isLdapAuthenticationEnabled = (value != null) ? Boolean.valueOf(value) : false;
 
-            if ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider)) {
+            if (isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
                 configOptions = getJdbcOptions(conf);
                 ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
@@ -143,7 +145,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             Object obj = mbeanServer.invoke(objName, AUTH_METHOD, new Object[] { SECURITY_DOMAIN_NAME, config },
                 new String[] { "java.lang.String", config.getClass().getName() });
         } catch (Exception e) {
-            throw new Exception("Error registering RHQ JAAS Modules", e);
+            throw new Exception("Error registering RHQ JAAS modules", e);
         }
     }
 

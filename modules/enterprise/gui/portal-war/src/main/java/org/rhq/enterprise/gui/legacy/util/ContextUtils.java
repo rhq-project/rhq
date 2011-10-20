@@ -27,8 +27,9 @@ import java.util.Properties;
 
 import javax.servlet.ServletContext;
 
+import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -224,7 +225,7 @@ public class ContextUtils {
      * Load the specified properties file and return the properties.
      *
      * @param  context  the <code>ServletContext</code>
-     * @param  filename the fully qualifed name of the properties file
+     * @param  filename the fully qualified name of the properties file
      *
      * @throws Exception if a problem occurs while loading the file
      */
@@ -252,12 +253,13 @@ public class ContextUtils {
 
     public static boolean usingLDAPAuthentication(ServletContext context) throws Exception {
         String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
+
         if (provider == null) {
-            provider = LookupUtil.getSystemManager().getSystemConfiguration(
-                LookupUtil.getSubjectManager().getOverlord()).getProperty(RHQConstants.JAASProvider);
+            SystemSettings systemSettings = LookupUtil.getSystemManager().getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
+            provider = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }
 
-        return (provider != null) && provider.equals(RHQConstants.LDAPJAASProvider);
+        return (provider != null) ? Boolean.valueOf(provider) : false;
     }
 }

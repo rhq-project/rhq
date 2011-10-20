@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -48,6 +47,8 @@ import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
@@ -308,9 +309,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new LoginException("No password was given");
         }
 
-        // get the configuration properties and use the JAAS modules to perform the login
-        Properties config = systemManager.getSystemConfiguration(getOverlord());
-
+        // Use the JAAS modules to perform the auth.
         _checkAuthentication(username, password);
 
         // User is authenticated!
@@ -334,7 +333,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             // user is logging in for the first time and must go through a special
             // GUI workflow to create a subject record.  Let's create a dummy
             // placeholder subject in here for now.
-            if (config.getProperty(RHQConstants.JAASProvider).equals(RHQConstants.LDAPJAASProvider)) {
+
+            boolean isLdapAuthenticationEnabled = isLdapAuthenticationEnabled();
+            if (isLdapAuthenticationEnabled) {
                 subject = new Subject();
                 subject.setId(0);
                 subject.setName(username);
@@ -397,14 +398,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 return subject; //bail. No further checking required.
             } else {//Start LDAP check.
 
-                //retrieve configuration properties and do LDAP check(permissions check in SubjectGWTImpl)
-                Properties config = systemManager.getSystemConfiguration(getOverlord());
-
-                //determine if ldap configured.
-                boolean ldapConfigured = config.getProperty(RHQConstants.JAASProvider).equals(
-                    RHQConstants.LDAPJAASProvider);
-
-                if (ldapConfigured) {//we can proceed with LDAP checking
+                boolean isLdapAuthenticationEnabled = isLdapAuthenticationEnabled();
+                if (isLdapAuthenticationEnabled) {//we can proceed with LDAP checking
                     //check that session is valid. RHQ auth has already occurred. Security check required to initiate following
                     //spinder BZ:682755: 3/10/11: can't use isValidSessionId() as it also compares subject.id which is changing during case insensitive
                     // and new registration. This worked before because HTTP get took longer to invalidate sessions.
@@ -779,11 +774,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return queryRunner.execute();
     }
 
+    private boolean isLdapAuthenticationEnabled() {
+        SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
+        String value = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
+        return (value != null) ? Boolean.valueOf(value) : false;
+    }
+
     private boolean isLdapAuthorizationEnabled() {
-        Properties options = systemManager.getSystemConfiguration(getOverlord());
-        String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
-        String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
-        return ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0));
+        SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
+        String groupFilter = systemSettings.get(SystemProperty.LDAP_GROUP_FILTER);
+        String groupMember = systemSettings.get(SystemProperty.LDAP_GROUP_MEMBER);
+        return ((groupFilter != null) && (groupFilter.trim().length() > 0)) ||
+               ((groupMember != null) && (groupMember.trim().length() > 0));
     }
 
 }

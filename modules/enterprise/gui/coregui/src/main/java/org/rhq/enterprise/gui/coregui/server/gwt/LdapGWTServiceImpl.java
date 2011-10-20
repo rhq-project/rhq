@@ -27,13 +27,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.LdapGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -145,15 +146,16 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     }
 
     /**
-     * Light call to determine ldap configuration status.
+     * Returns true if LDAP authentication is enabled, or false otherwise.
      */
     public Boolean checkLdapConfiguredStatus() throws RuntimeException {
         try {
-            String provider = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
-                RHQConstants.JAASProvider);
-            return ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+            SystemSettings systemSettings = systemManager.getSystemSettings(subjectManager.getOverlord());
+            String value = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
+            boolean result = (value != null) ? Boolean.valueOf(value) : false;
+            return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 

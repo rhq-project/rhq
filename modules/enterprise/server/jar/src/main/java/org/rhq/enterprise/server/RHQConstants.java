@@ -36,7 +36,8 @@ public class RHQConstants {
 
     // JAAS settings      
     @Deprecated public static final String JAASProvider = SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName();
-    //these are values that correspond to the booleans of the JAASProvider that actually go into the database..
+    // These are values that are actually stored in the DB for the JAASProvider system prop, though the
+    // SystemProperty.LDAP_BASED_JAAS_PROVIDER is represented as a boolean (false->"JDBC", true->"LDAP").
     public static final String JDBCJAASProvider = "JDBC";
     public static final String LDAPJAASProvider = "LDAP";
 

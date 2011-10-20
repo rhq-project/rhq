@@ -130,6 +130,13 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
     }
 
     @Override
+    public void destroy() {
+        this.initialized = false;
+
+        super.destroy();
+    }
+
+    @Override
     public boolean isInitialized() {
         return super.isInitialized() && this.initialized;
     }

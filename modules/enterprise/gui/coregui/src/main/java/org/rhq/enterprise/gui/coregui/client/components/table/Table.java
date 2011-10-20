@@ -447,6 +447,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     @Override
     public void destroy() {
+        this.initialized = false;
         // immediately null out the listGrid to stop async refresh requests from executing during the destroy
         // logic. This happens in selenium testing or when a user navs away prior to the refresh.
         this.listGrid = null;

@@ -59,6 +59,9 @@ public class AgentInventoryStatusUpdateJob implements Job {
     }
 
     public static void internalizeJobValues(EntityManager entityManager, String valuesCsvList, List<Resource> resources) {
+        if (valuesCsvList==null)
+            return;
+
         final String[] resourceIdStrings = valuesCsvList.split(",");
         for (String resourceIdString : resourceIdStrings) {
             int resourceId = Integer.parseInt(resourceIdString);

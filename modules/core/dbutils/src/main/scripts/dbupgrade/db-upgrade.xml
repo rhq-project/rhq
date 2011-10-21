@@ -3521,6 +3521,8 @@
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="CONFIG_ID" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="IS_PINNED" columnType="BOOLEAN"/>
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_PINNED" nullable="FALSE"/>
+                <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" columnType="BOOLEAN"/>
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" nullable="FALSE"/>
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_DEFINITION foreign key relation to RHQ_CONFIG">
                         ALTER TABLE RHQ_DRIFT_DEFINITION

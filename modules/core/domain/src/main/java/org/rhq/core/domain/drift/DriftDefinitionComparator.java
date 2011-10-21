@@ -99,6 +99,10 @@ public class DriftDefinitionComparator implements Comparator<DriftDefinition> {
                 return dc1.isEnabled() ? 1 : -1; // so false sorts before true, seems logical to me
             }
 
+            if (dc1.isAttached() != dc2.isAttached()) {
+                return dc1.isAttached() ? 1 : -1;
+            }
+
             if (dc1.isPinned() != dc2.isPinned()) {
                 return dc1.isPinned() ? 1 : -1;
             }

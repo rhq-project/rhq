@@ -53,6 +53,7 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_INTERVAL = "interval";
     public static final String PROP_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String PROP_PINNED = "pinned";
+    public static final String PROP_ATTACHED = "attached";
     public static final String PROP_INCLUDES = "includes";
     public static final String PROP_INCLUDES_INCLUDE = "include";
     public static final String PROP_EXCLUDES = "excludes";
@@ -66,6 +67,7 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
 
     public static final boolean DEFAULT_ENABLED = true;
+    public static final boolean DEFAULT_ATTACHED = true;
     public static final long DEFAULT_INTERVAL = 1800L;
     public static final DriftHandlingMode DEFAULT_DRIFT_HANDLING_MODE = DriftHandlingMode.normal;
 
@@ -133,6 +135,7 @@ public class DriftConfigurationDefinition implements Serializable {
         INSTANCE.put(createIncludes(INSTANCE, false));
         INSTANCE.put(createExcludes(INSTANCE, false));
         INSTANCE.put(createPinned(INSTANCE));
+        INSTANCE.put(createAttached(INSTANCE));
 
         INSTANCE_FOR_EXISTING_CONFIGS.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE_FOR_EXISTING_CONFIGS.put(createName(INSTANCE_FOR_EXISTING_CONFIGS, true));
@@ -200,6 +203,24 @@ public class DriftConfigurationDefinition implements Serializable {
         return pd;
     }
 
+    private static PropertyDefinitionSimple createAttached(ConfigurationDefinition configDef) {
+        String name = PROP_ATTACHED;
+        String description = "A flag that indicates whether or not the definition is attached to the template from " +
+            "which it is created. When a template is updated, the changes will be propagated to any attached " +
+            "definitions. Furthermore, if you pin an existing template to a snapshot, then attached definitions will " +
+            "become pinned as well. Finally, if you delete a template, attached definitions will also be deleted.";
+        boolean required = true;
+        PropertySimpleType type = PropertySimpleType.BOOLEAN;
+
+        PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
+        pd.setDisplayName("Attached to Template");
+        pd.setDefaultValue("true");
+        pd.setOrder(3);
+        pd.setConfigurationDefinition(configDef);
+
+        return pd;
+    }
+
     private static PropertyDefinitionSimple createDriftHandlingMode(ConfigurationDefinition configDef) {
         String name = PROP_DRIFT_HANDLING_MODE;
         String description = "" //
@@ -217,7 +238,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Drift Handling Mode");
         pd.setReadOnly(false);
         pd.setSummary(true);
-        pd.setOrder(3);
+        pd.setOrder(4);
         pd.setConfigurationDefinition(configDef);
 
         PropertyDefinitionEnumeration normalEnum = new PropertyDefinitionEnumeration(DriftHandlingMode.normal.name(),
@@ -249,7 +270,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         pd.setDisplayName("Pinned");
         pd.setDefaultValue("false");
-        pd.setOrder(4);
+        pd.setOrder(5);
         pd.setConfigurationDefinition(configDef);
 
         return pd;
@@ -265,7 +286,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Interval");
         pd.setReadOnly(false);
         pd.setSummary(true);
-        pd.setOrder(5);
+        pd.setOrder(6);
         pd.setAllowCustomEnumeratedValue(false);
         pd.setConfigurationDefinition(configDef);
         pd.setDefaultValue(String.valueOf(DEFAULT_INTERVAL));
@@ -284,7 +305,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Base Directory");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
-        pd.setOrder(6);
+        pd.setOrder(7);
         pd.setConfigurationDefinition(configDef);
 
         return pd;
@@ -354,7 +375,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Includes");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
-        pd.setOrder(7);
+        pd.setOrder(8);
         pd.setConfigurationDefinition(configDef);
         return pd;
     }
@@ -416,7 +437,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Excludes");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
-        pd.setOrder(8);
+        pd.setOrder(9);
         pd.setConfigurationDefinition(configDef);
         return pd;
     }

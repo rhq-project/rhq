@@ -108,6 +108,9 @@ public class DriftDefinition implements Serializable {
     @Column(name = "IS_PINNED", nullable = false)
     private boolean isPinned;
 
+    @Column(name = "IS_ATTACHED", nullable = false)
+    private boolean attached = true;
+
     // required for jaxb/web services stuff
     protected DriftDefinition() {
     }
@@ -172,6 +175,15 @@ public class DriftDefinition implements Serializable {
 
         this.isEnabled = isEnabled;
         this.setEnabledProperty(isEnabled);
+    }
+
+    public boolean isAttached() {
+        return attached;
+    }
+
+    public void setAttached(Boolean attached) {
+        this.attached = attached;
+        setAttachedProperty(attached);
     }
 
     public DriftHandlingMode getDriftHandlingMode() {
@@ -422,6 +434,15 @@ public class DriftDefinition implements Serializable {
 
     private void setEnabledProperty(boolean enabled) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED, String.valueOf(enabled)));
+    }
+
+    private boolean getAttachedProperty() {
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_ATTACHED,
+            String.valueOf(DriftConfigurationDefinition.DEFAULT_ATTACHED)).equals("true");
+    }
+
+    private void setAttachedProperty(boolean attached) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_ATTACHED, String.valueOf(attached)));
     }
 
     public List<Filter> getIncludes() {

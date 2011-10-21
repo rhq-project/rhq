@@ -19,6 +19,15 @@
 
 package org.rhq.core.domain.drift;
 
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -30,15 +39,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
-
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 public class DriftDefinitionTest {
     @Test
@@ -102,11 +102,24 @@ public class DriftDefinitionTest {
         dc1.setDescription(null);
         dc2.setDescription(null);
 
+        // make dc1 detached
+        dc1.setAttached(false);
+        assert comparator.compare(dc1, dc2) < 0 : dc1 + " is not attached";
+
+        // make dc1 attached and dc2 detached
+        dc1.setAttached(true);
+        dc2.setAttached(false);
+        assert comparator.compare(dc1, dc2) > 0 : dc2 + " is not attached";
+
+        // make both dc1 and dc2 detached
+        dc1.setAttached(false);
+        assert comparator.compare(dc1, dc2) == 0 : dc1 + " and " + dc2 + " are both detached";
+
         // Make dc1 pinned
         dc1.setPinned(true);
         assert comparator.compare(dc1, dc2) > 0 : dc1 + " is pinned";
 
-        // make both dc1 and dc2 pinned to the same versions
+        // make both dc1 and dc2 pinned
         dc2.setPinned(true);
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should be equal to " + dc2;
 

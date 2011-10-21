@@ -61,6 +61,13 @@ public class ImageManager {
     }
 
     /**
+     * Returns a generic edit icon.
+     */
+    public static String getEditDisabledIcon() {
+        return "[SKIN]/actions/edit_Disabled.png";
+    }
+
+    /**
      * Returns a generic remove icon.
      */
     public static String getRemoveIcon() {

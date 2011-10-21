@@ -77,7 +77,7 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
         setHeight100();
     }
 
-    abstract protected String getEditLink(String id);
+    abstract protected String getEditLink(String type);
 
     abstract protected TitleBar getTitleBar();
 
@@ -218,8 +218,12 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
             editField.addRecordClickHandler(new RecordClickHandler() {
 
                 public void onRecordClick(RecordClickEvent event) {
-                    CoreGUI
-                        .goToView(getEditLink(event.getRecord().getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID)));
+                    Record record = event.getRecord();
+                    String editAttr = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT);
+                    if (ImageManager.getEditIcon().equals(editAttr)) {
+                        String type = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID);
+                        CoreGUI.goToView(getEditLink(type));
+                    }
                 }
             });
             fields.add(editField);
@@ -273,7 +277,12 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
             editField.addRecordClickHandler(new RecordClickHandler() {
 
                 public void onRecordClick(RecordClickEvent event) {
-                    // TODO
+                    Record record = event.getRecord();
+                    String editAttr = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT);
+                    if (ImageManager.getEditIcon().equals(editAttr)) {
+                        String type = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID);
+                        CoreGUI.goToView(getEditLink(type));
+                    }
                 }
             });
             fields.add(editField);

@@ -115,9 +115,6 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
                     type, permissions.contains(Permission.MANAGE_SETTINGS));
 
                 renderTemplateView(templatesCanvas, view, viewPath);
-
-                //prepareSubCanvas(templatesCanvas, view, true);
-                //switchToCanvas(DriftDefinitionTemplateTypeView.this, templatesCanvas);
             }
         });
     }
@@ -198,6 +195,10 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
                 setAttribute(ATTR_PLUGIN_TEMPLATES, composite.getPluginDriftTemplates());
                 setAttribute(ATTR_USER_TEMPLATES, composite.getUserDriftTemplates());
+                // If the type has no plugin templates then drift monitoring is not enabled for the type
+                if (0 == composite.getPluginDriftTemplates()) {
+                    setAttribute(ATTRIB_EDIT, ImageManager.getEditDisabledIcon());
+                }
             }
         }
 
@@ -215,6 +216,10 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
                 setAttribute(ATTR_PLUGIN_TEMPLATES, composite.getPluginDriftTemplates());
                 setAttribute(ATTR_USER_TEMPLATES, composite.getUserDriftTemplates());
+                // If the type has no plugin templates then drift monitoring is not enabled for the type
+                if (0 == composite.getPluginDriftTemplates()) {
+                    setAttribute(ATTRIB_EDIT, ImageManager.getEditDisabledIcon());
+                }
             }
         }
 

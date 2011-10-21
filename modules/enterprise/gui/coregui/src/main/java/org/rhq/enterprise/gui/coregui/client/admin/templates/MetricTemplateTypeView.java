@@ -155,6 +155,10 @@ public class MetricTemplateTypeView extends ResourceTypeTreeView {
 
                 setAttribute(ATTR_ENABLED_TEMPLATES, composite.getEnabledMetricCount());
                 setAttribute(ATTR_DISABLED_TEMPLATES, composite.getDisabledMetricCount());
+                // If the type has no metrics then metric templates are enabled for the type
+                if (0 == (composite.getEnabledMetricCount() + composite.getDisabledMetricCount())) {
+                    setAttribute(ATTRIB_EDIT, ImageManager.getEditDisabledIcon());
+                }
             }
         }
 
@@ -172,6 +176,10 @@ public class MetricTemplateTypeView extends ResourceTypeTreeView {
 
                 setAttribute(ATTR_ENABLED_TEMPLATES, composite.getEnabledMetricCount());
                 setAttribute(ATTR_DISABLED_TEMPLATES, composite.getDisabledMetricCount());
+                // If the type has no metrics then metric templates are enabled for the type
+                if (0 == (composite.getEnabledMetricCount() + composite.getDisabledMetricCount())) {
+                    setAttribute(ATTRIB_EDIT, ImageManager.getEditDisabledIcon());
+                }
             }
         }
 

@@ -19,11 +19,14 @@
 
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static org.rhq.core.domain.common.EntityContext.forResource;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -102,6 +105,23 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
         String newChangeSetId = driftMgr.persistSnapshot(subject, snapshot, changeSetDTO);
         template.setChangeSetId(newChangeSetId);
+
+        pinDefinitions(subject, template);
+    }
+
+    private void pinDefinitions(Subject subject, DriftDefinitionTemplate template) {
+        for (DriftDefinition definition : template.getDriftDefinitions()) {
+            DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
+            pinnedDef.setPinned(true);
+            pinDefinition(subject, definition.getResource().getId(), pinnedDef);
+        }
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public void pinDefinition(Subject subject, int resourceId, DriftDefinition newDef) {
+        driftMgr.deleteDriftDefinition(subject, forResource(resourceId), newDef.getName());
+        driftMgr.updateDriftDefinition(subject, forResource(resourceId), newDef);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.HashSet;
@@ -63,7 +62,7 @@ public abstract class AuthorizedTableAction extends AbstractTableAction {
         }
 
         if (globalPermissions.isEmpty()) {
-            isGlobalAuthorized = Boolean.TRUE;
+            isGlobalAuthorized = true;
         }
     }
 
@@ -75,8 +74,12 @@ public abstract class AuthorizedTableAction extends AbstractTableAction {
 
         if (null == isGlobalAuthorized) {
             new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-
                 public void onPermissionsLoaded(Set<Permission> grantedPermissions) {
+                    if (grantedPermissions == null) {
+                        // failed to load the global perms from the Server - no need to display an error message,
+                        // since the ErrorHandler already did.
+                        return;
+                    }
                     for (Permission requiredPermission : globalPermissions) {
                         if (!grantedPermissions.contains(requiredPermission)) {
                             return;
@@ -92,4 +95,5 @@ public abstract class AuthorizedTableAction extends AbstractTableAction {
 
         return isGlobalAuthorized;
     }
+
 }

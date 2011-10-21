@@ -9,12 +9,12 @@ import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * This class represents the system settings of the RHQ server. Whenever a new property is added, 
- * it must be reflected by a property in this map (and therefore defined in the {@link SystemProperty} enum). 
+ * it must be reflected by a property in this map (and therefore defined in the {@link SystemSetting} enum). 
  *
  * @author John Sanda
  * @author Lukas Krejci
  */
-public class SystemSettings extends HashMap<SystemProperty, String> implements Serializable {
+public class SystemSettings extends HashMap<SystemSetting, String> implements Serializable {
 
     private static final long serialVersionUID = 2L;
 
@@ -24,7 +24,7 @@ public class SystemSettings extends HashMap<SystemProperty, String> implements S
         SystemSettings ret = new SystemSettings();
         
         for(Map.Entry<String, String> e : properties.entrySet()) {
-            SystemProperty p = SystemProperty.getByInternalName(e.getKey());
+            SystemSetting p = SystemSetting.getByInternalName(e.getKey());
             if (p == null) {
                 throw new IllegalArgumentException("'" + e.getKey() + "' is not a system property.");
             }
@@ -54,7 +54,7 @@ public class SystemSettings extends HashMap<SystemProperty, String> implements S
     }
     
     @Override
-    public String put(SystemProperty key, String value) {
+    public String put(SystemSetting key, String value) {
         if (key.validateValue(value)) {
             return super.put(key, value);
         } else {
@@ -63,8 +63,8 @@ public class SystemSettings extends HashMap<SystemProperty, String> implements S
     }
     
     @Override
-    public void putAll(Map<? extends SystemProperty, ? extends String> m) {
-        for(Map.Entry<? extends SystemProperty, ? extends String> e : m.entrySet()) {
+    public void putAll(Map<? extends SystemSetting, ? extends String> m) {
+        for(Map.Entry<? extends SystemSetting, ? extends String> e : m.entrySet()) {
             put(e.getKey(), e.getValue());
         }
     }
@@ -79,7 +79,7 @@ public class SystemSettings extends HashMap<SystemProperty, String> implements S
 
     public Configuration toConfiguration() {
         Configuration ret = new Configuration();
-        for(Map.Entry<SystemProperty, String> e : entrySet()) {
+        for(Map.Entry<SystemSetting, String> e : entrySet()) {
             ret.put(new PropertySimple(e.getKey().getInternalName(), e.getValue()));
         }
         
@@ -88,7 +88,7 @@ public class SystemSettings extends HashMap<SystemProperty, String> implements S
     
     public void applyConfiguration(Configuration configuration) {
         for(PropertySimple prop : configuration.getSimpleProperties().values()) {
-            SystemProperty systemProp = SystemProperty.getByInternalName(prop.getName());
+            SystemSetting systemProp = SystemSetting.getByInternalName(prop.getName());
             
             if (systemProp != null) {
                 String value = prop.getStringValue();
@@ -100,7 +100,7 @@ public class SystemSettings extends HashMap<SystemProperty, String> implements S
     public Map<String, String> toMap() {
         HashMap<String, String> ret = new HashMap<String, String>(size());
         
-        for(Map.Entry<SystemProperty, String> e : entrySet()) {
+        for(Map.Entry<SystemSetting, String> e : entrySet()) {
             ret.put(e.getKey().getInternalName(), e.getValue());
         }
         

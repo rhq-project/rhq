@@ -35,7 +35,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -102,34 +102,34 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 Configuration config = result.toConfiguration();
                 
                 //convert stuff for the display purposes
-                PropertySimple prop = config.getSimple(SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName());
+                PropertySimple prop = config.getSimple(SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName());
                 prop.setStringValue(convertMillisToMinutes(prop.getStringValue()));
                 
-                prop = config.getSimple(SystemProperty.DATA_MAINTENANCE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToHours(prop.getStringValue()));
                 
-                prop = config.getSimple(SystemProperty.AVAILABILITY_PURGE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.ALERT_PURGE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.ALERT_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.TRAIT_PURGE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.TRAIT_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.RT_DATA_PURGE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.EVENT_PURGE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.EVENT_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.DRIFT_FILE_PURGE_PERIOD.getInternalName());
+                prop = config.getSimple(SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.BASE_LINE_FREQUENCY.getInternalName());
+                prop = config.getSimple(SystemSetting.BASE_LINE_FREQUENCY.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
-                prop = config.getSimple(SystemProperty.BASE_LINE_DATASET.getInternalName());
+                prop = config.getSimple(SystemSetting.BASE_LINE_DATASET.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
                 // build our config definition and populate our config editor
@@ -183,16 +183,16 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 // some of our properties actually need different values on the server than how they were
                 // visualized in the UI.
                 // -- some other numerical values need to be converted to milliseconds
-                if (SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName().equals(simple.getName())) {
+                if (SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName().equals(simple.getName())) {
                     value = convertMinutesToMillis(value);
-                } else if (SystemProperty.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())) {
+                } else if (SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())) {
                     value = convertHoursToMillis(value);
-                } else if (SystemProperty.AVAILABILITY_PURGE_PERIOD.getInternalName().equals(simple.getName())
-                    || SystemProperty.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemProperty.TRAIT_PURGE_PERIOD.getInternalName().equals(simple.getName())
-                    || SystemProperty.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemProperty.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
-                    || SystemProperty.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
-                    || SystemProperty.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
-                    || SystemProperty.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
+                } else if (SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemSetting.TRAIT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemSetting.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
+                    || SystemSetting.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
                     value = convertDaysToMillis(value);
                 }
 
@@ -274,7 +274,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
         PropertyGroupDefinition ldapGroup = new PropertyGroupDefinition("ldap");
         ldapGroup.setDisplayName(MSG.view_admin_systemSettings_group_ldap());
-        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName(), "false"))); // show if LDAP is in use
+        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName(), "false"))); // show if LDAP is in use
         ldapGroup.setOrder(3);
 
         PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift");
@@ -282,7 +282,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
         
-        for(SystemProperty prop : SystemProperty.values()) {
+        for(SystemSetting prop : SystemSetting.values()) {
             
             //don't include the readonly properties in the configuration editor
             if (prop.isReadOnly()) {

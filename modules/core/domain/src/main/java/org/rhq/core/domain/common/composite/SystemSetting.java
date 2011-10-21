@@ -22,7 +22,7 @@ package org.rhq.core.domain.common.composite;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
-public enum SystemProperty {
+public enum SystemSetting {
     /** Base URL for the application - (i think this is only used for alert emails) */
     BASE_URL("CAM_BASE_URL", PropertySimpleType.STRING, false, true),
 
@@ -122,7 +122,7 @@ public enum SystemProperty {
     private boolean readOnly;
     private boolean requiringValue;
     
-    private SystemProperty(String name, PropertySimpleType type, boolean readOnly, boolean valueRequired) {
+    private SystemSetting(String name, PropertySimpleType type, boolean readOnly, boolean valueRequired) {
         this.internalName = name;
         this.type = type;
         this.readOnly = readOnly;
@@ -169,8 +169,8 @@ public enum SystemProperty {
         return new PropertyDefinitionSimple(internalName, null, requiringValue, type);
     }
 
-    public static SystemProperty getByInternalName(String internalName) {
-        for (SystemProperty p : SystemProperty.values()) {
+    public static SystemSetting getByInternalName(String internalName) {
+        for (SystemSetting p : SystemSetting.values()) {
             if (p.internalName.equals(internalName)) {
                 return p;
             }

@@ -62,7 +62,7 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.domain.common.SystemConfiguration;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.server.PersistenceUtility;
@@ -213,8 +213,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
         // verify each new setting and persist them to the database
         // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is        
-        for (Map.Entry<SystemProperty, String> e : settings.entrySet()) {
-            SystemProperty prop = e.getKey();
+        for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
+            SystemSetting prop = e.getKey();
             String value = e.getValue();
 
             if (skipValidation == false) {
@@ -272,7 +272,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     private void transformToSystemSettingsFormat(Map<String, String> map) {
         for (Map.Entry<String, String> e : map.entrySet()) {
-            SystemProperty prop = SystemProperty.getByInternalName(e.getKey());
+            SystemSetting prop = SystemSetting.getByInternalName(e.getKey());
             if (prop != null) {
                 //this is a legacy method that supplies values in the DB-specific format.
                 //we therefore have to transform the values as if they came from the database.
@@ -324,7 +324,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         SystemSettings settings = new SystemSettings();
 
         for (SystemConfiguration config : configs) {
-            SystemProperty prop = SystemProperty.getByInternalName(config.getPropertyKey());
+            SystemSetting prop = SystemSetting.getByInternalName(config.getPropertyKey());
             if (prop == null) {
                 log.warn("The database contains unknown system configuration setting [" + config.getPropertyKey()
                     + "].");
@@ -369,8 +369,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         transformToSystemSettingsFormat(map);
         
         SystemSettings settings = SystemSettings.fromMap(map);
-        for (Map.Entry<SystemProperty, String> e : settings.entrySet()) {
-            SystemProperty prop = e.getKey();
+        for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
+            SystemSetting prop = e.getKey();
             String value = e.getValue();
 
             verifyNewSystemConfigurationProperty(prop, value, settings);
@@ -381,7 +381,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * Call this to transform a system property to a more appropriate value.
      * @param prop
      */
-    private String transformSystemConfigurationProperty(SystemProperty prop, String value, boolean fromDb) {        
+    private String transformSystemConfigurationProperty(SystemSetting prop, String value, boolean fromDb) {        
         if (fromDb) {
             // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
             switch (prop) {
@@ -440,21 +440,21 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * @param properties the full set of system configurations, in case the changed value needs to be compared against
      *                   other values
      */
-    private void verifyNewSystemConfigurationProperty(SystemProperty property, String value, SystemSettings settings) {
-        if (property == SystemProperty.BASE_LINE_DATASET) {
+    private void verifyNewSystemConfigurationProperty(SystemSetting property, String value, SystemSettings settings) {
+        if (property == SystemSetting.BASE_LINE_DATASET) {
             // 1h table holds at most 14 days worth of data, make sure we don't set a dataset more than that
             long baselineDataSet = Long.parseLong(value);
             if (baselineDataSet > (1000L * 60 * 60 * 24 * 14)) {
                 throw new InvalidSystemConfigurationException("Baseline dataset must be less than 14 days");
             }
-        } else if (property == SystemProperty.BASE_LINE_FREQUENCY) {
+        } else if (property == SystemSetting.BASE_LINE_FREQUENCY) {
             long baselineFrequency = Long.parseLong(value);
-            long baselineDataSet = Long.parseLong(settings.get(SystemProperty.BASE_LINE_DATASET));
+            long baselineDataSet = Long.parseLong(settings.get(SystemSetting.BASE_LINE_DATASET));
             if (baselineFrequency > baselineDataSet) {
                 throw new InvalidSystemConfigurationException(
                     "baseline computation frequency must not be larger than baseline data set");
             }
-        } else if (property == SystemProperty.AGENT_MAX_QUIET_TIME_ALLOWED) {
+        } else if (property == SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED) {
             long time = Long.parseLong(value);
             if (time < 1000L * 60 * 2) {
                 throw new InvalidSystemConfigurationException("Agent Max Quiet Time Allowed must be at least 2 minutes");
@@ -686,7 +686,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         try {
             Subject su = this.subjectManager.getOverlord();
             String setting = getSystemSettings(su).get(
-                SystemProperty.DEBUG_MODE_ENABLED);
+                SystemSetting.DEBUG_MODE_ENABLED);
             if (setting == null) {
                 setting = "false";
             }
@@ -700,7 +700,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         try {
             Subject su = this.subjectManager.getOverlord();
             String setting = getSystemSettings(su).get(
-                SystemProperty.EXPERIMENTAL_FEATURES_ENABLED);
+                SystemSetting.EXPERIMENTAL_FEATURES_ENABLED);
             if (setting == null) {
                 setting = "false";
             }

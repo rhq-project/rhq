@@ -38,7 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
@@ -100,8 +100,8 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
                         }
 
                         public void onSuccess(SystemSettings systemSettings) {
-                            String groupFilter = systemSettings.get(SystemProperty.LDAP_GROUP_FILTER);
-                            String groupMember = systemSettings.get(SystemProperty.LDAP_GROUP_MEMBER);
+                            String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
+                            String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
                             UserEditView.this.ldapAuthorizationEnabled =
                                 (((groupFilter != null) && groupFilter.trim().length() > 0) ||
                                     ((groupMember != null) && groupMember.trim().length() > 0));

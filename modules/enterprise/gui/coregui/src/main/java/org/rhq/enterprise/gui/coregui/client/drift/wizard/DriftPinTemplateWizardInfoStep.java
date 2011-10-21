@@ -27,6 +27,7 @@ import java.util.Set;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -117,6 +118,12 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
 
             radioGroupItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
+                    if (SELECT_TEMPLATE.equals(event.getValue()) && null == selectTemplateItem.getValue()) {
+                        SC.say(MSG.view_drift_wizard_pinTemplate_infoStepSelectBlocked());
+                        event.getItem().setValue(CREATE_TEMPLATE);
+                        return;
+                    }
+
                     wizard.setCreateTemplate(CREATE_TEMPLATE.equals(event.getValue()));
 
                     if (wizard.isCreateTemplate()) {

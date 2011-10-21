@@ -239,18 +239,13 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
         @Override
         protected String getDetailsLinkColumnName() {
-            // TODO: provide a drift detail view for the template snapshot view
-            if (null != templateId) {
-                return DriftDataSource.ATTR_CTIME;
-            }
-
-            return null;
+            return DriftDataSource.ATTR_CTIME;
         }
 
         @Override
         protected CellFormatter getDetailsLinkColumnCellFormatter() {
             // TODO: provide a drift detail view for the template snapshot view                    
-            if (null != templateId) {
+            if (null == templateId) {
                 return new CellFormatter() {
                     public String format(Object value, ListGridRecord record, int i, int i1) {
                         String driftId = getId(record);
@@ -259,9 +254,13 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                         return SeleniumUtility.getLocatableHref(url, formattedValue, null);
                     }
                 };
+            } else {
+                return new CellFormatter() {
+                    public String format(Object value, ListGridRecord record, int i, int i1) {
+                        return TimestampCellFormatter.format(value);
+                    }
+                };
             }
-
-            return null;
         }
 
         public class DirectoryViewDataSource extends RPCDataSource<Drift<?, ?>, GenericDriftChangeSetCriteria> {
@@ -345,7 +344,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                                 public void onSuccess(final PageList<DriftDefinitionTemplate> result) {
                                     templateChangeSetId = String.valueOf(result.get(0).getChangeSetId());
                                     DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(
-                                        templateChangeSetId, directory, true, false);
+                                        templateChangeSetId, directory, false, true);
                                     executeGetSnapshot(request, response, snapshotRequest);
                                 }
 
@@ -355,7 +354,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                             });
                     } else {
                         DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(templateChangeSetId, directory,
-                            true, false);
+                            false, true);
                         executeGetSnapshot(request, response, snapshotRequest);
                     }
                 }

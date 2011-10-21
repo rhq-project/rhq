@@ -82,8 +82,8 @@ public class DriftPinTemplateWizardConfigStep extends AbstractWizardStep {
             return true;
         }
 
-        String message = wizard.getSelectedTemplate().isPinned() ? MSG.view_drift_wizard_pinTemplate_confirmPinned()
-            : MSG.view_drift_wizard_pinTemplate_confirmNotPinned();
+        String message = (!wizard.isCreateTemplate() && wizard.getSelectedTemplate().isPinned()) ? MSG
+            .view_drift_wizard_pinTemplate_confirmPinned() : MSG.view_drift_wizard_pinTemplate_confirmNotPinned();
 
         SC.ask(message, new BooleanCallback() {
             public void execute(Boolean confirmed) {

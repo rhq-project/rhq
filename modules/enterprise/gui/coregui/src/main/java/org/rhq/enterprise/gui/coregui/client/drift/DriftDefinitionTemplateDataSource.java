@@ -111,7 +111,7 @@ public class DriftDefinitionTemplateDataSource extends
                 if (event.getRecord().getAttributeAsBoolean(ATTR_IS_PINNED)) {
                     CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID
                         .getName(), String.valueOf(resourceTypeId))
-                        + "/" + event.getRecord().getAttribute(ATTR_ID));
+                        + "/" + event.getRecord().getAttribute(ATTR_ID) + "/Snapshot");
                 }
             }
         });
@@ -238,7 +238,7 @@ public class DriftDefinitionTemplateDataSource extends
         record
             .setAttribute(ATTR_DEFINED_BY, from.isUserDefined() ? MSG.common_title_user() : MSG.common_title_plugin());
         record.setAttribute(ATTR_NUM_DEFINITIONS, String.valueOf(from.getDriftDefinitions().size()));
-        record.setAttribute(ATTR_PINNED, templateDef.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
+        record.setAttribute(ATTR_PINNED, from.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
             .getUnpinnedIcon());
         record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(templateDef.isEnabled()));
         record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(templateDef
@@ -253,7 +253,7 @@ public class DriftDefinitionTemplateDataSource extends
         // don't store the entity unless necessary, it's just overhead
         // record.setAttribute(ATTR_ENTITY, from);
         record.setAttribute(ATTR_ID, from.getId());
-        record.setAttribute(ATTR_IS_PINNED, templateDef.isPinned());
+        record.setAttribute(ATTR_IS_PINNED, from.isPinned());
         record.setAttribute(ATTR_IS_USER_DEFINED, from.isUserDefined());
 
         return record;

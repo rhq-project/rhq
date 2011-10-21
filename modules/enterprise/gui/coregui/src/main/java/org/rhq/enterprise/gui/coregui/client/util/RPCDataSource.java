@@ -61,7 +61,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
@@ -82,7 +81,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
     private Criteria previousCriteria;
-    private int dataPageSize;
+    private Integer dataPageSize;
 
     public RPCDataSource() {
         this(null);
@@ -99,7 +98,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-        setDataPageSize(50);
+        setDataPageSize(75);
     }
 
     /**
@@ -162,11 +161,23 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         return request.getData();
     }
 
-    public int getDataPageSize() {
+    /**
+     * Returns the data page size that should be used for fetch requests, or null if results should not be paged.
+     * Default value is 50.
+     *
+     * @return the data page size that should be used for fetch requests, or null if results should not be paged
+     */
+    public Integer getDataPageSize() {
         return dataPageSize;
     }
 
-    public void setDataPageSize(int dataPageSize) {
+    /**
+     * Sets the data page size that should be used for fetch requests, or null if results should not be paged.
+     * Default value is 50. Subclasses that wish to use a different value should call this method in their constructors.
+     *
+     * @param dataPageSize the data page size that should be used for fetch requests, or null if results should not be paged
+     */
+    public void setDataPageSize(Integer dataPageSize) {
         this.dataPageSize = dataPageSize;
     }
 
@@ -202,11 +213,14 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
 
         // Create PageControl and initialize paging.
         PageControl pageControl;
-        if (request.getStartRow() == null || request.getEndRow() == null) {
-            pageControl = new PageControl();
+        if (request.getEndRow() == null) {
+            // null endRow means no paging
+            Log.debug("WARNING: " + getClass().getName() + " is not using paging for fetch request.");
+            pageControl = PageControl.getUnlimitedInstance();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
-                - request.getStartRow());
+            int startRow = (request.getStartRow() != null) ? request.getStartRow() : 0;
+            int endRow = request.getEndRow();
+            pageControl = PageControl.getExplicitPageControl(startRow, (endRow - startRow));
         }
 
         // Initialize sorting.

@@ -414,7 +414,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
             return new DriftDetailsView(extendLocatorId("History"), id);
         }
 
-        return new DriftSnapshotView(extendLocatorId("Snapshot"), context.getResourceId(), driftDefId, Integer
-            .valueOf(id));
+        return new DriftSnapshotView(extendLocatorId("Snapshot"), null, context.getResourceId(), driftDefId, Integer
+            .valueOf(id), hasWriteAccess);
     }
 }

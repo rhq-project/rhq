@@ -53,7 +53,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     private ResourceType type;
     private boolean hasWriteAccess;
     private DriftDefinitionTemplateDataSource dataSource;
-    private boolean useEditDetailsView;
+    private boolean useSnapshotDetailsView;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -188,10 +188,10 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
 
     @Override
     public void renderView(ViewPath viewPath) {
-        // we have two detail views for drift def templates, the config editor and the snapshot. figure out which one
-        // we're dealing with. The default is the editor. 
+        // we have two detail views for drift def templates, the config editor and the pinned snapshot. Figure out which
+        // one we're dealing with. The default is the editor. 
         if (!viewPath.isEnd()) {
-            this.useEditDetailsView = !viewPath.isNextEnd() && "Edit".equals(viewPath.getNext().getPath());
+            this.useSnapshotDetailsView = !viewPath.isNextEnd() && "Snapshot".equals(viewPath.getNext().getPath());
         }
 
         super.renderView(viewPath);
@@ -199,11 +199,10 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
 
     @Override
     public Canvas getDetailsView(Integer driftTemplateId) {
-        if (this.useEditDetailsView) {
-            return new DriftDefinitionTemplateEditView(extendLocatorId("TemplateEdit"), driftTemplateId, hasWriteAccess);
+        if (this.useSnapshotDetailsView) {
+            return new DriftDefinitionTemplateSnapshotView(extendLocatorId("TemplateSnapshot"), driftTemplateId);
         }
 
-        // TODO fix this stuff up
         return new DriftDefinitionTemplateEditView(extendLocatorId("TemplateEdit"), driftTemplateId, hasWriteAccess);
     }
 }

@@ -36,9 +36,16 @@ public class DriftSnapshotRequest implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int driftDefinitionId;
+    // If templateChangeSetId is set then the request is for a template's pinned snapshot
+    private String templateChangeSetId;
+
+    // If driftDefinitionId is set then the request is for a drift def's snapshot. The version info defines
+    // which snapshot.
+    private Integer driftDefinitionId;
     private Integer version;
     private Integer startVersion;
+
+    // Applicable to any snapshot request
     private String directory;
     private boolean includeDriftDirectories;
     private boolean includeDriftInstances;
@@ -60,10 +67,28 @@ public class DriftSnapshotRequest implements Serializable {
         this(driftDefinitionId, null, null, null, false, true);
     }
 
+    /**
+     * Get the requested snapshot version for the specified drift definition.
+     * </br>
+     * </br> 
+     * 
+     * @param driftDefinitionId
+     * @param version not null
+     */
     public DriftSnapshotRequest(int driftDefinitionId, Integer version) {
         this(driftDefinitionId, version, null, null, false, true);
     }
 
+    /**
+     * Get the requested snapshot version for the specified drift definition, narrowed to
+     * files in the specified directory.
+     * </br>
+     * </br> 
+     * 
+     * @param driftDefinitionId
+     * @param version null or < 0 or > most recent will default to most recent
+     * @param directory if specified, limit the snapshot to the specified directory
+     */
     public DriftSnapshotRequest(int driftDefinitionId, Integer version, String directory) {
         this(driftDefinitionId, version, null, directory, false, true);
     }
@@ -90,6 +115,27 @@ public class DriftSnapshotRequest implements Serializable {
         }
         this.includeDriftDirectories = includeDriftDirectories;
         this.includeDriftInstances = includeDriftInstances;
+    }
+
+    public DriftSnapshotRequest(String templateChangesetIdString, String directory, boolean includeDriftDirectories,
+        boolean includeDriftInstances) {
+
+        this.templateChangeSetId = templateChangesetIdString;
+        if (null != directory) {
+            directory = directory.trim();
+            this.directory = "".equals(directory) ? "./" : directory;
+        }
+        this.includeDriftDirectories = includeDriftDirectories;
+        this.includeDriftInstances = includeDriftInstances;
+
+        // just init these, they should get ignored anyway
+        this.driftDefinitionId = null;
+        this.version = 0;
+        this.startVersion = 0;
+    }
+
+    public String getTemplateChangeSetId() {
+        return templateChangeSetId;
     }
 
     public Integer getDriftDefinitionId() {
@@ -120,7 +166,8 @@ public class DriftSnapshotRequest implements Serializable {
     public String toString() {
         return "DriftSnapshotRequest [directory=" + directory + ", driftDefinitionId=" + driftDefinitionId
             + ", includeDriftDirectories=" + includeDriftDirectories + ", includeDriftInstances="
-            + includeDriftInstances + ", startVersion=" + startVersion + ", version=" + version + "]";
+            + includeDriftInstances + ", startVersion=" + startVersion + ", templateChangeSetId=" + templateChangeSetId
+            + ", version=" + version + "]";
     }
 
 }

@@ -38,11 +38,13 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -70,49 +72,49 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
     private static final String DEFAULT_TITLE = MSG.view_drift_table_snapshot();
 
-    private int resourceId;
-    private int driftDefId;
-    private int version;
+    private Integer templateId;
+    private Integer driftDefId;
+    private Integer resourceId;
+    private Integer version;
+    private boolean hasWriteAccess;
 
-    //private EntityContext context;
-    private boolean hasWriteAccess = true;
+    private String templateChangeSetId;
 
     protected DriftSnapshotDataSource dataSource;
     protected DriftSnapshotListGrid listGrid;
 
-    public DriftSnapshotView(String locatorId, int resourceId, int driftDefId, int version) {
-        this(locatorId, DEFAULT_TITLE, resourceId, driftDefId, version);
+    public DriftSnapshotView(String locatorId, String tableTitle, int templateId, boolean hasWriteAccess) {
+        this(locatorId, (null == tableTitle) ? DEFAULT_TITLE : tableTitle, templateId, null, null, null, hasWriteAccess);
     }
 
-    public DriftSnapshotView(String locatorId, String tableTitle, int resourceId, int driftDefId, int version) {
+    public DriftSnapshotView(String locatorId, String tableTitle, int resourceId, int driftDefId, int version,
+        boolean hasWriteAccess) {
+        this(locatorId, (null == tableTitle) ? DEFAULT_TITLE : tableTitle, null, resourceId, driftDefId, version,
+            hasWriteAccess);
+    }
+
+    private DriftSnapshotView(String locatorId, String tableTitle, Integer templateId, Integer resourceId,
+        Integer driftDefId, Integer version, boolean hasWriteAccess) {
+
         super(locatorId, tableTitle);
+
+        this.templateId = templateId;
         this.resourceId = resourceId;
         this.driftDefId = driftDefId;
         this.version = version;
+        this.hasWriteAccess = hasWriteAccess;
 
         setDataSource(getDataSource());
-    }
-
-    protected int getDriftDefId() {
-        return driftDefId;
-    }
-
-    protected void setDriftDefId(int driftDefId) {
-        this.driftDefId = driftDefId;
-    }
-
-    protected int getVersion() {
-        return version;
-    }
-
-    protected void setVersion(int version) {
-        this.version = version;
     }
 
     @Override
     public DriftSnapshotDataSource getDataSource() {
         if (null == dataSource) {
-            dataSource = new DriftSnapshotDataSource(driftDefId, version);
+            if (null != templateId) {
+                dataSource = new DriftSnapshotDataSource(templateId);
+            } else {
+                dataSource = new DriftSnapshotDataSource(driftDefId, version);
+            }
         }
 
         return dataSource;
@@ -193,27 +195,19 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
             String dirPath = record.getAttribute(DriftSnapshotDataSource.ATTR_DIR_PATH);
 
-            return new DirectoryView(extendLocatorId(dirPath), EntityContext.forResource(resourceId), driftDefId,
-                version, dirPath, hasWriteAccess);
+            return new DirectoryView(extendLocatorId(dirPath), dirPath);
         }
     }
 
-    public static class DirectoryView extends StringIDTableSection<DirectoryView.DirectoryViewDataSource> {
+    public class DirectoryView extends StringIDTableSection<DirectoryView.DirectoryViewDataSource> {
 
-        private int driftDefId;
         private String directory;
-        private int version;
-        private EntityContext context;
         private DirectoryViewDataSource dataSource;
 
-        public DirectoryView(String locatorId, EntityContext context, int driftDefId, int version, String directory,
-            boolean hasWriteAccess) {
+        public DirectoryView(String locatorId, String directory) {
             super(locatorId, null, true);
 
-            this.driftDefId = driftDefId;
             this.directory = directory;
-            this.version = version;
-            this.context = context;
 
             setShowFilterForm(false);
             setShowHeader(false);
@@ -228,11 +222,11 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         @Override
         public DirectoryViewDataSource getDataSource() {
 
-            if (null == this.dataSource) {
-                this.dataSource = new DirectoryViewDataSource();
+            if (null == dataSource) {
+                dataSource = new DirectoryViewDataSource();
             }
 
-            return this.dataSource;
+            return dataSource;
         }
 
         @Override
@@ -245,20 +239,29 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
         @Override
         protected String getDetailsLinkColumnName() {
-            return DriftDataSource.ATTR_CTIME;
+            // TODO: provide a drift detail view for the template snapshot view
+            if (null != templateId) {
+                return DriftDataSource.ATTR_CTIME;
+            }
+
+            return null;
         }
 
         @Override
         protected CellFormatter getDetailsLinkColumnCellFormatter() {
-            return new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int i, int i1) {
-                    Integer resourceId = context.getResourceId();
-                    String driftId = getId(record);
-                    String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
-                    String formattedValue = TimestampCellFormatter.format(value);
-                    return SeleniumUtility.getLocatableHref(url, formattedValue, null);
-                }
-            };
+            // TODO: provide a drift detail view for the template snapshot view                    
+            if (null != templateId) {
+                return new CellFormatter() {
+                    public String format(Object value, ListGridRecord record, int i, int i1) {
+                        String driftId = getId(record);
+                        String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
+                        String formattedValue = TimestampCellFormatter.format(value);
+                        return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+                    }
+                };
+            }
+
+            return null;
         }
 
         public class DirectoryViewDataSource extends RPCDataSource<Drift<?, ?>, GenericDriftChangeSetCriteria> {
@@ -324,11 +327,47 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             @Override
             protected void executeFetch(final DSRequest request, final DSResponse response,
                 GenericDriftChangeSetCriteria criteria) {
+
+                if (null == templateId) {
+                    DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, version, null,
+                        directory, false, true);
+                    executeGetSnapshot(request, response, snapshotRequest);
+
+                } else {
+                    if (null == templateChangeSetId) {
+
+                        DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
+                        templateCriteria.addFilterId(templateId);
+
+                        GWTServiceLookup.getDriftService().findDriftDefinitionTemplatesByCriteria(templateCriteria,
+                            new AsyncCallback<PageList<DriftDefinitionTemplate>>() {
+
+                                public void onSuccess(final PageList<DriftDefinitionTemplate> result) {
+                                    templateChangeSetId = String.valueOf(result.get(0).getChangeSetId());
+                                    DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(
+                                        templateChangeSetId, directory, true, false);
+                                    executeGetSnapshot(request, response, snapshotRequest);
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Failed to load definition.", caught);
+                                }
+                            });
+                    } else {
+                        DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(templateChangeSetId, directory,
+                            true, false);
+                        executeGetSnapshot(request, response, snapshotRequest);
+                    }
+                }
+            }
+
+            private void executeGetSnapshot(final DSRequest request, final DSResponse response,
+                DriftSnapshotRequest snapshotRequest) {
+
                 DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
-                DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, version, null, directory,
-                    false, true);
 
                 driftService.getSnapshot(snapshotRequest, new AsyncCallback<DriftSnapshot>() {
+
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
                         response.setStatus(RPCResponse.STATUS_FAILURE);

@@ -49,8 +49,8 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
-    protected void processUploadedFiles(Subject subject, Map<String, File> files, Map<String, String> formFields,
-        HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void processUploadedFiles(Subject subject, Map<String, File> files, Map<String, String> fileNames,
+        Map<String, String> formFields, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String successMsg;
 

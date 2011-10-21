@@ -131,11 +131,16 @@ public class FileUploadServlet extends HttpServlet {
 
                 fileItem.delete();
             } else {
-                Map<String, File> allUploadedFiles = new HashMap<String, File>();
+                Map<String, File> allUploadedFiles = new HashMap<String, File>(); // maps form field name to the actual file
+                Map<String, String> allUploadedFileNames = new HashMap<String, String>(); // maps form field name to upload file name
                 for (FileItem fileItem : actualFiles) {
-                    allUploadedFiles.put(fileItem.getFieldName(), forceToFile(fileItem));
+                    File theFile = forceToFile(fileItem);
+                    allUploadedFiles.put(fileItem.getFieldName(), theFile);
+                    allUploadedFileNames.put(fileItem.getFieldName(), (fileItem.getName() != null) ? fileItem.getName()
+                        : theFile.getName());
                 }
-                processUploadedFiles(authenticatedSubject, allUploadedFiles, formFields, req, resp);
+                processUploadedFiles(authenticatedSubject, allUploadedFiles, allUploadedFileNames, formFields, req,
+                    resp);
             }
         }
     }
@@ -157,14 +162,15 @@ public class FileUploadServlet extends HttpServlet {
      * Subclasses are free to override this to process the files however they need.
      * 
      * @param subject
-     * @param files
+     * @param files maps form field name to the actual File
+     * @param fileNames maps form field name to the name of the file, as told to us by the client
      * @param formFields 
      * @param request
      * @param response
      * @throws IOException
      */
-    protected void processUploadedFiles(Subject subject, Map<String, File> files, Map<String, String> formFields,
-        HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void processUploadedFiles(Subject subject, Map<String, File> files, Map<String, String> fileNames,
+        Map<String, String> formFields, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         PrintWriter writer = response.getWriter();
         writer.println("<html>");

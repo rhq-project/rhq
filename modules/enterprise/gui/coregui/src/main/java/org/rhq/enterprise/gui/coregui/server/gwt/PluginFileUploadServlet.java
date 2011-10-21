@@ -49,8 +49,8 @@ public class PluginFileUploadServlet extends FileUploadServlet {
     private final Log log = LogFactory.getLog(PluginFileUploadServlet.class);
 
     @Override
-    protected void processUploadedFiles(Subject subject, Map<String, File> files, Map<String, String> formFields,
-        HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void processUploadedFiles(Subject subject, Map<String, File> files, Map<String, String> fileNames,
+        Map<String, String> formFields, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String successMsg;
 
@@ -64,12 +64,13 @@ public class PluginFileUploadServlet extends FileUploadServlet {
 
             // note that this assumes 1 and only 1 file is uploaded
             File file = files.values().iterator().next();
-            String newPluginFilename = file.getName();
+            String newPluginFilename = fileNames.values().iterator().next();
 
-            // make sure its a .jar file and strip off any temp file suffix
+            // make sure its a .jar file and strip off any temp file suffix (in case the browser set the name to something odd)
             int jarExtension = newPluginFilename.lastIndexOf(".jar");
             if (jarExtension < 0) {
-                throw new IllegalArgumentException("Plugin files must have a .jar extension: " + newPluginFilename);
+                newPluginFilename = newPluginFilename + ".jar"; // make sure it ends with ".jar" in case it is some tmp filename
+                jarExtension = newPluginFilename.lastIndexOf(".jar");
             }
             newPluginFilename = newPluginFilename.substring(0, jarExtension + ".jar".length());
             log.info("A new plugin [" + newPluginFilename + "] has been uploaded to [" + file + "]");

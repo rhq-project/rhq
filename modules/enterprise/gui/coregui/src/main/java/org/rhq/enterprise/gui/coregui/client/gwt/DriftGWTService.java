@@ -125,7 +125,7 @@ public interface DriftGWTService extends RemoteService {
 
     void pinSnapshot(int driftDefId, int version) throws RuntimeException;
 
-    void pinTemplate(int templateId, int snapshotDriftDefId, int snapshotVersion);
+    void pinTemplate(int templateId, int snapshotDriftDefId, int snapshotVersion) throws RuntimeException;
 
     /**
      * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be 

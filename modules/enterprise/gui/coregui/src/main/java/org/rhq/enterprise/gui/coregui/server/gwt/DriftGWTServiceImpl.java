@@ -225,7 +225,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public void pinTemplate(int templateId, int snapshotDriftDefId, int snapshotVersion) {
+    public void pinTemplate(int templateId, int snapshotDriftDefId, int snapshotVersion) throws RuntimeException {
 
         try {
             driftTemplateManager.pinTemplate(getSessionSubject(), templateId, snapshotDriftDefId, snapshotVersion);

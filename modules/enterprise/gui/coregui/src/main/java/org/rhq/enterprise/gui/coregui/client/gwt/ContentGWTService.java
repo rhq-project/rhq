@@ -48,7 +48,7 @@ public interface ContentGWTService extends RemoteService {
 
     PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) throws RuntimeException;
 
-    PageList<Package> findPackagesByCriteria(PackageCriteria criteria) throws RuntimeException;;
+    PageList<Package> findPackagesByCriteria(PackageCriteria criteria) throws RuntimeException;
 
     PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria)
         throws RuntimeException;;

@@ -48,7 +48,7 @@ public interface PluginGWTService extends RemoteService {
      * @param pluginId identifies a known agent plugin
      * @return the agent plugin or null if the given ID does not identify an agent plugin
      */
-    Plugin getAgentPlugin(int pluginId);
+    Plugin getAgentPlugin(int pluginId) throws RuntimeException;
 
     /**
      * Given a server plugin ID, this will return that plugin.
@@ -61,7 +61,7 @@ public interface PluginGWTService extends RemoteService {
      * @param includeRelationships include additional data (such as scheduled jobs and plugin config)
      * @return the server plugin or null if the given ID does not identify a server plugin
      */
-    ServerPlugin getServerPlugin(int pluginId, boolean includeRelationships);
+    ServerPlugin getServerPlugin(int pluginId, boolean includeRelationships) throws RuntimeException;
 
     /**
      * Returns the list of all <em>agent</em> plugins.

@@ -28,7 +28,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ClusterKey;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ClusterGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.resource.cluster.ClusterManagerLocal;
@@ -78,6 +77,5 @@ public class ClusterGWTServiceImpl extends AbstractGWTServiceImpl implements Clu
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
-
     }
 }

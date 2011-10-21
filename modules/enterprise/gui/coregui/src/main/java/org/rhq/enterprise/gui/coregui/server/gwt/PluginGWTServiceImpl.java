@@ -65,7 +65,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     }
 
     @Override
-    public Plugin getAgentPlugin(int pluginId) {
+    public Plugin getAgentPlugin(int pluginId) throws RuntimeException {
         try {
             List<Plugin> result = getSelectedAgentPlugins(new int[] { pluginId });
             if (result == null || result.isEmpty()) {
@@ -78,7 +78,7 @@ public class PluginGWTServiceImpl extends AbstractGWTServiceImpl implements Plug
     }
 
     @Override
-    public ServerPlugin getServerPlugin(int pluginId, boolean includeRelationships) {
+    public ServerPlugin getServerPlugin(int pluginId, boolean includeRelationships) throws RuntimeException {
         try {
             ArrayList<Integer> ids = new ArrayList<Integer>(1);
             ids.add(pluginId);

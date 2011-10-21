@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.ArrayList;
 
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementChartsGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;

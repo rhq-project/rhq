@@ -38,7 +38,7 @@ public interface SystemGWTService extends RemoteService {
 
     ServerDetails getServerDetails() throws RuntimeException;
 
-    SystemSettings getSystemSettings();
+    SystemSettings getSystemSettings() throws RuntimeException;
 
     void setSystemSettings(SystemSettings settings) throws RuntimeException;
 

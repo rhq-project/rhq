@@ -24,7 +24,6 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.resource.InventorySummary;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTService;
 import org.rhq.enterprise.server.resource.ResourceBossLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -38,7 +37,7 @@ public class ResourceBossGWTServiceImpl extends AbstractGWTServiceImpl implement
 
     private ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
 
-    public InventorySummary getInventorySummary() {
+    public InventorySummary getInventorySummary() throws RuntimeException {
         try {
             // note: this does not need to be sent through SerialUtility.prepare as it has no entities
             return resourceBoss.getInventorySummary(getSessionSubject());

@@ -36,7 +36,6 @@ import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ContentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
@@ -74,7 +73,7 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         }
     }
 
-    public PageList<Package> findPackagesByCriteria(PackageCriteria criteria) {
+    public PageList<Package> findPackagesByCriteria(PackageCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.findPackagesByCriteria(getSessionSubject(), criteria),
                 "ContentService.findPackagesByCriteria");
@@ -95,7 +94,8 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
         }
     }
     
-    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria) {
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.findPackagesWithLatestVersion(getSessionSubject(), criteria),
                 "ContentService.findPackagesByCriteria");

@@ -32,7 +32,6 @@ import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.LdapGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -73,8 +72,8 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                 throw new PermissionException(message);
             }
             return SerialUtility.prepare(results, "findAvailableGroups");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -119,8 +118,8 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                 throw new PermissionException(message);
             }
 
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -140,8 +139,8 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
                 throw new PermissionException(message);
             }
             return SerialUtility.prepare(allAssignedLdapGroups, "findLdapGroupsAssignedToRole");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -165,8 +164,8 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     public Map<String, String> getLdapDetailsFor(String user) throws RuntimeException {
         try {
             return ldapManager.findLdapUserDetails(user);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

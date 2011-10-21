@@ -24,7 +24,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 
 public interface AlertTemplateGWTService extends RemoteService {
 
-    int createAlertTemplate(AlertDefinition alertDefinition, Integer resourceTypeId) throws Exception;
+    int createAlertTemplate(AlertDefinition alertDefinition, Integer resourceTypeId) throws RuntimeException;
 
     /**
      * Updates a alert template definition.

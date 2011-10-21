@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
     private Criteria previousCriteria;
+    private int dataPageSize;
 
     public RPCDataSource() {
         this(null);
@@ -98,6 +99,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
+        setDataPageSize(50);
     }
 
     /**
@@ -160,6 +162,14 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         return request.getData();
     }
 
+    public int getDataPageSize() {
+        return dataPageSize;
+    }
+
+    public void setDataPageSize(int dataPageSize) {
+        this.dataPageSize = dataPageSize;
+    }
+
     private Record getUpdatedRecord(DSRequest request, Record oldRecord) {
         // Get changed values.
         JavaScriptObject data = request.getData();
@@ -182,13 +192,13 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
      * @return the page control for passing to criteria and other queries
      */
     protected PageControl getPageControl(DSRequest request) {
-        if (!CriteriaUtility.equals(request.getCriteria(), this.previousCriteria)) {
+        if (previousCriteria != null && !CriteriaUtility.equals(request.getCriteria(), this.previousCriteria)) {
             // The criteria has changed since the last fetch request - reset paging.
             Log.debug("Resetting paging on " + getClass().getName() + "...");
             request.setStartRow(0);
-            request.setEndRow(Table.DATA_PAGE_SIZE);
+            request.setEndRow(getDataPageSize());
         }
-        this.previousCriteria = request.getCriteria();
+        this.previousCriteria = (request.getCriteria() != null) ? request.getCriteria() : new Criteria();
 
         // Create PageControl and initialize paging.
         PageControl pageControl;

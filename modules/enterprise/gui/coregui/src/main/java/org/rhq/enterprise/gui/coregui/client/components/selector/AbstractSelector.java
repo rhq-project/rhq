@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -62,7 +62,9 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VStack;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
@@ -77,6 +79,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends LocatableVLayout {
 
     private static final String SELECTOR_KEY = "id";
+
+    // We only make a single fetch request to load the available records. This is the maximum number we will allow the
+    // DataSource to return. If we don't manage to load the entire data set, we'll display a warning message telling the
+    // user they need to define some filters.
+    private static final int MAX_AVAILABLE_RECORDS = 100;
 
     protected ListGridRecord[] initialSelection;
     protected List<Record> availableRecords;
@@ -308,6 +315,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
             });
         }
         this.datasource = getDataSource();
+        this.datasource.setDataPageSize(MAX_AVAILABLE_RECORDS);
         populateAvailableGrid((null == latestCriteria) ? new Criteria() : latestCriteria);
 
         // Add event handlers.
@@ -337,13 +345,16 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     private void populateAvailableGrid(Criteria criteria) {
         // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
         this.datasource.invalidateCache();
+        DSRequest requestProperties = new DSRequest();
+        requestProperties.setStartRow(0);
+        requestProperties.setEndRow(getMaxAvailableRecords());
         this.datasource.fetchData(criteria, new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
                 try {
                     availableRecords = new ArrayList<Record>();
                     Record[] allRecords = response.getData();
                     ListGridRecord[] assignedRecords = assignedGrid.getRecords();
-                    if (assignedRecords != null && assignedRecords.length != 0) {
+                    if (assignedRecords.length != 0) {
                         Set<String> selectedRecordIds = new HashSet<String>(assignedRecords.length);
                         for (Record record : assignedRecords) {
                             String id = record.getAttribute(getSelectorKey());
@@ -358,12 +369,21 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     } else {
                         availableRecords.addAll(Arrays.asList(allRecords));
                     }
+                    int totalAvailableRecords = response.getTotalRows() - assignedRecords.length;
+                    if (availableRecords.size() < totalAvailableRecords) {
+                        // TODO: i18n
+                        Message message = new Message("Only " + availableRecords.size() + " out of "
+                            + totalAvailableRecords
+                            + " available items are listed - please specify one or more filters to find the items for which you are looking.",
+                            Message.Severity.Warning);
+                        CoreGUI.getMessageCenter().notify(message);
+                    }
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
                 } finally {
                     updateButtonEnablement();
                 }
             }
-        });
+        }, requestProperties);
     }
 
     private VStack buildButtonStack() {
@@ -491,6 +511,10 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         }
 
         return assignedSectionStack;
+    }
+
+    protected int getMaxAvailableRecords() {
+        return MAX_AVAILABLE_RECORDS;
     }
 
     protected boolean supportsNameHoverCustomizer() {

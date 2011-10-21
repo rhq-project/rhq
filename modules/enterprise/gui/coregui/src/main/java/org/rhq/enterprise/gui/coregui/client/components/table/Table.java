@@ -105,7 +105,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 @SuppressWarnings("unchecked")
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
 
-    public static final int DATA_PAGE_SIZE = 50;
+    private static final int DATA_PAGE_SIZE = 50;
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -258,10 +258,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         filterForm = new TableFilter(this);
 
-        /*
-         * table filters and search bar are currently mutually exclusive
-         */
-
+        // Table filters and search bar are currently mutually exclusive.
         if (getSearchSubsystem() == null) {
             configureTableFilters();
         } else {
@@ -310,8 +307,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // TODO: Uncomment the below line once we've upgraded to SmartGWT 2.3.
         //listGrid.setRecordCanSelectProperty("foobar");
 
-        if (getDataSource() != null) {
-            listGrid.setDataSource(getDataSource());
+        DS dataSource = getDataSource();
+        if (dataSource != null) {
+            dataSource.setDataPageSize(DATA_PAGE_SIZE);
+            listGrid.setDataSource(dataSource);
         }
 
         contents.addMember(listGrid);
@@ -1247,7 +1246,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     /*
-     * by default, no search bar is shown above this table.  if this table represents a subsystem that is capable
+     * By default, no search bar is shown above this table.  if this table represents a subsystem that is capable
      * of search, return the specific object here.
      */
     protected SearchSubsystem getSearchSubsystem() {

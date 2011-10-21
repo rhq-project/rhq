@@ -378,8 +378,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     }
 
     /**
-     * Call this to transform a system property to a more appropriate value.
-     * @param prop
+     * Call this to transform a system setting to a more appropriate value.
      */
     private String transformSystemConfigurationProperty(SystemSetting prop, String value, boolean fromDb) {        
         if (fromDb) {
@@ -435,9 +434,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      * This will make sure the given configuration has a valid value. An exception will be thrown if the given system
      * configuration value is invalid. This method returns if everything is OK.
      *
-     * @param name       name for the property
+     * @param property   name for the property
      * @param value      value of the property
-     * @param properties the full set of system configurations, in case the changed value needs to be compared against
+     * @param settings   the full set of system configurations, in case the changed value needs to be compared against
      *                   other values
      */
     private void verifyNewSystemConfigurationProperty(SystemSetting property, String value, SystemSettings settings) {
@@ -515,12 +514,12 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             dbtype = DatabaseTypeFactory.getDatabaseType(conn);
             long duration = 0;
             if (DatabaseTypeFactory.isPostgres(dbtype)) {
-                for (int i = 0; i < TABLES_TO_REINDEX.length; i++) {
-                    duration += doCommand(dbtype, conn, SQL_REINDEX, TABLES_TO_REINDEX[i]);
+                for (String table : TABLES_TO_REINDEX) {
+                    duration += doCommand(dbtype, conn, SQL_REINDEX, table);
                 }
             } else if (DatabaseTypeFactory.isOracle(dbtype)) {
-                for (int i = 0; i < ORA_INDEXES_TO_REBUILD.length; i++) {
-                    duration += doCommand(dbtype, conn, SQL_REBUILD, ORA_INDEXES_TO_REBUILD[i]);
+                for (String index : ORA_INDEXES_TO_REBUILD) {
+                    duration += doCommand(dbtype, conn, SQL_REBUILD, index);
                 }
             } else {
                 return -1;

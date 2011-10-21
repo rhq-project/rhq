@@ -73,15 +73,15 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
         idField.setCanEdit(false);
         fields.add(idField);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name());
-        nameField.setRequired(true);
+        DataSourceTextField nameField = new DataSourceTextField("name", MSG.common_title_name(), 100, true);
         fields.add(nameField);
 
-        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description());
+        DataSourceTextField descriptionField = new DataSourceTextField("description", MSG.common_title_description(),
+            100);
         fields.add(descriptionField);
 
-        DataSourceTextField expressionField = new DataSourceTextField("expression", MSG.view_dynagroup_expressionSet());
-        expressionField.setRequired(true);
+        DataSourceTextField expressionField = new DataSourceTextField("expression", MSG.view_dynagroup_expressionSet(),
+            1000, true);
         fields.add(expressionField);
 
         // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field

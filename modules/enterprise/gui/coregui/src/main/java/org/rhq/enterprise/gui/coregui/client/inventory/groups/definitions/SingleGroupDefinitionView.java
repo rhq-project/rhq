@@ -244,7 +244,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         @Override
         protected void configureTable() {
-            // i couldn't use percentage widths to work for some reason
+            // i couldn't get percentage widths to work for some reason
 
             ListGridField idField = new ListGridField("id", MSG.common_title_id());
             idField.setType(ListGridFieldType.INTEGER);
@@ -290,7 +290,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                     } else if (GroupCategory.MIXED.name().equals(category)) {
                         return MSG.view_dynagroup_mixed();
                     } else {
-                        return category; // should never happen
+                        throw new IllegalStateException("Unknown group category: " + category);
                     }
                 }
             });

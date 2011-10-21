@@ -170,7 +170,7 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
                 // Only use templates that have the same base dir and filters as the definition from which
                 // this snapshot is coming.  Otherwise the file set does not map.
                 DriftDefinitionComparator ddc = new DriftDefinitionComparator(
-                    CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+                    CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
                 for (DriftDefinitionTemplate template : templates) {
 
                     if (0 == ddc.compare(template.getTemplateDefinition(), wizard.getSnapshotDriftDef())) {

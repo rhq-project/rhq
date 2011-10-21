@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -119,18 +119,19 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         });
         categoryField.setShowHover(true);
         categoryField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String categoryName = record.getAttribute(CATEGORY.name());
+                String categoryName = record.getAttribute(CATEGORY.propertyName());
                 GroupCategory category = GroupCategory.valueOf(categoryName);
-                String displayName = null;
+                String displayName;
                 switch (category) {
-                case COMPATIBLE:
-                    displayName = MSG.view_group_summary_compatible();
-                    break;
-                case MIXED:
-                    displayName = MSG.view_group_summary_mixed();
-                    break;
+                    case COMPATIBLE:
+                        displayName = MSG.view_group_summary_compatible();
+                        break;
+                    case MIXED:
+                        displayName = MSG.view_group_summary_mixed();
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown group category: " + category);
                 }
                 return displayName;
             }

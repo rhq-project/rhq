@@ -38,11 +38,12 @@ import java.util.List;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -64,6 +65,11 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     private DriftManagerLocal driftMgr;
 
     private List<Resource> resources = new LinkedList<Resource>();
+
+    private JPADrift drift1;
+    private JPADrift drift2;
+    private JPADriftFile driftFile1;
+    private JPADriftFile driftFile2;
 
     @BeforeClass
     public void initClass() {
@@ -104,124 +110,134 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     // Note: This test is going to change substantially in terms of the behavior that it
     // is verifying because it was written before the design has been fully flushed out.
-    public void updateTemplateNameAndDescription() {
-        // first create a template
-        final DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test::updateNameAndDescription");
-        definition.setDescription("testing updating template name and description");
-        definition.setEnabled(true);
-        definition.setDriftHandlingMode(normal);
-        definition.setInterval(2400L);
-        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
-
-        // perform the update
-        DriftDefinitionTemplate template = loadTemplate(definition.getName());
-        String updatedName = "UPDATED NAME";
-        template.setName(updatedName);
-        template.setDescription("UPDATED DESCRIPTION");
-
-        templateMgr.updateTemplate(getOverlord(), template, false);
-
-        // verify that the update was made
-        DriftDefinitionTemplate updatedTemplate = loadTemplate(updatedName);
-
-        assertDriftTemplateEquals("Failed to update template", template, updatedTemplate);
-    }
+//    public void updateTemplateNameAndDescription() {
+//        // first create a template
+//        final DriftDefinition definition = new DriftDefinition(new Configuration());
+//        definition.setName("test::updateNameAndDescription");
+//        definition.setDescription("testing updating template name and description");
+//        definition.setEnabled(true);
+//        definition.setDriftHandlingMode(normal);
+//        definition.setInterval(2400L);
+//        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+//
+//        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
+//
+//        // perform the update
+//        DriftDefinitionTemplate template = loadTemplate(definition.getName());
+//        String updatedName = "UPDATED NAME";
+//        template.setName(updatedName);
+//        template.setDescription("UPDATED DESCRIPTION");
+//
+//        templateMgr.updateTemplate(getOverlord(), template, false);
+//
+//        // verify that the update was made
+//        DriftDefinitionTemplate updatedTemplate = loadTemplate(updatedName);
+//
+//        assertDriftTemplateEquals("Failed to update template", template, updatedTemplate);
+//    }
 
     // Note: This test is going to change substantially in terms of the behavior that it
     // is verifying because it was written before the design has been fully flushed out.
-    public void updateTemplateEnabledFlagAndIntervalAndApplyToDefs() {
-        // create a new template
-        final DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test::updateEnabledFlagAndInterval");
-        definition.setDescription("test updating enabled flag and interval");
-        definition.setEnabled(false);
-        definition.setDriftHandlingMode(normal);
-        definition.setInterval(2400L);
-        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
-
-        // create some definitions
-        DriftDefinitionTemplate template = loadTemplate(definition.getName());
-
-        final DriftDefinition def1 = template.createDefinition();
-        def1.setName("def 1");
-        def1.setTemplate(template);
-        def1.setResource(resource);
-
-        final DriftDefinition def2 = template.createDefinition();
-        def2.setName("def 2");
-        def2.setTemplate(template);
-        def2.setResource(resource);
-
-        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), def1);
-        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), def2);
-
-        // perform the update
-        template.getTemplateDefinition().setEnabled(false);
-        template.getTemplateDefinition().setInterval(3600L);
-        templateMgr.updateTemplate(getOverlord(), template, true);
-    }
+//    public void updateTemplateEnabledFlagAndIntervalAndApplyToDefs() {
+//        // create a new template
+//        final DriftDefinition definition = new DriftDefinition(new Configuration());
+//        definition.setName("test::updateEnabledFlagAndInterval");
+//        definition.setDescription("test updating enabled flag and interval");
+//        definition.setEnabled(false);
+//        definition.setDriftHandlingMode(normal);
+//        definition.setInterval(2400L);
+//        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+//
+//        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
+//
+//        // create some definitions
+//        DriftDefinitionTemplate template = loadTemplate(definition.getName());
+//
+//        final DriftDefinition def1 = template.createDefinition();
+//        def1.setName("def 1");
+//        def1.setTemplate(template);
+//        def1.setResource(resource);
+//
+//        final DriftDefinition def2 = template.createDefinition();
+//        def2.setName("def 2");
+//        def2.setTemplate(template);
+//        def2.setResource(resource);
+//
+//        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), def1);
+//        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), def2);
+//
+//        // perform the update
+//        template.getTemplateDefinition().setEnabled(false);
+//        template.getTemplateDefinition().setInterval(3600L);
+//        templateMgr.updateTemplate(getOverlord(), template, true);
+//    }
 
     @SuppressWarnings("unchecked")
-    public void pinSnapshotToTemplate() throws Exception {
+    public void pinTemplate() throws Exception {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("test::pinSnapshotToTemplate");
+        templateDef.setName("test::pinTemplate");
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);
         templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, templateDef);
-        DriftDefinitionTemplate template = loadTemplate(templateDef.getName());
+        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(),
+            resourceType.getId(), true, templateDef);
 
-        // next create the resource level drift definition and a couple change
-        // sets from which we will generate the snapshot
-        final DriftDefinition resourceDef = new DriftDefinition(templateDef.getConfiguration());
+        // next create some resource level definitions
+        final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
+        final DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
+        final DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
+        final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
 
-        // create initial change set
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
-        JPADrift drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
+        // create initial change set from which the snapshot will be generated
+        driftFile1 = new JPADriftFile("a1b2c3");
+        drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
 
         JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift1);
 
-        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, resourceDef);
+        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
         changeSet0.setInitialDriftSet(driftSet);
 
         // create change set v1
-        final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
-        final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, resourceDef);
-        final JPADrift drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
+        driftFile2 = new JPADriftFile("1a2b3c");
+        final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 1, DRIFT, attachedDef1);
+        drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
 
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
-                em.persist(resourceDef);
+                em.persist(attachedDef1);
                 em.persist(driftFile1);
                 em.persist(driftFile2);
                 em.persist(changeSet0);
                 em.persist(changeSet1);
                 em.persist(drift2);
+
+                em.persist(attachedDef2);
+                em.persist(detachedDef1);
+                em.persist(detachedDef2);
             }
         });
 
         // now we pin the snapshot to the template
-        templateMgr.pinTemplate(getOverlord(), template.getId(), resourceDef.getId(), 1);
+        templateMgr.pinTemplate(getOverlord(), template.getId(), attachedDef1.getId(), 1);
 
         // verify that the template is now pinned
         DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
-
         assertTrue("Template should be marked pinned", updatedTemplate.isPinned());
+    }
 
-        // Lastly verify that the change set was persisted
+    @Test(dependsOnMethods = "pinTemplate")
+    @InitDB(false)
+    public void persistChangeSetWhenTemplateGetsPinned() throws Exception {
+        DriftDefinitionTemplate template = loadTemplate("test::pinTemplate");
+
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
-        criteria.addFilterId(updatedTemplate.getChangeSetId());
+        criteria.addFilterId(template.getChangeSetId());
 
         PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
             criteria);
@@ -230,7 +246,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
         JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
         List<? extends Drift> expectedDrifts = asList(
-            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
+            new JPADrift(expectedChangeSet, "drift.1", FILE_ADDED, null, driftFile1),
             new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
 
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
@@ -248,16 +264,47 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
             "The newDriftFile property was not set correctly for " + drift1);
     }
 
-    private DriftDefinitionTemplate loadTemplate(String name) {
-        DriftDefinitionTemplateCriteria criteria = new DriftDefinitionTemplateCriteria();
-        criteria.addFilterResourceTypeId(resourceType.getId());
-        criteria.addFilterName(name);
-        criteria.fetchDriftDefinitions(true);
+    @Test(dependsOnMethods = "pinTemplate")
+    @InitDB(false)
+    public void updateAttachedDefinitionsWhenTemplateGetsPinned() throws Exception {
+        DriftDefinitionTemplate template = loadTemplate("test::pinTemplate");
 
-        PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(getOverlord(), criteria);
-        assertEquals("Expected to find one template", 1, templates.size());
+        // get the attached definitions
+        List<DriftDefinition> attachedDefs = new LinkedList<DriftDefinition>();
+        for (DriftDefinition d : template.getDriftDefinitions()) {
+            if (d.isAttached() && (d.getName().equals("attachedDef1") || d.getName().equals("attachedDef2"))) {
+                attachedDefs.add(d);
+            }
+        }
+        assertEquals("Failed to get attached definitions for " + toString(template), 2, attachedDefs.size());
+        assertDefinitionIsPinned(attachedDefs.get(0));
+        assertDefinitionIsPinned(attachedDefs.get(1));
+    }
 
-        return templates.get(0);
+    private void assertDefinitionIsPinned(DriftDefinition definition) throws Exception {
+        // verify that the definition is marked as pinned
+        assertTrue("Expected " + toString(definition) + " to be marked pinned", definition.isPinned());
+
+        // verify that the initial change set is generated for the definition
+        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(definition.getId());
+        criteria.addFilterCategory(COVERAGE);
+        criteria.fetchDrifts(true);
+
+        PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
+            criteria);
+        assertEquals("Expected to find one change set", 1, changeSets.size());
+
+        JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
+        List<? extends Drift> expectedDrifts = asList(
+            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
+            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+
+        DriftChangeSet<?> actualChangeSet = changeSets.get(0);
+        List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
+
+        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
+            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
     }
 
     private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {
@@ -271,6 +318,27 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         DriftDefinitionComparator comparator = new DriftDefinitionComparator(
             BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
         assertEquals(msg, 0, comparator.compare(expected, actual));
+    }
+
+    private DriftDefinition createDefinition(DriftDefinitionTemplate template, String defName, boolean isAttached) {
+        DriftDefinition def = template.createDefinition();
+        def.setName(defName);
+        def.setAttached(isAttached);
+        def.setTemplate(template);
+        def.setResource(resource);
+        return def;
+    }
+
+    private DriftDefinitionTemplate loadTemplate(String name) {
+        DriftDefinitionTemplateCriteria criteria = new DriftDefinitionTemplateCriteria();
+        criteria.addFilterResourceTypeId(resourceType.getId());
+        criteria.addFilterName(name);
+        criteria.fetchDriftDefinitions(true);
+
+        PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(getOverlord(), criteria);
+        assertEquals("Expected to find one template", 1, templates.size());
+
+        return templates.get(0);
     }
 
 }

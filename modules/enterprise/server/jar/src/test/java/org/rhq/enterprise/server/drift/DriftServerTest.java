@@ -23,6 +23,7 @@ import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -38,6 +39,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -71,10 +73,14 @@ public class DriftServerTest extends AbstractEJB3Test {
     protected Resource resource;
 
     @BeforeMethod
-    public void initServices() throws Exception {
+    public void initServices(Method testMethod) throws Exception {
         initDriftServer();
         initAgentServices();
-        initDB();
+
+        InitDB annotation = testMethod.getAnnotation(InitDB.class);
+        if (annotation == null || annotation.value()) {
+            initDB();
+        }
     }
 
     private void initDriftServer() throws Exception {
@@ -218,6 +224,11 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     protected String toString(DriftDefinition def) {
         return "DriftDefinition[id: " + def.getId() + ", name: " + def.getName() + "]";
+    }
+
+    protected String toString(DriftDefinitionTemplate template) {
+        return DriftDefinitionTemplate.class.getSimpleName() + "[id: " + template.getId() + ", name: " +
+            template.getName() + "]";
     }
 
     protected Drift findDriftByPath(List<? extends Drift> drifts, String path) {

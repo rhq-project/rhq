@@ -59,6 +59,9 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     @EJB
     DriftManagerLocal driftMgr;
 
+    @EJB
+    DriftTemplateManagerLocal templateMgr;
+
     @Override
     public PageList<DriftDefinitionTemplate> findTemplatesByCriteria(Subject subject,
         DriftDefinitionTemplateCriteria criteria) {
@@ -113,7 +116,8 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         for (DriftDefinition definition : template.getDriftDefinitions()) {
             DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
             pinnedDef.setPinned(true);
-            pinDefinition(subject, definition.getResource().getId(), pinnedDef);
+            pinnedDef.setTemplate(template);
+            templateMgr.pinDefinition(subject, definition.getResource().getId(), pinnedDef);
         }
     }
 

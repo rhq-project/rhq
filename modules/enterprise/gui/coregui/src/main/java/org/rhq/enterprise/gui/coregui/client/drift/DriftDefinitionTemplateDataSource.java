@@ -98,7 +98,7 @@ public class DriftDefinitionTemplateDataSource extends
         ListGridField definedByField = new ListGridField(ATTR_DEFINED_BY, MSG.view_adminTemplates_definedBy());
         fields.add(definedByField);
 
-        ListGridField numDefinitionsField = new ListGridField(ATTR_NUM_DEFINITIONS, "Definitions");
+        ListGridField numDefinitionsField = new ListGridField(ATTR_NUM_DEFINITIONS, MSG.common_title_definitions());
         fields.add(numDefinitionsField);
 
         ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());

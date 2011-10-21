@@ -86,6 +86,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Simeon Pinder
  */
 public class DashboardView extends LocatableVLayout {
+
     private DashboardContainer dashboardContainer;
     private Dashboard storedDashboard;
 
@@ -224,6 +225,7 @@ public class DashboardView extends LocatableVLayout {
         if (dashboardContainer.supportsDashboardNameEdit()) {
             nameItem = new TextItem("name", MSG.common_title_dashboard_name());
             nameItem.setValue(storedDashboard.getName());
+            nameItem.setLength(200);
             nameItem.setWrapTitle(false);
             nameItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent blurEvent) {

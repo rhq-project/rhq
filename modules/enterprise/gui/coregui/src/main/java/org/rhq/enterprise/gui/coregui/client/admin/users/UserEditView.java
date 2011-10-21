@@ -91,27 +91,23 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
                 final boolean isReadOnly = (!UserEditView.this.loggedInUserHasManageSecurityPermission && !isEditingSelf);
 
                 // Step 2 of async init: check if LDAP authz is enabled in system settings.
-                if (UserEditView.this.loggedInUserHasManageSecurityPermission) {
-                    GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
-                        public void onFailure(Throwable caught) {
-                            // TODO: i18n
-                            CoreGUI.getErrorHandler().handleError("Failed to determine if LDAP authorization is enabled. Perhaps the Server is down.",
+                GWTServiceLookup.getSystemService().isLdapAuthorizationEnabled(new AsyncCallback<Boolean>() {
+                    public void onFailure(Throwable caught) {
+                        // TODO: i18n
+                        CoreGUI.getErrorHandler()
+                            .handleError(
+                                "Failed to determine if LDAP authorization is enabled. Perhaps the Server is down.",
                                 caught);
-                        }
+                    }
 
-                        public void onSuccess(SystemSettings systemSettings) {
-                            String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
-                            String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
-                            UserEditView.this.ldapAuthorizationEnabled =
-                                (((groupFilter != null) && groupFilter.trim().length() > 0) ||
-                                    ((groupMember != null) && groupMember.trim().length() > 0));
-                            Log.debug("LDAP authorization is " + ((ldapAuthorizationEnabled) ? "" : "not ") + "enabled.");
+                    public void onSuccess(Boolean ldapAuthz) {
+                        UserEditView.this.ldapAuthorizationEnabled = ldapAuthz;
+                        Log.debug("LDAP authorization is " + ((ldapAuthorizationEnabled) ? "" : "not ") + "enabled.");
 
-                            // Step 3 of async init: call super.init() to draw the editor.
-                            UserEditView.this.init(isReadOnly);
-                        }
-                    });
-                }
+                        // Step 3 of async init: call super.init() to draw the editor.
+                        UserEditView.this.init(isReadOnly);
+                    }
+                });
             }
         });
     }

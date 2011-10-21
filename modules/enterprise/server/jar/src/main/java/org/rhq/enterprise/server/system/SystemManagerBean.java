@@ -710,6 +710,22 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
+    public boolean isLdapAuthorizationEnabled() {
+        Subject su = this.subjectManager.getOverlord();
+        SystemSettings settings = getSystemSettings(su);
+
+        String ldapAuthValue = settings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
+
+        boolean ldapAuth = ldapAuthValue == null ? false : Boolean.valueOf(ldapAuthValue);
+
+        String groupFilter = settings.get(SystemSetting.LDAP_GROUP_FILTER);
+        String groupMember = settings.get(SystemSetting.LDAP_GROUP_MEMBER);
+
+        return ldapAuth
+            && (((groupFilter != null) && groupFilter.trim().length() > 0) || ((groupMember != null) && groupMember
+                .trim().length() > 0));
+    }
+    
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ServerDetails getServerDetails(Subject subject) {
         CoreServerMBean coreServerMBean = LookupUtil.getCoreServer();

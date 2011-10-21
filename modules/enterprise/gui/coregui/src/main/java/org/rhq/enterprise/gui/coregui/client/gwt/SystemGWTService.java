@@ -73,4 +73,6 @@ public interface SystemGWTService extends RemoteService {
      * @return information about the bundle deployer tool that can be downloaded from the server
      */
     HashMap<String, String> getBundleDeployerDownload() throws RuntimeException;
+    
+    Boolean isLdapAuthorizationEnabled() throws RuntimeException;
 }

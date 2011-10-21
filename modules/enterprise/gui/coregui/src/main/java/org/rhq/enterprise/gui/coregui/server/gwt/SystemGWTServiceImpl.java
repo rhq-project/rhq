@@ -177,6 +177,15 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
 
     }
 
+    @Override
+    public Boolean isLdapAuthorizationEnabled() throws RuntimeException {
+        try {
+            return systemManager.isLdapAuthorizationEnabled();
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
     private File getBundleDeployerDownloadDir() {
         File serverHomeDir = getServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/bundle-deployer");

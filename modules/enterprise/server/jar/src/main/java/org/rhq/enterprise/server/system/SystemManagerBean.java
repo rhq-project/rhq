@@ -181,7 +181,16 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Deprecated
     public Properties getSystemConfiguration(Subject subject) {
         Properties copy = new Properties();
-        copy.putAll(getSystemSettings(subject).toMap());
+        
+        SystemSettings settings = getSystemSettings(subject);
+        for(Map.Entry<SystemSetting, String> e : settings.entrySet()) {
+            //transform the value back to the database format, because that's
+            //what this method always returned
+            String value = transformSystemConfigurationProperty(e.getKey(), e.getValue(), false);
+            
+            copy.put(e.getKey().getInternalName(), value);
+        }
+        
         return copy;
     }
 

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.system;
 
+import java.util.Properties;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -25,6 +27,9 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -82,5 +87,76 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
 
     public void testVacuumAppdef() {
         systemManager.vacuumAppdef(overlord);
+    }
+        
+    @SuppressWarnings("deprecation")
+    public void testLegacySystemSettingsInCorrectFormat() throws Exception {
+        //some of the properties are represented differently
+        //in the new style settings and the the old style
+        //settings (and consequently database).
+        //These two still co-exist together in the codebase
+        //so let's make sure the values correspond to each other.
+        
+        SystemSettings settings = systemManager.getSystemSettings(overlord);
+        Properties config = systemManager.getSystemConfiguration(overlord);
+        
+        SystemSettings origSettings = new SystemSettings(settings);
+        
+        try {
+            //let's make sure the values are the same
+            checkFormats(settings, config);
+            
+            boolean currentJaasProvider = Boolean.valueOf(settings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER));
+            settings.put(SystemSetting.LDAP_BASED_JAAS_PROVIDER, Boolean.toString(!currentJaasProvider));
+            
+            boolean currentUseSslForLdap = Boolean.valueOf(settings.get(SystemSetting.USE_SSL_FOR_LDAP));
+            settings.put(SystemSetting.USE_SSL_FOR_LDAP, Boolean.toString(!currentUseSslForLdap));
+            
+            systemManager.setSystemSettings(overlord, settings);
+            
+            settings = systemManager.getSystemSettings(overlord);
+            config = systemManager.getSystemConfiguration(overlord);
+            
+            checkFormats(settings, config);
+        } finally {
+            systemManager.setSystemSettings(overlord, origSettings);
+        }
+    }
+    
+    private void checkFormats(SystemSettings settings, Properties config) {        
+        assert settings.size() == config.size() : "The old and new style system settings differ in size";
+        
+        for(String name : config.stringPropertyNames()) {
+            SystemSetting setting = SystemSetting.getByInternalName(name);
+            
+            String oldStyleValue = config.getProperty(name);            
+            String newStyleValue = settings.get(setting);
+            
+            assert setting != null : "Could not find a system setting called '" + name + "'.";
+            
+            switch(setting) {
+            case USE_SSL_FOR_LDAP:
+                if (RHQConstants.LDAP_PROTOCOL_SECURED.equals(oldStyleValue)) {
+                    assert Boolean.valueOf(newStyleValue) : "Secured LDAP protocol should be represented by a 'true' in new style settings.";
+                } else if (RHQConstants.LDAP_PROTOCOL_UNSECURED.equals(oldStyleValue)) {
+                    assert !Boolean.valueOf(newStyleValue) : "Unsecured LDAP protocol should be represented by a 'false' in the new style settings.";
+                } else {
+                    assert false : "Unknown value for system setting '" + setting + "': [" + oldStyleValue + "].";
+                }
+                break;
+            case LDAP_BASED_JAAS_PROVIDER:
+                if (RHQConstants.LDAPJAASProvider.equals(oldStyleValue)) {
+                    assert Boolean.valueOf(newStyleValue) : "LDAP JAAS provider should be represented by a 'true' in new style settings.";
+                } else if (RHQConstants.JDBCJAASProvider.equals(oldStyleValue)) {
+                    assert !Boolean.valueOf(newStyleValue) : "JDBC JAAS provider should be represented by a 'false' in the new style settings.";
+                } else {
+                    assert false : "Unknown value for system setting '" + setting + "': [" + oldStyleValue + "].";
+                }
+                break;
+            default:
+                assert oldStyleValue != null && newStyleValue != null && oldStyleValue.equals(newStyleValue) : "Old and new style values unexpectedly differ for system setting '"
+                    + setting + "': old=[" + oldStyleValue + "], new=[" + newStyleValue + "].";
+            }
+        }
     }
 }

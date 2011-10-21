@@ -97,14 +97,14 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
         }
     }
 
-    private void pinTemplate(DriftDefinitionTemplate template) {
+    private void pinTemplate(final DriftDefinitionTemplate template) {
 
-        GWTServiceLookup.getDriftService().pinTemplate(getSelectedTemplate().getId(), getSnapshotDriftDef().getId(),
+        GWTServiceLookup.getDriftService().pinTemplate(template.getId(), getSnapshotDriftDef().getId(),
             getSnapshotVersion(), new AsyncCallback<Void>() {
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_drift_wizard_addTemplate_success(getSelectedTemplate().getName()),
+                        new Message(MSG.view_drift_wizard_addTemplate_success(template.getName()),
                             Message.Severity.Info));
                     getView().closeDialog();
                     DriftPinTemplateWizard.this.table.refresh();
@@ -112,7 +112,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        MSG.view_drift_wizard_addDef_failure(getSelectedTemplate().getName()), caught);
+                        MSG.view_drift_wizard_addDef_failure(template.getName()), caught);
                     getView().closeDialog();
                 }
             });

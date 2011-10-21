@@ -37,7 +37,7 @@ public class RHQConstants {
     // JAAS settings      
     @Deprecated public static final String JAASProvider = SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName();
     // These are values that are actually stored in the DB for the JAASProvider system prop, though
-    // SystemProperty.LDAP_BASED_JAAS_PROVIDER is represented as a boolean (false->"JDBC", true->"LDAP").
+    // SystemSetting.LDAP_BASED_JAAS_PROVIDER is represented as a boolean (false->"JDBC", true->"LDAP").
     public static final String JDBCJAASProvider = "JDBC";
     public static final String LDAPJAASProvider = "LDAP";
 
@@ -46,7 +46,7 @@ public class RHQConstants {
     @Deprecated public static final String LDAPUrl = SystemSetting.LDAP_NAMING_PROVIDER_URL.getInternalName();
     @Deprecated public static final String LDAPProtocol = SystemSetting.USE_SSL_FOR_LDAP.getInternalName();
     // These are values that are actually stored in the DB for the LDAPProtocol system prop, though
-    // SystemProperty.USE_SSL_FOR_LDAP is represented as a boolean (false->"", true->"ssl").
+    // SystemSetting.USE_SSL_FOR_LDAP is represented as a boolean (false->"", true->"ssl").
     public static final String LDAP_PROTOCOL_UNSECURED = "";
     public static final String LDAP_PROTOCOL_SECURED = "ssl";
     

@@ -50,7 +50,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.SystemConfiguration;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -425,7 +425,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, factoryName);
 
         // Setup SSL if requested
-        String value = env.getProperty(SystemProperty.USE_SSL_FOR_LDAP.getInternalName());
+        String value = env.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
         boolean ldapSsl = Boolean.TRUE.toString().equals(value);
         if (ldapSsl) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");

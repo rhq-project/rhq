@@ -47,7 +47,7 @@ import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.RoleCriteria;
@@ -776,14 +776,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     private boolean isLdapAuthenticationEnabled() {
         SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
-        String value = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
+        String value = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
         return (value != null) ? Boolean.valueOf(value) : false;
     }
 
     private boolean isLdapAuthorizationEnabled() {
         SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
-        String groupFilter = systemSettings.get(SystemProperty.LDAP_GROUP_FILTER);
-        String groupMember = systemSettings.get(SystemProperty.LDAP_GROUP_MEMBER);
+        String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
+        String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
         return ((groupFilter != null) && (groupFilter.trim().length() > 0)) ||
                ((groupMember != null) && (groupMember.trim().length() > 0));
     }

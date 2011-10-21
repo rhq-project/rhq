@@ -27,7 +27,7 @@ import java.util.Properties;
 
 import javax.servlet.ServletContext;
 
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -256,7 +256,7 @@ public class ContextUtils {
 
         if (provider == null) {
             SystemSettings systemSettings = LookupUtil.getSystemManager().getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
-            provider = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
+            provider = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }
 

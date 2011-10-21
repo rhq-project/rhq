@@ -35,7 +35,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
@@ -115,7 +115,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             this.log.info("Enabling RHQ JDBC JAAS Provider...");
             configEntries.add(ace);
 
-            String value = systemConfig.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+            String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
             boolean isLdapAuthenticationEnabled = (value != null) ? Boolean.valueOf(value) : false;
 
             if (isLdapAuthenticationEnabled) {
@@ -164,7 +164,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
         configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(RHQConstants.LDAPFactory));
         configOptions.put(Context.PROVIDER_URL, conf.getProperty(RHQConstants.LDAPUrl));
-        String value = conf.getProperty(SystemProperty.USE_SSL_FOR_LDAP.getInternalName());
+        String value = conf.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
         boolean ldapSsl = Boolean.TRUE.toString().equals(value);
         configOptions.put(Context.SECURITY_PROTOCOL, (ldapSsl) ? "ssl" : null);
         configOptions.put("LoginProperty", conf.getProperty(RHQConstants.LDAPLoginProperty));

@@ -27,7 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -151,7 +151,7 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     public Boolean checkLdapConfiguredStatus() throws RuntimeException {
         try {
             SystemSettings systemSettings = systemManager.getSystemSettings(subjectManager.getOverlord());
-            String value = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
+            String value = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
             boolean result = (value != null) ? Boolean.valueOf(value) : false;
             return result;
         } catch (Throwable t) {

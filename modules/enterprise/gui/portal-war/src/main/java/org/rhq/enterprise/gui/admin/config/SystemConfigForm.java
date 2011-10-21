@@ -26,7 +26,7 @@ import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.server.RHQConstants;
@@ -239,10 +239,10 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapUsername = prop.getProperty(RHQConstants.LDAPBindDN);
         ldapPassword = prop.getProperty(RHQConstants.LDAPBindPW);
 
-        String value = prop.getProperty(SystemProperty.USE_SSL_FOR_LDAP.getInternalName());
+        String value = prop.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
         ldapSsl = Boolean.TRUE.toString().equals(value);
 
-        value = prop.getProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+        value = prop.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
         ldapEnabled = (value != null) ? Boolean.valueOf(value) : false;
 
         String resourceGenericPropertiesUpgradeAllowed = prop.getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade);
@@ -345,7 +345,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         prop.setProperty(RHQConstants.LDAPBindPW, ldapPassword);
         prop.setProperty(RHQConstants.LDAPProtocol, ldapSsl ? "ssl" : "");
 
-        prop.setProperty(SystemProperty.LDAP_BASED_JAAS_PROVIDER.getInternalName(),
+        prop.setProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName(),
             (ldapEnabled != null) ? String.valueOf(ldapEnabled) : Boolean.FALSE.toString());
 
         prop.setProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, String.valueOf(allowResourceGenericPropertiesUpgrade));

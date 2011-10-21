@@ -37,7 +37,7 @@ import org.apache.struts.tiles.actions.TilesAction;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.common.composite.SystemProperty;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.gui.legacy.Constants;
@@ -209,7 +209,7 @@ public class AuthenticateUserAction extends TilesAction {
 
         if (provider == null) {
             SystemSettings systemSettings = LookupUtil.getSystemManager().getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
-            provider = systemSettings.get(SystemProperty.LDAP_BASED_JAAS_PROVIDER);
+            provider = systemSettings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }
 

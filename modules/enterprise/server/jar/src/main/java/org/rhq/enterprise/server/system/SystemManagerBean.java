@@ -239,7 +239,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 String existingValue = transformSystemConfigurationProperty(prop, existingConfig.getPropertyValue(), true);
                 
                 if ((existingValue == null && value != null) || !existingValue.equals(value)) {
-                    //SystemProperty#isReadOnly should be a superset of the "fReadOnly" field in the database
+                    //SystemSetting#isReadOnly should be a superset of the "fReadOnly" field in the database
                     //but let's just be super paranoid here...
                     if (prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue())) {
                         throw new IllegalArgumentException("The setting [" + prop.getInternalName()

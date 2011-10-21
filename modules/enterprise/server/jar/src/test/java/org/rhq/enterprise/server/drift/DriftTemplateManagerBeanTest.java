@@ -281,9 +281,26 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertDefinitionIsPinned(attachedDefs.get(1));
     }
 
+    @Test(dependsOnMethods = "pinTemplate")
+    @InitDB(false)
+    public void doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned() throws Exception {
+        DriftDefinitionTemplate template = loadTemplate("test::pinTemplate");
+
+        // get the detached definitions
+        List<DriftDefinition> detachedDefs = new LinkedList<DriftDefinition>();
+        for (DriftDefinition d : template.getDriftDefinitions()) {
+            if (!d.isAttached() && (d.getName().equals("detachedDef1") || d.getName().equals("detachedDef2"))) {
+                detachedDefs.add(d);
+            }
+        }
+        assertEquals("Failed to get detached definitions for " + toString(template), 2, detachedDefs.size());
+        assertDefinitionIsNotPinned(detachedDefs.get(0));
+        assertDefinitionIsNotPinned(detachedDefs.get(1));
+    }
+
     private void assertDefinitionIsPinned(DriftDefinition definition) throws Exception {
         // verify that the definition is marked as pinned
-        assertTrue("Expected " + toString(definition) + " to be marked pinned", definition.isPinned());
+        assertTrue("Expected " + toString(definition) + " to be pinned", definition.isPinned());
 
         // verify that the initial change set is generated for the definition
         JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
@@ -305,6 +322,30 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
         assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
             (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+
+        // Finally make sure that there are no other change sets
+        criteria = new JPADriftChangeSetCriteria();
+        criteria.addFilterStartVersion(1);
+        criteria.addFilterDriftDefinitionId(definition.getId());
+
+        assertEquals("There should not be any drift change sets", 0,
+            driftMgr.findDriftChangeSetsByCriteria(getOverlord(), criteria).size());
+    }
+
+    private void assertDefinitionIsNotPinned(DriftDefinition definition) throws Exception {
+        // verify that the definition is not pinned
+        assertFalse("Expected " + toString(definition) + " to be unpinned", definition.isPinned());
+
+        // Note that this method assumes that the definition has no change sets
+        // associated with it and therefore checks that there are no change sets.
+        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(definition.getId());
+
+        PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
+            criteria);
+        assertEquals("Did not expect to find any change sets for " + toString(definition) + ". Note that this " +
+            "assertion method assumes that the definition you are testing is not supposed to have any change sets.",
+            0, changeSets.size());
     }
 
     private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {

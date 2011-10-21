@@ -113,11 +113,14 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     }
 
     private void pinDefinitions(Subject subject, DriftDefinitionTemplate template) {
+        // TODO filter out the detached definitions with a query to avoid loading all of them into memory
         for (DriftDefinition definition : template.getDriftDefinitions()) {
-            DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
-            pinnedDef.setPinned(true);
-            pinnedDef.setTemplate(template);
-            templateMgr.pinDefinition(subject, definition.getResource().getId(), pinnedDef);
+            if (definition.isAttached()) {
+                DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
+                pinnedDef.setPinned(true);
+                pinnedDef.setTemplate(template);
+                templateMgr.pinDefinition(subject, definition.getResource().getId(), pinnedDef);
+            }
         }
     }
 

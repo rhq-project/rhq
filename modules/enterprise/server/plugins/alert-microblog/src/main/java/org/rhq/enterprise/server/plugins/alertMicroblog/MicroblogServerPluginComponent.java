@@ -48,7 +48,7 @@ import twitter4j.auth.RequestToken;
 
 /**
  * Microblog Server Plugin Component
- * 
+ *
  * @author Rafael Soares
  *
  */
@@ -65,12 +65,12 @@ public class MicroblogServerPluginComponent extends CustomAlertSenderBackingBean
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
 
-        String consumerKey = this.context.getPluginConfiguration().getSimpleValue("consumerKey", null);
-        String consumerSecret = this.context.getPluginConfiguration().getSimpleValue("consumerSecret", null);
+        String consumerKey = this.context.getPluginConfiguration().getSimpleValue("consumerKey", MicroblogSender.CONS_KEY);
+        String consumerSecret = this.context.getPluginConfiguration().getSimpleValue("consumerSecret", MicroblogSender.CONS_SECRET);
 
         if (consumerKey == null || consumerSecret == null)
             throw new TwitterException(
-                "consumerKey or cusumerSecret missing. Please configure the Microblog plugin before.");
+                "consumerKey or consumerSecret missing. Please configure the Microblog plugin before.");
 
         // The factory instance is re-useable and thread safe.
         this.twitter = new TwitterFactory().getInstance();
@@ -92,12 +92,12 @@ public class MicroblogServerPluginComponent extends CustomAlertSenderBackingBean
         if (this.context.getDataDirectory().exists() || this.context.getDataDirectory().mkdir()) {
 
             filePath = this.context.getDataDirectory().getAbsolutePath() + "/OAuthAccessToken_" + token.getUserId() + ".ser";
-            
+
             // merge the PLugin Configuration to store the token file path reference.
             // this property will be user by Microblog AlertSender to load the accessToken from file system
             this.context.getPluginConfiguration().put(new PropertySimple("accessTokenFilePath", filePath));
             this.persistConfiguration(this.context.getPluginConfiguration());
-            
+
             OutputStream file = new FileOutputStream(filePath);
             OutputStream buffer = new BufferedOutputStream(file);
             ObjectOutput output = new ObjectOutputStream(buffer);

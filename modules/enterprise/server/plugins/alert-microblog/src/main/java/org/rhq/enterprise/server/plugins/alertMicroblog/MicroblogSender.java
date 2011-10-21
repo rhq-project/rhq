@@ -60,15 +60,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class MicroblogSender extends AlertSender {
 
+    static final String CONS_KEY = "iXCqk1vR2vKksDHkulZQ";
+    static final String CONS_SECRET = "d2iwloVgHSghDfEmPWzjxAKdtp18TEvcBJsyaqBjst0";
     private final Log log = LogFactory.getLog(MicroblogSender.class);
 
     @Override
     public SenderResult send(Alert alert) {
 
         SenderResult result;
-        String consumerKey = preferences.getSimpleValue("consumerKey", "iXCqk1vR2vKksDHkulZQ");
+        String consumerKey = preferences.getSimpleValue("consumerKey", CONS_KEY);
         String consumerSecret = preferences.getSimpleValue("consumerSecret",
-            "d2iwloVgHSghDfEmPWzjxAKdtp18TEvcBJsyaqBjst0");
+                CONS_SECRET);
         String accessTokenFilePath = preferences.getSimpleValue("accessTokenFilePath", "/path/to/token.ser");
 
 

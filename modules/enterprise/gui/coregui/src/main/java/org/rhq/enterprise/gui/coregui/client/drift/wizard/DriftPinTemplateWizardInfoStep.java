@@ -164,23 +164,22 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
             FormUtility.addContextualHelp(selectTemplateItem, MSG.view_drift_wizard_pinTemplate_infoStepHelp());
 
             Set<DriftDefinitionTemplate> templates = wizard.getResourceType().getDriftDefinitionTemplates();
-            final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
-                templates.size());
-            if (!templates.isEmpty()) {
-                // Only use templates that have the same base dir and filters as the definition from which
-                // this snapshot is coming.  Otherwise the file set does not map.
-                DriftDefinitionComparator ddc = new DriftDefinitionComparator(
-                    CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
-                for (DriftDefinitionTemplate template : templates) {
-
-                    if (0 == ddc.compare(template.getTemplateDefinition(), wizard.getSnapshotDriftDef())) {
-                        templatesMap.put(template.getName(), template);
-                    }
-                }
-            } else {
+            if (null == templates || templates.isEmpty()) {
                 // there should be at least one template for any resource type that supports drift monitoring
                 throw new IllegalStateException(
                     "At least one drift definition template should exist for the resource type");
+            }
+
+            // Only use templates that have the same base dir and filters as the definition from which
+            // this snapshot is coming.  Otherwise the file set does not map.
+            final HashMap<String, DriftDefinitionTemplate> templatesMap = new HashMap<String, DriftDefinitionTemplate>(
+                templates.size());
+            DriftDefinitionComparator ddc = new DriftDefinitionComparator(CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
+            for (DriftDefinitionTemplate template : templates) {
+
+                if (0 == ddc.compare(template.getTemplateDefinition(), wizard.getSnapshotDriftDef())) {
+                    templatesMap.put(template.getName(), template);
+                }
             }
 
             Set<String> templatesMapKeySet = templatesMap.keySet();
@@ -199,9 +198,11 @@ public class DriftPinTemplateWizardInfoStep extends AbstractWizardStep {
             selectTemplateForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
             canvas.addMember(selectTemplateForm);
 
-            // set value to first in list  
-            selectTemplateItem.setValue(templatesMapKeySetArray[0]);
-            setSelectedTemplate(templatesMapKeySetArray[0], templatesMap);
+            // set value to first in list (assuming there are any values)
+            if (templatesMapKeySetArray.length > 0) {
+                selectTemplateItem.setValue(templatesMapKeySetArray[0]);
+                setSelectedTemplate(templatesMapKeySetArray[0], templatesMap);
+            }
         }
 
         return canvas;

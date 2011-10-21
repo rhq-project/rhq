@@ -82,6 +82,9 @@ public abstract class TestConfigurationFactory {
         simplePropDef = createIntegerPropDef();
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
+        simplePropDef = createLongPropDef();
+        addPropertyDefinition(configDef, simplePropDef, orderIndex++);
+
         simplePropDef = new PropertyDefinitionSimple("Float", "a Float simple prop", false, PropertySimpleType.FLOAT);
         simplePropDef.setDisplayName(simplePropDef.getName());
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
@@ -222,12 +225,13 @@ public abstract class TestConfigurationFactory {
         configuration.put(new PropertySimple("String1", "blah"));
         PropertySimple string2Prop = new PropertySimple("String2",
                 "a really, really, really, really, really long value that won't fit in the text input box");
-        string2Prop.setErrorMessage("illegal value!");
+        //string2Prop.setErrorMessage("illegal value!");
         configuration.put(string2Prop);
-        configuration.put(new PropertySimple("LongString", "blah blah blah\nblah blah blah"));
+        configuration.put(new PropertySimple("LongString", "blah blah blah\nblah blah blah\nblah blah blah"));
         configuration.put(new PropertySimple("Password", "ou812"));
         configuration.put(new PropertySimple("Boolean", false));
-        configuration.put(new PropertySimple("Integer", 666));
+        configuration.put(new PropertySimple("Integer", Integer.MAX_VALUE));
+        configuration.put(new PropertySimple("Long", Long.MAX_VALUE));
         configuration.put(new PropertySimple("Float", Math.PI));
 
         configuration.put(new PropertySimple("StringEnum1", "PA"));
@@ -282,7 +286,7 @@ public abstract class TestConfigurationFactory {
 
         configuration.put(new PropertySimple("myString1", "grouped String 1"));
         PropertySimple myString2Prop = new PropertySimple("myString2", "grouped String 2");
-        myString2Prop.setErrorMessage("bogus value!");
+        //myString2Prop.setErrorMessage("bogus value!");
         configuration.put(myString2Prop);
         configuration.put(new PropertySimple("myString3", "strings are cool"));
         configuration.put(new PropertySimple("myEnum", "Burlington"));
@@ -323,6 +327,15 @@ public abstract class TestConfigurationFactory {
         integerPropDef.setDisplayName(integerPropDef.getName());
         integerPropDef.setSummary(true);
         return integerPropDef;
+    }
+
+    private static PropertyDefinitionSimple createLongPropDef() {
+        PropertyDefinitionSimple longPropDef;
+         longPropDef = new PropertyDefinitionSimple("Long",
+            "a summary Long simple prop", false, PropertySimpleType.LONG);
+         longPropDef.setDisplayName( longPropDef.getName());
+         longPropDef.setSummary(true);
+        return  longPropDef;
     }
 
     private TestConfigurationFactory() {

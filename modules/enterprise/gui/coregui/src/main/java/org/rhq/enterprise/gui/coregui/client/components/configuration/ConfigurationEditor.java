@@ -62,6 +62,7 @@ import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -117,6 +118,7 @@ import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.IsLongValidator;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -1048,18 +1050,18 @@ public class ConfigurationEditor extends LocatableVLayout {
         PropertyDefinitionSimple defSimple = (PropertyDefinitionSimple) summaryPropDef;
         PropertySimpleType propSimpleType = defSimple.getType();
         switch (propSimpleType) {
-        case BOOLEAN:
-            field.setType(ListGridFieldType.BOOLEAN);
-            break;
-        case INTEGER:
-            field.setType(ListGridFieldType.INTEGER);
-            break;
-        case FLOAT:
-        case DOUBLE:
-            field.setType(ListGridFieldType.FLOAT);
-            break;
-        default:
-            field.setType(ListGridFieldType.TEXT);
+            case BOOLEAN:
+                field.setType(ListGridFieldType.BOOLEAN);
+                break;
+            case INTEGER:
+                field.setType(ListGridFieldType.INTEGER);
+                break;
+            case FLOAT:
+            case DOUBLE:
+                field.setType(ListGridFieldType.FLOAT);
+                break;
+            default:
+                field.setType(ListGridFieldType.TEXT);
         }
         return field;
     }
@@ -1221,7 +1223,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     form.addItemChangedHandler(new ItemChangedHandler() {
                         public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                            newMemberPropertySimple.setStringValue((String) itemChangedEvent.getNewValue());
+                            Object newValue = itemChangedEvent.getNewValue();
+                            newMemberPropertySimple.setValue(newValue);
 
                             // Only enable the OK button, allowing the user to add the property to the map, if the
                             // property is valid.
@@ -1306,6 +1309,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 case STRING:
                 case FILE:
                 case DIRECTORY:
+                case LONG:
+                    // Treat values with type LONG as strings, since GWT does not support longs.
                     valueItem = new TextItem();
                     break;
                 case LONG_STRING:
@@ -1321,8 +1326,19 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueItem = radioGroupItem;
                     break;
                 case INTEGER:
-                case LONG:
-                    valueItem = new IntegerItem();
+                    // Don't use spinner items for list member props, since for those we rely on listening for
+                    // ItemChangedEvents on the DynamicForm on the list editing modal, and there is a SmartGWT 2.4 bug
+                    // where manually changing the text input of a spinner item does not trigger an ItemChangedEvent as
+                    // it should.
+                    if (propertyDefinitionSimple.getParentPropertyListDefinition() == null) {
+                        SpinnerItem spinnerItem = new SpinnerItem();
+                        spinnerItem.setMin(Integer.MIN_VALUE);
+                        spinnerItem.setMax(Integer.MAX_VALUE);
+                        // TODO: If an integer constraint is defined on the propdef, use that to set the min and max.
+                        valueItem = spinnerItem;
+                    } else {
+                        valueItem = new IntegerItem();
+                    }
                     break;
                 case FLOAT:
                 case DOUBLE:
@@ -1517,8 +1533,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             typeValidator = lengthRangeValidator;
             break;
         case INTEGER:
-        case LONG:
             typeValidator = new IsIntegerValidator();
+            break;
+        case LONG:
+            typeValidator = new IsLongValidator();
             break;
         case FLOAT:
         case DOUBLE:

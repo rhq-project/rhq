@@ -25,7 +25,6 @@ import static org.testng.AssertJUnit.*;
 
 public class SnmpTrapdComponentTest extends ComponentTest {
 
-
     private Snmp snmp;
     private TransportMapping peer;
     private InetAddress address;
@@ -60,14 +59,29 @@ public class SnmpTrapdComponentTest extends ComponentTest {
         }
     }
 
+    @Test
+    public void test() throws Exception {
+        log.info("sending snmp trap...");
+        sendTrap("hello, world");
+        log.info("listening...");
+        boolean success = false;
+        for (int i = 0; i < 12; i++) {
+            Thread.sleep(250);
+            EventSenderRunner esr = new EventSenderRunner(eventManager);
+            EventReport eventReport = esr.call();
+            Map<EventSource, Set<Event>> events = eventReport.getEvents();
+            log.info("events " + events);
+            if (events.size() > 0) {
+                success = true;
+                break;
+            }
+        }
+        assertTrue("Did not get event (in time)", success);
+    }
+
     @Override
     protected void setConfiguration() {
         configuration.getSimple("pollInterval").setIntegerValue(1);
-    }
-
-    private void add(PDU pdu, OID oid, Object message) {
-        String s = String.valueOf(message);
-        pdu.add(new VariableBinding(oid, new OctetString(s)));
     }
 
     enum Severity {
@@ -94,23 +108,9 @@ public class SnmpTrapdComponentTest extends ComponentTest {
         }
     }
 
-    @Test
-    public void test() throws Exception {
-        log.info("listening");
-        sendTrap("hello, world");
-        boolean success = false;
-        for (int i = 0; i < 4; i++) {
-            Thread.sleep(500);
-            EventSenderRunner esr = new EventSenderRunner(eventManager);
-            EventReport eventReport = esr.call();
-            Map<EventSource, Set<Event>> events = eventReport.getEvents();
-            log.info("events " + events);
-            if (events.size() > 0) {
-                success = true;
-                break;
-            }
-        }
-        assertTrue("Did not get event (in time)", success);
+    private void add(PDU pdu, OID oid, Object message) {
+        String s = String.valueOf(message);
+        pdu.add(new VariableBinding(oid, new OctetString(s)));
     }
 
 }

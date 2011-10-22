@@ -745,10 +745,8 @@ public class ConfigurationEditor extends LocatableVLayout {
             invalidPropertySetChanged = (this.invalidPropertyNameToDisplayNameMap.remove(topLevelPropertyDefinition
                 .getName()) != null);
         } else {
-            int oldMapSize = invalidPropertyNameToDisplayNameMap.size();
-            this.invalidPropertyNameToDisplayNameMap.put(topLevelPropertyDefinition.getName(),
-                topLevelPropertyDefinition.getDisplayName());
-            invalidPropertySetChanged = this.invalidPropertyNameToDisplayNameMap.size() != oldMapSize;
+            invalidPropertySetChanged = (this.invalidPropertyNameToDisplayNameMap.put(topLevelPropertyDefinition
+                .getName(), topLevelPropertyDefinition.getDisplayName()) == null);
         }
 
         PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
@@ -902,7 +900,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private static boolean isDynamic(PropertyDefinitionMap propertyDefinitionMap) {
         Map<String, PropertyDefinition> memberPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
-        return memberPropertyDefinitions == null || memberPropertyDefinitions.isEmpty();
+        return memberPropertyDefinitions.isEmpty();
     }
 
     private void addMemberPropertyDefinitionsToDynamicPropertyMap(PropertyDefinitionMap propertyDefinitionMap,

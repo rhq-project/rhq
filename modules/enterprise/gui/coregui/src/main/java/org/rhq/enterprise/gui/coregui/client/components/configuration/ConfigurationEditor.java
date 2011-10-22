@@ -745,8 +745,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             invalidPropertySetChanged = (this.invalidPropertyNameToDisplayNameMap.remove(topLevelPropertyDefinition
                 .getName()) != null);
         } else {
-            invalidPropertySetChanged = (this.invalidPropertyNameToDisplayNameMap.put(topLevelPropertyDefinition
-                .getName(), topLevelPropertyDefinition.getDisplayName()) != null);
+            int oldMapSize = invalidPropertyNameToDisplayNameMap.size();
+            this.invalidPropertyNameToDisplayNameMap.put(topLevelPropertyDefinition.getName(),
+                topLevelPropertyDefinition.getDisplayName());
+            invalidPropertySetChanged = this.invalidPropertyNameToDisplayNameMap.size() != oldMapSize;
         }
 
         PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
@@ -1410,7 +1412,7 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     protected void updatePropertySimpleValue(FormItem formItem, Object value, PropertySimple propertySimple,
-        PropertyDefinitionSimple propertyDefinitionSimple) {
+                                                PropertyDefinitionSimple propertyDefinitionSimple) {
         propertySimple.setErrorMessage(null);
         propertySimple.setValue(value);
     }
@@ -1462,14 +1464,16 @@ public class ConfigurationEditor extends LocatableVLayout {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
                     valueItem.setDisabled(isUnset);
                     if (isUnset) {
-                        updatePropertySimpleValue(unsetItem, null, propertySimple, propertyDefinitionSimple);
-                        setValue(valueItem, null);
+                        if (valueItem.getValue() != null) {
+                            setValue(valueItem, null);
+                            updatePropertySimpleValue(unsetItem, null, propertySimple,
+                                propertyDefinitionSimple);
+                            firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, true);
+                        }
                     } else {
                         valueItem.focusInItem();
                     }
                     valueItem.redraw();
-                    propertySimple.setValue(valueItem.getValue());
-                    firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, true);
                 }
             });
 

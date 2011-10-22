@@ -155,6 +155,8 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     }
 
     private void updateLabel(Message message) {
+        label.hide();
+
         String contents = (message.getConciseMessage() != null) ? message.getConciseMessage() : message
             .getDetailedMessage();
         label.setContents(contents);
@@ -165,7 +167,8 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         String icon = (contents != null) ? message.getSeverity().getIcon() : null;
         label.setIcon(icon);
 
-        markForRedraw();
+        label.redraw();
+        label.show();
     }
 
 }

@@ -102,9 +102,9 @@ public interface DriftAgentService {
      * @param driftDefinition The updated driftDefinition.
      * @see DriftDefinition
      */
-    void updateDriftDetection(DriftDefinition driftDefinition);
+    void updateDriftDetection(int resourceId, DriftDefinition driftDefinition);
 
-    void updateDriftDetection(DriftDefinition driftDef, DriftSnapshot driftSnapshot);
+    void updateDriftDetection(int resourceId, DriftDefinition driftDef, DriftSnapshot driftSnapshot);
 
     /**
      * This method is invoked to inform the agent that the server has successfully

@@ -41,6 +41,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
@@ -213,9 +214,10 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
                 em.persist(attachedDef1);
                 em.persist(driftFile1);
                 em.persist(driftFile2);
+                em.persist(drift1);
+                em.persist(drift2);
                 em.persist(changeSet0);
                 em.persist(changeSet1);
-                em.persist(drift2);
 
                 em.persist(attachedDef2);
                 em.persist(detachedDef1);
@@ -296,6 +298,81 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertEquals("Failed to get detached definitions for " + toString(template), 2, detachedDefs.size());
         assertDefinitionIsNotPinned(detachedDefs.get(0));
         assertDefinitionIsNotPinned(detachedDefs.get(1));
+    }
+
+    public void deleteUnpinnedTemplate() throws Exception {
+        // first create the template
+        final DriftDefinition templateDef = new DriftDefinition(new Configuration());
+        templateDef.setName("test::pinTemplate");
+        templateDef.setEnabled(true);
+        templateDef.setDriftHandlingMode(normal);
+        templateDef.setInterval(2400L);
+        templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(),
+            resourceType.getId(), true, templateDef);
+
+        // next create some resource level definitions
+        final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
+        final DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
+        final DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
+        final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
+
+        // create some change sets
+        driftFile1 = new JPADriftFile("a1b2c3");
+        drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
+
+        JPADriftSet driftSet0 = new JPADriftSet();
+        driftSet0.addDrift(drift1);
+
+        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
+        changeSet0.setInitialDriftSet(driftSet0);
+
+
+        driftFile2 = new JPADriftFile("1a2b3c");
+        drift2 = new JPADrift(null, "drift.2", FILE_ADDED, null, driftFile2);
+
+        JPADriftSet driftSet1 = new JPADriftSet();
+        driftSet1.addDrift(drift2);
+
+        final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 0, DRIFT, detachedDef1);
+        changeSet1.setInitialDriftSet(driftSet1);
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(attachedDef1);
+                em.persist(attachedDef2);
+                em.persist(detachedDef1);
+                em.persist(detachedDef2);
+                em.persist(driftFile1);
+                em.persist(driftFile2);
+                em.persist(drift1);
+                em.persist(drift2);
+                em.persist(changeSet0);
+                em.persist(changeSet1);
+            }
+        });
+
+        // delete the template
+        templateMgr.deleteTemplate(getOverlord(), template.getId());
+
+        // verify that attached definitions along with their change sets have
+        // been deleted
+        assertNull("Change sets belonging to attached definitions should be deleted", loadChangeSet(changeSet0.getId()));
+        assertNull("Attached definition " + toString(attachedDef1) + " should be deleted",
+            loadDefinition(attachedDef1.getId()));
+        assertNull("Attached definition " + toString(attachedDef2) + " should be deleted",
+            loadDefinition(attachedDef2.getId()));
+
+        // verify that detached definitions along with their change sets have not been deleted
+        assertNotNull("Change sets belonging to detached definitions should not be deleted",
+            loadChangeSet(changeSet1.getId()));
+        assertNotNull("Detached definition " + toString(detachedDef1) + " should not be deleted",
+            loadDefinition(detachedDef1.getId()));
+        assertNotNull("Detached definition " + toString(detachedDef2) + " should not be deleted",
+            loadDefinition(detachedDef2.getId()));
     }
 
     private void assertDefinitionIsPinned(DriftDefinition definition) throws Exception {
@@ -380,6 +457,29 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertEquals("Expected to find one template", 1, templates.size());
 
         return templates.get(0);
+    }
+
+    private DriftDefinition loadDefinition(int definitionId) {
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.addFilterId(definitionId);
+        PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(getOverlord(), criteria);
+
+        if (definitions.isEmpty()) {
+            return null;
+        }
+        return definitions.get(0);
+    }
+
+    private DriftChangeSet<?> loadChangeSet(String id) throws Exception {
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterId(id);
+        PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
+            criteria);
+
+        if (changeSets.isEmpty()) {
+            return null;
+        }
+        return changeSets.get(0);
     }
 
 }

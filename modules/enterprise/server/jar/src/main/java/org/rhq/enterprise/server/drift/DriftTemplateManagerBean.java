@@ -138,4 +138,14 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         DriftDefinitionTemplate updatedTemplate = entityMgr.merge(template);
     }
 
+    @Override
+    public void deleteTemplate(Subject subject, int templateId) {
+        DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
+        for (DriftDefinition defintion : template.getDriftDefinitions()) {
+            if (defintion.isAttached()) {
+                driftMgr.deleteDriftDefinition(subject, forResource(defintion.getResource().getId()),
+                    defintion.getName());
+            }
+        }
+    }
 }

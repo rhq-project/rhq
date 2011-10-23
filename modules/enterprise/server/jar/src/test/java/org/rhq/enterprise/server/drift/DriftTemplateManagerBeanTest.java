@@ -20,11 +20,13 @@
 package org.rhq.enterprise.server.drift;
 
 import static java.util.Arrays.asList;
+import static org.rhq.core.domain.common.EntityContext.forResource;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
@@ -159,9 +161,11 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    public void updateTemplate() {
+    public void createAndUpdateTemplate() {
+        // create the template
         DriftDefinition definition = new DriftDefinition(new Configuration());
         definition.setName("test::updateTemplate");
+        definition.setDescription("update template test");
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
         definition.setInterval(2400L);
@@ -170,8 +174,32 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
             definition);
 
+        // next create some definitions from the template
+        DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
+        DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
+        DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
+        DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
 
+        driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), attachedDef1);
+        driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), attachedDef2);
+        driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), detachedDef1);
+        driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), detachedDef2);
+
+        // update the template
+        DriftDefinition newTemplateDef = template.getTemplateDefinition();
+        newTemplateDef.setDescription("UPDATE TEMPLATE TEST");
+        newTemplateDef.setInterval(4800L);
+        newTemplateDef.setDriftHandlingMode(plannedChanges);
+        newTemplateDef.setEnabled(false);
+
+        templateMgr.updateTemplate(getOverlord(), template);
+
+        // verify that the tempalte has been updated
+        DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
+        assertPropertiesMatch("Failed to update template", template, updatedTemplate, "resourceType",
+            "driftDefinitions", "templateDefinition");
     }
+
 
     @SuppressWarnings("unchecked")
     public void pinTemplate() throws Exception {

@@ -158,5 +158,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         if (comparator.compare(oldTemplate.getTemplateDefinition(), template.getTemplateDefinition()) != 0) {
             throw new IllegalArgumentException("The template's base directory and filters cannot be modified");
         }
+
+        entityMgr.merge(template);
     }
 }

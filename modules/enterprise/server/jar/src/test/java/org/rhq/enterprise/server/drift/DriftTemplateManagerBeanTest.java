@@ -198,26 +198,30 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertPropertiesMatch("Failed to update template", template, updatedTemplate, "resourceType",
             "driftDefinitions", "templateDefinition");
 
-        // verify that attached definitions are updated. We will do this in a transaction
-        // to avoid dealing with lazy init exceptions.
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                for (DriftDefinition def : asList(attachedDef1, attachedDef2)) {
-                    DriftDefinition updatedDef = loadDefinition(def.getId());
-                    String msg = "Failed to propagate update to attached definition " +
-                        DriftTemplateManagerBeanTest.this.toString(updatedDef) + " - ";
-                    DriftDefinition updatedTemplateDef = updatedTemplate.getTemplateDefinition();
+        // verify that attached definitions are updated.
+        for (DriftDefinition def : asList(attachedDef1, attachedDef2)) {
+            DriftDefinition updatedDef = loadDefinition(def.getId());
+            String msg = "Failed to propagate update to attached definition " + toString(updatedDef) + " - ";
+            DriftDefinition updatedTemplateDef = updatedTemplate.getTemplateDefinition();
 
-                    assertEquals(msg + "enabled property not updated", updatedTemplateDef.isEnabled(),
-                        updatedDef.isEnabled());
-                    assertEquals(msg + "driftHandlingMode property not updated",
-                        updatedTemplateDef.getDriftHandlingMode(), updatedDef.getDriftHandlingMode());
-                    assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(),
-                        updatedDef.getInterval());
-                }
-            }
-        });
+            assertEquals(msg + "enabled property not updated", updatedTemplateDef.isEnabled(),
+                updatedDef.isEnabled());
+            assertEquals(msg + "driftHandlingMode property not updated",
+                updatedTemplateDef.getDriftHandlingMode(), updatedDef.getDriftHandlingMode());
+            assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(),
+                updatedDef.getInterval());
+        }
+
+        // verify that the detached definitions have not been updated.
+        for (DriftDefinition def : asList(detachedDef1, detachedDef2)) {
+            DriftDefinition defAfterUpdate = loadDefinition(def.getId());
+            String msg = "Detached definition " + toString(def) + " should not get updated - ";
+
+            assertEquals(msg + "enabled property was modified", def.isEnabled(), defAfterUpdate.isEnabled());
+            assertEquals(msg + "driftHandlingMode property was modified", def.getDriftHandlingMode(),
+                defAfterUpdate.getDriftHandlingMode());
+            assertEquals(msg + "interval property was modified", def.getInterval(), defAfterUpdate.getInterval());
+        }
     }
 
 
@@ -510,7 +514,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     private DriftDefinition loadDefinition(int definitionId) {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterId(definitionId);
-        criteria.fetchTemplate(true);
+        criteria.fetchConfiguration(true);
         PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(getOverlord(), criteria);
 
         if (definitions.isEmpty()) {

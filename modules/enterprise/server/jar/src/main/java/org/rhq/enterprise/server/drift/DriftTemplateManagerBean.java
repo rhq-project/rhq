@@ -149,6 +149,10 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     public void updateTemplate(Subject subject, DriftDefinitionTemplate template) {
         DriftDefinitionTemplate oldTemplate = entityMgr.find(DriftDefinitionTemplate.class, template.getId());
 
+        if (!oldTemplate.getName().equals(template.getName())) {
+            throw new IllegalArgumentException("The template's name cannot be modified");
+        }
+
         DriftDefinitionComparator comparator = new DriftDefinitionComparator(
                 DriftDefinitionComparator.CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
         if (comparator.compare(oldTemplate.getTemplateDefinition(), template.getTemplateDefinition()) != 0) {

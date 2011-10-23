@@ -51,6 +51,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -118,8 +119,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         definition.setInterval(2400L);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
-            definition);
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
 
         assertNotNull("Failed to load template", loadTemplate(definition.getName()));
     }
@@ -134,6 +134,43 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/TEST"));
 
         templateMgr.updateTemplate(getOverlord(), template);
+    }
+
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
+        expectedExceptions = EJBException.class,
+        expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
+    @InitDB(false)
+    public void doNotAllowFiltersToBeUpdated() {
+        DriftDefinitionTemplate template = loadTemplate("test::createTemplateForNegativeUpdateTests");
+        DriftDefinition definition = template.getTemplateDefinition();
+        definition.addExclude(new Filter("/foo/bar/TEST/conf", "*.xml"));
+
+        templateMgr.updateTemplate(getOverlord(), template);
+    }
+
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
+        expectedExceptions = EJBException.class,
+        expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
+    @InitDB(false)
+    public void doNotAllowTemplateNameToBeUpdated() {
+        DriftDefinitionTemplate template = loadTemplate("test::createTemplateForNegativeUpdateTests");
+        template.setName("A new name");
+
+        templateMgr.updateTemplate(getOverlord(), template);
+    }
+
+    public void updateTemplate() {
+        DriftDefinition definition = new DriftDefinition(new Configuration());
+        definition.setName("test::updateTemplate");
+        definition.setEnabled(true);
+        definition.setDriftHandlingMode(normal);
+        definition.setInterval(2400L);
+        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
+            definition);
+
+
     }
 
     @SuppressWarnings("unchecked")

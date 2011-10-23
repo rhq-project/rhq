@@ -175,10 +175,10 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
             definition);
 
         // next create some definitions from the template
-        DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
-        DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
-        DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
-        DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
+        final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
+        final DriftDefinition attachedDef2 = createDefinition(template, "attachedDef2", true);
+        final DriftDefinition detachedDef1 = createDefinition(template, "detachedDef1", false);
+        final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
 
         driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), attachedDef1);
         driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), attachedDef2);
@@ -186,8 +186,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         driftMgr.updateDriftDefinition(getOverlord(), forResource(resource.getId()), detachedDef2);
 
         // update the template
-        DriftDefinition newTemplateDef = template.getTemplateDefinition();
-        newTemplateDef.setDescription("UPDATE TEMPLATE TEST");
+        final DriftDefinition newTemplateDef = template.getTemplateDefinition();
         newTemplateDef.setInterval(4800L);
         newTemplateDef.setDriftHandlingMode(plannedChanges);
         newTemplateDef.setEnabled(false);
@@ -195,9 +194,30 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
 
         // verify that the tempalte has been updated
-        DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
+        final DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
         assertPropertiesMatch("Failed to update template", template, updatedTemplate, "resourceType",
             "driftDefinitions", "templateDefinition");
+
+        // verify that attached definitions are updated. We will do this in a transaction
+        // to avoid dealing with lazy init exceptions.
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                for (DriftDefinition def : asList(attachedDef1, attachedDef2)) {
+                    DriftDefinition updatedDef = loadDefinition(def.getId());
+                    String msg = "Failed to propagate update to attached definition " +
+                        DriftTemplateManagerBeanTest.this.toString(updatedDef) + " - ";
+                    DriftDefinition updatedTemplateDef = updatedTemplate.getTemplateDefinition();
+
+                    assertEquals(msg + "enabled property not updated", updatedTemplateDef.isEnabled(),
+                        updatedDef.isEnabled());
+                    assertEquals(msg + "driftHandlingMode property not updated",
+                        updatedTemplateDef.getDriftHandlingMode(), updatedDef.getDriftHandlingMode());
+                    assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(),
+                        updatedDef.getInterval());
+                }
+            }
+        });
     }
 
 
@@ -490,6 +510,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     private DriftDefinition loadDefinition(int definitionId) {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterId(definitionId);
+        criteria.fetchTemplate(true);
         PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(getOverlord(), criteria);
 
         if (definitions.isEmpty()) {

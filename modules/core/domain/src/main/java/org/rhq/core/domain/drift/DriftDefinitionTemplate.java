@@ -104,7 +104,7 @@ public class DriftDefinitionTemplate implements Serializable {
     @OneToMany(mappedBy = "template", cascade = CascadeType.PERSIST)
     private Set<DriftDefinition> driftDefinitions = new HashSet<DriftDefinition>();
 
-    private transient DriftDefinition configWrapper;
+    //private transient DriftDefinition configWrapper;
 
     public int getId() {
         return id;
@@ -159,18 +159,13 @@ public class DriftDefinitionTemplate implements Serializable {
     }
 
     public DriftDefinition getTemplateDefinition() {
-        if (null == configWrapper) {
-            configWrapper = new DriftDefinition(configuration);
-        }
-
-        return configWrapper;
+        return new DriftDefinition(configuration);
     }
 
     public void setTemplateDefinition(DriftDefinition templateDefinition) {
         configuration = templateDefinition.getConfiguration().deepCopyWithoutProxies();
         name = templateDefinition.getName();
         description = templateDefinition.getDescription();
-        configWrapper = null;
     }
 
     /**

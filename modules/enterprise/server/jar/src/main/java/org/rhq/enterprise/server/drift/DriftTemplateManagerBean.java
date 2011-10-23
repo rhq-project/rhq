@@ -159,6 +159,17 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             throw new IllegalArgumentException("The template's base directory and filters cannot be modified");
         }
 
-        entityMgr.merge(template);
+        DriftDefinitionTemplate updatedTemplate = entityMgr.merge(template);
+        DriftDefinition templateDef = updatedTemplate.getTemplateDefinition();
+
+        for (DriftDefinition resourceDef : updatedTemplate.getDriftDefinitions()) {
+            if (resourceDef.isAttached()) {
+                resourceDef.setInterval(templateDef.getInterval());
+                resourceDef.setDriftHandlingMode(templateDef.getDriftHandlingMode());
+                resourceDef.setEnabled(templateDef.isEnabled());
+
+                driftMgr.updateDriftDefinition(subject, forResource(resourceDef.getResource().getId()), resourceDef);
+            }
+        }
     }
 }

@@ -34,6 +34,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
@@ -133,12 +134,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override
-    public void updateTemplate(Subject subject, DriftDefinitionTemplate template, boolean applyToDefs) {
-        @SuppressWarnings("unused")
-        DriftDefinitionTemplate updatedTemplate = entityMgr.merge(template);
-    }
-
-    @Override
     public void deleteTemplate(Subject subject, int templateId) {
         DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
         for (DriftDefinition defintion : template.getDriftDefinitions()) {
@@ -146,6 +141,18 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
                 driftMgr.deleteDriftDefinition(subject, forResource(defintion.getResource().getId()),
                     defintion.getName());
             }
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @Override
+    public void updateTemplate(Subject subject, DriftDefinitionTemplate template) {
+        DriftDefinitionTemplate oldTemplate = entityMgr.find(DriftDefinitionTemplate.class, template.getId());
+
+        DriftDefinitionComparator comparator = new DriftDefinitionComparator(
+                DriftDefinitionComparator.CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
+        if (comparator.compare(oldTemplate.getTemplateDefinition(), template.getTemplateDefinition()) != 0) {
+            throw new IllegalArgumentException("The template's base directory and filters cannot be modified");
         }
     }
 }

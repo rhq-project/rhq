@@ -38,5 +38,7 @@ public interface DriftTemplateManagerRemote {
 
     void pinTemplate(Subject subject, int templateId, int snapshotDriftDefId, int snapshotVersion);
 
+    void updateTemplate(Subject subject, DriftDefinitionTemplate template);
+
     void deleteTemplate(Subject subject, int templateId);
 }

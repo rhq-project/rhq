@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.ejb.EJBException;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
@@ -109,69 +110,31 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         });
     }
 
-    // Note: This test is going to change substantially in terms of the behavior that it
-    // is verifying because it was written before the design has been fully flushed out.
-//    public void updateTemplateNameAndDescription() {
-//        // first create a template
-//        final DriftDefinition definition = new DriftDefinition(new Configuration());
-//        definition.setName("test::updateNameAndDescription");
-//        definition.setDescription("testing updating template name and description");
-//        definition.setEnabled(true);
-//        definition.setDriftHandlingMode(normal);
-//        definition.setInterval(2400L);
-//        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-//
-//        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
-//
-//        // perform the update
-//        DriftDefinitionTemplate template = loadTemplate(definition.getName());
-//        String updatedName = "UPDATED NAME";
-//        template.setName(updatedName);
-//        template.setDescription("UPDATED DESCRIPTION");
-//
-//        templateMgr.updateTemplate(getOverlord(), template, false);
-//
-//        // verify that the update was made
-//        DriftDefinitionTemplate updatedTemplate = loadTemplate(updatedName);
-//
-//        assertDriftTemplateEquals("Failed to update template", template, updatedTemplate);
-//    }
+    public void createTemplateForNegativeUpdateTests() {
+        DriftDefinition definition = new DriftDefinition(new Configuration());
+        definition.setName("test::createTemplateForNegativeUpdateTests");
+        definition.setEnabled(true);
+        definition.setDriftHandlingMode(normal);
+        definition.setInterval(2400L);
+        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-    // Note: This test is going to change substantially in terms of the behavior that it
-    // is verifying because it was written before the design has been fully flushed out.
-//    public void updateTemplateEnabledFlagAndIntervalAndApplyToDefs() {
-//        // create a new template
-//        final DriftDefinition definition = new DriftDefinition(new Configuration());
-//        definition.setName("test::updateEnabledFlagAndInterval");
-//        definition.setDescription("test updating enabled flag and interval");
-//        definition.setEnabled(false);
-//        definition.setDriftHandlingMode(normal);
-//        definition.setInterval(2400L);
-//        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-//
-//        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
-//
-//        // create some definitions
-//        DriftDefinitionTemplate template = loadTemplate(definition.getName());
-//
-//        final DriftDefinition def1 = template.createDefinition();
-//        def1.setName("def 1");
-//        def1.setTemplate(template);
-//        def1.setResource(resource);
-//
-//        final DriftDefinition def2 = template.createDefinition();
-//        def2.setName("def 2");
-//        def2.setTemplate(template);
-//        def2.setResource(resource);
-//
-//        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), def1);
-//        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), def2);
-//
-//        // perform the update
-//        template.getTemplateDefinition().setEnabled(false);
-//        template.getTemplateDefinition().setInterval(3600L);
-//        templateMgr.updateTemplate(getOverlord(), template, true);
-//    }
+        DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
+            definition);
+
+        assertNotNull("Failed to load template", loadTemplate(definition.getName()));
+    }
+
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
+        expectedExceptions = EJBException.class,
+        expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
+    @InitDB(false)
+    public void doNotAllowBaseDirToBeUpdated() {
+        DriftDefinitionTemplate template = loadTemplate("test::createTemplateForNegativeUpdateTests");
+        DriftDefinition definition = template.getTemplateDefinition();
+        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/TEST"));
+
+        templateMgr.updateTemplate(getOverlord(), template);
+    }
 
     @SuppressWarnings("unchecked")
     public void pinTemplate() throws Exception {

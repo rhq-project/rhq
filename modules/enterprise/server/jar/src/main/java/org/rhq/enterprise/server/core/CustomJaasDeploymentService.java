@@ -116,14 +116,15 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             configEntries.add(ace);
 
             String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
-            boolean isLdapAuthenticationEnabled = (value != null) ? Boolean.valueOf(value) : false;
+            boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider
+                .equalsIgnoreCase(value) : false;
 
             if (isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
                 configOptions = getJdbcOptions(systemConfig);
                 ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                this.log.info("Enabling RHQ JDBC Principal Check JAAS Provider...");
+                this.log.info("Enabling RHQ JDBC-2 Principal Check JAAS Provider...");
                 configEntries.add(ace);
 
                 // this is the LDAP module that checks the LDAP for auth
@@ -132,10 +133,10 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
                         AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                    this.log.info("Enabling RHQ LDAP JAAS Provide...r");
+                    this.log.info("Enabling RHQ JDBC-2 LDAP JAAS Provider...");
                     configEntries.add(ace);
                 } catch (NamingException e) {
-                    this.log.info("Disabling RHQ LDAP JAAS Provider: " + e, e);
+                    this.log.info("Disabling RHQ JDBC-2 LDAP JAAS Provider: " + e, e);
                 }
             }
 

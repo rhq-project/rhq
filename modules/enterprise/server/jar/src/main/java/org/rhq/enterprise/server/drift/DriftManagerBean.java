@@ -43,9 +43,6 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import difflib.DiffUtils;
-import difflib.Patch;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -65,8 +62,10 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
@@ -74,8 +73,6 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -97,6 +94,9 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import difflib.DiffUtils;
+import difflib.Patch;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -743,16 +743,19 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             }
             resource.setAgentSynchronizationNeeded();
 
-            // Do not pass attached entities to the following Agent call, which is outside Hibernate's control. Flush
-            // and clear the entities to ensure the work above is captured and we pass out a detached object. 
-            entityManager.flush();
-            entityManager.clear();
-
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();
             try {
+                DriftSnapshot snapshot = null;
                 if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
-                    DriftSnapshot snapshot = getSnapshot(subject, new DriftSnapshotRequest(driftDef.getId()));
+                    snapshot = getSnapshot(subject, new DriftSnapshotRequest(driftDef.getId()));
+                }
+                // Do not pass attached entities to the following Agent call, which is outside Hibernate's control. Flush
+                // and clear the entities to ensure the work above is captured and we pass out a detached object.
+                entityManager.flush();
+                entityManager.clear();
+
+                if (snapshot != null) {
                     service.updateDriftDetection(resourceId, driftDef, snapshot);
                 } else {
                     service.updateDriftDetection(resourceId, driftDef);

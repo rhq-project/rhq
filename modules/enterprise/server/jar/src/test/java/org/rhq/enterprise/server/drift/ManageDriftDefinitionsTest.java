@@ -53,6 +53,7 @@ import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.test.TransactionCallback;
 
 public class ManageDriftDefinitionsTest extends DriftServerTest {
@@ -153,10 +154,21 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         agentServiceContainer.driftService = new TestDefService() {
             @Override
             public void updateDriftDetection(int resourceId, DriftDefinition driftDef, DriftSnapshot snapshot) {
-                agentInvoked.set(true);
-                assertNotNull("Expected snapshot drift instances collection to be non-null",
-                    snapshot.getDriftInstances());
-                assertEquals("Expected snapshot to contain two drift entries", 2, snapshot.getDriftInstances().size());
+                try {
+                    HibernateDetachUtility.nullOutUninitializedFields(driftDef,
+                        HibernateDetachUtility.SerializationType.SERIALIZATION);
+                    HibernateDetachUtility.nullOutUninitializedFields(snapshot,
+                        HibernateDetachUtility.SerializationType.SERIALIZATION);
+                    agentInvoked.set(true);
+                    assertNotNull("Expected snapshot drift instances collection to be non-null",
+                        snapshot.getDriftInstances());
+                    assertEquals("Expected snapshot to contain two drift entries", 2, snapshot.getDriftInstances().size());
+                } catch (Exception e) {
+                    String msg = "Do not pass attached entites to agent since those entities are outside of " +
+                        "Hibernate's control. The persistence context should be flushed and cleared to ensure that " +
+                        "only detached objects are sent to the agent";
+                    throw new RuntimeException(msg, e);
+                }
             }
         };
 

@@ -116,8 +116,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             configEntries.add(ace);
 
             String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
-            boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider
-                .equalsIgnoreCase(value) : false;
+            boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
 
             if (isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB

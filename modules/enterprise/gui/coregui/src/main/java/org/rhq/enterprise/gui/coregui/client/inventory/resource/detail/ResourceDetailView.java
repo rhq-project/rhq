@@ -51,7 +51,6 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftDefinitionsView;
-import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
@@ -145,7 +144,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
-    private SubTab driftHistory;
+    //private SubTab driftHistory;
     private SubTab driftDefinitions;
     private SubTab contentDeployed;
     private SubTab contentNew;
@@ -243,11 +242,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
-            MSG.view_tabs_common_history()), null);
+        // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
+        // go through the comprehensive drift carousel view.  Leave it in, but commented, in case we want it back. 
+        //this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
+        //    MSG.view_tabs_common_history()), null);
         this.driftDefinitions = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
             DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        driftTab.registerSubTabs(driftHistory, driftDefinitions);
+        //driftTab.registerSubTabs(driftHistory, driftDefinitions);
+        driftTab.registerSubTabs(driftDefinitions);
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
@@ -520,12 +522,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), resourcePermissions.isDrift())) {
 
-            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
-                }
-            });
+            // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
+            // go through the comprehensive drift carousel view.  Leave it in, but commented, in case we want it back. 
+            //updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
+            //    @Override
+            //    public Canvas createView() {
+            //        return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
+            //    }
+            //});
 
             updateSubTab(this.driftTab, this.driftDefinitions, true, true, new ViewFactory() {
                 @Override

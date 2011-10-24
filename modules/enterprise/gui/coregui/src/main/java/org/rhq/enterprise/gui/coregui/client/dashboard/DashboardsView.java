@@ -409,6 +409,13 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         return dashboard;
     }
 
+    public boolean isValidDashboardName(String name) {
+        if (name == null || name.equals("")) {
+            return false;
+        }
+        return (!this.dashboardsByName.containsKey(name));
+    }
+
     public void addNewDashboard() {
         int i = 0;
         String availableDashboardName = null;

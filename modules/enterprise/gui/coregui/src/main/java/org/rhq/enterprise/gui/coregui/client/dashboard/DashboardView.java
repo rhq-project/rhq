@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.form.events.ColorSelectedEvent;
 import com.smartgwt.client.widgets.form.events.ColorSelectedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
@@ -229,12 +230,19 @@ public class DashboardView extends LocatableVLayout {
             nameItem.setWrapTitle(false);
             nameItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent blurEvent) {
-                    String val = (String) blurEvent.getItem().getValue();
-                    val = (null == val) ? "" : val.trim();
-                    if (!("".equals(val) || val.equals(storedDashboard.getName()))) {
-                        storedDashboard.setName(val);
+                    FormItem nameItem = blurEvent.getItem();
+                    String name = (String) nameItem.getValue();
+                    String trimmedName = (name == null) ? "" : name.trim();
+                    if (dashboardContainer.isValidDashboardName(trimmedName)) {
+                        storedDashboard.setName(trimmedName);
                         save();
                         dashboardContainer.updateDashboardNames();
+                    } else {
+                        // TODO: i18n
+                        Message message = new Message("There is already a dashboard named '" + trimmedName
+                            + "'. Please specify a name that is not already in use.", Message.Severity.Error);
+                        CoreGUI.getMessageCenter().notify(message);
+                        nameItem.setValue(storedDashboard.getName());
                     }
                 }
             });

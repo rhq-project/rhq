@@ -71,7 +71,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Simeon Pinder
  * @author Jay Shaughnessy
  */
-
 public class ActivityView extends LocatableVLayout implements DashboardContainer, InitializableView {
 
     private static final String DASHBOARD_NAME_PREFIX = "GroupDashboard_";
@@ -333,6 +332,11 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     public void updateDashboardNames() {
         return;
+    }
+
+    @Override
+    public boolean isValidDashboardName(String name) {
+        return ((name != null) && (dashboardView != null) && name.equals(dashboardView.getDashboard().getName()));
     }
 
 }

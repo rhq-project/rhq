@@ -12,4 +12,6 @@ public interface DashboardContainer {
 
     public void updateDashboardNames();
 
+    public boolean isValidDashboardName(String name);
+
 }

@@ -65,7 +65,7 @@ public class SnmpTrapdComponentTest extends ComponentTest {
         sendTrap("hello, world");
         log.info("listening...");
         boolean success = false;
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 16; i++) {
             Thread.sleep(250);
             EventSenderRunner esr = new EventSenderRunner(eventManager);
             EventReport eventReport = esr.call();

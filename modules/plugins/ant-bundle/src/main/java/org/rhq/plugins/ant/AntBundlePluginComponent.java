@@ -42,9 +42,9 @@ import org.rhq.bundle.ant.LoggerAntBuildListener;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
-import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -124,8 +124,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 List<BuildListener> buildListeners = new ArrayList();
                 LoggerAntBuildListener logger = new LoggerAntBuildListener(null, logFileOutput, Project.MSG_DEBUG);
                 buildListeners.add(logger);
-                DeploymentAuditorBuildListener auditor = new DeploymentAuditorBuildListener(request
-                    .getBundleManagerProvider(), resourceDeployment);
+                DeploymentAuditorBuildListener auditor = new DeploymentAuditorBuildListener(
+                    request.getBundleManagerProvider(), resourceDeployment);
                 buildListeners.add(auditor);
 
                 // Parse and execute the Ant script.
@@ -141,9 +141,9 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                 BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
                 DeployDifferences diffs = project.getDeployDifferences();
 
-                String msg = new StringBuilder("Added files=").append(diffs.getAddedFiles().size()).append(
-                    "; Deleted files=").append(diffs.getDeletedFiles().size()).append(
-                    " (see attached details for more information)").toString();
+                String msg = new StringBuilder("Added files=").append(diffs.getAddedFiles().size())
+                    .append("; Deleted files=").append(diffs.getDeletedFiles().size())
+                    .append(" (see attached details for more information)").toString();
                 String fullDetails = formatDiff(diffs);
                 bundleManagerProvider.auditDeployment(resourceDeployment, "Deployment Differences", project.getName(),
                     BundleResourceDeploymentHistory.Category.DEPLOY_STEP, null, msg, fullDetails);
@@ -284,8 +284,8 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                         bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
                             "Failed to purge the metadata directory from the destination directory. "
                                 + "It may still contain backed up files from previous bundle deployments.",
-                            Category.AUDIT_MESSAGE, Status.FAILURE, "Metadata Directory: "
-                                + metadataDirectoryToPurge.getAbsolutePath(), null);
+                            Category.AUDIT_MESSAGE, Status.FAILURE,
+                            "Metadata Directory: " + metadataDirectoryToPurge.getAbsolutePath(), null);
                     }
                 }
             }
@@ -337,7 +337,9 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
                     // for now, just skip all property lists and maps, just assume we are getting simples
                     continue;
                 }
-                antProps.setProperty(name, value);
+                if (value != null) {
+                    antProps.setProperty(name, value);
+                }
             }
         }
         return antProps;

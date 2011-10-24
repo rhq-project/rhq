@@ -97,7 +97,7 @@ public interface SubjectManagerRemote {
         @WebParam(name = "subjectIds") int[] subjectIds);
 
     /**
-     * Looks up the existing of a subject by the given username.
+     * Looks up the existing subject using the given username.
      *
      * @param  username the name of the subject to look for
      *

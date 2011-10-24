@@ -256,9 +256,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#getSubjectByName(String)
      */
     public Subject getSubjectByName(String username) {
+        //TODO: this method needs to be modified to require a Subject and probably MANAGE_SECURITY 
+        //      to defend agains unrestricted access to subjects.
 
         SubjectCriteria c = new SubjectCriteria();
         c.addFilterName(username);
+        //to return the right user and to be deterministic the criteria should be strict.
+        c.setStrict(true);
+
         PageList<Subject> result = findSubjectsByCriteria(getOverlord(), c);
 
         return result.isEmpty() ? null : result.get(0);
@@ -784,8 +789,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         SystemSettings systemSettings = systemManager.getSystemSettings(getOverlord());
         String groupFilter = systemSettings.get(SystemSetting.LDAP_GROUP_FILTER);
         String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
-        return ((groupFilter != null) && (groupFilter.trim().length() > 0)) ||
-               ((groupMember != null) && (groupMember.trim().length() > 0));
+        return ((groupFilter != null) && (groupFilter.trim().length() > 0))
+            || ((groupMember != null) && (groupMember.trim().length() > 0));
     }
 
 }

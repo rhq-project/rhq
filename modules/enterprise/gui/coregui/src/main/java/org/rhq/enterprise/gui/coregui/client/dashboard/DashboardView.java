@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -240,7 +241,8 @@ public class DashboardView extends LocatableVLayout {
                     } else {
                         // TODO: i18n
                         Message message = new Message("There is already a dashboard named '" + trimmedName
-                            + "'. Please specify a name that is not already in use.", Message.Severity.Error);
+                            + "'. Please specify a name that is not already in use.", Message.Severity.Error,
+                            EnumSet.of(Message.Option.Transient));
                         CoreGUI.getMessageCenter().notify(message);
                         nameItem.setValue(storedDashboard.getName());
                     }

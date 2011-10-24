@@ -32,6 +32,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
@@ -112,6 +113,9 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     void detectDrift(Subject subject, EntityContext context, DriftDefinition driftDef);
 
     PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
+
+    PageList<DriftDefinitionComposite> findDriftDefinitionCompositesByCriteria(Subject subject,
+        DriftDefinitionCriteria criteria);
 
     /**
      * Get the specified drift definition. Note, the full Configuration is fetched. 

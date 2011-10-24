@@ -25,6 +25,7 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,9 @@ import javax.jms.Queue;
 import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
+import difflib.DiffUtils;
+import difflib.Patch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,20 +65,22 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
@@ -91,9 +97,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import difflib.DiffUtils;
-import difflib.Patch;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -453,6 +456,31 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         CriteriaQueryRunner<DriftDefinition> queryRunner = new CriteriaQueryRunner<DriftDefinition>(criteria,
             generator, entityManager);
         PageList<DriftDefinition> result = queryRunner.execute();
+
+        return result;
+    }
+
+    @Override
+    public PageList<DriftDefinitionComposite> findDriftDefinitionCompositesByCriteria(Subject subject,
+        DriftDefinitionCriteria criteria) {
+
+        PageList<DriftDefinition> defs = findDriftDefinitionsByCriteria(subject, criteria);
+        PageList<DriftDefinitionComposite> result = new PageList<DriftDefinitionComposite>(defs.getPageControl());
+        List<DriftDefinitionComposite> composites = new ArrayList<DriftDefinitionComposite>(defs.size());
+        GenericDriftChangeSetCriteria csCriteria = new GenericDriftChangeSetCriteria();
+        for (DriftDefinition def : defs) {
+            DriftDefinitionComposite composite = new DriftDefinitionComposite(def, null);
+            csCriteria.addFilterDriftDefinitionId(def.getId());
+            csCriteria.addSortVersion(PageOrdering.DESC);
+            csCriteria.setPageControl(PageControl.getSingleRowInstance());
+            PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, csCriteria);
+            if (!changeSets.isEmpty()) {
+                composite.setMostRecentChangeset(changeSets.get(0));
+            }
+            composites.add(composite);
+        }
+
+        result.addAll(composites);
 
         return result;
     }

@@ -23,6 +23,7 @@
 package org.rhq.core.domain.util;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -209,6 +210,16 @@ public class PageControl implements Serializable, Cloneable {
         int removeCount = orderingFields.size() - keepFieldCount;
         for (int i = 0; i < removeCount; i++) {
             orderingFields.removeLast();
+        }
+    }
+
+    public void removeOrderingField(String doomedField) {
+        for (Iterator<OrderingField> i = orderingFields.iterator(); i.hasNext();) {
+            OrderingField field = i.next();
+            if (field.getField().equals(doomedField)) {
+                i.remove();
+                break;
+            }
         }
     }
 

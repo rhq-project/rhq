@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -37,13 +38,17 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -54,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, DriftDefinitionCriteria> {
+public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComposite, DriftDefinitionCriteria> {
 
     public static final String ATTR_ENTITY = "object";
     public static final String ATTR_ID = "id";
@@ -62,9 +67,11 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
     public static final String ATTR_INTERVAL = "interval";
     public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
-    public static final String ATTR_ENABLED = "enabled";
+    public static final String ATTR_IS_ENABLED = "isEnabled";
     public static final String ATTR_EDIT = "edit";
-    public static final String ATTR_PINNED = "pinned";
+    public static final String ATTR_IS_PINNED = "isPinned";
+    public static final String ATTR_CHANGE_SET_CTIME = "changesetTime";
+    public static final String ATTR_CHANGE_SET_VERSION = "changesetVersion";
 
     public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
     public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
@@ -93,7 +100,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         ListGridField nameField = new ListGridField(ATTR_NAME, MSG.common_title_name());
         fields.add(nameField);
 
-        ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
+        ListGridField pinnedField = new ListGridField(ATTR_IS_PINNED, MSG.view_drift_table_pinned());
         pinnedField.setType(ListGridFieldType.IMAGE);
         pinnedField.setAlign(Alignment.CENTER);
         pinnedField.addRecordClickHandler(new RecordClickHandler() {
@@ -114,13 +121,24 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
 
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
 
-                return ImageManager.getPinnedIcon().equals(record.getAttribute(ATTR_PINNED)) ? MSG
+                return ImageManager.getPinnedIcon().equals(record.getAttribute(ATTR_IS_PINNED)) ? MSG
                     .view_drift_table_hover_defPinned() : MSG.view_drift_table_hover_defNotPinned();
             }
         });
         fields.add(pinnedField);
 
-        ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
+        ListGridField changeSetField = new ListGridField(ATTR_CHANGE_SET_VERSION, MSG.view_drift_table_snapshot());
+        changeSetField.setCanSortClientOnly(true);
+        fields.add(changeSetField);
+
+        ListGridField changeSetTimeField = new ListGridField(ATTR_CHANGE_SET_CTIME, MSG.view_drift_table_snapshotTime());
+        changeSetTimeField.setCellFormatter(new TimestampCellFormatter());
+        changeSetTimeField.setShowHover(true);
+        changeSetTimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CHANGE_SET_CTIME));
+        changeSetTimeField.setCanSortClientOnly(true);
+        fields.add(changeSetTimeField);
+
+        ListGridField enabledField = new ListGridField(ATTR_IS_ENABLED, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
         fields.add(enabledField);
@@ -133,14 +151,14 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         fields.add(intervalField);
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
-        // can't sort on this because it's not an entity field, it's derived from the config only
-        baseDirField.setCanSort(false);
+        changeSetTimeField.setCanSortClientOnly(true);
         fields.add(baseDirField);
 
         ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
         editField.setShowHover(true);
+        editField.setCanSort(false);
         editField.addRecordClickHandler(new RecordClickHandler() {
 
             public void onRecordClick(RecordClickEvent event) {
@@ -189,14 +207,18 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
             intervalField.setWidth(100);
             baseDirField.setWidth("*");
             pinnedField.setWidth(70);
+            changeSetField.setWidth(70);
+            changeSetTimeField.setWidth(100);
             editField.setWidth(70);
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
             nameField.setWidth("20%");
+            changeSetField.setWidth(70);
+            changeSetTimeField.setWidth(100);
             enabledField.setWidth(60);
-            driftHandlingModeField.setWidth("10%");
-            intervalField.setWidth(100);
+            driftHandlingModeField.setWidth("15%");
+            intervalField.setWidth(70);
             baseDirField.setWidth("*");
             pinnedField.setWidth(70);
             editField.setWidth(70);
@@ -208,23 +230,24 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response,
         final DriftDefinitionCriteria criteria) {
-        this.driftService.findDriftDefinitionsByCriteria(criteria, new AsyncCallback<PageList<DriftDefinition>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
+        this.driftService.findDriftDefinitionCompositesByCriteria(criteria,
+            new AsyncCallback<PageList<DriftDefinitionComposite>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
 
-            public void onSuccess(PageList<DriftDefinition> result) {
-                dataRetrieved(result, response, request);
-            }
-        });
+                public void onSuccess(PageList<DriftDefinitionComposite> result) {
+                    dataRetrieved(result, response, request);
+                }
+            });
     }
 
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<DriftDefinition> result, final DSResponse response,
+    protected void dataRetrieved(final PageList<DriftDefinitionComposite> result, final DSResponse response,
         final DSRequest request) {
         switch (entityContext.type) {
 
@@ -254,7 +277,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
      * 
      * @return should not exceed result.size(). 
      */
-    protected int getTotalRows(final Collection<DriftDefinition> result, final DSResponse response,
+    protected int getTotalRows(final Collection<DriftDefinitionComposite> result, final DSResponse response,
         final DSRequest request) {
         return result.size();
     }
@@ -276,54 +299,49 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         }
 
         criteria.fetchConfiguration(true);
-        criteria.setPageControl(getPageControl(request));
+
+        // filter out unsortable fields (i.e. fields sorted client-side only)
+        PageControl pageControl = getPageControl(request);
+        pageControl.removeOrderingField(ATTR_BASE_DIR_STRING);
+        pageControl.removeOrderingField(ATTR_CHANGE_SET_CTIME);
+        pageControl.removeOrderingField(ATTR_CHANGE_SET_VERSION);
+        criteria.setPageControl(pageControl);
 
         return criteria;
     }
 
-    /*
     @Override
-    protected String getSortFieldForColumn(String columnName) {
-        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
-            return "ancestry";
-        }
-
-        return super.getSortFieldForColumn(columnName);
-    }
-    */
-
-    @Override
-    public DriftDefinition copyValues(Record from) {
-        return (DriftDefinition) from.getAttributeAsObject(ATTR_ENTITY);
+    public DriftDefinitionComposite copyValues(Record from) {
+        return null;
     }
 
     @Override
-    public ListGridRecord copyValues(DriftDefinition from) {
+    public ListGridRecord copyValues(DriftDefinitionComposite from) {
         return convert(from);
     }
 
-    public static ListGridRecord convert(DriftDefinition from) {
+    public static ListGridRecord convert(DriftDefinitionComposite from) {
+        DriftDefinition def = from.getDriftDefinition();
+        DriftChangeSet<?> changeSet = from.getMostRecentChangeset();
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute(ATTR_ENTITY, from);
+        // don't store this unless it's needed
+        // record.setAttribute(ATTR_ENTITY, from);
 
-        record.setAttribute(ATTR_ID, from.getId());
-        record.setAttribute(ATTR_NAME, from.getName());
-        record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(from.getDriftHandlingMode()));
-        record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
-        record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
-        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
+        record.setAttribute(ATTR_ID, def.getId());
+        record.setAttribute(ATTR_NAME, def.getName());
+        record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(def.getDriftHandlingMode()));
+        record.setAttribute(ATTR_INTERVAL, String.valueOf(def.getInterval()));
+        record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(def.getBasedir()));
+        record.setAttribute(ATTR_IS_ENABLED, ImageManager.getAvailabilityIcon(def.isEnabled()));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
-        record.setAttribute(ATTR_PINNED, from.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
+        record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
             .getUnpinnedIcon());
 
-        // // for ancestry handling       
-        // Resource resource = ...
-        // record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        // record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        // record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        // record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        record.setAttribute(ATTR_CHANGE_SET_VERSION, (null != changeSet) ? String.valueOf(changeSet.getVersion()) : MSG
+            .common_label_none());
+        record.setAttribute(ATTR_CHANGE_SET_CTIME, (null != changeSet) ? new Date(changeSet.getCtime()) : null);
 
         return record;
     }

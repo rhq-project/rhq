@@ -29,6 +29,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
@@ -73,6 +74,17 @@ public interface DriftGWTService extends RemoteService {
         throws RuntimeException;
 
     PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria) throws RuntimeException;
+
+    /**
+     * Find all drift definitions that match the specified criteria and returns composites inclusing the
+     * requested DriftDefinition objects and supplemental data.
+     *
+     * @param criteria the criteria
+     *
+     * @return all drift definition composistes that matches the specified criteria
+     */
+    PageList<DriftDefinitionComposite> findDriftDefinitionCompositesByCriteria(DriftDefinitionCriteria criteria)
+        throws RuntimeException;
 
     /**
      * Find all drift definitions that match the specified criteria.

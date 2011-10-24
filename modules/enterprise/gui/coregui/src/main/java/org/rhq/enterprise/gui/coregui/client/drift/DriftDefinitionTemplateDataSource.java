@@ -39,6 +39,7 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -59,7 +60,7 @@ public class DriftDefinitionTemplateDataSource extends
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_DEFINED_BY = "definedBy";
     public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
-    public static final String ATTR_ENABLED = "enabled";
+    public static final String ATTR_IS_ENABLED = "isEnabled";
     public static final String ATTR_EDIT = "edit";
     public static final String ATTR_INTERVAL = "interval";
     public static final String ATTR_NAME = "name";
@@ -97,14 +98,17 @@ public class DriftDefinitionTemplateDataSource extends
         fields.add(nameField);
 
         ListGridField definedByField = new ListGridField(ATTR_DEFINED_BY, MSG.view_adminTemplates_definedBy());
+        definedByField.setCanSortClientOnly(true);
         fields.add(definedByField);
 
         ListGridField numDefinitionsField = new ListGridField(ATTR_NUM_DEFINITIONS, MSG.common_title_definitions());
+        numDefinitionsField.setCanSortClientOnly(true);
         fields.add(numDefinitionsField);
 
         ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
         pinnedField.setType(ListGridFieldType.IMAGE);
         pinnedField.setAlign(Alignment.CENTER);
+        pinnedField.setCanSortClientOnly(true);
         pinnedField.addRecordClickHandler(new RecordClickHandler() {
 
             public void onRecordClick(RecordClickEvent event) {
@@ -126,26 +130,29 @@ public class DriftDefinitionTemplateDataSource extends
         });
         fields.add(pinnedField);
 
-        ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
+        ListGridField enabledField = new ListGridField(ATTR_IS_ENABLED, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
+        definedByField.setCanSortClientOnly(true);
         fields.add(enabledField);
 
         ListGridField driftHandlingModeField = new ListGridField(ATTR_DRIFT_HANDLING_MODE, MSG
             .view_drift_table_driftHandlingMode());
+        driftHandlingModeField.setCanSortClientOnly(true);
         fields.add(driftHandlingModeField);
 
         ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
+        intervalField.setCanSortClientOnly(true);
         fields.add(intervalField);
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
-        // can't sort on this because it's not an entity field, it's derived from the config only
-        baseDirField.setCanSort(false);
+        baseDirField.setCanSortClientOnly(true);
         fields.add(baseDirField);
 
         ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
+        editField.setCanSort(false);
         editField.addRecordClickHandler(new RecordClickHandler() {
 
             public void onRecordClick(RecordClickEvent event) {
@@ -230,7 +237,19 @@ public class DriftDefinitionTemplateDataSource extends
         // I'm fetching these only to get the count of defs for the template. If it ends up being too slow
         // then we'll probably need to create a criteria method that returns a composite.
         criteria.fetchDriftDefinitions(true);
-        criteria.setPageControl(getPageControl(request));
+
+        // filter out unsortable fields (i.e. fields sorted client-side only)
+        PageControl pageControl = getPageControl(request);
+        pageControl.removeOrderingField(ATTR_DEFINED_BY);
+        pageControl.removeOrderingField(ATTR_PINNED);
+        pageControl.removeOrderingField(ATTR_NUM_DEFINITIONS);
+
+        pageControl.removeOrderingField(ATTR_IS_ENABLED);
+        pageControl.removeOrderingField(ATTR_DRIFT_HANDLING_MODE);
+        pageControl.removeOrderingField(ATTR_INTERVAL);
+        pageControl.removeOrderingField(ATTR_BASE_DIR_STRING);
+
+        criteria.setPageControl(pageControl);
 
         return criteria;
     }
@@ -257,7 +276,7 @@ public class DriftDefinitionTemplateDataSource extends
         record.setAttribute(ATTR_NUM_DEFINITIONS, String.valueOf(from.getDriftDefinitions().size()));
         record.setAttribute(ATTR_PINNED, from.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
             .getUnpinnedIcon());
-        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(templateDef.isEnabled()));
+        record.setAttribute(ATTR_IS_ENABLED, ImageManager.getAvailabilityIcon(templateDef.isEnabled()));
         record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(templateDef
             .getDriftHandlingMode()));
         record.setAttribute(ATTR_INTERVAL, String.valueOf(templateDef.getInterval()));

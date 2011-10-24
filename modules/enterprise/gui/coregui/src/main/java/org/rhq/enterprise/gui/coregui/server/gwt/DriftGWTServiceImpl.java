@@ -27,6 +27,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
@@ -123,6 +124,18 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
             PageList<DriftDefinition> results = driftManager.findDriftDefinitionsByCriteria(getSessionSubject(),
                 criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftDefinitionsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<DriftDefinitionComposite> findDriftDefinitionCompositesByCriteria(DriftDefinitionCriteria criteria)
+        throws RuntimeException {
+        try {
+            PageList<DriftDefinitionComposite> results = driftManager.findDriftDefinitionCompositesByCriteria(
+                getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftDefinitionCompositesByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

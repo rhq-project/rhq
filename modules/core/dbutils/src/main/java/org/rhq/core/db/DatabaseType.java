@@ -26,11 +26,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import mazz.i18n.Logger;
 
 import org.rhq.core.db.ant.dbupgrade.SST_JavaTask;
+import org.rhq.core.db.builders.CreateSequenceExprBuilder;
 
 /**
  * A vendor-specific database with some vendor-specific method implementations in order to do things necessary for each
@@ -41,6 +43,7 @@ import org.rhq.core.db.ant.dbupgrade.SST_JavaTask;
  *
  */
 public abstract class DatabaseType {
+
     private static final Logger LOG = DbUtilsI18NFactory.getLogger(DatabaseType.class);
 
     /**
@@ -556,19 +559,40 @@ public abstract class DatabaseType {
      */
     public abstract int getNextSequenceValue(Connection conn, String table, String key) throws SQLException;
 
+    private int getSafeSeqIdCacheSize(CreateSequenceExprBuilder builder, String suggestedSize) {
+        // we don't want to regress for the time being, and we don't want
+        // to default less than manufacturers recommended minimums...
+        final int legacySeqIdCacheSize = 10;
+        int size = Math.max(legacySeqIdCacheSize, builder.getFactorySeqIdCacheSizeLiteral());
+        try {
+            // but if someone asks for lower values we provide it...
+            size = Integer.parseInt(suggestedSize);
+        } catch (NumberFormatException e) {
+            // ... nada, previously validated in validateAttributes
+        }
+        return size;
+    }
+
     /**
      * Creates a sequence with the given name. Its initial value is specified along with its increment (both are
      * specified as Strings).
      *
-     * @param  conn
-     * @param  name
-     * @param  initial
-     * @param  increment
-     *
+     * @param conn
+     * @param name
+     * @param initial
+     * @param increment
+     * @param seqIdCacheSize
      * @throws SQLException
      */
-    public abstract void createSequence(Connection conn, String name, String initial, String increment)
-        throws SQLException;
+    public void createSequence(Connection conn, String name, String initial, String increment, String seqIdCacheSize) throws SQLException {
+        CreateSequenceExprBuilder builder = CreateSequenceExprBuilder.getBuilder(this);
+        HashMap<String, Object> terms = new HashMap<String, Object>();
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_NAME, name);
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_START, initial);
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_INCREMENT, increment);
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, getSafeSeqIdCacheSize(builder, seqIdCacheSize));
+        executeSql(conn, builder.build(terms));
+    }
 
     /**
      * Alters an existing column. You can optionally alter the column's type, the default value, precision, and

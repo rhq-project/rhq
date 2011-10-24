@@ -87,24 +87,6 @@ public abstract class SQLServerDatabaseType extends DatabaseType {
     }
 
     /**
-     * @see DatabaseType#createSequence(Connection, String, String, String)
-     */
-    public void createSequence(Connection conn, String name, String initial, String increment) throws SQLException {
-        // since this method backs the SST_CreateSequence task, which is used several times in db-upgrade.xml already,
-        // we'll fake it here by adding an identity column to the table, derived from the consistent sequence name 
-        name = name.toUpperCase();
-        if (!name.endsWith(SEQ_SUFFIX)) {
-            throw new FeatureNotSupportedException(SEQ_ERROR_MSG);
-        }
-
-        String tableName = name.substring(0, name.length() - SEQ_SUFFIX.length());
-        String alterTableStatement = "ALTER TABLE " + tableName + " ALTER COLUMN ID IDENTITY(" + initial + ", "
-            + increment + ")";
-
-        executeSql(conn, alterTableStatement);
-    }
-
-    /**
      * @see DatabaseType#alterColumn(Connection, String, String, String, String, String, Boolean, Boolean)
      */
     public void alterColumn(Connection conn, String table, String column, String generic_column_type,

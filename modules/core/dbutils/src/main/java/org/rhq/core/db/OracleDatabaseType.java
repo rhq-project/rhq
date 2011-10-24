@@ -120,16 +120,6 @@ public abstract class OracleDatabaseType extends DatabaseType {
     }
 
     /**
-     * @see DatabaseType#createSequence(Connection, String, String, String)
-     */
-    public void createSequence(Connection conn, String name, String initial, String increment) throws SQLException {
-        String sql = "CREATE SEQUENCE " + name + " START WITH " + initial + " INCREMENT BY " + increment
-            + " NOMAXVALUE NOCYCLE CACHE 10";
-
-        executeSql(conn, sql);
-    }
-
-    /**
      * @see DatabaseType#alterColumn(Connection, String, String, String, String, String, Boolean, Boolean)
      */
     public void alterColumn(Connection conn, String table, String column, String generic_column_type,

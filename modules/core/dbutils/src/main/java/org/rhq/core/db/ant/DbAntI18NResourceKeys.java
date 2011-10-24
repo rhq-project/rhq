@@ -119,8 +119,8 @@ public interface DbAntI18NResourceKeys {
     String DROP_TABLE_ERROR = "SchemaSpecTask.droptable.error";
 
     @I18NMessages( {
-        @I18NMessage("Creating sequence with the name [{0}] having an initial value of [{1}] and an increment of [{2}]"),
-        @I18NMessage(value = "Erstellen der Sequenz mit Namen [{0}], die einen Initialwert von {[1}] und ein Inkrement von [{2}] hat", locale = "de") })
+        @I18NMessage("Creating sequence with the name [{0}] having an initial value of [{1}] an increment of [{2}] and a cache size of [{3}]"),
+        @I18NMessage(value = "Erstellen der Sequenz mit Namen [{0}], die einen Initialwert von {[1}], ein Inkrement von [{2}] und ein Cache-Größe von [{3}] hat", locale = "de") })
     String CREATE_SEQUENCE_EXECUTING = "SchemaSpecTask.createsequence.executing";
 
     @I18NMessages( { @I18NMessage("Dropping sequence with the name [{0}]"),
@@ -298,4 +298,7 @@ public interface DbAntI18NResourceKeys {
     @I18NMessages( { @I18NMessage("Conditions on indexes are not supported for database {0}"),
         @I18NMessage(value = "Die Datenbank {0} unterstützt keine Bedingungen für Indexe", locale = "de") })
     String INDEX_CONDITION_NOT_SUPPORTED = "DBUpgrader.index-condition-not-supported";
+
+    @I18NMessages({@I18NMessage("Database SEQID Cache Size is not an integer: {0}")})
+    String SEQID_CACHE_SIZE_NOT_AN_INTEGER = "DBUpgrader.seqid-cache-size-not-an-integer";
 }

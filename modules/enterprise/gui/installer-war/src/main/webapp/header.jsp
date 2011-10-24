@@ -1,4 +1,4 @@
-<%@ page contentType="text/html" %>
+<%@ page contentType="text/html;charset=UTF-8" %>
 
 <%@page import="org.rhq.enterprise.installer.ServerInformation"%>
 
@@ -28,14 +28,14 @@
             setTimeout( "refresh()", 5*1000 )
 
             try
-            {  
+            {
                if (window.XMLHttpRequest)
-               { 
+               {
                   xmlRequest = new XMLHttpRequest(); // Firefox, Safari, ...
-               } 
+               }
                else if (window.ActiveXObject)
                {
-                  xmlRequest = new ActiveXObject("Microsoft.XMLHTTP"); // Internet Explorer 
+                  xmlRequest = new ActiveXObject("Microsoft.XMLHTTP"); // Internet Explorer
                }
             }
             catch (e)
@@ -76,7 +76,7 @@
          }
       </script>
       </c:if>
-      
+
       <script type="text/javascript" language="JavaScript">
          function popUp(url, title)
          {
@@ -98,5 +98,5 @@
    <p align="center">
       <h:graphicImage url="/images/logo.png" alt="logo"/>
    </p>
-   
+
    <h1 align="left"><h:outputText value="#{bundle.welcomeTitle}" /></h1>

@@ -93,6 +93,33 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         ListGridField nameField = new ListGridField(ATTR_NAME, MSG.common_title_name());
         fields.add(nameField);
 
+        ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
+        pinnedField.setType(ListGridFieldType.IMAGE);
+        pinnedField.setAlign(Alignment.CENTER);
+        pinnedField.addRecordClickHandler(new RecordClickHandler() {
+
+            public void onRecordClick(RecordClickEvent event) {
+                switch (entityContext.getType()) {
+                case Resource:
+                    CoreGUI.goToView(LinkManager.getDriftSnapshotLink(entityContext.getResourceId(), event.getRecord()
+                        .getAttributeAsInt(ATTR_ID), 0));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Entity Type not supported");
+                }
+            }
+        });
+        pinnedField.setShowHover(true);
+        pinnedField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+
+                return ImageManager.getPinnedIcon().equals(record.getAttribute(ATTR_PINNED)) ? MSG
+                    .view_drift_table_hover_defPinned() : MSG.view_drift_table_hover_defNotPinned();
+            }
+        });
+        fields.add(pinnedField);
+
         ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
@@ -113,6 +140,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
         ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
         editField.setType(ListGridFieldType.IMAGE);
         editField.setAlign(Alignment.CENTER);
+        editField.setShowHover(true);
         editField.addRecordClickHandler(new RecordClickHandler() {
 
             public void onRecordClick(RecordClickEvent event) {
@@ -126,25 +154,14 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinition, Dr
                 }
             }
         });
-        fields.add(editField);
+        editField.setHoverCustomizer(new HoverCustomizer() {
 
-        ListGridField pinnedField = new ListGridField(ATTR_PINNED, MSG.view_drift_table_pinned());
-        pinnedField.setType(ListGridFieldType.IMAGE);
-        pinnedField.setAlign(Alignment.CENTER);
-        pinnedField.addRecordClickHandler(new RecordClickHandler() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
 
-            public void onRecordClick(RecordClickEvent event) {
-                switch (entityContext.getType()) {
-                case Resource:
-                    CoreGUI.goToView(LinkManager.getDriftSnapshotLink(entityContext.getResourceId(), event.getRecord()
-                        .getAttributeAsInt(ATTR_ID), 0));
-                    break;
-                default:
-                    throw new IllegalArgumentException("Entity Type not supported");
-                }
+                return MSG.view_drift_table_hover_edit();
             }
         });
-        fields.add(pinnedField);
+        fields.add(editField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());

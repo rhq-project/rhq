@@ -38,9 +38,11 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
@@ -123,6 +125,57 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     @Override
     protected LocatableListGrid createListGrid(String locatorId) {
         return new DriftSnapshotListGrid(locatorId);
+    }
+
+    @Override
+    protected void onDraw() {
+
+        // Drift def snapshot view
+        if (null != this.driftDefId) {
+            DriftDefinitionCriteria defCriteria = new DriftDefinitionCriteria();
+            defCriteria.addFilterId(driftDefId);
+            defCriteria.fetchConfiguration(true);
+
+            DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
+            driftService.findDriftDefinitionsByCriteria(defCriteria, new AsyncCallback<PageList<DriftDefinition>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                }
+
+                public void onSuccess(PageList<DriftDefinition> result) {
+                    DriftDefinition driftDef = result.get(0);
+                    String defName = driftDef.getName();
+                    String title;
+                    if (0 == version) {
+                        String isPinned = String.valueOf(driftDef.isPinned());
+                        title = MSG.view_drift_table_title_initialSnapshot(defName, isPinned);
+                    } else {
+                        title = MSG.view_drift_table_title_snapshot(String.valueOf(version), defName);
+                    }
+                    setTitleString(title);
+                    DriftSnapshotView.super.onDraw();
+                }
+            });
+        } else {
+            DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
+            templateCriteria.addFilterId(templateId);
+
+            DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
+            driftService.findDriftDefinitionTemplatesByCriteria(templateCriteria,
+                new AsyncCallback<PageList<DriftDefinitionTemplate>>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                    }
+
+                    public void onSuccess(PageList<DriftDefinitionTemplate> result) {
+                        DriftDefinitionTemplate template = result.get(0);
+                        String templateName = template.getName();
+                        String title = MSG.view_drift_table_title_templateSnapshot(templateName);
+                        setTitleString(title);
+                        DriftSnapshotView.super.onDraw();
+                    }
+                });
+        }
     }
 
     @Override

@@ -28,6 +28,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
@@ -115,6 +116,14 @@ public class DriftDefinitionTemplateDataSource extends
                 }
             }
         });
+        pinnedField.setShowHover(true);
+        pinnedField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return record.getAttributeAsBoolean(ATTR_IS_PINNED) ? MSG.view_drift_table_hover_templatePinned() : MSG
+                    .view_drift_table_hover_templateNotPinned();
+            }
+        });
         fields.add(pinnedField);
 
         ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
@@ -143,6 +152,14 @@ public class DriftDefinitionTemplateDataSource extends
                 CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID
                     .getName(), String.valueOf(resourceTypeId))
                     + "/" + event.getRecord().getAttribute(ATTR_ID) + "/Edit");
+            }
+        });
+        editField.setShowHover(true);
+        editField.setHoverCustomizer(new HoverCustomizer() {
+
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+
+                return MSG.view_drift_table_hover_edit();
             }
         });
         fields.add(editField);

@@ -147,6 +147,11 @@ public class DashboardView extends LocatableVLayout {
 
         this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
+        // This is a workaround for the fact that RHQ 4.1 and earlier wrongly allowed the user to save a dashboard with
+        // 0 columns.
+        if (this.storedDashboard.getColumns() == 0) {
+            this.storedDashboard.setColumns(1);
+        }
         this.context = context;
 
         switch (this.context.getType()) {
@@ -258,19 +263,23 @@ public class DashboardView extends LocatableVLayout {
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
         addColumn.setEndRow(false);
+
+        final ButtonItem removeColumn = new ButtonItem("removeColumn", MSG.common_title_remove_column());
+        removeColumn.setAutoFit(true);
+        removeColumn.setStartRow(false);
+        removeColumn.setEndRow(false);
+        removeColumn.setDisabled(storedDashboard.getColumns() == 1);
+
         addColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
                 portalLayout.addMember(new PortalColumn());
                 numColItem.setValue(storedDashboard.getColumns() + 1);
                 storedDashboard.setColumns(storedDashboard.getColumns() + 1);
+                removeColumn.setDisabled(storedDashboard.getColumns() == 1);
                 save();
             }
         });
 
-        ButtonItem removeColumn = new ButtonItem("removeColumn", MSG.common_title_remove_column());
-        removeColumn.setAutoFit(true);
-        removeColumn.setStartRow(false);
-        removeColumn.setEndRow(false);
         removeColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
 
@@ -284,10 +293,13 @@ public class DashboardView extends LocatableVLayout {
                     portalLayout.removeMember(lastColumn);
                     numColItem.setValue(numColumns - 1);
                     storedDashboard.setColumns(storedDashboard.getColumns() - 1);
+                    removeColumn.setDisabled(storedDashboard.getColumns() == 1);
                     save();
                 }
             }
         });
+
+
 
         // build the menu of valid portlets for this context, sorted by portlet name
         final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));

@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * The content pane for the resource Summary>Dashboard subtab.
+ * The content pane for the resource Summary>Activity subtab.
  *
  * @author Jay Shaughnessy
  */

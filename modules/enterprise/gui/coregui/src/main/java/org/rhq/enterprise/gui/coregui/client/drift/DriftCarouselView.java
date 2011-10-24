@@ -176,6 +176,10 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                         DriftCarouselView.this.refreshCarouselInfo();
                     }
 
+                    Integer currentStartFilterMax = getCarouselStartFilterMax();
+                    if (null == currentStartFilterMax || currentStartFilterMax < carouselStart) {
+                        setCarouselStartFilterMax(carouselStart);
+                    }
                     setCarouselStartFilter(carouselStart);
                     setCarouselEndFilter(carouselEnd);
                     setCarouselSizeFilter(carouselSize);

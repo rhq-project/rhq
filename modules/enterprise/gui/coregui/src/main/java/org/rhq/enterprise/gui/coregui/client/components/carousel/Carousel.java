@@ -45,6 +45,7 @@ import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
@@ -125,6 +126,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     private Integer carouselStartFilter = null;
     // null means no end filter, end with lowest 
     private Integer carouselEndFilter = null;
+
     // null or < 0 indicates no limit to the carousel size. A size limit is always recommended to avoid unbounded view 
     private Integer carouselSizeFilter = getDefaultCarouselSize();
     private boolean carouselUsingFixedWidths = false;
@@ -499,7 +501,9 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         }
 
         // drift file path filter
-        TextItem startFilter = new TextItem(FILTER_CAROUSEL_START, getCarouselStartFilterLabel());
+        SpinnerItem startFilter = new SpinnerItem(FILTER_CAROUSEL_START, getCarouselStartFilterLabel());
+        startFilter.setMin(1);
+        //TextItem startFilter = new TextItem(FILTER_CAROUSEL_START, getCarouselStartFilterLabel());
         TextItem numFilter = new TextItem(FILTER_CAROUSEL_SIZE, getCarouselSizeFilterLabel());
         carouselFormItems[i++] = startFilter;
         carouselFormItems[i++] = numFilter;
@@ -1038,8 +1042,26 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         return carouselStartFilter;
     }
 
+    protected Integer getCarouselStartFilterMax() {
+        Double max = ((SpinnerItem) this.filterForm.getItem(FILTER_CAROUSEL_START)).getMax();
+        return (null == max) ? null : max.intValue();
+    }
+
+    protected void setCarouselStartFilterMax(Integer startFilterMax) {
+        SpinnerItem spinner = (SpinnerItem) this.filterForm.getItem(FILTER_CAROUSEL_START);
+
+        spinner.setMax((Integer) ((null == startFilterMax || startFilterMax < 0) ? null : startFilterMax));
+    }
+
     protected void setCarouselStartFilter(Integer carouselStartFilter) {
+        // bump up the start filter max if need be
+        Integer max = getCarouselStartFilterMax();
+        if (null != max && max < carouselStartFilter) {
+            setCarouselStartFilterMax(carouselStartFilter);
+        }
+
         this.carouselStartFilter = carouselStartFilter;
+
         if (null != carouselStartFilter) {
             this.filterForm.getItem(FILTER_CAROUSEL_START).setValue(String.valueOf(carouselStartFilter));
             this.filterForm.getItem(FILTER_CAROUSEL_START).redraw();

@@ -42,14 +42,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 @Local
 public interface DriftManagerLocal extends DriftManagerRemote {
 
-    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
-
-    DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
-
-    DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
-
-    void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
-
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
      * upload of the change-set, it is processed. This may in turn generated requests for drift files to
@@ -74,34 +66,10 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     void addFiles(Subject subject, int resourceId, String driftDefName, String token, long zipSize,
         InputStream zipStream) throws Exception;
 
-    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token, File changeSetFilesZip)
-        throws Exception;
-
-    void processRepeatChangeSet(int resourceId, String driftDefName, int version);
-
-    /**
-     * Remove the provided driftDef (identified by name) on the specified entityContext.
-     * Agents, if available, will be notified of the change. 
-     * @param subject
-     * @param entityContext
-     * @param driftDefName
-     */
-    void deleteDriftDefinition(Subject subject, EntityContext entityContext, String driftDefName);
-
     /**
      * This is for internal use only - do not call it unless you know what you are doing.
      */
     void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId);
-
-    /**
-     * When a user wants to completely remove all data related to a drift definition,
-     * this method will be called to give the plugin a chance to clean up any data related
-     * to the drift definition that is going to be deleted.
-     * @param Subject
-     * @param resourceId the resource whose drift definition is being purged
-     * @param driftDefName identifies the data that is to be purged
-     */
-    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
 
     /**
      * One time on-demand request to detect drift on the specified entities, using the supplied def.
@@ -112,7 +80,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      */
     void detectDrift(Subject subject, EntityContext context, DriftDefinition driftDef);
 
-    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
     PageList<DriftDefinitionComposite> findDriftDefinitionCompositesByCriteria(Subject subject,
         DriftDefinitionCriteria criteria);
@@ -125,6 +93,48 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @throws RuntimeException, IllegalArgumentException if entity or driftDef not found.
      */
     DriftDefinition getDriftDefinition(Subject subject, int driftDefId);
+
+    /**
+     * Returns an object that encapsulates the information needed for viewing drift details
+     *
+     * @param subject
+     * @param driftId
+     * @return
+     */
+    DriftDetails getDriftDetails(Subject subject, String driftId);
+
+    DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(Subject subject, String hash);
+
+    boolean isBinaryFile(Subject subject, Drift<?, ?> drift);
+
+    String persistSnapshot(Subject subject, DriftSnapshot snapshot, DriftChangeSet<? extends Drift<?, ?>> changeSet);
+
+    void processRepeatChangeSet(int resourceId, String driftDefName, int version);
+
+    /**
+     * When a user wants to completely remove all data related to a drift definition,
+     * this method will be called to give the plugin a chance to clean up any data related
+     * to the drift definition that is going to be deleted.
+     * @param Subject
+     * @param resourceId the resource whose drift definition is being purged
+     * @param driftDefName identifies the data that is to be purged
+     */
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
+
+    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token, File changeSetFilesZip)
+        throws Exception;
+
+    DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+
+    void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 
     void updateDriftDefinition(DriftDefinition driftDefinition);
 
@@ -147,26 +157,4 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      */
     int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 
-    /**
-     * Returns the content associated with the specified hash as a string
-     *
-     * @param hash The hash the uniquely identifies the requested content
-     * @return The content as a string
-     */
-    String getDriftFileBits(Subject subject, String hash);
-
-    /**
-     * Returns an object that encapsulates the information needed for viewing drift details
-     *
-     * @param subject
-     * @param driftId
-     * @return
-     */
-    DriftDetails getDriftDetails(Subject subject, String driftId);
-
-    void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion);
-
-    String persistSnapshot(Subject subject, DriftSnapshot snapshot, DriftChangeSet<? extends Drift<?, ?>> changeSet);
-
-    boolean isBinaryFile(Subject subject, Drift<?, ?> drift);
 }

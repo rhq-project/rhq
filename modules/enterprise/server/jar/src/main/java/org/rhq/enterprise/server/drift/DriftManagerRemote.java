@@ -36,7 +36,14 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface DriftManagerRemote {
 
-    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
+    /**
+     * Remove the provided driftDef (identified by name) on the specified entityContext.
+     * Agents, if available, will be notified of the change. 
+     * @param subject
+     * @param entityContext
+     * @param driftDefName
+     */
+    void deleteDriftDefinition(Subject subject, EntityContext entityContext, String driftDefName);
 
     /**
      * Standard criteria based fetch method
@@ -46,6 +53,8 @@ public interface DriftManagerRemote {
      */
     PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria)
         throws Exception;
+
+    PageList<DriftDefinition> findDriftDefinitionsByCriteria(Subject subject, DriftDefinitionCriteria criteria);
 
     /**
      * Standard criteria based fetch method
@@ -105,6 +114,8 @@ public interface DriftManagerRemote {
      * @throws IllegalArgumentException if the specified drift definition does not exist
      */
     DriftSnapshot getSnapshot(Subject subject, DriftSnapshotRequest request);
+
+    void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion);
 
     void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftConfig);
 }

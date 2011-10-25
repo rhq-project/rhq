@@ -4,7 +4,6 @@
         displayName="JBossCache 2.x Services"
         package="org.rhq.plugins.jbosscache"
         description="Provides monitoring of JBossCache 2.x statistics"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -81,7 +80,7 @@
          <metric property="CacheStoreInterceptor:cacheLoaderStores" displayName="Cache Loader Stores"
                  category="utilization" description="Number of nodes written to the cache loader." measurementType="trendsup" />
 
-         <metric property="InvalidationInterceptor:invalidations" displayName="Invalidataions"
+         <metric property="InvalidationInterceptor:invalidations" displayName="Invalidations"
                  category="utilization" description="Number of cached nodes that have been invalidated."
                  measurementType="trendsup" />
 
@@ -96,8 +95,8 @@
                  description="Number of transaction rollback operations performed." measurementType="trendsup" />
 
          <resource-configuration>
-            <c:simple-property name="Flavour" default="treecache"
-               description="Is this going to be a Pojo Cache or a Tree Cache">
+            <c:simple-property name="Flavour" displayName="Flavor" default="treecache"
+               description="Is this going to be a POJO Cache or a Tree Cache">
                <c:property-options>
                   <c:option name="POJO Cache" value="cache"/>
                   <c:option name="Tree Cache" value="treecache"/>
@@ -106,8 +105,8 @@
             <c:simple-property name="TransactionManagerLookupClass"
                default="org.jboss.cache.JBossTransactionManagerLookup"
                description="What class should be used to get a transaction manager instance"/>
-            <c:simple-property name="IsolationLevel" default="REPEATABLE_READ"
-               description="The isolation level for access to the cache">
+            <c:simple-property name="IsolationLevel" default="REPEATABLE_READ" required="false"
+               description="The isolation level for access to the cache (default is REPEATABLE_READ)">
                <c:property-options>
                   <c:option value="SERIALIZABLE"/>
                   <c:option value="REPEATABLE_READ"/>
@@ -116,39 +115,43 @@
                   <c:option value="NONE"/>
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="NodeLockingScheme" default="PESSIMISTIC">
+            <c:simple-property name="NodeLockingScheme" default="PESSIMISTIC" required="false"
+                    description="the node locking scheme for this cache (default is PESSIMISTIC)">
                <c:property-options>
                   <c:option value="OPTIMISTIC"/>
                   <c:option value="PESSIMISTIC"/>
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="CacheMode" default="LOCAL">
+            <c:simple-property name="CacheMode" default="LOCAL" required="false"
+                    description="the cache mode - a cache can be configured to be either local (standalone) or
+                                 clustered. If in a cluster, the cache can be configured to replicate changes, or to
+                                 invalidate changes (default is LOCAL)">
                <c:property-options>
                   <c:option value="LOCAL"/>
                   <c:option value="REPL_ASYNC"/>
                   <c:option value="REPL_SYNC"/>
                </c:property-options>
             </c:simple-property>
-            <c:simple-property name="UseReplQueue" type="boolean" default="false"
-                  description="Just used for async repl: use a replication queue "/>
-            <c:simple-property name="ReplQueueInterval" type="integer" default="100"
-                  description="Replication interval for replication queue (in ms) "/>
-            <c:simple-property name="ReplQueueMaxElements" type="integer" default="10"
-                  description="Max number of elements which trigger replication" />
+            <c:simple-property name="UseReplQueue" type="boolean" default="false" required="false"
+                  description="should a replication queue be used for asynchronous replication? (default is false)"/>
+            <c:simple-property name="ReplQueueInterval" type="integer" default="100" required="false"
+                  description="Time in milliseconds for elements from the replication queue to be replicated. Only used
+                               if UseReplQueue is enabled. (default is 100)"/>
+            <c:simple-property name="ReplQueueMaxElements" type="integer" default="10" required="false"
+                  description="Maximum number of elements which trigger replication (default is 10)" />
             <c:simple-property name="ClusterName" default="DefaultPartition"
                   description="Name of cluster. Needs to be the same for all clusters, in order to find each other"/>
-
-            <c:simple-property name="FetchStateOnStartup" type="boolean" default="true"
-                  description="Whether or not to fetch state on joining a cluster"/>
+            <c:simple-property name="FetchStateOnStartup" type="boolean" default="true" required="false"
+                  description="Whether or not to fetch state on joining a cluster (default is true)"/>
             <c:simple-property name="InitialStateRetrievalTimeout" type="long"
-                  description=" The max amount of time (in milliseconds) we wait until the
-            initial state (ie. the contents of the cache) are retrieved from
-            existing members in a clustered environment" default="5000"/>
+                  description="Maximum number of milliseconds to wait until the
+                               initial state (i.e. the contents of the cache) are retrieved from
+                               existing members in a clustered environment" default="5000"/>
             <c:simple-property name="SyncReplTimeout" type="long" default="15000"
-                  description="Number of milliseconds to wait until all responses for a
+                  description="Maximum number of milliseconds to wait until all responses for a
             synchronous call have been received."/>
             <c:simple-property name="LockAcquisitionTimeout" type="long" default="10000"
-                  description="Max number of milliseconds to wait for a lock acquisition."/>
+                  description="Maximum number of milliseconds to wait for a lock acquisition."/>
 
          </resource-configuration>
          <help>

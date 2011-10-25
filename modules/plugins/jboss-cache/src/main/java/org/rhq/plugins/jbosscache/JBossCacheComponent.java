@@ -46,6 +46,7 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -226,14 +227,16 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, 
                     }
                     if (nameAttrib.equals(context.getResourceKey())) {
                         // found ours, let the fun begin
-                        fillAttributesInConfig(mbean, config);
+                        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+                        fillAttributesInConfig(mbean, config, configDef);
                         Attribute code = mbean.getAttribute("code");
                         PropertySimple flavour = new PropertySimple();
                         flavour.setName("Flavour");
                         if (code.getValue().contains("Tree")) {
                             flavour.setStringValue("treecache");
-                        } else
+                        } else {
                             flavour.setStringValue("cache");
+                        }
                         config.put(flavour);
                     }
                 }
@@ -255,19 +258,23 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, 
 
     /**
      * Fill all the &lt;attribute name="XXX"&gt; elements found under mbean into the passed config.
+     *
      * @param mbean The &gt;mbean&lt; element that builds the root of the JBossCache config
      * @param config The configuration object to fill stuff in
+     * @param configDef
      */
-    private void fillAttributesInConfig(Element mbean, Configuration config) {
-
+    private void fillAttributesInConfig(Element mbean, Configuration config, ConfigurationDefinition configDef) {
         List children = mbean.getChildren("attribute");
         for (Object childObj : children) {
             if (childObj instanceof Element) {
                 Element child = (Element) childObj;
                 String name = child.getAttributeValue("name");
-                String value = child.getText();
-                PropertySimple ps = new PropertySimple(name, value);
-                config.put(ps);
+                // Only add a prop to the config if the mbean attribute has a corresponding prop def in the config def.
+                if (configDef.getPropertyDefinitionSimple(name) != null) {
+                    String value = child.getText();
+                    PropertySimple prop = new PropertySimple(name, value);
+                    config.put(prop);
+                }
             }
         }
     }
@@ -277,7 +284,17 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, 
      */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-        Configuration newOne = report.getConfiguration();
+        Configuration newConfig = report.getConfiguration();
+
+        // Remove any props in the config that don't have corresponding prop defs in the config def - this works
+        // around a bug in versions of the plugin prior to RHQ 4.2.
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        for (String propName : newConfig.getSimpleProperties().keySet()) {
+            if (configDef.getPropertyDefinitionSimple(propName) == null) {
+                newConfig.remove(propName);
+            }
+        }
+
         String mbeanName = context.getResourceKey();
         File file = DeploymentUtility.getDescriptorFile(parentServer.getEmsConnection(), mbeanName);
 
@@ -289,7 +306,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, 
 
         CacheConfigurationHelper helper = new CacheConfigurationHelper();
         try {
-            helper.writeConfig(file, newOne, mbeanName, true);
+            helper.writeConfig(file, newConfig, mbeanName, true);
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (Exception e) {
             log.error(e); // TODO do more?

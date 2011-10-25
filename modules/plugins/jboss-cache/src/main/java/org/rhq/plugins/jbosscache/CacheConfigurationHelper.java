@@ -1,6 +1,6 @@
 /*
   * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2011 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@ package org.rhq.plugins.jbosscache;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -41,9 +42,10 @@ import org.jdom.output.XMLOutputter;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * Utility that deals with processing JBossCache configurations 
+ * A utility for creating or updating JBossCache 2.x XML configuration files.
  *
  * @author Heiko W. Rupp
+ * @author Ian Springer
  */
 public class CacheConfigurationHelper {
 
@@ -61,24 +63,27 @@ public class CacheConfigurationHelper {
     public void writeConfig(File file, Configuration config, String mbeanName, boolean isUpdate) throws JDOMException,
         IOException {
 
-        Document doc = null;
-        Element root = null;
-        Element cacheMbean = null;
+        Document doc;
+        Element root;
+        Element cacheMbean;
 
         String flavour = config.getSimple("Flavour").getStringValue();
         boolean isTc = false;
-        if (flavour != null && flavour.startsWith("tree"))
+        if (flavour != null && flavour.startsWith("tree")) {
             isTc = true;
+        }
 
         if (isUpdate) {
-            if (!file.exists() || !file.canWrite())
-                throw new IllegalStateException("Can't update file, as it is not updateaable ");
+            if (!file.exists() || !file.canWrite()) {
+                throw new IllegalStateException("Can't update file, as it is not writeable.");
+            }
             SAXBuilder builder = new SAXBuilder();
             doc = builder.build(file);
             root = doc.getRootElement();
             cacheMbean = findComponentElement(root, mbeanName);
-            if (cacheMbean == null)
-                throw new IllegalStateException("File does not contain an MBean with name '" + mbeanName + "'");
+            if (cacheMbean == null) {
+                throw new IllegalStateException("File does not contain an MBean with name '" + mbeanName + "'.");
+            }
         } else { // new file
             doc = new Document();
             root = new Element("server");
@@ -88,32 +93,45 @@ public class CacheConfigurationHelper {
             root.addContent(cacheMbean);
         }
 
-        if (isTc)
+        if (isTc) {
             cacheMbean.setAttribute("code", "org.jboss.cache.TreeCache");
-        else
+        } else {
             cacheMbean.setAttribute("code", "org.jboss.cache.PojoCache");
+        }
 
-        // now process the individual elements
-        Element depends = new Element("depends");
-        depends.setText("jboss:service=TransactionManager");
-        cacheMbean.addContent(depends);
+        // Make sure 'depends' elements exist for the cache service's service dependencies.
 
+        addJBossServiceDependsIfNotPresent(cacheMbean, "jboss:service=Naming");
+        addJBossServiceDependsIfNotPresent(cacheMbean, "jboss:service=TransactionManager");
+
+        // Add or update 'attribute' elements for each of the config props.
         for (String propName : config.getSimpleProperties().keySet()) {
 
-            if (propName.equals("Flavour")) // Skip this, this is to set the mbean class
+            if (propName.equals("Flavour")) {
+                // Skip this prop, which we already used above to set the mbean class.
                 continue;
+            }
 
             String propVal = config.getSimple(propName).getStringValue();
             Element attribute = null;
             if (isUpdate) { // on update we need to find the existing element and update it
                 attribute = findAttributeNodeWithName(cacheMbean, propName);
             }
-            if (attribute == null) {
-                attribute = new Element("attribute");
-                attribute.setAttribute("name", propName);
-                cacheMbean.addContent(attribute);
+            if (propVal == null) {
+                // for a null value, delete the 'attribute' element if one exists to tell the mbean to use its internal
+                // default value for that attribute
+                if (attribute != null) {
+                    cacheMbean.removeContent(attribute);
+                }
+            } else {
+                if (attribute == null) {
+                    // an 'attribute' element for this attribute does not yet exist - add one.
+                    attribute = new Element("attribute");
+                    attribute.setAttribute("name", propName);
+                    cacheMbean.addContent(attribute);
+                }
+                attribute.setText(propVal);
             }
-            attribute.setText(propVal);
         }
 
         // TODO add the cluster config
@@ -128,8 +146,27 @@ public class CacheConfigurationHelper {
         } catch (IOException ioe) {
             log.error("Can't write the config : " + ioe);
         } finally {
-            if (fos != null)
+            if (fos != null) {
                 fos.close();
+            }
+        }
+    }
+
+    private void addJBossServiceDependsIfNotPresent(Element mBeanElement, String serviceMBeanName) {
+
+        boolean foundDepends = false;
+        List dependsElements = mBeanElement.getChildren("depends");
+        for (Object dependsObj : dependsElements) {
+            Element depends = (Element) dependsObj;
+            if (depends.getText().equals(serviceMBeanName)) {
+                foundDepends = true;
+                break;
+            }
+        }
+        if (!foundDepends) {
+            Element depends = new Element("depends");
+            depends.setText(serviceMBeanName);
+            mBeanElement.addContent(depends);
         }
     }
 
@@ -142,15 +179,17 @@ public class CacheConfigurationHelper {
      */
     private Element findAttributeNodeWithName(Element base, String propName) {
 
-        if (propName == null)
+        if (propName == null) {
             return null;
+        }
 
         for (Object attrObj : base.getChildren("attribute")) {
             if (attrObj instanceof Element) {
                 Element attr = (Element) attrObj;
                 String nameAttrib = attr.getAttributeValue("name");
-                if (propName.equals(nameAttrib))
+                if (propName.equals(nameAttrib)) {
                     return attr;
+                }
             }
         }
         return null;

@@ -1326,19 +1326,15 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueItem = radioGroupItem;
                     break;
                 case INTEGER:
-                    // Don't use spinner items for list member props, since for those we rely on listening for
-                    // ItemChangedEvents on the DynamicForm on the list editing modal, and there is a SmartGWT 2.4 bug
-                    // where manually changing the text input of a spinner item does not trigger an ItemChangedEvent as
-                    // it should.
-                    if (propertyDefinitionSimple.getParentPropertyListDefinition() == null) {
-                        SpinnerItem spinnerItem = new SpinnerItem();
-                        spinnerItem.setMin(Integer.MIN_VALUE);
-                        spinnerItem.setMax(Integer.MAX_VALUE);
-                        // TODO: If an integer constraint is defined on the propdef, use that to set the min and max.
-                        valueItem = spinnerItem;
-                    } else {
-                        valueItem = new IntegerItem();
-                    }
+                    // Ideally, we'd use SpinnerItems for INTEGER props, but unfortunately, as of version 2.4, SmartGWT
+                    // has a nasty bug where it does not fire ValueChangedEvents or ItemChangedEvents when the value of
+                    // a SpinnerItem changes...
+                    /*SpinnerItem spinnerItem = new SpinnerItem();
+                    spinnerItem.setMin(Integer.MIN_VALUE);
+                    spinnerItem.setMax(Integer.MAX_VALUE);
+                    // TODO: If an integer constraint is defined on the propdef, use that to set the min and max.
+                    valueItem = spinnerItem;*/
+                    valueItem = new IntegerItem();
                     break;
                 case FLOAT:
                 case DOUBLE:
@@ -1352,8 +1348,9 @@ public class ConfigurationEditor extends LocatableVLayout {
             List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
             valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
-            if ((propertySimple.getConfiguration() != null) || (propertySimple.getParentMap() != null)
-                || (propertySimple.getParentList() != null)) {
+            if ((propertySimple.getConfiguration() != null) ||
+                (propertySimple.getParentMap() != null) ||
+                (propertySimple.getParentList() != null)) {
                 valueItem.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent changedEvent) {
                         updatePropertySimpleValue(changedEvent.getItem(), changedEvent.getValue(), propertySimple,
@@ -1370,7 +1367,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
-        // For more robust and repeatable item locators (not positional), assign a name and a title.
+        // For more robust and repeatable (not positional) item locators, assign a name and a title.
         valueItem.setName(propertySimple.getName());
         valueItem.setTitle("none");
         valueItem.setShowTitle(false);
@@ -1475,12 +1472,21 @@ public class ConfigurationEditor extends LocatableVLayout {
                 }
             });
 
+            valueItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changedEvent) {
+                    // If new value is null, select the unset checkbox; otherwise, deselect it.
+                    Object value = changedEvent.getValue();
+                    boolean isUnset = (value == null);
+                    unsetItem.setValue(isUnset);
+                }
+            });
+
             valueItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent event) {
-                    if (event.getItem().getValue() == null) {
-                        unsetItem.setValue(true);
-                        valueItem.disable();
-                    }
+                    // When the user stops editing the input, disable it if its value is null.
+                    Object value = event.getItem().getValue();
+                    boolean isUnset = (value == null);
+                    event.getItem().setDisabled(isUnset);
                 }
             });
 

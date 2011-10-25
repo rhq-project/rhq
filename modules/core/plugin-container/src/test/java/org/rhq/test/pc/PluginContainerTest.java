@@ -40,6 +40,7 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -339,7 +340,8 @@ public class PluginContainerTest extends JMockTest {
         serverServices.setMeasurementServerService(context.mock(MeasurementServerService.class));
         serverServices.setOperationServerService(context.mock(OperationServerService.class));
         serverServices.setResourceFactoryServerService(context.mock(ResourceFactoryServerService.class));
-    
+        serverServices.setDriftServerService(context.mock(DriftServerService.class));
+        
         conf.setServerServices(serverServices);
         
         return conf;

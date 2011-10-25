@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.Set;
 
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.action.ReturnValueAction;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -240,6 +242,9 @@ public class ApacheTestSetup {
 
         expectations.allowing(ss.getDiscoveryServerService()).clearResourceConfigError(
             expectations.with(Expectations.any(int.class)));
+        
+        expectations.allowing(ss.getDriftServerService()).getDriftDefinitions(expectations.with(Expectations.any(Set.class)));
+        expectations.will(Expectations.returnValue(Collections.emptyMap()));
         
         expectations.ignoring(ss.getBundleServerService());
         expectations.ignoring(ss.getConfigurationServerService());

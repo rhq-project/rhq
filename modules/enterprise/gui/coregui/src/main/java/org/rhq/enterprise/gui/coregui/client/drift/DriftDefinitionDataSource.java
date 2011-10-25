@@ -325,8 +325,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         DriftChangeSet<?> changeSet = from.getMostRecentChangeset();
         ListGridRecord record = new ListGridRecord();
 
-        // don't store this unless it's needed
-        // record.setAttribute(ATTR_ENTITY, from);
+        // We need this for Detect Now support
+        record.setAttribute(ATTR_ENTITY, from.getDriftDefinition());
 
         record.setAttribute(ATTR_ID, def.getId());
         record.setAttribute(ATTR_NAME, def.getName());

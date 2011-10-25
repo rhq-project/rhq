@@ -87,25 +87,16 @@ public class DriftSnapshot implements Serializable {
         return directoryMap.values();
     }
 
-    //public <D extends Drift<?, ?>> DriftSnapshot addChangeSet(DriftChangeSet<D> changeSet) {
-    // TODO: add to plugin facet a getInstance capability for DriftChangeSet so we can actually
-    //       create a slim DriftChangeSet to set on the Drifts. Without this we'll get class cast
-    //       exceptions.  That's why we currently hijack the passed in DriftChangeSet. When we do that
-    //       perhaps we can get a version that doesn't need to suppress unchecked warnings.
     /**
-     * MAJOR SIDE_EFFECT! This method will on exit will leave changeSet.getDrifts() null.
-     * 
-     * @param changeSet
+     * @param changeSet The drifts must be set for the changeSet
      * @return
      */
-    @SuppressWarnings("unchecked")
-    public DriftSnapshot addChangeSet(DriftChangeSet changeSet) {
+    public DriftSnapshot addChangeSet(DriftChangeSet<? extends Drift<?, ?>> changeSet) {
 
         String dirFilter = request.getDirectory();
-        Set<Drift> drifts = changeSet.getDrifts();
-        changeSet.setDrifts(null);
+        Set<? extends Drift<?, ?>> drifts = changeSet.getDrifts();
 
-        for (Drift drift : drifts) {
+        for (Drift<?, ?> drift : drifts) {
             String path = drift.getPath();
 
             if (request.isIncludeDriftDirectories()) {
@@ -142,8 +133,6 @@ public class DriftSnapshot implements Serializable {
                 if (drift.getCategory() == FILE_REMOVED) {
                     driftMap.remove(path);
                 } else {
-                    // add drift instance to map, or replace with latest drift instance for the given path
-                    drift.setChangeSet(changeSet);
                     driftMap.put(drift.getPath(), drift);
                 }
             }

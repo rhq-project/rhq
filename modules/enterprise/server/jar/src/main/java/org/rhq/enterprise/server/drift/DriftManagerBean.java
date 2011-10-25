@@ -43,6 +43,9 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -62,10 +65,8 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
@@ -73,6 +74,8 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -94,9 +97,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import difflib.DiffUtils;
-import difflib.Patch;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -283,7 +283,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         int startVersion = request.getStartVersion();
 
         if (0 == startVersion) {
-            DriftChangeSet<?> initialChangeset = loadInitialChangeSet(subject, request);
+            DriftChangeSet<? extends Drift<?, ?>> initialChangeset = loadInitialChangeSet(subject, request);
             if (null == initialChangeset) {
                 if (log.isDebugEnabled()) {
                     log.debug("Cannot create snapshot, no initial changeset for: " + request);
@@ -316,14 +316,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         criteria.addSortVersion(PageOrdering.ASC);
 
         PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
-        for (DriftChangeSet<?> changeSet : changeSets) {
+        for (DriftChangeSet<? extends Drift<?, ?>> changeSet : changeSets) {
             result.addChangeSet(changeSet);
         }
 
         return result;
     }
 
-    private DriftChangeSet<?> loadInitialChangeSet(Subject subject, DriftSnapshotRequest request) {
+    private DriftChangeSet<? extends Drift<?, ?>> loadInitialChangeSet(Subject subject, DriftSnapshotRequest request) {
         DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterCategory(COVERAGE);
         criteria.addFilterVersion("0");

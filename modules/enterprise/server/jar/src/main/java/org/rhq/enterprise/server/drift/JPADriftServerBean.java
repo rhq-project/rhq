@@ -130,8 +130,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         driftsDeleted = q.executeUpdate();
 
         // delete the drift set
-//        JPADriftChangeSet changeSet = entityManager.createQuery(
-//            "select c from JPADriftChangeSet c where c.version = 0 and c.driftDefinition")
+        //        JPADriftChangeSet changeSet = entityManager.createQuery(
+        //            "select c from JPADriftChangeSet c where c.version = 0 and c.driftDefinition")
 
         // now purge all changesets
         q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTDEF_RESOURCE);
@@ -151,12 +151,18 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         JPADriftChangeSetCriteria jpaCriteria = (criteria instanceof JPADriftChangeSetCriteria) ? (JPADriftChangeSetCriteria) criteria
             : new JPADriftChangeSetCriteria(criteria);
 
+        // If looking for the initial change set make sure version is to to 0 
         if (criteria.getFilterCategory() != null && criteria.getFilterCategory() == COVERAGE) {
+
+            // If fetching Drifts then make sure we go through the DriftSet. Note that there is no guarantee
+            // that the fetched Drift will refer to the ChangeSets found, because it may refer to a pinned
+            // template's changeset and be shared amongst changesets.
             if (jpaCriteria.isFetchDrifts()) {
                 jpaCriteria.fetchInitialDriftSet(true);
                 jpaCriteria.fetchDrifts(false);
             }
             jpaCriteria.addFilterVersion("0");
+
         } else {
             jpaCriteria.fetchInitialDriftSet(false);
         }
@@ -165,15 +171,6 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         CriteriaQueryRunner<JPADriftChangeSet> queryRunner = new CriteriaQueryRunner<JPADriftChangeSet>(jpaCriteria,
             generator, entityManager);
         PageList<JPADriftChangeSet> result = queryRunner.execute();
-
-        if (jpaCriteria.isFetchInitialDriftSet()) {
-            for (JPADriftChangeSet changeSet : result) {
-                // Need to wire up each drift with its parent change set.
-                for (JPADrift drift : changeSet.getInitialDriftSet().getDrifts()) {
-                    drift.setChangeSet(changeSet);
-                }
-            }
-        }
 
         return result;
     }
@@ -234,8 +231,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         JPADriftSet driftSet = new JPADriftSet();
 
         for (Drift<?, ?> drift : changeSet.getDrifts()) {
-            JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(),
-                toJPADriftFile(drift.getOldDriftFile()), toJPADriftFile(drift.getNewDriftFile()));
+            JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(), toJPADriftFile(drift
+                .getOldDriftFile()), toJPADriftFile(drift.getNewDriftFile()));
             driftSet.addDrift(jpaDrift);
         }
         entityManager.persist(driftSet);

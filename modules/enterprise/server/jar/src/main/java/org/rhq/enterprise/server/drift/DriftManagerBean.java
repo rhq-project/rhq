@@ -673,10 +673,12 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift1, Drift<?, ?> drift2) {
-        String content1 = getDriftFileBits(subject, drift1.getNewDriftFile().getHashId());
+        DriftFile drift1File = drift1.getNewDriftFile();
+        String content1 = (null == drift1File) ? "" : getDriftFileBits(subject, drift1File.getHashId());
         List<String> content1List = asList(content1.split("\\n"));
 
-        String content2 = getDriftFileBits(subject, drift2.getNewDriftFile().getHashId());
+        DriftFile drift2File = drift2.getNewDriftFile();
+        String content2 = (null == drift2File) ? "" : getDriftFileBits(subject, drift2File.getHashId());
         List<String> content2List = asList(content2.split("\\n"));
 
         Patch patch = DiffUtils.diff(content1List, content2List);

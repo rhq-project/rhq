@@ -36,7 +36,9 @@ import javax.transaction.SystemException;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -75,6 +77,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -93,7 +96,22 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
 
     private int agentId;
     private int resourceTypeId;
+    private DriftServerPluginService driftServerPluginService;
+    
+    @BeforeClass
+    public void setup() {
+        //we need this because the drift plugins are referenced from the system settings that we use in our tests
+        driftServerPluginService = new DriftServerPluginService();
+        prepareCustomServerPluginService(driftServerPluginService);
+        driftServerPluginService.startMasterPluginContainer();        
+    }
 
+    @AfterClass
+    public void tearDown() throws Exception {
+        unprepareServerPluginService();
+        driftServerPluginService.stopMasterPluginContainer();
+    }
+    
     @BeforeMethod
     public void beforeMethod() throws Throwable {
         try {

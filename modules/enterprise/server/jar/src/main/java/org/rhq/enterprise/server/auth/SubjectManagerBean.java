@@ -257,7 +257,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public Subject getSubjectByName(String username) {
         //TODO: this method needs to be modified to require a Subject and probably MANAGE_SECURITY 
-        //      to defend agains unrestricted access to subjects.
+        //      permissions to defend against unrestricted access to subjects.
 
         SubjectCriteria c = new SubjectCriteria();
         c.addFilterName(username);

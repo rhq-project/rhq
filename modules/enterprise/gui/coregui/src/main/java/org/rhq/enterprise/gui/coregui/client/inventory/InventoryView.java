@@ -137,8 +137,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
         autodiscoveryQueueItem.setRefreshRequired(true);
 
-        // TODO: Specify an icon for this item.
-        NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null, new ViewFactory() {
+        NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, "resources/all_resources.png", new ViewFactory() {
             public Canvas createView() {
                 return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES.getName()), null, PAGE_ALL_RESOURCES
                     .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM, Boolean.TRUE),
@@ -155,7 +154,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()),
                     initialCriteria, PAGE_PLATFORMS.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM,
                     Boolean.TRUE));
-                view.setInitialSearchBarSearchText("category=" + ResourceCategory.PLATFORM.name().toLowerCase());
+                //view.setInitialSearchBarSearchText("category=" + ResourceCategory.PLATFORM.name().toLowerCase());
                 return view;
             }
         });
@@ -168,7 +167,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_SERVERS.getName()),
                     initialCriteria, PAGE_SERVERS.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
                     Boolean.TRUE));
-                view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVER.name().toLowerCase());
+                //view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVER.name().toLowerCase());
                 return view;
             }
         });
@@ -181,7 +180,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_SERVICES.getName()),
                     initialCriteria, PAGE_SERVICES.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE,
                     Boolean.TRUE));
-                view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVICE.name().toLowerCase());
+                //view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVICE.name().toLowerCase());
                 return view;
             }
         });
@@ -195,9 +194,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_UNAVAIL_SERVERS.getName()),
                     initialCriteria, MSG.view_inventory_unavailableServers(), ImageManager.getResourceLargeIcon(
                         ResourceCategory.SERVER, Boolean.FALSE));
-                // TODO (ips, 10/28/10): Should we include down platforms too?
-                view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVER.name().toLowerCase()
-                    + " availability=" + AvailabilityType.DOWN.name().toLowerCase());
+                //view.setInitialSearchBarSearchText("category=" + ResourceCategory.SERVER.name().toLowerCase()
+                //    + " availability=" + AvailabilityType.DOWN.name().toLowerCase());
                 return view;
             }
         });
@@ -231,7 +229,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                     extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
                         ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
                     PAGE_COMPATIBLE_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.COMPATIBLE));
-                view.setInitialSearchBarSearchText("groupCategory=compatible");
+                //view.setInitialSearchBarSearchText("groupCategory=compatible");
                 return view;
             }
         });
@@ -242,7 +240,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()),
                     new Criteria(ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
                     PAGE_MIXED_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.MIXED));
-                view.setInitialSearchBarSearchText("groupCategory=mixed");
+                //view.setInitialSearchBarSearchText("groupCategory=mixed");
                 return view;
             }
         });

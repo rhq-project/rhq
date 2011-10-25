@@ -106,6 +106,7 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
         DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
         templateCriteria.addFilterId(templateId);
+        templateCriteria.fetchDriftDefinitions(true);
 
         PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(subject, templateCriteria);
         DriftDefinitionTemplate template = templates.get(0);
@@ -177,8 +178,11 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             if (defintion.isAttached()) {
                 driftMgr.deleteDriftDefinition(subject, forResource(defintion.getResource().getId()),
                     defintion.getName());
+            } else {
+                defintion.setTemplate(null);
             }
         }
+        entityMgr.remove(template);
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

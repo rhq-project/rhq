@@ -385,7 +385,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertDefinitionIsNotPinned(detachedDefs.get(1));
     }
 
-    public void deleteUnpinnedTemplate() throws Exception {
+    public void deleteTemplate() throws Exception {
         // first create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
         templateDef.setName("test::pinTemplate");
@@ -454,10 +454,12 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         // verify that detached definitions along with their change sets have not been deleted
         assertNotNull("Change sets belonging to detached definitions should not be deleted",
             loadChangeSet(changeSet1.getId()));
-        assertNotNull("Detached definition " + toString(detachedDef1) + " should not be deleted",
-            loadDefinition(detachedDef1.getId()));
-        assertNotNull("Detached definition " + toString(detachedDef2) + " should not be deleted",
-            loadDefinition(detachedDef2.getId()));
+        assertDetachedDefinitionNotDeleted(detachedDef1.getId());
+        assertDetachedDefinitionNotDeleted(detachedDef2.getId());
+
+        // verify that the template itself has been deleted
+        assertNull("The template " + toString(template) + " should have been deleted",
+            loadTemplate(template.getName(), false));
     }
 
     private void assertDefinitionIsPinned(DriftDefinition definition) throws Exception {
@@ -523,6 +525,13 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertEquals(msg, 0, comparator.compare(expected, actual));
     }
 
+    private void assertDetachedDefinitionNotDeleted(int definitionId) {
+        DriftDefinition definition = loadDefinition(definitionId);
+        assertNotNull("Detached definition " + toString(definition) + " should not be deleted", definition);
+        assertNull("The detached definition's template reference should be set to null when the template is deleted",
+            definition.getTemplate());
+    }
+
     private DriftDefinition createDefinition(DriftDefinitionTemplate template, String defName, boolean isAttached) {
         DriftDefinition def = template.createDefinition();
         def.setName(defName);
@@ -533,14 +542,23 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     }
 
     private DriftDefinitionTemplate loadTemplate(String name) {
+        return loadTemplate(name, true);
+    }
+
+    private DriftDefinitionTemplate loadTemplate(String name, boolean verifyResultsUnique) {
         DriftDefinitionTemplateCriteria criteria = new DriftDefinitionTemplateCriteria();
         criteria.addFilterResourceTypeId(resourceType.getId());
         criteria.addFilterName(name);
         criteria.fetchDriftDefinitions(true);
 
         PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(getOverlord(), criteria);
-        assertEquals("Expected to find one template", 1, templates.size());
+        if (verifyResultsUnique) {
+            assertEquals("Expected to find one template", 1, templates.size());
+        }
 
+        if (templates.isEmpty()) {
+            return null;
+        }
         return templates.get(0);
     }
 
@@ -548,6 +566,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
         criteria.addFilterId(definitionId);
         criteria.fetchConfiguration(true);
+        criteria.fetchTemplate(true);
         PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(getOverlord(), criteria);
 
         if (definitions.isEmpty()) {

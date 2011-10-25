@@ -103,7 +103,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         this.templateId = templateId;
         this.resourceId = resourceId;
         this.driftDefId = driftDefId;
-        this.version = version;
+        this.version = (null == version) ? 0 : version;
         this.hasWriteAccess = hasWriteAccess;
 
         setDataSource(getDataSource());
@@ -454,15 +454,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
                 record.setAttribute(DriftDataSource.ATTR_CTIME, new Date(from.getCtime()));
 
-                switch (from.getChangeSet().getCategory()) {
-                case COVERAGE:
-                    record.setAttribute(DriftDataSource.ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(null));
-                    break;
-                case DRIFT:
-                    record.setAttribute(DriftDataSource.ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(from
-                        .getCategory()));
-                    break;
-                }
+                record.setAttribute(DriftDataSource.ATTR_CATEGORY, ImageManager
+                    .getDriftCategoryIcon((0 == version) ? null : from.getCategory()));
 
                 record.setAttribute(DriftDataSource.ATTR_CHANGESET_VERSION, (null == from.getChangeSet()) ? "0" : from
                     .getChangeSet().getVersion());

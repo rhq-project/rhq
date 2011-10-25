@@ -17,11 +17,13 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.core.domain.util;
+package org.rhq.enterprise.server.resource.group.test;
 
 import static org.testng.Assert.assertEquals;
 
 import org.testng.annotations.Test;
+
+import org.rhq.enterprise.server.resource.group.LDAPStringUtil;
 
 /**
  * Test various methods of the {@link LDAPStringUtil} class.

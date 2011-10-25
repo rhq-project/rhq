@@ -51,7 +51,6 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.resource.group.LdapGroup;
-import org.rhq.core.domain.util.LDAPStringUtil;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;

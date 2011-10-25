@@ -44,7 +44,7 @@ import javax.naming.ldap.ExtendedRequest;
 import javax.naming.ldap.ExtendedResponse;
 import javax.naming.ldap.LdapContext;
 
-import org.rhq.core.domain.util.LDAPStringUtil;
+import org.rhq.enterprise.server.resource.group.LDAPStringUtil;
 
 /**
  * A fake implementation of {@link LdapContext} which can be used for LDAP 

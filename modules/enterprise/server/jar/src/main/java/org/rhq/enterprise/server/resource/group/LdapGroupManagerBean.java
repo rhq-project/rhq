@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -49,9 +49,9 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.resource.group.LdapGroup;
+import org.rhq.core.domain.util.LDAPStringUtil;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.PersistenceUtility;
@@ -105,21 +105,27 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
-        //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
-        String filter = "";
-        //form assumes examples where groupFilter is like 'objecclass=groupOfNames' and groupMember is 'member'
-        // to produce ldaf filter like (&(objecclass=groupOfNames)(member=cn=Administrator,ou=People,dc=test,dc=com))
-        filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
-
-        Set<Map<String, String>> matched = buildGroup(options, filter);
-        log.trace("Located '" + matched.size() + "' LDAP groups for user '" + userName
-            + "' using following ldap filter '" + filter + "'.");
-
-        //iterate to extract just the group names.
         Set<String> ldapSet = new HashSet<String>();
-        for (Map<String, String> match : matched) {
-            ldapSet.add(match.get("id"));
+
+        if (userDN != null && userDN.trim().length() > 0) {
+            //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
+            String filter = "";
+            //form assumes examples where groupFilter is like 'objectclass=groupOfNames' and groupMember is 'member'
+            // to produce ldap filter like (&(objectclass=groupOfNames)(member=cn=Administrator,ou=People,dc=test,dc=com))
+            filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, LDAPStringUtil.encodeForFilter(userDN));
+
+            Set<Map<String, String>> matched = buildGroup(options, filter);
+            log.trace("Located '" + matched.size() + "' LDAP groups for user '" + userName
+                + "' using following ldap filter '" + filter + "'.");
+
+            //iterate to extract just the group names.
+            for (Map<String, String> match : matched) {
+                ldapSet.add(match.get("id"));
+            }
+        } else {
+            log.debug("Group lookup will not be performed due to no UserDN found for user " + userName);
         }
+
         return ldapSet;
     }
 
@@ -296,7 +302,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 filter = "(" + loginProperty + "=" + userName + ")";
             }
 
-            log.debug("Using LDAP filter=" + filter);
+            log.debug("Using LDAP filter [" + filter + "] to locate user details for " + userName);
 
             // Loop through each configured base DN.  It may be useful
             // in the future to allow for a filter to be configured for
@@ -313,7 +319,19 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 // We use the first match
                 SearchResult si = answer.next();
                 //generate the DN
-                String userDN = si.getName() + "," + baseDNs[x];
+                String userDN = null;
+                try {
+                    userDN = si.getNameInNamespace();
+                } catch (UnsupportedOperationException use) {
+                    userDN = si.getName();
+                    if (userDN.startsWith("\"")) {
+                        userDN = userDN.substring(1, userDN.length());
+                    }
+                    if (userDN.endsWith("\"")) {
+                        userDN = userDN.substring(0, userDN.length() - 1);
+                    }
+                    userDN = userDN + "," + baseDNs[x];
+                }
                 userDetails.put("dn", userDN);
 
                 // Construct the UserDN

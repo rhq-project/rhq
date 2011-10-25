@@ -23,11 +23,12 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 
 @Local
 public interface DriftTemplateManagerLocal extends DriftTemplateManagerRemote {
 
-    void pinDefinition(Subject subject, int resourceId, DriftDefinition definition);
+    void createTemplateChangeSet(Subject subject, int templateId, int driftDefId, int snapshotVersion);
+
+    //void pinDefinition(Subject subject, int resourceId, int templateId, DriftDefinition definition);
 
 }

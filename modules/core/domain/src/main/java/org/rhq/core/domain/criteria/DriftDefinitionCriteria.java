@@ -42,7 +42,8 @@ public class DriftDefinitionCriteria extends Criteria {
 
     private Integer filterId;
     private String filterName;
-    private List<Integer> filterResourceIds; // needs override    
+    private List<Integer> filterResourceIds; // needs override
+    private Integer filterTemplateId;
 
     private Boolean fetchConfiguration;
     private Boolean fetchResource;
@@ -52,6 +53,7 @@ public class DriftDefinitionCriteria extends Criteria {
 
     public DriftDefinitionCriteria() {
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
+        filterOverrides.put("templateId", "template.id = ?");
     }
 
     @Override
@@ -69,6 +71,10 @@ public class DriftDefinitionCriteria extends Criteria {
 
     public void addFilterResourceIds(Integer... filterResourceIds) {
         this.filterResourceIds = CriteriaUtils.getListIgnoringNulls(filterResourceIds);
+    }
+
+    public void addFilterTemplateId(Integer filterTemplateId) {
+        this.filterTemplateId = filterTemplateId;
     }
 
     public void fetchConfiguration(Boolean fetchConfiguration) {

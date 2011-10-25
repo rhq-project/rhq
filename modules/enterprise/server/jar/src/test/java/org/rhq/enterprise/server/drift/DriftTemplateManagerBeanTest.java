@@ -28,6 +28,7 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValu
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
+import static org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType.SERIALIZATION;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
@@ -53,6 +54,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
@@ -61,6 +63,7 @@ import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.test.TransactionCallback;
 
 public class DriftTemplateManagerBeanTest extends DriftServerTest {
@@ -80,6 +83,36 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     public void initClass() {
         templateMgr = getDriftTemplateManager();
         driftMgr = getDriftManager();
+
+    }
+
+    @Override
+    protected void initDB(EntityManager em) {
+        agentServiceContainer.driftService = new TestDefService() {
+            @Override
+            public void unscheduleDriftDetection(int resourceId, DriftDefinition driftDef) {
+                detach(driftDef);
+            }
+
+            @Override
+            public void updateDriftDetection(int resourceId, DriftDefinition driftDef) {
+                detach(driftDef);
+            }
+
+            @Override
+            public void updateDriftDetection(int resourceId, DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
+                detach(driftDef);
+                detach(driftSnapshot);
+            }
+
+            private void detach(Object object) {
+                try {
+                    HibernateDetachUtility.nullOutUninitializedFields(object, SERIALIZATION);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 
     public void createNewTemplate() {

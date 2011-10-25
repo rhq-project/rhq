@@ -19,7 +19,7 @@
 
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static javax.ejb.TransactionAttributeType.NEVER;
 import static org.rhq.core.domain.common.EntityContext.forResource;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
@@ -32,6 +32,7 @@ import javax.persistence.PersistenceContext;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
@@ -98,7 +99,42 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override
+    @TransactionAttribute(NEVER)
     public void pinTemplate(Subject subject, int templateId, int driftDefId, int snapshotVersion) {
+        templateMgr.createTemplateChangeSet(subject, templateId, driftDefId, snapshotVersion);
+        //pinDefinitions(subject, template);
+
+        DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
+        templateCriteria.addFilterId(templateId);
+
+        PageList<DriftDefinitionTemplate> templates = templateMgr.findTemplatesByCriteria(subject, templateCriteria);
+        DriftDefinitionTemplate template = templates.get(0);
+
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.addFilterTemplateId(templateId);
+        criteria.fetchConfiguration(true);
+        criteria.fetchResource(true);
+
+        PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(subject, criteria);
+        for (DriftDefinition def : definitions) {
+            if (def.isAttached()) {
+                int resourceId = def.getResource().getId();
+                driftMgr.deleteDriftDefinition(subject, forResource(resourceId), def.getName());
+
+                DriftDefinition newDef = new DriftDefinition(def.getConfiguration().deepCopyWithoutProxies());
+                newDef.setTemplate(template);
+                newDef.setPinned(true);
+
+                driftMgr.updateDriftDefinition(subject, forResource(resourceId), newDef);
+//                templateMgr.pinDefinition(subject, def.getResource().getId(), templateId,
+//                    new DriftDefinition(def.getConfiguration().deepCopyWithoutProxies()));
+            }
+        }
+    }
+
+    @Override
+    @TransactionAttribute
+    public void createTemplateChangeSet(Subject subject, int templateId, int driftDefId, int snapshotVersion) {
         DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
         DriftSnapshot snapshot = driftMgr.getSnapshot(subject, new DriftSnapshotRequest(driftDefId, snapshotVersion));
 
@@ -109,28 +145,29 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
 
         String newChangeSetId = driftMgr.persistSnapshot(subject, snapshot, changeSetDTO);
         template.setChangeSetId(newChangeSetId);
-
-        pinDefinitions(subject, template);
     }
 
-    private void pinDefinitions(Subject subject, DriftDefinitionTemplate template) {
-        // TODO filter out the detached definitions with a query to avoid loading all of them into memory
-        for (DriftDefinition definition : template.getDriftDefinitions()) {
-            if (definition.isAttached()) {
-                DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
-                pinnedDef.setPinned(true);
-                pinnedDef.setTemplate(template);
-                templateMgr.pinDefinition(subject, definition.getResource().getId(), pinnedDef);
-            }
-        }
-    }
-
-    @Override
-    @TransactionAttribute(NOT_SUPPORTED)
-    public void pinDefinition(Subject subject, int resourceId, DriftDefinition newDef) {
-        driftMgr.deleteDriftDefinition(subject, forResource(resourceId), newDef.getName());
-        driftMgr.updateDriftDefinition(subject, forResource(resourceId), newDef);
-    }
+//    private void pinDefinitions(Subject subject, DriftDefinitionTemplate template) {
+//        // TODO filter out the detached definitions with a query to avoid loading all of them into memory
+//        for (DriftDefinition definition : template.getDriftDefinitions()) {
+//            if (definition.isAttached()) {
+//                DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
+//                pinnedDef.setPinned(true);
+//                //pinnedDef.setTemplate(template);
+//                templateMgr.pinDefinition(subject, definition.getResource().getId(), template.getId(), pinnedDef);
+//            }
+//        }
+//    }
+//
+//    @Override
+//    //@TransactionAttribute(NOT_SUPPORTED)
+//    public void pinDefinition(Subject subject, int resourceId, int templateId, DriftDefinition newDef) {
+//        driftMgr.deleteDriftDefinition(subject, forResource(resourceId), newDef.getName());
+//        DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
+//        newDef.setTemplate(template);
+//        newDef.setPinned(true);
+//        driftMgr.updateDriftDefinition(subject, forResource(resourceId), newDef);
+//    }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override

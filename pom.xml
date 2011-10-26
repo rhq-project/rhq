@@ -107,7 +107,8 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.2.1.GA</resteasy.version>
+    <resteasy.version>2.2.2.GA</resteasy.version>
+    <freemarker.version>2.3.18</freemarker.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>

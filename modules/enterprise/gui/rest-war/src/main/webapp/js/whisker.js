@@ -9,17 +9,16 @@ function whisker(scheduleId,divId) {
             .attr("height", h);
 //  .append("svg:g");
 //    .attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")");
-console.log(scheduleId);
     d3.json(
             '/rest/1/metric/data/'+scheduleId+'.json?hideEmpty=true',
             function (jsondata) {
 
-                var points = jsondata.metricAggregate.dataPoints;
-                var minVal = jsondata.metricAggregate.min;
-                var maxVal = jsondata.metricAggregate.max;
-                var avgVal = jsondata.metricAggregate.avg;
-                var minTs = jsondata.metricAggregate.minTimeStamp;
-                var maxTs = jsondata.metricAggregate.maxTimeStamp;
+                var points = jsondata.dataPoints;
+                var minVal = jsondata.min;
+                var maxVal = jsondata.max;
+                var avgVal = jsondata.avg;
+                var minTs = jsondata.minTimeStamp;
+                var maxTs = jsondata.maxTimeStamp;
 
                 var minTsD = new Date(minTs);
                 var maxTsD = new Date(maxTs);
@@ -30,7 +29,6 @@ console.log(scheduleId);
                 // Y axis goes from lowest to highest value
                 var y = d3.scale.linear().domain([minVal, maxVal]).rangeRound([0,h]);
 
-//      console.log(jsondata.metricAggregate);
 
                 // Line for the average
                 var avgLine = svg.append("svg:line")
@@ -50,7 +48,9 @@ console.log(scheduleId);
                     return x(new Date(d.timeStamp))
                 };
 
-                var line = bars.enter().append("svg:line")
+                var group = bars.enter().append("svg:g");
+
+                var line = group.append("svg:line")
                         .attr("x1", currX)
                         .attr("x2", currX)
                         .attr("y1", function(d) {
@@ -61,7 +61,7 @@ console.log(scheduleId);
                         })
                         .attr("stroke", "lightblue");
 
-                var circleLow = bars.enter().append("svg:circle")
+                var circleLow = group.append("svg:circle")
                         .attr("cx", currX)
                         .attr("cy", function(d) {
                             return h - y(d.low)
@@ -70,7 +70,7 @@ console.log(scheduleId);
                         .attr("stroke", "green")
                         .attr("fill", "lightgreen");
 
-                var circleHigh = bars.enter().append("svg:circle")
+                var circleHigh = group.append("svg:circle")
                         .attr("cx", currX)
                         .attr("cy", function(d) {
                             return h - y(d.high)
@@ -79,7 +79,7 @@ console.log(scheduleId);
                         .attr("stroke", "green")
                         .attr("fill", "lightblue");
 
-                var circleVal = bars.enter().append("svg:circle")
+                var circleVal = group.append("svg:circle")
                         .attr("cx", currX)
                         .attr("cy", function(d) {
                             return h - y(d.value)

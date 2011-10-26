@@ -95,7 +95,7 @@
              <groupId>org.rhq</groupId>
              <artifactId>rhq-core-domain</artifactId>
            </exclusion>
-         </exclusions>         
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -127,6 +127,43 @@
          <dependency> <groupId>jboss</groupId> <artifactId>jboss-seam</artifactId> <version>${seam.version}</version>
          </dependency>
       -->
+
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxrs</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>jar</scope>
+           <exclusions>
+               <exclusion>
+                   <groupId>org.apache.httpcomponents</groupId>
+                   <artifactId>httpclient</artifactId>
+               </exclusion>
+               <exclusion>
+                   <groupId>org.apache.httpcomponents</groupId>
+                   <artifactId>httpcore</artifactId>
+               </exclusion>
+               <exclusion>
+                   <groupId>javassist</groupId>
+                   <artifactId>javassist</artifactId>
+               </exclusion>
+           </exclusions>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jettison-provider</artifactId>
+           <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-links</artifactId>
+           <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.freemarker</groupId>
+           <artifactId>freemarker</artifactId>
+           <version>${freemarker.version}</version>
+           <type>jar</type>
+       </dependency>
 
    </dependencies>
 
@@ -351,13 +388,13 @@
                           <artifactId>packagetype-cli</artifactId>
                           <version>${project.version}</version>
                         </artifactItem>
-                        
+
                         <artifactItem>
                           <groupId>org.rhq</groupId>
                           <artifactId>rhq-serverplugin-drift</artifactId>
                           <version>${project.version}</version>
                         </artifactItem>
-                        
+
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>

@@ -162,17 +162,17 @@ parse_and_validate_options()
 	   esac
    done
 
-   if [ -z $RELEASE_VERSION ];
+   if [ -z "$RELEASE_VERSION" ];
    then
       usage "Release version not specified!"
    fi
 
-   if [ -z $DEVELOPMENT_VERSION ];
+   if [ -z "$DEVELOPMENT_VERSION" ];
    then
       usage "Development version not specified!"
    fi
 
-   if [ -z $RELEASE_BRANCH ];
+   if [ -z "$RELEASE_BRANCH" ];
    then
       usage "Release branch not specified!"
    fi
@@ -512,3 +512,4 @@ checkout_build_branch_for_development
 update_development_version
 
 print_release_information
+

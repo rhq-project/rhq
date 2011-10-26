@@ -37,7 +37,13 @@
     criteria.addFilterEndTime(end);
     criteria.setPageControl(pc);
 
-    PageList<Alert> alerts = alertManager.findAlertsByCriteria(user.getSubject(), criteria);
+    PageList<Alert> alerts;
+    try {
+        alerts = alertManager.findAlertsByCriteria(user.getSubject(), criteria);
+    } catch (Exception e) {
+        alerts = new PageList<Alert>(0, PageControl.getUnlimitedInstance());
+    }
+
 %>
 
 { "events":

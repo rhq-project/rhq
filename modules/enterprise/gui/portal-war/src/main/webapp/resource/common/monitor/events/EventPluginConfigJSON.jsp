@@ -22,7 +22,13 @@
     long begin = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "begin"));
 
     ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-    PageList<PluginConfigurationUpdate> configurationUpdates = configurationManager.findPluginConfigurationUpdates(subject, resourceId, begin, end, new PageControl(0,100));
+    PageList<PluginConfigurationUpdate> configurationUpdates;
+    try {
+        configurationUpdates = configurationManager.findPluginConfigurationUpdates(subject, resourceId, begin, end, new PageControl(0,100));
+    } catch (Exception e) {
+        configurationUpdates = new PageList<PluginConfigurationUpdate>(0, PageControl.getUnlimitedInstance());
+    }
+
 %>
 
 

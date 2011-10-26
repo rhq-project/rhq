@@ -24,8 +24,14 @@
     long begin = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "begin"));
 
     OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-    PageList<ResourceOperationHistory> operations = operationManager.findCompletedResourceOperationHistories(
-            subject, resourceId, begin, end, new PageControl(0,100));
+    PageList<ResourceOperationHistory> operations;
+    try {
+        operations = operationManager.findCompletedResourceOperationHistories(
+                subject, resourceId, begin, end, new PageControl(0,100));
+    } catch (Exception e) {
+        operations = new PageList<ResourceOperationHistory>(0, PageControl.getUnlimitedInstance());
+    }
+
 %>
 
 { "events": [

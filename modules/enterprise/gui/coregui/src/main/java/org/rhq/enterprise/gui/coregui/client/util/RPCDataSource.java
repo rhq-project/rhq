@@ -98,7 +98,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-        setDataPageSize(75);
+        setDataPageSize(50);
     }
 
     /**
@@ -178,6 +178,9 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
      * @param dataPageSize the data page size that should be used for fetch requests, or null if results should not be paged
      */
     public void setDataPageSize(Integer dataPageSize) {
+        if (dataPageSize <= 0) {
+            throw new IllegalArgumentException("Page size must be greater than 0.");
+        }
         this.dataPageSize = dataPageSize;
     }
 
@@ -214,9 +217,12 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         // Create PageControl and initialize paging.
         PageControl pageControl;
         if (request.getEndRow() == null) {
-            // null endRow means no paging
-            Log.debug("WARNING: " + getClass().getName() + " is not using paging for fetch request.");
-            pageControl = PageControl.getUnlimitedInstance();
+            // A null endRow means no paging. However, there is a bug in the RHQ criteria API, where when an unlimited
+            // PageControl is used in combination with one or more join fetches, the results contain duplicates.
+            // So until that bug is fixed, always use paging.
+            //Log.debug("WARNING: " + getClass().getName() + " is not using paging for fetch request.");
+            //pageControl = PageControl.getUnlimitedInstance();
+            pageControl = PageControl.getExplicitPageControl(0, getDataPageSize());
         } else {
             int startRow = (request.getStartRow() != null) ? request.getStartRow() : 0;
             int endRow = request.getEndRow();

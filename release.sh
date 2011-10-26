@@ -59,8 +59,8 @@ USAGE:   release.sh OPTIONS
    --extra-profile=extra_profile          [OPTIONAL]
       An extra maven profile to be used for all the maven commands.
 
-   --debug-maven                          [OPTIONAL]
-      Set maven in debug mode.
+   --debug=[true|false]                   [OPTIONAL]
+      Set maven in debug mode. Default is false; true if option specified without argument.
 
 EOF
 )
@@ -83,7 +83,7 @@ parse_and_validate_options()
    MODE="test"
    SCM_STRATEGY="tag"
    EXTRA_MAVEN_PROFILE=
-   DEBUG_MAVEN=
+   DEBUG_MODE=false
 
    short_options="h"
    long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug-maven"
@@ -148,9 +148,26 @@ parse_and_validate_options()
             EXTRA_MAVEN_PROFILE="$1"
             shift
             ;;
-         --debug-maven)
+         --debug)
             shift
-            DEBUG_MAVEN="true"
+            case "$1" in
+               true)
+                  DEBUG_MODE=true
+                  shift
+                  ;;
+               false)
+                  DEBUG_MODE=false
+                  shift
+                  ;;
+               "")
+                  DEBUG_MODE=true
+                  shift
+                  ;;
+               *)
+                  DEBUG_MODE=false
+                  shift
+                  ;;
+            esac
             ;;
          --)
             shift
@@ -237,7 +254,7 @@ set_local_and_environment_variables()
       MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
    fi
 
-   if [ -n "$DEBUG_MAVEN" ]; then
+   if [ -n "$DEBUG_MODE" ]; then
       echo "Maven debug enabled"
       MAVEN_ARGS="$MAVEN_ARGS --debug"
    fi
@@ -495,6 +512,8 @@ checkout_build_branch_for_development()
 
 parse_and_validate_options $@
 
+set_script_debug_mode $DEBUG_MODE
+
 validate_system_utilities
 
 set_local_and_environment_variables
@@ -513,3 +532,4 @@ update_development_version
 
 print_release_information
 
+unset_script_debug_mode $DEBUG_MODE

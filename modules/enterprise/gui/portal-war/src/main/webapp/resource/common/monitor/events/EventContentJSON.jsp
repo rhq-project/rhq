@@ -26,8 +26,12 @@
 
     ContentUIManagerLocal contentManager = LookupUtil.getContentUIManager();
 
-    PageList<InstalledPackageHistory> history = contentManager.getInstalledPackageHistoryForResource(resourceId, new PageControl(0,20, new OrderingField("iph.timestamp",PageOrdering.DESC)));
-
+    PageList<InstalledPackageHistory> history;
+    try {
+        history = contentManager.getInstalledPackageHistoryForResource(resourceId, new PageControl(0,20, new OrderingField("iph.timestamp",PageOrdering.DESC)));
+    } catch (Exception e) {
+        history = new PageList<InstalledPackageHistory>(0, PageControl.getUnlimitedInstance());
+    }
 %>
 
 

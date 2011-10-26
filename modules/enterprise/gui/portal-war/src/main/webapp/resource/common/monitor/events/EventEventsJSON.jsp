@@ -32,9 +32,14 @@
 
     boolean tooManyEvents = false;
 
-    PageList<EventComposite> list =
-        eventManager.findEventComposites(subject, EntityContext.forResource(resourceId), begin, end, null, 
+    PageList<EventComposite> list;
+    try {
+        list = eventManager.findEventComposites(subject, EntityContext.forResource(resourceId), begin, end, null, 
             null, null, new PageControl(0,10000, new OrderingField("timestamp", PageOrdering.ASC)));
+    } catch (Exception e) {
+        list = new PageList<EventComposite>(0, PageControl.getUnlimitedInstance());
+    }
+
 %>
 
 <%! public String trimLength(String string, int length) {
@@ -154,14 +159,14 @@
             if (grouped) {
                 link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History";
             } else {
-                link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History/" + event.getEventId();            	
+                link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History/" + event.getEventId();
             }
 
             String detail = null;
             if (grouped) {
                 StringBuilder buf = new StringBuilder();
                 for (EventComposite childEvent : ((GroupedEventComposite)event).events) {
-                	String childColor = eventColor(childEvent.getSeverity());
+                    String childColor = eventColor(childEvent.getSeverity());
                     buf.append("<a href='/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History/" + childEvent.getEventId() + "'>");
                     buf.append("<font color=\"" + childColor + "\">" + escapeBackslashes(trimLength(childEvent.getEventDetail(),80)) + "</font></a><br />");
                 }

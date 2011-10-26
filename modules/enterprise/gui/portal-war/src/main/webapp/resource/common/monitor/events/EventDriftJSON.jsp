@@ -27,7 +27,12 @@
     criteria.addFilterResourceId(resourceId);
     criteria.addFilterCreatedAfter(begin);
     criteria.addFilterCreatedBefore(end);
-    PageList<? extends DriftChangeSet<?>> results = driftManager.findDriftChangeSetsByCriteria(subject, criteria);
+    PageList<? extends DriftChangeSet<?>> results;
+    try {
+        results = driftManager.findDriftChangeSetsByCriteria(subject, criteria);
+    } catch (Exception e) {
+        results = new PageList(0, PageControl.getUnlimitedInstance());
+    }
 %>
 
 { "events": [

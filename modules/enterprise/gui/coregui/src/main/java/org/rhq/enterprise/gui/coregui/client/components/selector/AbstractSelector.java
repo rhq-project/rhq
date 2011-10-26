@@ -369,12 +369,14 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     } else {
                         availableRecords.addAll(Arrays.asList(allRecords));
                     }
-                    int totalAvailableRecords = response.getTotalRows() - assignedRecords.length;
+                    int totalRecords = (response.getTotalRows() != null) ? response.getTotalRows() : allRecords.length;
+                    int totalAvailableRecords = totalRecords - assignedRecords.length;
                     if (availableRecords.size() < totalAvailableRecords) {
                         // TODO: i18n
                         Message message = new Message("Only " + availableRecords.size() + " out of "
-                            + totalAvailableRecords
-                            + " available items are listed - please specify one or more filters to find the items for which you are looking.",
+                            + totalAvailableRecords + " available " + getItemTitle()
+                            + " are listed - please specify one or more filters to find the " + getItemTitle()
+                            + " for which you are looking.",
                             Message.Severity.Warning);
                         CoreGUI.getMessageCenter().notify(message);
                     }

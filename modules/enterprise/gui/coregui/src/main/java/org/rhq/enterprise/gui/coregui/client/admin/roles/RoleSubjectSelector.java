@@ -75,6 +75,17 @@ public class RoleSubjectSelector extends AbstractSelector<Subject, SubjectCriter
     }
 
     class RoleUsersDataSource extends UsersDataSource {
+/*
+        @Override
+        protected SubjectCriteria getFetchCriteria(DSRequest request) {
+            SubjectCriteria criteria = super.getFetchCriteria(request);
+            // Filter out system users.
+            // TODO: Add a new custom filter to SubjectCriteria that returns only non-superusers (i.e. subjects with
+            //       id > 2), then replace the hack below with this method.
+            return criteria;
+        }
+*/
+
         @Override
         protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
             Record rhqAdminRecord = null;
@@ -82,9 +93,11 @@ public class RoleSubjectSelector extends AbstractSelector<Subject, SubjectCriter
                 Integer id = record.getAttributeAsInt(Field.ID);
                 if (id.equals(ID_RHQADMIN)) {
                     rhqAdminRecord = record;
+                    break;
                 }
             }
             if (rhqAdminRecord != null) {
+                records.setTotalSize(records.getTotalSize() - 1);
                 records.remove(rhqAdminRecord);
             }
             super.sendSuccessResponseRecords(request, response, records);

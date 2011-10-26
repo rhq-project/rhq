@@ -210,3 +210,29 @@ print_centered()
 	eval "printf '=%.0s' {1..${right_side}}"
 	printf "\n"
 }
+
+
+#========================================================================================
+# Description: Sets the script in debug mode; this will print all the commands before
+#              executing them.
+#========================================================================================
+set_script_debug_mode()
+{
+   if [ -n "$1" ] && [ "$1" ];
+   then
+      set -x
+   else
+      set +x
+   fi
+}
+
+
+#========================================================================================
+# Description: Resets the script in debug mode; this will stop printing all the commands
+#              before executing them.
+#========================================================================================
+unset_script_debug_mode()
+{
+   set +x
+}
+

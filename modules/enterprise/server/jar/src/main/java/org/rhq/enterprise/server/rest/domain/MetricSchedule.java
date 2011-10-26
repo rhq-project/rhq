@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
 import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
@@ -43,6 +43,7 @@ public class MetricSchedule {
     String displayName;
     String unit;
     String type;
+    transient long mtime;
 
     @SuppressWarnings("unused")
     public MetricSchedule() {
@@ -118,4 +119,41 @@ public class MetricSchedule {
 //    public String getEnabled() {
 //        return String.valueOf(enabled);
 //    }
+
+    @XmlTransient
+    public long getMtime() {
+        return mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
+    }
+
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MetricSchedule that = (MetricSchedule) o;
+
+        if (collectionInterval != that.collectionInterval) return false;
+        if (mtime != that.mtime) return false;
+        if (scheduleId != that.scheduleId) return false;
+        if (enabled != null ? !enabled.equals(that.enabled) : that.enabled != null) return false;
+        if (scheduleName != null ? !scheduleName.equals(that.scheduleName) : that.scheduleName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = scheduleId;
+        result = 31 * result + (scheduleName != null ? scheduleName.hashCode() : 0);
+        result = 31 * result + (enabled != null ? enabled.hashCode() : 0);
+        result = 31 * result + (int) (collectionInterval ^ (collectionInterval >>> 32));
+        result = 31 * result + (int) (mtime ^ (mtime >>> 32));
+        return result;
+    }
 }

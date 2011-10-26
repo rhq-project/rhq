@@ -19,11 +19,18 @@
 package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -111,23 +118,54 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return renderTemplate("metricData", agg);
     }
 
-    public MetricSchedule getSchedule(int scheduleId) {
+    /**
+     * Return a metric schedule with the respective status codes for cache validation
+     *
+     * @param scheduleId ID of the schedule
+     * @param request the REST request - injected by the REST framework
+     * @param headers the REST request http headers - injected by the REST framework
+     * @return Schedule with respective headers
+     */
+    public Response getSchedule(int scheduleId, Request request, HttpHeaders headers) {
 
-        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller, scheduleId);
         if (schedule==null)
             throw new StuffNotFoundException("Schedule with id " + scheduleId);
+
         MeasurementDefinition definition = schedule.getDefinition();
-        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+        MetricSchedule metricSchedule = new MetricSchedule(schedule.getId(), definition.getName(),
+                definition.getDisplayName(),
+                schedule.isEnabled(), schedule.getInterval(), definition.getUnits().toString(),
                 definition.getDataType().toString());
+        if (schedule.getMtime()!=null)
+            metricSchedule.setMtime(schedule.getMtime());
 
-        return ms;
-    }
+        // What media type does the user request?
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
-    @Override
-    public String getScheduleHtml(int scheduleId) {
-        MetricSchedule ms = getSchedule(scheduleId);
-        return renderTemplate("metricSchedule", ms);
+        // Check for conditional get
+        EntityTag eTag = new EntityTag(Integer.toOctalString(metricSchedule.hashCode()));
+        Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(metricSchedule.getMtime()),eTag);
+
+        if (builder==null) {
+            // preconditions not met, we need to send the resource
+            if (mediaType == MediaType.TEXT_HTML_TYPE) {
+                builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
+            }
+            else {
+                builder = Response.ok(metricSchedule);
+            }
+        }
+
+        // Create a cache control
+        CacheControl cc = new CacheControl();
+        cc.setMaxAge(300); // Schedules are valid for 5 mins
+        cc.setPrivate(false); // Proxies may cache this
+
+        builder.cacheControl(cc);
+        builder.tag(eTag);
+
+        return builder.build();
     }
 
     @Override

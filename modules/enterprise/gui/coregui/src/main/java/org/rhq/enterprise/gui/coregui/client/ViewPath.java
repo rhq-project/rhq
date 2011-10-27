@@ -53,7 +53,7 @@ public class ViewPath {
     public String getParentViewPath() {
         return getPathToIndex(this.index - 1);
     }
-    
+
     public ViewPath next() {
         index++;
         return this;
@@ -73,6 +73,10 @@ public class ViewPath {
         } else {
             return viewPath.get(index);
         }
+    }
+
+    public int getCurrentIndex() {
+        return index;
     }
 
     public String getPathToCurrent() {
@@ -102,13 +106,12 @@ public class ViewPath {
         return !(isEnd() || providedViewId == null || !getCurrent().equals(providedViewId));
     }
 
-
     public boolean isNext(ViewId providedViewId) {
         return ((index + 1) < viewPath.size() && providedViewId != null && getNext().equals(providedViewId));
     }
 
     public boolean isNextEnd() {
-        return viewPath.size() <= index+1;
+        return viewPath.size() <= index + 1;
     }
 
     public int viewsLeft() {
@@ -135,4 +138,3 @@ public class ViewPath {
         return path;
     }
 }
-

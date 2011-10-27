@@ -315,7 +315,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
             });
         }
         this.datasource = getDataSource();
-        this.datasource.setDataPageSize(MAX_AVAILABLE_RECORDS);
+        this.datasource.setDataPageSize(getMaxAvailableRecords());
         populateAvailableGrid((null == latestCriteria) ? new Criteria() : latestCriteria);
 
         // Add event handlers.

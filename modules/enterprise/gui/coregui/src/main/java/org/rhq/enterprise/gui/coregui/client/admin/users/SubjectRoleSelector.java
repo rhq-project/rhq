@@ -49,6 +49,11 @@ public class SubjectRoleSelector extends AbstractSelector<Role, RoleCriteria> {
     }
 
     @Override
+    protected int getMaxAvailableRecords() {
+        return 500;
+    }
+
+    @Override
     protected RPCDataSource<Role, RoleCriteria> getDataSource() {
         return new RolesDataSource();
 

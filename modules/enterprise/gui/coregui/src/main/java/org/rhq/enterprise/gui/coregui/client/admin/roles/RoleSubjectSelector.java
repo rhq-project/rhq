@@ -60,6 +60,11 @@ public class RoleSubjectSelector extends AbstractSelector<Subject, SubjectCriter
     }
 
     @Override
+    protected int getMaxAvailableRecords() {
+        return 500;
+    }
+
+    @Override
     protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
         return null; // No Filters Currently
     }

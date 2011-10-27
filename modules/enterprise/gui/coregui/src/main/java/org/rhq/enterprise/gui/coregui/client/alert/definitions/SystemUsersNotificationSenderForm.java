@@ -192,6 +192,11 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         }
 
         @Override
+        protected int getMaxAvailableRecords() {
+            return 500;
+        }
+
+        @Override
         protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
             return null; // No Filters Currently
         }

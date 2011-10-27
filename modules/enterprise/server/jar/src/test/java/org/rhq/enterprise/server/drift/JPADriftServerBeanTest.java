@@ -260,10 +260,11 @@ public class JPADriftServerBeanTest extends DriftServerTest {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
-                em.persist(driftSet);
-                changeSet.setInitialDriftSet(driftSet);
                 em.persist(changeSet);
                 em.persist(driftDef);
+                em.persist(driftSet);
+                changeSet.setInitialDriftSet(driftSet);
+                em.merge(changeSet);
             }
         });
 

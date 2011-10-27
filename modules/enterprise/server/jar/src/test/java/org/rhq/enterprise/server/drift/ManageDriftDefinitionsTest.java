@@ -103,19 +103,18 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         // and persisting the pinned change set.
 
         // first create the change set
+        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(null, 0, COVERAGE, null);
+        changeSet0.setDriftHandlingMode(DriftConfigurationDefinition.DriftHandlingMode.normal);
+
         final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
         final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
 
-        JPADrift drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
-        JPADrift drift2 = new JPADrift(null, "drift.2", FILE_ADDED, null, driftFile2);
+        JPADrift drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
+        JPADrift drift2 = new JPADrift(changeSet0, "drift.2", FILE_ADDED, null, driftFile2);
 
-        JPADriftSet driftSet = new JPADriftSet();
+        final JPADriftSet driftSet = new JPADriftSet();
         driftSet.addDrift(drift1);
         driftSet.addDrift(drift2);
-
-        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(null, 0, COVERAGE, null);
-        changeSet0.setInitialDriftSet(driftSet);
-        changeSet0.setDriftHandlingMode(DriftConfigurationDefinition.DriftHandlingMode.normal);
 
         // create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
@@ -137,6 +136,9 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
                 em.persist(driftFile1);
                 em.persist(driftFile2);
                 em.persist(changeSet0);
+                em.persist(driftSet);
+                changeSet0.setInitialDriftSet(driftSet);
+                em.merge(changeSet0);
 
                 // setting the change set id on the template is the last and the
                 // most important step in making the template pinned

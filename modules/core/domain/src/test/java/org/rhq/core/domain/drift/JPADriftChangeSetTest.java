@@ -119,35 +119,38 @@ public class JPADriftChangeSetTest extends DriftDataAccessTest {
 
     @Test(groups = {"JPADriftChangeSet", "drift.ejb"})
     public void saveAndLoadInitialChangeSet() {
-        JPADrift drift = new JPADrift(null, "drift.1", FILE_ADDED, null, null);
-        drift.setDirectory("/basedir");
-
-        JPADriftSet driftSet = new JPADriftSet();
-        driftSet.addDrift(drift);
-
-        final JPADriftChangeSet changeSet = new JPADriftChangeSet();
-        changeSet.setCategory(COVERAGE);
-        changeSet.setVersion(0);
-        changeSet.setDriftDefinition(definition);
-        changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
-        changeSet.setResource(resource);
-        changeSet.setInitialDriftSet(driftSet);
-
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
+
+                JPADriftChangeSet changeSet = new JPADriftChangeSet();
+                changeSet.setCategory(COVERAGE);
+                changeSet.setVersion(0);
+                changeSet.setDriftDefinition(definition);
+                changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
+                changeSet.setResource(resource);
+
                 em.persist(changeSet);
                 em.flush();
+
+                JPADriftSet driftSet = new JPADriftSet();
+                driftSet.addDrift(new JPADrift(changeSet, "drift.1", FILE_ADDED, null, null));
+
+                em.persist(driftSet);
+                changeSet.setInitialDriftSet(driftSet);
+                em.merge(changeSet);
+                em.flush();
                 em.clear();
+
 
                 JPADriftChangeSet savedChangeSet = em
                     .find(JPADriftChangeSet.class, Integer.parseInt(changeSet.getId()));
                 assertNotNull("Failed to persist change set", savedChangeSet);
 
-                JPADriftSet driftSet = savedChangeSet.getInitialDriftSet();
-                assertNotNull("Failed to persist drift set", driftSet);
-                assertEquals("Failed to persist drift belonging to drift set", 1, driftSet.getDrifts().size());
+                JPADriftSet savedDriftSet = savedChangeSet.getInitialDriftSet();
+                assertNotNull("Failed to persist drift set", savedDriftSet);
+                assertEquals("Failed to persist drift belonging to drift set", 1, savedDriftSet.getDrifts().size());
             }
         });
     }

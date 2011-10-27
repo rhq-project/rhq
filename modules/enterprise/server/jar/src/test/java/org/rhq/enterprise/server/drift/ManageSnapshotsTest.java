@@ -45,11 +45,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -74,14 +71,13 @@ public class ManageSnapshotsTest extends DriftServerTest {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 
         // create initial change set
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
-        JPADrift drift = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
-
-        JPADriftSet driftSet = new JPADriftSet();
-        driftSet.addDrift(drift);
-
         final JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
-        changeSet.setInitialDriftSet(driftSet);
+
+        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        JPADrift drift = new JPADrift(changeSet, "drift.1", FILE_ADDED, null, driftFile1);
+
+        final JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -89,6 +85,9 @@ public class ManageSnapshotsTest extends DriftServerTest {
                 EntityManager em = getEntityManager();
                 em.persist(driftFile1);
                 em.persist(changeSet);
+                em.persist(driftSet);
+                changeSet.setInitialDriftSet(driftSet);
+                em.merge(changeSet);
             }
         });
 
@@ -104,14 +103,13 @@ public class ManageSnapshotsTest extends DriftServerTest {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::makeSnapshotVersionZero");
 
         // create initial change set
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
-        JPADrift drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
-
-        JPADriftSet driftSet = new JPADriftSet();
-        driftSet.addDrift(drift1);
-
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
-        changeSet0.setInitialDriftSet(driftSet);
+
+        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        JPADrift drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
+
+        final JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift1);
 
         // create change set v1
         final JPADriftFile driftFile2 = new JPADriftFile("1a2b3c");
@@ -125,6 +123,9 @@ public class ManageSnapshotsTest extends DriftServerTest {
                 em.persist(driftFile1);
                 em.persist(driftFile2);
                 em.persist(changeSet0);
+                em.persist(driftSet);
+                changeSet0.setInitialDriftSet(driftSet);
+                em.merge(changeSet0);
                 em.persist(changeSet1);
                 em.persist(drift2);
             }
@@ -168,14 +169,13 @@ public class ManageSnapshotsTest extends DriftServerTest {
         final DriftDefinition driftDef = createAndPersistDriftDef("test::setPinnedFlag");
 
         // create initial change set
-        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
-        JPADrift drift = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
-
-        JPADriftSet driftSet = new JPADriftSet();
-        driftSet.addDrift(drift);
-
         final JPADriftChangeSet changeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
-        changeSet.setInitialDriftSet(driftSet);
+
+        final JPADriftFile driftFile1 = new JPADriftFile("a1b2c3");
+        JPADrift drift = new JPADrift(changeSet, "drift.1", FILE_ADDED, null, driftFile1);
+
+        final JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -183,6 +183,9 @@ public class ManageSnapshotsTest extends DriftServerTest {
                 EntityManager em = getEntityManager();
                 em.persist(driftFile1);
                 em.persist(changeSet);
+                em.persist(driftSet);
+                changeSet.setInitialDriftSet(driftSet);
+                em.merge(changeSet);
             }
         });
 

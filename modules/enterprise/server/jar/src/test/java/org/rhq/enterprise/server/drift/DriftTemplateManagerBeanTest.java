@@ -278,14 +278,13 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
 
         // create initial change set from which the snapshot will be generated
-        driftFile1 = new JPADriftFile("a1b2c3");
-        drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
-
-        JPADriftSet driftSet = new JPADriftSet();
-        driftSet.addDrift(drift1);
-
         final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
-        changeSet0.setInitialDriftSet(driftSet);
+
+        driftFile1 = new JPADriftFile("a1b2c3");
+        drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
+
+        final JPADriftSet driftSet = new JPADriftSet();
+        driftSet.addDrift(drift1);
 
         // create change set v1
         driftFile2 = new JPADriftFile("1a2b3c");
@@ -296,13 +295,19 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
+
                 em.persist(attachedDef1);
+
                 em.persist(driftFile1);
                 em.persist(driftFile2);
-                em.persist(drift1);
-                em.persist(drift2);
+
                 em.persist(changeSet0);
+                em.persist(driftSet);
+                changeSet0.setInitialDriftSet(driftSet);
+                em.merge(changeSet0);
+
                 em.persist(changeSet1);
+                em.persist(drift2);
 
                 em.persist(attachedDef2);
                 em.persist(detachedDef1);
@@ -404,39 +409,44 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         final DriftDefinition detachedDef2 = createDefinition(template, "detachedDef2", false);
 
         // create some change sets
-        driftFile1 = new JPADriftFile("a1b2c3");
-        drift1 = new JPADrift(null, "drift.1", FILE_ADDED, null, driftFile1);
+        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
 
-        JPADriftSet driftSet0 = new JPADriftSet();
+        driftFile1 = new JPADriftFile("a1b2c3");
+        drift1 = new JPADrift(changeSet0, "drift.1", FILE_ADDED, null, driftFile1);
+
+        final JPADriftSet driftSet0 = new JPADriftSet();
         driftSet0.addDrift(drift1);
 
-        final JPADriftChangeSet changeSet0 = new JPADriftChangeSet(resource, 0, COVERAGE, attachedDef1);
-        changeSet0.setInitialDriftSet(driftSet0);
-
+        final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 0, DRIFT, detachedDef1);
 
         driftFile2 = new JPADriftFile("1a2b3c");
-        drift2 = new JPADrift(null, "drift.2", FILE_ADDED, null, driftFile2);
+        drift2 = new JPADrift(changeSet1, "drift.2", FILE_ADDED, null, driftFile2);
 
-        JPADriftSet driftSet1 = new JPADriftSet();
+        final JPADriftSet driftSet1 = new JPADriftSet();
         driftSet1.addDrift(drift2);
-
-        final JPADriftChangeSet changeSet1 = new JPADriftChangeSet(resource, 0, DRIFT, detachedDef1);
-        changeSet1.setInitialDriftSet(driftSet1);
 
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
+
                 em.persist(attachedDef1);
                 em.persist(attachedDef2);
                 em.persist(detachedDef1);
                 em.persist(detachedDef2);
+
                 em.persist(driftFile1);
                 em.persist(driftFile2);
-                em.persist(drift1);
-                em.persist(drift2);
+
                 em.persist(changeSet0);
+                em.persist(driftSet0);
+                changeSet0.setInitialDriftSet(driftSet0);
+                em.merge(changeSet0);
+
                 em.persist(changeSet1);
+                em.persist(driftSet1);
+                changeSet1.setInitialDriftSet(driftSet1);
+                em.merge(changeSet1);
             }
         });
 

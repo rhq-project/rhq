@@ -728,7 +728,7 @@
         <column name="CTIME" type="LONG" required="true"/>
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>        
         <column name="DRIFT_SET_ID" type="INTEGER" required="false" references="RHQ_DRIFT_SET"/>
-        <column name="DRIFT_CHANGE_SET_ID" type="INTEGER" required="false" references="RHQ_DRIFT_CHANGE_SET"/>
+        <column name="DRIFT_CHANGE_SET_ID" type="INTEGER" required="true" references="RHQ_DRIFT_CHANGE_SET"/>
         <!-- the file path not including the base directory -->        
         <column name="PATH" type="VARCHAR2" size="1024" required="true"/>
         <!-- the same as PATH less [/]filename.ext. Redundant storage for the purpose of strict directory search.

@@ -3617,6 +3617,7 @@
                 <schema-addColumn   table="RHQ_DRIFT" column="PATH_DIRECTORY" columnType="VARCHAR2" precision="1024" />
                 <schema-alterColumn table="RHQ_DRIFT" column="PATH_DIRECTORY" nullable="FALSE" />                
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_CHANGE_SET_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_DRIFT" column="DRIFT_CHANGE_SET_ID" nullable="FALSE" />                
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_SET_ID" columnType="INTEGER"/>
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT foreign key relation to RHQ_DRIFT_CHANGE_SET">

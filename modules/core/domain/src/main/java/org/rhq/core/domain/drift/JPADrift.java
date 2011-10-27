@@ -84,8 +84,8 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     @Enumerated(EnumType.STRING)
     private String directory;
 
-    @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private JPADriftChangeSet changeSet;
 
     @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)

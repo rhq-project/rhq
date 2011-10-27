@@ -233,11 +233,14 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         for (Drift<?, ?> drift : changeSet.getDrifts()) {
             JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(), toJPADriftFile(drift
                 .getOldDriftFile()), toJPADriftFile(drift.getNewDriftFile()));
+
             driftSet.addDrift(jpaDrift);
         }
-        entityManager.persist(driftSet);
-        jpaChangeSet.setInitialDriftSet(driftSet);
         entityManager.persist(jpaChangeSet);
+
+        entityManager.persist(driftSet);
+
+        jpaChangeSet.setInitialDriftSet(driftSet);
 
         return jpaChangeSet.getId();
     }
@@ -322,9 +325,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                                 + "]. Change set cannot be saved.");
                             return false;
                         }
-                        // Commenting out the following line for now. We want to set the
-                        // version to the value specified in the headers, but we also
-                        // want to get the latest version we have in the database so that
+                        // TODO: Commenting out the following line for now. We want to set the
+                        // version to the value specified in the headers, but we may want to also
+                        // validate it against the latest version we have in the database so that
                         // we can make sure that the agent is in sync with the server.
                         //
                         //int version = getChangeSetVersion(resource, config);
@@ -370,7 +373,11 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             for (FileEntry entry : reader) {
                                 JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
                                 String path = FileUtil.useForwardSlash(entry.getFile());
-                                driftSet.addDrift(new JPADrift(null, path, entry.getType(), null, newDriftFile));
+                                // A Drift always has a changeSet. Note that in this code section the changeset is
+                                // always going to be set to a DriftDefinition's changeSet. But that is not always the
+                                // case, it could also be set to a DriftDefinitionTemplate's changeSet.
+                                driftSet.addDrift(new JPADrift(driftChangeSet, path, entry.getType(), null,
+                                    newDriftFile));
                             }
                             entityManager.persist(driftSet);
                             driftChangeSet.setInitialDriftSet(driftSet);

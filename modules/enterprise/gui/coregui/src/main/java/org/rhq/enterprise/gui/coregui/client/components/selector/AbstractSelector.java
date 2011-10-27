@@ -38,6 +38,7 @@ import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.ImgProperties;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.TransferImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -62,9 +63,7 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VStack;
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
@@ -103,6 +102,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
     protected Criteria latestCriteria;
 
     private boolean isReadOnly;
+    private Label messageLayout;
 
     public AbstractSelector(String locatorId) {
         this(locatorId, false);
@@ -187,6 +187,9 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
 
         if (!this.isReadOnly) {
             // LEFT SIDE
+            this.messageLayout = new Label();
+            this.messageLayout.setMargin(3);
+            addMember(this.messageLayout);
             this.availableFilterForm = getAvailableFilterForm();
             if (this.availableFilterForm != null) {
                 addMember(this.availableFilterForm);
@@ -373,13 +376,16 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     int totalAvailableRecords = totalRecords - assignedRecords.length;
                     if (availableRecords.size() < totalAvailableRecords) {
                         // TODO: i18n
-                        Message message = new Message("Only " + availableRecords.size() + " out of "
+                        messageLayout.setContents("<b>Note:</b> Only " + availableRecords.size() + " out of "
                             + totalAvailableRecords + " available " + getItemTitle()
-                            + " are listed - please specify one or more filters to find the " + getItemTitle()
-                            + " for which you are looking.",
-                            Message.Severity.Warning);
-                        CoreGUI.getMessageCenter().notify(message);
+                            + " are listed - please specify more specific filters below to find the " + getItemTitle()
+                            + " for which you are looking.");
+                    } else {
+                        // Clear the warning message, if any, from the previous fetch.
+                        // Note, surprisingly, setContents(null) doesn't work.
+                        messageLayout.setContents("&nbsp;");
                     }
+                    messageLayout.markForRedraw();
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
                 } finally {
                     updateButtonEnablement();

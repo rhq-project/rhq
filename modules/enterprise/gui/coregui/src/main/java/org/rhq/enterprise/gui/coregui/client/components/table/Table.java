@@ -228,6 +228,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.flexRowDisplay = flexRowDisplay;
     }
 
+    // TODO: I think this should just be a simple getter.  Returning the canvas before we're initialized is likely
+    // a bad thing. -Jay. Will do after the 4.2 release as it doesn't seem to bite us at the moment.
     /**
      * Returns the encompassing canvas that contains all content for this table component.
      * This content includes the list grid, the buttons, etc.
@@ -406,7 +408,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             if (showFooter) {
                 drawFooter();
             }
-
 
             if (!autoFetchData && (initialCriteria != null)) {
                 refresh();
@@ -1072,7 +1073,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         getListGrid().hideField(field.getName());
         field.setHidden(true);
     }
-
 
     // -------------- Inner utility classes ------------- //
 

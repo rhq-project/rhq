@@ -71,7 +71,7 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
             return LinkManager.getAdminTemplatesLink(VIEW_ID.getName());
         }
 
-        return LinkManager.getAdminTemplatesEditLink(VIEW_ID.getName(), typeId);
+        return LinkManager.getAdminTemplatesEditLink(VIEW_ID.getName(), Integer.valueOf(typeId));
     }
 
     @Override

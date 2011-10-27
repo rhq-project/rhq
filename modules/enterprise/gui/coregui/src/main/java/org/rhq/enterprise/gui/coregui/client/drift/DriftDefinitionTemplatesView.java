@@ -54,6 +54,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     private boolean hasWriteAccess;
     private DriftDefinitionTemplateDataSource dataSource;
     private boolean useSnapshotDetailsView;
+    private String snapshotDriftDetailsId;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -147,10 +148,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     }
 
     private void add() {
-
-        DriftAddDefinitionWizard wizard = new DriftAddDefinitionWizard(EntityContext.forSubsystemView(), this.type,
-            this);
-        wizard.startWizard();
+        DriftAddDefinitionWizard.showWizard(EntityContext.forTemplate(type.getId()), this);
 
         // we can refresh the table buttons immediately since the wizard is a dialog, the
         // user can't access enabled buttons anyway.
@@ -192,6 +190,11 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         // one we're dealing with. The default is the editor. 
         if (!viewPath.isEnd()) {
             this.useSnapshotDetailsView = !viewPath.isNextEnd() && "Snapshot".equals(viewPath.getNext().getPath());
+            snapshotDriftDetailsId = null;
+            if (viewPath.viewsLeft() > 1) {
+                snapshotDriftDetailsId = viewPath.getViewForIndex(viewPath.getCurrentIndex() + 2).getPath().substring(
+                    "0id_".length());
+            }
         }
 
         super.renderView(viewPath);
@@ -200,7 +203,10 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
     @Override
     public Canvas getDetailsView(Integer driftTemplateId) {
         if (this.useSnapshotDetailsView) {
-            return new DriftDefinitionTemplateSnapshotView(extendLocatorId("TemplateSnapshot"), driftTemplateId);
+            if (null == snapshotDriftDetailsId) {
+                return new DriftDefinitionTemplateSnapshotView(extendLocatorId("TemplateSnapshot"), driftTemplateId);
+            }
+            return new DriftDetailsView(extendLocatorId("TemplateSnapshotDrift"), snapshotDriftDetailsId);
         }
 
         return new DriftDefinitionTemplateEditView(extendLocatorId("TemplateEdit"), driftTemplateId, hasWriteAccess);

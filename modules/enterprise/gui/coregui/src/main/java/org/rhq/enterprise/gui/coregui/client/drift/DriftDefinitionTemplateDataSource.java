@@ -115,7 +115,7 @@ public class DriftDefinitionTemplateDataSource extends
 
                 if (event.getRecord().getAttributeAsBoolean(ATTR_IS_PINNED)) {
                     CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID
-                        .getName(), String.valueOf(resourceTypeId))
+                        .getName(), resourceTypeId)
                         + "/" + event.getRecord().getAttribute(ATTR_ID) + "/Snapshot");
                 }
             }
@@ -157,7 +157,7 @@ public class DriftDefinitionTemplateDataSource extends
 
             public void onRecordClick(RecordClickEvent event) {
                 CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID
-                    .getName(), String.valueOf(resourceTypeId))
+                    .getName(), resourceTypeId)
                     + "/" + event.getRecord().getAttribute(ATTR_ID) + "/Edit");
             }
         });

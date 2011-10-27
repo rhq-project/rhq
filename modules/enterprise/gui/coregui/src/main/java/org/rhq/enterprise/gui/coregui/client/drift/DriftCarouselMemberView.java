@@ -103,7 +103,7 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     Integer driftDefId = record.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_DEF_ID);
                     String driftId = getId(record);
-                    String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
+                    String url = LinkManager.getDriftCarouselDriftLink(resourceId, driftDefId, driftId);
                     CoreGUI.goToView(url);
                 }
             }
@@ -149,7 +149,7 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
     public void updateTitleCanvas(String titleString) {
         int resourceId = getContext().getResourceId();
         String imageHtml = Canvas.imgHTML(ImageManager.getViewIcon());
-        String link = LinkManager.getDriftSnapshotLink(resourceId, changeSet.getDriftDefinitionId(), changeSet
+        String link = LinkManager.getDriftCarouselSnapshotLink(resourceId, changeSet.getDriftDefinitionId(), changeSet
             .getVersion());
         StringBuilder sb = new StringBuilder();
 

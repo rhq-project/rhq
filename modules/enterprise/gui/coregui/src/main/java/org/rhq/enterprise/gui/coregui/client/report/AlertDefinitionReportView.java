@@ -175,7 +175,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                     } else {
                                         int typeId = result.get(0).getResourceType().getId();
                                         CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(
-                                            AlertDefinitionTemplateTypeView.VIEW_ID.getName(), String.valueOf(typeId))
+                                            AlertDefinitionTemplateTypeView.VIEW_ID.getName(), typeId)
                                             + "/" + templateId);
                                     }
                                 }

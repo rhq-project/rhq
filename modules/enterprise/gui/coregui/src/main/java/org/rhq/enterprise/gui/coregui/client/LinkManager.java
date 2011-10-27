@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 
@@ -395,7 +396,7 @@ public class LinkManager {
         }
     }
 
-    public static String getAdminTemplatesEditLink(String viewName, String typeId) {
+    public static String getAdminTemplatesEditLink(String viewName, int typeId) {
         if (GWT) {
             return "#Administration/Configuration/" + viewName + "/" + typeId;
         } else {
@@ -516,15 +517,51 @@ public class LinkManager {
         return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Edit";
     }
 
-    public static String getDriftHistoryLink(int resourceId, int driftDefId, String driftId) {
+    public static String getDriftCarouselDriftLink(int resourceId, int driftDefId, String driftId) {
         if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
             driftId = StringIDTableSection.ID_PREFIX + driftId;
         }
-        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/History/" + driftId;
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Drift/" + driftId;
     }
 
-    public static String getDriftSnapshotLink(int resourceId, int driftDefId, int version) {
+    public static String getDriftCarouselSnapshotLink(int resourceId, int driftDefId, int version) {
         return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Snapshot/" + version;
+    }
+
+    public static String getDriftCarouselSnapshotDriftLink(int resourceId, int driftDefId, int version, String driftId) {
+        if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
+            driftId = StringIDTableSection.ID_PREFIX + driftId;
+        }
+
+        // TODO: for now, just make this the same as the carousel drift link. The downside is that the back button
+        // will bring us back to the carousel and not the snapshot view. Eventually would like another
+        // master-detail relationship here, but it's hairy to get this working.
+        //
+        // return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Snapshot/" + version + "/" + driftId;
+
+        return getDriftCarouselDriftLink(resourceId, driftDefId, driftId);
+    }
+
+    public static String getDriftTemplateLink(int typeId, int templateId) {
+        String result = getAdminTemplatesEditLink(DriftDefinitionTemplateTypeView.VIEW_ID.getName(), typeId);
+
+        return result + "/" + templateId;
+    }
+
+    public static String getDriftTemplateSnapshotLink(int typeId, int templateId) {
+        String result = getDriftTemplateLink(typeId, templateId);
+
+        return result + "/Snapshot";
+    }
+
+    public static String getDriftTemplateSnapshotDriftLink(int typeId, int templateId, String driftId) {
+        String result = getDriftTemplateSnapshotLink(typeId, templateId);
+
+        if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
+            driftId = StringIDTableSection.ID_PREFIX + driftId;
+        }
+
+        return result + "/" + driftId;
     }
 
 }

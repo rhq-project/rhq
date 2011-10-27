@@ -158,7 +158,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
                 Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                 Integer driftDefId = record.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_DEF_ID);
                 String driftId = getId(record);
-                String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
+                String url = LinkManager.getDriftCarouselDriftLink(resourceId, driftDefId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
                 return SeleniumUtility.getLocatableHref(url, formattedValue, null);
             }
@@ -166,77 +166,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
-
-        /*
-         * TODO add ack 
-         * 
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
-            : TableActionEnablement.NEVER;
-
-        addTableAction("AcknowledgeDrift", MSG.common_button_ack(), MSG.view_drift_ack_confirm(),
-            new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    acknowledge(selection);
-                }
-            });
-
-        addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_drift_ack_confirm_all(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    acknowledgeAll();
-                }
-            });
-        *
-        *
-        */
+        // currently no buttons, etc
     }
-
-    /*
-     * TODO add ack
-     * 
-    private void acknowledge(ListGridRecord[] records) {
-        final int[] alertIds = new int[records.length];
-        for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
-            ListGridRecord record = records[i];
-            Integer alertId = record.getAttributeAsInt(DriftDataSource.ATTR_ID);
-            alertIds[i] = alertId;
-        }
-
-        GWTServiceLookup.getDriftService().acknowledgeDrifts(alertIds, new AsyncCallback<Integer>() {
-            public void onSuccess(Integer resultCount) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_drift_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
-                refresh();
-            }
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_ack_failure(Arrays.toString(alertIds)), caught);
-            }
-        });
-    }
-
-    private void acknowledgeAll() {
-        GWTServiceLookup.getDriftService().acknowledgeDriftsByContext(context, new AsyncCallback<Integer>() {
-            public void onSuccess(Integer resultCount) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_drift_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
-                refresh();
-            }
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_ack_failure_all(), caught);
-            }
-        });
-    }
-    *
-    *
-    */
 
     @Override
     public Canvas getDetailsView(String driftId) {

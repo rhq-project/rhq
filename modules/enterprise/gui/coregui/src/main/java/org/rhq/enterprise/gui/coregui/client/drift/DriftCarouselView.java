@@ -72,7 +72,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
     private boolean hasWriteAccess;
     private Integer maxCarouselEndFilter;
     private ArrayList<Record> selectedRecords = new ArrayList<Record>();
-    private boolean useHistoryDetailsView;
+    private boolean useDriftDetailsView;
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
@@ -397,16 +397,16 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
         return true;
     }
 
-    // this class is somewhat unusual in that it is a detail view for the drift defs list view, but also a pseudo-
-    // master view for snapshot and drift detail views.  It's "pseudo" in that there is no master-detail infrastructure
+    // this class is somewhat unusual in that it is a detail view for the drift defs list view, but also a pseudo-master
+    // view for snapshot and drift detail views.  It's "pseudo" in that there is no master-detail infrastructure
     // like that found in TableSection. The following paths must be handled (starting at the ^):
-    //   #Resource/10001/Drift/Definitions/10001/History/driftId
+    //   #Resource/10001/Drift/Definitions/10001/Drift/driftId
     //   #Resource/10001/Drift/Definitions/10001/Snapshot/version
     //                                           ^
     @Override
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd() && !viewPath.isNextEnd()) {
-            this.useHistoryDetailsView = !viewPath.isNextEnd() && "History".equals(viewPath.getNext().getPath());
+            this.useDriftDetailsView = !viewPath.isNextEnd() && "Drift".equals(viewPath.getNext().getPath());
         }
 
         super.renderView(viewPath);
@@ -414,8 +414,8 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
 
     @Override
     public Canvas getDetailsView(String id) {
-        if (this.useHistoryDetailsView) {
-            return new DriftDetailsView(extendLocatorId("History"), id);
+        if (this.useDriftDetailsView) {
+            return new DriftDetailsView(extendLocatorId("Drift"), id);
         }
 
         return new DriftSnapshotView(extendLocatorId("Snapshot"), null, context.getResourceId(), driftDefId, Integer

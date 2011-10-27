@@ -32,6 +32,8 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -70,8 +72,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Jay Shaughnessy
  */
+// TODO: Make this extend an abstract table so we can set up true master-detail
+//public class DriftSnapshotView extends StringIDTableSection<DriftSnapshotDataSource> {
 public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
-
     private static final String DEFAULT_TITLE = MSG.view_drift_table_snapshot();
 
     private Integer templateId;
@@ -81,6 +84,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     private boolean hasWriteAccess;
 
     private String templateChangeSetId;
+    private int templateResourceTypeId;
 
     protected DriftSnapshotDataSource dataSource;
     protected DriftSnapshotListGrid listGrid;
@@ -159,6 +163,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         } else {
             DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
             templateCriteria.addFilterId(templateId);
+            templateCriteria.fetchResourceType(true);
 
             DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
             driftService.findDriftDefinitionTemplatesByCriteria(templateCriteria,
@@ -172,6 +177,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                         String templateName = template.getName();
                         String title = MSG.view_drift_table_title_templateSnapshot(templateName);
                         setTitleString(title);
+                        templateResourceTypeId = template.getResourceType().getId();
                         DriftSnapshotView.super.onDraw();
                     }
                 });
@@ -288,6 +294,23 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
             super.configureTable();
+
+            // TODO: when we have true detail support then we'll want to remove this. 
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        String driftId = getId(selectedRows[0]);
+                        String link = (null == templateId) ? LinkManager.getDriftCarouselSnapshotDriftLink(resourceId,
+                            driftDefId, version, driftId) : LinkManager.getDriftTemplateSnapshotDriftLink(
+                            templateResourceTypeId, templateId, driftId);
+                        CoreGUI.goToView(link);
+
+                    }
+                }
+            });
         }
 
         @Override
@@ -302,9 +325,12 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 return new CellFormatter() {
                     public String format(Object value, ListGridRecord record, int i, int i1) {
                         String driftId = getId(record);
-                        String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
+                        String link = (null == templateId) ? LinkManager.getDriftCarouselSnapshotDriftLink(resourceId,
+                            driftDefId, version, driftId) : LinkManager.getDriftTemplateSnapshotDriftLink(
+                            templateResourceTypeId, templateId, driftId);
+
                         String formattedValue = TimestampCellFormatter.format(value);
-                        return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+                        return SeleniumUtility.getLocatableHref(link, formattedValue, null);
                     }
                 };
             } else {
@@ -487,5 +513,21 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
         return (i < 0) ? path.trim() : path.substring(++i).trim();
     }
+
+    // TODO: Make this extend an abstract table so we can set up true master-detail
+
+    /*
+    @Override
+    public void renderView(ViewPath viewPath) {
+        viewPath.next();
+        super.renderView(viewPath);
+    }
+
+
+    @Override
+    public Canvas getDetailsView(String driftId) {
+        return new DriftDetailsView(extendLocatorId("Details"), driftId);
+    }
+    */
 
 }

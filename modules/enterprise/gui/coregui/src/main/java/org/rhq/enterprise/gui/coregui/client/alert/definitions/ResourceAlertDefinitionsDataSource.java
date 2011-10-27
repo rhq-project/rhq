@@ -94,8 +94,7 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         } else {
             if (parentId != null && parentId.intValue() != 0) {
                 record.setAttribute(FIELD_PARENT, LinkManager.getAdminTemplatesEditLink(
-                    AlertDefinitionTemplateTypeView.VIEW_ID.getName(), String.valueOf(this.resource.getResourceType()
-                        .getId()))
+                    AlertDefinitionTemplateTypeView.VIEW_ID.getName(), this.resource.getResourceType().getId())
                     + "/" + parentId);
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {

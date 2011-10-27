@@ -19,11 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -104,15 +105,15 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
                 public void onSuccess(Void result) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_drift_wizard_addTemplate_success(template.getName()),
+                        new Message(MSG.view_drift_wizard_pinTemplate_success(template.getName()),
                             Message.Severity.Info));
                     getView().closeDialog();
                     DriftPinTemplateWizard.this.table.refresh();
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_drift_wizard_addDef_failure(template.getName()), caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_wizard_addDef_failure(template.getName()),
+                        caught);
                     getView().closeDialog();
                 }
             });
@@ -146,25 +147,12 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
                     final DriftDefinition driftDef = result.get(0);
                     final Resource resource = driftDef.getResource();
 
-                    // bypass type cache because this is infrequent and we don't need to cache the
-                    // drift def templates
-                    ResourceTypeCriteria rtc = new ResourceTypeCriteria();
-                    rtc.addFilterId(resource.getResourceType().getId());
-                    rtc.fetchDriftDefinitionTemplates(true);
-                    GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(rtc,
-                        new AsyncCallback<PageList<ResourceType>>() {
+                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
+                        EnumSet.of(ResourceTypeRepository.MetadataType.driftDefinitionTemplates),
+                        new ResourceTypeRepository.TypeLoadedCallback() {
 
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.widget_typeTree_loadFail(), caught);
-                            }
-
-                            public void onSuccess(PageList<ResourceType> result) {
-                                if (result.isEmpty()) {
-                                    throw new IllegalArgumentException("Resource Type not found ["
-                                        + resource.getResourceType().getId() + "]");
-                                }
-
-                                DriftPinTemplateWizard wizard = new DriftPinTemplateWizard(result.get(0), driftDef,
+                            public void onTypesLoaded(ResourceType type) {
+                                DriftPinTemplateWizard wizard = new DriftPinTemplateWizard(type, driftDef,
                                     snapshotVersion, table);
                                 wizard.startWizard();
                             }

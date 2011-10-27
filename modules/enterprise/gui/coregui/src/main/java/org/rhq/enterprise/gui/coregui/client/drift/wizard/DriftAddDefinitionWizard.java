@@ -19,12 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -42,7 +43,7 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
     private Table<?> table;
 
-    public DriftAddDefinitionWizard(EntityContext context, ResourceType type, Table<?> table) {
+    protected DriftAddDefinitionWizard(EntityContext context, ResourceType type, Table<?> table) {
 
         super(context, type);
         this.table = table;
@@ -110,7 +111,7 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
             break;
 
-        case SubsystemView:
+        case ResourceTemplate:
             GWTServiceLookup.getDriftService().createTemplate(getType().getId(), getNewDriftDefinition(),
                 new AsyncCallback<DriftDefinitionTemplate>() {
                     public void onSuccess(DriftDefinitionTemplate result) {
@@ -150,30 +151,8 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
                         throw new IllegalArgumentException("Entity not found [" + context + "]");
                     }
 
-                    final Resource resource = result.get(0);
-
-                    // bypass type cache because this is infrequent and we don't need to cache the
-                    // drift def templates
-                    ResourceTypeCriteria rtc = new ResourceTypeCriteria();
-                    rtc.addFilterId(resource.getResourceType().getId());
-                    rtc.fetchDriftDefinitionTemplates(true);
-                    GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(rtc,
-                        new AsyncCallback<PageList<ResourceType>>() {
-                            public void onSuccess(PageList<ResourceType> result) {
-                                if (result.isEmpty()) {
-                                    throw new IllegalArgumentException("Resource Type not found ["
-                                        + resource.getResourceType().getId() + "]");
-                                }
-
-                                DriftAddDefinitionWizard wizard = new DriftAddDefinitionWizard(context, result.get(0),
-                                    table);
-                                wizard.startWizard();
-                            }
-
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.widget_typeTree_loadFail(), caught);
-                            }
-                        });
+                    Resource resource = result.get(0);
+                    showWizard(context, resource.getResourceType().getId(), table);
                 }
 
                 public void onFailure(Throwable caught) {
@@ -183,9 +162,27 @@ public class DriftAddDefinitionWizard extends AbstractDriftAddDefinitionWizard {
 
             break;
 
+        case ResourceTemplate:
+            showWizard(context, context.getResourceTypeId(), table);
+
+            break;
+
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
         }
+    }
+
+    private static void showWizard(final EntityContext context, int resourceTypeId, final Table<?> table) {
+
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceTypeId,
+            EnumSet.of(ResourceTypeRepository.MetadataType.driftDefinitionTemplates),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+
+                public void onTypesLoaded(ResourceType type) {
+                    DriftAddDefinitionWizard wizard = new DriftAddDefinitionWizard(context, type, table);
+                    wizard.startWizard();
+                }
+            });
     }
 
     @Override

@@ -57,8 +57,29 @@ public class ResourceTypeRepository {
 
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
+    /**
+     * The following MetadadaTypes are not cached and will always be queried from the database:<br/>
+     * driftDefinitionTemplates
+     * 
+     * @author Jay Shaughnessy     
+     */
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates(
+            false);
+
+        private boolean isCachedMetadata;
+
+        private MetadataType() {
+            this.isCachedMetadata = true;
+        }
+
+        private MetadataType(boolean isCachedMetadata) {
+            this.isCachedMetadata = isCachedMetadata;
+        }
+
+        public boolean isCachedMetadata() {
+            return isCachedMetadata;
+        }
     }
 
     public static class Cache {
@@ -248,8 +269,7 @@ public class ResourceTypeRepository {
                 criteria.fetchDriftDefinitionTemplates(true);
                 break;
             default:
-                Log.error("Metadata type [" + metadataType.name()
-                    + "] not incorporated into ResourceType criteria.");
+                Log.error("Metadata type [" + metadataType.name() + "] not incorporated into ResourceType criteria.");
             }
         }
 
@@ -375,7 +395,11 @@ public class ResourceTypeRepository {
                         if (typeCacheLevel.containsKey(type.getId())) {
                             typeCacheLevel.get(type.getId()).addAll(metadataTypes);
                         } else {
-                            typeCacheLevel.put(type.getId(), EnumSet.copyOf(metadataTypes));
+                            for (MetadataType metadataType : metadataTypes) {
+                                if (metadataType.isCachedMetadata) {
+                                    typeCacheLevel.put(type.getId(), EnumSet.copyOf(metadataTypes));
+                                }
+                            }
                         }
                     }
                 }

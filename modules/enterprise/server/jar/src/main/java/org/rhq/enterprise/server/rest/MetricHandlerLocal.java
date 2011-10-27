@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.io.InputStream;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -30,6 +31,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
@@ -48,21 +50,15 @@ public interface MetricHandlerLocal {
 
     @GET
     @Path("data/{scheduleId}")
-    @Produces({"application/json","application/xml"})
-    MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    Response getMetricData(@PathParam("scheduleId") int scheduleId,
                                   @QueryParam("startTime")  long startTime,
                                   @QueryParam("endTime") long endTime,
                                   @QueryParam("dataPoints") int dataPoints,
-                                  @QueryParam("hideEmpty") boolean hideEmpty);
+                                  @QueryParam("hideEmpty") boolean hideEmpty,
+                                  @Context Request request,
+                                  @Context HttpHeaders headers);
 
-    @GET
-    @Path("data/{scheduleId}")
-    @Produces("text/html")
-    String getMetricDataHtml(@PathParam("scheduleId") int scheduleId,
-                             @QueryParam("startTime") long startTime,
-                             @QueryParam("endTime") long endTime,
-                             @QueryParam("dataPoints") int dataPoints,
-                             @QueryParam("hideEmpty") boolean hideEmpty);
 
     @GET
     @Path("data/resource/{resourceId}")
@@ -70,12 +66,13 @@ public interface MetricHandlerLocal {
 
     @GET
     @Path("/schedule/{id}")
-    @Produces({"application/json","application/xml","text/html"})
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     Response getSchedule(@PathParam("id") int scheduleId, @Context Request request, @Context HttpHeaders headers);
 
     @PUT
     @Path("/schedule/{id}")
-    @Consumes("application/json")
-    MetricSchedule updateSchedule(@PathParam("id") int scheduleId, MetricSchedule in);
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    MetricSchedule updateSchedule(@PathParam("id") int scheduleId,  MetricSchedule in);
 
 }

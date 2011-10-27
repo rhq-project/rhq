@@ -26,6 +26,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -61,8 +62,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     private static final long EIGHT_HOURS = 8 * 3600L * 1000L;
 
     @Override
-    public MetricAggregate getMetricData(int scheduleId, long startTime, long endTime,
-                                         int dataPoints,boolean hideEmpty) {
+    public Response getMetricData(int scheduleId, long startTime, long endTime,
+                                         int dataPoints,boolean hideEmpty,
+                                         @Context Request request,
+                                         @Context HttpHeaders headers) {
 
         if (dataPoints<0)
             throw new IllegalArgumentException("dataPoints must be >0 ");
@@ -105,18 +108,26 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         res.setMaxTimeStamp(maxTime);
         res.setMinTimeStamp(minTime);
 
+        CacheControl cc = new CacheControl();
+        int maxAge = (int) (schedule.getInterval() / 1000L)/2; // millis  ; half of schedule interval
+        cc.setMaxAge(maxAge); // these are seconds
+        cc.setPrivate(false);
+        cc.setNoCache(false);
 
-        return res;
+
+        Response.ResponseBuilder builder;
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            String htmlString = renderTemplate("metricData", res);
+            builder = Response.ok(htmlString,mediaType);
+        }
+        else
+            builder= Response.ok(res);
+        builder.cacheControl(cc);
+
+        return builder.build();
     }
 
-    public String getMetricDataHtml(int scheduleId,
-                                    long startTime,
-                                    long endTime,
-                                    int dataPoints,
-                                    boolean hideEmpty) {
-        MetricAggregate agg = getMetricData(scheduleId,startTime,endTime,dataPoints,hideEmpty);
-        return renderTemplate("metricData", agg);
-    }
 
     /**
      * Return a metric schedule with the respective status codes for cache validation
@@ -149,7 +160,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         if (builder==null) {
             // preconditions not met, we need to send the resource
-            if (mediaType == MediaType.TEXT_HTML_TYPE) {
+            if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                 builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
             }
             else {
@@ -191,7 +202,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     public MetricSchedule updateSchedule(int scheduleId, MetricSchedule in) {
         if (in==null)
             throw new StuffNotFoundException("Input is null"); // TODO other type of exception
-
         if (in.getScheduleId()==null)
             throw new StuffNotFoundException("Invalid input data");
 
@@ -205,8 +215,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         scheduleManager.updateSchedule(caller, schedule);
 
         schedule = scheduleManager.getScheduleById(caller,scheduleId);
+        MeasurementDefinition def = schedule.getDefinition();
 
-        MetricSchedule ret = new MetricSchedule(scheduleId,in.getScheduleName(),in.getDisplayName(),schedule.isEnabled(),schedule.getInterval(),in.getUnit(),in.getType());
+        MetricSchedule ret = new MetricSchedule(scheduleId,def.getName(),def.getDisplayName(),
+                schedule.isEnabled(),schedule.getInterval(),def.getUnits().toString(),def.getDataType().toString());
 
         return ret;
     }

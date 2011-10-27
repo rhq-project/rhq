@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
@@ -64,7 +65,7 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
     }
 
     private ConfigurationDefinition getDriftConfigDef() {
-        if (wizard.getEntityContext().isSubsystemView()) {
+        if (wizard.getEntityContext().getType() == EntityContext.Type.ResourceTemplate) {
             return DriftConfigurationDefinition.getNewTemplateInstance();
         }
 

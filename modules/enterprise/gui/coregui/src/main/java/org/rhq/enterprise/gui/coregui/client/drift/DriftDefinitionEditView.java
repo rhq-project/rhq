@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -116,9 +117,14 @@ public class DriftDefinitionEditView extends LocatableVLayout implements Propert
         GWTServiceLookup.getDriftService().getDriftDefinition(driftDefId, new AsyncCallback<DriftDefinition>() {
             @Override
             public void onSuccess(final DriftDefinition result) {
+                ConfigurationDefinition configDef = null;
+                if (result.getTemplate() != null && result.getTemplate().isPinned()) {
+                    configDef = DriftConfigurationDefinition.getExistingResourceInstanceByPinnedTemplate();
+                } else {
+                    configDef = DriftConfigurationDefinition.getInstanceForExistingConfiguration();
+                }
 
-                editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
-                    .getInstanceForExistingConfiguration(), result.getConfiguration());
+                editor = new ConfigurationEditor(extendLocatorId("Editor"), configDef, result.getConfiguration());
                 editor.setOverflow(Overflow.AUTO);
                 editor.addPropertyValueChangeListener(DriftDefinitionEditView.this);
                 editor.setReadOnly(!hasWriteAccess);

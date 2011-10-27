@@ -55,12 +55,23 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
 
             // keep a reference to the startingConfig in case the user navs back and changes it
             startingConfig = wizard.getNewStartingConfiguration();
-            ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
+            ConfigurationDefinition def = getDriftConfigDef();
             editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
             vLayout.addMember(editor);
         }
 
         return vLayout;
+    }
+
+    private ConfigurationDefinition getDriftConfigDef() {
+        if (wizard.getEntityContext().isSubsystemView()) {
+            return DriftConfigurationDefinition.getNewTemplateInstance();
+        }
+
+        if (wizard.getSelectedTemplate().isPinned()) {
+            return DriftConfigurationDefinition.getNewResourceInstanceByPinnedTemplate();
+        }
+        return DriftConfigurationDefinition.getInstance();
     }
 
     public boolean nextPage() {

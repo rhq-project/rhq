@@ -61,7 +61,7 @@ public class DriftPinTemplateWizardConfigStep extends AbstractWizardStep {
             vLayout.setOverflow(Overflow.AUTO);
 
             Configuration startingConfig = wizard.getSnapshotDriftDef().getConfiguration();
-            ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
+            ConfigurationDefinition def = DriftConfigurationDefinition.getNewPinnedTemplateInstance();
             editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
             vLayout.addMember(editor);
         }

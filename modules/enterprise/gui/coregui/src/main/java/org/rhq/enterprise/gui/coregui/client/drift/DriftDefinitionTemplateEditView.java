@@ -121,7 +121,7 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
                     DriftDefinitionTemplate template = result.get(0);
 
                     editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
-                        .getInstanceForExistingConfiguration(), template.getConfiguration());
+                        .getExistingTemplateInstance(), template.getConfiguration());
                     editor.setOverflow(Overflow.AUTO);
                     editor.addPropertyValueChangeListener(DriftDefinitionTemplateEditView.this);
                     editor.setReadOnly(!hasWriteAccess);

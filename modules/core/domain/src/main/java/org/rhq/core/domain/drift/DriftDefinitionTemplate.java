@@ -201,11 +201,16 @@ public class DriftDefinitionTemplate implements Serializable {
     }
 
     public Configuration createConfiguration() {
-        return configuration.deepCopyWithoutProxies();
+        return createDefinition().getConfiguration();
     }
 
     public DriftDefinition createDefinition() {
-        return new DriftDefinition(configuration.deepCopyWithoutProxies());
+        DriftDefinition definition = new DriftDefinition(configuration.deepCopyWithoutProxies());
+        definition.setAttached(true);
+        definition.setPinned(isPinned());
+        definition.setTemplate(this);
+
+        return definition;
     }
 
     public boolean isPinned() {

@@ -100,6 +100,22 @@ public class DriftConfigurationDefinition implements Serializable {
     private static final ConfigurationDefinition INSTANCE_FOR_EXISTING_CONFIGS = new ConfigurationDefinition(
         "GLOBAL_DRIFT_CONFIG_DEF", "The drift detection definition");
 
+    private static final ConfigurationDefinition NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE = new ConfigurationDefinition(
+        "NEW_RESOURCE_DRIFT_DEF_BY_PINNED_TEMPLATE", "A new resource drift definition created from a pinned template");
+
+    private static final ConfigurationDefinition EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE =
+        new ConfigurationDefinition("EXISTING_RESOURCE_DRIFT_DEF_BY_PINNED_TEMPLATE",
+            "An existing resource drift definition created from a pinned template");
+
+    private static final ConfigurationDefinition NEW_TEMPLATE_INSTANCE = new ConfigurationDefinition(
+        "NEW_TEMPLATE_DRIFT_CONFIG_DEF", "A new template drift definition");
+
+    private static final ConfigurationDefinition EXISTING_TEMPLATE_INSTANCE = new ConfigurationDefinition(
+        "EXISTING_TEMPLATE_DRIFT_CONFIG_DEF", "An existing template drift definition");
+
+    private static final ConfigurationDefinition NEW_PINNED_TEMPLATE_INSTANCE = new ConfigurationDefinition(
+        "NEW_PINNED_TEMPLATE_DRIFT_CONFIG_DEF", "A new pinned template drift definition");
+
     /**
      * Returns a configuration definition suitable for showing a new configuration form - that is,
      * a configuration that has not yet been created.
@@ -124,6 +140,26 @@ public class DriftConfigurationDefinition implements Serializable {
         return INSTANCE_FOR_EXISTING_CONFIGS;
     }
 
+    public static ConfigurationDefinition getNewResourceInstanceByPinnedTemplate() {
+        return NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE;
+    }
+
+    public static ConfigurationDefinition getExistingResourceInstanceByPinnedTemplate() {
+        return EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE;
+    }
+
+    public static ConfigurationDefinition getNewTemplateInstance() {
+        return NEW_TEMPLATE_INSTANCE;
+    }
+
+    public static ConfigurationDefinition getExistingTemplateInstance() {
+        return EXISTING_TEMPLATE_INSTANCE;
+    }
+
+    public static ConfigurationDefinition getNewPinnedTemplateInstance() {
+        return NEW_PINNED_TEMPLATE_INSTANCE;
+    }
+
     static {
         INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE.put(createName(INSTANCE, false));
@@ -134,8 +170,8 @@ public class DriftConfigurationDefinition implements Serializable {
         INSTANCE.put(createBasedir(INSTANCE, false));
         INSTANCE.put(createIncludes(INSTANCE, false));
         INSTANCE.put(createExcludes(INSTANCE, false));
-        INSTANCE.put(createPinned(INSTANCE));
-        INSTANCE.put(createAttached(INSTANCE));
+        INSTANCE.put(createPinned(INSTANCE, false));
+        INSTANCE.put(createAttached(INSTANCE, false));
 
         INSTANCE_FOR_EXISTING_CONFIGS.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE_FOR_EXISTING_CONFIGS.put(createName(INSTANCE_FOR_EXISTING_CONFIGS, true));
@@ -146,7 +182,69 @@ public class DriftConfigurationDefinition implements Serializable {
         INSTANCE_FOR_EXISTING_CONFIGS.put(createBasedir(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createIncludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
-        INSTANCE_FOR_EXISTING_CONFIGS.put(createPinned(INSTANCE_FOR_EXISTING_CONFIGS));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createAttached(INSTANCE_FOR_EXISTING_CONFIGS, false));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createPinned(INSTANCE_FOR_EXISTING_CONFIGS, true));
+
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createName(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, false));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createDescription(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createInterval(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createEnabled(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createDriftHandlingMode(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createBasedir(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, true));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createIncludes(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, true));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createExcludes(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, true));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createPinned(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, true));
+        NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createAttached(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, true));
+
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createName(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
+            true));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createDescription(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createInterval(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createEnabled(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createDriftHandlingMode(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createBasedir(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
+            true));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createIncludes(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
+            true));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createExcludes(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
+            true));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createPinned(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
+            true));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createAttached(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
+            true));
+
+        NEW_TEMPLATE_INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        NEW_TEMPLATE_INSTANCE.put(createName(NEW_TEMPLATE_INSTANCE, false));
+        NEW_TEMPLATE_INSTANCE.put(createDescription(NEW_TEMPLATE_INSTANCE));
+        NEW_TEMPLATE_INSTANCE.put(createInterval(NEW_TEMPLATE_INSTANCE));
+        NEW_TEMPLATE_INSTANCE.put(createEnabled(NEW_TEMPLATE_INSTANCE));
+        NEW_TEMPLATE_INSTANCE.put(createDriftHandlingMode(NEW_TEMPLATE_INSTANCE));
+        NEW_TEMPLATE_INSTANCE.put(createBasedir(NEW_TEMPLATE_INSTANCE, false));
+        NEW_TEMPLATE_INSTANCE.put(createIncludes(NEW_TEMPLATE_INSTANCE, false));
+        NEW_TEMPLATE_INSTANCE.put(createExcludes(NEW_TEMPLATE_INSTANCE, false));
+
+        EXISTING_TEMPLATE_INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        EXISTING_TEMPLATE_INSTANCE.put(createName(EXISTING_TEMPLATE_INSTANCE, true));
+        EXISTING_TEMPLATE_INSTANCE.put(createDescription(EXISTING_TEMPLATE_INSTANCE));
+        EXISTING_TEMPLATE_INSTANCE.put(createInterval(EXISTING_TEMPLATE_INSTANCE));
+        EXISTING_TEMPLATE_INSTANCE.put(createEnabled(EXISTING_TEMPLATE_INSTANCE));
+        EXISTING_TEMPLATE_INSTANCE.put(createDriftHandlingMode(EXISTING_TEMPLATE_INSTANCE));
+        EXISTING_TEMPLATE_INSTANCE.put(createBasedir(EXISTING_TEMPLATE_INSTANCE, true));
+        EXISTING_TEMPLATE_INSTANCE.put(createIncludes(EXISTING_TEMPLATE_INSTANCE, true));
+        EXISTING_TEMPLATE_INSTANCE.put(createExcludes(EXISTING_TEMPLATE_INSTANCE, true));
+
+        NEW_PINNED_TEMPLATE_INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createName(NEW_PINNED_TEMPLATE_INSTANCE, false));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createDescription(NEW_PINNED_TEMPLATE_INSTANCE));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createInterval(NEW_PINNED_TEMPLATE_INSTANCE));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createEnabled(NEW_PINNED_TEMPLATE_INSTANCE));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createDriftHandlingMode(NEW_PINNED_TEMPLATE_INSTANCE));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createBasedir(NEW_PINNED_TEMPLATE_INSTANCE, true));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createIncludes(NEW_PINNED_TEMPLATE_INSTANCE, true));
+        NEW_PINNED_TEMPLATE_INSTANCE.put(createExcludes(NEW_PINNED_TEMPLATE_INSTANCE, true));
     }
 
     private static PropertyDefinitionSimple createName(ConfigurationDefinition configDef, boolean readOnly) {
@@ -203,7 +301,7 @@ public class DriftConfigurationDefinition implements Serializable {
         return pd;
     }
 
-    private static PropertyDefinitionSimple createAttached(ConfigurationDefinition configDef) {
+    private static PropertyDefinitionSimple createAttached(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_ATTACHED;
         String description = "A flag that indicates whether or not the definition is attached to the template from " +
             "which it is created. When a template is updated, the changes will be propagated to any attached " +
@@ -216,6 +314,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Attached to Template");
         pd.setDefaultValue("true");
         pd.setOrder(3);
+        pd.setReadOnly(readOnly);
         pd.setConfigurationDefinition(configDef);
 
         return pd;
@@ -258,7 +357,7 @@ public class DriftConfigurationDefinition implements Serializable {
         return pd;
     }
 
-    private static PropertyDefinitionSimple createPinned(ConfigurationDefinition configDef) {
+    private static PropertyDefinitionSimple createPinned(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_PINNED;
         String description = "If set, pins the snapshot that the agent uses for comparing files during drift "
             + "detection. Normally, the agent compares those files being monitored for drift against the latest "
@@ -271,6 +370,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setDisplayName("Pinned");
         pd.setDefaultValue("false");
         pd.setOrder(5);
+        pd.setReadOnly(readOnly);
         pd.setConfigurationDefinition(configDef);
 
         return pd;

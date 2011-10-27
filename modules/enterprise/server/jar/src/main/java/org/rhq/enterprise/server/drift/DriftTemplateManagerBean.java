@@ -102,7 +102,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
     @TransactionAttribute(NEVER)
     public void pinTemplate(Subject subject, int templateId, int driftDefId, int snapshotVersion) {
         templateMgr.createTemplateChangeSet(subject, templateId, driftDefId, snapshotVersion);
-        //pinDefinitions(subject, template);
 
         DriftDefinitionTemplateCriteria templateCriteria = new DriftDefinitionTemplateCriteria();
         templateCriteria.addFilterId(templateId);
@@ -127,8 +126,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
                 newDef.setPinned(true);
 
                 driftMgr.updateDriftDefinition(subject, forResource(resourceId), newDef);
-//                templateMgr.pinDefinition(subject, def.getResource().getId(), templateId,
-//                    new DriftDefinition(def.getConfiguration().deepCopyWithoutProxies()));
             }
         }
     }
@@ -147,28 +144,6 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         String newChangeSetId = driftMgr.persistSnapshot(subject, snapshot, changeSetDTO);
         template.setChangeSetId(newChangeSetId);
     }
-
-//    private void pinDefinitions(Subject subject, DriftDefinitionTemplate template) {
-//        // TODO filter out the detached definitions with a query to avoid loading all of them into memory
-//        for (DriftDefinition definition : template.getDriftDefinitions()) {
-//            if (definition.isAttached()) {
-//                DriftDefinition pinnedDef = new DriftDefinition(definition.getConfiguration().deepCopyWithoutProxies());
-//                pinnedDef.setPinned(true);
-//                //pinnedDef.setTemplate(template);
-//                templateMgr.pinDefinition(subject, definition.getResource().getId(), template.getId(), pinnedDef);
-//            }
-//        }
-//    }
-//
-//    @Override
-//    //@TransactionAttribute(NOT_SUPPORTED)
-//    public void pinDefinition(Subject subject, int resourceId, int templateId, DriftDefinition newDef) {
-//        driftMgr.deleteDriftDefinition(subject, forResource(resourceId), newDef.getName());
-//        DriftDefinitionTemplate template = entityMgr.find(DriftDefinitionTemplate.class, templateId);
-//        newDef.setTemplate(template);
-//        newDef.setPinned(true);
-//        driftMgr.updateDriftDefinition(subject, forResource(resourceId), newDef);
-//    }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @Override

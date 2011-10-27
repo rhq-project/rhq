@@ -16,15 +16,6 @@
   <name>RHQ Enterprise Agent</name>
   <description>RHQ Agent</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/agent/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/agent/</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/enterprise/agent/</scm.module.path>
-  </properties>
-
   <dependencies>
 
     <!-- Internal Deps -->

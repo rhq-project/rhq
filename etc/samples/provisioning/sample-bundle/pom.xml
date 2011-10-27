@@ -16,11 +16,6 @@
   <name>RHQ Sample Bundle</name>
   <description>a sample bundle consisting of JBossAS 6.0 running the Java Petstore application</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/modules/sample-bundle/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/modules/sample-bundle/</developerConnection>
-  </scm>
-
   <properties>
     <!-- dependency versions -->
     <derbyclient.version>10.5.3.0_1</derbyclient.version>

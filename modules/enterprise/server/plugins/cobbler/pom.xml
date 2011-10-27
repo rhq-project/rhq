@@ -15,13 +15,7 @@
 
     <name>RHQ Enterprise Server Cobbler Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/cobbler/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/cobbler/</developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>modules/enterprise/server/plugins/cobbler/</scm.module.path>
         <cobber4j.version>0.1</cobber4j.version>
     </properties>
 

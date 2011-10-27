@@ -17,15 +17,6 @@
     <name>RHQ Integration Tests</name>
     <description>Parent POM for all RHQ integration tests</description>
 
-    <scm>
-       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/integration-tests</connection>
-       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/integration-tests</developerConnection>
-    </scm>
-
-    <properties>
-       <scm.module.path>modules/integration-tests/</scm.module.path>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>${rhq.groupId}</groupId>

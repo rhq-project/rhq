@@ -19,16 +19,7 @@
     <name>RHQ JBossAS 5.x Plugin</name>
     <description>A plugin for managing JBoss Application Server 5.x</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5</connection>
-        <developerConnection>
-            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5
-        </developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
-
         <jbossas.version>6.0.0.M1</jbossas.version>
     </properties>
 

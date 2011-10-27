@@ -15,15 +15,6 @@
    <name>RHQ Enterprise WebDav</name>
    <description>The RHQ WebDav inventory access</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/webdav-war/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/webdav-war/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/enterprise/gui/webdav-war/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <!-- Internal Deps -->

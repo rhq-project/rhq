@@ -13,15 +13,6 @@
 
     <name>RHQ Enterprise Server Mobicents Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-mobicents/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-mobicents/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-mobicents/</scm.module.path>
-    </properties>
-
     <build>
         <plugins>
 

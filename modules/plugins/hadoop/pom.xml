@@ -15,10 +15,6 @@
     <name>RHQ Hadoop Plugin</name>
     <description>Monitor Hadoop clusters</description>
 
-    <properties>
-        <scm.module.path>TODO</scm.module.path>
-    </properties>
-
     <build>
         <plugins>
             <plugin>

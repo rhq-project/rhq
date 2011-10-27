@@ -18,12 +18,6 @@
   <description>archetype for a Maven project for a SmartGWT web application (WAR)</description>
   <url>http://rhq-project.org/</url>
 
-  <scm>
-    <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
-    <url>http://git.fedorahosted.org/git/rhq/rhq.git</url>
-  </scm>
-
   <licenses>
     <license>
       <name>Apache Software License (ASL) version 2.0</name>

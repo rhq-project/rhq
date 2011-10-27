@@ -17,15 +17,6 @@
       A plugin for monitoring network services.
    </description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/platform</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/platform</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/platform/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

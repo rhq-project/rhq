@@ -15,19 +15,8 @@
     <name>RHQ Enterprise Server Disk Content Source Plugin</name>
     <description>JBoss Operations Network Enterprise Server Disk Content Source Plugin</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/disk/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/disk/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/disk/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <!-- Internal Deps -->
-
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-client-api</artifactId>

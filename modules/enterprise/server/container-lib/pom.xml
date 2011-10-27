@@ -16,15 +16,6 @@
    <name>RHQ Enterprise Container Library</name>
    <description>A library of classes that will be deployed in the server container itself, above the main EAR</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/container-lib/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/container-lib/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/enterprise/server/container-lib/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

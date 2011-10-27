@@ -14,14 +14,7 @@
    <name>RHQ Enterprise Remote Client API</name>
    <description>a set of client APIs used to connect to an RHQ Server and invoke methods on it</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/remoting/client-api/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/remoting/client-api/</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
-
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>

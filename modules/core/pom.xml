@@ -16,15 +16,6 @@
    <name>RHQ Core Modules</name>
    <description>parent POM for modules comprising the RHQ core (i.e. modules required by both the enterprise and embedded editions of RHQ)</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/core/</scm.module.path>
-   </properties>
-
    <dependencies>
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>

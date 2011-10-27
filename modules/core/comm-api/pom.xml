@@ -18,15 +18,6 @@
       interfaces that do not necessarily have access to the full comm module
    </description>
 
-   <scm>
-     <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/comm-api</connection>
-     <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/comm-api</developerConnection>
-   </scm>
-
-   <properties>
-     <scm.module.path>modules/core/comm-api/</scm.module.path>
-   </properties>
-
    <profiles>
 
       <profile>

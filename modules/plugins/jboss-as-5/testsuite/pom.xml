@@ -21,15 +21,7 @@
     <name>Jopr JBossAS 5.x Plugin Test Suite</name>
     <description>Test suite for JBoss Application Server 5.x plugin</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5/testsuite</connection>
-        <developerConnection>
-            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as-5/testsuite
-        </developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>jon/plugins/jboss-as-5/testsuite</scm.module.path>
         <final.name>jboss-as5-testsuite</final.name>
         <war.dir>${basedir}/target/${final.name}</war.dir>
         <jon.version>2.0.1-SNAPSHOT</jon.version>

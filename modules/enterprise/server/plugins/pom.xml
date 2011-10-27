@@ -16,15 +16,6 @@
    <name>RHQ Enterprise Server Plugins</name>
    <description>RHQ enterprise server plugins parent POM</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/enterprise/server/plugins/</scm.module.path>
-   </properties>
-
    <dependencies>
       <!-- all server-side plugins have access to some of the server-side APIs, therefore, we need this dependency -->
       <dependency>

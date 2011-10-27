@@ -14,15 +14,6 @@
     <name>RHQ File Template Bundle Plugins Common Library</name>
     <description>A library with the code common to the agent and server plugins for File Template Bundles</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/filetemplate-bundle/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/filetemplate-bundle/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/common/filetemplate-bundle/</scm.module.path>
-    </properties>
-
     <dependencies>
 
         <dependency>

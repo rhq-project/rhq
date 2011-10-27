@@ -15,15 +15,6 @@
    <name>RHQ Tomcat Plugin</name>
    <description>A plugin for managing standalone JBoss EWS and Apache Tomcat Servers</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/tomcat/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/tomcat/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/tomcat/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

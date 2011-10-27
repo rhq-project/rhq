@@ -16,11 +16,6 @@
   <name>RHQ Base Perspective Jar</name>
   <description>the base perspective classes and dependencies</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/base-perspective-jar/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/base-perspective-jar/</developerConnection>
-  </scm>
-
   <properties>
     <jsf.version>1.2_14</jsf.version>
     <facelets.version>1.1.15.B1</facelets.version>

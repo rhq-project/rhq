@@ -15,15 +15,6 @@
    <name>RHQ Augeas-based iptables Plugin</name>
    <description>A plugin for managing the *nix iptables file</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/iptables</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/iptables</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/iptables/</scm.module.path>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${rhq.groupId}</groupId>

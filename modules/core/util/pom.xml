@@ -14,15 +14,6 @@
   <name>RHQ Utilities</name>
   <description>generic utility classes for use by any RHQ module</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/util</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/util</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/core/util/</scm.module.path>
-  </properties>
-
   <dependencies>
 
     <!-- Used by the (deprecated) legacy XML parser, which is used to parse RHQ license files. -->

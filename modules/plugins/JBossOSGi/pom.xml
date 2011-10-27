@@ -19,11 +19,6 @@
     <name>JBossOSGi Plugin</name>
     <description>Plugin to Manage JBossOSGi services</description>
 
-      <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/JBoss-OSGi/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/JBoss-OSGi/</developerConnection>
-   </scm>
-
     <build>
         <plugins>
             <plugin>

@@ -16,13 +16,7 @@
   <name>RHQ Enterprise Installer War</name>
   <description>The RHQ Enterprise Installer webapp</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/installer-war/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/installer-war/</developerConnection>
-  </scm>
-
   <properties>
-    <scm.module.path>modules/enterprise/gui/installer-war/</scm.module.path>
     <war.dir>${basedir}/target/${final.name}</war.dir>
 
     <!-- plugin versions -->

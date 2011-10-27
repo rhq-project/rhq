@@ -16,14 +16,6 @@
    <name>RHQ Modules</name>
    <description>parent POM for all RHQ modules</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules</developerConnection>
-   </scm>
-
-   <properties>
-   </properties>
-
    <modules>
       <module>test-utils</module>
    </modules>

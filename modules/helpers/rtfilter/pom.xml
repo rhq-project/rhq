@@ -15,14 +15,8 @@
   <name>RHQ rtfilter</name>
   <description>Filter to gather response time metrics from web applcations</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/rtfilter</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers/rtfilter</developerConnection>
-   </scm>
-
    <properties>
       <final.name>rhq-rtfilter</final.name>
-      <scm.module.path>modules/helpers/rtfilter/</scm.module.path>
       <war.dir>${basedir}/target/${final.name}</war.dir>
    </properties>
 

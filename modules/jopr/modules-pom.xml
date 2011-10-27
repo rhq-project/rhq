@@ -15,14 +15,7 @@
   <name>Jopr Modules</name>
   <description>parent POM for all Jopr modules</description>
 
-  <scm>
-    <connection>scm:svn:http://svn.jboss.org/repos/jopr/trunk/modules/</connection>
-    <developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/trunk/modules/</developerConnection>
-  </scm>
-
   <properties>
-    <scm.module.path>modules/</scm.module.path>
-    
     <!-- dependency versions -->
     <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
     <persistence-api.version>1.0</persistence-api.version>

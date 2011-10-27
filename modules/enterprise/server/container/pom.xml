@@ -16,17 +16,9 @@
   <name>RHQ Enterprise Server Container</name>
   <description>The full RHQ container build, including the JBossAS server and all config/deploy files</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/container/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/container/</developerConnection>
-  </scm>
-
   <properties>
-    <scm.module.path>modules/enterprise/server/container/</scm.module.path>
-
     <!-- dependency versions -->
     <jboss-faces.version>4.2.3.GA</jboss-faces.version>
-
     <rhq.webappsReloadable>false</rhq.webappsReloadable>
   </properties>
 

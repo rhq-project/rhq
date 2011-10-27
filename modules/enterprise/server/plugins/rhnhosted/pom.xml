@@ -15,19 +15,8 @@
     <name>RHQ Enterprise Server RHN Hosted Plugin</name>
     <description>Provides ability to communicate with RHN Hosted</description>
 
-    <scm>
-        <connection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/rhnhosted/</connection>
-        <developerConnection>scm:svn:http://svn.rhq-project.org/repos/rhq/trunk/modules/enterprise/server/plugins/rhnhosted/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/rhnhosted/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <!-- Internal Deps -->
-
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-client-api</artifactId>

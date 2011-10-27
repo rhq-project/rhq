@@ -14,13 +14,7 @@
    <name>RHQ Enterprise Remote CLI</name>
    <description>RHQ Enterprise Remote Command Line Interface</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/client/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/client/</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
       <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>

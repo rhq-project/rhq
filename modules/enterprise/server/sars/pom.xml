@@ -16,11 +16,6 @@
   <name>RHQ Enterprise Server JBoss AS SARs</name>
   <description>parent POM for all JBoss AS SARs</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/</developerConnection>
-  </scm>
-
   <build>
     <plugins>
 

@@ -13,22 +13,6 @@
 
     <name>RHQ Enterprise Server Subject Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-subject/
-        </connection>
-        <developerConnection>
-            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-subject/
-        </developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-subject/</scm.module.path>
-    </properties>
-
-    <dependencies>
-
-    </dependencies>
-
     <build>
         <plugins>
 

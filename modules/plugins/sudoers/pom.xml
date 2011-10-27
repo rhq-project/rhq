@@ -15,13 +15,7 @@
    <name>RHQ Augeas-based Sudoers Plugin</name>
    <description>A plugin for managing the *nix sudoers file</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sudoers</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sudoers</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/sudoers/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

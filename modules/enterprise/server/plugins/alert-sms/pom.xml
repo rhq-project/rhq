@@ -16,13 +16,7 @@
 
     <name>RHQ Enterprise Server SMS-Sender Alert Plugin</name>
 
-     <scm>
-         <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-sms/</connection>
-         <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-sms/</developerConnection>
-     </scm>
-
      <properties>
-         <scm.module.path>modules/enterprise/server/plugins/alert-sms/</scm.module.path>
          <resteasy.version>1.2.GA</resteasy.version>
      </properties>
 

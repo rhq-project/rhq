@@ -16,11 +16,6 @@
   <name>RHQ Base Perspective War</name>
   <description>an abstract WAR that can be used by the maven war plugin as an overlay (i.e. base) for a perspective WAR</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/base-perspective-war/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/base-perspective-war/</developerConnection>
-  </scm>
-
   <dependencies>
 
       <dependency>

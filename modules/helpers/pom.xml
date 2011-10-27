@@ -16,17 +16,6 @@
   <name>RHQ Helpers</name>
   <description>parent POM for all RHQ helpers</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/helpers</developerConnection>
-  </scm>
-
-
-  <properties>
-    <scm.module.path>modules/helpers/</scm.module.path>
-  </properties>
-
-
   <dependencies>
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>

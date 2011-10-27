@@ -15,16 +15,6 @@
     <name>RHQ pattern Plugin</name>
     <description>Generate metrics that follow given patterns</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/pattern-generator</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/pattern-generator</developerConnection>
-    </scm>
-
-    <properties>
-       <scm.module.path>modules/plugins/pattern-generator/</scm.module.path>
-    </properties>
-
-
     <build>
         <plugins>
             <plugin>

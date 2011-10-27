@@ -15,13 +15,7 @@
    <name>RHQ Enterprise Server EAR</name>
    <description>RHQ enterprise server EAR</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/ear/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/ear/</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/enterprise/server/ear/</scm.module.path>
       <earDirectory>${project.build.directory}/${project.build.finalName}</earDirectory>
 
       <!-- dependency versions -->

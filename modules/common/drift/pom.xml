@@ -14,15 +14,6 @@
    <name>RHQ Drift Common Library</name>
    <description>A library with the code common to the agent and server drift management code</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/drift/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/drift/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/common/drift/</scm.module.path>
-   </properties>
-
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>

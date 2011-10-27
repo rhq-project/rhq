@@ -16,15 +16,6 @@
    <name>RHQ Plugins</name>
    <description>parent POM for all RHQ plugins</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

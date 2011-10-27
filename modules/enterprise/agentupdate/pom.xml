@@ -16,13 +16,7 @@
   <name>RHQ Enterprise Agent Update</name>
   <description>RHQ Agent Update</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/agentupdate/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/agentupdate/</developerConnection>
-  </scm>
-
   <properties>
-    <scm.module.path>modules/enterprise/agentupdate/</scm.module.path>
     <ant.version>1.7.1</ant.version>
   </properties>
 

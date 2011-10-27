@@ -19,17 +19,10 @@
     <url>http://redhat.com/</url>
   </organization>
 
-  <scm>
-    <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
-    <url>http://git.fedorahosted.org/git/rhq/rhq.git</url>
-  </scm>
-
   <issueManagement>
     <system>bugzilla</system>
     <url>https://bugzilla.redhat.com/browse.cgi?product=RHQ%20Project</url>
   </issueManagement>
-
 
   <properties>
     <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->

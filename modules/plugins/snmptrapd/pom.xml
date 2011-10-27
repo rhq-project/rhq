@@ -12,15 +12,6 @@
   <name>RHQ SnmpTrapd Plugin</name>
   <description>RHQ SnmpTrapd Plugin</description>
 
-     <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmptrapd</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmptrapd</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/snmptrapd/</scm.module.path>
-   </properties>
-
   <build>
     <plugins>
       <plugin>

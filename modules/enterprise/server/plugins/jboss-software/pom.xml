@@ -15,17 +15,7 @@
     <name>RHQ Enterprise Server JBoss Software Plugin</name>
     <description>JBoss Operations Network Enterprise Server JBoss Software RSS Feed Plugin</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/jboss-software/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/jboss-software/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/jboss-software/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-client-api</artifactId>

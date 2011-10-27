@@ -16,20 +16,6 @@
     <name>RHQ REST interface</name>
     <description>RHQ Rest interface for the RHQ server</description>
 
-
-    <scm>
-       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/rest-war/</connection>
-       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/rest-war/</developerConnection>
-    </scm>
-
-
-    <properties>
-       <scm.module.path>modules/enterprise/gui/rest-war/</scm.module.path>
-
-
-       <!-- Note: The product info properties now live in the RHQ root pom. -->
-    </properties>
-
     <dependencies>
         <dependency>
            <groupId>org.rhq</groupId>

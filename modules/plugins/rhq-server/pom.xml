@@ -15,15 +15,6 @@
    <name>RHQ Server Plugin</name>
    <description>A plugin for managing RHQ Servers</description>
 
-   <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/rhq-server</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/rhq-server</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/rhq-server/</scm.module.path>
-   </properties>
-
    <dependencies>
         <dependency>
           <groupId>${rhq.groupId}</groupId>

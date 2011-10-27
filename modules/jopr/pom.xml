@@ -26,11 +26,6 @@
     <url>http://jboss.com/</url>
   </organization>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/</developerConnection>
-  </scm>
-
   <issueManagement>
     <system>jira</system>
     <url>https://jira.jboss.org/jira/browse/JOPR</url>
@@ -45,9 +40,6 @@
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
     <!-- set the below prop to true to enable misc extra build output -->
     <rhq.debug>false</rhq.debug>
-   
-    <scm.branch>trunk</scm.branch>
-    <scm.module.path />    
   </properties>
 
   <modules>

@@ -16,11 +16,6 @@
    <name>RHQ Policy Perspective Parent</name>
    <description>parent POM for modules comprising the RHQ Policy Perspective</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/plugins/perspectives/policy</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/plugins/perspectives/policy</developerConnection>
-   </scm>
-
    <modules>
       <module>perspective</module>
       <module>app</module>

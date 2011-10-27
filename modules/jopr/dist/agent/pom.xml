@@ -27,15 +27,6 @@
   <name>Jopr Agent</name>
   <description>The Jopr Agent</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/agent/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/agent/</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/dist/agent/</scm.module.path>
-  </properties>
-
   <dependencies>
 
     <dependency>

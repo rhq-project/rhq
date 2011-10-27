@@ -15,7 +15,6 @@
     <name>RHQ JBossAS 7.x Plugin</name>
 
     <properties>
-        <scm.module.path>TODO</scm.module.path>
         <json.version>${project.json.version}</json.version>
         <jackson.version>1.7.4</jackson.version>
     </properties>

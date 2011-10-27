@@ -16,11 +16,6 @@
   <name>RHQ Enterprise Agent-Server Communications Layer</name>
   <description>RHQ Enterprise Agent-Server Communications Layer</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/comm/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/comm/</developerConnection>
-  </scm>
-
   <properties>
     <!-- Ports used by unit tests - can be overridden via profiles in settings.xml -->
     <rhq.comm.test.connectorBindPort>33333</rhq.comm.test.connectorBindPort>

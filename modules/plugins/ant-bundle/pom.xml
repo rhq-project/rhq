@@ -15,23 +15,12 @@
     <name>RHQ Ant Bundle Plugin</name>
     <description>a plugin that processes ant-based bundles</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/ant-bundle/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/ant-bundle/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/plugins/ant-bundle/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-ant-bundle-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-
     </dependencies>
 
     <build>

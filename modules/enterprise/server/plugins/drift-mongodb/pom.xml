@@ -15,17 +15,10 @@
     <name>Drift Server MongoDB Plugin</name>
     <description>Server side plugin providing MongoDB Backend for drift management</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/drift-mongodb/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/drift-mongodb/</developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>modules/enterprise/server/plugins/drift-mongodb/</scm.module.path>
         <!--
           Tests are temporarily disabled until a MongoDB server is set up for use with 
           hudson builds. They can however be run locally provided you have MongoDB installed.
-
           - jsanda
         -->
         <skipTests>true</skipTests>

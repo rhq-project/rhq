@@ -14,13 +14,7 @@
 
     <name>RHQ Enterprise Server Cloud Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/cloud/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/cloud/</developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>modules/enterprise/server/plugins/cloud/</scm.module.path>
         <cobber4j.version>0.1</cobber4j.version>
     </properties>
 

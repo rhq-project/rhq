@@ -15,13 +15,7 @@
    <name>RHQ Enterprise Server JAR</name>
    <description>RHQ enterprise server main JAR</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/jar/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/jar/</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/enterprise/server/jar/</scm.module.path>
       <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
       <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
 

@@ -15,13 +15,7 @@
   <name>RHQ Enterprise Server Embedded Agent SAR</name>
   <description>The SAR that allows the server to embed the agent</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/agent-sar/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/sars/agent-sar/</developerConnection>
-  </scm>
-
   <properties>
-    <scm.module.path>modules/enterprise/server/sars/agent-sar/</scm.module.path>
     <sarDirectory>${project.build.directory}/${project.build.finalName}</sarDirectory>
   </properties>
 

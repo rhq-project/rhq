@@ -15,15 +15,6 @@
    <name>RHQ Performance Test Plugin</name>
    <description>a plugin for performance testing</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/perftest</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/perftest</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/perftest/</scm.module.path>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>javax.xml.bind</groupId>

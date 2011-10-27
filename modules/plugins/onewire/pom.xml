@@ -15,15 +15,6 @@
   <name>snmptrapd</name>
   <description>RHQ OneWire Plugin</description>
   
-     <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmpget/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/snmpget/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/onewire</scm.module.path>
-   </properties>
-  
   <build>
     <plugins>
       <plugin>

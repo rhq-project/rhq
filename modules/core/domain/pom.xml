@@ -14,14 +14,7 @@
    <name>RHQ Domain Model</name>
    <description>RHQ domain model classes (i.e. POJOs used by both server and agent)</description>
 
-   <scm>
-     <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/domain</connection>
-     <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/domain</developerConnection>
-   </scm>
-
    <properties>
-     <scm.module.path>modules/core/domain/</scm.module.path>
-
      <!-- dependency versions -->
      <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
    </properties>

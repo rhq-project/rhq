@@ -16,14 +16,7 @@
   <name>Jopr Server</name>
   <description>The Jopr Server</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/server/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/server/</developerConnection>
-  </scm>
-
   <properties>
-    <scm.module.path>modules/dist/server/</scm.module.path>
-
     <!-- dependency versions -->
     <product.shortName>Jopr</product.shortName>
     <product.name>Jopr</product.name>

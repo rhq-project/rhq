@@ -15,13 +15,7 @@
    <name>RHQ Augeas-based Cron Plugin</name>
    <description>A plugin for managing the *nix cron file</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/cron</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/cron</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/cron/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

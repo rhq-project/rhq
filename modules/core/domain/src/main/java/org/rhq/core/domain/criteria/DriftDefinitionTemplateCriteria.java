@@ -29,6 +29,7 @@ public class DriftDefinitionTemplateCriteria extends Criteria {
     private String filterName;
     private Integer filterResourceTypeId;
 
+    private boolean fetchResourceType;
     private boolean fetchDriftDefinitions;
 
     public DriftDefinitionTemplateCriteria() {
@@ -40,19 +41,23 @@ public class DriftDefinitionTemplateCriteria extends Criteria {
         return DriftDefinitionTemplate.class;
     }
 
-    public void addFilterId(Integer id) {
-        filterId = id;
+    public void addFilterId(Integer filterId) {
+        this.filterId = filterId;
     }
 
-    public void addFilterName(String name) {
-        filterName = name;
+    public void addFilterName(String filterName) {
+        this.filterName = filterName;
     }
 
-    public void addFilterResourceTypeId(Integer resourceTypeId) {
-        filterResourceTypeId = resourceTypeId;
+    public void addFilterResourceTypeId(Integer filterResourceTypeId) {
+        this.filterResourceTypeId = filterResourceTypeId;
     }
 
-    public void fetchDriftDefinitions(boolean fetchDefinitions) {
-        fetchDriftDefinitions = fetchDefinitions;
+    public void fetchResourceType(boolean fetchResourceType) {
+        this.fetchResourceType = fetchResourceType;
+    }
+
+    public void fetchDriftDefinitions(boolean fetchDriftDefinitions) {
+        this.fetchDriftDefinitions = fetchDriftDefinitions;
     }
 }

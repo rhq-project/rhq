@@ -60,8 +60,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
-import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -152,7 +152,13 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             log.error("Failed to reload the system config cache - will try again later. Cause: " + t);
         } finally {
             // reschedule ourself to trigger in another 60 seconds
-            timerService.createTimer(60000L, TIMER_DATA);
+            try {
+                timerService.createTimer(60000L, TIMER_DATA);
+            } catch (Throwable t) {
+                log
+                    .error("Failed to reschedule system config cache reload timer! System config cache reload handling will not work from this point. A server restart may be needed after issue is resolved:"
+                        + t);
+            }
         }
     }
 
@@ -181,16 +187,16 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Deprecated
     public Properties getSystemConfiguration(Subject subject) {
         Properties copy = new Properties();
-        
+
         SystemSettings settings = getSystemSettings(subject);
-        for(Map.Entry<SystemSetting, String> e : settings.entrySet()) {
+        for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
             //transform the value back to the database format, because that's
             //what this method always returned
             String value = transformSystemConfigurationProperty(e.getKey(), e.getValue(), false);
-            
+
             copy.put(e.getKey().getInternalName(), value);
         }
-        
+
         return copy;
     }
 
@@ -245,19 +251,22 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 //them to "false"/"true" and store that value to database. This is a one way operation
                 //and therefore we need to compare the database-agnostic (i.e. "true"/"false") and
                 //not database specific.
-                String existingValue = transformSystemConfigurationProperty(prop, existingConfig.getPropertyValue(), true);
-                
+                String existingValue = transformSystemConfigurationProperty(prop, existingConfig.getPropertyValue(),
+                    true);
+
                 if ((existingValue == null && value != null) || !existingValue.equals(value)) {
                     //SystemSetting#isReadOnly should be a superset of the "fReadOnly" field in the database
                     //but let's just be super paranoid here...
-                    if (prop.isReadOnly() || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue())) {
+                    if (prop.isReadOnly()
+                        || (existingConfig.getFreadOnly() != null && existingConfig.getFreadOnly().booleanValue())) {
                         throw new IllegalArgumentException("The setting [" + prop.getInternalName()
-                            + "] is read-only - you cannot change its current value! Current value is [" + existingConfig.getPropertyValue() + "] while the new value was [" + value + "].");
+                            + "] is read-only - you cannot change its current value! Current value is ["
+                            + existingConfig.getPropertyValue() + "] while the new value was [" + value + "].");
                     }
-                    
+
                     //transform to the database-specific format
                     value = transformSystemConfigurationProperty(prop, value, false);
-                    
+
                     existingConfig.setPropertyValue(value);
                     entityManager.merge(existingConfig);
                 }
@@ -288,9 +297,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 String value = transformSystemConfigurationProperty(prop, e.getValue(), true);
                 e.setValue(value);
             }
-        }        
+        }
     }
-    
+
     private Map<String, String> getDriftServerPlugins() {
         DriftServerPluginManager pluginMgr = getDriftServerPluginManager();
         Map<String, String> plugins = new HashMap<String, String>();
@@ -362,9 +371,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @Deprecated
     public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception {
         Map<String, String> map = toMap(properties);
-        
+
         transformToSystemSettingsFormat(map);
-        
+
         SystemSettings settings = SystemSettings.fromMap(map);
 
         setSystemSettings(settings, skipValidation);
@@ -374,9 +383,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     public void validateSystemConfiguration(Subject subject, Properties properties)
         throws InvalidSystemConfigurationException {
         Map<String, String> map = toMap(properties);
-        
+
         transformToSystemSettingsFormat(map);
-        
+
         SystemSettings settings = SystemSettings.fromMap(map);
         for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
             SystemSetting prop = e.getKey();
@@ -389,7 +398,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     /**
      * Call this to transform a system setting to a more appropriate value.
      */
-    private String transformSystemConfigurationProperty(SystemSetting prop, String value, boolean fromDb) {        
+    private String transformSystemConfigurationProperty(SystemSetting prop, String value, boolean fromDb) {
         if (fromDb) {
             // to support Oracle (whose booleans may be 1 or 0) transform the boolean settings properly
             switch (prop) {
@@ -414,13 +423,13 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                         return Boolean.TRUE.toString();
                     }
                 }
-            }            
+            }
         } else {
             //toDB
             //the 0,1 -> true false scenario is no problem here, because the values are stored
             //as string anyway (so no conversion is done). I assume the above is a historical
             //code that could be safely eliminated.
-            switch(prop) {
+            switch (prop) {
             case LDAP_BASED_JAAS_PROVIDER:
                 if (Boolean.parseBoolean(value)) {
                     return RHQConstants.LDAPJAASProvider;
@@ -435,7 +444,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
                 }
             }
         }
-        
+
         return value;
     }
 
@@ -693,8 +702,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     public boolean isDebugModeEnabled() {
         try {
             Subject su = this.subjectManager.getOverlord();
-            String setting = getSystemSettings(su).get(
-                SystemSetting.DEBUG_MODE_ENABLED);
+            String setting = getSystemSettings(su).get(SystemSetting.DEBUG_MODE_ENABLED);
             if (setting == null) {
                 setting = "false";
             }
@@ -707,8 +715,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     public boolean isExperimentalFeaturesEnabled() {
         try {
             Subject su = this.subjectManager.getOverlord();
-            String setting = getSystemSettings(su).get(
-                SystemSetting.EXPERIMENTAL_FEATURES_ENABLED);
+            String setting = getSystemSettings(su).get(SystemSetting.EXPERIMENTAL_FEATURES_ENABLED);
             if (setting == null) {
                 setting = "false";
             }
@@ -733,7 +740,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             && (((groupFilter != null) && groupFilter.trim().length() > 0) || ((groupMember != null) && groupMember
                 .trim().length() > 0));
     }
-    
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public ServerDetails getServerDetails(Subject subject) {
         CoreServerMBean coreServerMBean = LookupUtil.getCoreServer();

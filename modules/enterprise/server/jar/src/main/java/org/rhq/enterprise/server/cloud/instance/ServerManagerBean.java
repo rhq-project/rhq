@@ -119,10 +119,15 @@ public class ServerManagerBean implements ServerManagerLocal {
         } catch (Throwable t) {
             log.error("Failed to handle cloud heartbeat timer - will try again later. Cause: " + t);
         } finally {
-            // reschedule ourself to trigger in another 30 seconds
-            timerService.createTimer(30000, TIMER_DATA);
+            // reschedule ourself to trigger in another 30 seconds        
+            try {
+                timerService.createTimer(30000, TIMER_DATA);
+            } catch (Throwable t) {
+                log
+                    .error("Failed to reschedule cloud heartbeat timer! Server status handling will not work from this point. A server restart may be needed after issue is resolved:"
+                        + t);
+            }
         }
-
     }
 
     public int create(Server server) {

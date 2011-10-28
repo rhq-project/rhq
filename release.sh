@@ -242,12 +242,15 @@ set_local_and_environment_variables()
       MAVEN_SETTINGS_FILE="$HOME/.m2/settings.xml"
    fi
 
-   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE -Dmaven.repo.local=$MAVEN_LOCAL_REPO_DIR --batch-mode --errors -Penterprise,dist,release"
+   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE -Dmaven.repo.local=$MAVEN_LOCAL_REPO_DIR --batch-mode --errors"
 
    if [ -n "$EXTRA_MAVEN_PROFILE" ];
    then
-      MAVEN_ARGS="$MAVEN_ARGS,$EXTRA_MAVEN_PROFILE"
+      MAVEN_ARGS="$MAVEN_ARGS --activate-profiles $EXTRA_MAVEN_PROFILE,enterprise,dist,release"
+   else
+      MAVEN_ARGS="$MAVEN_ARGS --activate-profiles enterprise,dist,release"
    fi
+
 
    if [ "$RELEASE_TYPE" = "enterprise" ];
    then

@@ -73,6 +73,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     private Availability availability2;
     private Availability availability3;
 
+    private DriftServerPluginService driftServerPluginService;
+
     @BeforeMethod
     public void beforeMethod() {
         try {
@@ -83,6 +85,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             this.resourceManager = LookupUtil.getResourceManager();
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
             additionalResources = new ArrayList<Resource>();
+
+            driftServerPluginService = new DriftServerPluginService();
+            prepareCustomServerPluginService(driftServerPluginService);
+            driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
+            driftServerPluginService.startMasterPluginContainer();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -131,6 +138,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
         finally {
             unprepareScheduler();
+            unprepareServerPluginService();
+            driftServerPluginService.stopMasterPluginContainer();
         }
     }
 

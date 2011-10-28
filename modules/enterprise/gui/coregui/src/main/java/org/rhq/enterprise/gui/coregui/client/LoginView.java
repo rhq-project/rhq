@@ -59,6 +59,7 @@ import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -205,12 +206,14 @@ public class LoginView extends LocatableCanvas {
         if (!loginShowing) {
             loginShowing = true;
 
+            ProductInfo productInfo = CoreGUI.get().getProductInfo();
+
             int fieldWidth = 120;
 
             LocatableVLayout column = new LocatableVLayout(extendLocatorId("NewLdapRegistration"));
             column.setMargin(25);
             HeaderItem header = new HeaderItem();
-            header.setValue(MSG.view_login_welcomeMsg());
+            header.setValue(MSG.view_login_welcomeMsg(productInfo.getName()));
             header.setWidth("100%");
             //build ui elements for registration screen
             first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());

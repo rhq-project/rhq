@@ -106,8 +106,8 @@
    <modules>
       <!--  core plugins  -->
       <module>platform</module>
-      <module>rhq-agent</module>
       <module>jmx</module>
+      <module>rhq-agent</module>      
    </modules>
 
   <profiles>

@@ -24,6 +24,10 @@
    <properties>
    </properties>
 
+   <modules>
+      <module>test-utils</module>
+   </modules>
+
    <profiles>
 
       <profile>
@@ -168,7 +172,5 @@
        </profile>
    </profiles>
 
-   <modules>
-      <module>test-utils</module>
-   </modules>
 </project>
+

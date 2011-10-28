@@ -610,6 +610,7 @@ Build-OS-Version=${os.version}
                <excludes>
                   <exclude>com/**/*.java</exclude>
                   <exclude>org/rhq/**/performance/**/*.java</exclude>
+                  <exclude>**/drift/*.java</exclude>
                </excludes>
                <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                <groups>${rhq.testng.includedGroups}</groups>

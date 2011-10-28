@@ -52,7 +52,7 @@ set_variables()
    if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
       echo "We appear to be running in a Hudson job." 
       WORKING_DIR="$WORKSPACE"
-      MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
+      MAVEN_LOCAL_REPO_DIR="$WORKSPACE/.m2/repository"
       #MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
    elif [ -z "$WORKING_DIR" ]; then
       WORKING_DIR="$HOME/release/rhq"
@@ -65,7 +65,7 @@ set_variables()
 
    PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
 
-   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Prhq-publish-release,enterprise,dist"
+   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Prhq-publish-release,enterprise,dist -Dmaven.repo.local=$MAVEN_LOCAL_REPO_DIR"
 
    if [ "$MODE" = "test" ]; then
       MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"

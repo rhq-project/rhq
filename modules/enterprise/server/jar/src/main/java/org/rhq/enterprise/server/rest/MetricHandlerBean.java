@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,12 +33,15 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -132,12 +136,14 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     /**
      * Return a metric schedule with the respective status codes for cache validation
      *
+     *
      * @param scheduleId ID of the schedule
      * @param request the REST request - injected by the REST framework
      * @param headers the REST request http headers - injected by the REST framework
+     * @param uriInfo
      * @return Schedule with respective headers
      */
-    public Response getSchedule(int scheduleId, Request request, HttpHeaders headers) {
+    public Response getSchedule(int scheduleId, Request request, HttpHeaders headers, UriInfo uriInfo) {
 
         MeasurementSchedule schedule = scheduleManager.getScheduleById(caller, scheduleId);
         if (schedule==null)
@@ -155,11 +161,29 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
         // Check for conditional get
+        // Interestingly computing the hashCode of the original schedule is slower, as it also
+        // pulls in data from the definition and the resource
         EntityTag eTag = new EntityTag(Integer.toOctalString(metricSchedule.hashCode()));
         Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(metricSchedule.getMtime()),eTag);
 
         if (builder==null) {
             // preconditions not met, we need to send the resource
+
+            // create link to metrics
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("metric/data/" + scheduleId);
+            URI uri = uriBuilder.build();
+
+            Link link = new Link("metrics",uri.toString());
+            metricSchedule.addLink(link);
+
+            // Link for updates
+            uriBuilder = uriInfo.getAbsolutePathBuilder();
+            uri = uriBuilder.build();
+            Link updateLink = new Link("edit",uri.toString());
+            metricSchedule.addLink(updateLink);
+
+
             if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                 builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
             }

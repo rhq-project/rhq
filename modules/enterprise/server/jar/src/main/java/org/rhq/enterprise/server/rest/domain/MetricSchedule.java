@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -44,6 +49,7 @@ public class MetricSchedule {
     String unit;
     String type;
     transient long mtime;
+    List<Link> links = new ArrayList<Link>();
 
     @SuppressWarnings("unused")
     public MetricSchedule() {
@@ -129,7 +135,14 @@ public class MetricSchedule {
         this.mtime = mtime;
     }
 
+    public void addLink(Link link) {
+        links.add(link);
+    }
 
+    @XmlElementRef
+    public List<Link> getLinks() {
+        return links;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -156,4 +169,5 @@ public class MetricSchedule {
         result = 31 * result + (int) (mtime ^ (mtime >>> 32));
         return result;
     }
+
 }

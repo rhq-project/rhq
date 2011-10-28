@@ -34,6 +34,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
@@ -67,7 +68,8 @@ public interface MetricHandlerLocal {
     @GET
     @Path("/schedule/{id}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
-    Response getSchedule(@PathParam("id") int scheduleId, @Context Request request, @Context HttpHeaders headers);
+    Response getSchedule(@PathParam("id") int scheduleId, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
     @PUT
     @Path("/schedule/{id}")

@@ -88,7 +88,7 @@ public class DriftDetailsView extends LocatableVLayout {
 
     }
 
-    private void show(DriftDetails driftDetails) {
+    protected void show(DriftDetails driftDetails) {
         for (Canvas child : getMembers()) {
             removeMember(child);
             child.destroy();
@@ -223,7 +223,7 @@ public class DriftDetailsView extends LocatableVLayout {
         return changeSetForm;
     }
 
-    private FormItem createViewFileLink(String hash, String path, int version, DriftFileStatus status) {
+    protected FormItem createViewFileLink(String hash, String path, int version, DriftFileStatus status) {
         if (status == LOADED) {
             return createViewFileLink(hash, path, version);
         }

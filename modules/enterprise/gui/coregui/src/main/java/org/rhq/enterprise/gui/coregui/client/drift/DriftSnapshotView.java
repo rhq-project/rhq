@@ -29,16 +29,19 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
+import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
+import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
+import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
 
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
@@ -53,7 +56,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -63,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a nested table view of a snapshot. The outer table is a list of directories in the snapshot
@@ -72,8 +73,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Jay Shaughnessy
  */
-// TODO: Make this extend an abstract table so we can set up true master-detail
-//public class DriftSnapshotView extends StringIDTableSection<DriftSnapshotDataSource> {
 public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     private static final String DEFAULT_TITLE = MSG.view_drift_table_snapshot();
 
@@ -84,7 +83,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     private boolean hasWriteAccess;
 
     private String templateChangeSetId;
-    private int templateResourceTypeId;
 
     protected DriftSnapshotDataSource dataSource;
     protected DriftSnapshotListGrid listGrid;
@@ -134,7 +132,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     @Override
     protected void onDraw() {
 
-        // Drift def snapshot view
+        // Drift def snapshot view or template pinned snapshot?
         if (null != this.driftDefId) {
             DriftDefinitionCriteria defCriteria = new DriftDefinitionCriteria();
             defCriteria.addFilterId(driftDefId);
@@ -177,7 +175,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                         String templateName = template.getName();
                         String title = MSG.view_drift_table_title_templateSnapshot(templateName);
                         setTitleString(title);
-                        templateResourceTypeId = template.getResourceType().getId();
+
                         DriftSnapshotView.super.onDraw();
                     }
                 });
@@ -247,6 +245,9 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
             setExpansionMode(ExpansionMode.RELATED);
+
+            //setDefaultHeight(10);
+            //setAutoFitData(Autofit.VERTICAL);
         }
 
         @Override
@@ -258,7 +259,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         }
     }
 
-    public class DirectoryView extends StringIDTableSection<DirectoryView.DirectoryViewDataSource> {
+    //public class DirectoryView extends StringIDTableSection<DirectoryView.DirectoryViewDataSource> {
+    public class DirectoryView extends Table<DirectoryView.DirectoryViewDataSource> {
 
         private String directory;
         private DirectoryViewDataSource dataSource;
@@ -273,7 +275,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             setShowFooter(false);
 
             setWidth100();
-            setHeight(250);
+            setAutoHeight();
+            setOverflow(Overflow.VISIBLE);
 
             setDataSource(getDataSource());
         }
@@ -289,56 +292,65 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         }
 
         @Override
+        protected LocatableListGrid createListGrid(String locatorId) {
+            return new DirectoryViewListGrid(locatorId);
+        }
+
+        @Override
         protected void configureTable() {
             ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
             getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
             super.configureTable();
+        }
 
-            // TODO: when we have true detail support then we'll want to remove this. 
-            setListGridDoubleClickHandler(new DoubleClickHandler() {
-                @Override
-                public void onDoubleClick(DoubleClickEvent event) {
-                    ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
-                    if (selectedRows != null && selectedRows.length == 1) {
-                        String driftId = getId(selectedRows[0]);
-                        String link = (null == templateId) ? LinkManager.getDriftCarouselSnapshotDriftLink(resourceId,
-                            driftDefId, version, driftId) : LinkManager.getDriftTemplateSnapshotDriftLink(
-                            templateResourceTypeId, templateId, driftId);
-                        CoreGUI.goToView(link);
+        private class DirectoryViewListGrid extends LocatableListGrid {
 
+            public DirectoryViewListGrid(String locatorId) {
+                super(locatorId);
+
+                setCanExpandRecords(true);
+                setCanExpandMultipleRecords(true);
+                setExpansionMode(ExpansionMode.RELATED);
+
+                setDefaultHeight(10);
+                setAutoFitData(Autofit.VERTICAL);
+
+                addRecordExpandHandler(new RecordExpandHandler() {
+
+                    @Override
+                    public void onRecordExpand(RecordExpandEvent event) {
+                        event.getRecord().setAttribute("Expanded", true);
                     }
+                });
+
+                addRecordCollapseHandler(new RecordCollapseHandler() {
+
+                    @Override
+                    public void onRecordCollapse(RecordCollapseEvent event) {
+                        event.getRecord().setAttribute("Expanded", false);
+                    }
+                });
+
+            }
+
+            @Override
+            protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
+
+                if (Boolean.TRUE.equals(record.getAttributeAsBoolean("Expanded"))) {
+                    return "background-color:#ffffcc;";
                 }
-            });
-        }
 
-        @Override
-        protected String getDetailsLinkColumnName() {
-            return DriftDataSource.ATTR_CTIME;
-        }
+                return super.getCellCSSText(record, rowNum, colNum);
 
-        @Override
-        protected CellFormatter getDetailsLinkColumnCellFormatter() {
-            // TODO: provide a drift detail view for the template snapshot view                    
-            if (null == templateId) {
-                return new CellFormatter() {
-                    public String format(Object value, ListGridRecord record, int i, int i1) {
-                        String driftId = getId(record);
-                        String link = (null == templateId) ? LinkManager.getDriftCarouselSnapshotDriftLink(resourceId,
-                            driftDefId, version, driftId) : LinkManager.getDriftTemplateSnapshotDriftLink(
-                            templateResourceTypeId, templateId, driftId);
+            }
 
-                        String formattedValue = TimestampCellFormatter.format(value);
-                        return SeleniumUtility.getLocatableHref(link, formattedValue, null);
-                    }
-                };
-            } else {
-                return new CellFormatter() {
-                    public String format(Object value, ListGridRecord record, int i, int i1) {
-                        return TimestampCellFormatter.format(value);
-                    }
-                };
+            @Override
+            protected Canvas getExpansionComponent(ListGridRecord record) {
+
+                String driftId = record.getAttribute(DriftDataSource.ATTR_ID);
+
+                return new DriftSnapshotDriftDetailsView(extendLocatorId(driftId), driftId);
             }
         }
 
@@ -491,11 +503,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 return record;
             }
         }
-
-        @Override
-        public Canvas getDetailsView(String driftId) {
-            return new DriftDetailsView(extendLocatorId("Details"), driftId);
-        }
     }
 
     /**
@@ -513,21 +520,4 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
         return (i < 0) ? path.trim() : path.substring(++i).trim();
     }
-
-    // TODO: Make this extend an abstract table so we can set up true master-detail
-
-    /*
-    @Override
-    public void renderView(ViewPath viewPath) {
-        viewPath.next();
-        super.renderView(viewPath);
-    }
-
-
-    @Override
-    public Canvas getDetailsView(String driftId) {
-        return new DriftDetailsView(extendLocatorId("Details"), driftId);
-    }
-    */
-
 }

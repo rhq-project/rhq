@@ -139,39 +139,32 @@ print_program_versions "${program_versions[@]}"
 
 echo "==============================================================================="
 
-# We only need to worry about cloning the repo if we are not running on hudson
-if [ ! "$HUDSON_URL" ]; then
-    # Clone and/or checkout the source from git.
-
-    if [ -d "$WORKING_DIR" ]; then
-        cd "$WORKING_DIR"
-        git status >/dev/null 2>&1
-        GIT_STATUS_EXIT_CODE=$?
-        # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
-        # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $WORKING_DIR
-        # is truly a git working copy.
-        if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
-            echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
-            git fetch origin "$RELEASE_BRANCH"
-            [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
-            git checkout "$RELEASE_BRANCH" 2>/dev/null
-            if [ "$?" -ne 0 ]; then
-                git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
-            fi
-            [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
-            git reset --hard "origin/$RELEASE_BRANCH"
-            [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
-            git clean -dxf
-            [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
-            git pull
-            [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
-        else
-            echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
-            cd ..
-            rm -rf "$WORKING_DIR"
-            [ "$?" -ne 0 ] && abort "Failed to remove bogus working directory ($WORKING_DIR)."
-        fi
-    fi
+# Checkout the source from git.
+git status >/dev/null 2>&1
+GIT_STATUS_EXIT_CODE=$?
+# Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
+# and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $WORKING_DIR
+# is truly a git working copy.
+if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
+   echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
+   git fetch origin "$RELEASE_BRANCH"
+   [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
+   git checkout "$RELEASE_BRANCH" 2>/dev/null
+   if [ "$?" -ne 0 ]; then
+       git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
+   fi
+   [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+   git reset --hard "origin/$RELEASE_BRANCH"
+   [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
+   git clean -dxf
+   [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
+   git pull
+   [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
+else
+   echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
+   cd ..
+   rm -rf "$WORKING_DIR"
+   [ "$?" -ne 0 ] && abort "Failed to remove bogus working directory ($WORKING_DIR)."
 fi
 
 

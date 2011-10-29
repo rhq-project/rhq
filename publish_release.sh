@@ -53,7 +53,7 @@ set_variables()
       echo "We appear to be running in a Hudson job." 
       WORKING_DIR="$WORKSPACE"
       MAVEN_LOCAL_REPO_DIR="$WORKSPACE/.m2/repository"
-      #MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
+      MAVEN_SETTINGS_FILE="$WORKSPACE/.m2/settings.xml"
    elif [ -z "$WORKING_DIR" ]; then
       WORKING_DIR="$HOME/release/rhq"
       MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
@@ -61,7 +61,7 @@ set_variables()
       MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
    fi
 
-   MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
+   #MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
 
    PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
 

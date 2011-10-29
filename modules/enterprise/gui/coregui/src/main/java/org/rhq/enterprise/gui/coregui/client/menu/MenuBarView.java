@@ -18,11 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
@@ -46,9 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Greg Hinkle
@@ -104,11 +103,8 @@ public class MenuBarView extends LocatableVLayout {
         HLayout logoSection = new HLayout();
         logoSection.setOverflow(Overflow.VISIBLE);
 
-        // NOTE: This image will either be an RHQ logo or a JON logo.
-        Img logo = new Img("header/rhq_logo_28px.png");
-        // NOTE: Don't explicitly specify a width, so the width will be scaled proportionally to the height.
-        logo.setImageType(ImageStyle.NORMAL);
-        logo.setImageHeight(28);
+        // NOTE: This image will either be an RHQ logo or a JON logo, but must be 80x28
+        Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
         logo.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 aboutModalWindow.show();
@@ -136,7 +132,7 @@ public class MenuBarView extends LocatableVLayout {
         lineLabel.setAlign(Alignment.CENTER);
 
         String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "' style='white-space: nowrap'>"
-                + LOGOUT_VIEW_ID.getTitle() + "</a>";
+            + LOGOUT_VIEW_ID.getTitle() + "</a>";
         LocatableLabel logoutLink = new LocatableLabel(this.extendLocatorId("LogoutLink"), contents);
         logoutLink.setAutoWidth();
 
@@ -167,7 +163,7 @@ public class MenuBarView extends LocatableVLayout {
                 linkVLayout.setAlign(VerticalAlignment.CENTER);
 
                 String contents = "<a class='menuBar' href='#" + sectionName.getName() + "'>" + sectionName.getTitle()
-                        + "</a>";
+                    + "</a>";
                 LocatableLabel link = new LocatableLabel(extendLocatorId(sectionName.getName()), contents);
                 link.setAutoHeight();
                 link.setAlign(Alignment.CENTER);

@@ -35,7 +35,6 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
-import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
@@ -121,14 +120,11 @@ public class LoginView extends LocatableCanvas {
             form.setErrorOrientation(FormErrorOrientation.BOTTOM);
 
             // NOTE: This image will either be an RHQ logo or a JON logo.
-            Img logoImg = new Img("header/rhq_logo_28px.png");
-            // NOTE: Don't explicitly specify a width, so the width will be scaled proportionally to the height.
-            logoImg.setImageType(ImageStyle.NORMAL);
-            logoImg.setImageHeight(40);
+            //       but must be 80x40
+            Img logoImg = new Img("header/rhq_logo_40px.png", 80, 40);
 
             CanvasItem logo = new CanvasItem();
             logo.setShowTitle(false);
-            logo.setHeight(logoImg.getImageHeight() + 4);
             logo.setCanvas(logoImg);
 
             HeaderItem header = new HeaderItem();
@@ -334,8 +330,7 @@ public class LoginView extends LocatableCanvas {
 
                 public void onFailure(Throwable caught) {
                     inputForm.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
-                    Log
-                        .debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
+                    Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
                 }
             });
 

@@ -184,7 +184,7 @@ public class DriftConfigurationDefinition implements Serializable {
         INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createAttached(INSTANCE_FOR_EXISTING_CONFIGS, false));
-        INSTANCE_FOR_EXISTING_CONFIGS.put(createPinned(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createPinned(INSTANCE_FOR_EXISTING_CONFIGS, false));
 
         NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createName(NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE, false));

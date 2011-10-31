@@ -70,6 +70,10 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        if (!isAugeasEnabled()) {
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);            
+        }
+        
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
 
         AugeasComponent comp = getAugeas();
@@ -87,7 +91,12 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-
+        if (!isAugeasEnabled()) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            return;
+        }
+        
         AugeasComponent comp = getAugeas();
         AugeasTree tree = null;
         try {
@@ -115,7 +124,12 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     public void deleteResource() throws Exception {
+        if (!isAugeasEnabled()) {
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
+        
         AugeasComponent comp = getAugeas();
 
         try {

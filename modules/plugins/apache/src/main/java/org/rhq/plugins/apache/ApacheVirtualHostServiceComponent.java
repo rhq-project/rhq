@@ -154,9 +154,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        if (!isAugeasEnabled()) {
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-        if (!parent.isAugeasEnabled())
-            throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
 
         AugeasComponent comp = getAugeas();
         try {
@@ -172,6 +174,12 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        if (!isAugeasEnabled()) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            return;
+        }
+        
         AugeasComponent comp = getAugeas();
         AugeasTree tree = null;
         try {
@@ -188,10 +196,14 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             finishConfigurationUpdate(report);
         } catch (Exception e) {
-            if (tree != null)
-                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
-            else
+            if (tree != null) {
+                String message = "Augeas failed to save configuration " + tree.summarizeAugeasError();
+                report.setErrorMessage(message);
+                log.error(message);
+            } else {
+                report.setErrorMessageFromThrowable(e);
                 log.error("Augeas failed to save configuration", e);
+            }
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         } finally {
             comp.close();
@@ -199,9 +211,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void deleteResource() throws Exception {
+        if (!isAugeasEnabled()) {
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-        if (!parent.isAugeasEnabled())
-            throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
 
         if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
             throw new IllegalArgumentException(
@@ -276,9 +290,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public CreateResourceReport createResource(CreateResourceReport report) {
         if (!isAugeasEnabled()) {
             report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage("Resources can be created only when augeas is enabled.");
+            report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return report;
         }
+        
         ResourceType resourceType = report.getResourceType();
         AugeasComponent comp = null;
         try {

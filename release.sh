@@ -62,6 +62,9 @@ USAGE:   release.sh OPTIONS
    --debug=[true|false]                   [OPTIONAL]
       Set maven in debug mode. Default is false; true if option specified without argument.
 
+   --override-tag=[true|false]
+      Override the tag if it already exists remotely. Default is false; true if option specified without argument.
+
 EOF
 )
 
@@ -84,9 +87,10 @@ parse_and_validate_options()
    SCM_STRATEGY="tag"
    EXTRA_MAVEN_PROFILE=
    DEBUG_MODE=false
+   OVERRIDE_TAG=false
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::"
+   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::,override-tag::"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -169,6 +173,28 @@ parse_and_validate_options()
                   ;;
             esac
             ;;
+         --override-tag)
+            shift
+            case "$1" in
+               true)
+                  OVERRIDE_TAG=true
+                  shift
+                  ;;
+               false)
+                  OVERRIDE_TAG=false
+                  shift
+                  ;;
+               "")
+                  OVERRIDE_TAG=true
+                  shift
+                  ;;
+               *)
+                  OVERRIDE_TAG=false
+                  shift
+                  ;;
+            esac
+            ;;
+
          --)
             shift
             break
@@ -322,9 +348,14 @@ run_release_version_and_tag_process()
    # 7) Commit the change in version (if everything went well so far then this is a good tag)
    git add -u
    git commit -m "tag $RELEASE_TAG"
-   
+
    # 8) Tag the current source
-   git tag "$RELEASE_TAG"
+   if [ "$OVERRIDE_TAG" ];
+   then
+      git tag --force "$RELEASE_TAG"
+   else
+      git tag "$RELEASE_TAG"
+   fi
 
    # 9) If everything went well so far than means all the changes can be pushed!!!
    git push origin "$BUILD_BRANCH"
@@ -364,7 +395,12 @@ verify_tags()
    EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
    if [ -n "$EXISTING_REMOTE_TAG" ];
    then
-      abort "A remote tag named $RELEASE_TAG already exists - aborting"
+      if[ "$OVERRIDE_TAG" ];
+      then
+         echo "A remote tag named $RELEASE_TAG already exists, but will be overriden."
+      else
+         abort "A remote tag named $RELEASE_TAG already exists - aborting"
+      fi
    fi
 
    # See if the specified tag already exists locally - if so, delete it (even if in production mode).

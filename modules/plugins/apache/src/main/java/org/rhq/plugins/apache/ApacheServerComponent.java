@@ -103,7 +103,10 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
 public class ApacheServerComponent implements AugeasRHQComponent, ResourceComponent<PlatformComponent>,
     MeasurementFacet, OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
 
-    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
+    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE =
+        "Configuration and child resource creation/deletion support for Apache is optional. "
+            + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
+            + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -338,7 +341,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public Configuration loadResourceConfiguration() throws Exception {
 
         if (!isAugeasEnabled())
-            throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
 
         AugeasComponent comp = getAugeas();
         try {
@@ -359,6 +362,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         if (!isAugeasEnabled()) {
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return;
         }
 
@@ -422,9 +426,10 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public CreateResourceReport createResource(CreateResourceReport report) {
         if (!isAugeasEnabled()) {
             report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage("Resources can be created only when augeas is enabled.");
+            report.setErrorMessage(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return report;
         }
+        
         if (ApacheVirtualHostServiceComponent.RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
             Configuration vhostResourceConfig = report.getResourceConfiguration();
             ConfigurationDefinition vhostResourceConfigDef = report.getResourceType()

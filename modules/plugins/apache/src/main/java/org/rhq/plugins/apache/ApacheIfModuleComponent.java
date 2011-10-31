@@ -65,6 +65,10 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        if (!isAugeasEnabled()) {
+            throw new IllegalStateException(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
         AugeasComponent comp = null;
         try {
             comp = parentComponent.getAugeas();
@@ -81,6 +85,12 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        if (!isAugeasEnabled()) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            return;
+        }
+        
         AugeasComponent comp = null;
         AugeasTree tree = null;
         try {
@@ -116,13 +126,6 @@ public class ApacheIfModuleComponent implements ResourceComponent<ApacheVirtualH
     private AugeasNode getNode(AugeasNode virtualHost) {
         AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, context.getResourceKey());
         return directory;
-    }
-
-    public void copy(AugeasNode a, AugeasNode b) {
-        for (AugeasNode nd : a.getChildNodes()) {
-            AugeasNode tempNode = tree.createNode(b, nd.getLabel(), nd.getValue(), nd.getSeq());
-            copy(nd, tempNode);
-        }
     }
 
     public boolean isAugeasEnabled() {

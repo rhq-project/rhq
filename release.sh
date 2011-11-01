@@ -324,20 +324,19 @@ run_release_version_and_tag_process()
 {
    print_function_information $FUNCNAME
 
-   # 1) Perform a test build before changing version
+   echo "1) Perform a test build before changing version."
    mvn clean install $MAVEN_ARGS -Ddbreset
    [ "$?" -ne 0 ] && abort "Test build failed. Please see output for details, fix any issues, then try again."
 
-   # 2) Run another cleanup
-   echo "Cleaning up module target dirs..."
+   echo "2) Run a maven cleanup to remove all the artifacts from previous build, this cleans module target dirs."
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
-   # 3) Increment version on all poms
+   echo "3) Increment version on all poms."
    mvn versions:set versions:use-releases -DnewVersion=$RELEASE_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
-   # 4) Perform a test build with the new version
+   echo "4) Perform a test build with the new version."
    mvn clean install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
    [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."
 
@@ -346,16 +345,15 @@ run_release_version_and_tag_process()
    #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
    #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 
-   # 6) Cleanup after this test build before commiting changes
-   echo "Cleaning up module target dirs..."
+   echo "6) Cleanup again after this test build before commiting changes."
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
 
-   # 7) Commit the change in version (if everything went well so far then this is a good tag)
+   echo "7) Commit the change in version; if everything went well so far then this is a good tag."
    git add -u
    git commit -m "tag $RELEASE_TAG"
 
-   # 8) Tag the current source
+   echo "8) Tag the current source."
    if [ "$OVERRIDE_TAG" ];
    then
       git tag --force "$RELEASE_TAG"
@@ -363,7 +361,7 @@ run_release_version_and_tag_process()
       git tag "$RELEASE_TAG"
    fi
 
-   # 9) If everything went well so far than means all the changes can be pushed!!!
+   echo "9) If everything went well so far than means all the changes can be pushed!!!"
    git push origin "$BUILD_BRANCH"
    git push origin "$RELEASE_TAG"
 }
@@ -376,15 +374,15 @@ update_development_version()
 {
    print_function_information $FUNCNAME
 
-   # 1) Set version to the current development version
+   echo "1) Set version to the current development version"
    mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
 
-   # 2) Commit the change in version
+   echo "2) Commit the change in version."
    git add -u
    git commit -m "development RHQ_$DEVELOPMENT_VERSION"
 
-   # 3) If everything went well so far than means all the changes can be pushed!!!
+   echo "3) If everything went well so far than means all the changes can be pushed!!!"
    git push origin "$BUILD_BRANCH"
 }
 

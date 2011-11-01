@@ -9,7 +9,7 @@
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>rhq-server-integration-tests</artifactId>
+  <artifactId>rhq-server-itests</artifactId>
 
   <name>RHQ Server Integration Tests</name>
   <description>RHQ enterprise server integration tests</description>

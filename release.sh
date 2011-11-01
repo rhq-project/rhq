@@ -79,6 +79,8 @@ EOF
 #========================================================================================
 parse_and_validate_options()
 {
+   print_function_information $FUNCNAME
+
    RELEASE_VERSION=
    DEVELOPMENT_VERSION=
    RELEASE_BRANCH=
@@ -250,6 +252,8 @@ parse_and_validate_options()
 #========================================================================================
 set_local_and_environment_variables()
 {
+   print_function_information $FUNCNAME
+
    # Set environment variables
    MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
    export MAVEN_OPTS
@@ -318,6 +322,8 @@ set_local_and_environment_variables()
 #========================================================================================
 run_release_version_and_tag_process()
 {
+   print_function_information $FUNCNAME
+
    # 1) Perform a test build before changing version
    mvn clean install $MAVEN_ARGS -Ddbreset
    [ "$?" -ne 0 ] && abort "Test build failed. Please see output for details, fix any issues, then try again."
@@ -368,6 +374,8 @@ run_release_version_and_tag_process()
 #========================================================================================
 update_development_version()
 {
+   print_function_information $FUNCNAME
+
    # 1) Set version to the current development version
    mvn versions:set versions:use-releases -DnewVersion=$DEVELOPMENT_VERSION  -DallowSnapshots=false -DgenerateBackupPoms=false
    [ "$?" -ne 0 ] && abort "Version set failed. Please see output for details, fix any issues, then try again."
@@ -390,6 +398,8 @@ update_development_version()
 #========================================================================================
 verify_tags()
 {
+   print_function_information $FUNCNAME
+
    # If the specified tag already exists remotely and we're in production mode, then abort. If it exists and
    # we're in test mode, delete it
    EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
@@ -421,6 +431,8 @@ verify_tags()
 #========================================================================================
 validate_system_utilities()
 {
+   print_function_information $FUNCNAME
+
    # TODO: Check that JDK version is < 1.7.
 
    validate_java_6
@@ -442,6 +454,8 @@ validate_system_utilities()
 #========================================================================================
 print_release_information()
 {
+   print_function_information $FUNCNAME
+
    echo
    print_centered "Release Info"
    echo "Version: $RELEASE_VERSION"
@@ -456,6 +470,8 @@ print_release_information()
 #========================================================================================
 checkout_release_branch()
 {
+   print_function_information $FUNCNAME
+
    # Checkout the source from git, assume that the git repo is already cloned
    git status >/dev/null 2>&1
    GIT_STATUS_EXIT_CODE=$?
@@ -492,6 +508,8 @@ checkout_release_branch()
 #========================================================================================
 checkout_build_branch_for_release()
 {
+   print_function_information $FUNCNAME
+
    # if this is a test build then create a temporary build branch off of RELEASE_BRANCH.  This allows checkins to
    # continue in RELEASE_BRANCH without affecting the release plugin work, which will fail if the branch contents
    # change before it completes.
@@ -535,6 +553,8 @@ checkout_build_branch_for_release()
 #========================================================================================
 checkout_build_branch_for_development()
 {
+   print_function_information $FUNCNAME
+
    if [ "$MODE" = "production" ];
    then
       if [ "$SCM_STRATEGY" = "branch" ];

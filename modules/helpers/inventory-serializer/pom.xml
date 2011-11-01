@@ -3,11 +3,11 @@
   <parent>
     <artifactId>rhq-helpers</artifactId>
     <groupId>org.rhq.helpers</groupId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.3.0-SNAPSHOT</version>
   </parent>
   <groupId>org.rhq.helpers</groupId>
   <artifactId>inventory-serializer</artifactId>
-  <version>4.1.0-SNAPSHOT</version>
+  <version>4.3.0-SNAPSHOT</version>
   <name>Inventory Serializer</name>
   <description>A helper command line app to export parts of the inventory to XML</description>
 

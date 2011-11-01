@@ -87,7 +87,7 @@ public class DriftServerTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
-        File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-4.1.0-SNAPSHOT.jar");
+        File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-4.3.0-SNAPSHOT.jar");
         assertTrue("Drift server plugin JAR file not found at" + jpaDriftPlugin.getPath(), jpaDriftPlugin.exists());
         FileUtils.copyFileToDirectory(jpaDriftPlugin, driftServerPluginService.masterConfig.getPluginDirectory());
 
@@ -179,9 +179,8 @@ public class DriftServerTest extends AbstractEJB3Test {
     protected void deleteEntity(Class<?> clazz, String name, EntityManager em) {
         try {
             Object entity = em.createQuery(
-                "select entity from " + clazz.getSimpleName() + " entity where entity.name = :name")
-                .setParameter("name", name)
-                .getSingleResult();
+                "select entity from " + clazz.getSimpleName() + " entity where entity.name = :name").setParameter(
+                "name", name).getSingleResult();
             em.remove(entity);
         } catch (NoResultException e) {
             // we can ignore no results because this code will run when the db
@@ -189,18 +188,14 @@ public class DriftServerTest extends AbstractEJB3Test {
         } catch (NonUniqueResultException e) {
             // we will fail here to let the person running the test know that
             // the database may not be in a consistent state
-            fail("Purging " + name + " failed. Expected to find one instance of " + clazz.getSimpleName() +
-                " but found more than one. The database may not be in a consistent state.");
+            fail("Purging " + name + " failed. Expected to find one instance of " + clazz.getSimpleName()
+                + " but found more than one. The database may not be in a consistent state.");
         }
     }
 
     protected void initResourceType() {
-        resourceType = new ResourceTypeBuilder().createResourceType()
-            .withId(0)
-            .withName(RESOURCE_TYPE_NAME)
-            .withCategory(SERVER)
-            .withPlugin(RESOURCE_TYPE_NAME.toLowerCase())
-            .build();
+        resourceType = new ResourceTypeBuilder().createResourceType().withId(0).withName(RESOURCE_TYPE_NAME)
+            .withCategory(SERVER).withPlugin(RESOURCE_TYPE_NAME.toLowerCase()).build();
     }
 
     protected void initAgent() {
@@ -208,13 +203,8 @@ public class DriftServerTest extends AbstractEJB3Test {
     }
 
     protected void initResource() {
-        resource = new ResourceBuilder().createResource()
-            .withId(0)
-            .withName(RESOURCE_NAME)
-            .withResourceKey(RESOURCE_NAME)
-            .withRandomUuid()
-            .withResourceType(resourceType)
-            .build();
+        resource = new ResourceBuilder().createResource().withId(0).withName(RESOURCE_NAME).withResourceKey(
+            RESOURCE_NAME).withRandomUuid().withResourceType(resourceType).build();
     }
 
     protected Subject getOverlord() {
@@ -226,8 +216,8 @@ public class DriftServerTest extends AbstractEJB3Test {
     }
 
     protected String toString(DriftDefinitionTemplate template) {
-        return DriftDefinitionTemplate.class.getSimpleName() + "[id: " + template.getId() + ", name: " +
-            template.getName() + "]";
+        return DriftDefinitionTemplate.class.getSimpleName() + "[id: " + template.getId() + ", name: "
+            + template.getName() + "]";
     }
 
     protected Drift findDriftByPath(List<? extends Drift> drifts, String path) {

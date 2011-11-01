@@ -389,7 +389,7 @@ public abstract class AgentPluginDescriptorUtil {
         for (ValidationEvent event : validationEventCollector.getEvents()) {
             // First build the message to be logged. The message will look something like this:
             //
-            //   Validation fatal error while parsing [jopr-jboss-as-plugin-4.1.0-SNAPSHOT.jar:META-INF/rhq-plugin.xml]
+            //   Validation fatal error while parsing [jopr-jboss-as-plugin-4.3.0-SNAPSHOT.jar:META-INF/rhq-plugin.xml]
             //   at line 221, column 94: cvc-minInclusive-valid: Value '20000' is not facet-valid with respect to
             //   minInclusive '30000' for type '#AnonType_defaultIntervalmetric'.
             //

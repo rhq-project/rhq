@@ -27,17 +27,16 @@ import javax.persistence.Query;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.test.ldap.FakeLdapCtxFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.TransactionCallback;
@@ -95,7 +94,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
 
     private LdapGroupManagerLocal ldapGroupManager = null;
     private SystemManagerLocal systemManager = null;
-    private DriftServerPluginService driftServerPluginService = null;
+    private TestServerPluginService testServerPluginService = null;
     
     //    private Subject overlord = null;
 
@@ -107,9 +106,9 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
         ldapGroupManager = LookupUtil.getLdapGroupManager();
 
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        driftServerPluginService = new DriftServerPluginService();
-        prepareCustomServerPluginService(driftServerPluginService);
-        driftServerPluginService.startMasterPluginContainer();        
+        testServerPluginService = new TestServerPluginService();
+        prepareCustomServerPluginService(testServerPluginService);
+        testServerPluginService.startMasterPluginContainer();
         
         // get our Maven properties for LDAP testing
         java.net.URL url = LdapGroupManagerBeanTest.class.getClassLoader().getResource("test-ldap.properties");
@@ -150,7 +149,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     @AfterClass
     public void tearDown() throws Exception {
         unprepareServerPluginService();
-        driftServerPluginService.stopMasterPluginContainer();
+        testServerPluginService.stopMasterPluginContainer();
     }
     
     /**

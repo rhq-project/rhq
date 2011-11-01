@@ -73,7 +73,6 @@ import org.rhq.core.domain.sync.ImportConfiguration;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -83,6 +82,7 @@ import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
 import org.rhq.enterprise.server.sync.SystemSettingsSynchronizer;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -105,7 +105,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         public Properties systemSettings;
         public ResourceType fakeType;
         public Resource fakePlatform;
-        public DriftServerPluginService driftServerPluginService;
+        public TestServerPluginService testServerPluginService;
     }
 
     private TestData testData;
@@ -151,9 +151,9 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         }
 
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        testData.driftServerPluginService = new DriftServerPluginService();
-        prepareCustomServerPluginService(testData.driftServerPluginService);
-        testData.driftServerPluginService.startMasterPluginContainer();
+        testData.testServerPluginService = new TestServerPluginService();
+        prepareCustomServerPluginService(testData.testServerPluginService);
+        testData.testServerPluginService.startMasterPluginContainer();
         
         synchronizationManager = LookupUtil.getSynchronizationManager();
 
@@ -191,7 +191,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         }
 
         unprepareServerPluginService();
-        testData.driftServerPluginService.stopMasterPluginContainer();
+        testData.testServerPluginService.stopMasterPluginContainer();
         
         export = null;
         testData = null;

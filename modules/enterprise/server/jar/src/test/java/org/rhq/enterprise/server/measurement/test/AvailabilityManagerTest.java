@@ -46,6 +46,7 @@ import org.rhq.enterprise.server.measurement.AvailabilityPoint;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -73,7 +74,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     private Availability availability2;
     private Availability availability3;
 
-    private DriftServerPluginService driftServerPluginService;
+    private TestServerPluginService testServerPluginService;
 
     @BeforeMethod
     public void beforeMethod() {
@@ -86,10 +87,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             this.overlord = LookupUtil.getSubjectManager().getOverlord();
             additionalResources = new ArrayList<Resource>();
 
-            driftServerPluginService = new DriftServerPluginService();
-            prepareCustomServerPluginService(driftServerPluginService);
-            driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
-            driftServerPluginService.startMasterPluginContainer();
+            testServerPluginService = new TestServerPluginService();
+            prepareCustomServerPluginService(testServerPluginService);
+            testServerPluginService.masterConfig.getPluginDirectory().mkdirs();
+            testServerPluginService.startMasterPluginContainer();
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
@@ -139,7 +140,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         finally {
             unprepareScheduler();
             unprepareServerPluginService();
-            driftServerPluginService.stopMasterPluginContainer();
+            testServerPluginService.stopMasterPluginContainer();
         }
     }
 

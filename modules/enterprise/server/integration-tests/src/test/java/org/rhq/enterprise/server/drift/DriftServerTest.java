@@ -48,7 +48,6 @@ import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.TransactionCallback;
 
 @Test(groups = "drift")
@@ -94,7 +93,7 @@ public class DriftServerTest extends AbstractEJB3Test {
 
         driftServerPluginService.startMasterPluginContainer();
 
-        serverPluginsMgr = LookupUtil.getServerPlugins();
+        //serverPluginsMgr = LookupUtil.getServerPlugins();
     }
 
     private void initAgentServices() {

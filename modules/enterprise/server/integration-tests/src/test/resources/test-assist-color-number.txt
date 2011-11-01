@@ -1,0 +1,46 @@
+
+color[ number
+c
+color[
+n
+number
+r
+color[ number
+lo
+color[
+number
+number!= number!== number= number==
+be
+number
+number==
+number=="two" number=="four" number=="twenty-two" number=="twenty-four" number=="forty-two"
+number==t
+number=="two" number=="twenty-two" number=="twenty-four" number=="forty-two"
+number==fo
+number=="four" number=="twenty-four" number=="forty-two"
+color
+color[
+color[
+color[primary] color[other]
+color[p
+color[primary]
+color[o
+color[other]
+color[r
+color[primary] color[other]
+color[primary
+color[primary]
+color[primary]
+color[primary]!= color[primary]!== color[primary]= color[primary]==
+color[primary]=
+color[primary]="red" color[primary]="green" color[primary]="blue"
+color[primary]=e
+color[primary]="red" color[primary]="green" color[primary]="blue"
+color[primary]=d
+color[primary]="red"
+color[primary]=g
+color[primary]="green"
+color[primary]=b
+color[primary]="blue"
+color[primary]=r
+color[primary]="red" color[primary]="green"

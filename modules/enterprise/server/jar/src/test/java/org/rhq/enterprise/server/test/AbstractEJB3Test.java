@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.test;
 
+import static org.rhq.test.JPAUtils.clearDB;
+import static org.rhq.test.JPAUtils.lookupEntityManager;
+import static org.rhq.test.JPAUtils.lookupTransactionManager;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Hashtable;
@@ -59,10 +63,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.JPAUtils;
 import org.rhq.test.TransactionCallback;
 
-import static org.rhq.test.JPAUtils.clearDB;
-import static org.rhq.test.JPAUtils.lookupEntityManager;
-import static org.rhq.test.JPAUtils.lookupTransactionManager;
-
 /**
  * This is the abstract test base for server jar tests.
  *
@@ -91,6 +91,13 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     //@BeforeSuite(groups = {"integration.ejb3","PERF"}) // TODO investigate again
     @BeforeSuite(alwaysRun = true)
     public static void startupEmbeddedJboss() throws Exception {
+        // The embeddedDeployment property needs to be set for running tests
+        // with the embedded container. It is set in the surefire configuration
+        // in pom.xml but setting here makes it easier to run tests directly
+        // from your IDE.
+        //
+        // jsanda
+        System.setProperty("embeddedDeployment", "true");
 
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));

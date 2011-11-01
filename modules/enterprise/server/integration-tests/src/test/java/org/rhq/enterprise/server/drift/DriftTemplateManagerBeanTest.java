@@ -31,7 +31,6 @@ import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BO
 import static org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType.SERIALIZATION;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.util.ArrayList;
@@ -64,6 +63,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
 public class DriftTemplateManagerBeanTest extends DriftServerTest {
@@ -228,7 +228,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
         // verify that the tempalte has been updated
         final DriftDefinitionTemplate updatedTemplate = loadTemplate(template.getName());
-        assertPropertiesMatch("Failed to update template", template, updatedTemplate, "resourceType",
+        AssertUtils.assertPropertiesMatch("Failed to update template", template, updatedTemplate, "resourceType",
             "driftDefinitions", "templateDefinition");
 
         // verify that attached definitions are updated.
@@ -344,8 +344,9 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
         List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
 
-        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
-            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+        AssertUtils.assertCollectionMatchesNoOrder(
+            "Expected to find drifts from change sets 1 and 2 in the template change set",
+            (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
 
         // we need to compare the newDriftFile properties separately because
         // assertCollectionMatchesNoOrder compares properties via equals() and JPADriftFile
@@ -494,8 +495,9 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
         List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
 
-        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
-            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+        AssertUtils.assertCollectionMatchesNoOrder(
+            "Expected to find drifts from change sets 1 and 2 in the template change set",
+            (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
 
         // Finally make sure that there are no other change sets
         criteria = new JPADriftChangeSetCriteria();
@@ -523,8 +525,9 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     }
 
     private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {
-        assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected, actual,
-            "id", "resourceType", "ctime", "templateDefinition");
+        AssertUtils
+            .assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected, actual,
+                "id", "resourceType", "ctime", "templateDefinition");
         assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(), actual
             .getTemplateDefinition());
     }

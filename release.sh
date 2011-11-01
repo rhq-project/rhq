@@ -527,7 +527,7 @@ checkout_build_branch_for_release()
       then
          BUILD_BRANCH="${RELEASE_BRANCH}"
       else
-         BUILD_BRANCH="release-$TAG_VERSION"
+         BUILD_BRANCH="release-$RELEASE_VERSION"
          # delete the branch if it exists, so we can recreate it fresh
          EXISTING_BUILD_BRANCH=`git ls-remote --heads origin "$BUILD_BRANCH"`
          if [ -n "$EXISTING_BUILD_BRANCH" ];

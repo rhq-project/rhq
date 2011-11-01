@@ -124,7 +124,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.2.1.GA/resteasy-jaxrs-2.2.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jettison-provider/2.2.1.GA/resteasy-jettison-provider-2.2.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.2.1.GA/jaxrs-api-2.2.1.GA.jar"/>
-	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/test/java"/>
@@ -287,6 +286,5 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
-	<classpathentry kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsprovide-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

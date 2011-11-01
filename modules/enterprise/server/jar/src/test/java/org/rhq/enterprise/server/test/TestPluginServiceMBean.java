@@ -17,9 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.measurement.test;
+package org.rhq.enterprise.server.test;
 
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 
-public interface DriftServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface TestPluginServiceMBean extends ServerPluginServiceManagement {
 }

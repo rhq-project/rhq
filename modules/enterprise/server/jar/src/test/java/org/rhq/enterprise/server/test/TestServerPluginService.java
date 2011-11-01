@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.measurement.test;
+package org.rhq.enterprise.server.test;
 
 import java.io.File;
 import java.net.URL;
@@ -39,12 +39,12 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
-public class DriftServerPluginService extends ServerPluginService implements DriftServerPluginServiceMBean {
+public class TestServerPluginService extends ServerPluginService implements TestPluginServiceMBean {
 
     public TestMasterServerPluginContainer master;
     public MasterServerPluginContainerConfiguration masterConfig;
 
-    public DriftServerPluginService() {
+    public TestServerPluginService() {
         // build the config at constructor time so tests have it even before the PC is initialized
         File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
         this.masterConfig = new MasterServerPluginContainerConfiguration(dir, dir, dir, null);

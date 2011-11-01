@@ -30,30 +30,30 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Test
 public class SystemManagerBeanTest extends AbstractEJB3Test {
     private Subject overlord;
     private SystemManagerLocal systemManager;
-    private DriftServerPluginService driftServerPluginService;
+    private TestServerPluginService testServerPluginService;
 
     @BeforeClass
     public void setupServer() {
         systemManager = LookupUtil.getSystemManager();
         
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        driftServerPluginService = new DriftServerPluginService();
-        prepareCustomServerPluginService(driftServerPluginService);
-        driftServerPluginService.startMasterPluginContainer();        
+        testServerPluginService = new TestServerPluginService();
+        prepareCustomServerPluginService(testServerPluginService);
+        testServerPluginService.startMasterPluginContainer();
     }
 
     @AfterClass
     public void tearDownServer() throws Exception {
         unprepareServerPluginService();
-        driftServerPluginService.stopMasterPluginContainer();
+        testServerPluginService.stopMasterPluginContainer();
     }
     
     @BeforeMethod

@@ -528,8 +528,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         
         //only look for the vhost entry if the vhost we're looking for isn't the main server
         if (!MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-            ApacheDirectiveTree tree = parent.loadParser(); 
-            tree = RuntimeApacheConfiguration.extract(tree, parent.getCurrentProcessInfo(), parent.getCurrentBinaryInfo(), parent.getModuleNames(), false);            
+            ApacheDirectiveTree tree = parent.parseRuntimeConfiguration(false); 
             
             //find the vhost entry the resource key represents
             List<ApacheDirective> vhosts = tree.search("/<VirtualHost");
@@ -601,10 +600,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     private ResourceType getDirectoryResourceType() {
         return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
-    }
-
-    public ApacheDirectiveTree loadParser() throws Exception {
-        return resourceContext.getParentResourceComponent().loadParser();
     }
 
     public boolean isAugeasEnabled() {

@@ -321,10 +321,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
         pluginConfig.put(new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_CUSTOM_MODULE_NAMES));
         
-        ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-
-        //extract the runtime configuration out of declared config
-        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()), true);
+        ApacheDirectiveTree serverConfig = parseRuntimeConfiguration(serverConfigFile.getAbsolutePath(), process.getProcessInfo(), binaryInfo);
         
         String serverUrl = null;
         String vhostsGlobInclude = null;
@@ -334,11 +331,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         if (!serverRoots.isEmpty()) {
             serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
             serverRootProp.setValue(serverRoot);
-            //reparse the configuration with the new ServerRoot
-            serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()), true);            
         }
-
+                
         serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
         vhostsGlobInclude = scanForGlobInclude(serverConfig);
 
@@ -597,14 +591,35 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
     }
 
-    public static ApacheDirectiveTree loadParser(String path, String serverRoot) {
-
+    public static ApacheDirectiveTree parseFullConfiguration(String path, String serverRoot) {
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree, serverRoot);
+        ApacheParser parser = new ApacheParserImpl(tree, serverRoot, null);
         ApacheConfigReader.buildTree(path, parser);
         return tree;
     }
 
+    public static ApacheDirectiveTree parseRuntimeConfiguration(String path, ProcessInfo processInfo,
+        ApacheBinaryInfo binaryInfo) {
+        
+        String httpdVersion = binaryInfo.getVersion();
+        Map<String, String> defaultModuleNames = getDefaultModuleNames(httpdVersion);
+        
+        return parseRuntimeConfiguration(path, processInfo, binaryInfo, defaultModuleNames, true);
+    }
+
+    public static ApacheDirectiveTree parseRuntimeConfiguration(String path, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        String defaultServerRoot = binaryInfo.getRoot();
+        
+        RuntimeApacheConfiguration.NodeInspector insp =
+            RuntimeApacheConfiguration.getNodeInspector(processInfo, binaryInfo,
+                moduleNames, suppressUnknownModuleWarnings);
+
+        ApacheDirectiveTree tree = new ApacheDirectiveTree();
+        ApacheParser parser = new ApacheParserImpl(tree, defaultServerRoot, insp);
+        ApacheConfigReader.buildTree(path, parser);
+        return tree;
+    }
+    
     public static String scanForGlobInclude(ApacheDirectiveTree tree) {
         try {
             List<ApacheDirective> includes = tree.search("/Include");

@@ -44,6 +44,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceDiscoveryComponent;
 import org.rhq.plugins.apache.parser.ApacheConfigReader;
@@ -51,6 +53,7 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParser;
 import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
+import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
@@ -149,10 +152,8 @@ public class ApacheTestSetup {
                 }
                 
                 //ok, now try to find the ping URL. The best thing is to actually invoke
-                //the same code the apache server discovery does.
-                ApacheDirectiveTree tree = new ApacheDirectiveTree();
-                ApacheParser parser = new ApacheParserImpl(tree, serverRootDir.getAbsolutePath());
-                ApacheConfigReader.buildTree(confFilePath, parser);
+                //the same code the apache server discovery does.                              
+                ApacheDirectiveTree tree = ApacheServerDiscoveryComponent.parseRuntimeConfiguration(confFilePath, null, ApacheBinaryInfo.getInfo(exePath, SystemInfoFactory.createSystemInfo()));
                 
                 //XXX this hardcodes apache2 as the only option we have...
                 HttpdAddressUtility.Address addrToUse = HttpdAddressUtility.APACHE_2_x.getMainServerSampleAddress(tree, null, -1);

@@ -149,9 +149,7 @@ public class ApacheExecutionUtil {
     }
 
     public ApacheDirectiveTree getRuntimeConfiguration() {
-        ApacheDirectiveTree config = serverComponent.loadParser();
-        return RuntimeApacheConfiguration.extract(config, resourceContext.getNativeProcess(), new ApacheBinaryInfo(
-            exePath), serverComponent.getModuleNames(), true);
+        return serverComponent.parseRuntimeConfiguration(true);
     }
 
     public ApacheServerComponent getServerComponent() {

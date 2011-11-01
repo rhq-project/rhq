@@ -62,7 +62,10 @@ USAGE:   release.sh OPTIONS
    --debug=[true|false]                   [OPTIONAL]
       Set maven in debug mode. Default is false; true if option specified without argument.
 
-   --override-tag=[true|false]
+   --workspace=workspace_to_use           [OPTIONAL]
+      Override the workspace used by default by the script.
+
+   --override-tag=[true|false]            [OPTIONAL]
       Override the tag if it already exists remotely. Default is false; true if option specified without argument.
 
 EOF
@@ -92,7 +95,7 @@ parse_and_validate_options()
    OVERRIDE_TAG=false
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::,override-tag::"
+   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::,override-tag::,workspace:"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -174,6 +177,11 @@ parse_and_validate_options()
                   shift
                   ;;
             esac
+            ;;
+         --workspace)
+            shift
+            WORKSPACE=$1
+            shift
             ;;
          --override-tag)
             shift

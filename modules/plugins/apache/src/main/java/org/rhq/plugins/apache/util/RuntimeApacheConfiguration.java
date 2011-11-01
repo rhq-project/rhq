@@ -59,6 +59,185 @@ public class RuntimeApacheConfiguration {
     }
 
     /**
+     * A result of a node inspection using {@link NodeInspector}
+     * 
+     *
+     * @author Lukas Krejci
+     */
+    public static class NodeInspectionResult {
+        public boolean nodeIsConditional;
+        public boolean shouldRecurseIntoConditionalNode;        
+    }
+    
+    /**
+     * Node inspector is used to determine how to proceed with the parsing of the configuration file.
+     * 
+     *
+     * @author Lukas Krejci
+     */
+    public static class NodeInspector {
+        private TransformState state;
+        
+        private NodeInspector(TransformState state) {
+            this.state = state;
+        }
+        
+        /**
+         * Inspects a node.
+         * 
+         * @param currentNodeName the name of the node
+         * @param allValues the list of all values specified on the node 
+         * @param valueAsString the original value as a string (from which the list of values was somehow produced)
+         * @return the inspection result or null if there was some unexpected event (which has been logged)
+         */
+        public NodeInspectionResult inspect(String currentNodeName, List<String> allValues, String valueAsString) {
+            NodeInspectionResult result = new NodeInspectionResult();
+            
+            result.shouldRecurseIntoConditionalNode = true;
+
+            if (currentNodeName.equalsIgnoreCase("LoadModule")) {
+                state.loadedModules.add(allValues.get(0));
+                result.nodeIsConditional = false;
+            } else if (currentNodeName.equalsIgnoreCase("<IfModule")) {
+                String moduleFile = valueAsString;
+                boolean negate = false;
+                if (moduleFile.startsWith("!")) {
+                    negate = true;
+                    moduleFile = moduleFile.substring(1);
+                }
+
+                boolean moduleLoaded = false;
+
+                switch (isModuleLoaded(moduleFile, state.loadedModules, state.moduleNames, state.moduleFiles)) {
+                case LOADED:
+                    moduleLoaded = true;
+                    break;
+                case NOT_LOADED:
+                    moduleLoaded = false;
+                    break;
+                case UNKNOWN:
+                    if (state.suppressUnknownModuleWarnings && LOGGED_UNKNOWN_MODULES.contains(moduleFile)) {
+                        LOG.debug("Encountered unknown module name in an IfModule directive: " + moduleFile);
+                    } else {
+                        LOG.warn("Encountered unknown module name in an IfModule directive: "
+                            + moduleFile + ". If you are using Apache 2.1 or later, you can try changing the module identifier from the source file to "
+                            + "the actual module name as used in the LoadModule directive to get rid of this warning.");
+                    }
+                    LOGGED_UNKNOWN_MODULES.add(moduleFile);
+                    return null;
+                }
+
+                result.shouldRecurseIntoConditionalNode = moduleLoaded != negate;
+
+                result.nodeIsConditional = true;
+            } else if (currentNodeName.equalsIgnoreCase("<IfDefine")) {
+                String define = valueAsString;
+                boolean negate = false;
+                if (define.startsWith("!")) {
+                    negate = true;
+                    define = define.substring(1);
+                }
+
+                boolean isDefined = state.defines.contains(define);
+
+                result.shouldRecurseIntoConditionalNode = isDefined != negate;
+
+                result.nodeIsConditional = true;
+            } else if (currentNodeName.equalsIgnoreCase("<IfVersion")) {
+                //<IfVersion [[!]operator] version> ... </IfVersion>
+                //operator: =, ==, >, >=, <, <=, ~
+                //version major[.minor[.patch]] or /regex/
+                //if operator is ~, the version is assumed regex
+                //if operator is omitted, = is assumed
+
+                if (isModuleLoaded("mod_version.c", state.loadedModules, state.moduleNames, state.moduleFiles) != ModuleLoadedState.LOADED) {
+                    LOG.debug("mod_version not loaded and IfVersion directive encountered. Skipping it.");
+                    return null;
+                }
+
+                List<String> values = allValues;
+                String operator = null;
+                String version = null;
+                boolean negate = false;
+                boolean regex = false;
+
+                if (values.size() == 0) {
+                    LOG.warn("Invalid IfVersion directive.");
+                    return null;
+                }
+
+                if (values.size() == 1) {
+                    operator = "=";
+                    version = values.get(0);
+                } else if (values.size() == 2) {
+                    operator = values.get(0);
+                    version = values.get(1);
+                } else {
+                    LOG.warn("Too many arguments to a IfVersion directive: " + values);
+                    return null;
+                }
+
+                if (operator == null || version == null) {
+                    LOG.warn("Invalid IfVersion with parameters: " + values);
+                    return null;
+                }
+
+                if (operator.charAt(0) == '!') {
+                    negate = true;
+                    operator = operator.substring(1);
+                }
+
+                if ("==".equals(operator)) {
+                    operator = "=";
+                }
+
+                if (version.charAt(0) == '/') {
+                    if ("=".equals(operator) || "~".equals(operator)) {
+                        regex = true;
+                        version = version.substring(1, version.length() - 1);
+                    } else {
+                        LOG.warn("Unsupported operator " + operator
+                            + " with regex version comparison in IfVersion directive.");
+                        return null;
+                    }
+                }
+
+                OSGiVersionComparator comp = new OSGiVersionComparator();
+
+                boolean hasVersion = false;
+                if ("=".equals(operator)) {
+                    if (regex) {
+                        hasVersion = Pattern.matches(version, state.httpdVersion);
+                    } else {
+                        hasVersion = comp.compare(version, state.httpdVersion) == 0;
+                    }
+                } else if ("~".equals(operator)) {
+                    hasVersion = Pattern.matches(version, state.httpdVersion);
+                } else if (">".equals(operator)) {
+                    hasVersion = comp.compare(state.httpdVersion, version) > 0;
+                } else if (">=".equals(operator)) {
+                    hasVersion = comp.compare(state.httpdVersion, version) >= 0;
+                } else if ("<".equals(operator)) {
+                    hasVersion = comp.compare(state.httpdVersion, version) < 0;
+                } else if ("<=".equals(operator)) {
+                    hasVersion = comp.compare(state.httpdVersion, version) <= 0;
+                } else {
+                    LOG.warn("Unknown operator " + operator + " in an IfVersion directive.");
+                    return null;
+                }
+
+                result.shouldRecurseIntoConditionalNode = hasVersion != negate;
+
+                result.nodeIsConditional = true;
+            } else {
+                result.nodeIsConditional = false;
+            }
+            
+            return result;
+        }
+    }
+    
+    /**
      * This is a node visitor interface to be implemented by the users of the 
      * {@link RuntimeApacheConfiguration#walkRuntimeConfig(ApacheAugeasTree, ProcessInfo, ApacheBinaryInfo, Map)}
      * or {@link RuntimeApacheConfiguration#walkRuntimeConfig(ApacheDirectiveTree, ProcessInfo, ApacheBinaryInfo, Map)}
@@ -244,6 +423,11 @@ public class RuntimeApacheConfiguration {
         }
     }
 
+    public static NodeInspector getNodeInspector(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
+        return new NodeInspector(new TransformState(httpdProcessInfo, httpdBinaryInfo,
+            moduleNames, suppressUnknownModuleWarnings));
+    }
+    
     /**
      * Given the apache configuration and information about the parameters httpd was executed
      * with this method provides the directive tree that corresponds to the actual
@@ -263,7 +447,7 @@ public class RuntimeApacheConfiguration {
     public static ApacheDirectiveTree extract(ApacheDirectiveTree tree, ProcessInfo httpdProcessInfo,
         ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         ApacheDirectiveTree ret = tree.clone();
-        transform(new TransformingWalker(), ret.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo,
+        transform(new TransformingWalker(), ret.getRootNode(), getNodeInspector(httpdProcessInfo, httpdBinaryInfo,
             moduleNames, suppressUnknownModuleWarnings));
 
         return ret;
@@ -303,7 +487,7 @@ public class RuntimeApacheConfiguration {
             }
         };
 
-        transform(walker, tree.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+        transform(walker, tree.getRootNode(), getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
     }
 
     public static void walkRuntimeConfig(final NodeVisitor<AugeasNode> visitor, AugeasTree tree,
@@ -350,10 +534,10 @@ public class RuntimeApacheConfiguration {
                 return node.getLabel();
             }
         };
-        transform(walker, tree.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
+        transform(walker, tree.getRootNode(), getNodeInspector(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
     }
 
-    private static <T> void transform(TreeWalker<T> walker, T parentNode, TransformState state) {
+    private static <T> void transform(TreeWalker<T> walker, T parentNode, NodeInspector inspector) {
         if (walker.getChildren(parentNode).isEmpty()) {
             return;
         }
@@ -361,148 +545,17 @@ public class RuntimeApacheConfiguration {
         walker.onBeforeChildrenScan(parentNode);
 
         for (T node : walker.getChildren(parentNode)) {
-            boolean recurseFurther = true;
-
-            if (walker.getName(node).equalsIgnoreCase("LoadModule")) {
-                state.loadedModules.add(walker.getValues(node).get(0));
-                walker.visitOrdinaryNode(node);
-            } else if (walker.getName(node).equalsIgnoreCase("<IfModule")) {
-                String moduleFile = walker.getValue(node);
-                boolean negate = false;
-                if (moduleFile.startsWith("!")) {
-                    negate = true;
-                    moduleFile = moduleFile.substring(1);
-                }
-
-                boolean result = false;
-
-                switch (isModuleLoaded(moduleFile, state.loadedModules, state.moduleNames, state.moduleFiles)) {
-                case LOADED:
-                    result = true;
-                    break;
-                case NOT_LOADED:
-                    result = false;
-                    break;
-                case UNKNOWN:
-                    if (state.suppressUnknownModuleWarnings && LOGGED_UNKNOWN_MODULES.contains(moduleFile)) {
-                        LOG.debug("Encountered unknown module name in an IfModule directive: " + moduleFile);
-                    } else {
-                        LOG.warn("Encountered unknown module name in an IfModule directive: "
-                            + moduleFile + ". If you are using Apache 2.1 or later, you can try changing the module identifier from the source file to "
-                            + "the actual module name as used in the LoadModule directive to get rid of this warning.");
-                    }
-                    LOGGED_UNKNOWN_MODULES.add(moduleFile);
-                    continue;
-                }
-
-                recurseFurther = result != negate;
-
-                walker.visitConditionalNode(node, recurseFurther);
-            } else if (walker.getName(node).equalsIgnoreCase("<IfDefine")) {
-                String define = walker.getValue(node);
-                boolean negate = false;
-                if (define.startsWith("!")) {
-                    negate = true;
-                    define = define.substring(1);
-                }
-
-                boolean result = state.defines.contains(define);
-
-                recurseFurther = result != negate;
-
-                walker.visitConditionalNode(node, recurseFurther);
-            } else if (walker.getName(node).equalsIgnoreCase("<IfVersion")) {
-                //<IfVersion [[!]operator] version> ... </IfVersion>
-                //operator: =, ==, >, >=, <, <=, ~
-                //version major[.minor[.patch]] or /regex/
-                //if operator is ~, the version is assumed regex
-                //if operator is omitted, = is assumed
-
-                if (isModuleLoaded("mod_version.c", state.loadedModules, state.moduleNames, state.moduleFiles) != ModuleLoadedState.LOADED) {
-                    LOG.debug("mod_version not loaded and IfVersion directive encountered. Skipping it.");
-                    continue;
-                }
-
-                List<String> values = walker.getValues(node);
-                String operator = null;
-                String version = null;
-                boolean negate = false;
-                boolean regex = false;
-
-                if (values.size() == 0) {
-                    LOG.warn("Invalid IfVersion directive.");
-                    continue;
-                }
-
-                if (values.size() == 1) {
-                    operator = "=";
-                    version = values.get(0);
-                } else if (values.size() == 2) {
-                    operator = values.get(0);
-                    version = values.get(1);
-                } else {
-                    LOG.warn("Too many arguments to a IfVersion directive: " + values);
-                    continue;
-                }
-
-                if (operator == null || version == null) {
-                    LOG.warn("Invalid IfVersion with parameters: " + values);
-                    continue;
-                }
-
-                if (operator.charAt(0) == '!') {
-                    negate = true;
-                    operator = operator.substring(1);
-                }
-
-                if ("==".equals(operator)) {
-                    operator = "=";
-                }
-
-                if (version.charAt(0) == '/') {
-                    if ("=".equals(operator) || "~".equals(operator)) {
-                        regex = true;
-                        version = version.substring(1, version.length() - 1);
-                    } else {
-                        LOG.warn("Unsupported operator " + operator
-                            + " with regex version comparison in IfVersion directive.");
-                        continue;
-                    }
-                }
-
-                OSGiVersionComparator comp = new OSGiVersionComparator();
-
-                boolean result = false;
-                if ("=".equals(operator)) {
-                    if (regex) {
-                        result = Pattern.matches(version, state.httpdVersion);
-                    } else {
-                        result = comp.compare(version, state.httpdVersion) == 0;
-                    }
-                } else if ("~".equals(operator)) {
-                    result = Pattern.matches(version, state.httpdVersion);
-                } else if (">".equals(operator)) {
-                    result = comp.compare(state.httpdVersion, version) > 0;
-                } else if (">=".equals(operator)) {
-                    result = comp.compare(state.httpdVersion, version) >= 0;
-                } else if ("<".equals(operator)) {
-                    result = comp.compare(state.httpdVersion, version) < 0;
-                } else if ("<=".equals(operator)) {
-                    result = comp.compare(state.httpdVersion, version) <= 0;
-                } else {
-                    LOG.warn("Unknown operator " + operator + " in an IfVersion directive.");
-                    continue;
-                }
-
-                recurseFurther = result != negate;
-
-                walker.visitConditionalNode(node, recurseFurther);
-            } else {
-                walker.visitOrdinaryNode(node);
+            NodeInspectionResult result = inspector.inspect(walker.getName(node), walker.getValues(node), walker.getValue(node));
+            if (result == null) {
+                continue;
             }
-
-            if (recurseFurther) {
-                transform(walker, node, state);
+            if (!result.nodeIsConditional) {
+                walker.visitOrdinaryNode(node);
+            } else {
+                walker.visitConditionalNode(node, result.shouldRecurseIntoConditionalNode);
+                if (result.shouldRecurseIntoConditionalNode) {
+                    transform(walker, node, inspector);
+                }
             }
         }
         walker.onAfterChildrenScan(parentNode);

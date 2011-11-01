@@ -81,11 +81,8 @@ import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
-import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.parser.ApacheParser;
-import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
@@ -403,6 +400,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public AugeasComponent getAugeas() throws AugeasTreeException {
         return new AugeasComponent() {
 
+            @Override
             public AugeasConfiguration initConfiguration() {
                 File tempDir = resourceContext.getDataDirectory();
                 if (!tempDir.exists())
@@ -412,6 +410,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 return config;
             }
 
+            @Override
             public AugeasTreeBuilder initTreeBuilder() {
                 AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
                 return builder;
@@ -445,10 +444,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             String[] vhostDefs = vhostDef.split(" ");
             HttpdAddressUtility.Address addr;
             try {
-                ApacheDirectiveTree parserTree = new ApacheDirectiveTree();
-                ApacheParser parser = new ApacheParserImpl(parserTree, getServerRoot().getAbsolutePath());
-
-                ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
+                ApacheDirectiveTree parserTree = parseRuntimeConfiguration(true);
 
                 Pattern virtualHostPattern = Pattern.compile(".+:([\\d]+|\\*)");
                 Matcher matcher = virtualHostPattern.matcher(vhostDefs[0]);
@@ -632,7 +628,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         } else {
             String serverRoot = null;
 
-            ApacheDirectiveTree tree = loadParser();
+            ApacheDirectiveTree tree = parseRuntimeConfiguration(true);
             List<ApacheDirective> directives = tree.search("/ServerRoot");
             if (!directives.isEmpty())
                 if (!directives.get(0).getValues().isEmpty())
@@ -700,7 +696,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             // First try server root as base
             String serverRoot = null;
             try {
-                ApacheDirectiveTree tree = loadParser();
+                ApacheDirectiveTree tree = parseRuntimeConfiguration(true);
                 List<ApacheDirective> directives = tree.search("/ServerRoot");
                 if (!directives.isEmpty())
                     if (!directives.get(0).getValues().isEmpty())
@@ -962,13 +958,18 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         }
     }
 
-    public ApacheDirectiveTree loadParser() {
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree, getServerRoot().getAbsolutePath());
-        ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-        return tree;
+    public ApacheDirectiveTree parseFullConfiguration() {
+        String httpdConfPath = getHttpdConfFile().getAbsolutePath();
+        return ApacheServerDiscoveryComponent.parseFullConfiguration(httpdConfPath, binaryInfo.getRoot());
     }
 
+    public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings) {
+        String httpdConfPath = getHttpdConfFile().getAbsolutePath();
+        ProcessInfo processInfo = resourceContext.getNativeProcess();
+        
+        return ApacheServerDiscoveryComponent.parseRuntimeConfiguration(httpdConfPath, processInfo, binaryInfo, getModuleNames(), suppressUnknownModuleWarnings);
+    }
+    
     public boolean isAugeasEnabled() {
 
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();

@@ -81,9 +81,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
 
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
-        ApacheDirectiveTree tree = serverComponent.loadParser();
-        
-        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
+        ApacheDirectiveTree tree = serverComponent.parseRuntimeConfiguration(false);
         
         //first define the root server as one virtual host
         discoverMainServer(context, tree, discoveredResources);
@@ -164,9 +162,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         ApacheServerComponent serverComponent = inventoriedResource.getParentResourceComponent();
 
-        ApacheDirectiveTree tree = serverComponent.loadParser();
-        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(),
-            serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
+        ApacheDirectiveTree tree = serverComponent.parseRuntimeConfiguration(false);
 
         List<VHostSpec> vhosts = VHostSpec.detect(tree);
         VirtualHostLegacyResourceKeyUtil legacyResourceKeyUtil = new VirtualHostLegacyResourceKeyUtil(serverComponent, tree);

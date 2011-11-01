@@ -94,15 +94,14 @@ public class RuntimeConfigurationTest {
     public void testConditionalInclusion() {
         MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
         binfo.setVersion("2.2.17");
+        binfo.setRoot(new File(tmpDir, "runtime-config/conditional").getAbsolutePath());
         MockProcessInfo pinfo = new MockProcessInfo();
-        pinfo.setCommandLine(new String[] {"blahblah", "-D", "DEFINED"});
-        
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/conditional").getAbsolutePath());
-        ApacheConfigReader.buildTree(new File(tmpDir, "runtime-config/conditional/httpd.conf").getAbsolutePath(), parser);
-        
-        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20, false);
-        
+        pinfo.setCommandLine(new String[] { "blahblah", "-D", "DEFINED" });
+
+        ApacheDirectiveTree tree =
+            ApacheServerDiscoveryComponent.parseRuntimeConfiguration(new File(tmpDir,
+                "runtime-config/conditional/httpd.conf").getAbsolutePath(), pinfo, binfo);
+
         List<VhostSpec> vhosts = VhostSpec.detect(tree);
         
         List<VhostSpec> expectedVhosts = new ArrayList<VhostSpec>();
@@ -124,15 +123,14 @@ public class RuntimeConfigurationTest {
     public void testInclusionOrder() {
         MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
         binfo.setVersion("2.2.17");
+        binfo.setRoot(new File(tmpDir, "runtime-config/incl-order").getAbsolutePath());
         MockProcessInfo pinfo = new MockProcessInfo();
-        pinfo.setCommandLine(new String[] {"blahblah"});
-        
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/incl-order").getAbsolutePath());
-        ApacheConfigReader.buildTree(new File(tmpDir, "runtime-config/incl-order/httpd.conf").getAbsolutePath(), parser);
-        
-        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20, false);
-                
+        pinfo.setCommandLine(new String[] { "blahblah" });
+
+        ApacheDirectiveTree tree =
+            ApacheServerDiscoveryComponent.parseRuntimeConfiguration(new File(tmpDir,
+                "runtime-config/incl-order/httpd.conf").getAbsolutePath(), pinfo, binfo);
+
         List<ApacheDirective> listens = tree.search("/Listen");
         
         assertEquals(listens.size(), 3, "There should be 3 listen directives");

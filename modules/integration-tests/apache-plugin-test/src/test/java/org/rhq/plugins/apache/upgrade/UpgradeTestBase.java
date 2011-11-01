@@ -207,8 +207,7 @@ public class UpgradeTestBase extends PluginContainerTest {
     protected void defineRHQ3ResourceKeys(ApacheTestConfiguration testConfig, ApacheTestSetup setup) throws Exception {
         setup.withApacheSetup().init();
         ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
-        ApacheDirectiveTree config = component.loadParser();
-        config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
+        ApacheDirectiveTree config = component.parseRuntimeConfiguration(false);
     
         DeploymentConfig deployConfig = setup.getDeploymentConfig();
         

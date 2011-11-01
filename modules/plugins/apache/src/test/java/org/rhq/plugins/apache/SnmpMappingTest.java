@@ -101,13 +101,14 @@ public class SnmpMappingTest {
     public void testVhostNames() {
         MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
         binfo.setVersion("2.2.17");
+        binfo.setRoot(new File(tmpDir, "snmp-mapping").getAbsolutePath());
         MockProcessInfo pinfo = new MockProcessInfo();
-        pinfo.setCommandLine(new String[] {"blahblah"});
-        
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "snmp-mapping").getAbsolutePath());
-        ApacheConfigReader.buildTree(new File(tmpDir, "snmp-mapping/httpd.conf").getAbsolutePath(), parser);
-        
+        pinfo.setCommandLine(new String[] { "blahblah" });
+
+        ApacheDirectiveTree tree =
+            ApacheServerDiscoveryComponent.parseRuntimeConfiguration(
+                new File(tmpDir, "snmp-mapping/httpd.conf").getAbsolutePath(), pinfo, binfo);
+
         HttpdAddressUtility addrUtil = HttpdAddressUtility.get("2.2.17");
         List<ApacheDirective> vhosts = tree.search("/<VirtualHost");
         List<String> snmpNames = new ArrayList<String>(vhosts.size() + 1);

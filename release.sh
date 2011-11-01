@@ -95,7 +95,7 @@ parse_and_validate_options()
    OVERRIDE_TAG=false
 
    short_options="h"
-   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::,override-tag::,workspace:"
+   long_options="help,release-version:,development-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,scm-strategy:,extra-profile:,debug::,workspace:,override-tag::"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -204,7 +204,6 @@ parse_and_validate_options()
                   ;;
             esac
             ;;
-
          --)
             shift
             break
@@ -241,12 +240,6 @@ parse_and_validate_options()
    if [ "$SCM_STRATEGY" != "tag" ] && [ "$SCM_STRATEGY" != "branch" ]; then
       usage "Invalid scm strategy: $SCM_STRATEGY (valid scm strategies are 'tag' or 'branch')"
    fi
-
-   #if [ "$MODE" = "production" ]; then
-   #   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
-   #      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
-   #   fi
-   #fi
 
    print_centered "Script Options"
    script_options=( "RELEASE_VERSION" "DEVELOPMENT_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
@@ -348,11 +341,6 @@ run_release_version_and_tag_process()
    mvn clean install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true
    [ "$?" -ne 0 ] && abort "Maven build for new version failed. Please see output for details, fix any issues, then try again."
 
-   # 5) Publish release artifacts - **FUTURE IMPROVEMENT**
-   #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-   #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-   #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-
    echo "6) Cleanup again after this test build before commiting changes."
    mvn clean $MAVEN_ARGS
    [ "$?" -ne 0 ] && abort "Failed to cleanup snbapshot jars produced by test build from module target dirs. Please see above Maven output for details, fix any issues, then try again."
@@ -411,7 +399,7 @@ verify_tags()
    EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
    if [ -n "$EXISTING_REMOTE_TAG" ];
    then
-      if[ "$OVERRIDE_TAG" ];
+      if [ "$OVERRIDE_TAG" ];
       then
          echo "A remote tag named $RELEASE_TAG already exists, but will be overriden."
       else

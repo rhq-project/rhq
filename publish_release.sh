@@ -173,3 +173,19 @@ mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
 [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Release build succeeded!"
+
+
+
+# 5) Publish release artifacts - **FUTURE IMPROVEMENT**
+#echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+#mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+#[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+
+
+
+   #if [ "$MODE" = "production" ]; then
+   #   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+   #      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+   #   fi
+   #fi
+

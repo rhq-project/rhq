@@ -39,7 +39,7 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
-public class TestServerPluginService extends ServerPluginService implements TestPluginServiceMBean {
+public class TestServerPluginService extends ServerPluginService implements TestServerPluginServiceMBean {
 
     public TestMasterServerPluginContainer master;
     public MasterServerPluginContainerConfiguration masterConfig;

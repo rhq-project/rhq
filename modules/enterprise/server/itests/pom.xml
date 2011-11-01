@@ -15,8 +15,8 @@
   <description>RHQ enterprise server integration tests</description>
 
   <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/integration-tests/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/integration-tests/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/itests/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/itests/</developerConnection>
   </scm>
 
   <properties>
@@ -26,42 +26,6 @@
   </properties>
 
   <dependencies>
-    <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-comm</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-common-drift</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-       <dependency>
-           <groupId>com.googlecode.java-diff-utils</groupId>
-           <artifactId>diffutils</artifactId>
-           <version>1.2.1</version>
-       </dependency>
-
       <!--================ Test Deps ================-->
 
       <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
@@ -140,19 +104,12 @@
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
-         <groupId>antlr</groupId>
-         <artifactId>antlr</artifactId>
-         <version>2.7.7</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
          <groupId>jboss</groupId>
          <artifactId>javassist</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>
       </dependency>
 
+      <!-- needed by embedded ejb container -->
       <dependency>
          <groupId>trove</groupId>
          <artifactId>trove</artifactId>
@@ -160,6 +117,7 @@
          <scope>test</scope>
       </dependency>
 
+      <!-- needed by embedded ejb container -->
       <dependency>
          <groupId>xerces</groupId>
          <artifactId>xercesImpl</artifactId>
@@ -167,62 +125,7 @@
          <scope>test</scope>
       </dependency>
 
-       <dependency>
-           <groupId>net.sf.opencsv</groupId>
-           <artifactId>opencsv</artifactId>
-           <version>1.8</version>
-           <scope>test</scope>
-       </dependency>
-
-       <dependency>
-           <groupId>commons-jxpath</groupId>
-           <artifactId>commons-jxpath</artifactId>
-           <version>1.3</version>
-           <scope>test</scope>
-       </dependency>
-
-
       <!-- 3rd Party Deps -->
-
-      <dependency>
-         <groupId>org.antlr</groupId>
-         <artifactId>antlr</artifactId>
-         <version>3.2</version>
-      </dependency>
-
-      <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
-      <dependency>
-         <groupId>commons-beanutils</groupId>
-         <artifactId>commons-beanutils</artifactId>
-         <version>1.6.1</version>
-      </dependency>
-
-      <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
-      <!-- also required by EJB3 Embedded (test scope) -->
-      <dependency>
-         <groupId>commons-collections</groupId>
-         <artifactId>commons-collections</artifactId>
-         <version>3.2</version>
-      </dependency>
-
-      <dependency>
-         <groupId>commons-httpclient</groupId>
-         <artifactId>commons-httpclient</artifactId>
-         <version>3.0.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>commons-lang</groupId>
-         <artifactId>commons-lang</artifactId>
-         <version>2.4</version>
-      </dependency>
-
-      <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
-      <dependency>
-         <groupId>commons-validator</groupId>
-         <artifactId>commons-validator</artifactId>
-         <version>1.1.4</version>
-      </dependency>
 
       <!-- required by RHQ server classes, as well as EJB3 Embedded -->
       <dependency>
@@ -230,12 +133,6 @@
          <artifactId>dom4j</artifactId>
          <version>1.6.1-jboss</version>
          <scope>runtime</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
 
       <dependency>
@@ -255,22 +152,13 @@
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
-         <groupId>i18nlog</groupId>
-         <artifactId>i18nlog</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.geronimo.specs</groupId>
-         <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
-         <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,
-              so use the Geronimo one instead. -->
-         <version>1.3</version>
-         <scope>provided</scope> <!-- by JBossAS -->
+        <groupId>javax.mail</groupId>
+        <artifactId>mail</artifactId>
+        <version>1.4</version>
       </dependency>
 
       <dependency>
@@ -281,43 +169,8 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>servlet-api</artifactId>
-         <version>2.4</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>jsp-api</artifactId>
-         <version>2.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-annotations-ejb3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-cache</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>compile</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-ejb3x</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
@@ -329,40 +182,6 @@
          <artifactId>jboss-ejb3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-j2ee</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-jmx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-system</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbosssx</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jbpm</artifactId>
-         <version>3.1.1</version>
       </dependency>
 
       <!-- for the transaction interrupt EJB3 interceptor -->
@@ -387,92 +206,20 @@
          <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
       </dependency>
 
+      <!-- This is needed cglib which is in turn needed by hibernate -->
       <dependency>
          <groupId>org.easymock</groupId>
          <artifactId>easymockclassextension</artifactId>
          <version>2.2</version>
          <scope>test</scope>
-         <!-- somehow this is needed otherwise the hibernate stuff doesn't initialize in our tests -->
       </dependency>
 
-      <dependency>
-         <groupId>org.snmp4j</groupId>
-         <artifactId>snmp4j</artifactId>
-         <version>1.8.2</version>
-      </dependency>
-
-      <!-- required by RHQ server classes, as well as EJB3 Embedded -->
-      <dependency>
-         <groupId>oswego-concurrent</groupId>
-         <artifactId>concurrent</artifactId>
-         <version>1.3.4</version>
-      </dependency>
-
-      <!-- TODO: Why is this needed? -->
-      <dependency>
-         <groupId>postgresql</groupId>
-         <artifactId>postgresql</artifactId>
-         <!--<scope>test</scope>-->
-      </dependency>
-
-      <dependency>
-         <groupId>rss4j</groupId>
-         <artifactId>rss4j</artifactId>
-         <version>0.92-on.2</version>
-      </dependency>
-
-      <dependency>
-         <groupId>tomcat</groupId>
-         <artifactId>catalina</artifactId>
-         <version>5.5.20</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>tomcat</groupId>
-         <artifactId>tomcat-jk</artifactId>
-         <version>4.1.31</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <!-- Needed by com.jboss.jbossnetwork.apl.actions.xml.XPathProcessor; TODO: Remove once APL has been excised. -->
-      <dependency>
-         <groupId>xalan</groupId>
-         <artifactId>xalan</artifactId>
-         <version>2.5.1</version>
-         <scope>provided</scope>
-      </dependency>
-
-       <dependency>
-           <groupId>com.jcraft</groupId>
-           <artifactId>jsch</artifactId>
-           <version>0.1.29</version>
-       </dependency>
-
-       <dependency>
-           <groupId>org.jboss.el</groupId>
-           <artifactId>jboss-el</artifactId>
-           <version>2.0.1.GA</version>
-           <scope>provided</scope>
-       </dependency>
        <dependency>
            <groupId>org.freemarker</groupId>
            <artifactId>freemarker</artifactId>
            <version>2.3.18</version>
            <scope>provided</scope>
        </dependency>
- 
-       <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-dbutils</artifactId>
-         <version>${project.version}</version>
-         <exclusions>
-            <exclusion>
-              <groupId>ant</groupId>
-              <artifactId>ant</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
   </dependencies>
 
   <build>
@@ -487,45 +234,6 @@
     <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
-
-               <execution>
-                  <phase>process-classes</phase>
-                  <configuration>
-                     <tasks>
-                        <!-- generate the I18N resource bundles -->
-                        <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-
-                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
-                           <classpath refid="maven.runtime.classpath" />
-                           <classfileset dir="${project.build.outputDirectory}">
-                              <include name="**/ServerI18NResourceKeys.class" />
-                              <include name="**/AlertI18NResourceKeys.class" />
-                           </classfileset>
-                        </i18n>
-
-                        <!-- create our rhq-server-version.properties file that goes in our jar -->
-                        <tstamp>
-                           <format property="build.time" pattern="dd.MMM.yyyy HH.mm.ss z" />
-                        </tstamp>
-
-                        <echo file="${project.build.outputDirectory}/rhq-server-version.properties" append="false">Product-Name=${rhq.product.name}
-Product-Version=${project.version}
-Module-Name=${project.name}
-Module-Version=${project.version}
-Build-Number=${buildNumber}
-Build-Date=${build.time}
-Build-Jdk-Vendor=${java.vendor}
-Build-Jdk=${java.version}
-Build-OS-Name=${os.name}
-Build-OS-Version=${os.version}
-</echo>
-                     </tasks>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-
                <!--  in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
                <execution>
                   <id>Extract JMS classes from RAR needed for JMS tests</id>
@@ -548,7 +256,6 @@ Build-OS-Version=${os.version}
                      <goal>run</goal>
                   </goals>
                </execution>
-
             </executions>
          </plugin>
     </plugins>

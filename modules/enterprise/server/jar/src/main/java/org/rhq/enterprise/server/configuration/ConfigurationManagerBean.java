@@ -136,7 +136,7 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-@SuppressWarnings({"UnnecessaryLocalVariable", "UnnecessaryReturnStatement"})
+@SuppressWarnings({ "UnnecessaryLocalVariable", "UnnecessaryReturnStatement" })
 @Stateless
 @XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
@@ -1245,6 +1245,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private boolean isRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
+        if (configDef == null) {
+            return false;
+        }
 
         return (ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat() || (ConfigurationFormat.RAW == configDef
             .getConfigurationFormat()));
@@ -1253,7 +1256,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     private boolean isStructuredAndRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
-
+        if (configDef == null) {
+            return false;
+        }
         return ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat();
     }
 

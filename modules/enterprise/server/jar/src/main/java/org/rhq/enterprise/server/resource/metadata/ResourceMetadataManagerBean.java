@@ -44,10 +44,11 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
@@ -450,74 +451,114 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateDriftMetadata(ResourceType existingType, ResourceType resourceType) {
-        boolean isSame = true;
-
         existingType = entityManager.find(ResourceType.class, existingType.getId());
 
         //
-        // First, we need to see if the drift definitions have changed. If the existing and new drift definitions
-        // are the same, then we can skip the update and do nothing. Only if one or more drift definitions
-        // are different do we have to do anything to the persisted metadata.
+        // Only if one or more drift definitions are different do we have to do anything to the persisted metadata.
         //
 
         Set<DriftDefinitionTemplate> existingDriftTemplates = existingType.getDriftDefinitionTemplates();
-        Set<DriftDefinitionTemplate> newDriftTemplates = resourceType.getDriftDefinitionTemplates();
-        if (existingDriftTemplates.size() != newDriftTemplates.size()) {
-            isSame = false;
-        } else {
-            // note: the size of the sets are typically really small (usually between 0 and 3),
-            // so iterating through them is fast.
 
-            // look at all the configs to ensure we detect any changes to individual settings on the templates
-            Set<String> existingNames = new HashSet<String>(existingDriftTemplates.size());
-            Set<String> newNames = new HashSet<String>(newDriftTemplates.size());
-            for (DriftDefinitionTemplate existingTemplate : existingDriftTemplates) {
-                String existingName = existingTemplate.getName();
-                Configuration existingConfig = existingTemplate.getConfiguration();
+        // We are only concerned with the plugin defined templates, user defined templates are not affected.
 
-                existingNames.add(existingName); // for later
+        Set<DriftDefinitionTemplate> existingPluginDriftTemplates = new HashSet<DriftDefinitionTemplate>(
+            existingDriftTemplates.size());
 
-                for (DriftDefinitionTemplate newTemplate : newDriftTemplates) {
-                    String newName = newTemplate.getName();
-                    newNames.add(newName); // for later, do this here, not in the if-stmt below, so we can catch if new has names not in existing
-                    if (newName.equals(existingName)) {
-                        Configuration newConfig = newTemplate.getConfiguration();
-                        if (!existingConfig.equals(newConfig)) {
-                            isSame = false;
-                        }
-                        break;
+        for (DriftDefinitionTemplate existingTemplate : existingDriftTemplates) {
+            if (!existingTemplate.isUserDefined()) {
+                existingPluginDriftTemplates.add(existingTemplate);
+            }
+        }
+
+        Set<DriftDefinitionTemplate> newPluginDriftTemplates = resourceType.getDriftDefinitionTemplates();
+        // note: the size of the sets are typically really small (usually between 1 and 3),
+        // so iterating through them is fast.
+
+        // look at all the configs to ensure we detect any changes to individual settings on the templates
+        Set<String> existingNames = new HashSet<String>(existingPluginDriftTemplates.size());
+        DriftDefinitionComparator dirComp = new DriftDefinitionComparator(CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
+
+        for (Iterator<DriftDefinitionTemplate> i = existingDriftTemplates.iterator(); i.hasNext();) {
+            DriftDefinitionTemplate existingTemplate = i.next();
+
+            String existingName = existingTemplate.getName();
+            DriftDefinition existingDef = existingTemplate.getTemplateDefinition();
+            Set<DriftDefinition> attachedDefs = existingTemplate.getDriftDefinitions();
+            boolean noAttachedDefs = (null == attachedDefs || attachedDefs.isEmpty());
+            boolean notPinned = !existingTemplate.isPinned();
+            boolean stillDefined = false;
+
+            // for later to determine if any existing templates are no longer defined in the plugin
+            existingNames.add(existingName);
+
+            for (DriftDefinitionTemplate newTemplate : newPluginDriftTemplates) {
+                String newName = newTemplate.getName();
+
+                // The new template existed previously. See if it has changed and if so, in what way:
+                //
+                // IF      the existingTemplate
+                //         has no attached defs AND
+                //         is not pinned
+                // THEN    we can update it with impunity
+                // ELSE IF the directories have not changed
+                // THEN    we can update the base info fields only
+                //    Note that in the latter case we update the template but we will not push the
+                //    changes down to attached defs.  This is a little odd because the template and defs can
+                //    get out of sync, but we don't want a plugin change to affect existing defs in case
+                //    the user has made manual changes, or wants it the way it is.
+                if (newName.equals(existingName)) {
+                    stillDefined = true;
+
+                    DriftDefinition newDef = newTemplate.getTemplateDefinition();
+                    boolean noDirChanges = (0 == dirComp.compare(existingDef, newDef));
+
+                    if ((noAttachedDefs && notPinned) || noDirChanges) {
+                        existingTemplate.setTemplateDefinition(newDef);
+
+                    } else {
+                        // can't update directories for an existing template if pinned and/or having attached defs
+                        log.error("Failed to update drift definition [" + newName + "] on type ["
+                            + resourceType.getName()
+                            + "]. It is not allowed to update directories on an existing template that is pinned "
+                            + "or has attached definitions. It would invalidate pinned snapshots as the fileset "
+                            + "would no longer map from template to definition.");
                     }
-                }
 
-                if (!isSame) {
                     break;
                 }
             }
 
-            if (isSame) {
-                // make sure they all have the same names and no duplicate names existed
-                isSame = existingNames.equals(newNames) && existingNames.size() == existingDriftTemplates.size();
+            // If the template is no longer defined then what we do depends on whether it has attached
+            // definitions. If not it can be deleted, otherwise we keep it around so the user doesn't lose
+            // anything, but set it to user-defined, in essence removing it from the plugin.
+            if (!stillDefined) {
+                if (noAttachedDefs) {
+                    entityManager.remove(existingTemplate);
+                    i.remove();
+
+                } else {
+                    existingTemplate.setUserDefined(true);
+                    log.warn("Plugin no longer defines drift template [" + existingTemplate.getName() + "] on type ["
+                        + resourceType.getName()
+                        + "]. This template has attached definitions.  To preserve the existing definitions the "
+                        + " template will not be removed but is instead being set as user-defined.  The user will "
+                        + " be responsible for further maintenance of this template.");
+                }
             }
         }
 
-        //
-        // If one or more drift definitions are different between new and existing,
-        // then we need to remove the old drift definition and persist the new drift definition.
-        //
+        // Now add new templates, not previously defined
+        for (DriftDefinitionTemplate newTemplate : newPluginDriftTemplates) {
+            String newName = newTemplate.getName();
 
-        if (!isSame) {
-            for (DriftDefinitionTemplate doomed : existingDriftTemplates) {
-                entityManager.remove(doomed);
+            if (existingNames.contains(newName)) {
+                continue;
             }
-            existingType.getDriftDefinitionTemplates().clear();
 
-            for (DriftDefinitionTemplate toPersist : newDriftTemplates) {
-                entityManager.persist(toPersist);
-                existingType.addDriftDefinitionTemplate(toPersist);
-            }
+            newTemplate.setResourceType(existingType);
+            entityManager.persist(newTemplate);
+            existingDriftTemplates.add(newTemplate);
         }
-
-        return;
     }
 
     private void persistNewType(ResourceType resourceType) {

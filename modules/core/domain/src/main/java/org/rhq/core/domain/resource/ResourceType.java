@@ -439,6 +439,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.packageTypes = new HashSet<PackageType>();
         this.subCategories = new ArrayList<ResourceSubCategory>();
         this.productVersions = new HashSet<ProductVersion>();
+        this.driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>();
 
         this.name = name;
         this.category = category;
@@ -839,6 +840,10 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         }
         template.setResourceType(this);
         driftDefinitionTemplates.add(template);
+    }
+
+    public void setDriftDefinitionTemplates(Set<DriftDefinitionTemplate> driftDefinitionTemplates) {
+        this.driftDefinitionTemplates = driftDefinitionTemplates;
     }
 
     @Override

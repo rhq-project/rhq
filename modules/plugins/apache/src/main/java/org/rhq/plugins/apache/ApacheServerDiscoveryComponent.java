@@ -89,6 +89,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         public DiscoveryFailureException(String message) {
             super(message);
         }
+        
+        public DiscoveryFailureException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
@@ -268,17 +272,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      */
     private DiscoveredResourceDetails discoverSingleProcess(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
         ProcessScanResult process) throws DiscoveryFailureException, Exception {
-        //String executablePath = process.getProcessInfo().getName();
-        String executableName = getExecutableName(process);
-        File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
-        if (executablePath == null) {
-            throw new DiscoveryFailureException("Executable path could not be determined.");
-        }
-        if (!executablePath.isAbsolute()) {
-            throw new DiscoveryFailureException("Executable path (" + executablePath + ") is not absolute."
-                + "Please restart Apache specifying an absolute path for the executable.");
-        }
+        File executablePath = getExecutableAbsolutePath(process);
         log.debug("Apache executable path: " + executablePath);
+        
         ApacheBinaryInfo binaryInfo;
         try {
             binaryInfo = ApacheBinaryInfo
@@ -563,6 +559,44 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return executableName;
     }
 
+    private static File getExecutableAbsolutePath(ProcessScanResult process) throws DiscoveryFailureException {
+        //String executablePath = process.getProcessInfo().getName();
+        String executableName = getExecutableName(process);
+        File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
+        if (executablePath == null) {
+            throw new DiscoveryFailureException("Executable path could not be determined.");
+        }
+        if (!executablePath.isAbsolute()) {
+            //try to figure out the full path... this might fail due to lack of privs
+            //if the agent is running as a different user than the httpd process
+            String errorMessage = "Executable path (" + executablePath + ") is not absolute. "
+            + "Please restart Apache specifying an absolute path for the executable or "
+            + "make sure that the user running the RHQ agent is able to access the commandline parameters of the " + executableName + " process.";
+            Throwable cause = null;
+            boolean success = false;
+            
+            //the OsProcessUtility.getProcExe does an excelent job at figuring the full path and I never saw it fail
+            //when the agent process has enough privs to get at the info at all. Nevertheless, let's be paranoid
+            //and try yet another method..
+            try {
+                String cwd = process.getProcessInfo().getCurrentWorkingDirectory();
+                if (cwd != null) {
+                    executablePath = new File(cwd, executablePath.getPath());
+                    
+                    success = executablePath.isAbsolute() && executablePath.isFile();
+                }
+            } catch (Exception e) {
+                cause = e;                
+            }
+            
+            if (!success) {
+                throw new DiscoveryFailureException(errorMessage, cause);
+            }
+        }
+        
+        return executablePath;
+    }
+    
     private static void validateServerRootAndServerConfigFile(Configuration pluginConfig) {
         String serverRoot = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT)
             .getStringValue();

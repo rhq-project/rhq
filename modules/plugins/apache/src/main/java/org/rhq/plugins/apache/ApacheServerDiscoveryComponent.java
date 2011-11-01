@@ -249,7 +249,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         for (ProcessScanResult process : processes) {
             try {
                 DiscoveredResourceDetails apache = discoverSingleProcess(discoveryContext, process);
-                discoveredResources.add(apache);
+                if (apache != null) {
+                    discoveredResources.add(apache);
+                }
             } catch (DiscoveryFailureException e) {
                 log.warn("Discovery of Apache process [" + process.getProcessInfo() + "] failed: " + e.getMessage());
             } catch (Exception e) {
@@ -272,6 +274,11 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      */
     private DiscoveredResourceDetails discoverSingleProcess(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
         ProcessScanResult process) throws DiscoveryFailureException, Exception {
+
+        if (isWindowsServiceRootInstance(process)) {
+            return null;
+        }   
+        
         File executablePath = getExecutableAbsolutePath(process);
         log.debug("Apache executable path: " + executablePath);
         
@@ -362,7 +369,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<PlatformComponent> context) {
         String inventoriedResourceKey = context.getResourceKey();
-
+        
         //check if the inventoried resource has the old format of the resource key.
         //the old format was "server-root", while the new format
         //is "server-root||httpd-conf". Checking for "||" in the resource key is therefore
@@ -527,7 +534,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return new File(serverConfigFile);
     }
 
-    private String getCommandLineOption(String[] cmdLine, String option) {
+    private static String getCommandLineOption(String[] cmdLine, String option) {
         String root = null;
         for (int i = 1; i < cmdLine.length; i++) {
             String arg = cmdLine[i];
@@ -817,5 +824,26 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             return MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
         default: throw new IllegalStateException("Unknown HttpdAddressUtility instance.");
     }        
+    }
+    
+    /**
+     * We need this because of PIQL limitations.
+     * 
+     * On *nixes we need to match all "root" httpd processes (i.e. with ppid of 1) but on windows
+     * we need to match all child httpd processes (i.e. processes that are spawned from the "root"
+     * httpd process).
+     * 
+     * The *nix requirement causes the root httpd process be matched on Windows
+     * as well, which is undesirable but there is no way of telling PIQL
+     * "don't do this on windows" or "match only processes that DO NOT have a -k argument
+     * at all or that have it with a value different from runservice".
+     * 
+     * @param process
+     * @return true if the process represents the root httpd instance if run as a windows service
+     */
+    private static boolean isWindowsServiceRootInstance(ProcessScanResult process) {
+        String kArg = getCommandLineOption(process.getProcessInfo().getCommandLine(), "-k");
+        
+        return kArg != null && kArg.equalsIgnoreCase("runservice");
     }
 }

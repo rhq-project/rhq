@@ -27,7 +27,6 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValu
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.io.ByteArrayOutputStream;
@@ -53,6 +52,7 @@ import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.EntitySerializer;
+import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
 public class ManageSnapshotsTest extends DriftServerTest {
@@ -153,8 +153,9 @@ public class ManageSnapshotsTest extends DriftServerTest {
 
         List<? extends Drift> actualDrifts = new ArrayList(changeSet.getDrifts());
 
-        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the new initial change set",
-            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+        AssertUtils.assertCollectionMatchesNoOrder(
+            "Expected to find drifts from change sets 1 and 2 in the new initial change set",
+            (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
 
         // we need to compare the newDriftFile properties separately because
         // assertCollectionMatchesNoOrder compares properties via equals() and JPADriftFile

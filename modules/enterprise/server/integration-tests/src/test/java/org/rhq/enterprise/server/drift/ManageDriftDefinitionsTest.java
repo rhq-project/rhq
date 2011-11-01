@@ -27,7 +27,6 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +53,7 @@ import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
 public class ManageDriftDefinitionsTest extends DriftServerTest {
@@ -199,8 +199,9 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
         List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
 
-        assertCollectionMatchesNoOrder("Expected to find drifts from change sets 1 and 2 in the template change set",
-            (List<Drift>)expectedDrifts, (List<Drift>)actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
+        AssertUtils.assertCollectionMatchesNoOrder(
+            "Expected to find drifts from change sets 1 and 2 in the template change set",
+            (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "newDriftFile");
 
         // lastly verify that the agent is called
         assertTrue("Failed to send drift definition along with snapshot to agent", agentInvoked.get());

@@ -27,7 +27,6 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValu
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.util.ArrayList;
@@ -52,6 +51,7 @@ import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 
 public class JPADriftServerBeanTest extends DriftServerTest {
@@ -149,8 +149,9 @@ public class JPADriftServerBeanTest extends DriftServerTest {
         assertEquals("Expected change set to contain two drifts. This could be a result of the change set not being " +
             "persisted correctly or the criteria fetch being done incorrectly.", 2, jpaChangeSet.getDrifts().size());
 
-       assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id", "drifts",
-           "class", "ctime");
+       AssertUtils
+           .assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id", "drifts",
+               "class", "ctime");
 
         List<? extends Drift> expectedDrifts = asList(drift1, drift2);
         List<? extends Drift> actualDrifts = new ArrayList(jpaChangeSet.getDrifts());
@@ -159,7 +160,7 @@ public class JPADriftServerBeanTest extends DriftServerTest {
         // and are somewhat implmentation specific. We ignore the directory property because
         // it is really a calculated property. newDriftFile has to be compared separately
         // since it does not implement equals.
-        assertCollectionMatchesNoOrder("The change set drifts were not persisted correctly",
+        AssertUtils.assertCollectionMatchesNoOrder("The change set drifts were not persisted correctly",
             (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "directory",
             "newDriftFile", "class");
 
@@ -214,8 +215,9 @@ public class JPADriftServerBeanTest extends DriftServerTest {
         assertEquals("Expected change set to contain two drifts. This could be a result of the change set not being " +
             "persisted correctly or the criteria fetch being done incorrectly.", 2, jpaChangeSet.getDrifts().size());
 
-       assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id", "drifts",
-           "class", "ctime");
+       AssertUtils
+           .assertPropertiesMatch("The change set was not persisted correctly", changeSet, jpaChangeSet, "id", "drifts",
+               "class", "ctime");
 
         List<? extends Drift> expectedDrifts = asList(drift1, drift2);
         List<? extends Drift> actualDrifts = new ArrayList(jpaChangeSet.getDrifts());
@@ -224,7 +226,7 @@ public class JPADriftServerBeanTest extends DriftServerTest {
         // and are somewhat implmentation specific. We ignore the directory property because
         // it is really a calculated property. newDriftFile has to be compared separately
         // since it does not implement equals.
-        assertCollectionMatchesNoOrder("The change set drifts were not persisted correctly",
+        AssertUtils.assertCollectionMatchesNoOrder("The change set drifts were not persisted correctly",
             (List<Drift>) expectedDrifts, (List<Drift>) actualDrifts, "id", "ctime", "changeSet", "directory",
             "newDriftFile", "class");
 
@@ -283,7 +285,8 @@ public class JPADriftServerBeanTest extends DriftServerTest {
         Set<JPADrift> expectedDrifts = new HashSet<JPADrift>(asList(drift1, drift2));
         Set<JPADrift> actualDrifts = newChangeSet.getDrifts();
 
-        assertCollectionMatchesNoOrder("The change set drifts were not copied correctly", expectedDrifts, actualDrifts,
+        AssertUtils.assertCollectionMatchesNoOrder("The change set drifts were not copied correctly", expectedDrifts,
+            actualDrifts,
             "changeSet", "newDriftFile");
     }
 

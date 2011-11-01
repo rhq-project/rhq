@@ -40,6 +40,7 @@
         <module>ear</module>
         <module>safe-invoker</module>
         <module>client-api</module>
+        <module>integration-tests</module>
       </modules>
     </profile>
 
@@ -54,6 +55,23 @@
         <module>xml-schemas</module>
         <module>jar</module>
         <module>safe-invoker</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>integration-tests</id>
+      <activation>
+        <property> 
+          <name>rhq.itests</name>
+        </property> 
+      </activation>
+      <modules>
+         <module>xml-schemas</module>
+         <module>jar</module>
+         <module>sars</module>
+         <module>plugins</module>
+         <module>client-api</module>
+         <module>integration-tests</module>
       </modules>
     </profile>
 

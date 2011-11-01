@@ -31,7 +31,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -58,27 +57,31 @@ public class ResourceTypeRepository {
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     /**
-     * The following MetadadaTypes are not cached and will always be queried from the database:<br/>
+     * The following MetadadaTypes are subject to change and are always fetched from the database:<br/>
      * driftDefinitionTemplates
      * 
      * @author Jay Shaughnessy     
      */
     public enum MetadataType {
         children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates(
-            false);
+            true);
 
-        private boolean isCachedMetadata;
+        private boolean isFetchAlways;
 
         private MetadataType() {
-            this.isCachedMetadata = true;
+            this(false);
         }
 
-        private MetadataType(boolean isCachedMetadata) {
-            this.isCachedMetadata = isCachedMetadata;
+        /**
+         * @param isFetchAlways if true then the cache for this metadata will be refreshed each time it is requested.
+         * Meaning, the db will always be called because this metadata is subject to change. 
+         */
+        private MetadataType(boolean isFetchAlways) {
+            this.isFetchAlways = isFetchAlways;
         }
 
-        public boolean isCachedMetadata() {
-            return isCachedMetadata;
+        public boolean isFetchAlways() {
+            return isFetchAlways;
         }
     }
 
@@ -187,22 +190,17 @@ public class ResourceTypeRepository {
         });
     }
 
-    public void getResourceTypes(Integer[] resourceTypeIds, EnumSet<MetadataType> metadataTypesNeeded,
+    public void getResourceTypes(Integer[] resourceTypeIds, EnumSet<MetadataType> metadataTypes,
         final TypesLoadedCallback callback) {
 
-        // note, metadataTypesNeeded == null implies EnumSet.noneOf(MetadataType.class)
-        final EnumSet<MetadataType> metadataTypes;
-        if (metadataTypesNeeded == null) {
-            metadataTypes = EnumSet.noneOf(MetadataType.class);
-        } else {
-            metadataTypes = metadataTypesNeeded;
-        }
-
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        // note, metadataTypes == null implies EnumSet.noneOf(MetadataType.class)
+        metadataTypes = (null == metadataTypes) ? EnumSet.noneOf(MetadataType.class) : metadataTypes;
 
         final Map<Integer, ResourceType> cachedTypes = new HashMap<Integer, ResourceType>();
-
         List<Integer> typesNeeded = new ArrayList<Integer>();
+        EnumSet<MetadataType> metadataTypesNeeded = EnumSet.noneOf(MetadataType.class);
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+
         if (resourceTypeIds == null) {
             //preload all
         } else {
@@ -215,7 +213,24 @@ public class ResourceTypeRepository {
                     || (!metadataTypes.isEmpty() && (!typeCacheLevel.containsKey(typeId) // 2. 
                     || !typeCacheLevel.get(typeId).containsAll(metadataTypes)))) // 3. 
                 {
+                    // add this type to the types we need to fetch
                     typesNeeded.add(typeId);
+
+                    // make sure we fetch the metadata needed for this type
+                    if (metadataTypesNeeded.size() < metadataTypes.size()) {
+                        EnumSet<MetadataType> metadataTypesCached = typeCacheLevel.get(typeId);
+
+                        if (metadataTypesCached == null) {
+                            metadataTypesNeeded = metadataTypes;
+
+                        } else {
+                            for (MetadataType metadataType : metadataTypes) {
+                                if (!metadataTypesCached.contains(metadataType)) {
+                                    metadataTypesNeeded.add(metadataType);
+                                }
+                            }
+                        }
+                    }
                 } else {
                     cachedTypes.put(typeId, typeCache.get(typeId));
                 }
@@ -230,7 +245,7 @@ public class ResourceTypeRepository {
             criteria.addFilterIds(typesNeeded.toArray(new Integer[typesNeeded.size()]));
         }
 
-        for (MetadataType metadataType : metadataTypes) {
+        for (MetadataType metadataType : metadataTypesNeeded) {
             switch (metadataType) {
             case children:
                 criteria.fetchChildResourceTypes(true);
@@ -275,16 +290,16 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        Log.info("Loading [" + typesNeeded.size() + "] types with facets=[" + metadataTypes + "]...");
+        Log.info("Loading [" + typesNeeded.size() + "] types with facets=[" + metadataTypesNeeded + "]...");
 
-        if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null)
-            && metadataTypes.contains(MetadataType.children)) {
+        if ((topLevelServerAndServiceTypes == null) && (metadataTypesNeeded != null)
+            && metadataTypesNeeded.contains(MetadataType.children)) {
             // Perform a one-time load of server and service types with no parent types. These types are implicitly
             // children of all platform types, even though they are not included in the platform types'
             // childResourceTypes field.
-            loadTopLevelServerAndServiceTypes(callback, metadataTypes, criteria, cachedTypes);
+            loadTopLevelServerAndServiceTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
         } else {
-            loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
+            loadRequestedTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
         }
     }
 
@@ -370,14 +385,7 @@ public class ResourceTypeRepository {
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
                                 case driftDefinitionTemplates:
-                                    if (cachedType.getDriftDefinitionTemplates() != null) {
-                                        cachedType.getDriftDefinitionTemplates().clear(); // remove any old ones hanging around
-                                    }
-                                    if (type.getDriftDefinitionTemplates() != null) {
-                                        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
-                                            cachedType.addDriftDefinitionTemplate(template);
-                                        }
-                                    }
+                                    cachedType.setDriftDefinitionTemplates(type.getDriftDefinitionTemplates());
                                     break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()
@@ -392,17 +400,17 @@ public class ResourceTypeRepository {
                     }
 
                     if (metadataTypes != null && !metadataTypes.isEmpty()) {
-                        if (typeCacheLevel.containsKey(type.getId())) {
-                            typeCacheLevel.get(type.getId()).addAll(metadataTypes);
-                        } else {
-                            for (MetadataType metadataType : metadataTypes) {
-                                if (metadataType.isCachedMetadata) {
-                                    typeCacheLevel.put(type.getId(), EnumSet.copyOf(metadataTypes));
-                                }
+                        EnumSet<MetadataType> cachedMetadata = typeCacheLevel.get(type.getId());
+                        cachedMetadata = (null == cachedMetadata) ? EnumSet.noneOf(MetadataType.class) : cachedMetadata;
+                        for (MetadataType metadataType : metadataTypes) {
+                            if (!metadataType.isFetchAlways()) {
+                                cachedMetadata.add(metadataType);
                             }
                         }
+                        typeCacheLevel.put(type.getId(), cachedMetadata);
                     }
                 }
+
                 if (callback != null) {
                     callback.onTypesLoaded(cachedTypes);
                 }

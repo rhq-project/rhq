@@ -401,7 +401,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     private BundleType bundleType;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "resourceType")
-    private Set<DriftDefinitionTemplate> driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>();
+    private Set<DriftDefinitionTemplate> driftDefinitionTemplates;
 
     // note that this is mapped to a Configuration entity, which is what it really is. However, our getter/setter
     // only provides access to this via ResourceTypeBundleConfiguration to encapsulate the innards of this implementation

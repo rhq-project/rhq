@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-      <groupId>org.rhq.helpers</groupId>
-      <artifactId>rhq-helpers</artifactId>
-      <version>3.0.1.GA</version>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>4.0.1</version>
     </parent>
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>rhq-pluginAnnotations</artifactId>
     <packaging>jar</packaging>
+    <version>3.0.4</version>
 
     <name>RHQ Plugin Annotations</name>
     <description>Annotations to help generate plugin descriptors</description>
@@ -49,3 +53,4 @@
     </build>
 
 </project>
+

@@ -27,12 +27,13 @@ import java.lang.annotation.Target;
  * Annotation that denotes an Operation that can be executed
  *
  * @author Heiko W. Rupp
- * @author Galder Zamarre–o
+ * @author Galder Zamarreño
  */
-@Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
+@Retention(RetentionPolicy.CLASS)
 public @interface Operation {
    String name() default "";
    String displayName() default "";
    String description() default "";
 }
+

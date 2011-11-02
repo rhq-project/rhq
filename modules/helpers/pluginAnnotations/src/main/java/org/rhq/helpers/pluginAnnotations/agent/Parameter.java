@@ -34,8 +34,9 @@ import java.lang.annotation.Target;
  * @since 4.0
  */
 @Target(ElementType.PARAMETER)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 public @interface Parameter {
    String name() default "";
    String description() default "";
 }
+

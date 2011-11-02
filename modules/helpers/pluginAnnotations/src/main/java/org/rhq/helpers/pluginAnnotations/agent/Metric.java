@@ -27,10 +27,10 @@ import java.lang.annotation.Target;
  * Annotation to denote a metric that should be measured
  *
  * @author Heiko W. Rupp
- * @author Galder Zamarre–o
+ * @author Galder Zamarreño
  */
-@Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.FIELD, ElementType.METHOD })
+@Retention(RetentionPolicy.CLASS)
 public @interface Metric {
    String property() default "";
    String displayName() default "";
@@ -41,3 +41,4 @@ public @interface Metric {
    Units units() default Units.NONE;
    MeasurementType measurementType() default MeasurementType.DYNAMIC;
  }
+

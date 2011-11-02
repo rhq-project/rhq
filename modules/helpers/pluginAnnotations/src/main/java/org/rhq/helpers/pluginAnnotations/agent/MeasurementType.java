@@ -36,3 +36,4 @@ public enum MeasurementType {
       return super.toString().toLowerCase();
    }
 }
+

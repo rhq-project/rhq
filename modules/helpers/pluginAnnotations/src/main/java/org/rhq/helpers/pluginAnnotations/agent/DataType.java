@@ -35,5 +35,5 @@ public enum DataType {
    public String toString() {
       return super.toString().toLowerCase();
    }
-
 }
+

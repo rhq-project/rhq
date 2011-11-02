@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javassist.ClassPool;
+import javassist.CtClass;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -78,7 +80,7 @@ public class Props {
    /** Depends on JMX plugin ? */
    private boolean dependsOnJmxPlugin;
    /** What version of RHQ should this plugin's pom use ? */
-   private String rhqVersion = "1.4.0-SNAPSHOT";
+   private String rhqVersion = "3.0.0";
 
    /** Embedded children */
    private Set<Props> children = new HashSet<Props>();
@@ -91,8 +93,12 @@ public class Props {
 
    private Set<OperationProps> operations = new LinkedHashSet<OperationProps>();;
 
+   private Set<TypeKey> runsInsides = new LinkedHashSet<TypeKey>();;
+
    private String pluginName;
    private String pluginDescription;
+
+   private ClassPool classPool = ClassPool.getDefault();
 
    public ResourceCategory getCategory() {
       return category;
@@ -326,10 +332,31 @@ public class Props {
       this.pluginDescription = pluginDescription;
    }
 
+   public Set<TypeKey> getRunsInsides() {
+      return runsInsides;
+   }
+
+   public void setRunsInsides(Set<TypeKey> runsInsides) {
+      this.runsInsides = runsInsides;
+   }
+
    public void populateMetrics(List<Class> classes) {
       for (Class<?> clazz : classes) {
-         Metric metricAnnot = clazz.getAnnotation(Metric.class);
-         if (metricAnnot != null) {
+          CtClass ctClass;
+          try {
+              ctClass = classPool.get(clazz.getName());
+          } catch (Exception e) {
+              throw new RuntimeException("Could not find " + clazz + ".");
+          }
+          // TODO (ips): This is broken. 'Metric' is a method/field annotation, not a class annotation.
+          Metric metricAnnot;
+          try {
+              metricAnnot = (Metric) ctClass.getAnnotation(Metric.class);
+          } catch (ClassNotFoundException e) {
+              throw new RuntimeException("Could not find " + Metric.class
+                  + ". Make sure the rhq-pluginAnnotations jar is in the classpath when running this tool.");
+          }
+          if (metricAnnot != null) {
             MetricProps metric = new MetricProps(metricAnnot.property());
             metric.setDisplayName(metricAnnot.displayName());
             metric.setDisplayType(metricAnnot.displayType());
@@ -337,7 +364,6 @@ public class Props {
             metric.setDescription(metricAnnot.description());
             metrics.add(metric);
          }
-
       }
    }
 
@@ -372,10 +398,37 @@ public class Props {
       sb.append(", children=").append(children);
       sb.append(", simpleProps=").append(simpleProps);
       sb.append(", templates=").append(templates);
+      sb.append(", runsInsides=").append(runsInsides);
       sb.append('}');
       return sb.toString();
    }
 
+   public static class TypeKey {
+      private String name;
+      private String pluginName;
+
+      public TypeKey(String name, String pluginName) {
+         this.name = name;
+         this.pluginName = pluginName;
+      }
+
+      public String getPluginName() {
+         return pluginName;
+      }
+
+      public String getName() {
+         return name;
+      }
+
+      @Override
+      public String toString() {
+         return "TypeKey{" +
+                "name='" + name + '\'' +
+                ", pluginName='" + pluginName + '\'' +
+                '}';
+      }
+   }
+    
    public static class SimpleProperty {
       private final String name;
       private String description;
@@ -431,7 +484,6 @@ public class Props {
       public void setDefaultValue(String defaultValue) {
          this.defaultValue = defaultValue;
       }
-
    }
 
    public static class Template {
@@ -519,7 +571,6 @@ public class Props {
       public String getProperty() {
          return property;
       }
-
    }
 
    public static class OperationProps {

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
@@ -30,12 +31,15 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftAddDefinitionWizard;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A list view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftDefinitionTemplate}s. It 
@@ -121,7 +125,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_defConfirm(),
+        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_template_delete_confirm(),
             new AbstractTableAction(deleteEnablement) {
 
                 boolean result = false;
@@ -155,34 +159,26 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         DriftDefinitionTemplatesView.this.refreshTableInfo();
     }
 
-    private void delete(ListGridRecord[] records) {
-        // TODO
+    private void delete(final ListGridRecord[] records) {
+        int[] templateIds = new int[records.length];
+        for (int i = 0; i < records.length; ++i) {
+            templateIds[i] = Integer.parseInt(records[i].getAttribute(DriftDefinitionTemplateDataSource.ATTR_ID));
+        }
+        GWTServiceLookup.getDriftService().deleteDriftDefinitionTemplates(templateIds, new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_template_delete_failure(), caught);
+                DriftDefinitionTemplatesView.this.refresh();
+            }
 
-        //        final String[] driftDefNames = new String[records.length];
-        //        for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
-        //            ListGridRecord record = records[i];
-        //            String driftDefName = record.getAttribute(DriftDefinitionDataSource.ATTR_NAME);
-        //            driftDefNames[i] = driftDefName;
-        //        }
-
-        //deleteDriftDefinitionTemplatesByName(driftDefNames);
+            @Override
+            public void onSuccess(Void result) {
+                CoreGUI.getMessageCenter().notify(new Message(MSG.view_drift_template_delete_success(
+                    Integer.toString(records.length)), Message.Severity.Info));
+                DriftDefinitionTemplatesView.this.refresh();
+            }
+        });
     }
-
-    //    private void deleteDriftDefinitionsByName(final String[] driftDefNames) {
-    //        GWTServiceLookup.getDriftService().deleteDriftDefinitionsByContext(context, driftDefNames,
-    //            new AsyncCallback<Integer>() {
-    //                public void onSuccess(Integer resultCount) {
-    //                    CoreGUI.getMessageCenter().notify(
-    //                        new Message(MSG.view_drift_success_deleteDefs(String.valueOf(resultCount)),
-    //                            Message.Severity.Info));
-    //                    refresh();
-    //                }
-    //
-    //                public void onFailure(Throwable caught) {
-    //                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteDefs(), caught);
-    //                }
-    //            });
-    //    }
 
     @Override
     public void renderView(ViewPath viewPath) {

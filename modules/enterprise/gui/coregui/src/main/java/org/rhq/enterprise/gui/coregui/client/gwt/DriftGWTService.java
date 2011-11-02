@@ -105,6 +105,8 @@ public interface DriftGWTService extends RemoteService {
     PageList<DriftDefinitionTemplate> findDriftDefinitionTemplatesByCriteria(DriftDefinitionTemplateCriteria criteria)
         throws RuntimeException;
 
+    void deleteDriftDefinitionTemplates(int[] templateIds) throws RuntimeException;
+
     /**
      * Find all drifts that match the specified criteria.
      *

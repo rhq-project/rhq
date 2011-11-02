@@ -40,8 +40,8 @@
       </bundle-target>
 '>
  <!ENTITY driftConfig '
-      <drift-definition name="Template: File System" 
-                        description="A template for monitoring the file system for drift. It is expected that definitions will set a more specific base directory as the file system root is not recommended.">
+      <drift-definition name="Template-File System" 
+                        description="Monitor the file system for drift. Definitions should set a more specific base directory as the file system root is not recommended.">
           <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/</value-name>

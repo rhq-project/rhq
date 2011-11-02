@@ -237,6 +237,7 @@ public class DriftDefinition implements Serializable {
         interval = getIntervalProperty();
         driftHandlingMode = getDriftHandlingModeProperty();
         isPinned = getIsPinnedProperty();
+        attached = getAttachedProperty();
     }
 
     public Resource getResource() {

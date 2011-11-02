@@ -184,9 +184,11 @@ public class NativeSystemInfoTest {
                 + nf.format(allSwap.getTotal()));
             assert allMemory.getActualFree() > 0 : allMemory.getActualFree();
             assert allMemory.getFree() > 0 : allMemory.getFree();
-            assert allSwap.getFree() > 0 : allSwap.getFree();
             assert allMemory.getTotal() > 1000000 : allMemory.getTotal();
-            assert allSwap.getTotal() > 1000000 : allSwap.getTotal();
+            if (allSwap.getTotal()>0) {
+                assert allSwap.getTotal() > 1000000 : allSwap.getTotal();
+                assert allSwap.getFree() > 0 : allSwap.getFree();
+            }
 
             ProcMem processMemory = sigar.getProcMem(sigar.getPid());
 

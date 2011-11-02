@@ -23,6 +23,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import sun.security.provider.certpath.OCSPResponse;
+
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+
 /**
  * Map a NotFoundException to a HTTP response with respective error message
  * @author Heiko W. Rupp
@@ -38,6 +42,14 @@ public class CustomExceptionMapper implements ExceptionMapper<EJBException> {
         if (cause !=null) {
             if (cause instanceof StuffNotFoundException)
                 return Response.status(Response.Status.NOT_FOUND)
+                .entity(cause.getMessage())
+                .build();
+            else if (cause instanceof ResourceNotFoundException)
+                return Response.status(Response.Status.NOT_FOUND)
+                .entity(cause.getMessage())
+                .build();
+            else if (cause instanceof ParameterMissingException)
+                return Response.status(Response.Status.NOT_ACCEPTABLE)
                 .entity(cause.getMessage())
                 .build();
             else

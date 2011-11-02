@@ -23,8 +23,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import sun.security.provider.certpath.OCSPResponse;
-
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**

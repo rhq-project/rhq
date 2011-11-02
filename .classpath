@@ -125,6 +125,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jettison-provider/2.2.1.GA/resteasy-jettison-provider-2.2.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.2.1.GA/jaxrs-api-2.2.1.GA.jar"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>

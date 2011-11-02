@@ -25,13 +25,15 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.LinkResources;
-import org.jboss.resteasy.spi.Link;
 
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -84,13 +86,15 @@ public interface ResourceHandlerLocal {
     @Path("/{id}/schedules")
     @Produces({"application/json","application/xml"})
     @LinkResource(rel="schedules",value = MetricSchedule.class)
-    List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
+    List<MetricSchedule> getSchedules(@PathParam("id") int resourceId,
+                                      @Context UriInfo uriInfo);
 
     @GET
     @Path("/{id}/schedules")
     @Produces("text/html")
     @LinkResource(rel="schedules",value = MetricSchedule.class)
-    String getSchedulesHtml(@PathParam("id") int resourceId);
+    String getSchedulesHtml(@PathParam("id") int resourceId,
+                            @Context UriInfo uriInfo);
 
     @GET
     @Path("/{id}/children")

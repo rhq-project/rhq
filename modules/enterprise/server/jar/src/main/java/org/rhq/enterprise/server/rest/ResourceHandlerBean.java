@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -29,8 +30,8 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-
-import org.jboss.resteasy.spi.Link;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -42,8 +43,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -163,7 +164,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return rwt;
     }
 
-    public List<MetricSchedule> getSchedules(int resourceId) {
+    public List<MetricSchedule> getSchedules(int resourceId, UriInfo uriInfo) {
 
         Resource res = resMgr.getResource(caller, resourceId);
 
@@ -174,14 +175,19 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
                     schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
                     definition.getDataType().toString());
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/metric/data/{id}");
+            URI uri = uriBuilder.build(schedule.getId());
+            Link metricLink = new Link("metric",uri.toString());
+            ms.addLink(metricLink);
             ret.add(ms);
         }
 
         return ret;
     }
 
-    public String getSchedulesHtml(int resourceId) {
-        List<MetricSchedule> list = getSchedules(resourceId);
+    public String getSchedulesHtml(int resourceId, UriInfo uriInfo) {
+        List<MetricSchedule> list = getSchedules(resourceId, uriInfo);
         return renderTemplate("listMetricSchedule", list);
     }
 
@@ -212,7 +218,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         List<Link> links = new ArrayList<Link>(alerts.size());
         for (Alert al: alerts) {
             Link link = new Link();
-            link.setRelationship("alert");
+            link.setRel("alert");
             link.setHref("/alert/" + al.getId());
         }
         return links;

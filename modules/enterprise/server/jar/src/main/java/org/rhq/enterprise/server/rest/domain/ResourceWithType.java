@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -32,9 +35,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
 import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
-import org.jboss.resteasy.links.AddLinks;
-import org.jboss.resteasy.links.LinkResource;
-import org.jboss.resteasy.links.RESTServiceDiscovery;
 import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
@@ -54,8 +54,8 @@ public class ResourceWithType {
     Integer typeId;
     String pluginName;
     Integer parentId;
+    List<Link> links = new ArrayList<Link>();
 
-	private RESTServiceDiscovery rest;
 
     public ResourceWithType() {
     }
@@ -124,12 +124,15 @@ public class ResourceWithType {
     }
 
     @XmlElementRef
-    public RESTServiceDiscovery getRest() {
-        return rest;
+    public List<Link> getLinks() {
+        return links;
     }
 
-    public void setRest(RESTServiceDiscovery rest) {
-        this.rest = rest;
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 
+    public void addLink(Link link) {
+        links.add(link);
+    }
 }

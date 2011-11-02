@@ -196,7 +196,6 @@
               displayName="Agent Home Directory"
               dataType="trait"
               displayType="detail"
-              defaultInterval="86400000"
               description="The directory where the agent is installed" />
 
       <metric property="NumberAgentRestarts"

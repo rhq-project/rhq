@@ -44,11 +44,12 @@ import org.rhq.core.domain.util.StringUtils;
  * @author Greg Hinkle
  */
 public class MetricsMetadataParser {
-    private static final long MIN_1 = 1L * 60 * 1000L;
-    private static final long MIN_10 = 10L * MIN_1;
-    private static final long MIN_20 = 20L * MIN_1;
-    private static final long MIN_30 = 30L * MIN_1;
-    private static final long MIN_60 = 60L * MIN_1;
+    private static final long MINUTE_1 = 1L * 60 * 1000L;
+    private static final long MINUTE_10 = 10L * MINUTE_1;
+    private static final long MINUTE_20 = 20L * MINUTE_1;
+    private static final long MINUTE_30 = 30L * MINUTE_1;
+    private static final long HOUR_1 = 60L * MINUTE_1;
+    private static final long HOUR_24 = HOUR_1 * 24;
 
     public static final long MINIMUM_INTERVAL = MeasurementSchedule.MINIMUM_INTERVAL;
 
@@ -59,24 +60,24 @@ public class MetricsMetadataParser {
         DataType dataType = DataType.valueOf(metricDescriptor.getDataType().toUpperCase());
         DisplayType displayType = DisplayType.valueOf(metricDescriptor.getDisplayType().toUpperCase());
 
-        long collectionInterval = MIN_30;
+        long collectionInterval = MINUTE_30;
         MeasurementUnits units = getMeasurementUnits(metricDescriptor.getUnits(), dataType);
 
         switch (dataType) {
         case MEASUREMENT: {
             switch (resourceType.getCategory()) {
             case PLATFORM: {
-                collectionInterval = MIN_10;
+                collectionInterval = MINUTE_10;
                 break;
             }
 
             case SERVER: {
-                collectionInterval = MIN_20;
+                collectionInterval = MINUTE_10;
                 break;
             }
 
             case SERVICE: {
-                collectionInterval = MIN_30;
+                collectionInterval = MINUTE_20;
                 break;
             }
             }
@@ -88,12 +89,12 @@ public class MetricsMetadataParser {
         }
 
         case TRAIT: {
-            collectionInterval = (displayType == DisplayType.SUMMARY) ? MIN_30 : MIN_60;
+            collectionInterval = HOUR_24; // BZ 741331 no difference between summary and detail
             break;
         }
 
         case CALLTIME: {
-            collectionInterval = MIN_10;
+            collectionInterval = MINUTE_10;
             if (units != MeasurementUnits.MILLISECONDS) {
                 throw new IllegalStateException("Units must always be set to 'milliseconds' for call-time metrics.");
             }
@@ -110,10 +111,10 @@ public class MetricsMetadataParser {
             (metricDescriptor.getDefaultInterval() == null) ? collectionInterval : metricDescriptor
                 .getDefaultInterval().longValue());
 
-        definition = new MeasurementDefinition(metricDescriptor.getProperty(), MeasurementCategory
-            .valueOf(metricDescriptor.getCategory().toUpperCase()), getMeasurementUnits(metricDescriptor.getUnits(),
-            dataType), dataType, NumericType.valueOf(metricDescriptor.getMeasurementType().toUpperCase()),
-            metricDescriptor.isDefaultOn(), collectionInterval, displayType);
+        definition = new MeasurementDefinition(metricDescriptor.getProperty(),
+            MeasurementCategory.valueOf(metricDescriptor.getCategory().toUpperCase()), getMeasurementUnits(
+                metricDescriptor.getUnits(), dataType), dataType, NumericType.valueOf(metricDescriptor
+                .getMeasurementType().toUpperCase()), metricDescriptor.isDefaultOn(), collectionInterval, displayType);
 
         if (metricDescriptor.getDisplayName() != null) {
             definition.setDisplayName(metricDescriptor.getDisplayName());
@@ -129,19 +130,22 @@ public class MetricsMetadataParser {
         definition.setDestinationType(metricDescriptor.getDestinationType());
 
         // Make sure that all summary properties are on by default.
-        // BZ 741331 - we no longer want to imply any metric should be on by default
-        //             let the plugin writer tell us explicitly if it should be on by default
-        // if (definition.getDisplayType() == DisplayType.SUMMARY) {
-        //     definition.setDefaultOn(true);
-        // }
+        // It is assumed that if a plugin developer marks a metric as "summary" (which
+        // shows the metric's graph within the graph page of the UI) then he doesn't want
+        // to show an empty graph by default. Therefore, a summary metric will always be
+        // enabled by default. You can't say a metric is a "summary" metric but with
+        // defaultOn="false".  The defaultOn will be overridden here and will be set to true.
+        if (definition.getDisplayType() == DisplayType.SUMMARY) {
+            definition.setDefaultOn(true);
+        }
 
         if ((definition.getNumericType() == NumericType.TRENDSUP)
             || (definition.getNumericType() == NumericType.TRENDSDOWN)) {
             ArrayList<MeasurementDefinition> definitions = new ArrayList<MeasurementDefinition>();
             MeasurementDefinition perMinuteMetric = new MeasurementDefinition(definition);
 
-            // Default to applying defaultOn, SUMMARY type, etc. to the per-minute version of the metric,
-            // so only the per-minute, and not the raw, is enabled by default.
+            // Disable the raw metric since that is usually what the user will want. Typically,
+            // the user will only care about the per-minute metric.
             definition.setDisplayType(DisplayType.DETAIL);
             definition.setDefaultOn(false);
 

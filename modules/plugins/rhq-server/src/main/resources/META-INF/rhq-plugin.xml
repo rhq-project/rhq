@@ -38,6 +38,8 @@
          </results>
       </operation>
 
+      <metric property="TotalCacheElementCount" category="throughput" displayType="summary"
+              description="The total number of elements in all alert caches that check all types of conditions"/>
       <metric property="AvailabilityCacheElementCount" category="throughput" displayType="summary"
               description="The number of elements in the alerts cache that check conditions against availability data"/>
       <metric property="MeasurementCacheElementCount" category="throughput" displayType="summary"
@@ -46,6 +48,8 @@
               description="The number of elements in the alerts cache that check conditions against event history data"/>
       <metric property="OperationCacheElementCount" category="throughput" displayType="summary"
               description="The number of elements in the alerts cache that check conditions against operation history data"/>
+      <metric property="CallTimeCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against calltime measurement data"/>
       <metric property="ResourceConfigurationCacheElementCount" category="throughput" displayType="summary"
               description="The number of elements in the alerts cache that check conditions against resource configuration data"/>
       <metric property="DriftCacheElementCount" category="throughput" displayType="summary"
@@ -63,6 +67,8 @@
               description="The total number of times resource configuration-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
       <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
               description="The total number of times operation-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="CallTimeCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times calltime-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
       <metric property="DriftCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
               description="The total number of times drift conditions have triggered against incoming data since this RHQ Server instance was started"/>
 
@@ -78,6 +84,8 @@
               description="The total amount of time spent by the alerts cache processing resource configuration data"/>
       <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
               description="The total amount of time spent by the alerts cache processing operation history data"/>
+      <metric property="CallTimeProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing calltime measurement data"/>
       <metric property="DriftProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
               description="The total amount of time spent by the alerts cache processing drift data"/>
 

@@ -145,7 +145,6 @@ public class ResourceTreeDatasource extends DataSource {
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
-            criteria.fetchParentResource(true);
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
@@ -266,6 +265,17 @@ public class ResourceTreeDatasource extends DataSource {
                 // If the parent node is an autogroup node, make sure the autogroup node is in the
                 // tree prior to the resource node.
 
+                // First we need to ensure we have a properly populated parentResource (id and name, minimally),
+                // get this from the parent ResourceTreeNode as resource.parentResource may not be set with
+                // anything more than the id.
+
+                String parentResourceNodeId = ResourceTreeNode.idOf(resource.getParentResource());
+                for (ResourceTreeNode node : resourceNodes) {
+                    if (node.getID().equals(parentResourceNodeId)) {
+                        resource.setParentResource(node.getResource());
+                    }
+                }
+
                 String autoGroupNodeID = resourceNode.getParentID();
                 if (!allNodeIds.contains(autoGroupNodeID)) {
                     AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
@@ -334,8 +344,10 @@ public class ResourceTreeDatasource extends DataSource {
         /**
          * The parentID will be set to the parent resource at construction.  It can be changed
          * later (prior to tree linkage) if the resource node should logically be set to an
-         * autogroup or subcategory parent.
-         * @param resource
+         * autogroup or subcategory parent. 
+         * 
+         * @param resource The resource must have, minimally, id, name, description set. And, if parent is not null,
+         * parentResource.id must be set as well. Also, resourceType.childresourceTypes.
          * @param isLocked
          */
         private ResourceTreeNode(Resource resource, boolean isLocked) {
@@ -442,7 +454,8 @@ public class ResourceTreeDatasource extends DataSource {
         private boolean parentSubcategory = false;
 
         /**
-         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent)
+         * @param resource.id must be set. resource.parentResource.id, .name must be set.
+         * resource.resourceType.id, .name, .description, .subCategory  must be set.
          */
         private AutoGroupTreeNode(Resource resource) {
             this.parentResource = resource.getParentResource();

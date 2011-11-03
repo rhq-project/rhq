@@ -163,6 +163,14 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
 
         addTableAction("DetectNow", MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
             detectNowEnablement) {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                if (selection.length == 0) {
+                    return false;
+                }
+                return Boolean.valueOf(selection[0].getAttribute(DriftDefinitionDataSource.ATTR_IS_ENABLED));
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 detectDrift(selection); // will only ever be a single selection - see detectNowEnablement variable
             }

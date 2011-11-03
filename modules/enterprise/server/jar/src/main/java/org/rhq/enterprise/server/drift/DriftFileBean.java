@@ -44,9 +44,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
     @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/DriftFileQueue"),
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
     // this is just declarative, I think it's unnecessary 
-    @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable"),
-    // don't redeliver messages on failure. It just causes more failures. just go straight to the dead messages
-    @ActivationConfigProperty(propertyName = "dLQMaxResent", propertyValue = "0") })
+    @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable") })
 public class DriftFileBean implements MessageListener {
     private final Log log = LogFactory.getLog(DriftFileBean.class);
 
@@ -84,8 +82,8 @@ public class DriftFileBean implements MessageListener {
                         + "]");
                 }
 
-                driftManager.saveChangeSetContent(subjectManager.getOverlord(), request.getResourceId(),
-                    request.getDriftDefName(), request.getToken(), tempFile);
+                driftManager.saveChangeSetContent(subjectManager.getOverlord(), request.getResourceId(), request
+                    .getDriftDefName(), request.getToken(), tempFile);
             } catch (IOException e) {
                 log.error(e);
 

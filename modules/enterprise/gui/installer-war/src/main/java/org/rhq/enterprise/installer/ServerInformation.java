@@ -49,7 +49,6 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.mx.util.ObjectNameFactory;
-import org.jboss.security.auth.login.XMLLoginConfig;
 import org.jboss.security.auth.login.XMLLoginConfigMBean;
 import org.jboss.system.server.ServerConfig;
 
@@ -71,6 +70,7 @@ import org.rhq.enterprise.communications.util.SecurityUtil;
  *
  * @author John Mazzitelli
  */
+@SuppressWarnings("deprecation")
 public class ServerInformation {
     private static final Log LOG = LogFactory.getLog(ServerInformation.class);
 
@@ -85,9 +85,8 @@ public class ServerInformation {
     private static final String UNDEPLOYED_EMBEDDED_AGENT_FILENAME = DEPLOYED_EMBEDDED_AGENT_FILENAME + ".rej";
     private static final String DEPLOYED_MAIL_SERVICE_FILENAME = "mail-service.xml";
     private static final String UNDEPLOYED_MAIL_SERVICE_FILENAME = DEPLOYED_MAIL_SERVICE_FILENAME + ".rej";
-    private static final String DEPLOYED_ALERT_CACHE_SERVICE_FILENAME = "alert-cache-service.xml";
-    private static final String UNDEPLOYED_ALERT_CACHE_SERVICE_FILENAME = DEPLOYED_ALERT_CACHE_SERVICE_FILENAME
-        + ".rej";
+    private static final String DEPLOYED_MDB_SERVICE_FILENAME = "rhq-mdb-service.xml";
+    private static final String UNDEPLOYED_MDB_SERVICE_FILENAME = DEPLOYED_MDB_SERVICE_FILENAME + ".rej";
     private static final String DEPLOYED_JMS_FILENAME = "jms";
     private static final String UNDEPLOYED_POSTGRES_JMS_FILENAME = "jms-postgres.rej";
     private static final String UNDEPLOYED_ORACLE_JMS_FILENAME = "jms-oracle.rej";
@@ -213,7 +212,7 @@ public class ServerInformation {
      *
      * @throws Exception if failed to create the new schema for some reason
      */
-    public void  createNewDatabaseSchema(Properties props) throws Exception {
+    public void createNewDatabaseSchema(Properties props) throws Exception {
         if (props == null) {
             props = getServerProperties();
         }
@@ -389,11 +388,11 @@ public class ServerInformation {
                 deleteFile(jms);
             }
 
-            // ALERT CACHE SERVICE
-            File alertCache = getAlertCacheServiceFile(!deploy);
-            File alertCacheRenameTo = getAlertCacheServiceFile(deploy);
-            if (!alertCacheRenameTo.exists()) {
-                alertCache.renameTo(alertCacheRenameTo);
+            // MDB SERVICE
+            File mdb = getMdbServiceFile(!deploy);
+            File mdbRenameTo = getMdbServiceFile(deploy);
+            if (!mdbRenameTo.exists()) {
+                mdb.renameTo(mdbRenameTo);
             }
 
             // EAR
@@ -421,7 +420,7 @@ public class ServerInformation {
         File jms = getJmsFile(true);
         File ds = getDataSourceFile(true);
         File mail = getMailServiceFile(true);
-        File alert = getAlertCacheServiceFile(true);
+        File alert = getMdbServiceFile(true);
 
         return ds.exists() && jms.exists() && ear.exists() && agent.exists() && mail.exists() && alert.exists();
     }
@@ -438,10 +437,9 @@ public class ServerInformation {
         return file;
     }
 
-    private File getAlertCacheServiceFile(boolean deployed) {
+    private File getMdbServiceFile(boolean deployed) {
         File deployDir = getDeployDirectory();
-        File file = new File(deployDir, deployed ? DEPLOYED_ALERT_CACHE_SERVICE_FILENAME
-            : UNDEPLOYED_ALERT_CACHE_SERVICE_FILENAME);
+        File file = new File(deployDir, deployed ? DEPLOYED_MDB_SERVICE_FILENAME : UNDEPLOYED_MDB_SERVICE_FILENAME);
         return file;
     }
 
@@ -828,7 +826,7 @@ public class ServerInformation {
 
         MBeanServer mbs = getMBeanServer();
         ObjectName name = ObjectNameFactory.create("jboss.security:service=XMLLoginConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name,XMLLoginConfigMBean.class,false);
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, XMLLoginConfigMBean.class, false);
 
         XMLLoginConfigMBean conf = (XMLLoginConfigMBean) mbean;
         conf.stop();

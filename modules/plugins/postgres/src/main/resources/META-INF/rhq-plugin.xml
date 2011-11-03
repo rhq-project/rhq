@@ -329,7 +329,7 @@
           </operation>
 
 
-         <metric displayName="Backends" property="numbackends" displayType="summary"
+         <metric displayName="Backends" property="numbackends"
                  description="Number of active server processes for database"/>
          <metric displayName="Transactions Committed" property="xact_commit" measurementType="trendsup" displayType="summary"
                  description="Transactions committed in database"/>
@@ -362,11 +362,11 @@
             <metric displayName="Index Scan Rows Read" property="idx_tup_fetch" measurementType="trendsup"
                     description="Number of index entries returned by index scans"/>
 
-            <metric displayName="Heap Blocks Read" property="heap_blks_read" measurementType="trendsup" displayType="summary"
+            <metric displayName="Heap Blocks Read" property="heap_blks_read" measurementType="trendsup"
                     description="The number of heap blocks read that were not a buffer cache hit"/>
             <metric displayName="Heap Blocks Hit" property="heap_blks_hit" measurementType="trendsup"
                     description="The number of heap block requests that were found in the buffer cache"/>
-            <metric displayName="Index Blocks Read" property="idx_blks_read" measurementType="trendsup" displayType="summary"
+            <metric displayName="Index Blocks Read" property="idx_blks_read" measurementType="trendsup"
                     description="The number of index blocks fetched that were not a buffer cache hit"/>
             <metric displayName="Index Blocks Hit" property="idx_blks_hit" measurementType="trendsup"
                     description="The number of index block requests that were found in the buffer cache"/>

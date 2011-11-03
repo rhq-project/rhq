@@ -98,6 +98,8 @@ public class ASConnection {
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
+            conn.addRequestProperty("Content-Type","application/json");
+            conn.addRequestProperty("Accept","application/json");
             OutputStream out = conn.getOutputStream();
 
             String result = mapper.writeValueAsString(operation);

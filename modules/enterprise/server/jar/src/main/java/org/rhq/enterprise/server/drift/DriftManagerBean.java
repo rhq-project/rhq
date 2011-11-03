@@ -33,7 +33,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
@@ -221,7 +220,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @TransactionAttribute(NOT_SUPPORTED)
     public void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
         File changeSetFilesZip) throws Exception {
         saveChangeSetFiles(subject, changeSetFilesZip);

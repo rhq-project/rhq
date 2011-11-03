@@ -40,6 +40,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public long getOperationProcessingTime();
 
+    public long getCallTimeProcessingTime();
+
     public long getDriftProcessingTime();
 
     public void incrementAvailabilityProcessingTime(long moreMillis);
@@ -52,11 +54,15 @@ public interface AlertConditionCacheMonitorMBean {
 
     public void incrementOperationProcessingTime(long moreMillis);
 
+    public void incrementCallTimeProcessingTime(long moreMillis);
+
     public void incrementDriftProcessingTime(long moreMillis);
 
     /*
      * for current congestion
      */
+    public int getTotalCacheElementCount();
+
     public int getAvailabilityCacheElementCount();
 
     public int getMeasurementCacheElementCount();
@@ -66,6 +72,8 @@ public interface AlertConditionCacheMonitorMBean {
     public int getResourceConfigurationCacheElementCount();
 
     public int getOperationCacheElementCount();
+
+    public int getCallTimeCacheElementCount();
 
     public int getDriftCacheElementCount();
 
@@ -86,6 +94,8 @@ public interface AlertConditionCacheMonitorMBean {
 
     public int getOperationCacheElementMatches();
 
+    public int getCallTimeCacheElementMatches();
+
     public int getDriftCacheElementMatches();
 
     public void incrementAvailabilityCacheElementMatches(int matches);
@@ -97,6 +107,8 @@ public interface AlertConditionCacheMonitorMBean {
     public void incrementResourceConfigurationCacheElementMatches(int matches);
 
     public void incrementOperationCacheElementMatches(int matches);
+
+    public void incrementCallTimeCacheElementMatches(int matches);
 
     public void incrementDriftCacheElementMatches(int matches);
 

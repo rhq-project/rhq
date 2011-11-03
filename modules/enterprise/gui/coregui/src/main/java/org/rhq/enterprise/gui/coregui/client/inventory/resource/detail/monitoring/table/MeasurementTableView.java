@@ -170,6 +170,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 FullHTMLPane iframe = new FullHTMLPane(extendLocatorId("View"), destination);
                 window.addItem(iframe);
                 window.show();
+                refreshTableInfo();
             }
         });
     }
@@ -193,6 +194,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
             @Override
             public void onCloseClick(CloseClientEvent event) {
                 liveDataWindow.destroy();
+                refreshTableInfo();
             }
         });
 

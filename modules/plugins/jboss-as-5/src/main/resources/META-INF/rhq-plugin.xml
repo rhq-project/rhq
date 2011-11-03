@@ -812,13 +812,13 @@
     <metric property="CurrentPoolSize" displayName="Current Pool Size" displayType="summary" measurementType="dynamic"
             description="The number of beans in the pool."/>
 
-    <metric property="MaxPoolSize" displayName="Max Pool Size" displayType="summary" measurementType="dynamic"
+    <metric property="MaxPoolSize" displayName="Max Pool Size" measurementType="dynamic"
             description="The maximum pool size."/>
 '>
 
 <!ENTITY ejb2CreateRemoveMetrics '
     <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
-            description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
+            description="The number of instances of this EJB2 Session Bean that have been created since server start."/>
 
     <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
             description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
@@ -872,8 +872,7 @@
 <!ENTITY ejb2StatefulSessionBeanMetrics '
    <metric displayName="Passive Beans"
            description="The count of beans in the passivated state"
-           property="PassivatedCount"
-           displayType="summary"/>
+           property="PassivatedCount" />
 '>
 
 <!ENTITY ejb2MessageDrivenBeanDefinition '
@@ -901,8 +900,7 @@
 
 <!ENTITY ejb2EntityBeanMetrics '
 	<metric property="CacheSize"
-	        displayName="Cache Size"
-	        displayType="summary"/>
+	        displayName="Cache Size"/>
 '>
 
 <!ENTITY subscriptionsResultProperty '

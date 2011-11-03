@@ -464,7 +464,7 @@
                  category="utilization" displayType="summary"
                  description="Total Number of Connections for the Connection Pool, both active and in-active."/>
          <metric displayName="Available Connections" property="AvailableConnectionCount"
-                 category="utilization" displayType="summary"
+                 category="utilization"
                  description="Number of available connections in the connection pool in-active and waiting."/>
          <metric displayName="Active Connections" property="InUseConnectionCount"
                  category="utilization" displayType="summary"
@@ -474,7 +474,7 @@
                  measurementType="trendsup"
                  description="Number of Connections created since the Connection Pool was created."/>
          <metric displayName="Connections Destroyed" property="ConnectionDestroyedCount"
-                 category="utilization" displayType="summary"
+                 category="utilization"
                  measurementType="trendsup"
                  description="Number of Connections destroyed since the Connection Pool was created."/>
 
@@ -1390,12 +1390,10 @@
              <metric displayName="Durable Message Count"
                      property="DurableMessageCount"
                      category="utilization"
-                     displayType="summary"
                      description="Total number of messages for all durable subscriptions."/>
              <metric displayName="Non-durable Message Count"
                      property="NonDurableMessageCount"
                      category="utilization"
-                     displayType="summary"
                      description="Total number of messages for all non-durable subscriptions."/>
              <metric displayName="All Subscription Count"
                      property="AllSubscriptionsCount"
@@ -1405,12 +1403,10 @@
              <metric displayName="Durable Subscription Count"
                      property="DurableSubscriptionsCount"
                      category="utilization"
-                     displayType="summary"
                      description="Number of durable subscriptions waiting for a message."/>
              <metric displayName="Non-durable Subscription Count"
                      property="NonDurableSubscriptionsCount"
                      category="utilization"
-                     displayType="summary"
                      description="Number of non-durable subscriptions waiting for a message."/>
 
              <resource-configuration>
@@ -2115,13 +2111,11 @@
 
            <metric displayName="Method-Ready Beans"
                    description="The number of pooled instances of this EJB 1.x or 2.x Stateful Session Bean in the method-ready state"
-                   property="{stats.methodReadyCount.current}"
-                   displayType="summary"/>
+                   property="{stats.methodReadyCount.current}"/>
 
            <metric displayName="Passive Beans"
                    description="The number of pooled instances of this EJB 1.x or 2.x Stateful Session Bean in the passivated state"
-                   property="{stats.passiveCount.current}"
-                   displayType="summary"/>
+                   property="{stats.passiveCount.current}"/>
 
            <metric property="MethodInvocationTime" dataType="calltime" units="milliseconds"
                    defaultOn="false" destinationType="Method Name"
@@ -2160,8 +2154,7 @@
 
       <metric displayName="Method-Ready Beans"
               description="The number of pooled instances of this EJB 1.x or 2.x Entity Bean in the method-ready state"
-              property="{stats.methodReadyCount.current}"
-              displayType="summary"/>
+              property="{stats.methodReadyCount.current}"/>
 
       <metric displayName="Pooled Beans"
               description="The total number of currently pooled instances of this EJB 1.x or 2.x Entity Bean"
@@ -2565,11 +2558,11 @@
                     description="Returns the hit/miss ratio for the cache. This ratio is defined as hits/(hits + misses)."/>
             <metric property="ReadWriteRatio" displayType="summary" units="percentage"
                     description="Returns the read/write ratio for the cache. This ratio is defined as (hits + misses)/stores."/>
-            <metric property="Hits" displayType="summary"
+            <metric property="Hits"
                     description="Returns the number of requests made to this cache which it could answer without interrogating the underlying data store"/>
-            <metric property="Misses" displayType="summary"
+            <metric property="Misses"
                     description="Returns the number of requests made to this cache which required interrogating the underlying data store"/>
-            <metric property="Evictions" displayType="summary"
+            <metric property="Evictions"
                     description="Returns the number of elements purged from this cache in accordance with its specific eviction policy"/>
             <metric property="NumberOfLocksHeld"
                     description="The number of elements locked by this interceptor for update / replication across the (clustered) tree cache"/>

@@ -553,7 +553,6 @@
 
          <metric displayName="Total Number of Bytes Received" property="wwwSummaryInLowBytes"
                  description="The number of bytes received by the service"
-                 displayType="summary"
                  units="bytes" measurementType="trendsup"/>
 
          <!-- summary metrics for responses  - determined via SNMP
@@ -566,7 +565,6 @@
 
          <metric displayName="Total Number of Bytes Sent" property="wwwSummaryOutLowBytes"
                  description="The number of bytes sent by the service"
-                 displayType="summary"
                  units="bytes" measurementType="trendsup"/>
 
          <!-- per-request-method metrics - determined via SNMP

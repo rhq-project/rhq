@@ -628,7 +628,6 @@
                   description="Number of cache entries" />
                <metric
                   property="cacheMaxSize"
-                  displayType="summary"
                   description="Maximum number of cache entries" />
             </service>
          </service>

@@ -68,6 +68,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
     public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_IS_ENABLED = "isEnabled";
+    public static final String ATTR_IS_ENABLED_ICON = "isEnabledIcon";
     public static final String ATTR_EDIT = "edit";
     public static final String ATTR_IS_PINNED = "isPinned";
     public static final String ATTR_CHANGE_SET_CTIME = "changesetTime";
@@ -138,7 +139,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         changeSetTimeField.setCanSortClientOnly(true);
         fields.add(changeSetTimeField);
 
-        ListGridField enabledField = new ListGridField(ATTR_IS_ENABLED, MSG.common_title_enabled());
+        ListGridField enabledField = new ListGridField(ATTR_IS_ENABLED_ICON, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
         fields.add(enabledField);
@@ -333,7 +334,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(def.getDriftHandlingMode()));
         record.setAttribute(ATTR_INTERVAL, String.valueOf(def.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(def.getBasedir()));
-        record.setAttribute(ATTR_IS_ENABLED, ImageManager.getAvailabilityIcon(def.isEnabled()));
+        record.setAttribute(ATTR_IS_ENABLED, String.valueOf(def.isEnabled()));
+        record.setAttribute(ATTR_IS_ENABLED_ICON, ImageManager.getAvailabilityIcon(def.isEnabled()));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
         record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager

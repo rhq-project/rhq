@@ -261,8 +261,20 @@ public class DriftDetector implements Runnable {
         }
 
         if (deltaEntries.isEmpty()) {
-            // If nothing has changed, there is no need to add/update any files
             summary.setNewSnapshot(currentSnapshot);
+
+            // If nothing has changed, there is no need to add/update any files
+            // unless the definition is pinned in which case we need to reset
+            // the current snapshot to match the pinned snapshot. Note though
+            // that we increment the snapshot version in order to let the server
+            // know about the state change.
+            if (schedule.getDriftDefinition().isPinned()) {
+                currentSnapshot.delete();
+                File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
+
+                updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, currentSnapshot, newSnapshot);
+                // TODO report back to the server that we are back in compliance
+            }
         } else {
             if (schedule.getDriftDefinition().isPinned() && newVersion > 1 &&
                 isSameAsPreviousChangeSet(deltaEntries, currentSnapshot)) {
@@ -271,35 +283,51 @@ public class DriftDetector implements Runnable {
                 return;
             }
 
-            File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() + ".previous");
-            copyFile(currentSnapshot, oldSnapshot);
-            currentSnapshot.delete();
+            File oldSnapshot = backupAndDeleteCurrentSnapshot(currentSnapshot);
+            File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
 
-            Headers snapshotHeaders = createHeaders(schedule, COVERAGE, newVersion);
-            File newSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
-                schedule.getDriftDefinition().getName(), COVERAGE);
-            ChangeSetWriter newSnapshotWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-                snapshotHeaders);
-
-            for (FileEntry entry : snapshotEntries) {
-                newSnapshotWriter.write(entry);
-            }
-            newSnapshotWriter.close();
-            Headers deltaHeaders = createHeaders(schedule, DRIFT, newVersion);
-
-            File driftChangeSet = changeSetMgr.findChangeSet(schedule.getResourceId(),
-                schedule.getDriftDefinition().getName(), DRIFT);
-            ChangeSetWriter deltaWriter = changeSetMgr.getChangeSetWriter(driftChangeSet, deltaHeaders);
-
-            summary.setDriftChangeSet(driftChangeSet);
-            summary.setNewSnapshot(newSnapshot);
-            summary.setOldSnapshot(oldSnapshot);
-
-            for (FileEntry entry : deltaEntries) {
-                deltaWriter.write(entry);
-            }
-            deltaWriter.close();
+            updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, oldSnapshot, newSnapshot);
         }
+    }
+
+    private void updateDeltaSnapshot(DriftDetectionSummary summary, DriftDetectionSchedule schedule,
+                                     List<FileEntry> deltaEntries, int newVersion, File oldSnapshot, File newSnapshot)
+        throws IOException {
+        Headers deltaHeaders = createHeaders(schedule, DRIFT, newVersion);
+        File driftChangeSet = changeSetMgr.findChangeSet(schedule.getResourceId(),
+            schedule.getDriftDefinition().getName(), DRIFT);
+        ChangeSetWriter deltaWriter = changeSetMgr.getChangeSetWriter(driftChangeSet, deltaHeaders);
+
+        summary.setDriftChangeSet(driftChangeSet);
+        summary.setNewSnapshot(newSnapshot);
+        summary.setOldSnapshot(oldSnapshot);
+
+        for (FileEntry entry : deltaEntries) {
+            deltaWriter.write(entry);
+        }
+        deltaWriter.close();
+    }
+
+    private File backupAndDeleteCurrentSnapshot(File currentSnapshot) throws IOException {
+        File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() + ".previous");
+        copyFile(currentSnapshot, oldSnapshot);
+        currentSnapshot.delete();
+        return oldSnapshot;
+    }
+
+    private File updateCurrentSnapshot(DriftDetectionSchedule schedule, List<FileEntry> snapshotEntries, int newVersion)
+        throws IOException {
+        Headers snapshotHeaders = createHeaders(schedule, COVERAGE, newVersion);
+        File newSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
+            schedule.getDriftDefinition().getName(), COVERAGE);
+        ChangeSetWriter newSnapshotWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
+            snapshotHeaders);
+
+        for (FileEntry entry : snapshotEntries) {
+            newSnapshotWriter.write(entry);
+        }
+        newSnapshotWriter.close();
+        return newSnapshot;
     }
 
     private boolean isSameAsPreviousChangeSet(List<FileEntry> entries, File currentSnapsotFile) throws IOException {

@@ -372,6 +372,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         // This ensures that all the schedules for a single resource start at the same time
         // This will enable them to be collected at the same time
         long firstCollection = System.currentTimeMillis();
+        // see BZ 751231 for why we delay the first collection
+        if (configuration != null) {
+            firstCollection += (configuration.getMeasurementCollectionInitialDelay() * 1000L);
+        } else {
+            firstCollection += 30000L;
+        }
 
         for (MeasurementScheduleRequest request : requests) {
             ScheduledMeasurementInfo info = new ScheduledMeasurementInfo(request, resourceId);

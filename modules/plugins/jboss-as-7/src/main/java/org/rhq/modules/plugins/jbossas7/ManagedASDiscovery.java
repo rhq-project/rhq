@@ -105,12 +105,18 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
                 initLogFile(scans, serverInfo.name, config, homeDir);
 
                 String version = determineServerVersionFromHomeDir(homeDir);
+                String resourceDescription = "Managed AS7 instance";
+
+                if (homeDir.contains("eap")) {
+                    version = "EAP " + version;
+                    resourceDescription = resourceDescription.replace("AS7","EAP6");
+                }
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                     hostName + "/" + serverInfo.name, // key
                     serverInfo.name, // Name
                     version, // TODO  get from Domain as soon as it is provided
-                    "Managed AS 7 instance", // Description
+                        resourceDescription, // Description
                     config, null);
 
                 // Add to return values

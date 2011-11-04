@@ -644,7 +644,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
                     // until we finish the following work we're susceptible to fast-click issues in
-                    // tree navigation.  So, wait until after it's done to notify listeners thatthe view is
+                    // tree navigation.  So, wait until after it's done to notify listeners that the view is
                     // safely rendered.  Make sure to notify even on failure.
                     try {
                         resourceComposite.getResource().setResourceType(type);

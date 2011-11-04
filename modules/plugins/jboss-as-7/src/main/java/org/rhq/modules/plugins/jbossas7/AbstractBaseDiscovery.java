@@ -47,7 +47,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
-
+    private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
 
     /**
      * Read the host.xml or standalone.xml file depending on isDomainMode. If isDomainMode is true,
@@ -68,7 +68,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
                 is.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            log.error(e.getMessage());
         }
     }
 
@@ -314,8 +314,10 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
     protected String determineServerVersionFromHomeDir(String homeDir) {
         String version;
         String tmp = homeDir.substring(homeDir.lastIndexOf("/")+1);
-        if (tmp.startsWith("jboss-as-")) {
+        if (tmp.startsWith(JBOSS_AS_PREFIX)) {
             version = tmp.substring(JBOSS_AS_PREFIX.length());
+        } else if (tmp.startsWith(JBOSS_EAP_PREFIX)) {
+            version = tmp.substring(JBOSS_EAP_PREFIX.length());
         } else {
             version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
         }

@@ -74,11 +74,17 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String psName = psr.getProcessScan().getName();
             String description = discoveryContext.getResourceType().getDescription();
             String homeDir = getHomeDirFromCommandLine(commandLine);
-            String version = null;
+            String version = determineServerVersionFromHomeDir(homeDir);
+            boolean isEAP = false;
 
             //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
             String bootLogFile = getLogFileFromCommandLine(commandLine);
             String logFile = bootLogFile;
+
+            if (homeDir.contains("eap")) {
+                isEAP=true;
+                version="EAP " + version;
+            }
 
             if (psName.equals("HostController")) {
 
@@ -109,6 +115,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
             } else { // Standalone server
                 serverNameFull = homeDir;
+
+
                 readStandaloneOrHostXml(psr.getProcessInfo(), false);
                 if ( serverNameFull.isEmpty()) {
                     // Try to obtain the server name
@@ -139,6 +147,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
                 //preload server.log file for event log monitoring
                 logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
+            }
+
+            if (isEAP) {
+                description=description.replace("AS7","EAP6");
             }
 
             initLogEventSourcesConfigProp(logFile, config);

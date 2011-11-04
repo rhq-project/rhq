@@ -111,6 +111,10 @@ public class DriftDefinition implements Serializable {
     @Column(name = "IS_ATTACHED", nullable = false)
     private boolean attached = true;
 
+    @Column(name = "COMPLIANCE_STATUS", nullable = false)
+    @Enumerated(EnumType.ORDINAL)
+    private DriftComplianceStatus complianceStatus = DriftComplianceStatus.IN_COMPLIANCE;
+
     // required for jaxb/web services stuff
     protected DriftDefinition() {
     }
@@ -257,6 +261,14 @@ public class DriftDefinition implements Serializable {
 
     public void setTemplate(DriftDefinitionTemplate template) {
         this.template = template;
+    }
+
+    public DriftComplianceStatus getComplianceStatus() {
+        return complianceStatus;
+    }
+
+    public void setComplianceStatus(DriftComplianceStatus complianceStatus) {
+        this.complianceStatus = complianceStatus;
     }
 
     @Override

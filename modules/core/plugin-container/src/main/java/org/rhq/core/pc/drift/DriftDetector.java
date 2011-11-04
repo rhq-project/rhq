@@ -268,7 +268,7 @@ public class DriftDetector implements Runnable {
             // the current snapshot to match the pinned snapshot. Note though
             // that we increment the snapshot version in order to let the server
             // know about the state change.
-            if (schedule.getDriftDefinition().isPinned()) {
+            if (schedule.getDriftDefinition().isPinned() && newVersion > 1) {
                 currentSnapshot.delete();
                 File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
 

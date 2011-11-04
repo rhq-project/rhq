@@ -22,6 +22,8 @@ import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.IN_COMPLIANCE;
 
 import java.io.File;
 import java.io.InputStream;
@@ -516,14 +518,47 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    @TransactionAttribute(NOT_SUPPORTED)
+    @TransactionAttribute(REQUIRES_NEW)
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+
         if (DriftHandlingMode.plannedChanges != summary.getDriftHandlingMode()) {
             notifyAlertConditionCacheManager("saveChangeSet", summary);
         }
+
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.addFilterName(summary.getDriftDefinitionName());
+        criteria.addFilterResourceIds(resourceId);
+        PageList<DriftDefinition> definitions = findDriftDefinitionsByCriteria(subject, criteria);
+
+        if (definitions.isEmpty()) {
+            log.warn("Could not find drift definition for [resourceId: " + resourceId + ", driftDefinitionName: " +
+                summary.getDriftDefinitionName() + "]. Will not be able check compliance for thiis drift definition");
+        } else {
+            updateCompliance(definitions.get(0), summary);
+        }
+
         return summary;
+    }
+
+    private void updateCompliance(DriftDefinition definition, DriftChangeSetSummary changeSetSummary) {
+        if (!definition.isPinned()) {
+            return;
+        }
+
+        boolean updateNeeded = false;
+        if (changeSetSummary.getDriftPathnames().isEmpty()) {
+            updateNeeded = definition.getComplianceStatus() != IN_COMPLIANCE;
+            definition.setComplianceStatus(IN_COMPLIANCE);
+        } else {
+            updateNeeded = definition.getComplianceStatus() == IN_COMPLIANCE;
+            definition.setComplianceStatus(OUT_OF_COMPLIANCE_DRIFT);
+        }
+
+        if (updateNeeded) {
+            updateDriftDefinition(definition);
+        }
     }
 
     @Override

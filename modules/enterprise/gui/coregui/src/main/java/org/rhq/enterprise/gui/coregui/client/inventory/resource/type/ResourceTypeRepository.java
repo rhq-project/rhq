@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -46,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * A cache for ResourceTypes and their various fields. Fields are only fetched as needed.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class ResourceTypeRepository {
     static private final Messages MSG = CoreGUI.getMessages();
@@ -159,12 +162,18 @@ public class ResourceTypeRepository {
 
         Set<Integer> types = new HashSet<Integer>();
         for (ResourceGroup group : groups) {
-            types.add(group.getResourceType().getId());
+            ResourceType type = group.getResourceType();
+            if (type != null) {
+                types.add(type.getId());
+            }
         }
         getResourceTypes(types.toArray(new Integer[types.size()]), metadataTypes, new TypesLoadedCallback() {
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
                 for (ResourceGroup group : groups) {
-                    group.setResourceType(types.get(group.getResourceType().getId()));
+                    ResourceType type = group.getResourceType();
+                    if (type != null) {
+                        group.setResourceType(types.get(type.getId()));
+                    }
                 }
                 if (callback != null) {
                     callback.onResourceTypeLoaded(groups);
@@ -293,12 +302,13 @@ public class ResourceTypeRepository {
         Log.info("Loading " + typesNeeded.size()
             + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
 
-        if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null) &&
-                metadataTypes.contains(MetadataType.children)) {
+        if ((topLevelServerAndServiceTypes == null) && metadataTypesNeeded.contains(MetadataType.children)) {
             // Perform a one-time load of server and service types with no parent types. These types are implicitly
             // children of all platform types, even though they are not included in the platform types'
-            // childResourceTypes field.
-            loadTopLevelServerAndServiceTypes(callback, metadataTypes, criteria, cachedTypes);
+            // childResourceTypes field in the DB. After the top-level types are loaded, loadRequestedTypes() will be
+            // called to load the requested types. For any requested types that are platforms, the top-level
+            // server/service types will be added to the platform types' childResourceTypes fields.
+            loadTopLevelServerAndServiceTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
         } else {
             loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
         }
@@ -309,21 +319,34 @@ public class ResourceTypeRepository {
                                                    final ResourceTypeCriteria criteria, final Map<Integer,
             ResourceType> cachedTypes) {
         ResourceTypeCriteria topLevelCriteria = new ResourceTypeCriteria();
-        topLevelCriteria.fetchParentResourceTypes(true);
+        topLevelCriteria.addFilterCategories(ResourceCategory.SERVER, ResourceCategory.SERVICE);
+        topLevelCriteria.addFilterParentResourceTypesEmpty(true);
+        topLevelCriteria.addSortCategory(PageOrdering.DESC);
+        topLevelCriteria.addSortName(PageOrdering.ASC);
         resourceTypeService.findResourceTypesByCriteria(topLevelCriteria, new AsyncCallback<PageList<ResourceType>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
-                loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
-            }
-
             public void onSuccess(PageList<ResourceType> types) {
-                topLevelServerAndServiceTypes = new HashSet<ResourceType>();
+                topLevelServerAndServiceTypes = new LinkedHashSet<ResourceType>(types.size());
                 for (ResourceType type : types) {
-                    if ((type.getCategory() != ResourceCategory.PLATFORM) &&
-                            (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
+                    if (cachedTypes.containsKey(type.getId())) {
+                        ResourceType cachedType = cachedTypes.get(type.getId());
+                        topLevelServerAndServiceTypes.add(cachedType);
+                    } else {
+                        cachedTypes.put(type.getId(), type);
                         topLevelServerAndServiceTypes.add(type);
                     }
                 }
+                if (Log.isDebugEnabled()) {
+                    Set<String> typeNames = new LinkedHashSet<String>(topLevelServerAndServiceTypes.size());
+                    for (ResourceType type : topLevelServerAndServiceTypes) {
+                        typeNames.add(type.getPlugin() + ":" + type.getName());
+                    }
+                    Log.debug("Loaded " + typeNames.size() + " top-level server and service types: " + typeNames);
+                }
+                loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
+            }
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
                 loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
             }
         });

@@ -25,4 +25,13 @@ public enum DriftComplianceStatus {
     OUT_OF_COMPLIANCE_NO_BASEDIR,
 
     OUT_OF_COMPLIANCE_DRIFT;
+
+    public static DriftComplianceStatus fromCode(int code) {
+        switch (code) {
+            case 0: return IN_COMPLIANCE;
+            case 1: return OUT_OF_COMPLIANCE_NO_BASEDIR;
+            case 2: return OUT_OF_COMPLIANCE_DRIFT;
+            default: throw new IllegalArgumentException(code + " is not a DriftComplianceStatus code");
+        }
+    }
 }

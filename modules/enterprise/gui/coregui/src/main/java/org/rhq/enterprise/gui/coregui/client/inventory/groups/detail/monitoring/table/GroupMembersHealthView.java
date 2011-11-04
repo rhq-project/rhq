@@ -19,7 +19,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
-import java.util.HashMap;
 import java.util.List;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -71,7 +70,6 @@ public class GroupMembersHealthView extends MembersView {
                     return;
                 }
                 // keyed on metric name - string[0] is the metric label, [1] is the units
-                final HashMap<String, String[]> scheduleNamesAndUnits = new HashMap<String, String[]>();
                 int[] resourceIds = new int[selection.length];
                 int i = 0;
                 for (ListGridRecord record : selection) {
@@ -90,6 +88,7 @@ public class GroupMembersHealthView extends MembersView {
                 FullHTMLPane iframe = new FullHTMLPane(extendLocatorId("View"), destination);
                 window.addItem(iframe);
                 window.show();
+                GroupMembersHealthView.this.refreshTableInfo();
             }
         });
     }

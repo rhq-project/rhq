@@ -218,33 +218,6 @@
             <c:description>
                 The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml.
             </c:description>
-            <c:property-options>
-                <c:option name="Cloudscape" value="Cloudscape"/>
-                <c:option name="DB2" value="DB2"/>
-                <c:option name="DB2/400" value="DB2/400"/>
-                <c:option name="Derby" value="Derby"/>
-                <c:option name="Firebird" value="Firebird"/>
-                <c:option name="FirstSQL/J" value="FirstSQL/J"/>
-                <c:option name="Hypersonic SQL" value="Hypersonic SQL"/>
-                <c:option name="InformixDB" value="InformixDB"/>
-                <c:option name="Ingres" value="Ingres"/>
-                <c:option name="InterBase" value="InterBase"/>
-                <c:option name="MaxDB" value="MaxDB"/>
-                <c:option name="McKoi" value="McKoi"/>
-                <c:option name="Mimer SQL" value="Mimer SQL"/>
-                <c:option name="MS SQLSERVER" value="MS SQLSERVER"/>
-                <c:option name="MS SQLSERVER2000" value="MS SQLSERVER2000"/>
-                <c:option name="Oracle7" value="Oracle7"/>
-                <c:option name="Oracle8" value="Oracle8"/>
-                <c:option name="Oracle9i" value="Oracle9i"/>
-                <c:option name="PointBase" value="PointBase"/>
-                <c:option name="PostgreSQL" value="PostgreSQL"/>
-                <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
-                <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
-                <c:option name="SapDB" value="SapDB"/>
-                <c:option name="SOLID" value="SOLID"/>
-                <c:option name="Sybase" value="Sybase"/>
-            </c:property-options>
         </c:simple-property>
     </c:map-property>
 
@@ -307,33 +280,6 @@
         <c:description>
             The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml.
         </c:description>
-        <c:property-options>
-            <c:option name="Cloudscape" value="Cloudscape"/>
-            <c:option name="DB2" value="DB2"/>
-            <c:option name="DB2/400" value="DB2/400"/>
-            <c:option name="Derby" value="Derby"/>
-            <c:option name="Firebird" value="Firebird"/>
-            <c:option name="FirstSQL/J" value="FirstSQL/J"/>
-            <c:option name="Hypersonic SQL" value="Hypersonic SQL"/>
-            <c:option name="InformixDB" value="InformixDB"/>
-            <c:option name="Ingres" value="Ingres"/>
-            <c:option name="InterBase" value="InterBase"/>
-            <c:option name="MaxDB" value="MaxDB"/>
-            <c:option name="McKoi" value="McKoi"/>
-            <c:option name="Mimer SQL" value="Mimer SQL"/>
-            <c:option name="MS SQLSERVER" value="MS SQLSERVER"/>
-            <c:option name="MS SQLSERVER2000" value="MS SQLSERVER2000"/>
-            <c:option name="Oracle7" value="Oracle7"/>
-            <c:option name="Oracle8" value="Oracle8"/>
-            <c:option name="Oracle9i" value="Oracle9i"/>
-            <c:option name="PointBase" value="PointBase"/>
-            <c:option name="PostgreSQL" value="PostgreSQL"/>
-            <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
-            <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
-            <c:option name="SapDB" value="SapDB"/>
-            <c:option name="SOLID" value="SOLID"/>
-            <c:option name="Sybase" value="Sybase"/>
-        </c:property-options>
     </c:simple-property>
 
     <c:simple-property name="use-java-context"

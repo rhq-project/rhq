@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
@@ -73,6 +74,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
     public static final String ATTR_IS_PINNED = "isPinned";
     public static final String ATTR_CHANGE_SET_CTIME = "changesetTime";
     public static final String ATTR_CHANGE_SET_VERSION = "changesetVersion";
+    public static final String ATTR_COMPLIANCE = "compliance";
+    public static final String ATTR_COMPLIANCE_ICON = "complianceIcon";
 
     public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
     public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
@@ -143,6 +146,24 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
         fields.add(enabledField);
+
+        ListGridField inComplianceField = new ListGridField(ATTR_COMPLIANCE_ICON, MSG.common_title_in_compliance());
+        inComplianceField.setType(ListGridFieldType.IMAGE);
+        inComplianceField.setAlign(Alignment.CENTER);
+        inComplianceField.setShowHover(true);
+        inComplianceField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object o, ListGridRecord record, int row, int column) {
+                int complianceCode = record.getAttributeAsInt(ATTR_COMPLIANCE);
+                DriftComplianceStatus complianceStatus = DriftComplianceStatus.fromCode(complianceCode);
+                switch (complianceStatus) {
+                    case OUT_OF_COMPLIANCE_NO_BASEDIR: return MSG.view_drift_table_out_of_compliance_no_basedir();
+                    case OUT_OF_COMPLIANCE_DRIFT: return MSG.view_drift_table_out_of_compliance_drift();
+                    default: return "";
+                }
+            }
+        });
+        fields.add(inComplianceField);
 
         ListGridField driftHandlingModeField = new ListGridField(ATTR_DRIFT_HANDLING_MODE, MSG
             .view_drift_table_driftHandlingMode());
@@ -218,6 +239,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
             changeSetField.setWidth(70);
             changeSetTimeField.setWidth(100);
             enabledField.setWidth(60);
+            inComplianceField.setWidth(60);
             driftHandlingModeField.setWidth("15%");
             intervalField.setWidth(70);
             baseDirField.setWidth("*");
@@ -336,6 +358,9 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(def.getBasedir()));
         record.setAttribute(ATTR_IS_ENABLED, String.valueOf(def.isEnabled()));
         record.setAttribute(ATTR_IS_ENABLED_ICON, ImageManager.getAvailabilityIcon(def.isEnabled()));
+        record.setAttribute(ATTR_COMPLIANCE, def.getComplianceStatus().ordinal());
+        record.setAttribute(ATTR_COMPLIANCE_ICON, ImageManager.getAvailabilityIcon(
+            def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
         record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager

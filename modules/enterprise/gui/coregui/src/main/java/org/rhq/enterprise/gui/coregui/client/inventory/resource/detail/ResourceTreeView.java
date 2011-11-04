@@ -790,7 +790,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         setRootResource(root);
 
                         // seed datasource with initial resource list and which ancestor resources are locked 
-                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData);
+                        ResourceTreeDatasource dataSource = new ResourceTreeDatasource(lineage, lockedData, treeGrid);
                         treeGrid.setDataSource(dataSource);
 
                         addMember(treeGrid);
@@ -828,8 +828,8 @@ public class ResourceTreeView extends LocatableVLayout {
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                                 public void onResourceTypeLoaded(List<Resource> result) {
-                                    treeGrid.getTree()
-                                        .linkNodes(ResourceTreeDatasource.buildNodes(lineage, lockedData));
+                                    treeGrid.getTree().linkNodes(
+                                        ResourceTreeDatasource.buildNodes(lineage, lockedData, treeGrid));
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
                                     if (selectedNode != null && updateSelection) {

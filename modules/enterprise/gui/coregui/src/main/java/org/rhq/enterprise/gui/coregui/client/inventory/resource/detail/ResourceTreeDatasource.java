@@ -36,6 +36,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -64,16 +65,20 @@ public class ResourceTreeDatasource extends DataSource {
 
     private List<Resource> initialData;
     private List<Resource> lockedData;
+    // the encompassing grid. It's unfortunate to have the DS know about the encompassing TreeGrid
+    // but we have a situation in which a new AG node needs to be able to access its parent TreeNode by ID. 
+    private TreeGrid treeGrid;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData) {
+    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData, TreeGrid treeGrid) {
         this.setClientOnly(false);
         this.setDataProtocol(DSProtocol.CLIENTCUSTOM);
         this.setDataFormat(DSDataFormat.CUSTOM);
 
         this.initialData = initialData;
         this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
+        this.treeGrid = treeGrid;
 
         DataSourceField idDataField = new DataSourceTextField("id", MSG.common_title_id());
         idDataField.setPrimaryKey(true);
@@ -169,7 +174,7 @@ public class ResourceTreeDatasource extends DataSource {
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                 public void onResourceTypeLoaded(List<Resource> result) {
-                    TreeNode[] treeNodes = buildNodes(result, lockedData);
+                    TreeNode[] treeNodes = buildNodes(result, lockedData, treeGrid);
                     response.setData(treeNodes);
                     processResponse(requestId, response);
                 }
@@ -182,49 +187,14 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resources
      * @return
      */
-    public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData) {
+    public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData, TreeGrid treeGrid) {
         List<ResourceTreeNode> resourceNodes = new ArrayList<ResourceTreeNode>(resources.size());
-        //        boolean nullFound = false;
         for (Resource resource : resources) {
-            //            if (null != resource.getParentResource() && null == resource.getParentResource().getName()) {
-            //                CoreGUI.getMessageCenter().notify(
-            //                    new Message(" *** Null parent name for " + resource + " parent " + resource.getParentResource(),
-            //                        Severity.Info));
-            //                nullFound = true;
-            //            }
             ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));
             resourceNodes.add(node);
         }
-        //        if (!nullFound) {
-        //            CoreGUI.getMessageCenter().notify(new Message(" *** No Null parent names found", Severity.Info));
-        //        }
 
-        List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes);
-
-        //        nullFound = false;
-        //        for (TreeNode node : result) {
-        //            if (node instanceof ResourceTreeNode) {
-        //                ResourceTreeNode rtNode = (ResourceTreeNode) node;
-        //                if (null != rtNode.getResource().getParentResource()
-        //                    && null == rtNode.getResource().getParentResource().getName()) {
-        //                    CoreGUI.getMessageCenter().notify(
-        //                        new Message(" *** Null parent name for resource tree node " + rtNode.getResource() + " parent "
-        //                            + rtNode.getResource(), Severity.Info));
-        //                    nullFound = true;
-        //                }
-        //            } else if (node instanceof AutoGroupTreeNode) {
-        //                AutoGroupTreeNode rtNode = (AutoGroupTreeNode) node;
-        //                if (null == rtNode.getParentResource().getName()) {
-        //                    CoreGUI.getMessageCenter().notify(
-        //                        new Message(" *** Null parent name for autogroup tree node " + rtNode.getParentResource(),
-        //                            Severity.Info));
-        //                    nullFound = true;
-        //                }
-        //            }
-        //        }
-        //        if (!nullFound) {
-        //            CoreGUI.getMessageCenter().notify(new Message(" *** No Null tree node parent names found", Severity.Info));
-        //        }
+        List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes, treeGrid);
 
         return result.toArray(new TreeNode[result.size()]);
     }
@@ -233,7 +203,8 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resourceNodes ordered such that referenced parent nodes have lower indexes than the referencing child.
      * @return a new List, properly ordered and including AG and Subcategory nodes.
      */
-    private static List<TreeNode> introduceTypeAndCategoryNodes(final List<ResourceTreeNode> resourceNodes) {
+    private static List<TreeNode> introduceTypeAndCategoryNodes(final List<ResourceTreeNode> resourceNodes,
+        TreeGrid treeGrid) {
         // The resulting list of nodes, including AG and SC nodes. The list is ordered to ensure all
         // referenced parent nodes have lower indexes than the referencing child.
         List<TreeNode> allNodes = new ArrayList<TreeNode>(resourceNodes.size());
@@ -268,12 +239,15 @@ public class ResourceTreeDatasource extends DataSource {
                 // First we need to ensure we have a properly populated parentResource (id and name, minimally),
                 // get this from the parent ResourceTreeNode as resource.parentResource may not be set with
                 // anything more than the id.
-
-                String parentResourceNodeId = ResourceTreeNode.idOf(resource.getParentResource());
-                for (ResourceTreeNode node : resourceNodes) {
-                    if (node.getID().equals(parentResourceNodeId)) {
-                        resource.setParentResource(node.getResource());
-                    }
+                Resource parentResource = resource.getParentResource();
+                String parentResourceNodeId = ResourceTreeNode.idOf(parentResource);
+                TreeNode parentResourceNode = treeGrid.getTree().findById(parentResourceNodeId);
+                if (null != parentResourceNode) {
+                    parentResource = ((ResourceTreeNode) parentResourceNode).getResource();
+                    resource.setParentResource(parentResource);
+                }
+                if (null == parentResource.getName()) {
+                    Log.error("AutoGroup node creation using invalid parent resource: " + parentResource);
                 }
 
                 String autoGroupNodeID = resourceNode.getParentID();

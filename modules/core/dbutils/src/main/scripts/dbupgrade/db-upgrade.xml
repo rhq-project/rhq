@@ -3684,6 +3684,16 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.115">
+                <schema-addColumn table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" columnType="INTEGER"/>
+                <schema-directSQL>
+                    <statement desc="RHQ_DRIFT_DEFINITION: set compliance_status column for existing definitions">
+                        UPDATE RHQ_DRIFT_DEFINITION SET COMPLIANCE_STATUS = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" nullable="FALSE"/>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

@@ -73,8 +73,8 @@ public interface MetricHandlerLocal {
 
     @PUT
     @Path("/schedule/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     MetricSchedule updateSchedule(@PathParam("id") int scheduleId,  MetricSchedule in);
 
 }

@@ -26,6 +26,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.jboss.resteasy.links.AddLinks;
@@ -53,23 +57,15 @@ public interface ResourceHandlerLocal {
     })
     @GET
     @Path("/{id}")
-    @Produces({"application/json","application/xml"})
-    ResourceWithType getResource(@PathParam("id") int id);
-
-    @GET
-    @Path("/{id}")
-    @Produces("text/html")
-    String getResourceHtml(@PathParam("id") int id);
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    Response getResource(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
     @GET
     @Path("/platforms")
-    @Produces({"application/json","application/xml"})
-    List<ResourceWithType> getPlatforms();
-
-    @GET
-    @Path("/platforms")
-    @Produces("text/html")
-    String getPlatformsHtml();
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    Response getPlatforms(@Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
 
     @GET
@@ -93,20 +89,17 @@ public interface ResourceHandlerLocal {
     @Path("/{id}/schedules")
     @Produces("text/html")
     @LinkResource(rel="schedules",value = MetricSchedule.class)
+            // TODO move to ScheduleManager, link from resource and pass the resource as query param
     String getSchedulesHtml(@PathParam("id") int resourceId,
                             @Context UriInfo uriInfo);
 
     @GET
     @Path("/{id}/children")
-    @Produces({"application/json","application/xml"})
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     @LinkResource(rel="children", value = ResourceWithType.class)
-    List<ResourceWithType> getChildren(@PathParam("id") int id);
+    Response getChildren(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
-    @GET
-    @Path("/{id}/children")
-    @Produces("text/html")
-    @LinkResource(rel="children", value = ResourceWithType.class)
-    String getChildrenHtml(@PathParam("id") int id);
 
     @AddLinks
     @GET

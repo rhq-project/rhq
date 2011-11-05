@@ -36,6 +36,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.jboss.cache.Fqn;
+
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -80,7 +82,17 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         }
 
 
-        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
+        MeasurementSchedule schedule;
+        schedule = getFromCache(scheduleId,MeasurementSchedule.class);
+        if (schedule==null) {
+            schedule = scheduleManager.getScheduleById(caller,scheduleId);
+            if (schedule==null) {
+                throw new StuffNotFoundException("Schedule with id " + scheduleId);
+            }
+            else
+                putToCache(scheduleId,MeasurementSchedule.class,schedule);
+        }
+
         if (schedule.getDefinition().getDataType()!= DataType.MEASUREMENT)
             throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a (numerical) metric");
 
@@ -140,14 +152,43 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
      * @param scheduleId ID of the schedule
      * @param request the REST request - injected by the REST framework
      * @param headers the REST request http headers - injected by the REST framework
-     * @param uriInfo
+     * @param uriInfo info about the called uri to build links
      * @return Schedule with respective headers
      */
     public Response getSchedule(int scheduleId, Request request, HttpHeaders headers, UriInfo uriInfo) {
 
-        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller, scheduleId);
-        if (schedule==null)
-            throw new StuffNotFoundException("Schedule with id " + scheduleId);
+        MeasurementSchedule schedule=null;
+        Response.ResponseBuilder builder=null;
+
+        // Create a cache control
+        CacheControl cc = new CacheControl();
+        cc.setMaxAge(300); // Schedules are valid for 5 mins
+        cc.setPrivate(false); // Proxies may cache this
+
+
+        Fqn fqn = getFqn(scheduleId,MeasurementSchedule.class);
+        schedule = getFromCache(fqn,MeasurementSchedule.class);
+        if (schedule!=null) {
+                // If it is on cache, quickly return if match
+            long tim = schedule.getMtime() != null ? schedule.getMtime() : 0;
+            EntityTag eTag = new EntityTag(Long.toOctalString(schedule.hashCode()+tim)); // factor in mtime in etag
+            builder = request.evaluatePreconditions(new Date(tim),eTag);
+
+            if (builder!=null) {
+                builder.cacheControl(cc);
+                return builder.build();
+            }
+
+
+        }
+
+        if (schedule==null) {
+            schedule = scheduleManager.getScheduleById(caller, scheduleId);
+            if (schedule==null)
+                throw new StuffNotFoundException("Schedule with id " + scheduleId);
+            else
+                putToCache(fqn,schedule);
+        }
 
         MeasurementDefinition definition = schedule.getDefinition();
         MetricSchedule metricSchedule = new MetricSchedule(schedule.getId(), definition.getName(),
@@ -157,14 +198,14 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         if (schedule.getMtime()!=null)
             metricSchedule.setMtime(schedule.getMtime());
 
-        // What media type does the user request?
-        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
-        // Check for conditional get
+        // Check for conditional get again
         // Interestingly computing the hashCode of the original schedule is slower, as it also
         // pulls in data from the definition and the resource
-        EntityTag eTag = new EntityTag(Integer.toOctalString(metricSchedule.hashCode()));
-        Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(metricSchedule.getMtime()),eTag);
+        long tim = schedule.getMtime() != null ? schedule.getMtime() : 0;
+        EntityTag eTag = new EntityTag(Long.toOctalString(schedule.hashCode()+tim));
+        builder = request.evaluatePreconditions(new Date(tim),eTag); // factor in mtime in etag
+
 
         if (builder==null) {
             // preconditions not met, we need to send the resource
@@ -173,8 +214,14 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("metric/data/" + scheduleId);
             URI uri = uriBuilder.build();
-
             Link link = new Link("metrics",uri.toString());
+            metricSchedule.addLink(link);
+
+            // create link to the resource
+            uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("resource/" + schedule.getResource().getId());
+            uri = uriBuilder.build();
+            link = new Link("resource",uri.toString());
             metricSchedule.addLink(link);
 
             // Link for updates
@@ -183,6 +230,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             Link updateLink = new Link("edit",uri.toString());
             metricSchedule.addLink(updateLink);
 
+            // What media type does the user request?
+            MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
             if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                 builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
@@ -192,10 +241,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             }
         }
 
-        // Create a cache control
-        CacheControl cc = new CacheControl();
-        cc.setMaxAge(300); // Schedules are valid for 5 mins
-        cc.setPrivate(false); // Proxies may cache this
 
         builder.cacheControl(cc);
         builder.tag(eTag);
@@ -208,6 +253,9 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         List<MeasurementSchedule> schedules = scheduleManager.findSchedulesForResourceAndType(caller,
                 resourceId, DataType.MEASUREMENT, null,false);
+        for (MeasurementSchedule sched: schedules) {
+            putToCache(sched.getId(),MeasurementSchedule.class,sched);
+        }
         List<MetricAggregate> ret = new ArrayList<MetricAggregate>(schedules.size());
 
         long now = System.currentTimeMillis();
@@ -239,6 +287,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         scheduleManager.updateSchedule(caller, schedule);
 
         schedule = scheduleManager.getScheduleById(caller,scheduleId);
+        Fqn fqn = getFqn(scheduleId,MeasurementSchedule.class);
+        putToCache(fqn,schedule);
         MeasurementDefinition def = schedule.getDefinition();
 
         MetricSchedule ret = new MetricSchedule(scheduleId,def.getName(),def.getDisplayName(),

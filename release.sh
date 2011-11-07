@@ -395,7 +395,7 @@ verify_tags()
    EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
    if [ -n "$EXISTING_REMOTE_TAG" ];
    then
-      if[ "$OVERRIDE_TAG" ];
+      if [ "$OVERRIDE_TAG" ];
       then
          echo "A remote tag named $RELEASE_TAG already exists, but will be overriden."
       else

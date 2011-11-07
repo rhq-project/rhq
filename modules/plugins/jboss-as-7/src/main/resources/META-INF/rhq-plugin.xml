@@ -1304,7 +1304,7 @@
 
     <server name="Logging"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="LoggerComponent"
         singleton="true"
         >
 
@@ -1331,9 +1331,15 @@
                     </c:property-options>
                 </c:simple-property>
             </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
         </operation>
 
         <operation name="remove-root-logger" description="Remove the root logger.">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
         </operation>
 
         <operation name="set-root-logger" description="Set the root logger.">
@@ -1355,6 +1361,9 @@
                         <c:simple-property name="handler" type="string"/>
                 </c:list-property>
             </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
         </operation>
 
         <resource-configuration>
@@ -1842,7 +1851,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     </server>
 
     <server name="ModCluster"
-             class="BaseComponent"
+             class="ModClusterComponent"
              discovery="SubsystemDiscovery"
              description="Mod_cluster support"
              singleton="true"
@@ -1858,6 +1867,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
 
         <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
+            <results>
+                    <c:simple-property name="operationResult"/>
+            </results>
+
         </operation>
 
         <resource-configuration>

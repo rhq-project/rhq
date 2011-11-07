@@ -28,6 +28,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ImportConfiguration;
 import org.rhq.core.domain.sync.ImportConfigurationDefinition;
+import org.rhq.core.domain.sync.ImportReport;
 
 /**
  * 
@@ -75,9 +76,11 @@ public interface SynchronizationManagerRemote {
      * 
      * @param subject the authenticated user
      * @param exportFile the contents of the export file
-     * @param importerConfigurations the configurations of individual importers to be used when importing
+     * @param importerConfigurations the configurations of individual importers to be used when importing or null
+     *        if the default configurations should be used for all the importers.
      *        
-     * @return the report describing the result of the export
+     * @return the report describing the result of the import
      */
-    void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
+    ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
+        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
 }

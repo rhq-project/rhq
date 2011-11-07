@@ -39,6 +39,9 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.sync.validators.EntityValidator;
+import org.rhq.enterprise.server.sync.validators.MaxCountValidator;
+import org.rhq.enterprise.server.sync.validators.SystemSettingsValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -100,6 +103,14 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     }
 
     @Override
+    public Set<EntityValidator<SystemSettings>> getEntityValidators() {
+        HashSet<EntityValidator<SystemSettings>> ret = new HashSet<EntityValidator<SystemSettings>>();
+        ret.add(new SystemSettingsValidator());
+        ret.add(new MaxCountValidator<SystemSettings>(1));
+        return ret;
+    }
+    
+    @Override
     public void update(NoSingleEntity entity, SystemSettings exportedEntity) throws Exception {
         Properties props = exportedEntity.toProperties();
 
@@ -131,7 +142,8 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     }
 
     @Override
-    public void finishImport() {
+    public String finishImport() {
+        return null;
     }
 
     private Set<String> getSettingNamesConfiguredForImport(Configuration importConfiguration) {

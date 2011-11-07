@@ -20,7 +20,6 @@
 package org.rhq.enterprise.server.sync.validators;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,13 +34,15 @@ import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
-import org.rhq.enterprise.server.sync.ValidationException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This implementation checks that the two installations
  * have the exact same plugins deployed.
  *
+ * Note that this class is currently not used by any synchronizer but
+ * exists for "demo" purposes.
+ * 
  * @author Lukas Krejci
  */
 public class DeployedAgentPluginsValidator implements ConsistencyValidator {
@@ -172,15 +173,6 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
         }
     }
 
-    @Override
-    public Set<Class<?>> getValidatedEntityTypes() {
-        return Collections.emptySet();
-    }
-
-    @Override
-    public void validateExportedEntity(Object entity) throws ValidationException {
-    }
-    
     @Override
     public int hashCode() {
         //all the deployed plugins validators are equal

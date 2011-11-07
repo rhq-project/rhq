@@ -65,6 +65,7 @@ import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
 import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
 import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.sync.validators.EntityValidator;
 import org.rhq.test.JMockTest;
 
 /**
@@ -140,7 +141,13 @@ public class ExportingInputStreamTest extends JMockTest {
         }
 
         @Override
-        public void finishImport() throws Exception {
+        public String finishImport() throws Exception {
+            return null;
+        }
+
+        @Override
+        public Set<EntityValidator<T>> getEntityValidators() {
+            return Collections.emptySet();
         }
         
     }

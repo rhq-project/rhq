@@ -19,8 +19,6 @@
 
 package org.rhq.enterprise.server.sync.validators;
 
-import java.util.Set;
-
 import javax.persistence.EntityManager;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -28,7 +26,6 @@ import javax.xml.stream.XMLStreamReader;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
-import org.rhq.enterprise.server.sync.ValidationException;
 
 /**
  * Implementations of this interface can export a state and validate that
@@ -90,37 +87,4 @@ public interface ConsistencyValidator {
      * @throws InconsistentStateException in case of failed consistency check
      */
     void validateExportedState() throws InconsistentStateException;
-    
-    /**
-     * Returns the types of exported entities this validator can validate before export.
-     * This set can be empty, which would mean it can only validate the current state.
-     */
-    Set<Class<?>> getValidatedEntityTypes();
-    
-    /**
-     * Validates a single entity before it is imported.
-     * The supplied entity has one of the types returned by {@link #getValidatedEntityTypes()}.
-     * 
-     * @param entity
-     */
-    void validateExportedEntity(Object entity) throws ValidationException;
-    
-    /**
-     * Implementations of the consistency validator interface should reimplement the
-     * {@link Object#equals(Object)} method so that two identically configured 
-     * validators are equal to each other.
-     * 
-     * @param other
-     * @return
-     */
-    boolean equals(Object other);
-    
-    /**
-     * The {@link ConsistencyValidator} interface mandates a certain behavior of
-     * the {@link #equals(Object)} method and therefore the <code>hashCode</code>
-     * should be reimplemented accordingly.
-     *  
-     * @return
-     */
-    int hashCode();
 }

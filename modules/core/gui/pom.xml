@@ -206,15 +206,4 @@
 
    </profiles>
 
-    <repositories>
-        <repository>
-            <id>jboss-deprecated-items-group</id>
-            <name>JBoss Public Repository Group</name>
-            <url>https://repository.jboss.org/nexus/content/repositories/deprecated/</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
 </project>

@@ -25,8 +25,11 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -497,74 +500,56 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(buildMetricsMenu(resourceType, resource));
 
         // Create Child Menu
-        MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
-        boolean createChildResourcesEnabled = resourcePermission.isCreateChildResources();
-        if (createChildResourcesEnabled) {
-            Menu createChildSubMenu = new Menu();
-            //sort the display items alphabetically
-            TreeSet<String> ordered = new TreeSet<String>();
-            Map<String, ResourceType> typeMap = new HashMap<String, ResourceType>();
-            for (ResourceType o : resourceType.getChildResourceTypes()) {
-                ordered.add(o.getName());
-                typeMap.put(o.getName(), o);
-            }
-
-            for (String type : ordered) {
-                final ResourceType childType = typeMap.get(type);
-                if (childType.isCreatable()) {
-                    MenuItem createItem = new MenuItem(childType.getName());
-
+        Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
+        if (!creatableChildTypes.isEmpty()) {
+            MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
+            boolean hasCreateChildPermission = resourcePermission.isCreateChildResources();
+            createChildMenu.setEnabled(hasCreateChildPermission);
+            if (hasCreateChildPermission) {
+                Menu createChildSubMenu = new Menu();
+                Map<String, ResourceType> displayNameMap = getDisplayNames(creatableChildTypes);
+                Set<String> displayNames = displayNameMap.keySet();
+                for (String displayName : displayNames) {
+                    MenuItem createItem = new MenuItem(displayName);
+                    final ResourceType childType = displayNameMap.get(displayName);
                     createItem.addClickHandler(new ClickHandler() {
-
                         public void onClick(MenuItemClickEvent event) {
                             ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
                         }
                     });
-
                     createChildSubMenu.addItem(createItem);
-
                 }
+                createChildMenu.setSubmenu(createChildSubMenu);
             }
-            createChildMenu.setSubmenu(createChildSubMenu);
-            createChildResourcesEnabled = createChildSubMenu.getItems().length > 0;
+
+            resourceContextMenu.addItem(createChildMenu);
         }
-        createChildMenu.setEnabled(createChildResourcesEnabled);
-        resourceContextMenu.addItem(createChildMenu);
 
         // Manual Import Menu
-        MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
-        boolean manualImportEnabled = resourcePermission.isCreateChildResources();
-        if (manualImportEnabled) {
-            Menu importChildSubMenu = new Menu();
+        Set<ResourceType> importableChildTypes = getImportableChildTypes(resourceType);
 
-            //sort the display items alphabetically
-            TreeSet<String> ordered = new TreeSet<String>();
-            Map<String, ResourceType> typeMap = new HashMap<String, ResourceType>();
-            for (ResourceType o : resourceType.getChildResourceTypes()) {
-                ordered.add(o.getName());
-                typeMap.put(o.getName(), o);
-            }
-            for (String name : ordered) {
-                final ResourceType childType = typeMap.get(name);
-                if (childType.isSupportsManualAdd()) {
-                    MenuItem importItem = new MenuItem(childType.getName());
-
+        if (!importableChildTypes.isEmpty()) {
+            MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
+            boolean hasManualImportPermission = resourcePermission.isCreateChildResources();
+            importChildMenu.setEnabled(hasManualImportPermission);
+            if (hasManualImportPermission) {
+                Menu importChildSubMenu = new Menu();
+                Map<String, ResourceType> displayNameMap = getDisplayNames(importableChildTypes);
+                Set<String> displayNames = displayNameMap.keySet();
+                for (final String displayName : displayNames) {
+                    MenuItem importItem = new MenuItem(displayName);
+                    final ResourceType childType = displayNameMap.get(displayName);
                     importItem.addClickHandler(new ClickHandler() {
-
                         public void onClick(MenuItemClickEvent event) {
                             ResourceFactoryImportWizard.showImportWizard(resource, childType);
                         }
                     });
-
                     importChildSubMenu.addItem(importItem);
                 }
+                importChildMenu.setSubmenu(importChildSubMenu);
             }
-
-            importChildMenu.setSubmenu(importChildSubMenu);
-            manualImportEnabled = importChildSubMenu.getItems().length > 0;
+            resourceContextMenu.addItem(importChildMenu);
         }
-        importChildMenu.setEnabled(manualImportEnabled);
-        resourceContextMenu.addItem(importChildMenu);
     }
 
     private MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {
@@ -938,4 +923,49 @@ public class ResourceTreeView extends LocatableVLayout {
             setSelectedResource(resourceId, viewPath.isRefresh());
         }
     }
+
+    private static Set<ResourceType> getImportableChildTypes(ResourceType type) {
+        Set<ResourceType> results = new TreeSet<ResourceType>();
+        Set<ResourceType> childTypes = type.getChildResourceTypes();
+        for (ResourceType childType : childTypes) {
+            if (childType.isSupportsManualAdd()) {
+                results.add(childType);
+            }
+        }
+        return results;
+    }
+
+    private static Set<ResourceType> getCreatableChildTypes(ResourceType type) {
+        Set<ResourceType> results = new TreeSet<ResourceType>();
+        Set<ResourceType> childTypes = type.getChildResourceTypes();
+        for (ResourceType childType : childTypes) {
+            if (childType.isCreatable()) {
+                results.add(childType);
+            }
+        }
+        return results;
+    }
+
+    private static Map<String, ResourceType> getDisplayNames(Set<ResourceType> types) {
+        Set<String> allNames = new HashSet<String>();
+        Set<String> repeatedNames = new HashSet<String>();
+        for (ResourceType type : types) {
+            String typeName = type.getName();
+            if (allNames.contains(typeName)) {
+                repeatedNames.add(typeName);
+            } else {
+                allNames.add(typeName);
+            }
+        }
+        Map<String, ResourceType> results = new TreeMap<String, ResourceType>();
+        for (ResourceType type : types) {
+            String displayName = type.getName();
+            if (repeatedNames.contains(type.getName())) {
+                displayName += " (" + type.getPlugin() + " plugin)";
+            }
+            results.put(displayName, type);
+        }
+        return results;
+    }
+
 }

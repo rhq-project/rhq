@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -25,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -46,8 +49,19 @@ public class LoggerComponent extends BaseComponent {
 
         Map<String,Property> propertyMap = parameters.getAllProperties();
         for (Map.Entry<String,Property> entry : propertyMap.entrySet()) {
-            PropertySimple ps = (PropertySimple) entry.getValue();
-            op.addAdditionalProperty(entry.getKey(),ps.getStringValue());
+            if (entry.getValue() instanceof PropertySimple) {
+                PropertySimple ps = (PropertySimple) entry.getValue();
+                op.addAdditionalProperty(entry.getKey(),ps.getStringValue());
+            } else if (entry.getValue() instanceof PropertyList) {
+                PropertyList pl = (PropertyList) entry.getValue();
+                List<Property> props = pl.getList();
+                List<String> objects = new ArrayList<String>(props.size());
+                for (Property p : props) {
+                    PropertySimple ps = (PropertySimple) p;
+                    objects.add(ps.getStringValue());
+                }
+                op.addAdditionalProperty(entry.getKey(),objects);
+            }
         }
 
 
@@ -59,7 +73,7 @@ public class LoggerComponent extends BaseComponent {
         }
         else {
             OperationResult failure = new OperationResult();
-            failure.setErrorMessage(result.getFailureDescription().toString());
+            failure.setErrorMessage(result.getFailureDescription());
             return failure;
         }
 

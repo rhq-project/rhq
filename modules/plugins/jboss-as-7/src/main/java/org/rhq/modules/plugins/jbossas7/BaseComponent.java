@@ -429,8 +429,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                                            Configuration parameters) throws InterruptedException, Exception {
 
         if (!name.contains(":")) {
-            OperationResult badName = new OperationResult("Operation name did not contain a ':'");
-            badName.setErrorMessage("Operation name did not contain a ':'");
+            String simpleResult = "Operation with name [" + name + "] did not contain a ':'";
+            OperationResult badName = new OperationResult(simpleResult);
+            badName.setErrorMessage(simpleResult);
             return badName;
         }
 

@@ -28,3 +28,6 @@ modules/enterprise/gui/content_http-war/build/classes/*
 settings.xml
 *rsa
 *_private.sh
+.classpath
+.project
+.settings

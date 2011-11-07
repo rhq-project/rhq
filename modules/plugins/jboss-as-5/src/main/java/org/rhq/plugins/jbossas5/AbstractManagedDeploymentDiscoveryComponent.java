@@ -23,7 +23,6 @@
 package org.rhq.plugins.jbossas5;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,13 +32,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
-import org.jboss.deployers.spi.management.deploy.DeploymentManager;
-import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
-import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.profileservice.spi.NoSuchDeploymentException;
-import org.jboss.profileservice.spi.Profile;
 import org.jboss.profileservice.spi.ProfileKey;
 import org.jboss.profileservice.spi.ProfileService;
 
@@ -181,40 +175,6 @@ public abstract class AbstractManagedDeploymentDiscoveryComponent implements
     }
 
     private static String getProfileName(ManagedDeployment deployment, ProfileService profileService) {
-        Collection<ProfileKey> profileKeys = profileService.getActiveProfileKeys();
-        for (ProfileKey profileKey : profileKeys) {
-            Profile profile;
-            try {
-                profile = profileService.getActiveProfile(profileKey);
-            } catch (Exception e) {
-                DeploymentManager deploymentManager = profileService.getDeploymentManager();
-                try {
-                    deploymentManager.loadProfile(profileKey);
-                } catch (Exception e1) {
-                    continue;
-                }
-                DeploymentState deploymentState = deployment.getDeploymentState();
-                try {
-                    DeploymentProgress progress;
-                    if (deploymentState == DeploymentState.STARTED || deploymentState == DeploymentState.STARTING) {
-                        progress = deploymentManager.start(deployment.getName());
-                    } else {
-                        progress = deploymentManager.stop(deployment.getName());
-                    }
-                    progress.run();
-                    DeploymentStatus status = progress.getDeploymentStatus();
-                    if (status.isFailed()) {
-                        continue;
-                    }
-                } catch (Exception e1) {
-                    continue;
-                }
-                return profileKey.getName();
-            }
-            if (profile.hasDeployment(deployment.getName())) {
-                return profileKey.getName();
-            }
-        }
         return ProfileKey.DEFAULT;
     }
 

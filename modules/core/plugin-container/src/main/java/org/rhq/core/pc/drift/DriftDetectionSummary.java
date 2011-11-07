@@ -37,6 +37,8 @@ public class DriftDetectionSummary {
 
     private boolean repeat;
 
+    private boolean baseDirExists = true;
+
     private int version;
 
     public DriftDetectionSchedule getSchedule() {
@@ -93,6 +95,14 @@ public class DriftDetectionSummary {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public boolean isBaseDirExists() {
+        return baseDirExists;
+    }
+
+    public void setBaseDirExists(boolean exists) {
+        baseDirExists = exists;
     }
 
 }

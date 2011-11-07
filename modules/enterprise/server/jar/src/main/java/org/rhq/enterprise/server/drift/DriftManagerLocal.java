@@ -30,6 +30,7 @@ import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComposite;
@@ -136,7 +137,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
 
     void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 
-    void updateDriftDefinition(DriftDefinition driftDefinition);
+    void updateDriftDefinition(Subject subject, DriftDefinition driftDefinition);
 
     /**
      * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will

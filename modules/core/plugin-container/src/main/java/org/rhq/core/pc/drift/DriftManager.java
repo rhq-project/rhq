@@ -24,6 +24,7 @@ import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_NO_BASEDIR;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -549,6 +550,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         updateDriftDetection(resourceId, driftDef);
+    }
+
+    @Override
+    public void reportMissingBaseDir(int resourceId, DriftDefinition driftDefinition) {
+        if (log.isDebugEnabled()) {
+            log.debug("Reporting to server missing base directory for " + toString(resourceId, driftDefinition));
+        }
+        DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+        driftServer.updateCompliance(resourceId, driftDefinition.getName(), OUT_OF_COMPLIANCE_NO_BASEDIR);
     }
 
     @Override

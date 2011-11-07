@@ -21,9 +21,13 @@ package org.rhq.enterprise.server.sync.importers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -51,6 +55,8 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.sync.entity.MetricTemplate;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.sync.ExportReader;
+import org.rhq.enterprise.server.sync.validators.EntityValidator;
+import org.rhq.enterprise.server.sync.validators.UniquenessValidator;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -71,6 +77,8 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     public static final String METRIC_UPDATE_OVERRIDES_PROPERTY = "metricUpdateOverrides";
     public static final String METRIC_UPDATE_OVERRIDE_PROPERTY = "metricUpdateOverride";
 
+    private static final String IMPORT_NOTES_PROLOGUE = "The following metric templates were not imported because they do not correspond to any metric defined by the existing resource types:\n";
+    
     private static class UpdateKey {
         public final long collectionInterval;
         public final boolean updateSchedules;
@@ -104,6 +112,26 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         }
     }
 
+    private static final Comparator<MetricTemplate> METRIC_TEMPLATE_COMPARATOR = new Comparator<MetricTemplate>() {
+        
+        @Override
+        public int compare(MetricTemplate o1, MetricTemplate o2) {
+            //sort by plugin, type name, and metric name in that order
+            
+            int ret = o1.getResourceTypePlugin().compareTo(o2.getResourceTypePlugin());
+            if (ret != 0) {
+                return ret;
+            }
+            
+            ret = o1.getResourceTypeName().compareTo(o2.getResourceTypeName());
+            if (ret != 0) {
+                return ret;
+            }
+            
+            return o1.getMetricName().compareTo(o2.getMetricName());
+        }
+    }; 
+    
     private Subject subject;
     private EntityManager entityManager;
     private Map<UpdateKey, List<MeasurementDefinition>> definitionsByUpdateKey =
@@ -111,7 +139,8 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     private Configuration importConfiguration;
     private Unmarshaller unmarshaller;
     private MeasurementScheduleManagerLocal measurementScheduleManager;
-
+    private Set<MetricTemplate> unmatchedTemplates = new TreeSet<MetricTemplate>(METRIC_TEMPLATE_COMPARATOR);
+    
     public MetricTemplateImporter(Subject subject, EntityManager entityManager) {
         this(subject, entityManager, LookupUtil.getMeasurementScheduleManager());
     }
@@ -215,8 +244,14 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     }
 
     @Override
+    public Set<EntityValidator<MetricTemplate>> getEntityValidators() {
+        return Collections.<EntityValidator<MetricTemplate>>singleton(new UniquenessValidator<MetricTemplate>());
+    }
+    
+    @Override
     public void update(MeasurementDefinition entity, MetricTemplate exportedEntity) {
         if (entity == null) {
+            unmatchedTemplates.add(exportedEntity);
             return;
         }
 
@@ -233,7 +268,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     }
 
     @Override
-    public void finishImport() {
+    public String finishImport() {
         for (Map.Entry<UpdateKey, List<MeasurementDefinition>> e : definitionsByUpdateKey.entrySet()) {
             int[] ids = getIdsFromDefs(e.getValue());
             boolean enable = e.getKey().enable;
@@ -243,8 +278,25 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
             measurementScheduleManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(subject,
                 ids, collectionInterval, enable, updateSchedules);
         }
+        
+        if (unmatchedTemplates.isEmpty()) {
+            return null;
+        } else {
+            return getUnmatchedMetricTemplatesReport(unmatchedTemplates);
+        }
     }
 
+    //public for testability
+    public static String getUnmatchedMetricTemplatesReport(Set<MetricTemplate> metricTemplates) {
+        StringBuilder bld = new StringBuilder(IMPORT_NOTES_PROLOGUE);
+        
+        for(MetricTemplate t : metricTemplates) {
+            bld.append(t).append("\n");
+        }
+        
+        return bld.toString();
+    }
+    
     private static int[] getIdsFromDefs(Collection<MeasurementDefinition> defs) {
         int[] ids = new int[defs.size()];
 

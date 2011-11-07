@@ -31,7 +31,6 @@ import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
 import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
-import org.rhq.enterprise.server.sync.validators.SystemSettingsValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -67,7 +66,7 @@ public class SystemSettingsSynchronizer implements Synchronizer<NoSingleEntity, 
     }
 
     public Set<ConsistencyValidator> getRequiredValidators() {
-        return Collections.<ConsistencyValidator>singleton(new SystemSettingsValidator(systemManager));
+        return Collections.emptySet();
     }
 
 }

@@ -19,11 +19,14 @@
 
 package org.rhq.enterprise.server.sync.importers;
 
+import java.util.Set;
+
 import javax.xml.stream.XMLStreamException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.server.sync.ExportReader;
+import org.rhq.enterprise.server.sync.validators.EntityValidator;
 
 /**
  * Implementations of this interface are used to import entities into the database.
@@ -58,6 +61,12 @@ public interface Importer<Entity, ExportedType> {
     ExportedEntityMatcher<Entity, ExportedType> getExportedEntityMatcher();
 
     /**
+     * The set of entity validators that should be called on each entity before
+     * the import actually starts.
+     */
+    Set<EntityValidator<ExportedType>> getEntityValidators();
+    
+    /**
      * Updates the entity with the data from the export.
      * <p>
      * This method is responsible for persisting the entity in the database
@@ -84,6 +93,10 @@ public interface Importer<Entity, ExportedType> {
      * have been {@link #update(Object, Object) updated}.
      * <p>
      * This is useful for importers that need to batch the updates to the database.
+     * 
+     * @return notes that should be transfered to the user. These should be any warnings and other
+     * messages that are not errors (which should throw an exception) but are deemed
+     * important for the (human) caller to be aware of. 
      */
-    void finishImport() throws Exception;
+    String finishImport() throws Exception;
 }

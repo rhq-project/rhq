@@ -22,40 +22,31 @@ package org.rhq.enterprise.server.sync.validators;
 import javax.persistence.EntityManager;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ValidationException;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class SystemSettingsValidator implements EntityValidator<SystemSettings> {
+public class MaxCountValidator<T> implements EntityValidator<T> {
 
-    private Subject subject;
-    private SystemManagerLocal systemManager;
+    private int max;
+    private int cnt;
     
-    public SystemSettingsValidator() {
-        this(LookupUtil.getSystemManager());
-    }
-    
-    public SystemSettingsValidator(SystemManagerLocal systemManager) {
-        this.systemManager = systemManager;
+    public MaxCountValidator(int max) {
+        this.max = max;
     }
     
     @Override
     public void initialize(Subject subject, EntityManager entityManager) {
-        this.subject = subject;
+        cnt = 0;
     }
-    
+
     @Override
-    public void validateExportedEntity(SystemSettings entity) throws ValidationException {
-        try {
-            systemManager.validateSystemConfiguration(subject, ((SystemSettings)entity).toProperties());
-        } catch (Exception e) {
-            throw new ValidationException("The system settings failed to validate: " + e.getMessage(), e);
+    public void validateExportedEntity(T entity) throws ValidationException {
+        if (++cnt > max) {
+            throw new ValidationException("Entity " + entity + " is unexpected in the export file. At most " + max + " entites of this type are expected.");
         }
     }
 }

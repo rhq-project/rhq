@@ -19,43 +19,32 @@
 
 package org.rhq.enterprise.server.sync.validators;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.EntityManager;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ValidationException;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * 
+ * This validator merely checks that there are no duplicates in the export file.
  *
  * @author Lukas Krejci
  */
-public class SystemSettingsValidator implements EntityValidator<SystemSettings> {
-
-    private Subject subject;
-    private SystemManagerLocal systemManager;
+public class UniquenessValidator<T> implements EntityValidator<T> {
     
-    public SystemSettingsValidator() {
-        this(LookupUtil.getSystemManager());
-    }
-    
-    public SystemSettingsValidator(SystemManagerLocal systemManager) {
-        this.systemManager = systemManager;
-    }
+    private Set<T> alreadyCheckedEntities;
     
     @Override
     public void initialize(Subject subject, EntityManager entityManager) {
-        this.subject = subject;
+        alreadyCheckedEntities = new HashSet<T>();
     }
-    
+
     @Override
-    public void validateExportedEntity(SystemSettings entity) throws ValidationException {
-        try {
-            systemManager.validateSystemConfiguration(subject, ((SystemSettings)entity).toProperties());
-        } catch (Exception e) {
-            throw new ValidationException("The system settings failed to validate: " + e.getMessage(), e);
+    public void validateExportedEntity(T entity) throws ValidationException {
+        if (!alreadyCheckedEntities.add(entity)) {
+            throw new ValidationException("Was the export file manually updated? The entity " + entity + " has been seen multiple times.");
         }
     }
 }

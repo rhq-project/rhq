@@ -19,16 +19,12 @@
 
 package org.rhq.enterprise.server.sync;
 
-import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
-import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
-import org.rhq.enterprise.server.sync.importers.Importer;
-import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
-import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 
 /**
  * The enum of all possible synchronized entities. 
- *
+ * This is used in the {@link SynchronizerFactory#getAllSynchronizers()} to provide
+ * the synchronizers to the rest of the config sync machinery.
+ * 
  * @author Lukas Krejci
  */
 public enum SynchronizedEntity {

@@ -22,13 +22,10 @@ package org.rhq.enterprise.server.sync.test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +46,6 @@ import org.w3c.dom.NodeList;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.sync.ExporterMessages;
@@ -57,7 +53,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.MetricTemplateSynchronizer;
 import org.rhq.enterprise.server.sync.SynchronizationConstants;
@@ -77,19 +72,15 @@ public class MetricTemplateExporterTest extends JMockTest {
 
     public void testCanExport() throws Exception {
         final MeasurementDefinitionManagerLocal measurementDefinitionManager = context.mock(MeasurementDefinitionManagerLocal.class);
-        final PluginManagerLocal pluginManager = context.mock(PluginManagerLocal.class);
         final MeasurementScheduleManagerLocal measurementScheduleManager = context.mock(MeasurementScheduleManagerLocal.class);
         context.checking(new Expectations() {
             {
                 allowing(measurementDefinitionManager).findMeasurementDefinitionsByCriteria(with(any(Subject.class)), with(any(MeasurementDefinitionCriteria.class)));
                 will(returnValue(getFakeMeasurementDefinitions()));
-                
-                allowing(pluginManager).getInstalledPlugins();
-                will(returnValue(getFakeInstalledPlugins()));
             }
         });
         
-        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefinitionManager, measurementScheduleManager, pluginManager);
+        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefinitionManager, measurementScheduleManager);
 
         Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
         exporters.add(exporter);
@@ -226,11 +217,5 @@ public class MetricTemplateExporterTest extends JMockTest {
         }
         
         return new PageList<MeasurementDefinition>(ret, PageControl.getUnlimitedInstance());
-    }
-    
-    private static List<Plugin> getFakeInstalledPlugins() {
-        Plugin p = new Plugin("fakePlugin", null, "12345");
-        p.setVersion("1.0.0.test");
-        return Collections.singletonList(p);
     }
 }

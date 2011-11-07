@@ -54,7 +54,8 @@ import org.rhq.test.JMockTest;
  *
  * @author Lukas Krejci
  */
-@Test
+//@Test - switching this off for now because this validator is no longer used in any
+//of the default synchronizers
 public class DeployedAgentPluginsValidatorTest extends JMockTest {
 
     private static final Log LOG = LogFactory.getLog(DeployedAgentPluginsValidator.class);

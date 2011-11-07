@@ -27,7 +27,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -37,6 +39,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.persistence.EntityManager;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -56,6 +60,8 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DataType;
@@ -76,10 +82,22 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.sync.ExportReader;
+import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.MetricTemplateSynchronizer;
+import org.rhq.enterprise.server.sync.NoSingleEntity;
 import org.rhq.enterprise.server.sync.SynchronizationConstants;
 import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
+import org.rhq.enterprise.server.sync.Synchronizer;
+import org.rhq.enterprise.server.sync.SynchronizerFactory;
 import org.rhq.enterprise.server.sync.SystemSettingsSynchronizer;
+import org.rhq.enterprise.server.sync.ValidationException;
+import org.rhq.enterprise.server.sync.exporters.Exporter;
+import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
+import org.rhq.enterprise.server.sync.importers.Importer;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.sync.validators.EntityValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
@@ -108,12 +126,142 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         public TestServerPluginService testServerPluginService;
     }
 
+    //this can't be mocked out because the config sync machinery has to be able to 
+    //instantiate this class
+    public static class ImportConfigurationCheckingSynchronizer implements Synchronizer<NoSingleEntity, String> {
+
+        public static boolean importerConfigured;
+        public static boolean importValidatorsObtainedAfterConfiguration;
+        
+        public static void reset() {
+            importerConfigured = false;
+            importValidatorsObtainedAfterConfiguration = false;
+        }
+        
+        @Override
+        public void initialize(Subject subject, EntityManager entityManager) {
+        }
+
+        @Override
+        public Exporter<NoSingleEntity, String> getExporter() {
+            return new Exporter<NoSingleEntity, String>() {
+
+                @Override
+                public ExportingIterator<String> getExportingIterator() {
+                    return new ExportingIterator<String>() {
+                        boolean ran = false;
+                        
+                        @Override
+                        public boolean hasNext() {
+                            if (ran) {
+                                return false;
+                            }
+                            
+                            ran = true;
+                            return true;
+                        }
+
+                        @Override
+                        public String next() {
+                            return null;
+                        }
+
+                        @Override
+                        public void remove() {
+                        }
+
+                        @Override
+                        public void export(ExportWriter output) throws XMLStreamException {
+                            output.writeStartElement("my-entity");
+                            output.writeCharacters("value");
+                            output.writeEndElement();
+                        }
+
+                        @Override
+                        public String getNotes() {
+                            return null;
+                        }
+                        
+                    };
+                }
+
+                @Override
+                public String getNotes() {
+                    return null;
+                }
+                
+            };
+        }
+
+        @Override
+        public Importer<NoSingleEntity, String> getImporter() {
+            return new Importer<NoSingleEntity, String>() {
+
+                @Override
+                public ConfigurationDefinition getImportConfigurationDefinition() {
+                    return new ConfigurationDefinition("fake", null);
+                }
+
+                @Override
+                public void configure(Configuration importConfiguration) {
+                    importerConfigured = true;
+                }
+
+                @Override
+                public ExportedEntityMatcher<NoSingleEntity, String> getExportedEntityMatcher() {
+                    return null;
+                }
+
+                @Override
+                public Set<EntityValidator<String>> getEntityValidators() {
+                    EntityValidator<String> v = new EntityValidator<String>() {
+                        
+                        @Override
+                        public void validateExportedEntity(String entity) throws ValidationException {
+                        }
+                        
+                        @Override
+                        public void initialize(Subject subject, EntityManager entityManager) {
+                        }
+                    };
+                    
+                    if (importerConfigured) {
+                        importValidatorsObtainedAfterConfiguration = true;
+                    }
+                    
+                    return Collections.singleton(v);
+                }
+
+                @Override
+                public void update(NoSingleEntity entity, String exportedEntity) throws Exception {
+                }
+
+                @Override
+                public String unmarshallExportedEntity(ExportReader reader) throws XMLStreamException {
+                    return reader.getElementText();
+                }
+
+                @Override
+                public String finishImport() throws Exception {
+                    return null;
+                }
+                
+            };
+        }
+
+        @Override
+        public Set<ConsistencyValidator> getRequiredValidators() {
+            return Collections.emptySet();
+        }
+        
+    }
+    
     private TestData testData;
 
     //I just don't get why this can't be a @BeforeTest
     //but when it was declared as such (together with tearDown() being an @AfterTest)
     //no tests would work. I have no idea why...
-    private void setup() throws Exception {
+    private void setup(boolean createExport) throws Exception {
         testData = new TestData();
         getTransactionManager().begin();
         try {
@@ -154,7 +302,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         testData.testServerPluginService = new TestServerPluginService();
         prepareCustomServerPluginService(testData.testServerPluginService);
         testData.testServerPluginService.startMasterPluginContainer();
-        
+
         synchronizationManager = LookupUtil.getSynchronizationManager();
 
         SystemManagerLocal systemManager = LookupUtil.getSystemManager();
@@ -162,7 +310,10 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         systemManager.loadSystemConfigurationCache();
 
         testData.systemSettings = systemManager.getSystemConfiguration(freshUser());
-        export = synchronizationManager.exportAllSubsystems(freshUser());
+        
+        if (createExport) {
+            export = synchronizationManager.exportAllSubsystems(freshUser());
+        }
     }
 
     private void tearDown() throws Exception {
@@ -183,7 +334,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             em.remove(attachedType);
 
             em.flush();
-            
+
             getTransactionManager().commit();
         } catch (Exception e) {
             getTransactionManager().rollback();
@@ -192,14 +343,14 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
         unprepareServerPluginService();
         testData.testServerPluginService.stopMasterPluginContainer();
-        
+
         export = null;
         testData = null;
         synchronizationManager = null;
     }
 
     public void testExport() throws Exception {
-        setup();
+        setup(true);
         try {
             assertNull("Export shouldn't generate an error message.", export.getErrorMessage());
             assertTrue("The export should contain some data.", export.getExportFile().length > 0);
@@ -209,7 +360,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void testImportWithDefaultConfiguration() throws Exception {
-        setup();
+        setup(true);
 
         try {
             SystemManagerLocal systemManager = LookupUtil.getSystemManager();
@@ -247,7 +398,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void testImportWithRedefinedConfigurationInExportFile() throws Exception {
-        setup();
+        setup(true);
 
         try {
             String exportXML = getExportData();
@@ -255,15 +406,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             exportXML = updateSystemSettingsImportConfiguration(exportXML);
             exportXML = updateMetricTemplatesImportConfiguration(exportXML);
 
-            ByteArrayOutputStream compressed = new ByteArrayOutputStream();
-            OutputStreamWriter wrt = new OutputStreamWriter(new GZIPOutputStream(compressed), "UTF-8");
-            try {
-                wrt.write(exportXML);
-            } finally {
-                wrt.close();
-            }
-
-            InputStream exportData = new ByteArrayInputStream(compressed.toByteArray());
+            InputStream exportData = createCompressedStream(exportXML);
 
             try {
                 synchronizationManager.importAllSubsystems(freshUser(), exportData, null);
@@ -317,7 +460,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void testManuallyPassedImportConfigurationHasPrecendenceOverTheInlinedOne() throws Exception {
-        setup();
+        setup(true);
 
         try {
             //let's read the original values from the database, so that we know what to compare against
@@ -342,15 +485,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             exportXML = updateSystemSettingsImportConfiguration(exportXML);
             exportXML = updateMetricTemplatesImportConfiguration(exportXML);
 
-            ByteArrayOutputStream compressed = new ByteArrayOutputStream();
-            OutputStreamWriter wrt = new OutputStreamWriter(new GZIPOutputStream(compressed), "UTF-8");
-            try {
-                wrt.write(exportXML);
-            } finally {
-                wrt.close();
-            }
-
-            InputStream exportData = new ByteArrayInputStream(compressed.toByteArray());
+            InputStream exportData = createCompressedStream(exportXML);
 
             //let's just use the default configs so that we don't apply the changes suggested in
             //the changed default configs created above
@@ -404,6 +539,58 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                 originalInterval, schedules.get(0).getInterval());
 
         } finally {
+            tearDown();
+        }
+    }
+
+    public void testUnknownValidatorsAreIgnored() throws Exception {
+        setup(true);
+
+        try {
+            String export = getExportData();
+
+            Document xml =
+                DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(export)));
+            
+            Element unknownValidator = xml.createElement("validator");
+            unknownValidator.setAttribute(SynchronizationConstants.CLASS_ATTRIBUTE, "org.nothing.UnknownValidator");
+            
+            xml.getDocumentElement().insertBefore(unknownValidator, xml.getDocumentElement().getFirstChild());
+            
+            export = documentToString(xml);
+            
+            InputStream exportStream = createCompressedStream(export);
+            
+            synchronizationManager.importAllSubsystems(freshUser(), exportStream, null);
+        } finally {
+            tearDown();
+        }
+    }
+
+    public void testImporterConfiguredBeforeValidatorsObtained() throws Exception {        
+        setup(false);
+        
+        try {
+            ImportConfigurationCheckingSynchronizer.reset();
+            
+            synchronizationManager.setSynchronizerFactory(new SynchronizerFactory() {
+                @Override
+                public Set<Synchronizer<?, ?>> getAllSynchronizers() {
+                    return Collections.<Synchronizer<?, ?>>singleton(new ImportConfigurationCheckingSynchronizer());
+                }
+            });
+            
+            export = synchronizationManager.exportAllSubsystems(freshUser());
+            
+            //and import it back again, so that we actually invoke the import validation
+            synchronizationManager.importAllSubsystems(freshUser(), export.getExportFile(), null);
+            
+            assertTrue(ImportConfigurationCheckingSynchronizer.importerConfigured);
+            assertTrue(ImportConfigurationCheckingSynchronizer.importValidatorsObtainedAfterConfiguration);
+        } finally {
+            //reset the factory so that other tests work w/ the default syncers
+            synchronizationManager.setSynchronizerFactory(new SynchronizerFactory());
             tearDown();
         }
     }
@@ -542,5 +729,17 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
         user = subjectManager.getOverlord();
         return user;
+    }
+    
+    private InputStream createCompressedStream(String exportData) throws UnsupportedEncodingException, IOException {
+        ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+        OutputStreamWriter wrt = new OutputStreamWriter(new GZIPOutputStream(compressed), "UTF-8");
+        try {
+            wrt.write(exportData);
+        } finally {
+            wrt.close();
+        }
+
+        return new ByteArrayInputStream(compressed.toByteArray());            
     }
 }

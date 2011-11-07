@@ -228,7 +228,7 @@ public class DriftDetectorTest extends DriftTest {
     }
 
     @Test
-    public void reportEmptyChangeSetWhenBaseDirDoesNotExist() throws Exception {
+    public void reportMissingBaseDirWhenNoInitialSnapshotExists() throws Exception {
         final File basedir = new File(resourceDir, "conf");
         DriftDefinition def = driftDefinition("basedir-does-not-exist", basedir.getAbsolutePath());
 
@@ -237,18 +237,15 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), def));
         detector.run();
 
-        assertEquals(driftClient.getSendChangeSetInvocationCount(), 1, "DriftClient should be invoked to send " +
-            "initial change set to server even when the base directory does not exist.");
+        assertEquals(driftClient.getReportMissingBaseDirInvocationCount(), 1, "A missing base directory should be " +
+            "reported to the server if no initial snapshot has already been generated.");
+        assertEquals(driftClient.getSendChangeSetInvocationCount(), 0, "No initial change set should be sent to " +
+            "the server if the base directory does not exist.");
 
-        // verify that the initial change set was generated
+        // verify that the initial change set was not generated
         File snapshot = changeSet(def.getName(), COVERAGE);
-        List<FileEntry> fileEntries = emptyList();
-
-        Headers headers = createHeaders(def, COVERAGE);
-        headers.setBasedir(basedir.getAbsolutePath());
-        assertHeaderEquals(snapshot, headers);
-        assertFileEntriesMatch("There should be no file entries when the base directory does not exist", fileEntries,
-            snapshot);
+        assertFalse(snapshot.exists(), "An initial snapshot should not be written to disk if the base directory " +
+            "does not exist.");
     }
 
     @SuppressWarnings("unchecked")

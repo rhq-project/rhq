@@ -29,15 +29,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 public class DriftServerServiceImpl implements DriftServerService {
+
+    private Log log = LogFactory.getLog(DriftServerServiceImpl.class);
+
     @Override
     public void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream) {
         try {
@@ -102,5 +110,28 @@ public class DriftServerServiceImpl implements DriftServerService {
 
         return getDriftManager().getSnapshot(overlord,
             new DriftSnapshotRequest(driftDefinitionId, endVersion, startVersion, null, false, true));
+    }
+
+    @Override
+    public void updateCompliance(int resourceId, String drfitDefName, DriftComplianceStatus complianceStatus) {
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.addFilterResourceIds(resourceId);
+        criteria.addFilterName(drfitDefName);
+
+        DriftManagerLocal driftMgr = getDriftManager();
+        SubjectManagerLocal subjectMgr = getSubjectManager();
+        Subject overlord = subjectMgr.getOverlord();
+
+        PageList<DriftDefinition> definitions = driftMgr.findDriftDefinitionsByCriteria(overlord, criteria);
+
+        if (definitions.isEmpty()) {
+            log.warn("Cannot update compliance for [resourceId: " + resourceId + ", driftDefinitionName: " +
+                drfitDefName + "]. Could not find drift definition.");
+            return;
+        }
+
+        DriftDefinition definition = definitions.get(0);
+        definition.setComplianceStatus(complianceStatus);
+        driftMgr.updateDriftDefinition(overlord, definition);
     }
 }

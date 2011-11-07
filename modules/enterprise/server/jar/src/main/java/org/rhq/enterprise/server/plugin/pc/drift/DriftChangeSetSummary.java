@@ -42,6 +42,7 @@ public class DriftChangeSetSummary {
     private String driftDefinitionName;
     private DriftHandlingMode driftHandlingMode;
     private List<String> driftPathnames;
+    private boolean isInitialChangeSet;
 
     /**
      * Because this summary object is used within the alert subsystem, this toString is used to display
@@ -115,6 +116,14 @@ public class DriftChangeSetSummary {
 
     public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
         this.driftHandlingMode = driftHandlingMode;
+    }
+
+    public boolean isInitialChangeSet() {
+        return isInitialChangeSet;
+    }
+
+    public void setInitialChangeSet(boolean isInitialChangeSet) {
+        this.isInitialChangeSet = isInitialChangeSet;
     }
 
 }

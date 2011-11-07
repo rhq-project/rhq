@@ -43,6 +43,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
@@ -408,6 +409,10 @@ public class DriftManagerTest extends DriftTest {
         @Override
         public DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion) {
             return null;
+        }
+
+        @Override
+        public void updateCompliance(int resourceId, String drfitDefName, DriftComplianceStatus complianceStatus) {
         }
     }
 

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftSnapshot;
 
@@ -126,4 +127,5 @@ public interface DriftServerService {
 
     DriftSnapshot getSnapshot(int driftDefinitionId, int startVersion, int endVersion);
 
+    void updateCompliance(int resourceId, String drfitDefName, DriftComplianceStatus complianceStatus);
 }

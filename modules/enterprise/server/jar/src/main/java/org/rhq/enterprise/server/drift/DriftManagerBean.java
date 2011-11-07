@@ -22,8 +22,8 @@ import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
 import static org.rhq.core.domain.drift.DriftComplianceStatus.IN_COMPLIANCE;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
 
 import java.io.File;
 import java.io.InputStream;
@@ -536,28 +536,32 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             log.warn("Could not find drift definition for [resourceId: " + resourceId + ", driftDefinitionName: " +
                 summary.getDriftDefinitionName() + "]. Will not be able check compliance for thiis drift definition");
         } else {
-            updateCompliance(definitions.get(0), summary);
+            updateCompliance(subject, definitions.get(0), summary);
         }
 
         return summary;
     }
 
-    private void updateCompliance(DriftDefinition definition, DriftChangeSetSummary changeSetSummary) {
-        if (!definition.isPinned()) {
-            return;
-        }
-
+    private void updateCompliance(Subject subject, DriftDefinition definition, DriftChangeSetSummary changeSetSummary) {
         boolean updateNeeded = false;
-        if (changeSetSummary.getDriftPathnames().isEmpty()) {
+
+        if (changeSetSummary.isInitialChangeSet()) {
             updateNeeded = definition.getComplianceStatus() != IN_COMPLIANCE;
             definition.setComplianceStatus(IN_COMPLIANCE);
-        } else {
-            updateNeeded = definition.getComplianceStatus() == IN_COMPLIANCE;
-            definition.setComplianceStatus(OUT_OF_COMPLIANCE_DRIFT);
+        }
+
+        if (definition.isPinned()) {
+            if (changeSetSummary.getDriftPathnames().isEmpty()) {
+                updateNeeded = definition.getComplianceStatus() != IN_COMPLIANCE;
+                definition.setComplianceStatus(IN_COMPLIANCE);
+            } else {
+                updateNeeded = definition.getComplianceStatus() == IN_COMPLIANCE;
+                definition.setComplianceStatus(OUT_OF_COMPLIANCE_DRIFT);
+            }
         }
 
         if (updateNeeded) {
-            updateDriftDefinition(definition);
+            updateDriftDefinition(subject, definition);
         }
     }
 
@@ -596,7 +600,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     public void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
         DriftDefinition driftDef = driftManager.getDriftDefinition(subject, driftDefId);
         driftDef.setPinned(true);
-        driftManager.updateDriftDefinition(driftDef);
+        driftManager.updateDriftDefinition(subject, driftDef);
 
         DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, snapshotVersion);
         DriftSnapshot snapshot = getSnapshot(subject, snapshotRequest);
@@ -725,7 +729,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void updateDriftDefinition(DriftDefinition driftDefinition) {
+    public void updateDriftDefinition(Subject subject, DriftDefinition driftDefinition) {
         entityManager.merge(driftDefinition);
     }
 

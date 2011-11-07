@@ -117,7 +117,9 @@ public class DriftDetector implements Runnable {
                     generateSnapshot(detectionSummary);
                 }
 
-                if (detectionSummary.isRepeat()) {
+                if (!detectionSummary.isBaseDirExists()) {
+                    driftClient.reportMissingBaseDir(schedule.getResourceId(), schedule.getDriftDefinition());
+                } else if (detectionSummary.isRepeat()) {
                     driftClient.repeatChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
                         detectionSummary.getVersion());
                 } else if (changesNeedToBeReported(detectionSummary)) {
@@ -268,7 +270,8 @@ public class DriftDetector implements Runnable {
             // the current snapshot to match the pinned snapshot. Note though
             // that we increment the snapshot version in order to let the server
             // know about the state change.
-            if (schedule.getDriftDefinition().isPinned() && newVersion > 1) {
+            if (schedule.getDriftDefinition().isPinned() && newVersion > 1 && !isPreviousChangeSetEmpty(
+                schedule.getResourceId(), schedule.getDriftDefinition())) {
                 currentSnapshot.delete();
                 File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
 
@@ -278,6 +281,9 @@ public class DriftDetector implements Runnable {
         } else {
             if (schedule.getDriftDefinition().isPinned() && newVersion > 1 &&
                 isSameAsPreviousChangeSet(deltaEntries, currentSnapshot)) {
+                // if we are still out of compliance just report, we report a
+                // repeat change set to indicate no changes but also still out
+                // of compliance.
                 summary.setVersion(newVersion - 1);
                 summary.setRepeat(true);
                 return;
@@ -288,6 +294,23 @@ public class DriftDetector implements Runnable {
 
             updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, oldSnapshot, newSnapshot);
         }
+    }
+
+    private boolean isPreviousChangeSetEmpty(int resourceId, DriftDefinition definition) throws IOException {
+        File changeSet = changeSetMgr.findChangeSet(resourceId, definition.getName(), DRIFT);
+        if (!changeSet.exists()) {
+            return true;
+        }
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(changeSet);
+        boolean isEmpty = true;
+
+        for (FileEntry entry : reader) {
+            isEmpty = false;
+            break;
+        }
+        reader.close();
+
+        return isEmpty;
     }
 
     private void updateDeltaSnapshot(DriftDetectionSummary summary, DriftDetectionSchedule schedule,
@@ -380,6 +403,8 @@ public class DriftDetector implements Runnable {
                     "exist. You may want review the drift definition and verify that the value of the base " +
                     "directory is in fact correct.");
             }
+            summary.setBaseDirExists(false);
+            return;
         }
 
         log.debug("Generating coverage change set for " + schedule);
@@ -389,7 +414,6 @@ public class DriftDetector implements Runnable {
         final ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(snapshot, createHeaders(schedule, COVERAGE, 0));
 
         if (basedir.isDirectory()) {
-
             forEachFile(basedir, new FilterFileVisitor(basedir, driftDef.getIncludes(), driftDef.getExcludes(),
                 new FileVisitor() {
                     @Override

@@ -369,6 +369,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                                 }
                             }
                         } else {
+                            summary.setInitialChangeSet(true);
                             JPADriftSet driftSet = new JPADriftSet();
                             for (FileEntry entry : reader) {
                                 JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);

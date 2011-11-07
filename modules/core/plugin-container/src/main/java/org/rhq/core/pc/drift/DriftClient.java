@@ -7,6 +7,9 @@ import org.rhq.core.domain.drift.DriftDefinition;
 /**
  * This is a client interface to the server that drift-related tasks call to interact with
  * the server.
+ * <br/><br/>
+ * The primary reason classes use DriftClient instead of DriftManager directly is to
+ * facilitate testing with stubs or mocks.
  */
 public interface DriftClient {
 
@@ -26,5 +29,7 @@ public interface DriftClient {
     void repeatChangeSet(int resourceId, String driftDefName, int version);
 
     File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition);
+
+    void reportMissingBaseDir(int resourceId, DriftDefinition driftDefinition);
 
 }

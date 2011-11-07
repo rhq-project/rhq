@@ -12,6 +12,8 @@ class DriftClientTestStub implements DriftClient {
 
     private int sendChangeSetInvocationCount;
 
+    private int reportMissingBaseDirInvocationCount;
+
     @Override
     public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
         ++sendChangeSetInvocationCount;
@@ -35,6 +37,15 @@ class DriftClientTestStub implements DriftClient {
     @Override
     public File getAbsoluteBaseDirectory(int resourceId, DriftDefinition driftDefinition) {
         return basedir;
+    }
+
+    @Override
+    public void reportMissingBaseDir(int resourceId, DriftDefinition driftDefinition) {
+        ++reportMissingBaseDirInvocationCount;
+    }
+
+    public int getReportMissingBaseDirInvocationCount() {
+        return reportMissingBaseDirInvocationCount;
     }
 
     public void setBaseDir(File basedir) {

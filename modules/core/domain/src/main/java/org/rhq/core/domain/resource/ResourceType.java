@@ -802,10 +802,6 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.productVersions = productVersions;
     }
 
-    public int compareTo(ResourceType that) {
-        return this.name.compareTo(that.getName());
-    }
-
     public String getHelpText() {
         return helpText;
     }
@@ -846,6 +842,24 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.driftDefinitionTemplates = driftDefinitionTemplates;
     }
 
+    // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing ResourceTypes, or
+    //       TreeMaps with ResourceTypes as keys, will not work reliably. See the Javadoc for Comparable for a precise
+    //       definition of consistent with equals().
+    @Override
+    public int compareTo(ResourceType that) {
+        if (this.name == null) {
+            return (that.name == null) ? 0 : -1;
+        }
+        int result = (that.name == null) ? 1 : this.name.compareTo(that.name);
+        if (result != 0) {
+            return result;
+        }
+        if (this.plugin == null) {
+            return (that.plugin == null) ? 0 : -1;
+        }
+        return (that.plugin == null) ? 1 : this.plugin.compareTo(that.plugin);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -877,8 +891,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Override
     public String toString() {
-        return "ResourceType[id=" + this.id + ", category=" + this.category + ", name=" + this.name + ", plugin="
-            + this.plugin + "]";
+        return "ResourceType[id=" + this.id  + ", name=" + this.name + ", plugin=" + this.plugin + ", category="
+            + this.category + "]";
     }
 
 }

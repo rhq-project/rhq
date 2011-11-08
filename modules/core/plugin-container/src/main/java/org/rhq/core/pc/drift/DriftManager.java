@@ -493,6 +493,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void updateDriftDetection(int resourceId, DriftDefinition driftDefinition) {
         log.info("Recived request to update schedule for " + toString(resourceId, driftDefinition));
+
         DriftDetectionSchedule updatedSchedule = schedulesQueue.update(resourceId, driftDefinition);
         if (updatedSchedule == null) {
             updatedSchedule = new DriftDetectionSchedule(resourceId, driftDefinition);
@@ -514,6 +515,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             } else if (log.isInfoEnabled()) {
                 log.info(updatedSchedule + " has been updated.");
             }
+
+            if (!updatedSchedule.getDriftDefinition().isPinned()) {
+                unpinDefinition(updatedSchedule);
+            }
         }
 
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
@@ -521,6 +526,27 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (container != null) {
             container.addDriftDefinition(driftDefinition);
         }
+    }
+
+    private void unpinDefinition(final DriftDetectionSchedule schedule) {
+        if (log.isDebugEnabled()) {
+            log.debug("Unpinning definition for " + toString(schedule.getResourceId(), schedule.getDriftDefinition()));
+        }
+        schedulesQueue.removeAndExecute(schedule.getResourceId(), schedule.getDriftDefinition(), new Runnable() {
+            @Override
+            public void run() {
+                File currentSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
+                    schedule.getDriftDefinition().getName(), COVERAGE);
+                File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+                pinnedSnapshot.delete();
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Deleted pinned snapshot file " + pinnedSnapshot.getPath());
+                }
+
+                schedulesQueue.addSchedule(schedule);
+            }
+        });
     }
 
     @Override

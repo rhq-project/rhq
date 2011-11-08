@@ -207,6 +207,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         schedule.getDriftDefinition().setInterval(driftDef.getInterval());
         schedule.getDriftDefinition().setDriftHandlingMode(driftDef.getDriftHandlingMode());
         schedule.getDriftDefinition().setPinned(driftDef.isPinned());
+        schedule.getDriftDefinition().setComplianceStatus(driftDef.getComplianceStatus());
     }
 
     @Override

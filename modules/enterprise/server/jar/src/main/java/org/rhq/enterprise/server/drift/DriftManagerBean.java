@@ -62,6 +62,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
@@ -760,6 +761,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                     // you cannot update drift def that changes basedir/includes/excludes from the original.
                     // the user must delete the drift def and create a new one, as opposed to trying to update the existing one.
                     if (comparator.compare(driftDef, dc) == 0) {
+                        if (dc.isPinned() && !driftDef.isPinned()) {
+                            dc.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
+                        }
                         dc.setConfiguration(driftDef.getConfiguration().deepCopyWithoutProxies());
                         isUpdated = true;
                         break;
@@ -810,6 +814,15 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
+        }
+    }
+
+    private void updateCompliance(DriftDefinition updatedDef) {
+        DriftDefinition currentDef = entityManager.find(DriftDefinition.class, updatedDef.getId());
+
+        // check to see if we are unpinning the definition
+        if (currentDef.isPinned() && !updatedDef.isPinned()) {
+            updatedDef.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
         }
     }
 

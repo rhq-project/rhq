@@ -55,7 +55,7 @@ class Column {
     protected String m_sDefault;
     protected int m_iInitialSequence = 1;
     protected int m_iIncrementSequence = 1;
-    private int m_iSequenceCacheSize = -1; // falls back to factory defaults
+    private String m_strSequenceCacheSize = null; // falls back to factory defaults
     private String ondelete;
 
     protected String m_strTableName;
@@ -100,7 +100,8 @@ class Column {
                     // Get the initial autoincrement value
                     this.m_iInitialSequence = Integer.parseInt(strValue);
                 } else if (strName.equalsIgnoreCase("sequencecachesize")) {
-                    this.m_iSequenceCacheSize = Integer.parseInt(strValue);
+                    Integer.parseInt(strValue);
+                    this.m_strSequenceCacheSize = strValue;
                 } else if (strName.equalsIgnoreCase("references")) {
                     this.m_sReferences = strValue;
                 } else if (strName.equalsIgnoreCase("ondelete")) {
@@ -143,8 +144,8 @@ class Column {
         return this.m_iIncrementSequence;
     }
 
-    protected int getSequenceCacheSize() {
-        return this.m_iSequenceCacheSize;
+    protected String getSequenceCacheSize() {
+        return this.m_strSequenceCacheSize;
     }
 
     protected String getMappedType(Collection<TypeMap> typemaps, DatabaseType dbtype) {
@@ -371,8 +372,8 @@ class Column {
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_START, getInitialSequence());
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_INCREMENT, getIncrementSequence());
         // fall back to factory defaults if left unspecified...
-        int cacheSize = getSequenceCacheSize() == -1 ? builder.getFactorySeqIdCacheSizeLiteral() : getSequenceCacheSize();
-        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, cacheSize);
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE,
+                CreateSequenceExprBuilder.getSafeSequenceCacheSize(builder, getSequenceCacheSize()));
         return builder.build(terms);
 
     }

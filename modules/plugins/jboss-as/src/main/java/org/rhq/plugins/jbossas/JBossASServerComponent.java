@@ -48,6 +48,7 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -952,6 +953,9 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             if (entry != null) {
                 is = jfile.getInputStream(entry);
                 SAXBuilder saxBuilder = new SAXBuilder();
+                JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+                saxBuilder.setEntityResolver(jbossEntityResolver);
+
                 Document doc = saxBuilder.build(is);
                 Element root = doc.getRootElement(); // <jboss-web>
                 List<Element> vHosts = root.getChildren("virtual-host");

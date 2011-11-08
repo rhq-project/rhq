@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -32,6 +32,7 @@ import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -47,8 +48,8 @@ import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 
-/**
- * Loads and edits Datasources in the datasource xml format
+ /**
+ * Loads and edits Datasources in the datasource XML format.
  *
  * @author Greg Hinkle
  * @author Mark Spritzler
@@ -108,6 +109,9 @@ public class DatasourceConfigurationEditor {
          */
         try {
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             Document doc = builder.build(file);
 
             // Get the root element
@@ -148,7 +152,7 @@ public class DatasourceConfigurationEditor {
         return null;
     }
 
-    /**
+     /**
      * Writes out datasource changes to the file system. If the file does not exist it will create a new file in the
      * requested location.
      *
@@ -207,6 +211,9 @@ public class DatasourceConfigurationEditor {
 
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();
         } else {
@@ -260,6 +267,9 @@ public class DatasourceConfigurationEditor {
         if (deploymentFile.exists()) {
             try {
                 SAXBuilder builder = new SAXBuilder();
+                JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+                builder.setEntityResolver(jbossEntityResolver);
+
                 doc = builder.build(deploymentFile);
                 root = doc.getRootElement();
 

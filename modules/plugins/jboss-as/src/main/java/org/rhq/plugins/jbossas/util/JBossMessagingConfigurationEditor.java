@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -137,6 +138,9 @@ public class JBossMessagingConfigurationEditor extends AbstractMessagingConfigur
         Document doc;
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();
         } else {

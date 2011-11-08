@@ -33,6 +33,7 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -76,6 +77,9 @@ public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
         boolean found = false;
         try {
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             Document doc = builder.build(file);
 
             // Get the root element

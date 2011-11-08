@@ -30,6 +30,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -91,6 +92,9 @@ public class ConnectionFactoryConfigurationEditor {
     public static Configuration loadConnectionFactory(File file, String name) {
         try {
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             Document doc = builder.build(file);
 
             // Get the root element
@@ -175,6 +179,9 @@ public class ConnectionFactoryConfigurationEditor {
         Element root;
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();
         } else {
@@ -223,6 +230,9 @@ public class ConnectionFactoryConfigurationEditor {
         if (deploymentFile != null && deploymentFile.exists()) {
             try {
                 SAXBuilder builder = new SAXBuilder();
+                JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+                builder.setEntityResolver(jbossEntityResolver);
+
                 doc = builder.build(deploymentFile);
                 root = doc.getRootElement();
 

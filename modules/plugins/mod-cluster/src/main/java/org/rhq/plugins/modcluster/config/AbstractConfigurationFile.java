@@ -31,6 +31,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.jboss.util.xml.JBossEntityResolver;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -76,6 +77,9 @@ public abstract class AbstractConfigurationFile {
     private void loadConfiguratonFile() throws ParserConfigurationException, SAXException, IOException {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+        JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+        docBuilder.setEntityResolver(jbossEntityResolver);
+
         this.document = docBuilder.parse(this.configurationFile);
     }
 }

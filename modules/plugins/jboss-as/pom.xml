@@ -38,13 +38,6 @@
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-core-client-api</artifactId>
-         <version>${project.version}</version>
-         <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
-      </dependency>
-
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope>
@@ -71,15 +64,31 @@
       </dependency>
 
       <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-common</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-common-core</artifactId>
+         <version>2.2.18.GA</version>
       </dependency>
+
+      <!-- this is a dep of jboss-common-core -->
+      <dependency>
+         <groupId>org.jboss.logging</groupId>
+         <artifactId>jboss-logging-spi</artifactId>
+         <version>2.1.0.GA</version>
+      </dependency>   
 
       <dependency>
          <groupId>jdom</groupId>
          <artifactId>jdom</artifactId>
          <version>1.0</version>
+      </dependency>
+
+      <!-- test -->
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
       </dependency>
 
    </dependencies>
@@ -98,6 +107,14 @@
                   </goals>
                   <configuration>
                      <artifactItems>
+                        <artifactItem>
+                           <groupId>org.jboss</groupId>
+                           <artifactId>jboss-common-core</artifactId>
+                        </artifactItem>
+                        <artifactItem>
+                           <groupId>org.jboss.logging</groupId>
+                           <artifactId>jboss-logging-spi</artifactId>
+                        </artifactItem>
                         <artifactItem>
                            <groupId>gnu-getopt</groupId>
                            <artifactId>getopt</artifactId>
@@ -140,10 +157,6 @@
                   </goals>
                   <configuration>
                      <artifactItems>
-                       <artifactItem>
-                         <groupId>jboss</groupId>
-                         <artifactId>jboss-common</artifactId>
-                       </artifactItem>
                        <artifactItem>
                          <groupId>jboss</groupId>
                          <artifactId>jbpm</artifactId>
@@ -196,7 +209,8 @@
                   <executions>
                      <execution>
                         <phase>pre-integration-test</phase>
-                        <configuration>
+      
+                  <configuration>
                            <tasks>
                               <echo>Setting up plugin dependencies...</echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />

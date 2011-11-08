@@ -32,6 +32,7 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -78,6 +79,9 @@ public class CacheConfigurationHelper {
                 throw new IllegalStateException("Can't update file, as it is not writeable.");
             }
             SAXBuilder builder = new SAXBuilder();
+            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
+            builder.setEntityResolver(jbossEntityResolver);
+
             doc = builder.build(file);
             root = doc.getRootElement();
             cacheMbean = findComponentElement(root, mbeanName);

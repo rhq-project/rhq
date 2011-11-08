@@ -559,7 +559,7 @@ public abstract class DatabaseType {
      */
     public abstract int getNextSequenceValue(Connection conn, String table, String key) throws SQLException;
 
-    private int getSafeSeqIdCacheSize(CreateSequenceExprBuilder builder, String suggestedSize) {
+    private static int getSafeSeqIdCacheSize(CreateSequenceExprBuilder builder, String suggestedSize) {
         // we don't want to regress for the time being, and we don't want
         // to default less than manufacturers recommended minimums...
         final int legacySeqIdCacheSize = 10;

@@ -2,6 +2,8 @@ package org.rhq.core.db.setup;
 
 import java.util.List;
 
+import org.rhq.core.db.H2DatabaseType;
+import org.rhq.core.db.builders.CreateSequenceExprBuilder;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -27,11 +29,8 @@ public class H2Column extends Column {
             switch (getDefault()) {
             case Column.DEFAULT_AUTO_INCREMENT:
             case Column.DEFAULT_SEQUENCE_ONLY: {
-                cmds.add(0, "" //
-                    + " CREATE SEQUENCE " + getSequenceName() //
-                    + " START WITH " + this.getInitialSequence() //
-                    + " INCREMENT BY " + this.getIncrementSequence() //
-                    + " CACHE 10");
+                cmds.add(0, buildSequenceSqlExpr(CreateSequenceExprBuilder.getBuilder(H2DatabaseType.VENDOR_NAME),
+                        getSequenceName()));
                 break;
             }
             }

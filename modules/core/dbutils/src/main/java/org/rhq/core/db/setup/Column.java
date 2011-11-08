@@ -23,9 +23,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.rhq.core.db.builders.CreateSequenceExprBuilder;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -53,6 +55,7 @@ class Column {
     protected String m_sDefault;
     protected int m_iInitialSequence = 1;
     protected int m_iIncrementSequence = 1;
+    private int m_iSequenceCacheSize = -1; // falls back to factory defaults
     private String ondelete;
 
     protected String m_strTableName;
@@ -96,6 +99,8 @@ class Column {
                 } else if (strName.equalsIgnoreCase("initial")) {
                     // Get the initial autoincrement value
                     this.m_iInitialSequence = Integer.parseInt(strValue);
+                } else if (strName.equalsIgnoreCase("sequencecachesize")) {
+                    this.m_iSequenceCacheSize = Integer.parseInt(strValue);
                 } else if (strName.equalsIgnoreCase("references")) {
                     this.m_sReferences = strValue;
                 } else if (strName.equalsIgnoreCase("ondelete")) {
@@ -136,6 +141,10 @@ class Column {
 
     protected int getIncrementSequence() {
         return this.m_iIncrementSequence;
+    }
+
+    protected int getSequenceCacheSize() {
+        return this.m_iSequenceCacheSize;
     }
 
     protected String getMappedType(Collection<TypeMap> typemaps, DatabaseType dbtype) {
@@ -354,5 +363,17 @@ class Column {
 
     protected static boolean isColumn(Node node) {
         return node.getNodeName().equalsIgnoreCase("column");
+    }
+
+    protected String buildSequenceSqlExpr(CreateSequenceExprBuilder builder, String name) {
+        HashMap<String, Object> terms = new HashMap<String, Object>();
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_NAME, name);
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_START, getInitialSequence());
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_INCREMENT, getIncrementSequence());
+        // fall back to factory defaults if left unspecified...
+        int cacheSize = getSequenceCacheSize() == -1 ? builder.getFactorySeqIdCacheSizeLiteral() : getSequenceCacheSize();
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, cacheSize);
+        return builder.build(terms);
+
     }
 }

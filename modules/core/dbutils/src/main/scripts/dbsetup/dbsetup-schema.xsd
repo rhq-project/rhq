@@ -39,6 +39,7 @@
         <xs:complexType>
             <xs:attribute name="name" type="xs:NMTOKEN" use="required"/>
             <xs:attribute name="initial" use="optional" type="xs:integer"/>
+            <xs:attribute name="sequencecachesize" use="optional" type="xs:integer"/>
 
             <xs:attribute name="default" use="optional">
                 <xs:simpleType>

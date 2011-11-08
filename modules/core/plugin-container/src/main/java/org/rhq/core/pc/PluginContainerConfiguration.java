@@ -882,7 +882,7 @@ public class PluginContainerConfiguration {
         defaultRegex.append("(org\\.jboss\\.remoting\\..*)|");
         defaultRegex.append("(org\\.jboss\\.serial\\..*)|");
 
-        // Miscelleneous libraries that the agent has that we want to hide from plugins.
+        // Miscellaneous libraries that the agent has that we want to hide from plugins.
         // If the plugins want these, they should include their own implementations.
         defaultRegex.append("(org\\.dom4j\\..*)|");
         defaultRegex.append("(EDU\\.oswego\\..*)|");

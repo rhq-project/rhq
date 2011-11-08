@@ -347,19 +347,29 @@ run_release_version_and_tag_process()
 
    echo "7) Commit the change in version; if everything went well so far then this is a good tag."
    git add -u
+   [ "$?" -ne 0 ] && abort "Adding modified files to commit failed."
    git commit -m "tag $RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "The commit with version modified files failed."
 
    echo "8) Tag the current source."
    if [ "$OVERRIDE_TAG" ];
    then
       git tag --force "$RELEASE_TAG"
+      [ "$?" -ne 0 ] && abort "Force tagging failed."
    else
       git tag "$RELEASE_TAG"
+      [ "$?" -ne 0 ] && abort "Tagging failed"
    fi
 
-   echo "9) If everything went well so far than means all the changes can be pushed!!!"
+   echo "9) Merge any remote changes into the local branch to be able to push tag and version change. This will fail if the merge process requires manual merges."
+   git pull origin "$BUILD_BRANCH"
+   [ "$?" -ne 0 ] && abort "Merge with remote $BUILD_BRANCH failed."
+
+   echo "10) If everything went well so far than means all the changes can be pushed!!!"
    git push origin "$BUILD_BRANCH"
+   [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
    git push origin "$RELEASE_TAG"
+   [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
 }
 
 
@@ -376,10 +386,17 @@ update_development_version()
 
    echo "2) Commit the change in version."
    git add -u
+   [ "$?" -ne 0 ] && abort "Adding modified files to commit failed."
    git commit -m "development RHQ_$DEVELOPMENT_VERSION"
+   [ "$?" -ne 0 ] && abort "The commit with version modified files failed."
 
-   echo "3) If everything went well so far than means all the changes can be pushed!!!"
+   echo "3) Merge any remote changes into the local branch to be able to push tag and version change. This will fail if the merge process requires manual merges."
+   git pull origin "$BUILD_BRANCH"
+   [ "$?" -ne 0 ] && abort "Merge with remote $BUILD_BRANCH failed."
+
+   echo "4) If everything went well so far than means all the changes can be pushed!!!"
    git push origin "$BUILD_BRANCH"
+   [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
 }
 
 

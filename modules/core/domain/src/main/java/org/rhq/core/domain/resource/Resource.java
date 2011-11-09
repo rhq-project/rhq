@@ -740,14 +740,37 @@ import org.rhq.core.domain.util.Summary;
         + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id " //
         + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name "),
 
-    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = "" //
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( " //
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version) " //
-        + "FROM Resource r " //
-        + "WHERE r.inventoryStatus = 'COMMITTED' " //
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version " //
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version ")
+//    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = "" //
+//        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( " //
+//        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version) " //
+//        + "FROM Resource r " //
+//        + "WHERE r.inventoryStatus = 'COMMITTED' " //
+//        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version " //
+//        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version "),
 
+    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE, query = ""
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount("
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), "
+        + "r.version, size(templates), 0) "
+        + "FROM Resource r JOIN r.resourceType type LEFT JOIN type.driftDefinitionTemplates templates "
+        + "WHERE r.inventoryStatus = 'COMMITTED' AND 0 = ("
+        + "    SELECT COUNT(defs) "
+        + "    FROM r.driftDefinitions defs "
+        + "    WHERE defs.complianceStatus = 0) "
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version "
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version "),
+
+    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE, query = ""
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount("
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), "
+        + "r.version, size(templates), 1) "
+        + "FROM Resource r JOIN r.resourceType type LEFT JOIN type.driftDefinitionTemplates templates "
+        + "WHERE r.inventoryStatus = 'COMMITTED' AND 0 < ("
+        + "    SELECT COUNT(defs) "
+        + "    FROM r.driftDefinitions defs "
+        + "    WHERE defs.complianceStatus <> 0) "
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version "
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version ")
 })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
 @Table(name = Resource.TABLE_NAME)
@@ -884,6 +907,11 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public static final String QUERY_RESOURCE_REPORT = "Resource.findResourceReport";
     public static final String QUERY_RESOURCE_VERSION_REPORT = "Resource.findResourceVersionReport";
+
+    public static final String QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE =
+        "Resource.findResourceVersionDriftInCompliance";
+    public static final String QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE =
+        "Resource.findResourceVersionDriftOutOfCompliance";
 
     private static final int UUID_LENGTH = 36;
 

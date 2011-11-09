@@ -119,6 +119,14 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
 
+            ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE,
+                MSG.common_title_in_compliance());
+            HashMap<String, String> complianceIcons = new HashMap<String, String>();
+            complianceIcons.put("true", ImageManager.getAvailabilityIcon(true));
+            complianceIcons.put("false", ImageManager.getAvailabilityIcon(false));
+            fieldInCompliance.setValueIcons(complianceIcons);
+            fieldInCompliance.setType(ListGridFieldType.ICON);
+
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
             fieldCategory.setWidth("55");
@@ -173,7 +181,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 }
             });
 
-            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount);
+            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance);
         }
 
         private String getResourceTypeTableUrl(ListGridRecord selected) {
@@ -200,6 +208,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 public static final String TYPEID = "typeId"; // int
                 public static final String VERSION = "version"; // String
                 public static final String OBJECT = "object";
+                public static final String IN_COMPLIANCE = "inCompliance";
             }
 
             @Override
@@ -217,8 +226,11 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 record.setAttribute(Field.CATEGORY, from.getCategory().name());
                 record.setAttribute(Field.TYPEID, from.getTypeId());
                 record.setAttribute(Field.VERSION, from.getVersion());
-
                 record.setAttribute(Field.OBJECT, from);
+
+                if (from.getNumDriftTemplates() > 0) {
+                    record.setAttribute(Field.IN_COMPLIANCE, Boolean.toString(from.isInCompliance()));
+                }
 
                 return record;
             }

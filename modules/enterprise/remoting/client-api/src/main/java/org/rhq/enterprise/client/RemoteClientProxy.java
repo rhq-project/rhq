@@ -21,6 +21,9 @@ package org.rhq.enterprise.client;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.remoting.invocation.NameBasedInvocation;
 
 import org.rhq.bindings.client.AbstractRhqFacadeProxy;
@@ -36,6 +39,8 @@ import org.rhq.core.server.ExternalizableStrategy;
  * @author Lukas Krejci
  */
 public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
+
+    private static final Log LOG = LogFactory.getLog(RemoteClientProxy.class);
 
     public RemoteClientProxy(RemoteClient client, RhqManagers manager) {
         super(client, manager);
@@ -63,7 +68,7 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
         try {
             return super.invoke(proxy, method, args);
         } catch (Throwable t) {
-            t.printStackTrace();
+            LOG.debug(t);
             throw t;
         }
     }
@@ -74,7 +79,7 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
         String methodName = getManager().beanName() + ":" + originalMethod.getName();
 
         String[] paramSig = createParamSignature(argTypes);
-        
+
         NameBasedInvocation request = new NameBasedInvocation(methodName, args, paramSig);
 
         Object response = getRhqFacade().getRemotingClient().invoke(request);
@@ -82,10 +87,10 @@ public class RemoteClientProxy extends AbstractRhqFacadeProxy<RemoteClient> {
         if (response instanceof Throwable) {
             throw (Throwable) response;
         }
-        
+
         return response;
     }
-    
+
     private String[] createParamSignature(Class<?>[] types) {
         String[] paramSig = new String[types.length];
         for (int x = 0; x < types.length; x++) {

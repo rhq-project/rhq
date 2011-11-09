@@ -2373,13 +2373,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {
         Query query = null;
+        List<ResourceInstallCount> results = null;
+
         if (!groupByVersions) {
             query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_REPORT);
+            results = query.getResultList();
         } else {
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_REPORT);
+            //query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_REPORT);
+            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE);
+            results = query.getResultList();
+
+            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE);
+            results.addAll(query.getResultList());
         }
 
-        List<ResourceInstallCount> results = query.getResultList();
         return results;
     }
 

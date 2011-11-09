@@ -159,16 +159,16 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ResourceGroup createResourceGroup(Subject user, //
         @XmlJavaTypeAdapter(ResourceGroupAdapter.class) ResourceGroup group) {
-        /*
-        GH: We are now allowing Groups where names collide... TODO, should this only be allowed for cluster auto backing groups?
-        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME);
+
+        // We are now allowing Groups where names collide if the group is not visible as for autogroups and clusters
+        Query query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP);
         query.setParameter("name", group.getName());
 
         List<ResourceGroup> groups = query.getResultList();
         if (groups.size() != 0) {
             throw new ResourceGroupAlreadyExistsException("ResourceGroup with name " + group.getName()
                 + " already exists");
-        }*/
+        }
 
         long time = System.currentTimeMillis();
         group.setCtime(time);
@@ -209,7 +209,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         if (changeType == null) {
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {
-                // making a recursive group into a "normal" group 
+                // making a recursive group into a "normal" group
                 changeType = RecursivityChangeType.RemovedRecursion;
             } else if (attachedGroup.isRecursive() == false && group.isRecursive() == true) {
                 // making a "normal" group into a recursive group
@@ -321,14 +321,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
 
     /*
      * TODO: Deletion of all associated group data (except implicit/explicit resource members) should be moved here.
-     *       in other words, we don't want Hibernate cascade annotations to remove that history upon deletion of an 
+     *       in other words, we don't want Hibernate cascade annotations to remove that history upon deletion of an
      *       entity anymore because there are now two cases where group constructs need to be destroyed:
-     *       
-     *          1) compatible group deletion - a group is deleted, all history removed, entity is gone from the system 
+     *
+     *          1) compatible group deletion - a group is deleted, all history removed, entity is gone from the system
      *          2) dynagroup recomputation - a group definition is recalculation, a compatible group turns into a mixed
      *                                       group, compatible constructs need to be removed, but the entity survives
-     * 
-     *       For now, this implementation should suffice for -- https://bugzilla.redhat.com/show_bug.cgi?id=535671 
+     *
+     *       For now, this implementation should suffice for -- https://bugzilla.redhat.com/show_bug.cgi?id=535671
      */
     private void removeCompatibleGroupConstructs(Subject subject, ResourceGroup group)
         throws ResourceGroupDeleteException {
@@ -789,10 +789,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 /*
                  * do have to worry about whether these resources are already in the explicit resource list because
                  * they are being newly committed to inventory and thus shouldn't be in any group except the work
-                 * being done right now. 
-                 * 
-                 * also, since we've already computed the toAddResourceIds by recursing down the chain resource passed 
-                 * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions 
+                 * being done right now.
+                 *
+                 * also, since we've already computed the toAddResourceIds by recursing down the chain resource passed
+                 * to this method, we can just do simple RHQ_RESOURCE_GROUP_RES_IMP_MAP table insertions
                  */
                 String insertImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
                     ResourceGroup.QUERY_NATIVE_ADD_RESOURCES_TO_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
@@ -808,9 +808,9 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                  * created, but which initially creates one or more resource groups of size 1; if this happens, the
                  * group will be created as a compatible group, if resources are later added via an inventory sync, and
                  * if this compatible group's membership changes, we need to recalculate the group category
-                 * 
-                 * NOTE: this is no longer true.  the group category used to be based off of the explicit membership, 
-                 *       but that assumption was changed for 1.2.0 release so we could support a compatible left-nav 
+                 *
+                 * NOTE: this is no longer true.  the group category used to be based off of the explicit membership,
+                 *       but that assumption was changed for 1.2.0 release so we could support a compatible left-nav
                  *       tree with recursive access to descendant for easy authorization.  this method only modifies
                  *       the implicit resource membership, not the explicit, so setResourceType would be a no-op.
                  */
@@ -1237,7 +1237,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
     }
 
     @SuppressWarnings("unchecked")
-    // returns a subset of the passed groupIds which no longer exist 
+    // returns a subset of the passed groupIds which no longer exist
     public List<Integer> findDeletedResourceGroupIds(int[] possibleGroupIds) {
         List<Integer> groupIds = ArrayUtils.wrapInList(possibleGroupIds);
         if (groupIds == null || groupIds.size() == 0) {
@@ -1456,15 +1456,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      * all of the methods on the {@link Criteria} object - including paging, sorting, filtering, fetching - will
      * work with this method.  The only thing that differs is the ResultSet which, instead of being a collection
      * of {@link ResourceGroup} objects is a collection of {@link ResourceGroupComposite} objects.
-     * 
+     *
      * The extended data in the composite object, however, is treated differently:
-     * 
+     *
      *   1) It is always fetched
      *   2) It can not be a candidate for filtering
      *   3) It must be sorted by using the zero-based positional ordinal within the projection
-     *   
-     * This method offers 4 new aggregates that you can sort on.  The 
-     * 
+     *
+     * This method offers 4 new aggregates that you can sort on.  The
+     *
      * explicitCount (ordinal 0) - the count of the number of children in the group
      * explicitAvail (ordinal 1) - decimal percentage representing the number of UP children relative to the total
      *                             number of children in the group
@@ -1508,7 +1508,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ), " // DELETE_RESOURCES
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 16 ))"; // MANAGE_DRIFT            
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 16 ))"; // MANAGE_DRIFT
             compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
             break;
         default:

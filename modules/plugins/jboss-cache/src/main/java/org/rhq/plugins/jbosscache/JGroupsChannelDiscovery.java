@@ -33,7 +33,6 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -44,6 +43,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 
 /**
@@ -77,8 +77,8 @@ public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
         boolean found = false;
         try {
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
 
             Document doc = builder.build(file);
 

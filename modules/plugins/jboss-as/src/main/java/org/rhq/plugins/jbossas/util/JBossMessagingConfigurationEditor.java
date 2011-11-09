@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -44,6 +43,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.plugins.jbossas.JBossMessagingComponent;
 
 /**
@@ -138,8 +138,8 @@ public class JBossMessagingConfigurationEditor extends AbstractMessagingConfigur
         Document doc;
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
 
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();

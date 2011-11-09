@@ -32,7 +32,6 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -41,6 +40,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 
 /**
  * A utility for creating or updating JBossCache 2.x XML configuration files.
@@ -79,8 +79,8 @@ public class CacheConfigurationHelper {
                 throw new IllegalStateException("Can't update file, as it is not writeable.");
             }
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
 
             doc = builder.build(file);
             root = doc.getRootElement();

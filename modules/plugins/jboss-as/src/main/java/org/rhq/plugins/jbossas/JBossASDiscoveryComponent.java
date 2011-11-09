@@ -238,11 +238,11 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
 
     private static JnpConfig getJnpConfig(File installHome, File configDir, Properties props) {
         File serviceXML = new File(configDir, JBOSS_SERVICE_XML);
-        JnpConfig config = JnpConfig.getConfig(installHome, serviceXML, props);
+        JnpConfig config = JnpConfig.getConfig(serviceXML, props);
         if ((config == null) || (config.getJnpPort() == null)) {
             File namingServiceFile = new File(configDir, JBOSS_NAMING_SERVICE_XML);
             if (namingServiceFile.exists()) {
-                config = JnpConfig.getConfig(installHome, namingServiceFile, props);
+                config = JnpConfig.getConfig(namingServiceFile, props);
             }
         }
         return config;

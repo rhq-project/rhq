@@ -44,50 +44,10 @@
          <scope>provided</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-common-core</artifactId>
-         <version>2.2.18.GA</version>
-      </dependency>
-
-      <!-- this is a dep of jboss-common-core -->
-      <dependency>
-         <groupId>org.jboss.logging</groupId>
-         <artifactId>jboss-logging-spi</artifactId>
-         <version>2.1.0.GA</version>
-      </dependency>   
-
    </dependencies>
 
    <build>
       <plugins>
-
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>copy-dependencies</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.jboss</groupId>
-                           <artifactId>jboss-common-core</artifactId>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.jboss.logging</groupId>
-                           <artifactId>jboss-logging-spi</artifactId>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-
-            </executions>
-         </plugin>
 
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>

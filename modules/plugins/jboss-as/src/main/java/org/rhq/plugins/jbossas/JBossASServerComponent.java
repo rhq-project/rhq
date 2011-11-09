@@ -48,7 +48,6 @@ import com.jboss.jbossnetwork.product.jbpm.handlers.InPluginControlActionFacade;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -100,6 +99,7 @@ import org.rhq.core.pluginapi.support.SnapshotReportRequest;
 import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
@@ -953,8 +953,8 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             if (entry != null) {
                 is = jfile.getInputStream(entry);
                 SAXBuilder saxBuilder = new SAXBuilder();
-                JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-                saxBuilder.setEntityResolver(jbossEntityResolver);
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                saxBuilder.setEntityResolver(entityResolver);
 
                 Document doc = saxBuilder.build(is);
                 Element root = doc.getRootElement(); // <jboss-web>

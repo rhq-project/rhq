@@ -33,7 +33,6 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -208,8 +207,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, 
         }
         try {
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+
 
             Document doc = builder.build(file);
 

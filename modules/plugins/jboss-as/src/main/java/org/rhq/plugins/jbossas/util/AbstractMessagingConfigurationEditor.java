@@ -32,7 +32,6 @@ import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -50,8 +49,9 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 
-/**
+ /**
  * Common base class for MessagingConfig related stuff
  * @author Heiko W. Rupp
  */
@@ -105,8 +105,8 @@ public class AbstractMessagingConfigurationEditor {
         if (deploymentFile.exists()) {
             try {
                 SAXBuilder builder = new SAXBuilder();
-                JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-                builder.setEntityResolver(jbossEntityResolver);
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                builder.setEntityResolver(entityResolver);
 
                 doc = builder.build(deploymentFile);
                 root = doc.getRootElement();
@@ -385,8 +385,8 @@ public class AbstractMessagingConfigurationEditor {
         deploymentFile = file;
         try {
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
 
             Document doc = builder.build(deploymentFile);
 

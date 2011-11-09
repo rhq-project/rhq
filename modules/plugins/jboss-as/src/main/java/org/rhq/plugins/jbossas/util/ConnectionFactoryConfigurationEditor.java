@@ -30,7 +30,6 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.util.xml.JBossEntityResolver;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -47,8 +46,9 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 
-/**
+ /**
  * Loads and edits Connection Factories in the connection factory xml format
  *
  * @author Mark Spritzler
@@ -92,8 +92,8 @@ public class ConnectionFactoryConfigurationEditor {
     public static Configuration loadConnectionFactory(File file, String name) {
         try {
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
 
             Document doc = builder.build(file);
 
@@ -179,8 +179,8 @@ public class ConnectionFactoryConfigurationEditor {
         Element root;
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
-            JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-            builder.setEntityResolver(jbossEntityResolver);
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
 
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();
@@ -230,8 +230,8 @@ public class ConnectionFactoryConfigurationEditor {
         if (deploymentFile != null && deploymentFile.exists()) {
             try {
                 SAXBuilder builder = new SAXBuilder();
-                JBossEntityResolver jbossEntityResolver = new JBossEntityResolver();
-                builder.setEntityResolver(jbossEntityResolver);
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                builder.setEntityResolver(entityResolver);
 
                 doc = builder.build(deploymentFile);
                 root = doc.getRootElement();

@@ -42,7 +42,6 @@ public class SST_CreateSequence extends SchemaSpecTask {
     private String m_name = null;
     private String m_initial = "1";
     private String m_increment = "1";
-    private String m_seqIdCacheSize = "10";
 
     /**
      * The name attribute of the ANT task element which defines the sequence table name.
@@ -51,15 +50,6 @@ public class SST_CreateSequence extends SchemaSpecTask {
      */
     public void setName(String name) {
         m_name = name;
-    }
-
-    /**
-     * Sets the sequence id cache size.
-     *
-     * @param seqIdCacheSize the sequence id cache size
-     */
-    public void setSeqIdCacheSize(String seqIdCacheSize) {
-        this.m_seqIdCacheSize = seqIdCacheSize;
     }
 
     /**
@@ -97,9 +87,8 @@ public class SST_CreateSequence extends SchemaSpecTask {
             DatabaseType db_type = getDatabaseType();
             Connection conn = getConnection();
 
-            log(MSG.getMsg(DbAntI18NResourceKeys.CREATE_SEQUENCE_EXECUTING, m_name,
-                    m_initial, m_increment, m_seqIdCacheSize));
-            db_type.createSequence(conn, m_name, m_initial, m_increment, m_seqIdCacheSize);
+            log(MSG.getMsg(DbAntI18NResourceKeys.CREATE_SEQUENCE_EXECUTING, m_name, m_initial, m_increment));
+            db_type.createSequence(conn, m_name, m_initial, m_increment);
         } catch (Exception e) {
             throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.SCHEMA_SPEC_TASK_FAILURE, "CreateSequence", e), e);
         }
@@ -140,13 +129,6 @@ public class SST_CreateSequence extends SchemaSpecTask {
         } catch (NumberFormatException e) {
             throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.SCHEMA_SPEC_TASK_INVALID_ATTRIB,
                 "CreateSequence", "initial", m_initial));
-        }
-
-        try {
-            Integer.parseInt(m_seqIdCacheSize);
-        } catch (NumberFormatException e) {
-            throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.SEQID_CACHE_SIZE_NOT_AN_INTEGER,
-                    m_seqIdCacheSize));
         }
 
         // all checks out OK

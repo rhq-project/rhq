@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.client.commands;
 
+import java.io.PrintWriter;
+
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 
@@ -53,6 +55,12 @@ public class LoginCommand implements ClientCommand {
         String transport = null;
         int port = 7080;
 
+        PrintWriter printWriter = client.getPrintWriter();
+        if (args.length<3) {
+            printWriter.println(usage());
+            return true;
+        }
+
         try {
             user = args[1];
             pass = args[2];
@@ -74,10 +82,10 @@ public class LoginCommand implements ClientCommand {
 
             execute(client, user, pass, host, port, transport);
 
-            client.getPrintWriter().println("Login successful");
+            printWriter.println("Login successful");
         } catch (Exception e) {
-            client.getPrintWriter().println("Login failed: " + e);
-            client.getPrintWriter().println(getSyntax());
+            printWriter.println("Login failed: " + e.getMessage());
+            printWriter.println(usage());
             log.debug("Login failed for " + user + " on " + host + ":" + port + " over transport: " + transport, e);
         }
 
@@ -106,7 +114,7 @@ public class LoginCommand implements ClientCommand {
         client.setPass(password);
 
         Subject subject = remoteClient.login(username, password);
-        
+
         ProductInfo info = remoteClient.getSystemManager().getServerDetails(subject).getProductInfo();
         String version = info.getVersion()
             + " (" + info.getBuildNumber() + ")";
@@ -123,6 +131,10 @@ public class LoginCommand implements ClientCommand {
     private void bindSubject(ClientMain client, Subject subject) {
         ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
         cmd.initBindings(client);
+    }
+
+    private String usage() {
+        return "Usage: " + getSyntax();
     }
 
     public String getSyntax() {

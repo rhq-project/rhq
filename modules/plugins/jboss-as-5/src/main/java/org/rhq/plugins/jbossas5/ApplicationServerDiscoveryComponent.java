@@ -80,7 +80,7 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  * @author Ian Springer
  * @author Mark Spritzler
  */
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
     ManualAddFacet {
     private static final String CHANGE_ME = "***CHANGE_ME***";
@@ -90,8 +90,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
     private static final String LOCALHOST = "127.0.0.1";
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
-    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS =
-        new HashMap<JBossProductType, ComparableVersion>(4);
+    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS = new HashMap<JBossProductType, ComparableVersion>(
+        4);
     static {
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
@@ -146,7 +146,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         } catch (IOException e) {
             throw new InvalidPluginConfigurationException(e);
         }
-        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo, installInfo);
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
+            installInfo);
         return resourceDetails;
     }
 
@@ -166,7 +167,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 clientJarUrls.add(clientJarUrl);
             } else {
                 log.warn("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
-                   + " may not be required for some app server versions).");
+                    + " may not be required for some app server versions).");
             }
         }
 
@@ -178,13 +179,11 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             InputStream inputStream = url.openStream();
             try {
                 inputStream.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 log.error("Failed to close input stream for URL [" + url + "].", e);
             }
             return true;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             return false;
         }
     }
@@ -194,7 +193,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             .getStringValue();
         URL homeUrl = new File(homeDir).toURI().toURL();
 
-        String clientUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CLIENT_URL, null);
+        String clientUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CLIENT_URL,
+            null);
         if (clientUrlString == null) {
             URL clientUrl = new URL(homeUrl, "client");
             pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.CLIENT_URL, clientUrl));
@@ -206,10 +206,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.LIB_URL, libUrl));
         }
 
-        String commonLibUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, null);
+        String commonLibUrlString = pluginConfig.getSimpleValue(
+            ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, null);
         if (commonLibUrlString == null) {
             URL commonLibUrl = new URL(homeUrl, "common/lib");
-            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, commonLibUrl));
+            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL,
+                commonLibUrl));
         }
     }
 
@@ -305,9 +307,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         try {
             return new InProcessJBossASDiscovery().discoverInProcessJBossAS(discoveryContext);
         } catch (Throwable t) {
-            log
-                .debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.",
-                    t);
+            log.debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.", t);
             return null;
         }
     }
@@ -340,7 +340,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 namingPort = port;
         }
 
-        String description = installInfo.getProductType().DESCRIPTION;
+        final String PNAME = installInfo.getProductType().NAME + " ";
+        String description = PNAME + installInfo.getMajorVersion() + " Server";
         File deployDir = new File(absoluteConfigPath, "deploy");
 
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
@@ -351,11 +352,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
-            absoluteConfigPath.getName(), isRhqServer);
+        String name = PNAME
+            + formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
+                absoluteConfigPath.getName(), isRhqServer);
 
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
-            description, pluginConfig, processInfo);
+        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PNAME
+            + installInfo.getVersion(), description, pluginConfig, processInfo);
     }
 
     public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName,

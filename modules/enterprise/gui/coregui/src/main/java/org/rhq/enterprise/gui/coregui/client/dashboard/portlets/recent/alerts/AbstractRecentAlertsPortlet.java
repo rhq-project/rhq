@@ -67,13 +67,22 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     // autorefresh timer
     private Timer refreshTimer;
 
+    private String baseViewPath;
+
     public AbstractRecentAlertsPortlet(String locatorId, EntityContext entityContext) {
         super(locatorId, null, entityContext);
+
+        this.baseViewPath = LinkManager.getEntityTabLink(getContext(), "Alerts", "History");
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);
         setShowFooterRefresh(false); //disable footer refresh button as redundant for portlets
         setShowHeader(false);//disable header for portlets
+    }
+
+    @Override
+    protected String getBasePath() {
+        return this.baseViewPath;
     }
 
     @Override

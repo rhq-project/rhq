@@ -168,9 +168,9 @@ public class OperationHistoryDataSource extends
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 if (value != null) {
                     String timestamp = super.format(value, record, rowNum, colNum);
-                    Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     Integer opHistoryId = record.getAttributeAsInt("id");
-                    String url = LinkManager.getSubsystemResourceOperationHistoryLink(resourceId, opHistoryId);
+                    String url = LinkManager.getEntityTabLink(entityContext, "Operations", "History") + "/"
+                        + opHistoryId;
                     return SeleniumUtility.getLocatableHref(url, timestamp, null);
                 } else {
                     return "<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>";

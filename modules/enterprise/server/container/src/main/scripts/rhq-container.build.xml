@@ -228,6 +228,8 @@
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
           toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
+    <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws-management.war/WEB-INF/web.xml"
+          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws-management.war/WEB-INF" verbose="true" overwrite="true"/>
 
 
       <echo>Installing patched hibernate jar ...</echo>
@@ -867,6 +869,10 @@ rhq.autoinstall.public-endpoint-address=
      <delete dir="${jboss.deploy.dir}/jmx-console.war" />
      -->
       <move file="${jboss.deploy.dir}/jmx-console.war" tofile="${jboss.deploy.dir}/jmx-console.war.rej" failonerror="false" />
+       <!-- fix security-constraint -->
+       <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jmx-console.war.rej/WEB-INF/web.xml"
+             toDir="${jboss.deploy.dir}/jmx-console.war.rej/WEB-INF" verbose="true" />
+
    </target>
 
    <target name="undeploy-mail-service" unless="predeploy">

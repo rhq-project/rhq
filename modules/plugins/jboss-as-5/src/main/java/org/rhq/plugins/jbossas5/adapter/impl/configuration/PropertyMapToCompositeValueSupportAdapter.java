@@ -22,6 +22,7 @@
  */
 package org.rhq.plugins.jbossas5.adapter.impl.configuration;
 
+import org.jboss.metatype.api.values.EnumValue;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
@@ -47,6 +48,12 @@ public class PropertyMapToCompositeValueSupportAdapter extends AbstractPropertyM
     protected void putValue(CompositeValue compositeValue, String key, MetaValue value)
     {
         CompositeValueSupport compositeValueSupport = (CompositeValueSupport)compositeValue;
+        if ((value instanceof EnumValue) && (((EnumValue) value).getValue() == null))
+        {
+            // set() does not accept EnumValues with an inner value of null (it throws a nasty
+            // IllegalArgumentException), so in such a case, pass null as the value instead.
+            value = null;
+        }
         compositeValueSupport.set(key, value);
     }
 

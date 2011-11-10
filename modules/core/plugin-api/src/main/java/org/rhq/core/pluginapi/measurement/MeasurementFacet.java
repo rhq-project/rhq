@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -27,27 +27,38 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 
 /**
- * Implementations of this facet perform the collection of measurement data that is emitted from a monitored resource.
- * Resource components expose this interface when it has one or more metrics that it exposes.
+ * Implementations of this facet perform the collection of measurement data exposed by a managed resource.
  *
  * @author Greg Hinkle
  */
 public interface MeasurementFacet {
     /**
-     * Collects measurement data emitted from monitored resources and returns that data in a measurement report. All
-     * collected data will be added to the given <code>report</code>.
-     *
-     * <p>The key to the improvement in metric collection performance and reduction in monitoring overhead is to take
+     * Collects measurement data exposed by managed resources and returns that data in a measurement report. the
+     * provided set of {@link MeasurementScheduleRequest request}s specify which metrics are being requested. All
+     * collected data should be added to the provided {@link MeasurementReport report}.
+     * <p>
+     * If there is no data available for one of the requested metrics, there are several ways an implementation of this
+     * method can indicate that:
+     * <ol>
+     *  <li>do not add a {@link org.rhq.core.domain.measurement.MeasurementData datum} to the report</li>
+     *  <li>add a {@link org.rhq.core.domain.measurement.MeasurementData datum} with a value of null to the report</li>
+     *  <li>if it's a numeric metric, add a {@link org.rhq.core.domain.measurement.MeasurementData datum} with a value
+     *      of {@link Double#NaN} to the report</li>
+     * </ol>
+     * </p>
+     * <p>
+     * The key to the improvement in metric collection performance and reduction in monitoring overhead is to take
      * advantage of the situations where a single remote call can return more than one piece of data; e.g. a JMX MBean
-     * getAttributes call, or a database select.</p>
+     * {@link javax.management.MBeanServer#getAttributes(javax.management.ObjectName, String[]) getAttributes} call, or
+     * a database SELECT.
+     * </p>
      *
-     * <p>TODO GH: So far this is limited to multi-collections by a single resource. Could support cross-resource
-     * collections too?</p>
-     *
-     * @param  report  the report where all collected measurement data will be added
-     * @param  metrics the schedule of what needs to be collected when
+     * @param report  the report to which all collected measurement data should be added
+     * @param metrics a set of requests describing the metrics being requested
      *
      * @throws Exception if the component failed to obtain one or more values
      */
+    // TODO GH: So far this is limited to multi-collections by a single resource. Could support cross-resource
+    //          collections too?
     void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception;
 }

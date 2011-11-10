@@ -38,6 +38,7 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -50,10 +51,16 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
@@ -84,6 +91,8 @@ public class ResourceSearchView extends Table {
     private static final String DEFAULT_TITLE = MSG.common_title_resources();
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
+
+    private ResourceType resourceType;
 
     /**
      * A list of all Resources in the system.
@@ -127,12 +136,29 @@ public class ResourceSearchView extends Table {
 
         final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
-        //setInitialCriteriaFixed(false);
+
+        ResourceTypeCriteria typeCriteria = new ResourceTypeCriteria();
+        typeCriteria.addFilterId(criteria.getAttributeAsInt(ResourceDataSourceField.TYPE.propertyName()));
+        typeCriteria.fetchDriftDefinitionTemplates(true);
+
+        GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(typeCriteria,
+            new AsyncCallback<PageList<ResourceType>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError("Unable to retrieve resource type", caught);
+                }
+
+                @Override
+                public void onSuccess(PageList<ResourceType> result) {
+                    resourceType = result.get(0);
+                }
+            });
     }
 
     // suppress unchecked warnings because the subclasses may have different generic types for the datasource
     protected RPCDataSource getDataSourceInstance() {
-        return ResourceDatasource.getInstance();
+        //return ResourceDatasource.getInstance();
+        return new ResourceComplianceDataSource();
     }
 
     @Override
@@ -271,6 +297,9 @@ public class ResourceSearchView extends Table {
         ListGridField modifiedByField = new ListGridField(MODIFIER.propertyName(), MODIFIER.title(), 100);
         fields.add(modifiedByField);
 
+        IconField inComplianceField = new IconField("inCompliance", MSG.common_title_in_compliance(), 95);
+        fields.add(inComplianceField);
+
         return fields;
     }
 
@@ -285,6 +314,37 @@ public class ResourceSearchView extends Table {
     @Override
     protected SearchSubsystem getSearchSubsystem() {
         return SearchSubsystem.RESOURCE;
+    }
+
+    private class ResourceComplianceDataSource extends ResourceDatasource {
+        @Override
+        protected ResourceCriteria getFetchCriteria(DSRequest request) {
+            ResourceCriteria criteria = super.getFetchCriteria(request);
+            criteria.fetchDriftDefinitions(true);
+            return criteria;
+        }
+
+        @Override
+        public ListGridRecord copyValues(Resource from) {
+            ListGridRecord record = super.copyValues(from);
+            if (!resourceType.getDriftDefinitionTemplates().isEmpty()) {
+                if (isOutOfCompliance(from)) {
+                    record.setAttribute("inCompliance", ImageManager.getAvailabilityIcon(false));
+                } else {
+                    record.setAttribute("inCompliance", ImageManager.getAvailabilityIcon(true));
+                }
+            }
+            return record;
+        }
+
+        private boolean isOutOfCompliance(Resource resource) {
+            for (DriftDefinition def : resource.getDriftDefinitions()) {
+                if (def.getComplianceStatus() != DriftComplianceStatus.IN_COMPLIANCE) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
 }

@@ -151,6 +151,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
             if (isEAP) {
                 description=description.replace("AS7","EAP6");
+                serverName = "EAP " + serverName;
             }
 
             initLogEventSourcesConfigProp(logFile, config);

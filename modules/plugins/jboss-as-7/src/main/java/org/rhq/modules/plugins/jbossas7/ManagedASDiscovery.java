@@ -110,6 +110,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
                 if (homeDir.contains("eap")) {
                     version = "EAP " + version;
                     resourceDescription = resourceDescription.replace("AS7","EAP6");
+                    serverInfo.name = "EAP " + serverInfo.name;
                 }
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType

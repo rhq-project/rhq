@@ -387,6 +387,14 @@ public class JnpConfig {
                     isBindingManagerInUse = true;
                 }
             }
+
+            if (inNamingPort) {
+                inNamingPort = false;
+            }
+
+            if (inNamingBindAddress) {
+                inNamingBindAddress = false;
+            }
         }
 
         protected Integer getNamingPort() {
@@ -436,6 +444,9 @@ public class JnpConfig {
         }
 
         protected File getStoreFile() {
+            if (this.storeURL == null) {
+                return null;
+            }
             File homeDir = new File(systemProperties.getProperty(JBossProperties.HOME_DIR));
             try {
                 URL url = JBossConfigurationUtility.makeURL(storeURL.toString(), homeDir);

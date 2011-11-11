@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2010 Red Hat, Inc.
+* Copyright (C) 2005-2011 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -83,7 +84,6 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
 @SuppressWarnings({ "UnusedDeclaration" })
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
     ManualAddFacet {
-    private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
     private static final String JBOSS_NAMING_SERVICE_XML = "deploy" + File.separator + "naming-service.xml";
     private static final String ANY_ADDRESS = "0.0.0.0";
@@ -258,13 +258,16 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
 
-            String jnpURL = getJnpURL(cmdLine, installHome, configDir);
-
             // TODO? Set the connection type - local or remote
 
             // Set the required props...
-            pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.NAMING_URL,
-                jnpURL));
+            String jnpURL = getJnpURL(cmdLine, installHome, configDir);
+            PropertySimple namingUrlProp = new PropertySimple(ApplicationServerPluginConfigurationProperties.NAMING_URL,
+                jnpURL);
+            if (jnpURL == null) {
+                namingUrlProp.setErrorMessage("RHQ failed to discover the naming provider URL.");
+            }
+            pluginConfiguration.put(namingUrlProp);
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.HOME_DIR,
                 installHome.getAbsolutePath()));
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR,
@@ -329,15 +332,14 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         String namingUrl = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.NAMING_URL)
             .getStringValue();
 
-        // Only include the JNP port in the Resource name if its value is not "***CHANGE_ME***".
+        // If we were able to discover the JNP URL, include the JNP port in the Resource name.
         String namingPort = null;
         //noinspection ConstantConditions
-        int colonIndex = namingUrl.lastIndexOf(':');
-        if ((colonIndex != -1) && (colonIndex != (namingUrl.length() - 1))) {
-            // NOTE: We assume the JNP URL does not have a trailing slash.
-            String port = namingUrl.substring(colonIndex + 1);
-            if (!port.equals(CHANGE_ME))
-                namingPort = port;
+        if (namingUrl != null) {
+            URI uri = URI.create(namingUrl);
+            if (uri.getPort() != -1) {
+                namingPort = String.valueOf(uri.getPort());
+            }
         }
 
         final JBossProductType productType = installInfo.getProductType();
@@ -383,7 +385,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 }
             }
 
-            if (jnpPort != null && !jnpPort.equals(CHANGE_ME)) {
+            if (jnpPort != null) {
                 hostnameToUse += ":" + jnpPort;
             }
 
@@ -442,11 +444,21 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
-        String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : CHANGE_ME;
+
+
+
+        String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : null;
+        Integer jnpPort = (jnpConfig.getJnpPort() != null) ? jnpConfig.getJnpPort() : null;
+
+        if (jnpAddress == null || jnpPort == null) {
+            log.warn("Failed to discover JNP URL for JBoss instance with configuration directory [" +  configDir + "].");
+            return null;
+        }
+
         if (ANY_ADDRESS.equals(jnpAddress)) {
             jnpAddress = LOCALHOST;
         }
-        String jnpPort = (jnpConfig.getJnpPort() != null) ? String.valueOf(jnpConfig.getJnpPort()) : CHANGE_ME;
+
         return "jnp://" + jnpAddress + ":" + jnpPort;
     }
 

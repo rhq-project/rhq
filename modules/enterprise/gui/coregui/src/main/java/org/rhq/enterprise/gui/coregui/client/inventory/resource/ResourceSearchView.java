@@ -286,5 +286,4 @@ public class ResourceSearchView extends Table {
     protected SearchSubsystem getSearchSubsystem() {
         return SearchSubsystem.RESOURCE;
     }
-
 }

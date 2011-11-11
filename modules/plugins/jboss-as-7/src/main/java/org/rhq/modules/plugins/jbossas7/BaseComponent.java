@@ -451,7 +451,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             operation = new Operation(op,theAddress);
             operation.addAdditionalProperty("profile",profile);
         } else if (what.equals("server")) {
-            if (context.getResourceType().getName().equals("JBossAS-Managed")) {
+            if (context.getResourceType().getName().equals("JBossAS7 Managed Server")) {
                 String host = pluginConfiguration.getSimpleValue("domainHost","local");
                 theAddress.add("host", host);
                 theAddress.add("server-config", myServerName);

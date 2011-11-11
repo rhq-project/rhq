@@ -53,6 +53,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
 {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
+    private static final String JBOSS_EAP_6 = "JBoss Enterprise Application Platform 6";
+    private static final String AS7 = "AS7";
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
@@ -83,7 +85,6 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
             if (homeDir.contains("eap")) {
                 isEAP=true;
-                version="EAP " + version;
             }
 
             if (psName.equals("HostController")) {
@@ -93,11 +94,19 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 if (hp.isLocal) {
                     serverName = "DomainController"; // TODO make more unique
                     serverNameFull = "DomainController";
-                    description = "Domain controller for an AS7 domain";
+                    if (isEAP)
+                        description = "Domain controller for a " + JBOSS_EAP_6 + " domain";
+                    else
+                        description = "Domain controller for an " + AS7 + " domain";
                 }
                 else {
                     serverName = "HostController"; // TODO make more unique
                     serverNameFull = "HostController";
+                    if (isEAP)
+                        description = "Host controller for a " + JBOSS_EAP_6 + " host";
+                    else
+                        description = "Host controller for an " + AS7 + " host";
+
                 }
 
                 config.put(new PropertySimple("baseDir", homeDir));
@@ -116,6 +125,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             } else { // Standalone server
                 serverNameFull = homeDir;
 
+                if (isEAP)
+                    description = "Standalone " + JBOSS_EAP_6 + " server";
+                else
+                    description = "Standalone " + AS7 + " server";
 
                 readStandaloneOrHostXml(psr.getProcessInfo(), false);
                 if ( serverNameFull.isEmpty()) {
@@ -150,8 +163,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             }
 
             if (isEAP) {
-                description=description.replace("AS7","EAP6");
                 serverName = "EAP " + serverName;
+                version="EAP " + version;
             }
 
             initLogEventSourcesConfigProp(logFile, config);

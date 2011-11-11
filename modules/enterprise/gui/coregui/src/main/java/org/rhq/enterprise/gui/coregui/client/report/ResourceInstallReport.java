@@ -90,7 +90,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria);
+        resourceList = new ResourceInstallReportResourceSearchView(extendLocatorId("resourceList"), criteria);
         addMember(resourceList);
         markForRedraw();
     }
@@ -119,8 +119,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
 
-            ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE,
-                MSG.common_title_in_compliance());
+            ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE, MSG
+                .common_title_in_compliance());
             HashMap<String, String> complianceIcons = new HashMap<String, String>();
             complianceIcons.put("true", ImageManager.getAvailabilityIcon(true));
             complianceIcons.put("false", ImageManager.getAvailabilityIcon(false));
@@ -129,9 +129,10 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
-            fieldCategory.setWidth("55");
+            fieldCategory.setWidth(70);
             fieldVersion.setWidth("*");
-            fieldCount.setWidth("10%");
+            fieldCount.setWidth(60);
+            fieldInCompliance.setWidth(100);
 
             fieldTypeName.setCellFormatter(new CellFormatter() {
                 @Override

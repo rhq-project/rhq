@@ -90,13 +90,32 @@ public class MeasurementSenderRunner implements Callable<MeasurementReport>, Run
         Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
         while (iter.hasNext()) {
             MeasurementDataNumeric numeric = iter.next();
-            Double v = numeric.getValue();
-            if (v == null || v.isInfinite() || v.isNaN()) {
-                LOG.warn("Numeric " + numeric.getName() + " with id " + numeric.getScheduleId()
-                    + " is invalid, value was '" + v + "'");
+            Double value = numeric.getValue();
+            if (value == null || value.isInfinite() || value.isNaN()) {
+                if (LOG.isDebugEnabled()) {
+                    String stringValue = getStringValue(value);
+                    LOG.debug("Numeric metric [" + numeric.getName() + "] with schedule id [" + numeric.getScheduleId()
+                        + "] is invalid - value is [" + stringValue + "].");
+                }
                 iter.remove();
             }
         }
+    }
+
+    private String getStringValue(Double value) {
+        String stringValue;
+        if (value == null) {
+            stringValue = "null";
+        } else if (value.isNaN()) {
+            stringValue = "Double.NaN";
+        } else if (value == Double.POSITIVE_INFINITY) {
+            stringValue = "Double.POSITIVE_INFINITY";
+        } else if (value == Double.NEGATIVE_INFINITY) {
+            stringValue = "Double.NEGATIVE_INFINITY";
+        } else {
+            stringValue = value.toString();
+        }
+        return stringValue;
     }
 
     public void run() {

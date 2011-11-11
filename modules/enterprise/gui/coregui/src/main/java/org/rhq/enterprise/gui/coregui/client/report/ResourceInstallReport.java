@@ -1,3 +1,25 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.HashMap;
@@ -133,6 +155,14 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             fieldVersion.setWidth("*");
             fieldCount.setWidth(60);
             fieldInCompliance.setWidth(100);
+
+            // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
+            //                       uncomment these lines to allow grouping by the plugin or category fields.
+            /*getListGrid().setCanGroupBy(true);
+            fieldTypeName.setCanGroupBy(false);
+            fieldVersion.setCanGroupBy(false);
+            fieldCount.setCanGroupBy(false);
+            fieldInCompliance.setCanGroupBy(false);*/
 
             fieldTypeName.setCellFormatter(new CellFormatter() {
                 @Override

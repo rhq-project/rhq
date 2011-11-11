@@ -366,9 +366,9 @@ run_release_version_and_tag_process()
    [ "$?" -ne 0 ] && abort "Merge with remote $BUILD_BRANCH failed."
 
    echo "10) If everything went well so far than means all the changes can be pushed!!!"
-   git push origin "$BUILD_BRANCH"
+   git push origin "refs/heads/$BUILD_BRANCH"
    [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
-   git push origin "$RELEASE_TAG"
+   git push origin "refs/tags/$RELEASE_TAG"
    [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
 }
 
@@ -395,7 +395,7 @@ update_development_version()
    [ "$?" -ne 0 ] && abort "Merge with remote $BUILD_BRANCH failed."
 
    echo "4) If everything went well so far than means all the changes can be pushed!!!"
-   git push origin "$BUILD_BRANCH"
+   git push origin "refs/heads/$BUILD_BRANCH"
    [ "$?" -ne 0 ] && abort "$BUILD_BRANCH branch push to origin failed."
 }
 
@@ -495,17 +495,15 @@ checkout_release_branch()
        git fetch origin "$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
 
-       git checkout "$RELEASE_BRANCH" 2>/dev/null
-       if [ "$?" -ne 0 ];
-       then
-           git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
-       fi
-
+       git checkout --track "origin/$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+
        git reset --hard "origin/$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
+
        git clean -dxf
        [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
+
        git pull origin $RELEASE_BRANCH
        [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
    else

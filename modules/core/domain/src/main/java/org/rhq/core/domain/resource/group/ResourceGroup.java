@@ -118,6 +118,11 @@ import org.rhq.core.domain.tagging.Tag;
         + " GROUP BY rg.groupCategory "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME_VISIBLE_GROUP, query =
+            "SELECT rg FROM ResourceGroup AS rg " +
+                    " WHERE LOWER(rg.name) = LOWER(:name)" +
+                    "     AND rg.visible = true"
+    ),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
 
     @NamedQuery(name = ResourceGroup.QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE, query = "SELECT DISTINCT rg "
@@ -145,7 +150,7 @@ import org.rhq.core.domain.tagging.Tag;
         + " WHERE r.id = :id " //
         + "   AND r.id IN ( SELECT role.id " //
         + "                   FROM Role role " //
-        + "                   JOIN role.subjects s " // 
+        + "                   JOIN role.subjects s " //
         + "                  WHERE s.id = :subjectId ) "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_IDS_admin, query = "" //
@@ -203,6 +208,7 @@ public class ResourceGroup extends Group {
     public static final String QUERY_FIND_RESOURCE_GROUP_SUMMARY_admin = "ResourceGroup.findResourceGroupSummary_admin";
 
     public static final String QUERY_FIND_BY_NAME = "ResourceGroup.findByName";
+    public static final String QUERY_FIND_BY_NAME_VISIBLE_GROUP = "ResourceGroup.findByNameVisibleGroup";
     public static final String QUERY_FIND_BY_CLUSTER_KEY = "ResourceGroup.findByClusterKey";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE_WITH_EXCLUDES = "ResourceGroup.getAvailableResourceGroupsForRoleWithExcludes";
     public static final String QUERY_GET_AVAILABLE_RESOURCE_GROUPS_FOR_ROLE = "ResourceGroup.getAvailableResourceGroupsForRole";
@@ -463,7 +469,7 @@ public class ResourceGroup extends Group {
     @ManyToOne
     private Resource autoGroupParentResource = null;
 
-    // When false hide this group from the UI. For example, for an autocluster or autogroup backing group. 
+    // When false hide this group from the UI. For example, for an autocluster or autogroup backing group.
     private boolean visible = true;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
@@ -735,8 +741,8 @@ public class ResourceGroup extends Group {
     @PrePersist
     @PreUpdate
     void onPersist() {
-        // always normalize empty string descriptions to NULL, which will give consistent sorting 
-        // between databases that treat empty string and null as distinct entities (e.g. postgres) 
+        // always normalize empty string descriptions to NULL, which will give consistent sorting
+        // between databases that treat empty string and null as distinct entities (e.g. postgres)
         // and those that interpret empty string and null as being equivalent (oracle)
         String description = getDescription();
         if (description != null && description.trim().equals("")) {

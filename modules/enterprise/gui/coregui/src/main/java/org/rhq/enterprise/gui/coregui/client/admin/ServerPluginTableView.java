@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.admin;
 
 import java.util.ArrayList;
@@ -76,6 +75,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
     private static final String FIELD_LASTUPDATE = "lastUpdate";
     private static final String FIELD_ENABLED = "enabled";
     private static final String FIELD_DEPLOYED = "deployed";
+    private static final String FIELD_VERSION = "version";
 
     private boolean showUndeployed = false;
 
@@ -373,12 +373,17 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             deployedField.setHidden(true);
             fields.add(deployedField);
 
+            ListGridField versionField = new ListGridField(FIELD_VERSION, MSG.common_title_version());
+            versionField.setHidden(true);
+            fields.add(versionField);
+
             idField.setWidth(100);
             nameField.setWidth("30%");
             descriptionField.setWidth("*");
             lastUpdateField.setWidth("20%");
-            enabledField.setWidth(75);
+            enabledField.setWidth(65);
             deployedField.setWidth(75);
+            versionField.setWidth(100);
 
             return fields;
         }
@@ -418,6 +423,7 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             record.setAttribute(FIELD_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
             record.setAttribute(FIELD_DEPLOYED,
                 ImageManager.getAvailabilityIcon(from.getStatus() == PluginStatusType.INSTALLED));
+            record.setAttribute(FIELD_VERSION, from.getVersion());
             return record;
         }
 
@@ -427,4 +433,5 @@ public class ServerPluginTableView extends TableSection<ServerPluginDataSource> 
             return null;
         }
     }
+
 }

@@ -340,8 +340,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 namingPort = port;
         }
 
-        final String PNAME = installInfo.getProductType().NAME + " ";
-        String description = PNAME + installInfo.getMajorVersion() + " Server";
+        final JBossProductType productType = installInfo.getProductType();
+        String description = productType.DESCRIPTION + " " + installInfo.getMajorVersion();
         File deployDir = new File(absoluteConfigPath, "deploy");
 
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
@@ -352,11 +352,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = PNAME
+        final String PRODUCT_PREFIX = productType.name() + " ";
+        String name = PRODUCT_PREFIX
             + formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
                 absoluteConfigPath.getName(), isRhqServer);
 
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PNAME
+        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PRODUCT_PREFIX
             + installInfo.getVersion(), description, pluginConfig, processInfo);
     }
 

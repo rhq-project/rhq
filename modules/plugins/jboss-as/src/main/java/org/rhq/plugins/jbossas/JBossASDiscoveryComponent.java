@@ -59,6 +59,7 @@ import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstallationInfo;
 import org.rhq.plugins.jbossas.helper.JBossInstanceInfo;
+import org.rhq.plugins.jbossas.helper.JBossProductType;
 import org.rhq.plugins.jbossas.helper.JBossProperties;
 import org.rhq.plugins.jbossas.util.JBossMBeanUtility;
 import org.rhq.plugins.jbossas.util.JnpConfig;
@@ -293,9 +294,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
             }
         }
 
-        final String PNAME = installInfo.getProductType().NAME + " ";
-        String configName = absoluteConfigPath.getName();
-        String description = PNAME + installInfo.getMajorVersion() + " Server";
+        final JBossProductType productType = installInfo.getProductType();
+        String description = productType.DESCRIPTION + " " + installInfo.getMajorVersion();
         boolean isInServer = isRhqServer(absoluteConfigPath);
         if (isInServer) {
             description += " hosting the RHQ Server";
@@ -324,11 +324,12 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 }
             }
         }
-        String name = PNAME
+        final String PRODUCT_PREFIX = productType.name() + " ";
+        String name = PRODUCT_PREFIX
             + formatServerName(bindingAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
-                configName, isInServer);
+                absoluteConfigPath.getName(), isInServer);
 
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PNAME
+        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PRODUCT_PREFIX
             + installInfo.getVersion(), description, pluginConfiguration, processInfo);
     }
 

@@ -46,14 +46,11 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.alert.GroupAlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.GroupAlertDefinitionsView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftDefinitionsView;
-import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
@@ -65,18 +62,15 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.G
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.MembersView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMeasurementTableView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMembersHealthView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMonitoringTablesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView.DriftSubTab;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+// TODO: Re-enable and flesh out Drift support        
 
 /**
  * The right panel of a Resource Group view (#ResourceGroup/* or #Resource/AutoGroup/*).
@@ -98,7 +92,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private TwoLevelTab inventoryTab;
     private TwoLevelTab operationsTab;
     private TwoLevelTab alertsTab;
-    private TwoLevelTab driftTab;
+    // private TwoLevelTab driftTab;
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
 
@@ -117,8 +111,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
-    private SubTab driftDefinition;
-    private SubTab driftHistory;
+    // private SubTab driftDefinition;
+    // private SubTab driftHistory;
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
@@ -235,14 +229,14 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
-        driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
-            .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
-            MSG.view_tabs_common_history()), null);
-        this.driftDefinition = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
-            DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        driftTab.registerSubTabs(driftHistory, driftDefinition);
-        tabs.add(driftTab);
+        //        driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
+        //            .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
+        //        this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
+        //            MSG.view_tabs_common_history()), null);
+        //        this.driftDefinition = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
+        //            DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
+        //        driftTab.registerSubTabs(driftHistory, driftDefinition);
+        //        tabs.add(driftTab);
 
         return tabs;
     }
@@ -265,7 +259,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             updateEventsTab(groupCategory, facets);
             updateOperationsTab(groupCategory, facets);
             updateConfigurationTab(groupCategory, facets);
-            updateDriftTab(groupCategory, facets);
+            // updateDriftTab(groupCategory, facets);
 
             this.show();
             markForRedraw();
@@ -298,9 +292,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 @Override
                 public Canvas createView() {
                     String url = "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId;
-                    
+
                     if (groupContext.isAutoGroup()) {
-                        url += "&parent=" + groupContext.parentResourceId + "&type=" + groupContext.resourceTypeId + "&groupType=auto";
+                        url += "&parent=" + groupContext.parentResourceId + "&type=" + groupContext.resourceTypeId
+                            + "&groupType=auto";
                     } else if (groupContext.isAutoCluster()) {
                         url += "&groupType=cluster";
                     }
@@ -359,8 +354,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSubTab(this.inventoryTab, this.inventoryMembers, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MembersView(inventoryMembers.extendLocatorId("View"),
-                    groupComposite.getResourceGroup().getId(), canModifyMembers);
+                return new MembersView(inventoryMembers.extendLocatorId("View"), groupComposite.getResourceGroup()
+                    .getId(), canModifyMembers);
             }
         });
         updateSubTab(this.inventoryTab, this.inventoryConn, facets.contains(ResourceTypeFacet.PLUGIN_CONFIGURATION),
@@ -456,27 +451,28 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         }
     }
 
-    private void updateDriftTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
-        boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.DRIFT));
-        Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
-
-        if (updateTab(this.driftTab, visible, visible && groupPermissions.contains(Permission.MANAGE_DRIFT))) {
-
-            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), null);
-                }
-            });
-
-            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    return ResourceDriftDefinitionsView.get(driftDefinition.extendLocatorId("View"), null);
-                }
-            });
-        }
-    }
+    //
+    //    private void updateDriftTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
+    //        boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.DRIFT));
+    //        Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
+    //
+    //        if (updateTab(this.driftTab, visible, visible && groupPermissions.contains(Permission.MANAGE_DRIFT))) {
+    //
+    //            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
+    //                @Override
+    //                public Canvas createView() {
+    //                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), null);
+    //                }
+    //            });
+    //
+    //            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
+    //                @Override
+    //                public Canvas createView() {
+    //                    return ResourceDriftDefinitionsView.get(driftDefinition.extendLocatorId("View"), null);
+    //                }
+    //            });
+    //        }
+    //    }
 
     @Override
     protected ResourceGroupComposite getSelectedItem() {

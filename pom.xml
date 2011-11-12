@@ -959,9 +959,7 @@ version is changed the versions of each of these should be validated and updated
 
             <properties>
                 <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
-                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE
-                    -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y
-                </maven.surefire.debug>
+                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
             </properties>
         </profile>
 

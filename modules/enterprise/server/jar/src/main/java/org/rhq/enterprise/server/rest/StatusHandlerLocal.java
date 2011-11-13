@@ -22,8 +22,9 @@ import javax.ejb.Local;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-
-import org.rhq.enterprise.server.rest.domain.Status;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
 /**
  * Return some status information about the system
@@ -36,11 +37,5 @@ public interface StatusHandlerLocal {
 
     @GET
     @Path("/")
-    @Produces({"application/json","application/xml"})
-    Status getStatus();
-
-    @GET
-    @Path("/")
-    @Produces("text/html")
-    String getStatusHtml();
+    Response getStatus(@Context HttpHeaders httpHeaders);
 }

@@ -49,7 +49,6 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.Link;
@@ -202,26 +201,6 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         AvailabilityRest availabilityRest = new AvailabilityRest(avail.getAvailabilityType(),avail.getStartTime().getTime(),
                 avail.getResource().getId());
         return availabilityRest;
-    }
-
-    private ResourceWithType fillRWT(Resource res, UriInfo uriInfo) {
-        ResourceType resourceType = res.getResourceType();
-        ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId());
-        rwt.setTypeName(resourceType.getName());
-        rwt.setTypeId(resourceType.getId());
-        rwt.setPluginName(resourceType.getPlugin());
-        Resource parent = res.getParentResource();
-        if (parent!=null) {
-            rwt.setParentId(parent.getId());
-        }
-        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/operation/definitions");
-        uriBuilder.queryParam("resourceId",res.getId());
-        URI uri = uriBuilder.build();
-        Link link = new Link("operationDefinitions",uri.toString());
-        rwt.addLink(link);
-
-        return rwt;
     }
 
     public List<MetricSchedule> getSchedules(int resourceId, UriInfo uriInfo) {

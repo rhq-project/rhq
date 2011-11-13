@@ -150,7 +150,7 @@
        </dependency>
        <dependency>
            <groupId>org.jboss.resteasy</groupId>
-           <artifactId>resteasy-jettison-provider</artifactId>
+           <artifactId>resteasy-jackson-provider</artifactId>
            <version>${resteasy.version}</version>
        </dependency>
        <dependency>
@@ -164,6 +164,32 @@
            <version>${freemarker.version}</version>
            <type>jar</type>
        </dependency>
+       <dependency>
+             <groupId>org.jboss.resteasy</groupId>
+             <artifactId>resteasy-yaml-provider</artifactId>
+             <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.yaml</groupId>
+           <artifactId>snakeyaml</artifactId>
+           <version>1.8</version>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxb-provider</artifactId>
+           <version>${resteasy.version}</version>
+           <exclusions>
+               <exclusion>
+                   <groupId>com.sun.xml.bind</groupId>
+                   <artifactId>jaxb-impl</artifactId>
+               </exclusion>
+               <exclusion>
+                   <groupId>com.sun.xml.stream</groupId>
+                   <artifactId>sjsxp</artifactId>
+               </exclusion>
+           </exclusions>
+       </dependency>
+
 
    </dependencies>
 

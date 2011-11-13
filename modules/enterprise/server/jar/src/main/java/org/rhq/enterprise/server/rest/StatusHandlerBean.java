@@ -21,13 +21,12 @@ package org.rhq.enterprise.server.rest;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -60,7 +59,7 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
     AlertDefinitionManagerLocal alertDefinitionManager;
 
     @Override
-    public Status getStatus() {
+    public Response getStatus(HttpHeaders httpHeaders) {
 
         Status status = new Status();
 
@@ -94,12 +93,15 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
 
         status.setMetricsMin(scheduleManager.getScheduledMeasurementsPerMinute());
 
-        return status;
-    }
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            String htmlString = renderTemplate("status",status);
+            builder = Response.ok(htmlString,mediaType);
+        } else  {
+            builder = Response.ok(status, httpHeaders.getAcceptableMediaTypes().get(0));
+        }
 
-    @Override
-    public String getStatusHtml() {
-        Status status = getStatus();
-        return renderTemplate("status",status);
+        return builder.build();
     }
 }

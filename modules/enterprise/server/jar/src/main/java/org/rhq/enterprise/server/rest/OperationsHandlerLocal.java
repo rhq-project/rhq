@@ -19,8 +19,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.jboss.resteasy.annotations.providers.jaxb.Wrapped;
-
 import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 

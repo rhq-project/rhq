@@ -24,6 +24,7 @@ package org.rhq.enterprise.server.rest;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,6 +32,8 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
@@ -48,6 +51,9 @@ import org.jboss.cache.Node;
 import org.jboss.cache.TreeCacheMBean;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.rest.domain.Link;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
  * Abstract base class for EJB classes that implement REST methods.
@@ -226,5 +232,25 @@ public class AbstractRestBean {
             }
         }
         return true;
+    }
+
+    public ResourceWithType fillRWT(org.rhq.core.domain.resource.Resource res, UriInfo uriInfo) {
+        ResourceType resourceType = res.getResourceType();
+        ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId());
+        rwt.setTypeName(resourceType.getName());
+        rwt.setTypeId(resourceType.getId());
+        rwt.setPluginName(resourceType.getPlugin());
+        org.rhq.core.domain.resource.Resource parent = res.getParentResource();
+        if (parent!=null) {
+            rwt.setParentId(parent.getId());
+        }
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/operation/definitions");
+        uriBuilder.queryParam("resourceId",res.getId());
+        URI uri = uriBuilder.build();
+        Link link = new Link("operationDefinitions",uri.toString());
+        rwt.addLink(link);
+
+        return rwt;
     }
 }

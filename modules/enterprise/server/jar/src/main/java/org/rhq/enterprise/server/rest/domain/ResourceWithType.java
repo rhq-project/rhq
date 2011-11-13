@@ -33,19 +33,17 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
-import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
 import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A (partial) resource with some type information
  * @author Heiko W. Rupp
  */
-@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 @XmlRootElement
+/*
 @XmlAccessorType(XmlAccessType.NONE)
-//@XmlType(propOrder = {"resourceId","resourceName","parentId","parentName","typeId","typeName","pluginId","pluginName","rest"})
 @URITemplate("{id}")
+*/
 public class ResourceWithType {
 
     String resourceName;

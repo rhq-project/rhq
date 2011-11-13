@@ -117,18 +117,6 @@
             <version>1.7.3</version>
      </dependency>
 
-      <dependency>
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs-all</artifactId>
-          <scope>provided</scope>
-          <version>${resteasy.version}</version>
-          <type>pom</type>
-      </dependency>
-      <dependency>
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jettison-provider</artifactId>
-      </dependency>
-
   </dependencies>
 
   <build>

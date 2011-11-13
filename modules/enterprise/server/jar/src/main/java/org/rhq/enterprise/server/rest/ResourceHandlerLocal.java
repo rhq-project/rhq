@@ -36,6 +36,7 @@ import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.LinkResources;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
@@ -46,7 +47,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * Interface class that describes the REST interface
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/html"})
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Path("/resource")
 @Local
 public interface ResourceHandlerLocal {
@@ -57,13 +58,12 @@ public interface ResourceHandlerLocal {
     })
     @GET
     @Path("/{id}")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+
     Response getResource(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
     @GET
     @Path("/platforms")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     Response getPlatforms(@Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
@@ -95,7 +95,6 @@ public interface ResourceHandlerLocal {
 
     @GET
     @Path("/{id}/children")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     @LinkResource(rel="children", value = ResourceWithType.class)
     Response getChildren(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
@@ -104,7 +103,6 @@ public interface ResourceHandlerLocal {
     @AddLinks
     @GET
     @Path(("/{id}/alerts"))
-//    @LinkResource(rel="alerts", value = AlertRest.class)
     List<Link> getAlertsForResource(@PathParam("id") int resourceId); // TODO paging + status
 
 }

@@ -228,9 +228,14 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
      * @throws StuffNotFoundException if the group is not found (or not accessible by the caller)
      */
     private ResourceGroup fetchGroup(int groupId) {
-        ResourceGroup resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
-        if (resourceGroup==null)
-            throw new StuffNotFoundException("Group with id " + groupId);
+        ResourceGroup resourceGroup;
+        resourceGroup = getFromCache(groupId,ResourceGroup.class);
+        if (resourceGroup==null) {
+            resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
+            if (resourceGroup==null)
+                throw new StuffNotFoundException("Group with id " + groupId);
+            putToCache(groupId,ResourceGroup.class,resourceGroup);
+        }
         return resourceGroup;
     }
 

@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -48,8 +49,9 @@ public interface GroupHandlerLocal {
 
     @PUT
     @Path("{id}")
-    public Response updateGroup(@PathParam("id") int id,@Context Request request, @Context HttpHeaders headers,
-                             @Context UriInfo uriInfo);
+    public Response updateGroup(@PathParam("id") int id, GroupRest in, @Context Request request,
+                                @Context HttpHeaders headers,
+                                @Context UriInfo uriInfo);
 
     @DELETE
     @Path("{id}")
@@ -62,12 +64,6 @@ public interface GroupHandlerLocal {
     public Response getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo);
 
-
-    @GET
-    @Path("{id}/resource/{resourceId}")
-    public Response getResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
-                                @Context Request request, @Context HttpHeaders headers,
-                             @Context UriInfo uriInfo);
 
     @PUT
     @Path("{id}/resource/{resourceId}")

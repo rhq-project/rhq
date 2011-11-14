@@ -124,9 +124,22 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     @Override
     @PUT
     @Path("{id}")
-    public Response updateGroup(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response updateGroup(@PathParam("id") int id, GroupRest in, @Context Request request,
+                                @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
-        return null;  // TODO: Customise this generated block
+
+        ResourceGroup resourceGroup = fetchGroup(id);
+        resourceGroup.setName(in.getName());
+        Response.ResponseBuilder builder;
+
+        try {
+            resourceGroup = resourceGroupManager.updateResourceGroup(caller,resourceGroup);
+            builder=Response.ok(fillGroup(resourceGroup,uriInfo));
+        }
+        catch (Exception e) {
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE); // TODO correct?
+        }
+        return builder.build();
     }
 
     @Override
@@ -170,18 +183,6 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
         return builder.build();
 
-    }
-
-
-    @Override
-    @GET
-    @Path("{id}/resource/{resourceId}")
-    public Response getResource(@PathParam("id") int id, @PathParam("resourceId") int resourceId,
-                                @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
-
-
-
-        return null;  // TODO: Customise this generated block
     }
 
     @Override

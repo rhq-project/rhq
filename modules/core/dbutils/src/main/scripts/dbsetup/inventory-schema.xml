@@ -76,7 +76,7 @@
 
     <table name="RHQ_PRD_VER">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="VERSION" type="VARCHAR2" size="50" required="true"/>
+        <column name="VERSION" type="VARCHAR2" size="100" required="true"/>
         <column name="RES_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
     </table>
 

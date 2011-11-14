@@ -5,9 +5,7 @@
       "http://struts.apache.org/dtds/struts-config_1_2.dtd">
 
 <struts-config>
-
    <data-sources/>
-
    <form-beans>
       <form-bean name="LoginForm"
                  type="org.rhq.enterprise.gui.authentication.LogonForm"/>
@@ -372,18 +370,15 @@
       <!-- The standard administrative actions available with Tiles -->
       <!-- These would be either omitted or protected by security -->
       <!-- in a real application deployment -->
-<!--
       <action path="/admin/tiles/reload"
               type="org.apache.struts.tiles.actions.ReloadDefinitionsAction"/>
 
       <action path="/admin/tiles/view"
               type="org.apache.struts.tiles.actions.ViewDefinitionsAction"/>
--->
 
       <!-- role admin actions -->
 
       <!-- top-level role admin URL -->
-<!--
       <action path="/admin/role/RoleAdmin"
               forward=".admin.role.layout">
       </action>
@@ -393,10 +388,8 @@
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.BaseAction">
       </action>
--->
 
       <!-- admin portal controller -->
-<!--
       <action path="/Admin"
               forward=".admin.layout">
       </action>
@@ -589,12 +582,14 @@
          <forward name="failure" path="/admin/role/RoleAdmin.do?mode=view"/>
          <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
       </action>
--->
+
+
+
+
 
 
       <!-- / -->
 
-<!--
       <action path="/admin/role/ChangeOwnerFormPrepare"
               name="ChangeRoleOwnerForm"
               scope="request"
@@ -616,10 +611,8 @@
          <forward name="success" path="/admin/role/RoleAdmin.do?mode=view"/>
          <forward name="lostRights" path="/ResourceHub.do"/>
       </action>
--->
 
       <!--USER ADMINISTRATION -->
-<!--
       <action path="/admin/user/UserAdmin"
               forward=".admin.user.layout">
       </action>
@@ -775,11 +768,9 @@
          <forward name="reset" path="/admin/user/UserAdmin.do?mode=register" redirect="true"/>
          <forward name="logout" path="/Logout.do"/>
       </action>
--->
       <!-- end user admin actions / -->
 
       <!--CONFIG -->
-<!--
       <action path="/admin/config/Config"
               forward=".admin.config.layout">
       </action>
@@ -818,12 +809,10 @@
               parameter="mode">
          <set-property property="title" value="Monitoring+Defaults+Configuration"/>
       </action>
--->
 
       <!--end admin CONFIG -->
 
       <!-- resource hub -->
-<!--
       <action path="/ResourceHub"
               name="ResourceHubForm"
               forward=".resource.hub.layout">
@@ -899,10 +888,8 @@
          <forward name="success" path="/ResourceHub.do"/>
          <forward name="newgroup" path="/resource/group/Inventory.do?mode=new" redirect="true"/>
       </action>
--->
 
       <!-- resource hub -->
-<!--
       <action path="/resource/hub/RemoveResource"
               type="org.rhq.enterprise.gui.legacy.action.resource.hub.RemoveResourceAction"
               name="ResourceHubForm"
@@ -912,10 +899,8 @@
          <forward name="failure" path="/ResourceHub.do"/>
          <forward name="success" path="/ResourceHub.do"/>
       </action>
--->
 
       <!-- group hub -->
-<!--
       <action path="/resource/hub/RemoveGroup"
               type="org.rhq.enterprise.gui.legacy.action.resource.hub.RemoveGroupAction"
               name="GroupHubForm"
@@ -925,10 +910,8 @@
          <forward name="failure" path="/GroupHub.do"/>
          <forward name="success" path="/GroupHub.do"/>
       </action>
--->
 
       <!-- resource common inventory actions -->
-<!--
       <action path="/resource/common/inventory/EditResourceGeneralPropertiesFormPrepare"
               name="ResourceForm"
               scope="request"
@@ -943,10 +926,8 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.AddResourceGroupsFormPrepareAction">
          <set-property property="title" value="Add+To+Groups"/>
       </action>
--->
 
       <!-- resource platform actions -->
-<!--
       <action path="/resource/platform/Inventory"
               forward=".resource.platform.inventory.layout">
       </action>
@@ -1078,12 +1059,10 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.ResourceConfigFormPrepareAction">
          <set-property property="title" value="Edit+Configuration"/>
       </action>
--->
 
       <!-- / -->
 
       <!-- resource platform autodiscovery actions -->
-<!--
       <action path="/resource/platform/AutoDiscovery"
               forward=".resource.platform.autodiscovery.layout">
       </action>
@@ -1184,10 +1163,8 @@
          <forward name="failure" path="/resource/platform/AutoDiscovery.do?mode=view"/>
          <forward name="success" path="/resource/platform/AutoDiscovery.do?mode=view"/>
       </action>
--->
 
       <!-- platform monitoring actions -->
-<!--
       <action path="/resource/platform/monitor/Visibility"
               forward=".resource.platform.monitor.visibility.layout">
       </action>
@@ -1254,10 +1231,8 @@
       <action path="/resource/platform/monitor/visibility/ListChildrenResources"
               type="org.rhq.enterprise.gui.legacy.action.resource.platform.monitor.visibility.ListChildrenAction">
       </action>
--->
 
       <!-- platform monitoring config -->
-<!--
       <action path="/resource/platform/monitor/Config"
               forward=".resource.platform.monitor.config.layout">
       </action>
@@ -1298,7 +1273,6 @@
          <forward name="failure" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
          <forward name="success" path="/resource/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
       </action>
--->
 
       <!-- / -->
 
@@ -1307,7 +1281,6 @@
       <!-- / -->
 
       <!-- resource server actions -->
-<!--
       <action path="/resource/server/Inventory"
               forward=".resource.server.inventory.layout">
       </action>
@@ -1453,12 +1426,10 @@
          <forward name="failure" path="/resource/server/Inventory.do?mode=addGroups"/>
          <forward name="success" path="/resource/server/Inventory.do?mode=view"/>
       </action>
--->
 
       <!-- / -->
 
       <!-- resource service actions -->
-<!--
       <action path="/resource/service/Inventory"
               forward=".resource.service.inventory.layout">
       </action>
@@ -1572,10 +1543,8 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.common.inventory.ResourceConfigFormPrepareAction">
          <set-property property="title" value="Edit+Configuration"/>
       </action>
--->
 
       <!-- service monitoring -->
-<!--
       <action path="/resource/service/monitor/Visibility"
               forward=".resource.service.monitor.visibility.layout">
       </action>
@@ -1622,10 +1591,8 @@
          <forward name="chart" path="/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource"
                   redirect="true"/>
       </action>
--->
 
       <!-- application service config -->
-<!--
       <action path="/resource/service/monitor/Config"
               forward=".resource.service.monitor.config.layout">
       </action>
@@ -1652,12 +1619,10 @@
          <forward name="failure" path="/resource/service/monitor/Config.do?mode=configure"/>
          <forward name="success" path="/resource/service/monitor/Config.do?mode=configure"/>
       </action>
--->
 
       <!-- / -->
 
       <!-- resource group actions -->
-<!--
       <action path="/resource/group/Inventory"
               forward=".resource.group.inventory.layout">
       </action>
@@ -1729,7 +1694,6 @@
               input="/resource/service/Inventory.do?mode=view">
          <forward name="success" path="/resource/group/Inventory.do?mode=view" redirect="true"/>
       </action>
--->
 
       <!-- / -->
 
@@ -1862,7 +1826,6 @@
       </action>
 
       <!-- Software actions -->
-<!--
       <action path="/resource/software/inventory/List"
               name="SoftwareSearchForm"
               scope="session"
@@ -1894,13 +1857,11 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.software.inventory.DetailsAction">
          <set-property property="title" value="View+Software+Details"/>
       </action>
--->
 
 
 
 
       <!-- DASHBOARD ACTIONS -->
-<!--
       <action path="/DashboardController"
               type="org.rhq.enterprise.gui.legacy.portlet.DisplayDashboardAction">
          <set-property property="title" value="Dashboard"/>
@@ -2203,11 +2164,9 @@
          <forward name="failure" path="/dashboard/Admin.do?mode=crtAlertsAddResources"/>
          <forward name="success" path="/dashboard/Admin.do?mode=criticalAlerts"/>
       </action>
--->
       <!-- / -->
 
       <!-- resource group control -->
-<!--
       <action path="/resource/group/Control"
               forward=".resource.group.control.layout">
       </action>
@@ -2329,11 +2288,9 @@
          <forward name="cancel" path="/resource/group/Control.do?mode=view" redirect="true"/>
          <forward name="reset" path="/resource/group/Control.do?mode=new" redirect="true"/>
       </action>
--->
       <!-- / -->
 
       <!-- resource server control -->
-<!--
       <action path="/resource/server/Control"
               forward=".resource.server.control.layout">
       </action>
@@ -2463,14 +2420,12 @@
          <forward name="failure" path="/resource/server/Control.do?mode=view" redirect="true"/>
          <forward name="success" path="/resource/server/Control.do?mode=view" redirect="true"/>
       </action>
--->
       <!-- / end resource server control -->
 
 
-      <!-- resource service control. this reuses the forms, action classes, and jsp's
+      <!-- resource service control. this reuses the forms, aciton classes, and jsp's
       for server control, it just makes them available at different urls.
       -->
-<!--
       <action path="/resource/service/Control"
               forward=".resource.service.control.layout">
       </action>
@@ -2543,7 +2498,7 @@
          <forward name="executeAction" path="/resource/service/manage/InvokeAction.do" redirect="true"/>
       </action>
 
-      &lt;!&ndash; TODO may need to change the form being used here &ndash;&gt;
+      <!-- TODO may need to change the form being used here -->
       <action path="/resource/service/manage/InvokeAction"
               scope="request"
               input="/resource/service/Control.do?mode=view"
@@ -2599,11 +2554,9 @@
          <forward name="failure" path="/resource/service/Control.do?mode=view" redirect="true"/>
          <forward name="success" path="/resource/service/Control.do?mode=view" redirect="true"/>
       </action>
--->
       <!-- / end resource service control -->
 
       <!-- BEGIN: alerts actions -->
-<!--
       <action path="/alerts/ListDefinitions"
               name="RemoveConfigForm"
               scope="request"
@@ -2653,7 +2606,7 @@
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionControlActionAction"/>
 
-      &lt;!&ndash; JBNADM-536 update for name and title property&ndash;&gt;
+      <!-- JBNADM-536 update for name and title property-->
       <action path="/software/ListSoftware"
               name="RemoveAlertsForm"
               scope="request"
@@ -2661,13 +2614,13 @@
          <set-property property="title" value="List+Applicable+Software"/>
       </action>
 
-      &lt;!&ndash; JBNADM-573 the install preview page &ndash;&gt;
+      <!-- JBNADM-573 the install preview page -->
       <action path="/software/ListInstallPreview"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.software.InstallPreviewAction">
          <set-property property="title" value="Install+and+Uninstall+Preview"/>
       </action>
 
-      &lt;!&ndash;JBNADM-587 the AuditTrail page&ndash;&gt;
+      <!--JBNADM-587 the AuditTrail page-->
       <action path="/software/ListAuditTrail"
               name="AuditTrailForm"
               scope="request"
@@ -2675,7 +2628,7 @@
          <set-property property="title" value="Installation+Audit+Trail"/>
       </action>
 
-      &lt;!&ndash;JBNADM-588 the software status page&ndash;&gt;
+      <!--JBNADM-588 the software status page-->
       <action path="/software/ListSoftwareStatus"
               name="PatchInstallForm"
               scope="request"
@@ -2696,10 +2649,10 @@
               scope="request"
               input="/alerts/Alerts.do?mode=list">
          <forward name="cancel" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
-         &lt;!&ndash; for viewing an alert for a deleted resource &ndash;&gt;
+         <!-- for viewing an alert for a deleted resource -->
          <forward name="noresource" path="/Dashboard.do" redirect="true"/>
          <forward name="success" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
-         &lt;!&ndash; we need this here in case we're coming from the alerts list page &ndash;&gt;
+         <!-- we need this here in case we're coming from the alerts list page -->
          <forward name="remove" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
          <forward name="failure" path="/rhq/resource/alert/listAlertHistory.xhtml?mode=list" redirect="true"/>
       </action>
@@ -2869,7 +2822,6 @@
               parameter="mode"
               input="/alerts/Config.do"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.PortalAction"/>
--->
 
 
       <!-- END: alerts actions -->
@@ -2878,7 +2830,6 @@
       <!-- ============= STUFF DEFINITELY BEING USED FOR RHQ ============== -->
 
       <!-- === Resource Inventory Tab === -->
-<!--
       <action path="/resource/Inventory"
               forward=".resource.inventory.layout">
       </action>
@@ -2893,7 +2844,6 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.inventory.ViewResourceAction">
          <set-property property="title" value="View+Resource"/>
       </action>
--->
 
       <!-- === Resource Monitor>Visibility Tab === -->
 
@@ -3123,7 +3073,6 @@
       </action>
 
       <!-- === Resource Monitor>Configure Tab === -->
-<!--
       <action path="/resource/common/monitor/Config"
               forward=".resource.common.monitor.config.layout">
       </action>
@@ -3164,10 +3113,8 @@
          <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
          <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure&amp;nomenu=true"/>
       </action>
--->
 
       <!--  === Resource Monitor>Events Tab === -->
-<!--
       <action path="/resource/common/Events"
               forward=".resource.common.events.layout">
       </action>
@@ -3208,7 +3155,6 @@
               parameter="action"
               name="EventsForm">
       </action>
--->
 
    </action-mappings>
 

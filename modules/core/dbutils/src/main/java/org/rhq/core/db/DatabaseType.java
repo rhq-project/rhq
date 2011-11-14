@@ -559,20 +559,6 @@ public abstract class DatabaseType {
      */
     public abstract int getNextSequenceValue(Connection conn, String table, String key) throws SQLException;
 
-    private int getSafeSeqIdCacheSize(CreateSequenceExprBuilder builder, String suggestedSize) {
-        // we don't want to regress for the time being, and we don't want
-        // to default less than manufacturers recommended minimums...
-        final int legacySeqIdCacheSize = 10;
-        int size = Math.max(legacySeqIdCacheSize, builder.getFactorySeqIdCacheSizeLiteral());
-        try {
-            // but if someone asks for lower values we provide it...
-            size = Integer.parseInt(suggestedSize);
-        } catch (NumberFormatException e) {
-            // ... nada, previously validated in validateAttributes
-        }
-        return size;
-    }
-
     /**
      * Creates a sequence with the given name. Its initial value is specified along with its increment (both are
      * specified as Strings).
@@ -590,7 +576,7 @@ public abstract class DatabaseType {
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_NAME, name);
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_START, initial);
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_INCREMENT, increment);
-        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, getSafeSeqIdCacheSize(builder, seqIdCacheSize));
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, CreateSequenceExprBuilder.getSafeSequenceCacheSize(builder, seqIdCacheSize));
         executeSql(conn, builder.build(terms));
     }
 

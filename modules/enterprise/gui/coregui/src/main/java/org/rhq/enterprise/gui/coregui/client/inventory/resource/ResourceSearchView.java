@@ -127,7 +127,6 @@ public class ResourceSearchView extends Table {
 
         final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
-        //setInitialCriteriaFixed(false);
     }
 
     // suppress unchecked warnings because the subclasses may have different generic types for the datasource
@@ -286,5 +285,4 @@ public class ResourceSearchView extends Table {
     protected SearchSubsystem getSearchSubsystem() {
         return SearchSubsystem.RESOURCE;
     }
-
 }

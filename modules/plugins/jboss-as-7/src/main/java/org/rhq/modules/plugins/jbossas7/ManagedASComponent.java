@@ -44,7 +44,7 @@ public class ManagedASComponent extends BaseComponent {
     @Override
     public AvailabilityType getAvailability() {
 
-        if (context.getResourceType().getName().equals("JBossAS-Managed")) {
+        if (context.getResourceType().getName().equals("JBossAS7 Managed Server")) {
             Address theAddress = new Address();
             String host = pluginConfiguration.getSimpleValue("domainHost","local");
             theAddress.add("host",host);

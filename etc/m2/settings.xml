@@ -272,12 +272,20 @@
                  e.g.: C:/opt/jboss-5.0.0.CR1/server/default -->
             <jbas5.configDir>SET_ME</jbas5.configDir>
 
-             <!-- set browser(s) to compile the qwt stuff for
+             <!-- set browser(s) to compile the GWT stuff for
                ~~ See http://rhq-project.org/display/RHQ/Advanced+Build+Notes#AdvancedBuildNotes-GWTCompilationForDifferentBrowsers
                ~~ for details and browser versions
                ~~ Possible engines are ie6,ie8,gecko,gecko1_8,safari,opera
              -->
              <gwt.userAgent>SET_ME</gwt.userAgent>
+             <!-- Only gwt-compile JavaScript for FF2 and later. -->
+             <!--<gwt.userAgent>gecko1_8</gwt.userAgent>-->
+             <!-- Enable faster, but less-optimized, gwt compilations. -->
+             <gwt.draftCompile>true</gwt.draftCompile>
+             <!-- Only compile the default locale. -->
+             <gwt.locale>default</gwt.locale>
+             <!-- If user specifies an unsupported locale, fallback to the default locale. -->
+             <gwt.fallback.locale>default</gwt.fallback.locale>
          </properties>
       </profile>
 

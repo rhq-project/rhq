@@ -31,6 +31,7 @@ import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ImportConfiguration;
 import org.rhq.core.domain.sync.ImportConfigurationDefinition;
+import org.rhq.core.domain.sync.ImportReport;
 
 /**
  * 
@@ -60,7 +61,18 @@ public interface SynchronizationManagerLocal {
     
     void validate(Subject subject, InputStream exportFile) throws ValidationException;
     
-    void importAllSubsystems(Subject subject, InputStream exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
+    ImportReport importAllSubsystems(Subject subject, InputStream exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
+    
+    /**
+     * <b>Provided for testability reasons. DON'T USE OUTSIDE TESTS.</b> 
+     * <p>
+     * Using this method one can provide a custom factory
+     * for {@link Synchronizer}s. This way one can export/import different types of entities
+     * than by default.
+     * 
+     * @param factory
+     */
+    void setSynchronizerFactory(SynchronizerFactory factory);
     
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
@@ -93,5 +105,5 @@ public interface SynchronizationManagerLocal {
     /**
      * @see SynchronizationManagerRemote#importAllSubsystems(Subject, byte[], Set)
      */
-    void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
+    ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
 }

@@ -43,6 +43,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 
 /**
@@ -76,6 +77,9 @@ public class JGroupsChannelDiscovery implements ResourceDiscoveryComponent {
         boolean found = false;
         try {
             SAXBuilder builder = new SAXBuilder();
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
+
             Document doc = builder.build(file);
 
             // Get the root element

@@ -42,6 +42,7 @@ import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
@@ -205,6 +206,36 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
 
         // lastly verify that the agent is called
         assertTrue("Failed to send drift definition along with snapshot to agent", agentInvoked.get());
+    }
+
+    public void unpinDefinition() {
+        // First create the definition
+        DriftDefinition definition = new DriftDefinition(new Configuration());
+        definition.setName("test_unpin");
+        definition.setEnabled(true);
+        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+        definition.setComplianceStatus(DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT);
+        definition.setInterval(1800L);
+        definition.setDriftHandlingMode(normal);
+        definition.setPinned(true);
+
+        // persist the definition
+        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), definition);
+
+        // now update the definition
+        DriftDefinition newDef = loadDefinition(definition.getName());
+        assertNotNull("Failed to load new definition, " + toString(definition));
+        newDef.setPinned(false);
+
+        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(resource.getId()), newDef);
+
+        // now verify that the definition was updated
+        DriftDefinition updatedDef = loadDefinition(definition.getName());
+        assertNotNull("Failed to load updated definition, " + toString(newDef));
+
+        assertFalse("The updated definition should be set to unpinned", updatedDef.isPinned());
+        assertEquals("The updated definition should be set to in compliance", DriftComplianceStatus.IN_COMPLIANCE,
+            updatedDef.getComplianceStatus());
     }
 
     private DriftDefinition loadDefinition(String name) {

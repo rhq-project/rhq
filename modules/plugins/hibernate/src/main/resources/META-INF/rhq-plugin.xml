@@ -47,11 +47,11 @@
 
       <metric displayName="Entity Insert Count" property="EntityInsertCount"
               description="The global number of entity inserts since the statistics were reset"
-              category="throughput" displayType="summary" measurementType="trendsup"/>
+              category="throughput" measurementType="trendsup"/>
 
       <metric displayName="Query Execution Max Time" property="QueryExecutionMaxTime"
               description="The amount of time taken by the slowest recorded query since the statistics were reset"
-              category="performance" displayType="summary" units="milliseconds" />
+              category="performance" units="milliseconds" />
 
       <metric displayName="Entity Update Count" property="EntityUpdateCount"
               description="The global number of entity updates since the statistics were reset"
@@ -210,11 +210,11 @@
 
          <metric displayName="Load Count" property="loadCount" displayType="summary"
                  description="The number of times this entity was loaded since the statistics were reset" />
-         <metric displayName="Update Count" property="updateCount" displayType="summary"
+         <metric displayName="Update Count" property="updateCount"
                  description="The number of times this entity was updated since the statistics were reset" />
-         <metric displayName="Insert Count" property="insertCount" displayType="summary"
+         <metric displayName="Insert Count" property="insertCount"
                  description="The number of times this entity was inserted since the statistics were reset" />
-         <metric displayName="Delete Count" property="deleteCount" displayType="summary"
+         <metric displayName="Delete Count" property="deleteCount"
                  description="The number of times this entity was deleted since the statistics were reset" />
          <metric displayName="Fetch Count" property="fetchCount"
                  description="The number of times this entity was fetched since the statistics were reset" />

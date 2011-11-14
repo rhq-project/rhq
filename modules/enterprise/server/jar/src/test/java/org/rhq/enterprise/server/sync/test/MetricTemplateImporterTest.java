@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.sync.test;
 
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -98,7 +99,6 @@ public class MetricTemplateImporterTest extends JMockTest {
     private static final ResourceType FAKE_RESOURCE_TYPE = new ResourceType("fake", "fake", ResourceCategory.PLATFORM,
         null);
 
-    @SuppressWarnings("unchecked")
     public void testNonMatchingMeasurementDefinitionsAreIgnored() {
         final TestPrerequisities prereqs = new TestPrerequisities(context);
 
@@ -156,7 +156,6 @@ public class MetricTemplateImporterTest extends JMockTest {
         importer.finishImport();
     }
 
-    @SuppressWarnings("unchecked")
     public void testCanUpdateEnablements() {
         MeasurementDefinition defToEnable = new MeasurementDefinition(FAKE_RESOURCE_TYPE, "enabled");
         MeasurementDefinition defToDisable = new MeasurementDefinition(FAKE_RESOURCE_TYPE, "disable");
@@ -210,7 +209,6 @@ public class MetricTemplateImporterTest extends JMockTest {
 
     }
 
-    @SuppressWarnings("unchecked")
     public void testCanUpdateSchedules() {
         MeasurementDefinition def = new MeasurementDefinition(FAKE_RESOURCE_TYPE, "def");
         def.setId(1);
@@ -253,7 +251,6 @@ public class MetricTemplateImporterTest extends JMockTest {
         importer.finishImport();
     }
 
-    @SuppressWarnings("unchecked")
     public void testPerMetricUpdateScheduleOverrides() {
         MeasurementDefinition updatedDef = new MeasurementDefinition(FAKE_RESOURCE_TYPE, "def");
         updatedDef.setId(1);
@@ -325,7 +322,6 @@ public class MetricTemplateImporterTest extends JMockTest {
         testNonMatchingMeasurementDefinitionsAreIgnored();
     }
 
-    @SuppressWarnings("unchecked")
     public void testDistinguishingBetweenNormalAndPerMinuteTemplates() {
         MeasurementDefinition normalDef = new MeasurementDefinition(FAKE_RESOURCE_TYPE, "def"); 
         MeasurementDefinition perMinuteDef = new MeasurementDefinition(FAKE_RESOURCE_TYPE, "def");
@@ -376,5 +372,41 @@ public class MetricTemplateImporterTest extends JMockTest {
         //this should invoke the mocked measurement schedule manager and the expectations should check it gets called
         //correctly by the importer.
         importer.finishImport();
+    }
+    
+    public void testNotifiesAboutIgnoredMetricTemplates() throws Exception {
+        final TestPrerequisities prereqs = new TestPrerequisities(context);
+        prereqs.setMeasurementDefinitions(Collections.<MeasurementDefinition>emptyList());
+        
+        context.checking(new Expectations() {
+            {
+                prereqs.addExpectations(this);
+            }
+        });
+
+        MetricTemplateImporter importer =
+            new MetricTemplateImporter(null, prereqs.getEntityManager(), prereqs.getMeasurementScheduleManager());
+
+        importer.configure(null);
+
+        importer.configure(null);
+
+        MetricTemplate unmatched = new MetricTemplate();
+        unmatched.setMetricName("made-up");
+        unmatched.setResourceTypeName("made-up");
+        unmatched.setResourceTypePlugin("made-up");
+
+        ExportedEntityMatcher<MeasurementDefinition, MetricTemplate> matcher = importer.getExportedEntityMatcher();
+
+        assertNull(matcher.findMatch(unmatched));
+
+        importer.update(null, unmatched);
+
+        String notes = importer.finishImport();
+
+        String expectedNotes =
+            MetricTemplateImporter.getUnmatchedMetricTemplatesReport(Collections.singleton(unmatched));
+
+        assertEquals(notes, expectedNotes);
     }
 }

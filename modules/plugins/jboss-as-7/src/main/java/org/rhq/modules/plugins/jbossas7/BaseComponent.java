@@ -429,8 +429,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                                            Configuration parameters) throws InterruptedException, Exception {
 
         if (!name.contains(":")) {
-            OperationResult badName = new OperationResult("Operation name did not contain a ':'");
-            badName.setErrorMessage("Operation name did not contain a ':'");
+            String simpleResult = "Operation with name [" + name + "] did not contain a ':'";
+            OperationResult badName = new OperationResult(simpleResult);
+            badName.setErrorMessage(simpleResult);
             return badName;
         }
 
@@ -450,7 +451,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             operation = new Operation(op,theAddress);
             operation.addAdditionalProperty("profile",profile);
         } else if (what.equals("server")) {
-            if (context.getResourceType().getName().equals("JBossAS-Managed")) {
+            if (context.getResourceType().getName().equals("JBossAS7 Managed Server")) {
                 String host = pluginConfiguration.getSimpleValue("domainHost","local");
                 theAddress.add("host", host);
                 theAddress.add("server-config", myServerName);

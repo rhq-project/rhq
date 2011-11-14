@@ -117,7 +117,9 @@ public class DriftDetector implements Runnable {
                     generateSnapshot(detectionSummary);
                 }
 
-                if (detectionSummary.isRepeat()) {
+                if (!detectionSummary.isBaseDirExists()) {
+                    driftClient.reportMissingBaseDir(schedule.getResourceId(), schedule.getDriftDefinition());
+                } else if (detectionSummary.isRepeat()) {
                     driftClient.repeatChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
                         detectionSummary.getVersion());
                 } else if (changesNeedToBeReported(detectionSummary)) {
@@ -178,53 +180,33 @@ public class DriftDetector implements Runnable {
         final Set<File> processedFiles = new HashSet<File>();
         final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>();
         final List<FileEntry> deltaEntries = new LinkedList<FileEntry>();
-        final ChangeSetReader coverageReader = changeSetMgr.getChangeSetReader(snapshotFile);
 
-        if (!basedir.exists()) {
-            log.warn("The base directory [" + basedir.getAbsolutePath() + "] for " + schedule + " does not exist.");
-        }
-
+        ChangeSetReader coverageReader = null;
         int newVersion;
-        if (schedule.getDriftDefinition().isPinned()) {
-            ChangeSetReader snapshotReader = changeSetMgr.getChangeSetReader(currentSnapshot);
-            newVersion = snapshotReader.getHeaders().getVersion() + 1;
-            snapshotReader.close();
-        } else {
-            newVersion = coverageReader.getHeaders().getVersion() + 1;
-        }
+        try {
+            coverageReader = changeSetMgr.getChangeSetReader(snapshotFile);
 
-        // First look for files that have either been modified or deleted
-        for (FileEntry entry : coverageReader) {
-            File file = new File(basedir, entry.getFile());
-            if (!file.exists()) {
-                // The file has been deleted since the last scan
-                if (log.isDebugEnabled()) {
-                    log.debug("Detected deleted file for " + schedule + " --> " + file.getAbsolutePath());
-                }
-                deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
-            } else if (!file.canRead()) {
-                processedFiles.add(file);
-                if (log.isDebugEnabled()) {
-                    log.debug(file.getPath() + " is no longer readable. Treating it as a deleted file.");
-                }
-                deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
-            } else {
-                processedFiles.add(file);
-                String currentSHA = sha256(file);
-                if (!currentSHA.equals(entry.getNewSHA())) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
-                    }
-                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA);
-                    deltaEntries.add(modifiedEntry);
-                    snapshotEntries.add(modifiedEntry);
-                } else {
-                    // The file has not changed
-                    snapshotEntries.add(entry);
-                }
+            if (!basedir.exists()) {
+                log.warn("The base directory [" + basedir.getAbsolutePath() + "] for " + schedule + " does not exist.");
             }
+
+            if (schedule.getDriftDefinition().isPinned()) {
+                ChangeSetReader snapshotReader = null;
+                try {
+                    snapshotReader = changeSetMgr.getChangeSetReader(currentSnapshot);
+                    newVersion = snapshotReader.getHeaders().getVersion() + 1;
+                } finally {
+                    snapshotReader.close();
+                }
+            } else {
+                newVersion = coverageReader.getHeaders().getVersion() + 1;
+            }
+
+            // First look for files that have either been modified or deleted
+            scanForModifiedOrDeletedFiles(schedule, basedir, processedFiles, snapshotEntries, deltaEntries, coverageReader);
+        } finally {
+            coverageReader.close();
         }
-        coverageReader.close();
 
         // If the basedir is still valid we need to do a directory tree scan to look for newly added files
         if (basedir.isDirectory()) {
@@ -261,35 +243,110 @@ public class DriftDetector implements Runnable {
         }
 
         if (deltaEntries.isEmpty()) {
-            // If nothing has changed, there is no need to add/update any files
             summary.setNewSnapshot(currentSnapshot);
+
+            // If nothing has changed, there is no need to add/update any files
+            // unless the definition is pinned in which case we need to reset
+            // the current snapshot to match the pinned snapshot. Note though
+            // that we increment the snapshot version in order to let the server
+            // know about the state change.
+            if (schedule.getDriftDefinition().isPinned() && newVersion > 1 && !isPreviousChangeSetEmpty(
+                schedule.getResourceId(), schedule.getDriftDefinition())) {
+                currentSnapshot.delete();
+                File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
+
+                updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, currentSnapshot, newSnapshot);
+                // TODO report back to the server that we are back in compliance
+            }
         } else {
             if (schedule.getDriftDefinition().isPinned() && newVersion > 1 &&
                 isSameAsPreviousChangeSet(deltaEntries, currentSnapshot)) {
+                // if we are still out of compliance just report, we report a
+                // repeat change set to indicate no changes but also still out
+                // of compliance.
                 summary.setVersion(newVersion - 1);
                 summary.setRepeat(true);
                 return;
             }
 
-            File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() + ".previous");
-            copyFile(currentSnapshot, oldSnapshot);
-            currentSnapshot.delete();
+            File oldSnapshot = backupAndDeleteCurrentSnapshot(currentSnapshot);
+            File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
 
-            Headers snapshotHeaders = createHeaders(schedule, COVERAGE, newVersion);
-            File newSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
-                schedule.getDriftDefinition().getName(), COVERAGE);
-            ChangeSetWriter newSnapshotWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-                snapshotHeaders);
+            updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, oldSnapshot, newSnapshot);
+        }
+    }
 
-            for (FileEntry entry : snapshotEntries) {
-                newSnapshotWriter.write(entry);
+    private void scanForModifiedOrDeletedFiles(DriftDetectionSchedule schedule, File basedir, Set<File> processedFiles,
+        List<FileEntry> snapshotEntries, List<FileEntry> deltaEntries, ChangeSetReader coverageReader)
+        throws IOException {
+
+        for (FileEntry entry : coverageReader) {
+            File file = new File(basedir, entry.getFile());
+            if (!file.exists()) {
+                // The file has been deleted since the last scan
+                if (log.isDebugEnabled()) {
+                    log.debug("Detected deleted file for " + schedule + " --> " + file.getAbsolutePath());
+                }
+                deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
+            } else if (!file.canRead()) {
+                processedFiles.add(file);
+                if (log.isDebugEnabled()) {
+                    log.debug(file.getPath() + " is no longer readable. Treating it as a deleted file.");
+                }
+                deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
+            } else {
+                processedFiles.add(file);
+                String currentSHA = sha256(file);
+                if (!currentSHA.equals(entry.getNewSHA())) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
+                    }
+                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA);
+                    deltaEntries.add(modifiedEntry);
+                    snapshotEntries.add(modifiedEntry);
+                } else {
+                    // The file has not changed
+                    snapshotEntries.add(entry);
+                }
             }
-            newSnapshotWriter.close();
-            Headers deltaHeaders = createHeaders(schedule, DRIFT, newVersion);
+        }
+    }
 
+    private boolean isPreviousChangeSetEmpty(int resourceId, DriftDefinition definition) throws IOException {
+        File changeSet = changeSetMgr.findChangeSet(resourceId, definition.getName(), DRIFT);
+        if (!changeSet.exists()) {
+            return true;
+        }
+        ChangeSetReader reader = null;
+        boolean isEmpty;
+        try {
+            reader = changeSetMgr.getChangeSetReader(changeSet);
+            isEmpty = true;
+
+            for (FileEntry entry : reader) {
+                isEmpty = false;
+                break;
+            }
+        } finally {
+            if (reader != null) {
+                reader.close();
+            }
+        }
+
+        return isEmpty;
+    }
+
+    private void updateDeltaSnapshot(DriftDetectionSummary summary, DriftDetectionSchedule schedule,
+        List<FileEntry> deltaEntries, int newVersion, File oldSnapshot, File newSnapshot)
+        throws IOException {
+
+        ChangeSetWriter deltaWriter = null;
+
+        try {
+            Headers deltaHeaders = createHeaders(schedule, DRIFT, newVersion);
             File driftChangeSet = changeSetMgr.findChangeSet(schedule.getResourceId(),
                 schedule.getDriftDefinition().getName(), DRIFT);
-            ChangeSetWriter deltaWriter = changeSetMgr.getChangeSetWriter(driftChangeSet, deltaHeaders);
+            deltaWriter = changeSetMgr.getChangeSetWriter(driftChangeSet, deltaHeaders);
 
             summary.setDriftChangeSet(driftChangeSet);
             summary.setNewSnapshot(newSnapshot);
@@ -298,7 +355,38 @@ public class DriftDetector implements Runnable {
             for (FileEntry entry : deltaEntries) {
                 deltaWriter.write(entry);
             }
-            deltaWriter.close();
+        } finally {
+            if (deltaWriter != null) {
+                deltaWriter.close();
+            }
+        }
+    }
+
+    private File backupAndDeleteCurrentSnapshot(File currentSnapshot) throws IOException {
+        File oldSnapshot = new File(currentSnapshot.getParentFile(), currentSnapshot.getName() + ".previous");
+        copyFile(currentSnapshot, oldSnapshot);
+        currentSnapshot.delete();
+        return oldSnapshot;
+    }
+
+    private File updateCurrentSnapshot(DriftDetectionSchedule schedule, List<FileEntry> snapshotEntries, int newVersion)
+        throws IOException {
+
+        ChangeSetWriter newSnapshotWriter = null;
+
+        try {
+            Headers snapshotHeaders = createHeaders(schedule, COVERAGE, newVersion);
+            File newSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
+                schedule.getDriftDefinition().getName(), COVERAGE);
+            newSnapshotWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
+                snapshotHeaders);
+
+            for (FileEntry entry : snapshotEntries) {
+                newSnapshotWriter.write(entry);
+            }
+            return newSnapshot;
+        } finally {
+            newSnapshotWriter.close();
         }
     }
 
@@ -308,37 +396,44 @@ public class DriftDetector implements Runnable {
             entriesMap.put(e.getFile(), e);
         }
 
-        File deltaChangeSet = new File(currentSnapsotFile.getParentFile(), "drift-changeset.txt");
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(deltaChangeSet);
+        ChangeSetReader reader = null;
+        try {
+            File deltaChangeSet = new File(currentSnapsotFile.getParentFile(), "drift-changeset.txt");
+            reader = changeSetMgr.getChangeSetReader(deltaChangeSet);
 
-        int numEntries = 0;
-        for (FileEntry entry : reader) {
-            FileEntry newEntry = entriesMap.get(entry.getFile());
-            if (newEntry == null) {
-                return false;
+            int numEntries = 0;
+            for (FileEntry entry : reader) {
+                FileEntry newEntry = entriesMap.get(entry.getFile());
+                if (newEntry == null) {
+                    return false;
+                }
+                if (entry.getType() != newEntry.getType()) {
+                    return false;
+                }
+                switch (entry.getType()) {
+                    case FILE_ADDED:
+                        if (!entry.getNewSHA().equals(newEntry.getNewSHA())) {
+                            return false;
+                        }
+                    case FILE_CHANGED:
+                        if (!entry.getNewSHA().equals(newEntry.getNewSHA()) ||
+                            !entry.getOldSHA().equals(newEntry.getOldSHA())) {
+                            return false;
+                        }
+                    default:  // FILE_REMOVED
+                        if (!entry.getOldSHA().equals(newEntry.getOldSHA())) {
+                            return false;
+                        }
+                }
+                numEntries++;
             }
-            if (entry.getType() != newEntry.getType()) {
-                return false;
+
+            return numEntries == entriesMap.size();
+        } finally {
+            if (reader != null) {
+                reader.close();
             }
-            switch (entry.getType()) {
-                case FILE_ADDED:
-                    if (!entry.getNewSHA().equals(newEntry.getNewSHA())) {
-                        return false;
-                    }
-                case FILE_CHANGED:
-                    if (!entry.getNewSHA().equals(newEntry.getNewSHA()) ||
-                        !entry.getOldSHA().equals(newEntry.getOldSHA())) {
-                        return false;
-                    }
-                default:  // FILE_REMOVED
-                    if (!entry.getOldSHA().equals(newEntry.getOldSHA())) {
-                        return false;
-                    }
-            }
-            numEntries++;
         }
-
-        return numEntries == entriesMap.size();
     }
 
     private void generateSnapshot(DriftDetectionSummary summary) throws IOException {
@@ -352,45 +447,60 @@ public class DriftDetector implements Runnable {
                     "exist. You may want review the drift definition and verify that the value of the base " +
                     "directory is in fact correct.");
             }
+            summary.setBaseDirExists(false);
+            return;
         }
 
         log.debug("Generating coverage change set for " + schedule);
 
         File snapshot = changeSetMgr.findChangeSet(schedule.getResourceId(), schedule.getDriftDefinition().getName(),
             COVERAGE);
-        final ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(snapshot, createHeaders(schedule, COVERAGE, 0));
 
-        if (basedir.isDirectory()) {
+        ChangeSetWriter writer = null;
+        try {
+            writer = changeSetMgr.getChangeSetWriter(snapshot, createHeaders(schedule, COVERAGE, 0));
 
-            forEachFile(basedir, new FilterFileVisitor(basedir, driftDef.getIncludes(), driftDef.getExcludes(),
-                new FileVisitor() {
-                    @Override
-                    public void visit(File file) {
-                        try {
-                            if (!file.canRead()) {
-                                if (log.isDebugEnabled()) {
-                                    log.debug("Skipping " + file.getPath() + " since it is not readable.");
-                                }
-                                return;
-                            }
+            if (basedir.isDirectory()) {
+                doDirectoryScan(schedule, driftDef, basedir, writer);
+                writer.close();
+                writer = null;
+            }
+            if (schedule.getDriftDefinition().isPinned()) {
+                copyFile(snapshot, new File(snapshot.getParentFile(), "snapshot.pinned"));
+            }
+            summary.setNewSnapshot(snapshot);
+        } finally {
+            if (writer != null) {
+                writer.close();
+            }
+        }
+    }
+
+    private void doDirectoryScan(final DriftDetectionSchedule schedule, DriftDefinition driftDef, final File basedir,
+                                 final ChangeSetWriter writer) {
+        forEachFile(basedir, new FilterFileVisitor(basedir, driftDef.getIncludes(), driftDef.getExcludes(),
+            new FileVisitor() {
+                @Override
+                public void visit(File file) {
+                    try {
+                        if (!file.canRead()) {
                             if (log.isDebugEnabled()) {
-                                log.debug("Adding " + file.getPath() + " to coverage change set for " + schedule);
+                                log.debug("Skipping " + file.getPath() + " since it is not readable.");
                             }
-                            writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
-                        } catch (IOException e) {
-                            log.error("An error occurred while generating a coverage change set for " + schedule + ": "
-                                + e.getMessage());
-                            throw new DriftDetectionException(
-                                "An error occurred while generating a coverage change set for " + schedule, e);
+                            return;
                         }
+                        if (log.isDebugEnabled()) {
+                            log.debug("Adding " + file.getPath() + " to coverage change set for " + schedule);
+                        }
+                        writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
+                    } catch (IOException e) {
+                        log.error("An error occurred while generating a coverage change set for " + schedule + ": "
+                            + e.getMessage());
+                        throw new DriftDetectionException(
+                            "An error occurred while generating a coverage change set for " + schedule, e);
                     }
-                }));
-        }
-        writer.close();
-        if (schedule.getDriftDefinition().isPinned()) {
-            copyFile(snapshot, new File(snapshot.getParentFile(), "snapshot.pinned"));
-        }
-        summary.setNewSnapshot(snapshot);
+                }
+            }));
     }
 
     private String relativePath(File basedir, File file) {

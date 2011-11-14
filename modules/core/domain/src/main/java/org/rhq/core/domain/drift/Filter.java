@@ -27,6 +27,10 @@ public class Filter implements Serializable {
     private String path;
     private String pattern;
 
+    /** For JAXB only **/
+    public Filter() {
+    }
+
     public Filter(String path, String pattern) {
         setPath(path);
         setPattern(pattern);

@@ -99,6 +99,7 @@ import org.rhq.core.pluginapi.support.SnapshotReportRequest;
 import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
@@ -952,6 +953,9 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             if (entry != null) {
                 is = jfile.getInputStream(entry);
                 SAXBuilder saxBuilder = new SAXBuilder();
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                saxBuilder.setEntityResolver(entityResolver);
+
                 Document doc = saxBuilder.build(is);
                 Element root = doc.getRootElement(); // <jboss-web>
                 List<Element> vHosts = root.getChildren("virtual-host");

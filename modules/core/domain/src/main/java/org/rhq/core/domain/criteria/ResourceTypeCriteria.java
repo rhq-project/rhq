@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,9 @@
 package org.rhq.core.domain.criteria;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -59,6 +61,8 @@ public class ResourceTypeCriteria extends Criteria {
     // by default, we don't want to fetch resource types that
     // are marked deleted
     private Boolean filterDeleted = false;
+    private Set<ResourceCategory> filterCategories; // needs overrides
+    private Boolean filterParentResourceTypesEmpty; // needs overrides
 
     private boolean fetchSubCategory;
     private boolean fetchChildResourceTypes;
@@ -87,10 +91,15 @@ public class ResourceTypeCriteria extends Criteria {
             + "          FROM ResourceType innerRt " //
             + "          JOIN innerRt.parentResourceTypes innerParentRt " //
             + "         WHERE innerParentRt.id IN ( ? ) )");
-
         filterOverrides.put("pluginName", "plugin like ?");
         filterOverrides.put("ids", "id in ( ? )");
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
+        filterOverrides.put("categories", "category in ( ? )");
+        filterOverrides.put("parentResourceTypesEmpty", "" //
+            + "id IN ( SELECT innerRt.id FROM ResourceType innerRt " //
+            + "        LEFT JOIN innerRt.parentResourceTypes " //
+            + "        WHERE ( ? = true  AND innerRt.parentResourceTypes IS EMPTY ) " //
+            + "           OR ( ? = false AND innerRt.parentResourceTypes IS NOT EMPTY ) )");
 
         sortOverrides.put("pluginName", "plugin");
     }
@@ -146,6 +155,14 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void addFilterDeleted(boolean deleted) {
         this.filterDeleted = deleted;
+    }
+
+    public void addFilterCategories(ResourceCategory... filterCategories) {
+        this.filterCategories = new HashSet<ResourceCategory>(Arrays.asList(filterCategories));
+    }
+
+    public void addFilterParentResourceTypesEmpty(boolean filterParentResourceTypesEmpty) {
+        this.filterParentResourceTypesEmpty = filterParentResourceTypesEmpty;
     }
 
     public void fetchSubCategory(boolean fetchSubCategory) {

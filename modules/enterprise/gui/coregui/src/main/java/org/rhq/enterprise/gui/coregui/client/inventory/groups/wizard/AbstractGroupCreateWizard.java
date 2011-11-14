@@ -30,7 +30,6 @@ import com.smartgwt.client.widgets.IButton;
 
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -82,11 +81,12 @@ public abstract class AbstractGroupCreateWizard extends AbstractWizard {
         groupService.createResourceGroup(createStep.getGroup(), memberStep.getSelectedResourceIds(),
             new AsyncCallback<ResourceGroup>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_groupCreateWizard_createFailure(), caught);
+                    String msg = caught.getMessage();
+                    CoreGUI.getErrorHandler().handleError(MSG.view_groupCreateWizard_createFailure(createStep.getGroup().getName(),msg), caught);
                 }
 
                 public void onSuccess(ResourceGroup result) {
-                    String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise();
+                    String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise(result.getName());
                     String detailedMessage = MSG.view_groupCreateWizard_createSuccessful_full(result.getGroupCategory()
                         .name().toLowerCase(), result.getName(), String
                         .valueOf(memberStep.getSelectedResourceIds().length));

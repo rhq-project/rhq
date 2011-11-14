@@ -19,6 +19,12 @@
 
 package org.rhq.core.pc.drift;
 
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,12 +40,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.util.MessageDigestGenerator;
-
-import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.IOUtils.write;
-import static org.apache.commons.io.IOUtils.writeLines;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
  * A base test class that provides a framework for drift related tests. DriftTest sets up
@@ -189,6 +189,10 @@ public class DriftTest {
      */
     protected File changeSet(String config, DriftChangeSetCategory type) throws IOException {
         return changeSetMgr.findChangeSet(resourceId(), config, type);
+    }
+
+    protected File pinnedSnapshot(String definitionName) throws Exception {
+        return new File(changeSetDir(definitionName), "snapshot.pinned");
     }
 
     /**

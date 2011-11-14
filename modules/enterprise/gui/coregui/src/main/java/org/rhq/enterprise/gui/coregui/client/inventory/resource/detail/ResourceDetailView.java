@@ -520,7 +520,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
     private void updateDriftTabContent(final ResourceComposite resourceComposite, final Resource resource,
         ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
-        if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), resourcePermissions.isDrift())) {
+        if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), true)) {
 
             // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
             // go through the comprehensive drift carousel view.  Leave it in, but commented, in case we want it back. 
@@ -644,7 +644,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
                     // until we finish the following work we're susceptible to fast-click issues in
-                    // tree navigation.  So, wait until after it's done to notify listeners thatthe view is
+                    // tree navigation.  So, wait until after it's done to notify listeners that the view is
                     // safely rendered.  Make sure to notify even on failure.
                     try {
                         resourceComposite.getResource().setResourceType(type);

@@ -39,7 +39,7 @@
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by ${rhq.earName} -->
       </dependency>
-      
+
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-domain</artifactId>
@@ -53,7 +53,7 @@
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by ${rhq.earName} -->
       </dependency>
-      
+
       <!-- 3rd Party Deps -->
 
       <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
@@ -132,7 +132,7 @@
       </dependency>
 
       <!-- == Seam Related Dependencies ================ -->
-      
+
       <dependency>
         <groupId>org.jboss.seam</groupId>
         <artifactId>jboss-seam</artifactId>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name="mod_cluster" displayName="mod_cluster" description="Monitoring and management of mod_cluster plugin." version="1.0" package="org.rhq.plugins.modcluster" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin"
+<plugin name="mod_cluster" displayName="mod_cluster" description="Monitoring and management of mod_cluster plugin." package="org.rhq.plugins.modcluster" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin"
    xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="JMX" />

@@ -371,10 +371,10 @@
 
             <!-- Dynamic Metrics -->
             <metric property="Rows" displayType="summary" measurementType="dynamic" description="Number of Rows in the Table" />
-            <metric property="Avg_row_length" displayType="summary" measurementType="dynamic" units="bytes" description="Average Row Length(bytes)" />
+            <metric property="Avg_row_length" measurementType="dynamic" units="bytes" description="Average Row Length(bytes)" />
             <metric property="Data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Data Size(bytes)" />
-            <metric property="Max_data_length" displayType="summary" measurementType="dynamic" units="bytes" description="Max Table Data Size(bytes)" />
-            <metric property="Index_length" displayType="summary" measurementType="dynamic" units="bytes" description="Table Index Size(bytes)" />
+            <metric property="Max_data_length" measurementType="dynamic" units="bytes" description="Max Table Data Size(bytes)" />
+            <metric property="Index_length" measurementType="dynamic" units="bytes" description="Table Index Size(bytes)" />
             <metric property="Data_free" displayType="summary" measurementType="dynamic" units="bytes" description="Table Free Space(bytes)" />
          </service>
       </service>

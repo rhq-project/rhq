@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +55,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
 import org.rhq.core.domain.sync.ExportReport;
@@ -62,12 +62,13 @@ import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.ImportConfiguration;
 import org.rhq.core.domain.sync.ImportConfigurationDefinition;
+import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
 import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.sync.validators.EntityValidator;
 import org.rhq.enterprise.server.sync.validators.InconsistentStateException;
 import org.rhq.enterprise.server.xmlschema.ConfigurationInstanceDescriptorUtil;
 
@@ -85,18 +86,25 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     private EntityManager entityManager;
 
     private JAXBContext defaultImportConfigurationJAXBContext;
+        
+    private SynchronizerFactory synchronizerFactory = new SynchronizerFactory();
     
     public SynchronizationManagerBean() {
         try {
-            defaultImportConfigurationJAXBContext = JAXBContext.newInstance(DefaultImportConfigurationDescriptor.class);
+            defaultImportConfigurationJAXBContext = JAXBContext.newInstance(DefaultImportConfigurationDescriptor.class);            
         } catch (JAXBException e) {
             throw new IllegalStateException("Failed to create DefaultImportConfigurationDescriptor unmarshaller. This should never happen.");
         }
     }
     
+    //for test purposes
+    @Override
+    public void setSynchronizerFactory(SynchronizerFactory factory) {
+        this.synchronizerFactory = factory;
+    }
+    
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ExportReport exportAllSubsystems(Subject subject) {
         ExportWrapper localExport = exportAllSubsystemsLocally(subject);
 
@@ -131,16 +139,9 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ExportWrapper exportAllSubsystemsLocally(Subject subject) {
-        Set<Synchronizer<?, ?>> allSynchronizers = new HashSet<Synchronizer<?, ?>>();
+        Set<Synchronizer<?, ?>> allSynchronizers = getInitializedSynchronizers(subject);
         Map<String, ExporterMessages> messages = new HashMap<String, ExporterMessages>();
-
-        for (SynchronizedEntity e : SynchronizedEntity.values()) {
-            Synchronizer<?, ?> synchronizer = e.getSynchronizer();
-            synchronizer.initialize(subject, entityManager);
-            allSynchronizers.add(synchronizer);
-        }
 
         try {
             return new ExportWrapper(messages, new ExportingInputStream(allSynchronizers, messages));
@@ -150,8 +151,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void importAllSubsystems(Subject subject, InputStream exportFile, List<ImportConfiguration> configurations)
+    public ImportReport importAllSubsystems(Subject subject, InputStream exportFile, List<ImportConfiguration> configurations)
         throws ValidationException, ImportException {
 
         File tmpFile = null;
@@ -170,13 +170,15 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         }
 
         InputStream in = null;
-        try {
+        try {            
+            Map<String, Configuration> configsPerImports = getConfigPerImporter(configurations);
+            
             in = new GZIPInputStream(new BufferedInputStream(new FileInputStream(tmpFile)));
-            validateExport(subject, in);
+            validateExport(subject, in, configsPerImports);
             in.close();
 
             in = new GZIPInputStream(new BufferedInputStream(new FileInputStream(tmpFile)));            
-            importExportFile(subject, in, getConfigPerImporter(configurations));
+            return importExportFile(subject, in, configsPerImports);
         } catch (XMLStreamException e) {
             throw new ImportException("Failed import due to XML parsing error.", e);
         } catch (IOException e) {
@@ -188,24 +190,21 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> configurations)
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> configurations)
         throws ValidationException, ImportException {
-        importAllSubsystems(subject, new ByteArrayInputStream(exportFile), configurations);
+        return importAllSubsystems(subject, new ByteArrayInputStream(exportFile), configurations);
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void validate(Subject subject, InputStream exportFile) throws ValidationException {
         try {
-            validateExport(subject, exportFile);
+            validateExport(subject, exportFile, Collections.<String, Configuration>emptyMap());
         } catch (XMLStreamException e) {
             throw new ValidationException("Failed to parse the export file.", e);
         }
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void validate(Subject subject, byte[] exportFile) throws ValidationException {
         validate(subject, new ByteArrayInputStream(exportFile));
     }
@@ -235,8 +234,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
         List<ImportConfigurationDefinition> ret = new ArrayList<ImportConfigurationDefinition>();
 
-        for (SynchronizedEntity e : SynchronizedEntity.values()) {
-            Synchronizer<?, ?> syn = e.getSynchronizer();
+        for (Synchronizer<?, ?> syn : synchronizerFactory.getAllSynchronizers()) {
             ret.add(new ImportConfigurationDefinition(syn.getClass().getName(), syn.getImporter()
                 .getImportConfigurationDefinition()));
         }
@@ -244,12 +242,12 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         return ret;
     }
 
-    private void validateExport(Subject subject, InputStream exportFile) throws ValidationException, XMLStreamException {
+    private void validateExport(Subject subject, InputStream exportFile, Map<String, Configuration> importConfigs) throws ValidationException, XMLStreamException {
         XMLStreamReader rdr = XMLInputFactory.newInstance().createXMLStreamReader(exportFile);
 
         try {
             Set<ConsistencyValidatorFailureReport> failures = new HashSet<ConsistencyValidatorFailureReport>();
-            Set<ConsistencyValidator> executedValidators = new HashSet<ConsistencyValidator>();
+            Set<ConsistencyValidator> consistencyValidators = new HashSet<ConsistencyValidator>();
 
             while (rdr.hasNext()) {
                 switch (rdr.next()) {
@@ -258,6 +256,11 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
                     if (SynchronizationConstants.VALIDATOR_ELEMENT.equals(tagName)) {
                         ConsistencyValidator validator = null;
                         String validatorClass = rdr.getAttributeValue(null, SynchronizationConstants.CLASS_ATTRIBUTE);
+                        if (!isConsistencyValidatorClass(validatorClass)) {
+                            LOG.info("The export file contains an unknown consistency validator: " + validatorClass + ". Ignoring.");
+                            continue;
+                        }
+                        
                         try {
                             validator = validateSingle(rdr, subject);
                         } catch (Exception e) {
@@ -265,14 +268,12 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
                                 printExceptionToString(e)));
                         }
                         if (validator != null) {
-                            executedValidators.add(validator);
+                            consistencyValidators.add(validator);
                         }
                     } else if (SynchronizationConstants.ENTITIES_EXPORT_ELEMENT.equals(tagName)) {
-                        //all the validators preceed the importers in the export file so we can now check if the
-                        //validator was already run
                         String synchronizerClass = rdr.getAttributeValue(null, SynchronizationConstants.ID_ATTRIBUTE);
                         try {
-                            failures.addAll(validateEntities(rdr, subject, executedValidators));
+                            failures.addAll(validateEntities(rdr, subject, consistencyValidators, importConfigs));
                         } catch (Exception e) {
                             throw new ValidationException(
                                 "Validation failed unexpectedly while processing the entities exported by the synchronizer '"
@@ -290,24 +291,38 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         }
     }
 
-    private Set<ConsistencyValidatorFailureReport> validateEntities(XMLStreamReader rdr, Subject subject,
-        Set<ConsistencyValidator> executedValidators) throws Exception {
+    /**
+     * @param validatorClass
+     * @return
+     */
+    private boolean isConsistencyValidatorClass(String validatorClass) {
+        try {
+            Class<?> cls = Class.forName(validatorClass);
+            
+            return ConsistencyValidator.class.isAssignableFrom(cls);            
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private <E, X> Set<ConsistencyValidatorFailureReport> validateEntities(XMLStreamReader rdr, Subject subject,
+        Set<ConsistencyValidator> consistencyValidators, Map<String, Configuration> importConfigurations) throws Exception {
         String synchronizerClass = rdr.getAttributeValue(null, SynchronizationConstants.ID_ATTRIBUTE);
         HashSet<ConsistencyValidatorFailureReport> ret = new HashSet<ConsistencyValidatorFailureReport>();
 
-        Synchronizer<?, ?> synchronizer = instantiate(synchronizerClass, Synchronizer.class,
+        @SuppressWarnings("unchecked")
+        Synchronizer<E, X> synchronizer = instantiate(synchronizerClass, Synchronizer.class,
             "The id attribute of entities doesn't correspond to a class implementing the Synchronizer interface.");
 
         synchronizer.initialize(subject, entityManager);
 
-        Importer<?, ?> importer = synchronizer.getImporter();
+        Importer<E, X> importer = synchronizer.getImporter();
 
-        //pre-init the validators so that we can reuse them in the loop below
-        Set<ConsistencyValidator> validators = synchronizer.getRequiredValidators();
-        for(ConsistencyValidator v : validators) {
-            v.initialize(subject, entityManager);
-            
-            if (!executedValidators.contains(v)) {
+        Set<ConsistencyValidator> requriedConsistencyValidators = synchronizer.getRequiredValidators();
+        
+        //check that all the required consistency validators were run
+        for(ConsistencyValidator v : requriedConsistencyValidators) {
+            if (!consistencyValidators.contains(v)) {
                 ret.add(new ConsistencyValidatorFailureReport(v.getClass().getName(), "The validator '"
                     + v.getClass().getName() + "' is required by the synchronizer '" + synchronizerClass
                     + "' but was not found in the export file."));
@@ -319,29 +334,48 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
             return ret;
         }
         
+        boolean configured = false;
+        Configuration importConfiguration = importConfigurations.get(synchronizerClass);
+
+        Set<EntityValidator<X>> validators = null;
+        
+        //the passed in configuration has precedence over the default one inlined in 
+        //the config file.
+        if (importConfiguration != null) {
+            importer.configure(importConfiguration);
+            validators = importer.getEntityValidators();
+            for(EntityValidator<X> v : validators) {
+                v.initialize(subject, entityManager);
+            }
+            configured = true;
+        }
+        
         while (rdr.hasNext()) {
             boolean bailout = false;
             switch (rdr.next()) {
             case XMLStreamConstants.START_ELEMENT:
-                if (SynchronizationConstants.DATA_ELEMENT.equals(rdr.getName().getLocalPart())) {
-                    rdr.nextTag();
-                    Object exportedEntity = importer.unmarshallExportedEntity(new ExportReader(rdr));
-                    Class<?> exportedEntityClass = exportedEntity.getClass();
+                if (SynchronizationConstants.DEFAULT_CONFIGURATION_ELEMENT.equals(rdr.getName().getLocalPart())) {
+                    if (!configured) {
+                        importConfiguration = getDefaultConfiguration(rdr);
+                    }
+                } else if (SynchronizationConstants.DATA_ELEMENT.equals(rdr.getName().getLocalPart())) {
                     
-                    for (ConsistencyValidator validator : validators) {
-                        boolean shouldCheck = false;
-                        for (Class<?> cls : validator.getValidatedEntityTypes()) {
-                            if (cls.isAssignableFrom(exportedEntityClass)) {
-                                shouldCheck = true;
-                                break;
-                            }
+                    //first check if the configure method has been called
+                    if (!configured) {
+                        importer.configure(importConfiguration);
+                        validators = importer.getEntityValidators();
+                        for(EntityValidator<X> v : validators) {
+                            v.initialize(subject, entityManager);
                         }
+                        configured = true;
+                    }
+                    
+                    //now do the validation
 
-                        if (!shouldCheck) {
-                            //ok, this validator doesn't want to validate this type of entity
-                            continue;
-                        }
-
+                    rdr.nextTag();
+                    X exportedEntity = importer.unmarshallExportedEntity(new ExportReader(rdr));                    
+                    
+                    for (EntityValidator<X> validator : validators) {
                         try {
                             validator.validateExportedEntity(exportedEntity);
                         } catch (Exception e) {
@@ -367,17 +401,23 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         return ret;
     }
 
-    private void importExportFile(Subject subject, InputStream exportFile,
+    private ImportReport importExportFile(Subject subject, InputStream exportFile,
         Map<String, Configuration> importerConfigs) throws ImportException, XMLStreamException {
         XMLStreamReader rdr = XMLInputFactory.newInstance().createXMLStreamReader(exportFile);
 
+        ImportReport report = new ImportReport();
+        
         while (rdr.hasNext()) {
             switch (rdr.next()) {
             case XMLStreamReader.START_ELEMENT:
                 String tagName = rdr.getName().getLocalPart();
                 if (SynchronizationConstants.ENTITIES_EXPORT_ELEMENT.equals(tagName)) {
                     try {
-                        importSingle(subject, importerConfigs, rdr);
+                        String synchronizer = rdr.getAttributeValue(null, SynchronizationConstants.ID_ATTRIBUTE);
+                        String notes = importSingle(subject, importerConfigs, rdr);
+                        if (notes != null) {
+                            report.getImporterNotes().put(synchronizer, notes);
+                        }
                     } catch (Exception e) {
                         //fail fast on the import errors... This runs in a single transaction
                         //so all imports done so far will get rolled-back.
@@ -390,6 +430,8 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
                 break;
             }
         }
+        
+        return report;
     }
 
     private ConsistencyValidator validateSingle(XMLStreamReader rdr, Subject subject) throws InstantiationException,
@@ -410,7 +452,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         return validator;
     }
 
-    private <E, X> void importSingle(Subject subject, Map<String, Configuration> importConfigs, XMLStreamReader rdr)
+    private <E, X> String importSingle(Subject subject, Map<String, Configuration> importConfigs, XMLStreamReader rdr)
         throws Exception {
         String synchronizerClassName = rdr.getAttributeValue(null, SynchronizationConstants.ID_ATTRIBUTE);
 
@@ -477,7 +519,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
             importer.configure(importConfiguration);
         }
         
-        importer.finishImport();
+        return importer.finishImport();
     }
 
     private static String printExceptionToString(Throwable t) {
@@ -499,6 +541,15 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         return desiredClass.cast(instance);
     }
 
+    private Set<Synchronizer<?, ?>> getInitializedSynchronizers(Subject subject) {
+        Set<Synchronizer<?, ?>> ret = synchronizerFactory.getAllSynchronizers();
+        for(Synchronizer<?, ?> s : ret) {
+            s.initialize(subject, entityManager);
+        }
+        
+        return ret;
+    }
+    
     private Map<String, Configuration> getConfigPerImporter(List<ImportConfiguration> list) {
         Map<String, Configuration> ret = new HashMap<String, Configuration>();
 

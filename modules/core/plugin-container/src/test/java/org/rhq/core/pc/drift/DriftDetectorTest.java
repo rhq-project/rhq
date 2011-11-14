@@ -21,6 +21,7 @@ package org.rhq.core.pc.drift;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static org.apache.commons.io.FileUtils.copyFile;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
@@ -48,6 +49,7 @@ import org.testng.annotations.Test;
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.ChangeSetWriter;
+import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -226,7 +228,7 @@ public class DriftDetectorTest extends DriftTest {
     }
 
     @Test
-    public void reportEmptyChangeSetWhenBaseDirDoesNotExist() throws Exception {
+    public void reportMissingBaseDirWhenNoInitialSnapshotExists() throws Exception {
         final File basedir = new File(resourceDir, "conf");
         DriftDefinition def = driftDefinition("basedir-does-not-exist", basedir.getAbsolutePath());
 
@@ -235,18 +237,15 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), def));
         detector.run();
 
-        assertEquals(driftClient.getSendChangeSetInvocationCount(), 1, "DriftClient should be invoked to send " +
-            "initial change set to server even when the base directory does not exist.");
+        assertEquals(driftClient.getReportMissingBaseDirInvocationCount(), 1, "A missing base directory should be " +
+            "reported to the server if no initial snapshot has already been generated.");
+        assertEquals(driftClient.getSendChangeSetInvocationCount(), 0, "No initial change set should be sent to " +
+            "the server if the base directory does not exist.");
 
-        // verify that the initial change set was generated
+        // verify that the initial change set was not generated
         File snapshot = changeSet(def.getName(), COVERAGE);
-        List<FileEntry> fileEntries = emptyList();
-
-        Headers headers = createHeaders(def, COVERAGE);
-        headers.setBasedir(basedir.getAbsolutePath());
-        assertHeaderEquals(snapshot, headers);
-        assertFileEntriesMatch("There should be no file entries when the base directory does not exist", fileEntries,
-            snapshot);
+        assertFalse(snapshot.exists(), "An initial snapshot should not be written to disk if the base directory " +
+            "does not exist.");
     }
 
     @SuppressWarnings("unchecked")
@@ -863,6 +862,59 @@ public class DriftDetectorTest extends DriftTest {
         assertFalse(previousSnapshot.exists(), "There should be no previous version snapshot file because the " +
             "server has already acknowledged the current snapshot.");
 
+    }
+
+    @Test
+    public void detectWhenResourceComesBackIntoCompliance() throws Exception {
+        DriftDefinition driftDef = driftDefinition("back-into-compliance", resourceDir.getAbsolutePath());
+        driftDef.setPinned(true);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+        String serverConfHash = sha256(serverConf);
+
+        Headers headers = createHeaders(driftDef, COVERAGE);
+
+        // generate the pinned snapshot which is version zero
+        File pinnedSnapshot = pinnedSnapshot(driftDef.getName());
+        ChangeSetWriter writer = new ChangeSetWriterImpl(pinnedSnapshot, headers);
+        writer.write(addedFileEntry("conf/server.conf", serverConfHash));
+        writer.close();
+
+        // generate the current snapshot file. we will take a shortcut here by
+        // just copying the pinned snapshot. We can do this since the current
+        // snapshot will be identical to the pinned snapshot after the current
+        // snapshot is first generated.
+        File currentSnapshot = changeSet(driftDef.getName(), COVERAGE);
+        copyFile(pinnedSnapshot, currentSnapshot);
+
+        // now generate some drift causing the resource to go out of compliance
+        File newServerConf = createRandomFile(confDir, "new_server.conf");
+        String newServerConfHash = sha256(newServerConf);
+
+        // do a drift detection run
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftDef);
+        scheduleQueue.addSchedule(schedule);
+        // this run should produce version one
+        detector.run();
+
+        // now put the resource back into compliance
+        newServerConf.delete();
+
+        // do another drift detection run but first we have to delete the
+        // previous snapshot file otherwise the detection scan will not run.
+        previousSnapshot(driftDef.getName()).delete();
+        schedule.resetSchedule();
+        // this run should produce version two
+        detector.run();
+
+        // verify that that current snapshot has been updated to reflect that
+        // the resource is back in compliance.
+        List<FileEntry> entries = asList(addedFileEntry("conf/server.conf", serverConfHash));
+
+        assertHeaderEquals(currentSnapshot, createHeaders(driftDef, COVERAGE, 2));
+        assertFileEntriesMatch("The entries in the current snapshot should match those in the pinned snapshot " +
+            "once the resource has gone back into compliance.", entries, currentSnapshot);
     }
 
     private void assertHeaderEquals(File changeSet, Headers expected) throws Exception {

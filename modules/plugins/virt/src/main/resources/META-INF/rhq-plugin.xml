@@ -171,12 +171,12 @@
 
                 <metric property="rx_bytes" displayName="Received Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
                 <metric property="rx_packets" displayName="Received Packets" measurementType="trendsup"/>
-                <metric property="rx_errs" displayName="Receive Errors" displayType="summary" measurementType="trendsup"/>
-                <metric property="rx_drop" displayName="Receive Packages Dropped" displayType="summary" measurementType="trendsup"/>
+                <metric property="rx_errs" displayName="Receive Errors" measurementType="trendsup"/>
+                <metric property="rx_drop" displayName="Receive Packages Dropped" measurementType="trendsup"/>
                 <metric property="tx_bytes" displayName="Sent Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
                 <metric property="tx_packets" displayName="Sent Packets" measurementType="trendsup"/>
-                <metric property="tx_errs" displayName="Send Errors" displayType="summary" measurementType="trendsup"/>
-                <metric property="tx_drop" displayName="Send Packets Dropped" displayType="summary" measurementType="trendsup"/>
+                <metric property="tx_errs" displayName="Send Errors" measurementType="trendsup"/>
+                <metric property="tx_drop" displayName="Send Packets Dropped" measurementType="trendsup"/>
 
 
             </service>
@@ -184,9 +184,9 @@
             <service name="Virtual Block Device"
                     class="VirtualizationBlockDeviceComponent"
                     discovery="VirtualizationBlockDeviceDiscoveryComponent">
-                <metric property="rd_req" displayName="Read Requests" displayType="summary" measurementType="trendsup"/>
+                <metric property="rd_req" displayName="Read Requests" measurementType="trendsup"/>
                 <metric property="rd_bytes" displayName="Read Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
-                <metric property="wr_req" displayName="Write Requests" displayType="summary" measurementType="trendsup"/>
+                <metric property="wr_req" displayName="Write Requests" measurementType="trendsup"/>
                 <metric property="wr_bytes" displayName="Write Bytes" units="bytes" displayType="summary" measurementType="trendsup"/>
                 <metric property="errs" displayName="Errors" displayType="summary" measurementType="trendsup"/>
 

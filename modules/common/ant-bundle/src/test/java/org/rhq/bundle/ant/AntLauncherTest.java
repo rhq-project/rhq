@@ -59,6 +59,7 @@ import org.rhq.core.util.updater.FileHashcodeMap;
 public class AntLauncherTest {
     private static final File DEPLOY_DIR = new File("target/test-ant-bundle").getAbsoluteFile();
     private static final String ANT_BASEDIR = "target/test-classes";
+    private static final File REDHAT_RELEASE_FILE = new File("/etc/redhat-release");
 
     private int deploymentId;
 
@@ -107,7 +108,7 @@ public class AntLauncherTest {
 
     public void testInstall() throws Exception {
 
-        if (skipNonLinux("testInstall")) return;
+        if (skipNonRHLinux("testInstall")) return;
 
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
@@ -163,9 +164,9 @@ public class AntLauncherTest {
             "templatized.variable").equals("10000");
     }
 
-    private boolean skipNonLinux(String meth) {
-        if (!System.getProperty("os.name").equals("Linux")) {
-            System.out.println("Skipping " + meth + "() as this only works on Linux");
+    private boolean skipNonRHLinux(String meth) {
+        if (!System.getProperty("os.name").equals("Linux") ||  !REDHAT_RELEASE_FILE.exists()) {
+            System.out.println("Skipping " + meth + "() as this only works on Red Hat Linux flavors");
             return true;
         }
         return false;
@@ -174,7 +175,7 @@ public class AntLauncherTest {
     @Test(dependsOnMethods = "testInstall")
     public void testUpgrade() throws Exception {
 
-        if (skipNonLinux("testUpgrade")) return;
+        if (skipNonRHLinux("testUpgrade")) return;
 
         // We want to test an upgrade, so do *not* wipe out the deploy dir - our test method @dependsOnMethods testInstall
         // but we do want to add an unrelated file to see that it gets deleted as part of the upgrade
@@ -230,7 +231,7 @@ public class AntLauncherTest {
 
     public void testUpgradeNoManageRootDir() throws Exception {
 
-        if (skipNonLinux("testInstall")) return;
+        if (skipNonRHLinux("testInstall")) return;
 
         // We want to test an upgrade, so do *not* wipe out the deploy dir - let's re-invoke testInstall
         // to get us to an initial state of the v1 bundle installed

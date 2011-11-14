@@ -19,6 +19,9 @@
 package org.rhq.core.db.setup;
 
 import java.util.List;
+
+import org.rhq.core.db.PostgresqlDatabaseType;
+import org.rhq.core.db.builders.CreateSequenceExprBuilder;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
@@ -47,8 +50,8 @@ class PostgresColumn extends Column {
             case Column.DEFAULT_AUTO_INCREMENT:
             case Column.DEFAULT_SEQUENCE_ONLY: {
                 String strSeqName = this.m_strTableName.toUpperCase() + '_' + this.getName().toUpperCase() + "_SEQ";
-                cmds.add(0, "CREATE SEQUENCE " + strSeqName + " START " + this.getInitialSequence() + " INCREMENT "
-                    + this.getIncrementSequence() + " CACHE 10");
+                cmds.add(0, buildSequenceSqlExpr(CreateSequenceExprBuilder.getBuilder(PostgresqlDatabaseType.VENDOR_NAME),
+                        strSeqName));
                 break;
             }
             }

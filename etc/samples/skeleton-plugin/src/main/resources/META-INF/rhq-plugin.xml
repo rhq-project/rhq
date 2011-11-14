@@ -97,10 +97,7 @@
       -->
       <metric property="MeasurementName"
               displayName="The Measurement Name"
-              description="Describes what this measurement is actually telling you"
-              defaultOn="true"
-              defaultInterval="300000"
-              category="performance" />
+              description="Describes what this measurement is actually telling you" />
 
       <!--
          CHANGE: Resource configuration properties are used to configure resources themselves, as compared to the plugin

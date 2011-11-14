@@ -648,7 +648,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
                 @Override
                 public void onCloseClick(CloseClientEvent event) {
                     try {
-                        hide();
+                        ChartViewWindow.this.destroy();
                     } catch (Throwable e) {
                         Log.warn("Cannot destroy chart display window.", e);
                     }

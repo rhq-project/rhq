@@ -127,8 +127,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
     }
 
     public void stop() {
-        if (this.augeas != null)
-            this.augeas.close();
+        close();
     }
 
     public AvailabilityType getAvailability() {

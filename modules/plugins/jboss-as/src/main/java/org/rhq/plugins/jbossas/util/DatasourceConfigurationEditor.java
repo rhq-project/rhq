@@ -1,4 +1,4 @@
- /*
+/*
   * Jopr Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -46,9 +46,10 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 
 /**
- * Loads and edits Datasources in the datasource xml format
+ * Loads and edits Datasources in the datasource XML format.
  *
  * @author Greg Hinkle
  * @author Mark Spritzler
@@ -108,6 +109,9 @@ public class DatasourceConfigurationEditor {
          */
         try {
             SAXBuilder builder = new SAXBuilder();
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
+
             Document doc = builder.build(file);
 
             // Get the root element
@@ -148,7 +152,7 @@ public class DatasourceConfigurationEditor {
         return null;
     }
 
-    /**
+     /**
      * Writes out datasource changes to the file system. If the file does not exist it will create a new file in the
      * requested location.
      *
@@ -207,6 +211,9 @@ public class DatasourceConfigurationEditor {
 
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
+
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();
         } else {
@@ -260,6 +267,9 @@ public class DatasourceConfigurationEditor {
         if (deploymentFile.exists()) {
             try {
                 SAXBuilder builder = new SAXBuilder();
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                builder.setEntityResolver(entityResolver);
+
                 doc = builder.build(deploymentFile);
                 root = doc.getRootElement();
 

@@ -236,7 +236,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             }
 
             for (MeasurementDataNumeric aData : data) {
-                if (aData.getValue() == null || Double.isNaN(aData.getValue())) {
+                Double value = aData.getValue();
+                if ((value == null) || Double.isNaN(value) || Double.isInfinite(value)) {
                     expectedCount--;
                     continue;
                 }
@@ -254,7 +255,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
                 ps.setInt(1, aData.getScheduleId());
                 ps.setLong(2, aData.getTimestamp());
-                ps.setDouble(3, aData.getValue());
+                ps.setDouble(3, value);
                 ps.addBatch();
             }
 

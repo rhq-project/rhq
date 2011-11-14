@@ -207,6 +207,8 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, 
         }
         try {
             SAXBuilder builder = new SAXBuilder();
+
+
             Document doc = builder.build(file);
 
             // Get the root element

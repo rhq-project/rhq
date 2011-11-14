@@ -40,7 +40,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
 
     /**
      * @param className
-     * @param configurationFile
+     * @param configurationFileName
      * @throws ParserConfigurationException
      * @throws SAXException
      * @throws IOException
@@ -67,7 +67,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
     /**
      * @param className
      * @param constructorArgumentClassName
-     * @param configurationFile
+     * @param configurationFileName
      * @throws ParserConfigurationException
      * @throws SAXException
      * @throws IOException

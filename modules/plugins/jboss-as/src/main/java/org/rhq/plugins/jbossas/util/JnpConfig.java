@@ -30,8 +30,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -40,6 +38,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.xml.sax.Attributes;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -81,8 +80,7 @@ public class JnpConfig {
         this.systemProperties = systemProperties;
     }
 
-    public static synchronized JnpConfig getConfig(final File distributionDirectory, File configXML,
-        Properties systemProperties) {
+    public static synchronized JnpConfig getConfig(File configXML, Properties systemProperties) {
 
         JnpConfig config = CACHE.get(configXML);
 
@@ -94,7 +92,7 @@ public class JnpConfig {
             CACHE.put(configXML, config);
 
             try {
-                config.read(distributionDirectory, configXML);
+                config.read(configXML);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -123,9 +121,9 @@ public class JnpConfig {
         return this.jnpAddress;
     }
 
-    private void read(File distributionDirectory, File file) throws IOException {
+    private void read(File file) throws IOException {
         try {
-            parseServiceXML(distributionDirectory, file);
+            parseServiceXML(file);
         } catch (SAXException e) {
             throw new IllegalArgumentException(e.getMessage());
         } catch (ParserConfigurationException e) {
@@ -138,7 +136,7 @@ public class JnpConfig {
         }
     }
 
-    private void parseServiceXML(File distributionDirectory, File serviceXmlFile) throws IOException, SAXException,
+    private void parseServiceXML(File serviceXmlFile) throws IOException, SAXException,
         ParserConfigurationException {
         FileInputStream is = null;
         try {
@@ -146,22 +144,20 @@ public class JnpConfig {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             SAXParser parser = factory.newSAXParser();
 
-            EntityResolver r = new LocalEntityResolver(distributionDirectory);
-
-            JBossServiceHandler handler = new JBossServiceHandler(serviceXmlFile);
-
             XMLReader reader = parser.getXMLReader();
 
-            reader.setEntityResolver(r);
+            EntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            reader.setEntityResolver(entityResolver);
 
-            reader.setContentHandler(handler);
+            JBossServiceHandler contentHandler = new JBossServiceHandler(serviceXmlFile);
+            reader.setContentHandler(contentHandler);
 
             reader.parse(new InputSource(is));
 
-            this.jnpAddress = handler.getNamingBindAddress();
-            this.jnpPort = handler.getNamingPort();
-            this.storeFile = handler.getStoreFile();
-            this.serverName = handler.getServerName();
+            this.jnpAddress = contentHandler.getNamingBindAddress();
+            this.jnpPort = contentHandler.getNamingPort();
+            this.storeFile = contentHandler.getStoreFile();
+            this.serverName = contentHandler.getServerName();
         } finally {
             if (is != null) {
                 is.close();
@@ -466,51 +462,6 @@ public class JnpConfig {
         }
     }
 
-    public static class LocalEntityResolver implements EntityResolver {
-        static Properties resolverMap = new Properties();
-
-        static {
-            resolverMap.setProperty("-//JBoss//DTD JBOSS 3.2//EN", "jboss-service_3_2.dtd");
-            resolverMap.setProperty("-//JBoss//DTD JBOSS 4.0//EN", "jboss-service_4_0.dtd");
-        }
-
-        private File distributionDirectory;
-
-        public LocalEntityResolver(File distributionDirectory) {
-            this.distributionDirectory = distributionDirectory;
-        }
-
-        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-            if (log.isDebugEnabled())
-                log.debug("Resolving DTD [" + publicId + "]...");
-            String dtdName = resolverMap.getProperty(publicId);
-            if (dtdName != null) {
-                File systemJar = new File(distributionDirectory + File.separator + "lib" + File.separator
-                    + "jboss-system.jar");
-                if (systemJar.exists()) {
-                    JarFile j = new JarFile(systemJar);
-                    try {
-                        JarEntry entry = j.getJarEntry("dtd/" + dtdName);
-                        if (entry == null) {
-                            entry = j.getJarEntry("org/jboss/metadata/" + dtdName);
-                        }
-
-                        if (entry != null) {
-                            if (log.isDebugEnabled())
-                                log.debug("Found DTD locally: " + entry.getName());
-
-                            return new InputSource(j.getInputStream(entry));
-                        }
-                    } finally {
-                        j.close();
-                    }
-                }
-            }
-
-            return null;
-        }
-    }
-
     private String replaceProperties(String value) {
         return (value != null) ? StringPropertyReplacer.replaceProperties(value, this.systemProperties) : null;
     }
@@ -525,7 +476,7 @@ public class JnpConfig {
         File distDir = serviceFile.getParentFile().getParentFile().getParentFile().getParentFile();
 
         // Pass in an empty set of System properties.
-        JnpConfig cfg = JnpConfig.getConfig(distDir, serviceFile, new Properties());
+        JnpConfig cfg = JnpConfig.getConfig(serviceFile, new Properties());
 
         System.out.println("JNP address: " + cfg.getJnpAddress());
         System.out.println("JNP port: " + cfg.getJnpPort());

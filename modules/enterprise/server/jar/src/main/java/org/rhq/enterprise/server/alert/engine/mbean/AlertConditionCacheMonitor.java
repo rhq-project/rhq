@@ -42,6 +42,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger measurementCacheElementMatches = new AtomicInteger();
     public AtomicInteger resourceConfigurationCacheElementMatches = new AtomicInteger();
     public AtomicInteger operationCacheElementMatches = new AtomicInteger();
+    public AtomicInteger calltimeCacheElementMatches = new AtomicInteger();
     public AtomicInteger driftCacheElementMatches = new AtomicInteger();
     public AtomicInteger totalCacheElementMatches = new AtomicInteger();
 
@@ -50,6 +51,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicLong measurementProcessingTime = new AtomicLong();
     public AtomicLong resourceConfigurationProcessingTime = new AtomicLong();
     public AtomicLong operationProcessingTime = new AtomicLong();
+    public AtomicLong calltimeProcessingTime = new AtomicLong();
     public AtomicLong driftProcessingTime = new AtomicLong();
     public AtomicLong totalProcessingTime = new AtomicLong();
 
@@ -99,9 +101,26 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
             AlertConditionCacheCoordinator.Cache.ResourceOperationCache);
     }
 
+    public int getCallTimeCacheElementCount() {
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.CallTimeDataCache);
+    }
+
     public int getDriftCacheElementCount() {
         return AlertConditionCacheCoordinator.getInstance().getCacheSize(
             AlertConditionCacheCoordinator.Cache.DriftCache);
+    }
+
+    /**
+     * Takes all the counts from {@link #getCacheCounts()} and returns the sum.
+     */
+    public int getTotalCacheElementCount() {
+        Map<String, Integer> map = getCacheCounts();
+        int total = 0;
+        for (Integer count : map.values()) {
+            total += count;
+        }
+        return total;
     }
 
     public Map<String, Integer> getCacheCounts() {
@@ -126,6 +145,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public int getOperationCacheElementMatches() {
         return operationCacheElementMatches.get();
+    }
+
+    public int getCallTimeCacheElementMatches() {
+        return calltimeCacheElementMatches.get();
     }
 
     public int getDriftCacheElementMatches() {
@@ -161,6 +184,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         totalCacheElementMatches.addAndGet(matches);
     }
 
+    public void incrementCallTimeCacheElementMatches(int matches) {
+        calltimeCacheElementMatches.addAndGet(matches);
+        totalCacheElementMatches.addAndGet(matches);
+    }
+
     public void incrementDriftCacheElementMatches(int matches) {
         driftCacheElementMatches.addAndGet(matches);
         totalCacheElementMatches.addAndGet(matches);
@@ -180,6 +208,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public long getOperationProcessingTime() {
         return operationProcessingTime.get();
+    }
+
+    public long getCallTimeProcessingTime() {
+        return calltimeProcessingTime.get();
     }
 
     public long getDriftProcessingTime() {
@@ -212,6 +244,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementOperationProcessingTime(long moreMillis) {
         operationProcessingTime.addAndGet(moreMillis);
+        totalProcessingTime.addAndGet(moreMillis);
+    }
+
+    public void incrementCallTimeProcessingTime(long moreMillis) {
+        calltimeProcessingTime.addAndGet(moreMillis);
         totalProcessingTime.addAndGet(moreMillis);
     }
 

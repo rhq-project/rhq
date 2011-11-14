@@ -30,6 +30,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
@@ -61,8 +62,12 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
     // autorefresh timer
     private Timer refreshTimer;
 
+    private String baseViewPath;
+
     public AbstractOperationHistoryPortlet(String locatorId, EntityContext entityContext) {
         super(locatorId, null, entityContext);
+
+        this.baseViewPath = LinkManager.getEntityTabLink(getContext(), "Operations", "History");
 
         setShowFilterForm(false); //disable filter form for portlet
         setOverflow(Overflow.VISIBLE);
@@ -88,6 +93,11 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
             this.dataSource = new OperationHistoryPortletDataSource(getContext());
         }
         return this.dataSource;
+    }
+
+    @Override
+    protected String getBasePath() {
+        return this.baseViewPath;
     }
 
     @Override

@@ -19,9 +19,6 @@
 
 package org.rhq.enterprise.server.sync.test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-
 import java.util.Properties;
 
 import org.jmock.Expectations;
@@ -58,22 +55,5 @@ public class SystemSettingsValidatorTest extends JMockTest {
         });
         
         validator.validateExportedEntity(importedSettings);
-    }
-    
-    public void testAllValidatorsAreEqual() {
-        SystemManagerLocal systemManager = context.mock(SystemManagerLocal.class);
-        
-        SystemSettingsValidator v1 = new SystemSettingsValidator(systemManager);
-        SystemSettingsValidator v2 = new SystemSettingsValidator(systemManager);
-        SystemSettingsValidator v3 = new SystemSettingsValidator(systemManager);
-        Object o = new Object();
-        
-        assertEquals(v1, v2);
-        assertEquals(v1, v3);
-        assertEquals(v2, v3);
-        
-        assertFalse(v1.equals(o));
-        assertFalse(v2.equals(o));
-        assertFalse(v3.equals(o));
-    }
+    }    
 }

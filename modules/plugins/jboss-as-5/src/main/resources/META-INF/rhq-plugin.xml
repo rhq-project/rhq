@@ -216,35 +216,9 @@
     <c:map-property name="metadata" required="false" description="Metadata properties.">
         <c:simple-property required="false" name="typeMapping">
             <c:description>
-                The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml.
+                The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml. The type mappings provided by default: DB2, InformixDB, MaxDB, mySQL, Oracle9i, PointBase, InterBase, Mimer SQL, McKoi, SapDB, DB2/400, SOLID, Hypersonic SQL, FirstSQL/J, MS SQLSERVER2000, MS SQLSERVER, Cloudscape, Derby, Firebird, PostgreSQL 8.0, PostgreSQL, Sybase, Ingres. 
+                Note, there may be custom type mappings defined in addition to these predefined mappings.
             </c:description>
-            <c:property-options>
-                <c:option name="Cloudscape" value="Cloudscape"/>
-                <c:option name="DB2" value="DB2"/>
-                <c:option name="DB2/400" value="DB2/400"/>
-                <c:option name="Derby" value="Derby"/>
-                <c:option name="Firebird" value="Firebird"/>
-                <c:option name="FirstSQL/J" value="FirstSQL/J"/>
-                <c:option name="Hypersonic SQL" value="Hypersonic SQL"/>
-                <c:option name="InformixDB" value="InformixDB"/>
-                <c:option name="Ingres" value="Ingres"/>
-                <c:option name="InterBase" value="InterBase"/>
-                <c:option name="MaxDB" value="MaxDB"/>
-                <c:option name="McKoi" value="McKoi"/>
-                <c:option name="Mimer SQL" value="Mimer SQL"/>
-                <c:option name="MS SQLSERVER" value="MS SQLSERVER"/>
-                <c:option name="MS SQLSERVER2000" value="MS SQLSERVER2000"/>
-                <c:option name="Oracle7" value="Oracle7"/>
-                <c:option name="Oracle8" value="Oracle8"/>
-                <c:option name="Oracle9i" value="Oracle9i"/>
-                <c:option name="PointBase" value="PointBase"/>
-                <c:option name="PostgreSQL" value="PostgreSQL"/>
-                <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
-                <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
-                <c:option name="SapDB" value="SapDB"/>
-                <c:option name="SOLID" value="SOLID"/>
-                <c:option name="Sybase" value="Sybase"/>
-            </c:property-options>
         </c:simple-property>
     </c:map-property>
 
@@ -305,35 +279,9 @@
 
     <c:simple-property name="type-mapping" displayName="Type Mapping" required="false">
         <c:description>
-            The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml.
+            The name of the corresponding type-mapping in conf/standardjbosscmp-jdbc.xml. The type mappings provided by default: DB2, InformixDB, MaxDB, mySQL, Oracle9i, PointBase, InterBase, Mimer SQL, McKoi, SapDB, DB2/400, SOLID, Hypersonic SQL, FirstSQL/J, MS SQLSERVER2000, MS SQLSERVER, Cloudscape, Derby, Firebird, PostgreSQL 8.0, PostgreSQL, Sybase, Ingres. 
+                Note, there may be custom type mappings defined in addition to these predefined mappings.
         </c:description>
-        <c:property-options>
-            <c:option name="Cloudscape" value="Cloudscape"/>
-            <c:option name="DB2" value="DB2"/>
-            <c:option name="DB2/400" value="DB2/400"/>
-            <c:option name="Derby" value="Derby"/>
-            <c:option name="Firebird" value="Firebird"/>
-            <c:option name="FirstSQL/J" value="FirstSQL/J"/>
-            <c:option name="Hypersonic SQL" value="Hypersonic SQL"/>
-            <c:option name="InformixDB" value="InformixDB"/>
-            <c:option name="Ingres" value="Ingres"/>
-            <c:option name="InterBase" value="InterBase"/>
-            <c:option name="MaxDB" value="MaxDB"/>
-            <c:option name="McKoi" value="McKoi"/>
-            <c:option name="Mimer SQL" value="Mimer SQL"/>
-            <c:option name="MS SQLSERVER" value="MS SQLSERVER"/>
-            <c:option name="MS SQLSERVER2000" value="MS SQLSERVER2000"/>
-            <c:option name="Oracle7" value="Oracle7"/>
-            <c:option name="Oracle8" value="Oracle8"/>
-            <c:option name="Oracle9i" value="Oracle9i"/>
-            <c:option name="PointBase" value="PointBase"/>
-            <c:option name="PostgreSQL" value="PostgreSQL"/>
-            <c:option name="PostgreSQL 7.2" value="PostgreSQL 7.2"/>
-            <c:option name="PostgreSQL 8.0" value="PostgreSQL 8.0"/>
-            <c:option name="SapDB" value="SapDB"/>
-            <c:option name="SOLID" value="SOLID"/>
-            <c:option name="Sybase" value="Sybase"/>
-        </c:property-options>
     </c:simple-property>
 
     <c:simple-property name="use-java-context"
@@ -812,13 +760,13 @@
     <metric property="CurrentPoolSize" displayName="Current Pool Size" displayType="summary" measurementType="dynamic"
             description="The number of beans in the pool."/>
 
-    <metric property="MaxPoolSize" displayName="Max Pool Size" displayType="summary" measurementType="dynamic"
+    <metric property="MaxPoolSize" displayName="Max Pool Size" measurementType="dynamic"
             description="The maximum pool size."/>
 '>
 
 <!ENTITY ejb2CreateRemoveMetrics '
     <metric property="CreateCount" displayName="Create Count" displayType="summary" measurementType="trendsup"
-            description="The number of instances of this EJB2 Session Bean that have been created. since server start."/>
+            description="The number of instances of this EJB2 Session Bean that have been created since server start."/>
 
     <metric property="RemoveCount" displayName="Remove Count" displayType="summary" measurementType="trendsup"
             description="The number of instances of this EJB2 Session Bean that have been removed since server start."/>
@@ -872,8 +820,7 @@
 <!ENTITY ejb2StatefulSessionBeanMetrics '
    <metric displayName="Passive Beans"
            description="The count of beans in the passivated state"
-           property="PassivatedCount"
-           displayType="summary"/>
+           property="PassivatedCount" />
 '>
 
 <!ENTITY ejb2MessageDrivenBeanDefinition '
@@ -901,8 +848,7 @@
 
 <!ENTITY ejb2EntityBeanMetrics '
 	<metric property="CacheSize"
-	        displayName="Cache Size"
-	        displayType="summary"/>
+	        displayName="Cache Size"/>
 '>
 
 <!ENTITY subscriptionsResultProperty '
@@ -1195,8 +1141,8 @@
              </configuration>
           </content>
 
-          <drift-definition name="Template: Base Files"
-                            description="A template for monitoring base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
+          <drift-definition name="Template-Base Files"
+                            description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
               <basedir>
                   <value-context>pluginConfiguration</value-context>
                   <value-name>homeDir</value-name>

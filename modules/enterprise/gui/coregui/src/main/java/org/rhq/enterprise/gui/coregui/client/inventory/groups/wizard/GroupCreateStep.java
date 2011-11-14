@@ -22,15 +22,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
 
+import java.util.EnumSet;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.ValuesManager;
 import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
@@ -40,6 +51,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 public class GroupCreateStep extends AbstractWizardStep {
 
     private LocatableDynamicForm form;
+    private ResourceGroupGWTServiceAsync groupService;
+    boolean canContinue = false;
+
+    public GroupCreateStep() {
+
+        groupService = GWTServiceLookup.getResourceGroupService();
+    }
 
     public Canvas getCanvas(Locatable parent) {
 
@@ -57,6 +75,49 @@ public class GroupCreateStep extends AbstractWizardStep {
             TextItem name = new TextItem("name", MSG.common_title_name());
             name.setRequired(true);
             name.setWidth(300);
+            name.addChangedHandler(new ChangedHandler() {
+                @Override
+                public void onChanged(ChangedEvent changedEvent) {
+
+                    final String newGroupName = form.getValueAsString("name");
+
+                    ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                    criteria.addFilterName(newGroupName);
+                    criteria.addFilterVisible(true);
+                    criteria.setRestriction(ResourceGroupCriteria.Restriction.COLLECTION_ONLY);
+
+                    groupService.findResourceGroupsByCriteria(criteria,new AsyncCallback<PageList<ResourceGroup>>() {
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            // failure is no issue - we will catch possiple upd later
+                        }
+
+                        @Override
+                        public void onSuccess(PageList<ResourceGroup> resourceGroups) {
+
+                            // criteria query may return more than we want, so search for an exact match
+                            boolean found = false;
+                            for (ResourceGroup group: resourceGroups) {
+                                if (group.getName().equals(newGroupName))
+                                    found = true;
+                            }
+
+                            if (found) {
+                                canContinue = false;
+                                Message msg = new Message(MSG.view_groupCreateWizard_createStep_group_exists(newGroupName),
+                                        Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+                                CoreGUI.getMessageCenter().notify(msg);
+
+                            }
+                            else {
+                                canContinue = true;
+                                CoreGUI.getMessageCenter().notify(new Message("", Message.Severity.Blank,EnumSet.of(Message.Option.Transient)));
+                            }
+                        }
+                    });
+                }
+            });
+
 
             TextAreaItem description = new AutoFitTextAreaItem("description", MSG.common_title_description());
             description.setWidth(300);
@@ -70,7 +131,7 @@ public class GroupCreateStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        return form.validate();
+        return form.validate() && canContinue;
     }
 
     public String getName() {

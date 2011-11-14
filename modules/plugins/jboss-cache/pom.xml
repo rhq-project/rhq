@@ -26,19 +26,33 @@
 
    <dependencies>
 
-     <dependency>
+      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope>
-     </dependency>
+      </dependency>
 
-     <dependency>
+      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-plugin</artifactId>
          <version>${project.version}</version>
       </dependency>
+
    </dependencies>
+
+   <build>
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <skip>true</skip>
+            </configuration>
+         </plugin>
+
+      </plugins>
+   </build>
 
    <profiles>
       <profile>

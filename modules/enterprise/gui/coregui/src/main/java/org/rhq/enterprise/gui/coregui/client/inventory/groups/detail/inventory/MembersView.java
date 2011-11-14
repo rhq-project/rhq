@@ -77,6 +77,7 @@ public class MembersView extends ResourceSearchView {
                         @Override
                         public void onCloseClick(CloseClientEvent event) {
                             winModal.markForDestroy();
+                            MembersView.this.refreshTableInfo();
                         }
                     });
 
@@ -87,6 +88,7 @@ public class MembersView extends ResourceSearchView {
 
                         public void onClick(ClickEvent event) {
                             winModal.markForDestroy();
+                            MembersView.this.refreshTableInfo();
                             CoreGUI.refresh();
                         }
                     });
@@ -95,6 +97,7 @@ public class MembersView extends ResourceSearchView {
 
                         public void onClick(ClickEvent event) {
                             winModal.destroy();
+                            MembersView.this.refreshTableInfo();
                         }
                     });
 

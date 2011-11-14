@@ -24,6 +24,7 @@ import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_NO_BASEDIR;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -306,26 +307,23 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
         String fileName = "changeset_" + System.currentTimeMillis() + ".zip";
         final File zipFile = new File(changeSetFile.getParentFile(), fileName);
-        ZipOutputStream stream = null;
 
         try {
-            stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+            ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
             FileInputStream fis = new FileInputStream(changeSetFile);
             stream.putNextEntry(new ZipEntry(changeSetFile.getName()));
-            StreamUtil.copy(fis, stream, false);
-            fis.close();
-            stream.close();
+            StreamUtil.copy(fis, stream, true);
         } catch (IOException e) {
             zipFile.delete();
             throw new DriftDetectionException("Failed to create change set zip file " + zipFile.getPath(), e);
-        } finally {
-            try {
-                if (stream != null) {
-                    stream.close();
-                }
-            } catch (IOException e) {
-                log.warn("An error occurred while trying to close change set zip file output stream", e);
-            }
+//        } finally {
+//            try {
+//                if (stream != null) {
+//                    stream.close();
+//                }
+//            } catch (IOException e) {
+//                log.warn("An error occurred while trying to close change set zip file output stream", e);
+//            }
         }
 
         try {
@@ -342,27 +340,35 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, final File contentDir) {
+        ZipOutputStream stream = null;
         try {
             String timestamp = Long.toString(System.currentTimeMillis());
             String contentFileName = "content_" + timestamp + ".zip";
             final File zipFile = new File(contentDir.getParentFile(), contentFileName);
-            ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+            stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
             for (File file : contentDir.listFiles()) {
                 FileInputStream fis = new FileInputStream(file);
-                stream.putNextEntry(new ZipEntry(file.getName()));
-                StreamUtil.copy(fis, stream, false);
-                fis.close();
+                try {
+                    stream.putNextEntry(new ZipEntry(file.getName()));
+                    StreamUtil.copy(fis, stream, false);
+                } finally {
+                    fis.close();
+                }
             }
             stream.close();
-
-            //            DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
-            //            driftServer.sendFilesZip(resourceId, driftDefinitionName, timestamp, zipFile.length(),
-            //                remoteInputStream(new BufferedInputStream(new FileInputStream(zipFile))));
+            stream = null;
             sendContentZipFile(resourceId, driftDefinitionName, zipFile);
         } catch (IOException e) {
             log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
                 + ", driftDefinition: " + driftDefinitionName + "]", e);
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                }
+            }
         }
 
         for (File file : contentDir.listFiles()) {
@@ -492,6 +498,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void updateDriftDetection(int resourceId, DriftDefinition driftDefinition) {
         log.info("Recived request to update schedule for " + toString(resourceId, driftDefinition));
+
         DriftDetectionSchedule updatedSchedule = schedulesQueue.update(resourceId, driftDefinition);
         if (updatedSchedule == null) {
             updatedSchedule = new DriftDetectionSchedule(resourceId, driftDefinition);
@@ -513,6 +520,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             } else if (log.isInfoEnabled()) {
                 log.info(updatedSchedule + " has been updated.");
             }
+
+            if (!updatedSchedule.getDriftDefinition().isPinned()) {
+                unpinDefinition(updatedSchedule);
+            }
         }
 
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
@@ -520,6 +531,27 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (container != null) {
             container.addDriftDefinition(driftDefinition);
         }
+    }
+
+    private void unpinDefinition(final DriftDetectionSchedule schedule) {
+        if (log.isDebugEnabled()) {
+            log.debug("Unpinning definition for " + toString(schedule.getResourceId(), schedule.getDriftDefinition()));
+        }
+        schedulesQueue.removeAndExecute(schedule.getResourceId(), schedule.getDriftDefinition(), new Runnable() {
+            @Override
+            public void run() {
+                File currentSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(),
+                    schedule.getDriftDefinition().getName(), COVERAGE);
+                File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+                pinnedSnapshot.delete();
+
+                if (log.isDebugEnabled()) {
+                    log.debug("Deleted pinned snapshot file " + pinnedSnapshot.getPath());
+                }
+
+                schedulesQueue.addSchedule(schedule);
+            }
+        });
     }
 
     @Override
@@ -549,6 +581,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         updateDriftDetection(resourceId, driftDef);
+    }
+
+    @Override
+    public void reportMissingBaseDir(int resourceId, DriftDefinition driftDefinition) {
+        if (log.isDebugEnabled()) {
+            log.debug("Reporting to server missing base directory for " + toString(resourceId, driftDefinition));
+        }
+        DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+        driftServer.updateCompliance(resourceId, driftDefinition.getName(), OUT_OF_COMPLIANCE_NO_BASEDIR);
     }
 
     @Override
@@ -715,20 +756,23 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     private void writeSnapshotToFile(DriftSnapshot snapshot, File file, Headers headers) throws IOException {
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(file, headers);
-        for (Drift drift : snapshot.getDriftInstances()) {
-            switch (drift.getCategory()) {
-            case FILE_ADDED:
-                writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
-                break;
-            case FILE_CHANGED:
-                writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
-                    drift.getNewDriftFile().getHashId()));
-                break;
-            default:  // FILE_REMOVED
-                writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));
+        try {
+            for (Drift drift : snapshot.getDriftInstances()) {
+                switch (drift.getCategory()) {
+                case FILE_ADDED:
+                    writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
+                    break;
+                case FILE_CHANGED:
+                    writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
+                        drift.getNewDriftFile().getHashId()));
+                    break;
+                default:  // FILE_REMOVED
+                    writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));
+                }
             }
+        } finally {
+            writer.close();
         }
-        writer.close();
     }
 
     private String toString(int resourceId, DriftDefinition d) {

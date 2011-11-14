@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2010 Red Hat, Inc.
+* Copyright (C) 2005-2011 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -80,18 +81,17 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  * @author Ian Springer
  * @author Mark Spritzler
  */
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings({ "UnusedDeclaration" })
 public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryComponent, ClassLoaderFacet,
     ManualAddFacet {
-    private static final String CHANGE_ME = "***CHANGE_ME***";
     private static final String JBOSS_SERVICE_XML = "conf" + File.separator + "jboss-service.xml";
     private static final String JBOSS_NAMING_SERVICE_XML = "deploy" + File.separator + "naming-service.xml";
     private static final String ANY_ADDRESS = "0.0.0.0";
     private static final String LOCALHOST = "127.0.0.1";
     private static final String JAVA_HOME_ENV_VAR = "JAVA_HOME";
 
-    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS =
-        new HashMap<JBossProductType, ComparableVersion>(4);
+    private static final Map<JBossProductType, ComparableVersion> MINIMUM_PRODUCT_VERSIONS = new HashMap<JBossProductType, ComparableVersion>(
+        4);
     static {
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.AS, new ComparableVersion("5.2.0.Beta1"));
         MINIMUM_PRODUCT_VERSIONS.put(JBossProductType.EAP, new ComparableVersion("5.0.0.Beta"));
@@ -146,7 +146,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         } catch (IOException e) {
             throw new InvalidPluginConfigurationException(e);
         }
-        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo, installInfo);
+        DiscoveredResourceDetails resourceDetails = createResourceDetails(discoveryContext, pluginConfig, processInfo,
+            installInfo);
         return resourceDetails;
     }
 
@@ -166,7 +167,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 clientJarUrls.add(clientJarUrl);
             } else {
                 log.warn("Client JAR [" + clientJarUrl + "] does not exist or is not readable (note, this JAR "
-                   + " may not be required for some app server versions).");
+                    + " may not be required for some app server versions).");
             }
         }
 
@@ -178,13 +179,11 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             InputStream inputStream = url.openStream();
             try {
                 inputStream.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 log.error("Failed to close input stream for URL [" + url + "].", e);
             }
             return true;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             return false;
         }
     }
@@ -194,7 +193,8 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             .getStringValue();
         URL homeUrl = new File(homeDir).toURI().toURL();
 
-        String clientUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CLIENT_URL, null);
+        String clientUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CLIENT_URL,
+            null);
         if (clientUrlString == null) {
             URL clientUrl = new URL(homeUrl, "client");
             pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.CLIENT_URL, clientUrl));
@@ -206,10 +206,12 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.LIB_URL, libUrl));
         }
 
-        String commonLibUrlString = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, null);
+        String commonLibUrlString = pluginConfig.getSimpleValue(
+            ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, null);
         if (commonLibUrlString == null) {
             URL commonLibUrl = new URL(homeUrl, "common/lib");
-            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL, commonLibUrl));
+            pluginConfig.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.COMMON_LIB_URL,
+                commonLibUrl));
         }
     }
 
@@ -256,13 +258,16 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
 
-            String jnpURL = getJnpURL(cmdLine, installHome, configDir);
-
             // TODO? Set the connection type - local or remote
 
             // Set the required props...
-            pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.NAMING_URL,
-                jnpURL));
+            String jnpURL = getJnpURL(cmdLine, installHome, configDir);
+            PropertySimple namingUrlProp = new PropertySimple(ApplicationServerPluginConfigurationProperties.NAMING_URL,
+                jnpURL);
+            if (jnpURL == null) {
+                namingUrlProp.setErrorMessage("RHQ failed to discover the naming provider URL.");
+            }
+            pluginConfiguration.put(namingUrlProp);
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.HOME_DIR,
                 installHome.getAbsolutePath()));
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR,
@@ -305,9 +310,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         try {
             return new InProcessJBossASDiscovery().discoverInProcessJBossAS(discoveryContext);
         } catch (Throwable t) {
-            log
-                .debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.",
-                    t);
+            log.debug("In-process JBoss AS discovery failed - we are probably not running embedded within JBoss AS.", t);
             return null;
         }
     }
@@ -329,18 +332,18 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
         String namingUrl = pluginConfig.getSimple(ApplicationServerPluginConfigurationProperties.NAMING_URL)
             .getStringValue();
 
-        // Only include the JNP port in the Resource name if its value is not "***CHANGE_ME***".
+        // If we were able to discover the JNP URL, include the JNP port in the Resource name.
         String namingPort = null;
         //noinspection ConstantConditions
-        int colonIndex = namingUrl.lastIndexOf(':');
-        if ((colonIndex != -1) && (colonIndex != (namingUrl.length() - 1))) {
-            // NOTE: We assume the JNP URL does not have a trailing slash.
-            String port = namingUrl.substring(colonIndex + 1);
-            if (!port.equals(CHANGE_ME))
-                namingPort = port;
+        if (namingUrl != null) {
+            URI uri = URI.create(namingUrl);
+            if (uri.getPort() != -1) {
+                namingPort = String.valueOf(uri.getPort());
+            }
         }
 
-        String description = installInfo.getProductType().DESCRIPTION;
+        final JBossProductType productType = installInfo.getProductType();
+        String description = productType.DESCRIPTION + " " + installInfo.getMajorVersion();
         File deployDir = new File(absoluteConfigPath, "deploy");
 
         File rhqInstallerWar = new File(deployDir, "rhq-installer.war");
@@ -351,11 +354,13 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
             // We know this is an RHQ Server. Let's add an event source for its server log file, but disable it by default.
             configureEventSourceForServerLogFile(pluginConfig);
         }
-        String name = formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
-            absoluteConfigPath.getName(), isRhqServer);
+        final String PRODUCT_PREFIX = productType.name() + " ";
+        String name = PRODUCT_PREFIX
+            + formatServerName(bindAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
+                absoluteConfigPath.getName(), isRhqServer);
 
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, installInfo.getVersion(),
-            description, pluginConfig, processInfo);
+        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PRODUCT_PREFIX
+            + installInfo.getVersion(), description, pluginConfig, processInfo);
     }
 
     public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName,
@@ -380,7 +385,7 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
                 }
             }
 
-            if (jnpPort != null && !jnpPort.equals(CHANGE_ME)) {
+            if (jnpPort != null) {
                 hostnameToUse += ":" + jnpPort;
             }
 
@@ -439,21 +444,31 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
         // Above did not work, so fall back to our previous scheme
         JnpConfig jnpConfig = getJnpConfig(installHome, configDir, cmdLine.getSystemProperties());
-        String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : CHANGE_ME;
+
+
+
+        String jnpAddress = (jnpConfig.getJnpAddress() != null) ? jnpConfig.getJnpAddress() : null;
+        Integer jnpPort = (jnpConfig.getJnpPort() != null) ? jnpConfig.getJnpPort() : null;
+
+        if (jnpAddress == null || jnpPort == null) {
+            log.warn("Failed to discover JNP URL for JBoss instance with configuration directory [" +  configDir + "].");
+            return null;
+        }
+
         if (ANY_ADDRESS.equals(jnpAddress)) {
             jnpAddress = LOCALHOST;
         }
-        String jnpPort = (jnpConfig.getJnpPort() != null) ? String.valueOf(jnpConfig.getJnpPort()) : CHANGE_ME;
+
         return "jnp://" + jnpAddress + ":" + jnpPort;
     }
 
     private static JnpConfig getJnpConfig(File installHome, File configDir, Properties props) {
         File serviceXML = new File(configDir, JBOSS_SERVICE_XML);
-        JnpConfig config = JnpConfig.getConfig(installHome, serviceXML, props);
+        JnpConfig config = JnpConfig.getConfig(serviceXML, props);
         if ((config == null) || (config.getJnpPort() == null)) {
             File namingServiceFile = new File(configDir, JBOSS_NAMING_SERVICE_XML);
             if (namingServiceFile.exists()) {
-                config = JnpConfig.getConfig(installHome, namingServiceFile, props);
+                config = JnpConfig.getConfig(namingServiceFile, props);
             }
         }
         return config;

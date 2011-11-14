@@ -157,7 +157,7 @@
         <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
-                    <c:option-source target="resource" expression="type=JBossAS-Managed"/>
+                    <c:option-source target="resource" expression="type=JBossAS7 Managed Server"/>
                 </c:simple-property>
                 <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
                     <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
@@ -323,7 +323,7 @@
         </service>
     </server>
 
-    <server name="JBossAS7-Standalone"
+    <server name="JBossAS7 Standalone Server"
             discovery="BaseProcessDiscovery"
             class="StandaloneASComponent"
             description="Standalone AS7 server"
@@ -445,7 +445,7 @@
 
     </server>
 
-    <server name="JBossAS-Managed"
+    <server name="JBossAS7 Managed Server"
             discovery="ManagedASDiscovery"
             class="ManagedASComponent"
             >
@@ -531,8 +531,8 @@
               class="org.rhq.plugins.jmx.JMXServerComponent"
               singleton="true">
         <runs-inside>
-            <parent-resource-type name="JBossAS-Managed"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Managed Server"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
       </server>
 
@@ -544,7 +544,7 @@
             >
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -637,7 +637,7 @@
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -841,7 +841,7 @@
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -877,7 +877,7 @@
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1293,7 +1293,7 @@
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1304,13 +1304,13 @@
 
     <server name="Logging"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="LoggerComponent"
         singleton="true"
         >
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1331,9 +1331,15 @@
                     </c:property-options>
                 </c:simple-property>
             </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
         </operation>
 
         <operation name="remove-root-logger" description="Remove the root logger.">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
         </operation>
 
         <operation name="set-root-logger" description="Set the root logger.">
@@ -1355,6 +1361,9 @@
                         <c:simple-property name="handler" type="string"/>
                 </c:list-property>
             </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
         </operation>
 
         <resource-configuration>
@@ -1625,7 +1634,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1660,7 +1669,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
             <runs-inside>
                 <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-                <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+                <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
             </runs-inside>
 
             <plugin-configuration>
@@ -1690,7 +1699,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     >
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1738,7 +1747,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1796,7 +1805,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1842,7 +1851,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     </server>
 
     <server name="ModCluster"
-             class="BaseComponent"
+             class="ModClusterComponent"
              discovery="SubsystemDiscovery"
              description="Mod_cluster support"
              singleton="true"
@@ -1850,7 +1859,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <runs-inside>
             <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/> <!-- FAKE as "runs inside Profile" only does not work -->
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/> <!-- FAKE as "runs inside Profile" only does not work -->
         </runs-inside>
 
         <plugin-configuration>
@@ -1858,6 +1867,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
 
         <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
+            <results>
+                    <c:simple-property name="operationResult"/>
+            </results>
+
         </operation>
 
         <resource-configuration>
@@ -1875,7 +1888,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <runs-inside>
             <parent-resource-type name="Host"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1905,7 +1918,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <runs-inside>
             <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
             <parent-resource-type name="Host"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
         <plugin-configuration>
@@ -1918,7 +1931,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              class="BaseComponent"
             >
         <runs-inside>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
 
@@ -2007,7 +2020,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <runs-inside>
             <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
         <plugin-configuration>
             <c:simple-property name="path" default="deployment" readOnly="true"/>
@@ -2030,7 +2043,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              singleton="true"
              >
         <runs-inside>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
         <plugin-configuration>
             <c:simple-property name="path" default="subsystem=deployment-scanner" readOnly="true"/>

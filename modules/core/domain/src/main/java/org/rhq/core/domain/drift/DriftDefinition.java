@@ -48,6 +48,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.StringUtils;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
@@ -110,6 +111,10 @@ public class DriftDefinition implements Serializable {
 
     @Column(name = "IS_ATTACHED", nullable = false)
     private boolean attached = true;
+
+    @Column(name = "COMPLIANCE_STATUS", nullable = false)
+    @Enumerated(EnumType.ORDINAL)
+    private DriftComplianceStatus complianceStatus = DriftComplianceStatus.IN_COMPLIANCE;
 
     // required for jaxb/web services stuff
     protected DriftDefinition() {
@@ -231,12 +236,22 @@ public class DriftDefinition implements Serializable {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
+
+        // normalize paths to forward slashes
+        BaseDirectory baseDir = getBasedir();
+        if (null != baseDir) {
+            setBasedir(baseDir);
+        }
+        setIncludes(getIncludes());
+        setExcludes(getExcludes());
+
         name = getNameProperty();
         description = getDescriptionProperty();
         isEnabled = getIsEnabledProperty();
         interval = getIntervalProperty();
         driftHandlingMode = getDriftHandlingModeProperty();
         isPinned = getIsPinnedProperty();
+        attached = getAttachedProperty();
     }
 
     public Resource getResource() {
@@ -256,6 +271,14 @@ public class DriftDefinition implements Serializable {
 
     public void setTemplate(DriftDefinitionTemplate template) {
         this.template = template;
+    }
+
+    public DriftComplianceStatus getComplianceStatus() {
+        return complianceStatus;
+    }
+
+    public void setComplianceStatus(DriftComplianceStatus complianceStatus) {
+        this.complianceStatus = complianceStatus;
     }
 
     @Override
@@ -395,7 +418,8 @@ public class DriftDefinition implements Serializable {
 
         PropertyMap basedirMap = new PropertyMap(DriftConfigurationDefinition.PROP_BASEDIR);
         basedirMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT, valueContext));
-        basedirMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, valueName));
+        basedirMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, StringUtils
+            .useForwardSlash(valueName)));
 
         configuration.put(basedirMap);
     }
@@ -453,6 +477,15 @@ public class DriftDefinition implements Serializable {
         return getFilters(DriftConfigurationDefinition.PROP_EXCLUDES);
     }
 
+    public void setIncludes(List<Filter> includesFilters) {
+        configuration.remove(DriftConfigurationDefinition.PROP_INCLUDES);
+        if (null != includesFilters) {
+            for (Filter filter : includesFilters) {
+                addInclude(filter);
+            }
+        }
+    }
+
     public void addInclude(Filter filter) {
         PropertyList filtersList = configuration.getList(DriftConfigurationDefinition.PROP_INCLUDES);
         if (filtersList == null) {
@@ -462,9 +495,19 @@ public class DriftDefinition implements Serializable {
         }
 
         PropertyMap filterMap = new PropertyMap(DriftConfigurationDefinition.PROP_INCLUDES_INCLUDE);
-        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, filter.getPath()));
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, StringUtils.useForwardSlash(filter
+            .getPath())));
         filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATTERN, filter.getPattern()));
         filtersList.add(filterMap);
+    }
+
+    public void setExcludes(List<Filter> excludesFilters) {
+        configuration.remove(DriftConfigurationDefinition.PROP_EXCLUDES);
+        if (null != excludesFilters) {
+            for (Filter filter : excludesFilters) {
+                addExclude(filter);
+            }
+        }
     }
 
     public void addExclude(Filter filter) {
@@ -476,7 +519,8 @@ public class DriftDefinition implements Serializable {
         }
 
         PropertyMap filterMap = new PropertyMap(DriftConfigurationDefinition.PROP_EXCLUDES_EXCLUDE);
-        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, filter.getPath()));
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, StringUtils.useForwardSlash(filter
+            .getPath())));
         filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATTERN, filter.getPattern()));
         filtersList.add(filterMap);
     }

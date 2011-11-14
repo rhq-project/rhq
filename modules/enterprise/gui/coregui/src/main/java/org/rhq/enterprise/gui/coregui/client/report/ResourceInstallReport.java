@@ -1,3 +1,25 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client.report;
 
 import java.util.HashMap;
@@ -90,7 +112,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria);
+        resourceList = new ResourceInstallReportResourceSearchView(extendLocatorId("resourceList"), criteria);
         addMember(resourceList);
         markForRedraw();
     }
@@ -119,11 +141,28 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
 
+            ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE, MSG
+                .common_title_in_compliance());
+            HashMap<String, String> complianceIcons = new HashMap<String, String>();
+            complianceIcons.put("true", ImageManager.getAvailabilityIcon(true));
+            complianceIcons.put("false", ImageManager.getAvailabilityIcon(false));
+            fieldInCompliance.setValueIcons(complianceIcons);
+            fieldInCompliance.setType(ListGridFieldType.ICON);
+
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
-            fieldCategory.setWidth("55");
+            fieldCategory.setWidth(70);
             fieldVersion.setWidth("*");
-            fieldCount.setWidth("10%");
+            fieldCount.setWidth(60);
+            fieldInCompliance.setWidth(100);
+
+            // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
+            //                       uncomment these lines to allow grouping by the plugin or category fields.
+            /*getListGrid().setCanGroupBy(true);
+            fieldTypeName.setCanGroupBy(false);
+            fieldVersion.setCanGroupBy(false);
+            fieldCount.setCanGroupBy(false);
+            fieldInCompliance.setCanGroupBy(false);*/
 
             fieldTypeName.setCellFormatter(new CellFormatter() {
                 @Override
@@ -173,7 +212,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 }
             });
 
-            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount);
+            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance);
         }
 
         private String getResourceTypeTableUrl(ListGridRecord selected) {
@@ -200,6 +239,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 public static final String TYPEID = "typeId"; // int
                 public static final String VERSION = "version"; // String
                 public static final String OBJECT = "object";
+                public static final String IN_COMPLIANCE = "inCompliance";
             }
 
             @Override
@@ -217,8 +257,11 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 record.setAttribute(Field.CATEGORY, from.getCategory().name());
                 record.setAttribute(Field.TYPEID, from.getTypeId());
                 record.setAttribute(Field.VERSION, from.getVersion());
-
                 record.setAttribute(Field.OBJECT, from);
+
+                if (from.getNumDriftTemplates() > 0) {
+                    record.setAttribute(Field.IN_COMPLIANCE, Boolean.toString(from.isInCompliance()));
+                }
 
                 return record;
             }

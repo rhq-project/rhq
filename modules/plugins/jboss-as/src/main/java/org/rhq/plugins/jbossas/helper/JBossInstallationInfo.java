@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.helper;
 
 import java.io.File;
@@ -44,18 +44,20 @@ public class JBossInstallationInfo {
     private JBossProductType productType;
     private String version;
     private String defaultBindAddress;
+    private final String majorVersion;
 
     public JBossInstallationInfo(File installationDir) throws IOException {
         File binDir = new File(installationDir, "bin");
         File runJar = new File(binDir, "run.jar");
         if (!runJar.exists()) {
             throw new RuntimeException(runJar + " does not exist - " + installationDir
-                    + " does not appear to be a JBoss installation/home directory.");
+                + " does not appear to be a JBoss installation/home directory.");
         }
         Attributes jarManifestAttributes = loadManifestAttributesFromJar(runJar);
         this.productType = JBossProductType.determineJBossProductType(jarManifestAttributes);
         this.version = getVersion(jarManifestAttributes);
         this.defaultBindAddress = getDefaultServerName(this.version);
+        this.majorVersion = version.substring(0, version.indexOf('.'));
     }
 
     public JBossProductType getProductType() {
@@ -70,6 +72,10 @@ public class JBossInstallationInfo {
      */
     public String getVersion() {
         return this.version;
+    }
+
+    public String getMajorVersion() {
+        return majorVersion;
     }
 
     public String getDefaultBindAddress() {
@@ -94,13 +100,13 @@ public class JBossInstallationInfo {
         String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         // e.g. Implementation-Version: 4.2.2.GA (build: SVNTag=JBoss_4_2_2_GA date=200710221139)
         if (implementationVersion == null) {
-            throw new IllegalStateException(
-                    "'" + Attributes.Name.IMPLEMENTATION_VERSION + "' MANIFEST.MF attribute not found.");
+            throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' MANIFEST.MF attribute not found.");
         }
         int spaceIndex = implementationVersion.indexOf(' ');
         if (spaceIndex == -1) {
-            throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION +
-                    "' MANIFEST.MF attribute has an invalid value: " + implementationVersion);
+            throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION
+                + "' MANIFEST.MF attribute has an invalid value: " + implementationVersion);
         }
         String version = implementationVersion.substring(0, spaceIndex);
         if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
@@ -116,7 +122,7 @@ public class JBossInstallationInfo {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[productType=" + this.productType + ", version=" + this.version +
-                ", defaultBindAddress=" + this.defaultBindAddress + "]";
+        return this.getClass().getSimpleName() + "[productType=" + this.productType + ", version=" + this.version
+            + ", defaultBindAddress=" + this.defaultBindAddress + "]";
     }
 }

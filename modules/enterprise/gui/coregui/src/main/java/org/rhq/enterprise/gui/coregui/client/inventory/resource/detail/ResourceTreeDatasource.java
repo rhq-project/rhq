@@ -36,6 +36,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -64,16 +65,20 @@ public class ResourceTreeDatasource extends DataSource {
 
     private List<Resource> initialData;
     private List<Resource> lockedData;
+    // the encompassing grid. It's unfortunate to have the DS know about the encompassing TreeGrid
+    // but we have a situation in which a new AG node needs to be able to access its parent TreeNode by ID. 
+    private TreeGrid treeGrid;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
-    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData) {
+    public ResourceTreeDatasource(List<Resource> initialData, List<Resource> lockedData, TreeGrid treeGrid) {
         this.setClientOnly(false);
         this.setDataProtocol(DSProtocol.CLIENTCUSTOM);
         this.setDataFormat(DSDataFormat.CUSTOM);
 
         this.initialData = initialData;
         this.lockedData = (null != lockedData) ? lockedData : new ArrayList<Resource>();
+        this.treeGrid = treeGrid;
 
         DataSourceField idDataField = new DataSourceTextField("id", MSG.common_title_id());
         idDataField.setPrimaryKey(true);
@@ -145,7 +150,6 @@ public class ResourceTreeDatasource extends DataSource {
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
-            criteria.fetchParentResource(true);
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
                 public void onFailure(Throwable caught) {
@@ -170,7 +174,7 @@ public class ResourceTreeDatasource extends DataSource {
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                 public void onResourceTypeLoaded(List<Resource> result) {
-                    TreeNode[] treeNodes = buildNodes(result, lockedData);
+                    TreeNode[] treeNodes = buildNodes(result, lockedData, treeGrid);
                     response.setData(treeNodes);
                     processResponse(requestId, response);
                 }
@@ -183,49 +187,14 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resources
      * @return
      */
-    public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData) {
+    public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData, TreeGrid treeGrid) {
         List<ResourceTreeNode> resourceNodes = new ArrayList<ResourceTreeNode>(resources.size());
-        //        boolean nullFound = false;
         for (Resource resource : resources) {
-            //            if (null != resource.getParentResource() && null == resource.getParentResource().getName()) {
-            //                CoreGUI.getMessageCenter().notify(
-            //                    new Message(" *** Null parent name for " + resource + " parent " + resource.getParentResource(),
-            //                        Severity.Info));
-            //                nullFound = true;
-            //            }
             ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));
             resourceNodes.add(node);
         }
-        //        if (!nullFound) {
-        //            CoreGUI.getMessageCenter().notify(new Message(" *** No Null parent names found", Severity.Info));
-        //        }
 
-        List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes);
-
-        //        nullFound = false;
-        //        for (TreeNode node : result) {
-        //            if (node instanceof ResourceTreeNode) {
-        //                ResourceTreeNode rtNode = (ResourceTreeNode) node;
-        //                if (null != rtNode.getResource().getParentResource()
-        //                    && null == rtNode.getResource().getParentResource().getName()) {
-        //                    CoreGUI.getMessageCenter().notify(
-        //                        new Message(" *** Null parent name for resource tree node " + rtNode.getResource() + " parent "
-        //                            + rtNode.getResource(), Severity.Info));
-        //                    nullFound = true;
-        //                }
-        //            } else if (node instanceof AutoGroupTreeNode) {
-        //                AutoGroupTreeNode rtNode = (AutoGroupTreeNode) node;
-        //                if (null == rtNode.getParentResource().getName()) {
-        //                    CoreGUI.getMessageCenter().notify(
-        //                        new Message(" *** Null parent name for autogroup tree node " + rtNode.getParentResource(),
-        //                            Severity.Info));
-        //                    nullFound = true;
-        //                }
-        //            }
-        //        }
-        //        if (!nullFound) {
-        //            CoreGUI.getMessageCenter().notify(new Message(" *** No Null tree node parent names found", Severity.Info));
-        //        }
+        List<TreeNode> result = introduceTypeAndCategoryNodes(resourceNodes, treeGrid);
 
         return result.toArray(new TreeNode[result.size()]);
     }
@@ -234,7 +203,8 @@ public class ResourceTreeDatasource extends DataSource {
      * @param resourceNodes ordered such that referenced parent nodes have lower indexes than the referencing child.
      * @return a new List, properly ordered and including AG and Subcategory nodes.
      */
-    private static List<TreeNode> introduceTypeAndCategoryNodes(final List<ResourceTreeNode> resourceNodes) {
+    private static List<TreeNode> introduceTypeAndCategoryNodes(final List<ResourceTreeNode> resourceNodes,
+        TreeGrid treeGrid) {
         // The resulting list of nodes, including AG and SC nodes. The list is ordered to ensure all
         // referenced parent nodes have lower indexes than the referencing child.
         List<TreeNode> allNodes = new ArrayList<TreeNode>(resourceNodes.size());
@@ -265,6 +235,20 @@ public class ResourceTreeDatasource extends DataSource {
 
                 // If the parent node is an autogroup node, make sure the autogroup node is in the
                 // tree prior to the resource node.
+
+                // First we need to ensure we have a properly populated parentResource (id and name, minimally),
+                // get this from the parent ResourceTreeNode as resource.parentResource may not be set with
+                // anything more than the id.
+                Resource parentResource = resource.getParentResource();
+                String parentResourceNodeId = ResourceTreeNode.idOf(parentResource);
+                TreeNode parentResourceNode = treeGrid.getTree().findById(parentResourceNodeId);
+                if (null != parentResourceNode) {
+                    parentResource = ((ResourceTreeNode) parentResourceNode).getResource();
+                    resource.setParentResource(parentResource);
+                }
+                if (null == parentResource.getName()) {
+                    Log.error("AutoGroup node creation using invalid parent resource: " + parentResource);
+                }
 
                 String autoGroupNodeID = resourceNode.getParentID();
                 if (!allNodeIds.contains(autoGroupNodeID)) {
@@ -334,8 +318,10 @@ public class ResourceTreeDatasource extends DataSource {
         /**
          * The parentID will be set to the parent resource at construction.  It can be changed
          * later (prior to tree linkage) if the resource node should logically be set to an
-         * autogroup or subcategory parent.
-         * @param resource
+         * autogroup or subcategory parent. 
+         * 
+         * @param resource The resource must have, minimally, id, name, description set. And, if parent is not null,
+         * parentResource.id must be set as well. Also, resourceType.childresourceTypes.
          * @param isLocked
          */
         private ResourceTreeNode(Resource resource, boolean isLocked) {
@@ -442,7 +428,8 @@ public class ResourceTreeDatasource extends DataSource {
         private boolean parentSubcategory = false;
 
         /**
-         * @param resource requires resourceType field be set.  requires parentResource field be set (null for no parent)
+         * @param resource.id must be set. resource.parentResource.id, .name must be set.
+         * resource.resourceType.id, .name, .description, .subCategory  must be set.
          */
         private AutoGroupTreeNode(Resource resource) {
             this.parentResource = resource.getParentResource();

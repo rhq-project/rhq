@@ -19,16 +19,10 @@
 
 package org.rhq.enterprise.server.sync.validators;
 
-import java.util.Collections;
-import java.util.Set;
-
 import javax.persistence.EntityManager;
-import javax.xml.stream.XMLStreamException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.entity.SystemSettings;
-import org.rhq.enterprise.server.sync.ExportReader;
-import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ValidationException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -38,7 +32,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-public class SystemSettingsValidator implements ConsistencyValidator {
+public class SystemSettingsValidator implements EntityValidator<SystemSettings> {
 
     private Subject subject;
     private SystemManagerLocal systemManager;
@@ -57,41 +51,11 @@ public class SystemSettingsValidator implements ConsistencyValidator {
     }
     
     @Override
-    public void exportState(ExportWriter writer) throws XMLStreamException {
-    }
-
-    @Override
-    public void initializeExportedStateValidation(ExportReader reader) throws XMLStreamException {
-    }
-
-    @Override
-    public void validateExportedState() throws InconsistentStateException {
-    }
-
-    @Override
-    public Set<Class<?>> getValidatedEntityTypes() {
-        return Collections.<Class<?>>singleton(SystemSettings.class);
-    }
-
-    @Override
-    public void validateExportedEntity(Object entity) throws ValidationException {
-        if (entity instanceof SystemSettings) {
-            try {
-                systemManager.validateSystemConfiguration(subject, ((SystemSettings)entity).toProperties());
-            } catch (Exception e) {
-                throw new ValidationException("The system settings failed to validate: " + e.getMessage(), e);
-            }
+    public void validateExportedEntity(SystemSettings entity) throws ValidationException {
+        try {
+            systemManager.validateSystemConfiguration(subject, ((SystemSettings)entity).toProperties());
+        } catch (Exception e) {
+            throw new ValidationException("The system settings failed to validate: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public int hashCode() {
-        return 0; //all system settings validators are equal
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        //all system settings validators are equal
-        return obj instanceof SystemSettingsValidator;
     }
 }

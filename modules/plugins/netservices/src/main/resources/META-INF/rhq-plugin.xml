@@ -37,12 +37,12 @@
         </plugin-configuration>
 
         <metric property="connectTime" units="milliseconds" displayType="summary"
-                description="The to connect to the service"/>
+                description="The time to connect to the service"/>
         <metric property="readTime" units="milliseconds" displayType="summary"
                 description="The time to transfer the requested content"/>
-        <metric property="contentLength" units="bytes" displayType="summary"
+        <metric property="contentLength" units="bytes"
                 description="The size of the returned content"/>
-        <metric property="contentAge" units="milliseconds" displayType="summary"
+        <metric property="contentAge" units="milliseconds"
                 description="The declared age of the requested page"/>
 
 

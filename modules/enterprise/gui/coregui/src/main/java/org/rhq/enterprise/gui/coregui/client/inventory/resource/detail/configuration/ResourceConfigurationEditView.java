@@ -66,7 +66,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
     private ConfigurationEditor editor;
     private ToolStrip buttonbar;
     private IButton saveButton;
-
     private boolean refreshing = false;
 
     public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
@@ -123,11 +122,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 @Override
-                public void onSuccess(final ResourceConfigurationUpdate result) {
-                    if (result == null) {
-                        
-                        CoreGUI.getMessageCenter().notify(new Message(MSG.view_configurationDetails_noConfigurationFetched(), Message.Severity.Info));
-                        
+                public void onSuccess(final ResourceConfigurationUpdate configurationUpdate) {
+                    if (configurationUpdate == null) {
+                        Message message = new Message(MSG.view_configurationDetails_noConfigurationFetched(),
+                            Message.Severity.Info);
+                        CoreGUI.getMessageCenter().notify(message);
                         saveButton.disable();
                         refreshing = false;
                         return;
@@ -137,9 +136,9 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         EnumSet.of(MetadataType.resourceConfigurationDefinition), new TypeLoadedCallback() {
                             @Override
                             public void onTypesLoaded(ResourceType type) {
-
                                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                                configurationService.getOptionValuesForConfigDefinition(type.getResourceConfigurationDefinition(),new AsyncCallback<ConfigurationDefinition>(){
+                                configurationService.getOptionValuesForConfigDefinition(
+                                    type.getResourceConfigurationDefinition(), new AsyncCallback<ConfigurationDefinition>(){
                                     @Override
                                     public void onFailure(Throwable throwable) {
                                         refreshing = false;
@@ -148,17 +147,18 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
 
                                     @Override
                                     public void onSuccess(ConfigurationDefinition configurationDefinition) {
+                                        Configuration configuration = configurationUpdate.getConfiguration();
+                                        editor = new ConfigurationEditor(extendLocatorId("Editor"),
+                                            configurationDefinition, configuration);
+                                        editor.setOverflow(Overflow.AUTO);
+                                        editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
+                                        editor.setReadOnly(!resourcePermission.isConfigureWrite());
+                                        addMember(editor);
 
-                                            editor = new ConfigurationEditor(extendLocatorId("Editor"), configurationDefinition, result.getConfiguration());
-                                            editor.setOverflow(Overflow.AUTO);
-                                            editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
-                                            editor.setReadOnly(!resourcePermission.isConfigureWrite());
-                                            addMember(editor);
-
-                                            saveButton.disable();
-                                            buttonbar.setVisible(true);
-                                            markForRedraw();
-                                            refreshing = false;
+                                        saveButton.disable();
+                                        buttonbar.setVisible(true);
+                                        markForRedraw();
+                                        refreshing = false;
                                     }
                                 });
                             }

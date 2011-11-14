@@ -6,7 +6,7 @@
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
         <version>4.3.0-SNAPSHOT</version>
-        <relativePath>../../../../pom.xml</relativePath>            
+        <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -31,7 +31,7 @@
               in your settings.xml -->
         <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
         <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
-        
+
         <coreGuiParams />
         <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
 
@@ -61,15 +61,19 @@
         -->
         <gwt.userAgent>ie6,ie8,gecko1_8,safari,opera</gwt.userAgent>
 
-        <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed 
+        <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
-        
+
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
              src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
              Messages_ja.properties and MessageConstants_ja.properties. -->
         <gwt.locale>en,de,ja,pt,zh</gwt.locale>
+
+        <!-- The locale that GWT should fallback to if the user specified an unsupported locale via the 'locale' query
+             string parameter. -->
+        <gwt.fallback.locale>en</gwt.fallback.locale>
     </properties>
 
 
@@ -101,7 +105,7 @@
             <!-- by rhq.ear -->
         </dependency>
 
-        
+
         <!-- =============== 3rd Party Deps =============== -->
 
         <dependency>
@@ -252,7 +256,7 @@
                 <targetPath>${project.build.directory}/generated-sources/gwt</targetPath>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
-            </resource>            
+            </resource>
             <resource>
                 <directory>src/main/java</directory>
                 <includes>
@@ -282,7 +286,7 @@
                     <debugSuspend>false</debugSuspend>
                     <servicePattern>**/gwt/*GWTService.java</servicePattern>
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
-                    <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>                    
+                    <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
                     <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
                     <style>DETAILED</style>
                 </configuration>
@@ -304,7 +308,7 @@
                         </goals>
                         <configuration>
                             <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
-                        </configuration>    
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -476,7 +480,7 @@
             </activation>
             <properties>
                <coreGuiRunTarget>http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}</coreGuiRunTarget>
-            </properties>         
+            </properties>
         </profile>
 
         <profile>
@@ -494,7 +498,7 @@
                 </plugins>
               </build>
         </profile>
-        
+
     </profiles>
 
 
@@ -516,6 +520,7 @@
                <enabled>false</enabled>
             </snapshots>
         </repository>
+
     </repositories>
 
 </project>

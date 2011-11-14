@@ -39,12 +39,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
@@ -212,6 +214,43 @@ public class ManageSnapshotsTest extends DriftServerTest {
         driftMgr.pinSnapshot(getOverlord(), driftDef.getId(), 0);
 
         assertTrue("Failed to send request to agent to pin snapshot", agentInvoked.get());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
+        expectedExceptionsMessageRegExp = "Cannot repin.*definition.*")
+    public void doNotAllowSnapshotToBePinnedWhenDefinitionIsAttachedToPinnedTemplate() {
+        // First create the template
+        final DriftDefinition templateDef = new DriftDefinition(new Configuration());
+        templateDef.setName("Template-Pinned_Test");
+        templateDef.setEnabled(true);
+        templateDef.setDriftHandlingMode(normal);
+        templateDef.setInterval(2400L);
+        templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
+            templateDef);
+
+        // Now we will pin the template. We are going to take a bit of a short cut
+        // here. Pinning a template requires a drift definition with at least one
+        // snapshot. For the purposes of this test we can simply set the
+        // changeSetId field of the template to indicate that it is pinned.
+        template.setChangeSetId("1234");
+
+        // Next create a resource-level definition from the template.
+        final DriftDefinition driftDef = template.createDefinition();
+        driftDef.setResource(resource);
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.merge(template);
+                em.persist(driftDef);
+            }
+        });
+
+        // Now try resource-level pinning, i.e., pin a snapshot to the definition
+        driftMgr.pinSnapshot(getOverlord(), driftDef.getId(), 0);
     }
 
     private DriftDefinition createAndPersistDriftDef(String name) {

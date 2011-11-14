@@ -81,6 +81,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     private Integer resourceId;
     private Integer version;
     private boolean hasWriteAccess;
+    private boolean pinnedToTemplate;
 
     private String templateChangeSetId;
 
@@ -137,6 +138,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             DriftDefinitionCriteria defCriteria = new DriftDefinitionCriteria();
             defCriteria.addFilterId(driftDefId);
             defCriteria.fetchConfiguration(true);
+            defCriteria.fetchTemplate(true);
 
             DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
             driftService.findDriftDefinitionsByCriteria(defCriteria, new AsyncCallback<PageList<DriftDefinition>>() {
@@ -155,6 +157,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                         title = MSG.view_drift_table_title_snapshot(String.valueOf(version), defName);
                     }
                     setTitleString(title);
+                    pinnedToTemplate = driftDef.getTemplate() != null && driftDef.getTemplate().isPinned();
                     DriftSnapshotView.super.onDraw();
                 }
             });
@@ -203,6 +206,11 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     pinToDefinition();
+                }
+
+                @Override
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    return !pinnedToTemplate;
                 }
             });
 

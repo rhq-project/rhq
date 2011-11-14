@@ -154,6 +154,17 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
+    public void deleteDriftDefinitionTemplates(int[] templateIds) throws RuntimeException {
+        try {
+            for (int templateId : templateIds) {
+                driftTemplateManager.deleteTemplate(getSessionSubject(), templateId);
+            }
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
     public DriftSnapshot getSnapshot(DriftSnapshotRequest request) throws RuntimeException {
         try {
             DriftSnapshot results = driftManager.getSnapshot(getSessionSubject(), request);

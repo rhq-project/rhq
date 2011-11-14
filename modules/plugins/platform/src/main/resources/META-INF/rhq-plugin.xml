@@ -40,8 +40,8 @@
       </bundle-target>
 '>
  <!ENTITY driftConfig '
-      <drift-definition name="Template: File System" 
-                        description="A template for monitoring the file system for drift. It is expected that definitions will set a more specific base directory as the file system root is not recommended.">
+      <drift-definition name="Template-File System" 
+                        description="Monitor the file system for drift. Definitions should set a more specific base directory as the file system root is not recommended.">
           <basedir>
               <value-context>fileSystem</value-context>
               <value-name>/</value-name>
@@ -472,12 +472,12 @@
       
       <metric property="rxBytes" displayName="Bytes Received" units="bytes" measurementType="trendsup" displayType="summary"
               description="The total number of bytes received across this network interface since it started"/>
-      <metric property="rxPackets" displayName="Packets Received" measurementType="trendsup" displayType="summary"
+      <metric property="rxPackets" displayName="Packets Received" measurementType="trendsup"
               description="The total number of packets received across this network interface since it started"/>
 
       <metric property="txBytes" displayName="Bytes Transmitted" units="bytes" measurementType="trendsup" displayType="summary"
               description="The total number of bytes transmitted across this network interface since it started"/>
-      <metric property="txPackets" displayName="Packets Transmitted" measurementType="trendsup" displayType="summary"
+      <metric property="txPackets" displayName="Packets Transmitted" measurementType="trendsup"
               description="The total number of packets transmitted across this network interface since it started"/>
 
       <metric property="rxErrors" displayName="Receive Errors" measurementType="trendsup"
@@ -532,9 +532,9 @@
               description="The filesystem's flags"/>
       <metric property="fileSystemUsage.used" displayName="Used" units="kilobytes" 
               description="The total bytes used on the filesystem"/>
-      <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup" displayType="summary"
+      <metric property="fileSystemUsage.diskReads" displayName="Disk Reads" measurementType="trendsup"
               description="The number of physical disk reads"/>
-      <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup" displayType="summary"
+      <metric property="fileSystemUsage.diskWrites" displayName="Disk Writes" measurementType="trendsup"
               description="The number of physical disk writes"/>
       <metric property="fileSystemUsage.diskReadBytes" displayName="Disk Read Bytes" measurementType="trendsup" units="bytes" 
               description="The number of physical disk bytes read"/>
@@ -615,9 +615,9 @@
            <c:simple-property name="fullProcessTree" default="true" type="boolean" description="If true, the entire process tree will be monitored"/>
        </plugin-configuration>
 
-       <metric displayName="User Time" property="Process.cpu.user" measurementType="trendsup" units="milliseconds" displayType="summary"
+       <metric displayName="User Time" property="Process.cpu.user" measurementType="trendsup" units="milliseconds"
                description="The aggregate amount of CPU user time spent by all processes"/>
-       <metric displayName="Kernel Time" property="Process.cpu.sys" measurementType="trendsup" units="milliseconds" displayType="summary"
+       <metric displayName="Kernel Time" property="Process.cpu.sys" measurementType="trendsup" units="milliseconds"
                description="The aggregate amount of CPU kernel time spent by all processes"/>
        <metric displayName="CPU Percentage" property="Process.cpu.percent" measurementType="dynamic" units="percentage" displayType="summary"
                description="The percentage of CPU currently being used by all processes"/>
@@ -625,7 +625,7 @@
                description="The aggregate amount of resident memory used by all processes"/>
        <metric displayName="Virtual Memory" property="Process.memory.size" measurementType="dynamic" units="bytes" displayType="summary"
                description="The aggregate amount of virtual memory used by all processes"/>
-       <metric displayName="Open File Descriptors" property="Process.fileDescriptor.total" measurementType="dynamic" displayType="summary"
+       <metric displayName="Open File Descriptors" property="Process.fileDescriptor.total" measurementType="dynamic"
                description="The aggregate number of file descriptors open by all processes"/>
 
    </service>

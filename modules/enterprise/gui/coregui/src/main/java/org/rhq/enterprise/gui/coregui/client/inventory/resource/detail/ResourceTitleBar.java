@@ -32,6 +32,8 @@ import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 
@@ -114,6 +116,11 @@ public class ResourceTitleBar extends LocatableVLayout {
         this.title.setWidth("*");
 
         this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
+        this.availabilityImage.addDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                refresh();
+            }
+        });
 
         this.favoriteButton = new LocatableImg(this.extendLocatorId("Favorite"), NOT_FAV_ICON, 24, 24);
 
@@ -173,22 +180,8 @@ public class ResourceTitleBar extends LocatableVLayout {
         });
 
         pluginErrors = new Img(PLUGIN_ERRORS_ICON, 24, 24);
-        pluginErrors.hide();
-        GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
-            new AsyncCallback<List<ResourceError>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
-                            .getId())), caught);
-                }
-
-                public void onSuccess(List<ResourceError> result) {
-                    if (!result.isEmpty()) {
-                        pluginErrors.show();
-                    }
-                    markForRedraw();
-                }
-            });
+        pluginErrors.setVisible(false);
+        refreshPluginErrors(); // this is an async call
 
         //define tool tip
         pluginErrors.setPrompt(MSG.view_resource_title_component_errors_tooltip());
@@ -216,9 +209,9 @@ public class ResourceTitleBar extends LocatableVLayout {
                 Resource resource = resourceComposite.getResource();
                 ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
 
-                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), MSG
-                    .view_summaryOverview_header_detectedErrors(), null, null,
-                    new String[] { ResourceErrorsDataSource.Field.DETAIL });
+                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), null,
+                    ResourceTitleBar.this);
+
                 errorsGrid.setDataSource(errors);
 
                 form.addMember(errorsGrid);
@@ -337,6 +330,27 @@ public class ResourceTitleBar extends LocatableVLayout {
         return favorites;
     }
 
+    public void refresh() {
+        refreshPluginErrors();
+    }
+
+    private void refreshPluginErrors() {
+        GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
+            new AsyncCallback<List<ResourceError>>() {
+                public void onFailure(Throwable caught) {
+                    pluginErrors.setVisible(false);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
+                            .getId())), caught);
+                }
+
+                public void onSuccess(List<ResourceError> result) {
+                    pluginErrors.setVisible(!result.isEmpty());
+                    markForRedraw();
+                }
+            });
+    }
+
     public class UpdateFavoritesCallback implements AsyncCallback<Subject> {
         public void onSuccess(Subject subject) {
             String msg = null;
@@ -362,4 +376,5 @@ public class ResourceTitleBar extends LocatableVLayout {
             toggleFavoriteLocally();
         }
     }
+
 }

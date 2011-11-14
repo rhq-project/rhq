@@ -120,9 +120,9 @@
                createDeletePolicy="neither" singleton="true">
 
          <plugin-configuration>
-            <c:simple-property name="objectName" readOnly="true" default="java.lang:type=OperatingSystem"/>
-            <c:simple-property name="nameTemplate" readOnly="true" default="Operating system information"/>
-            <c:simple-property name="descriptionTemplate" readOnly="true" default="Operating system information provided by the JVM."/>
+            <c:simple-property name="objectName" default="java.lang:type=OperatingSystem"/>
+            <c:simple-property name="nameTemplate" default="Operating system information"/>
+            <c:simple-property name="descriptionTemplate" default="Operating system information provided by the JVM."/>
          </plugin-configuration>
 
          <metric displayName="Free Physical Memory"
@@ -146,6 +146,7 @@
                  measurementType="trendsup"
                  units="nanoseconds"/>
          <metric displayName="Committed Virtual Memory"
+                 defaultOn="true"
                  category="utilization"
                  property="CommittedVirtualMemorySize"
                  description="Size of virtual memory used by this process"
@@ -159,7 +160,7 @@
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Threading"/>
-            <c:simple-property name="nameTemplate" readOnly="true" default="Threading"/>
+            <c:simple-property name="nameTemplate" default="Threading"/>
          </plugin-configuration>
 
          <operation displayName="Reset Peak Thread Metrics" name="resetPeakThreadCount"
@@ -207,31 +208,26 @@
 
          <metric displayName="Thread Count"
                  displayType="summary"
-                 category="performance"
                  property="ThreadCount"
                  description="Number of active threads in the system"/>
          <metric displayName="Peak Thread Count"
-                 category="performance"
+                 defaultOn="true"
                  property="PeakThreadCount"
                  description="Peak count of active threads in the system"/>
          <metric displayName="Total Started Thread Count"
-                 category="performance"
+                 defaultOn="true"
                  property="TotalStartedThreadCount"
                  description="Count of threads started since system start"/>
          <metric displayName="Daemon Thread Count"
-                 category="performance"
+                 defaultOn="true"
                  property="DaemonThreadCount"
                  description="Count of threads marked as daemons in the system"/>
          <metric property="SuspendedThreadCount"
                  displayName="Suspended Thread Count"
-                 description="Count of suspended threads"
-                 defaultOn="false"
-                 category="performance" />
+                 description="Count of suspended threads" />
          <metric property="DeadLockedThreadCount"
                  displayName="Deadlocked Thread Count"
-                 description="Count of threads that are deadlocked waiting to acquire object monitors. This is a CPU-time consuming metric."
-                 defaultOn="false"
-                 category="performance" />		
+                 description="Count of threads that are deadlocked waiting to acquire object monitors. This is a CPU-time consuming metric." />
          <resource-configuration>
             <c:simple-property name="ThreadContentionMonitoringEnabled" type="boolean"/>
             <c:simple-property name="ThreadCpuTimeEnabled" type="boolean"/>
@@ -245,7 +241,7 @@
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Memory"/>
-            <c:simple-property name="nameTemplate" readOnly="true" default="Memory Subsystem"/>
+            <c:simple-property name="nameTemplate" default="Memory Subsystem"/>
          </plugin-configuration>
 
          <operation name="gc" displayName="Run Garbage Collection" description="Runs the garbage collector."/>
@@ -307,9 +303,9 @@
 
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true" default="java.lang:type=MemoryPool,name=%name%"/>
-               <c:simple-property name="nameTemplate" readOnly="true" default="{name}"/>
-               <c:simple-property name="descriptionTemplate" readOnly="true" default="The {name} memory pool for this VM."/>
-               <c:simple-property name="name" type="string" readOnly="true" description="The memory pool's name"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
+               <c:simple-property name="descriptionTemplate" default="The {name} memory pool for this VM."/>
+               <c:simple-property name="name" type="string" description="The memory pool's name"/>
             </plugin-configuration>
 
             <metric displayName="Used"
@@ -350,9 +346,9 @@
 
             <plugin-configuration>
                <c:simple-property name="objectName" readOnly="true" default="java.lang:type=GarbageCollector,name=%name%"/>
-               <c:simple-property name="nameTemplate" readOnly="true" default="{name}"/>
-               <c:simple-property name="descriptionTemplate" readOnly="true" default="The {name} Garbage Collector for this VM."/>
-               <c:simple-property name="name" type="string" readOnly="true" description="The garbage collector's name"/>
+               <c:simple-property name="nameTemplate" default="{name}"/>
+               <c:simple-property name="descriptionTemplate" default="The {name} Garbage Collector for this VM."/>
+               <c:simple-property name="name" type="string" description="The garbage collector's name"/>
             </plugin-configuration>
 
             <metric property="CollectionCount"
@@ -379,7 +375,7 @@
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="java.lang:type=Compilation"/>
-            <c:simple-property name="nameTemplate" readOnly="true" default="Compilation"/>
+            <c:simple-property name="nameTemplate" default="Compilation"/>
          </plugin-configuration>
 
          <metric property="TotalCompilationTime"
@@ -395,7 +391,7 @@
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="java.lang:type=ClassLoading"/>
-            <c:simple-property name="nameTemplate" readOnly="true" default="Class Loading"/>
+            <c:simple-property name="nameTemplate" default="Class Loading"/>
          </plugin-configuration>
 
          <metric displayName="Loaded Classes"
@@ -423,7 +419,7 @@
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="java.util.logging:type=Logging"/>
-            <c:simple-property name="nameTemplate" readOnly="true" default="Logging"/>
+            <c:simple-property name="nameTemplate" default="Logging"/>
             <c:simple-property name="configManagementEnabled" type="boolean" default="false" description="When false, configuration reading for this resource will fail."/>
          </plugin-configuration>
 

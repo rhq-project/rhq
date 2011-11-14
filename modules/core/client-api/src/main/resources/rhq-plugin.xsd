@@ -202,16 +202,16 @@
             <xs:annotation>
                <xs:documentation>
                   The default collection interval, in milliseconds. The metric is not necessarily
-                  enabled by default - see the defaultOn attribute for that. The minimum allowed
-                  value is 30000 (30 seconds). If unspecified, the default collection interval is
-                  set according to the Resource category, metric data type, and metric display
-                  type, as follows:
+                  enabled by default - see the defaultOn and displayType attributes for that.
+                  The minimum allowed value is 30000 (30 seconds).
+                  If unspecified, the default collection interval is set according to the
+                  resource type category, metric data type, and metric display type, as follows:
 
-                      platform numeric metrics: summary - 1m, detail - 2m
-                      server numeric metrics: summary - 5m, detail - 10m
-                      service numeric metrics: summary - 10m, detail - 20m
-                      traits: summary - 10m, detail - 30m
-                      call-time metrics: 1m
+                      Platform numeric metrics: summary - 10m, detail - 20m
+                      Server numeric metrics: summary - 10m, detail - 20m
+                      Service numeric metrics: summary - 20m, detail - 40m
+                      All Traits: summary and detail - 24 hours
+                      Calltime metrics: 10m
                </xs:documentation>
             </xs:annotation>
             <xs:simpleType>
@@ -225,6 +225,8 @@
                <xs:documentation>
                   If true, this metric will get collected as soon as possible.
                   If false, a user must explicitly tell the plugin to collect this metric.
+                  This is only used for metrics with a displayType of "detail". All
+                  "summary" metrics are enabled by default, regardless of this value.
                </xs:documentation>
             </xs:annotation>
          </xs:attribute>

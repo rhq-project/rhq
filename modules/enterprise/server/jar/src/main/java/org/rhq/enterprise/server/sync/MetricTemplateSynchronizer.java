@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.sync;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,7 +37,7 @@ import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.sync.validators.DeployedAgentPluginsValidator;
-import org.rhq.enterprise.server.sync.validators.MetricTemplateValidator;
+import org.rhq.enterprise.server.sync.validators.UniquenessValidator;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -50,17 +51,15 @@ public class MetricTemplateSynchronizer implements Synchronizer<MeasurementDefin
     private EntityManager entityManager;
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
     private MeasurementScheduleManagerLocal measurementScheduleManager;
-    private PluginManagerLocal pluginManager;
 
     public MetricTemplateSynchronizer() {
-        this(LookupUtil.getMeasurementDefinitionManager(), LookupUtil.getMeasurementScheduleManager(), LookupUtil.getPluginManager());
+        this(LookupUtil.getMeasurementDefinitionManager(), LookupUtil.getMeasurementScheduleManager());
     }
 
     public MetricTemplateSynchronizer(MeasurementDefinitionManagerLocal measurementDefinitionManager,
-        MeasurementScheduleManagerLocal measurementScheduleManager, PluginManagerLocal pluginManager) {
+        MeasurementScheduleManagerLocal measurementScheduleManager) {
         this.measurementDefinitionManager = measurementDefinitionManager;
         this.measurementScheduleManager = measurementScheduleManager;
-        this.pluginManager = pluginManager;
     }
 
     @Override
@@ -69,19 +68,19 @@ public class MetricTemplateSynchronizer implements Synchronizer<MeasurementDefin
         this.entityManager = entityManager;
     }
 
+    @Override
     public Exporter<MeasurementDefinition, MetricTemplate> getExporter() {
         return new MetricTemplateExporter(subject, measurementDefinitionManager);
     }
 
+    @Override
     public Importer<MeasurementDefinition, MetricTemplate> getImporter() {
         return new MetricTemplateImporter(subject, entityManager, measurementScheduleManager);
     }
 
+    @Override
     public Set<ConsistencyValidator> getRequiredValidators() {
-        HashSet<ConsistencyValidator> ret = new HashSet<ConsistencyValidator>();
-        ret.add(new DeployedAgentPluginsValidator(pluginManager));
-        ret.add(new MetricTemplateValidator());
-        return ret;
+        return Collections.emptySet();
     }
 
 }

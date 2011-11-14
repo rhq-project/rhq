@@ -64,7 +64,7 @@ public class AugeasPluginLifecycleListener implements PluginLifecycleListener {
     }
     
     private List<String> getLenses(String pluginName) throws IOException {
-        InputStream lensesDescriptor = getClass().getResourceAsStream("/META-INF/augeas-lenses/list");
+        InputStream lensesDescriptor = Thread.currentThread().getContextClassLoader().getResourceAsStream("META-INF/augeas-lenses/list");
         
         if (lensesDescriptor == null) {
             return Collections.emptyList();
@@ -96,13 +96,14 @@ public class AugeasPluginLifecycleListener implements PluginLifecycleListener {
     }
     
     private void copyToDir(List<String> lenses, File targetDir, String pluginName) throws IOException {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
         for (String lens : lenses) {
             URL lensURL = null;
             
             if (lens.startsWith("/")) {
-                lensURL = getClass().getResource(lens);
+                lensURL = cl.getResource(lens.substring(1));
             } else {
-                lensURL = getClass().getResource("/META-INF/augeas-lenses/" + lens);
+                lensURL = cl.getResource("META-INF/augeas-lenses/" + lens);
             }
             
             String lensName = lensURL.getPath();

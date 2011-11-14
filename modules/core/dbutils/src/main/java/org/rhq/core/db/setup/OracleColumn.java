@@ -19,7 +19,11 @@
 package org.rhq.core.db.setup;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+
+import org.rhq.core.db.OracleDatabaseType;
+import org.rhq.core.db.builders.CreateSequenceExprBuilder;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 import org.rhq.core.db.DatabaseType;
@@ -53,8 +57,8 @@ class OracleColumn extends Column {
             case Column.DEFAULT_AUTO_INCREMENT:
             case Column.DEFAULT_SEQUENCE_ONLY: {
                 String strSeqName = this.m_strTableName.toUpperCase() + '_' + this.getName().toUpperCase() + "_SEQ";
-                cmds.add(0, "CREATE SEQUENCE " + strSeqName + " START WITH " + this.getInitialSequence()
-                    + " INCREMENT BY " + this.getIncrementSequence() + " NOMAXVALUE NOCYCLE CACHE 10");
+                cmds.add(0, buildSequenceSqlExpr(CreateSequenceExprBuilder.getBuilder(OracleDatabaseType.VENDOR),
+                        strSeqName));
                 break;
             }
             }

@@ -40,6 +40,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 
 /**
  * A utility for creating or updating JBossCache 2.x XML configuration files.
@@ -78,6 +79,9 @@ public class CacheConfigurationHelper {
                 throw new IllegalStateException("Can't update file, as it is not writeable.");
             }
             SAXBuilder builder = new SAXBuilder();
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
+
             doc = builder.build(file);
             root = doc.getRootElement();
             cacheMbean = findComponentElement(root, mbeanName);

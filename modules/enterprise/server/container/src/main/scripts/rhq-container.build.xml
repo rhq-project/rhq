@@ -228,6 +228,8 @@
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
           toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
+    <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws-management.war/WEB-INF/web.xml"
+          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws-management.war/WEB-INF" verbose="true" overwrite="true"/>
 
 
       <echo>Installing patched hibernate jar ...</echo>
@@ -804,7 +806,7 @@ rhq.autoinstall.public-endpoint-address=
                    undeploy-jmx-console,
                    undeploy-mail-service,
                    undeploy-cluster-service,
-                   undeploy-alert-cache-service,
+                   undeploy-mdb-service,
                    undeploy-embedded-agent,
                    undeploy-jms,
                    undeploy-ear,
@@ -846,6 +848,10 @@ rhq.autoinstall.public-endpoint-address=
      <delete dir="${jboss.deploy.dir}/jmx-console.war" />
      -->
       <move file="${jboss.deploy.dir}/jmx-console.war" tofile="${jboss.deploy.dir}/jmx-console.war.rej" failonerror="false" />
+       <!-- fix security-constraint -->
+       <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jmx-console.war.rej/WEB-INF/web.xml"
+             toDir="${jboss.deploy.dir}/jmx-console.war.rej/WEB-INF" verbose="true" />
+
    </target>
 
    <target name="undeploy-mail-service" unless="predeploy">
@@ -861,9 +867,9 @@ rhq.autoinstall.public-endpoint-address=
       <move file="${jboss.deploy.dir}/cluster-service.xml" tofile="${jboss.deploy.dir}/cluster-service.xml.rej" failonerror="false" />
    </target>
 
-   <target name="undeploy-alert-cache-service" unless="predeploy">
-      <echo>Preparing for release - undeploying Alert Cache Service...</echo>
-      <move file="${jboss.deploy.dir}/alert-cache-service.xml" tofile="${jboss.deploy.dir}/alert-cache-service.xml.rej" failonerror="false" />
+   <target name="undeploy-mdb-service" unless="predeploy">
+      <echo>Preparing for release - undeploying RHQ MDB Service...</echo>
+      <move file="${jboss.deploy.dir}/rhq-mdb-service.xml" tofile="${jboss.deploy.dir}/rhq-mdb-service.xml.rej" failonerror="false" />
    </target>
 
    <target name="undeploy-embedded-agent" unless="predeploy">

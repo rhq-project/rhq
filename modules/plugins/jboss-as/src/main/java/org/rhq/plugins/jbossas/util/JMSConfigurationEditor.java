@@ -45,6 +45,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.plugins.jbossas.JMSComponent;
 
 /**
@@ -135,6 +136,9 @@ public class JMSConfigurationEditor extends AbstractMessagingConfigurationEditor
         Document doc;
         if (deploymentFile.exists()) {
             SAXBuilder builder = new SAXBuilder();
+            SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+            builder.setEntityResolver(entityResolver);
+
             doc = builder.build(deploymentFile);
             root = doc.getRootElement();
         } else {

@@ -56,6 +56,7 @@ import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordi
 import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
 import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement.CallTimeElementValue;
 import org.rhq.enterprise.server.alert.engine.model.DriftCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.EventCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
@@ -64,7 +65,6 @@ import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheEleme
 import org.rhq.enterprise.server.alert.engine.model.MeasurementRangeNumericCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
-import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement.CallTimeElementValue;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
@@ -415,6 +415,8 @@ class AgentConditionCache extends AbstractConditionCache {
                     }
                 }
             }
+            AlertConditionCacheMonitor.getMBean().incrementCallTimeCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementCallTimeProcessingTime(stats.getAge());
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error("Error during calltime cache processing for agent[id=" + agentId + "]", t);
@@ -519,8 +521,8 @@ class AgentConditionCache extends AbstractConditionCache {
             int resourceId = driftChangeSetSummary.getResourceId();
             List<DriftCacheElement> cacheElements = lookupDriftCacheElements(resourceId);
 
-            processCacheElements(cacheElements, DriftCacheElement.UNUSED_CONDITION_VALUE, driftChangeSetSummary
-                .getCreatedTime(), stats, driftChangeSetSummary);
+            processCacheElements(cacheElements, DriftCacheElement.UNUSED_CONDITION_VALUE,
+                driftChangeSetSummary.getCreatedTime(), stats, driftChangeSetSummary);
 
             AlertConditionCacheMonitor.getMBean().incrementDriftCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementDriftProcessingTime(stats.getAge());

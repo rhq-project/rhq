@@ -22,6 +22,8 @@ import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.IN_COMPLIANCE;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
 
 import java.io.File;
 import java.io.InputStream;
@@ -33,7 +35,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
@@ -61,6 +62,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
@@ -221,7 +223,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    @TransactionAttribute(NOT_SUPPORTED)
     public void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token,
         File changeSetFilesZip) throws Exception {
         saveChangeSetFiles(subject, changeSetFilesZip);
@@ -517,14 +519,51 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    @TransactionAttribute(NOT_SUPPORTED)
+    @TransactionAttribute(REQUIRES_NEW)
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+
         if (DriftHandlingMode.plannedChanges != summary.getDriftHandlingMode()) {
             notifyAlertConditionCacheManager("saveChangeSet", summary);
         }
+
+        DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+        criteria.addFilterName(summary.getDriftDefinitionName());
+        criteria.addFilterResourceIds(resourceId);
+        PageList<DriftDefinition> definitions = findDriftDefinitionsByCriteria(subject, criteria);
+
+        if (definitions.isEmpty()) {
+            log.warn("Could not find drift definition for [resourceId: " + resourceId + ", driftDefinitionName: " +
+                summary.getDriftDefinitionName() + "]. Will not be able check compliance for thiis drift definition");
+        } else {
+            updateCompliance(subject, definitions.get(0), summary);
+        }
+
         return summary;
+    }
+
+    private void updateCompliance(Subject subject, DriftDefinition definition, DriftChangeSetSummary changeSetSummary) {
+        boolean updateNeeded = false;
+
+        if (changeSetSummary.isInitialChangeSet()) {
+            updateNeeded = definition.getComplianceStatus() != IN_COMPLIANCE;
+            definition.setComplianceStatus(IN_COMPLIANCE);
+        }
+
+        if (definition.isPinned()) {
+            if (changeSetSummary.getDriftPathnames().isEmpty()) {
+                updateNeeded = definition.getComplianceStatus() != IN_COMPLIANCE;
+                definition.setComplianceStatus(IN_COMPLIANCE);
+            } else {
+                updateNeeded = definition.getComplianceStatus() == IN_COMPLIANCE;
+                definition.setComplianceStatus(OUT_OF_COMPLIANCE_DRIFT);
+            }
+        }
+
+        if (updateNeeded) {
+            updateDriftDefinition(subject, definition);
+        }
     }
 
     @Override
@@ -561,8 +600,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(NOT_SUPPORTED)
     public void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
         DriftDefinition driftDef = driftManager.getDriftDefinition(subject, driftDefId);
+
+        if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
+            throw new IllegalArgumentException(("Cannot repin a definition that has been created from a pinned " +
+                "template."));
+        }
+
         driftDef.setPinned(true);
-        driftManager.updateDriftDefinition(driftDef);
+        driftManager.updateDriftDefinition(subject, driftDef);
 
         DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, snapshotVersion);
         DriftSnapshot snapshot = getSnapshot(subject, snapshotRequest);
@@ -691,7 +736,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void updateDriftDefinition(DriftDefinition driftDefinition) {
+    public void updateDriftDefinition(Subject subject, DriftDefinition driftDefinition) {
         entityManager.merge(driftDefinition);
     }
 
@@ -722,6 +767,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                     // you cannot update drift def that changes basedir/includes/excludes from the original.
                     // the user must delete the drift def and create a new one, as opposed to trying to update the existing one.
                     if (comparator.compare(driftDef, dc) == 0) {
+                        if (dc.isPinned() && !driftDef.isPinned()) {
+                            dc.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
+                        }
                         dc.setConfiguration(driftDef.getConfiguration().deepCopyWithoutProxies());
                         isUpdated = true;
                         break;
@@ -772,6 +820,15 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
+        }
+    }
+
+    private void updateCompliance(DriftDefinition updatedDef) {
+        DriftDefinition currentDef = entityManager.find(DriftDefinition.class, updatedDef.getId());
+
+        // check to see if we are unpinning the definition
+        if (currentDef.isPinned() && !updatedDef.isPinned()) {
+            updatedDef.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
         }
     }
 

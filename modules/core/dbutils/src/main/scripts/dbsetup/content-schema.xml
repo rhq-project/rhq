@@ -695,20 +695,22 @@
         <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
         <column name="DRIFT_DEF_TEMPLATE_ID" type="INTEGER" required="false" references="RHQ_DRIFT_DEF_TEMPLATE"/>
         <column name="CTIME" type="LONG" required="true"/>
-        <column name="NAME" type="VARCHAR2" size="128" required="true"/>
+        <column name="NAME" type="VARCHAR2" size="512" required="true"/>
         <column name="DESCRIPTION" type="VARCHAR2" size="512" required="false"/>
         <column name="INTERVAL" type="LONG" required="true"/>
         <column name="IS_ENABLED" type="BOOLEAN" required="true"/>        
         <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>
         <column name="IS_PINNED" type="BOOLEAN" required="true"/>
         <column name="IS_ATTACHED" type="BOOLEAN" required="true"/>
+        <column name="COMPLIANCE_STATUS" type="INTEGER" required="true"/>
     </table>
 
+    <!--  A set of drift records (note, this is for the JPA server plugin impl only) -->
     <table name="RHQ_DRIFT_SET">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
     </table>
 
-    <!--  A drift change-set report for a resource -->
+    <!--  A drift change-set report for a resource (note, this is for the JPA server plugin impl only) -->
     <table name="RHQ_DRIFT_CHANGE_SET">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="DRIFT_SET_ID" type="INTEGER" required="false" references="RHQ_DRIFT_SET"/>
@@ -722,7 +724,7 @@
         <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>        
     </table>
     
-    <!--  A single occurence of drift for a resource -->
+    <!--  A single occurence of drift for a resource (note, this is for the JPA server plugin impl only) -->
     <table name="RHQ_DRIFT">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="CTIME" type="LONG" required="true"/>

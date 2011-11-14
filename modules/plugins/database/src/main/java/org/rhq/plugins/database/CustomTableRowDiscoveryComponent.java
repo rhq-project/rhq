@@ -25,6 +25,8 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -58,7 +60,7 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
             if (resourceName == null) {
                 throw new InvalidPluginConfigurationException("The 'name' connection property has to be specified.");
             }
-            
+
             statement = conn.createStatement();
             resultSet = statement.executeQuery("SELECT * FROM " + table);
 
@@ -97,6 +99,7 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
      * @return the formatted text with variables replaced
      */
     public static String formatMessage(String message, String key) {
+        key = Matcher.quoteReplacement(key);
         message = message.replaceAll("\\{key\\}", key);
         return message;
     }

@@ -63,12 +63,26 @@ public abstract class CreateSequenceExprBuilder {
      */
     public static final int USE_SEQID_NOCACHE_SIZE = 0;
 
+    @SuppressWarnings({"UnusedParameters"})
+    public static int getSafeSequenceCacheSize(CreateSequenceExprBuilder builder, String requestedSize) {
+        // we don't want to regress for the time being, and we don't want
+        // to default less than manufacturers recommended minimums...
+        int size = 10;
+        try {
+            // but if someone asks for lower values we provide it...
+            size = Integer.parseInt(requestedSize);
+        } catch (NumberFormatException e) {
+            // ... nada, previously validated in validateAttributes
+        }
+        return size;
+    }
+
     /**
      * Get the default factory sequence id cache size.
      *
      * @return the factory sequence id cache size
      */
-    public int getFactorySeqIdCacheSizeLiteral() {
+    public int getFactorySequenceCacheSize() {
         return 0; // this is the global default
     }
 
@@ -93,9 +107,8 @@ public abstract class CreateSequenceExprBuilder {
     protected StringBuilder appendCreateSeqCacheSize(HashMap<String, Object> terms, StringBuilder builder) {
         final int specifiedCacheSize = (Integer) terms.get(KEY_SEQ_CACHE_SIZE);
         // If the user specifies a cache size that is negative we use the factory
-        // default cache size. If the factory default cache size is identical to
-        // the specified value we do not need to append a cache term.
-        if ((specifiedCacheSize >= USE_SEQID_NOCACHE_SIZE) && (specifiedCacheSize != getFactorySeqIdCacheSizeLiteral())) {
+        // default cache size.
+        if (specifiedCacheSize >= USE_SEQID_NOCACHE_SIZE) {
             if (USE_SEQID_NOCACHE_SIZE == specifiedCacheSize) {
                 // values of zero map to 'no cache'...
                 appendSeqIdNoCacheTerms(terms, builder);
@@ -122,7 +135,7 @@ public abstract class CreateSequenceExprBuilder {
     private static class PostgresInnerBuilder extends CreateSequenceExprBuilder {
 
         @Override
-        public int getFactorySeqIdCacheSizeLiteral() {
+        public int getFactorySequenceCacheSize() {
             return 1; // believe it or not!
         }
 
@@ -158,7 +171,7 @@ public abstract class CreateSequenceExprBuilder {
     private static class OracleInnerBuilder extends CreateSequenceExprBuilder {
 
         @Override
-        public int getFactorySeqIdCacheSizeLiteral() {
+        public int getFactorySequenceCacheSize() {
             return 32;
         }
 
@@ -185,7 +198,7 @@ public abstract class CreateSequenceExprBuilder {
         public static final String SEQ_SUFFIX = "_ID_SEQ";
 
         @Override
-        public int getFactorySeqIdCacheSizeLiteral() {
+        public int getFactorySequenceCacheSize() {
             return 10; // for identity columns only; not applicable for Denali! In Denali the default is 50
         }
 
@@ -228,7 +241,7 @@ public abstract class CreateSequenceExprBuilder {
     private static class H2InnerBuilder extends CreateSequenceExprBuilder {
 
         @Override
-        public int getFactorySeqIdCacheSizeLiteral() {
+        public int getFactorySequenceCacheSize() {
             return 32;
         }
 

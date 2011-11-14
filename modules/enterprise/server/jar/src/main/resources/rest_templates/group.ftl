@@ -19,7 +19,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 -->
-<#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.ResourceWithType" -->
+<#-- @ftlvariable name="var" type="org.rhq.enterprise.server.rest.domain.GroupRest" -->
 <html>
     <table>
         <thead>
@@ -28,26 +28,14 @@
         </tr>
         </thead>
         <tr>
-            <td>Name</td><td>${var.resourceName}</td>
+            <td>Name</td><td>${var.name}</td>
         </tr>
         <tr>
-            <td>Id</td><td><a href="/rest/1/resource/${var.resourceId}.html">${var.resourceId}</a></td>
+            <td>Id</td><td>${var.id}</td>
         </tr>
         <tr>
-            <td>Type name</td><td>${var.typeName}</td>
+            <td>Category</td><td>${var.category}</td>
         </tr>
-        <tr>
-            <td>Type id</td><td>${var.typeId?c}</td>
-        </tr>
-        <tr>
-            <td>Plugin</td><td>${var.pluginName}</td>
-        </tr>
-        <#if var.parentId??>
-        <tr>
-            <td>Parent Id</td><td><a href="/rest/1/resource/${var.parentId?c}.html">${var.parentId?c}</a></td>
-        </tr>
-        </#if>
     </table>
-    <a href="/rest/1/resource/${var.resourceId}/children.html">Children</a><br/>
-    <a href="/rest/1/resource/${var.resourceId}/schedules.html">Schedules</a><br/>
+    <a href="/rest/1/group/${var.id?c}/resources.html">Resources</a><br/>
 </html>

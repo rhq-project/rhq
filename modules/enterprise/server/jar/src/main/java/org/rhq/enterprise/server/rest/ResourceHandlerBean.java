@@ -34,12 +34,15 @@ import javax.interceptor.Interceptors;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -145,7 +148,8 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
         }
         else {
-            builder = Response.ok(rwtList);
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+            builder = Response.ok(list);
         }
 
         return builder.build();
@@ -257,7 +261,8 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             builder = Response.ok(renderTemplate("listMetricSchedule", ret), mediaType);
         }
         else {
-            builder = Response.ok(ret,mediaType);
+            GenericEntity<List<MetricSchedule>> list = new GenericEntity<List<MetricSchedule>>(ret){};
+            builder = Response.ok(list,mediaType);
         }
 
         return builder.build();
@@ -292,7 +297,8 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
         }
         else {
-            builder = Response.ok(rwtList);
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+            builder = Response.ok(list);
         }
 
         return builder.build();

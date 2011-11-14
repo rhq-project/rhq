@@ -59,8 +59,8 @@ public interface GroupHandlerLocal {
 
     @GET
     @Path("{id}/resources")
-    public List<ResourceWithType> getResources(@PathParam("id") int id,@Context Request request, @Context HttpHeaders headers,
-                             @Context UriInfo uriInfo);
+    public Response getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+                                 @Context UriInfo uriInfo);
 
 
     @GET

@@ -76,7 +76,6 @@ public class ResourceWithType {
         this.resourceName = resourceName;
     }
 
-    @XmlAttribute
     @XmlID
     public String getResourceId() {
         return String.valueOf(resourceId);

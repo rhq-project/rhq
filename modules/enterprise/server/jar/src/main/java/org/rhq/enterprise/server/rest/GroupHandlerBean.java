@@ -15,7 +15,9 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
@@ -24,13 +26,14 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
+import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -49,15 +52,28 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     @EJB
     ResourceManagerLocal resourceManager;
 
-    @Override
-    @GET
-    @Path("/")
     public Response getGroups(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
-        Set<Role> roles = caller.getRoles();
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller,criteria);
 
-//        resourceGroupManager.findAvailableResourceGroupsForRole(caller,roleId,new int[]{}, PageControl.SIZE_UNLIMITED);
-        return null; // TODO
+        List<GroupRest> list = new ArrayList<GroupRest>(groups.size());
+        for (ResourceGroup group : groups) {
+            list.add(fillGroup(group, uriInfo));
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listGroup", list), mediaType);
+        }
+        else {
+            GenericEntity<List<GroupRest>> ret = new GenericEntity<List<GroupRest>>(list) {};
+            builder = Response.ok(ret);
+        }
+
+        return builder.build();
 
     }
 
@@ -69,8 +85,18 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
         ResourceGroup group = fetchGroup(id);
 
-        GroupRest groupRest = fillGroup(group);
-        Response.ResponseBuilder builder = Response.ok(groupRest);
+        GroupRest groupRest = fillGroup(group, uriInfo);
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("group", groupRest), mediaType);
+        }
+        else {
+            builder = Response.ok(groupRest,mediaType);
+        }
 
         return builder.build();
     }
@@ -121,7 +147,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     @Override
     @GET
     @Path("{id}/resources")  // TODO introduce paging through the list
-    public List<ResourceWithType> getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+    public Response getResources(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
                                  @Context UriInfo uriInfo) {
 
         ResourceGroup resourceGroup = fetchGroup(id);
@@ -131,10 +157,19 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         for (Resource res: resources) {
             rwtList.add(fillRWT(res,uriInfo));
         }
-        Response.ResponseBuilder builder = Response.ok(rwtList);
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
 
-//        return builder.build();
-        return rwtList;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
+        }
+        else {
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+            builder = Response.ok(list);
+        }
+
+        return builder.build();
+
     }
 
 
@@ -200,10 +235,17 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
 
 
-    private GroupRest fillGroup(ResourceGroup group) {
+    private GroupRest fillGroup(ResourceGroup group, UriInfo uriInfo) {
 
         GroupRest gr = new GroupRest(group.getName());
+        gr.setId(group.getId());
         gr.setCategory(group.getGroupCategory());
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}");
+        URI uri = uriBuilder.build(group.getId());
+
+        Link link = new Link("edit",uri.toASCIIString());
+        gr.getLinks().add(link);
 
         return gr;
     }

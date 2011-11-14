@@ -16,6 +16,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 public class GroupRest {
 
 
+    int id;
     private String name;
     private GroupCategory category;
 
@@ -26,6 +27,14 @@ public class GroupRest {
 
     public GroupRest(String name) {
         this.name = name;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -44,6 +53,7 @@ public class GroupRest {
         this.category = category;
     }
 
+    @XmlElementRef
     public List<Link> getLinks() {
         return links;
     }

@@ -238,7 +238,10 @@ public class DriftDefinition implements Serializable {
         this.configuration = configuration;
 
         // normalize paths to forward slashes
-        setBasedir(getBasedir());
+        BaseDirectory baseDir = getBasedir();
+        if (null != baseDir) {
+            setBasedir(baseDir);
+        }
         setIncludes(getIncludes());
         setExcludes(getExcludes());
 
@@ -476,8 +479,10 @@ public class DriftDefinition implements Serializable {
 
     public void setIncludes(List<Filter> includesFilters) {
         configuration.remove(DriftConfigurationDefinition.PROP_INCLUDES);
-        for (Filter filter : includesFilters) {
-            addInclude(filter);
+        if (null != includesFilters) {
+            for (Filter filter : includesFilters) {
+                addInclude(filter);
+            }
         }
     }
 
@@ -498,8 +503,10 @@ public class DriftDefinition implements Serializable {
 
     public void setExcludes(List<Filter> excludesFilters) {
         configuration.remove(DriftConfigurationDefinition.PROP_EXCLUDES);
-        for (Filter filter : excludesFilters) {
-            addExclude(filter);
+        if (null != excludesFilters) {
+            for (Filter filter : excludesFilters) {
+                addExclude(filter);
+            }
         }
     }
 

@@ -307,6 +307,10 @@ public class ResourceTitleBar extends LocatableVLayout {
         }
     }
 
+    public ResourceComposite getResource() {
+        return resourceComposite;
+    }
+
     void displayResourceName(String resourceName) {
         if (!resource.getName().equals(resourceName)) {
             resource.setName(resourceName); // the name must have been changed by the user via the editable field

@@ -2047,9 +2047,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         ResourceError error = entityManager.find(ResourceError.class, resourceErrorId);
 
         if (error != null) {
-            if (!authorizationManager.canViewResource(user, error.getResource().getId())) {
-                throw new PermissionException("Cannot delete resource error [" + resourceErrorId + "]. User [" + user
-                    + "] does not have permission to operate on resource [" + error.getResource().getName() + "].");
+            if (!authorizationManager.hasResourcePermission(user, Permission.MODIFY_RESOURCE,
+                error.getResource().getId())) {
+                throw new PermissionException("Cannot delete Resource error [" + resourceErrorId + "]. User [" + user
+                    + "] does not have permission to modify Resource [" + error.getResource().getName() + "].");
             }
 
             entityManager.remove(error);

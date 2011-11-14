@@ -619,10 +619,11 @@
 -->
 
       <!--USER ADMINISTRATION -->
-<!--
+
       <action path="/admin/user/UserAdmin"
               forward=".admin.user.layout">
       </action>
+<!--
 
       <action path="/admin/user/UserAdminPortal"
               parameter="mode"
@@ -3154,7 +3155,7 @@
          <forward name="failure" path="/admin/platform/monitor/Config.do?mode=configure"/>
          <forward name="success" path="/admin/platform/monitor/Config.do?mode=configure"/>
       </action>
-      
+
       <action path="/resource/common/monitor/config/ConfigMetricsNoMenu"
               name="MonitoringConfigForm"
               scope="request"

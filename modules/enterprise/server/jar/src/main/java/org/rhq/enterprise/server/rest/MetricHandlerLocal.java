@@ -75,6 +75,6 @@ public interface MetricHandlerLocal {
     @Path("/schedule/{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    MetricSchedule updateSchedule(@PathParam("id") int scheduleId,  MetricSchedule in);
+    Response updateSchedule(@PathParam("id") int scheduleId,  MetricSchedule in,@Context HttpHeaders headers);
 
 }

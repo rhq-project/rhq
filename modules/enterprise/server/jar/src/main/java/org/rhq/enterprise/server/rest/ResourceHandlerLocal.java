@@ -21,10 +21,12 @@ package org.rhq.enterprise.server.rest;
 import java.util.List;
 
 import javax.ejb.Local;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -36,7 +38,6 @@ import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.LinkResources;
 
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
@@ -80,18 +81,13 @@ public interface ResourceHandlerLocal {
 
     @GET
     @Path("/{id}/schedules")
-    @Produces({"application/json","application/xml"})
     @LinkResource(rel="schedules",value = MetricSchedule.class)
-    List<MetricSchedule> getSchedules(@PathParam("id") int resourceId,
+    Response getSchedules(@PathParam("id") int resourceId,
+                                      @QueryParam("type") @DefaultValue("all") String scheduleType,
+                                      @Context Request request,
+                                      @Context HttpHeaders headers,
                                       @Context UriInfo uriInfo);
 
-    @GET
-    @Path("/{id}/schedules")
-    @Produces("text/html")
-    @LinkResource(rel="schedules",value = MetricSchedule.class)
-            // TODO move to ScheduleManager, link from resource and pass the resource as query param
-    String getSchedulesHtml(@PathParam("id") int resourceId,
-                            @Context UriInfo uriInfo);
 
     @GET
     @Path("/{id}/children")

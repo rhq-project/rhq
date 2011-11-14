@@ -138,7 +138,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             builder = Response.ok(htmlString,mediaType);
         }
         else
-            builder= Response.ok(res);
+            builder= Response.ok(res,mediaType);
         builder.cacheControl(cc);
 
         return builder.build();
@@ -178,8 +178,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 builder.cacheControl(cc);
                 return builder.build();
             }
-
-
         }
 
         if (schedule==null) {
@@ -210,12 +208,17 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         if (builder==null) {
             // preconditions not met, we need to send the resource
 
-            // create link to metrics
-            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-            uriBuilder.path("metric/data/" + scheduleId);
-            URI uri = uriBuilder.build();
-            Link link = new Link("metrics",uri.toString());
-            metricSchedule.addLink(link);
+            UriBuilder uriBuilder;
+            URI uri;
+            Link link;
+            if (definition.getDataType()==DataType.MEASUREMENT) {
+                // create link to metrics
+                uriBuilder = uriInfo.getBaseUriBuilder();
+                uriBuilder.path("metric/data/" + scheduleId);
+                uri = uriBuilder.build();
+                link = new Link("metric",uri.toString());
+                metricSchedule.addLink(link);
+            }
 
             // create link to the resource
             uriBuilder = uriInfo.getBaseUriBuilder();
@@ -237,7 +240,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
             }
             else {
-                builder = Response.ok(metricSchedule);
+                builder = Response.ok(metricSchedule,mediaType);
             }
         }
 
@@ -271,7 +274,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     }
 
     @Override
-    public MetricSchedule updateSchedule(int scheduleId, MetricSchedule in) {
+    public Response updateSchedule(int scheduleId, MetricSchedule in,HttpHeaders httpHeaders) {
         if (in==null)
             throw new StuffNotFoundException("Input is null"); // TODO other type of exception
         if (in.getScheduleId()==null)
@@ -294,6 +297,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         MetricSchedule ret = new MetricSchedule(scheduleId,def.getName(),def.getDisplayName(),
                 schedule.isEnabled(),schedule.getInterval(),def.getUnits().toString(),def.getDataType().toString());
 
-        return ret;
+        return Response.ok(ret,httpHeaders.getAcceptableMediaTypes().get(0)).build();
     }
 }

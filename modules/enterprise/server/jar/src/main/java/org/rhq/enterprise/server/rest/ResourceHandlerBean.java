@@ -44,6 +44,7 @@ import javax.ws.rs.core.UriInfo;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -203,7 +204,15 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return availabilityRest;
     }
 
-    public List<MetricSchedule> getSchedules(int resourceId, UriInfo uriInfo) {
+    public Response getSchedules(int resourceId,
+                                             String scheduleType,
+                                          @Context Request request,
+                                          @Context HttpHeaders headers,
+                                          @Context UriInfo uriInfo) {
+
+        // allow metric as input
+        if (scheduleType.equals("metric"))
+            scheduleType=DataType.MEASUREMENT.toString().toLowerCase();
 
         Resource res = resMgr.getResource(caller, resourceId);
 
@@ -212,30 +221,46 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         for (MeasurementSchedule schedule : schedules) {
             putToCache(schedule.getId(),MeasurementSchedule.class,schedule);
             MeasurementDefinition definition = schedule.getDefinition();
-            MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                    schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
-                    definition.getDataType().toString());
-            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-            uriBuilder.path("/metric/data/{id}");
-            URI uri = uriBuilder.build(schedule.getId());
-            Link metricLink = new Link("metric",uri.toString());
-            ms.addLink(metricLink);
-            // create link to the resource
-            uriBuilder = uriInfo.getBaseUriBuilder();
-            uriBuilder.path("resource/" + schedule.getResource().getId());
-            uri = uriBuilder.build();
-            Link link = new Link("resource",uri.toString());
-            ms.addLink(link);
 
-            ret.add(ms);
+            // user can opt to e.g. only get "measurement" or "trait" metrics
+
+            if ("all".equals(scheduleType) ||
+                    scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase()) ) {
+                MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                        schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                        definition.getDataType().toString());
+                UriBuilder uriBuilder;
+                URI uri;
+                if (definition.getDataType()== DataType.MEASUREMENT) {
+                    uriBuilder = uriInfo.getBaseUriBuilder();
+                    uriBuilder.path("/metric/data/{id}");
+                    uri = uriBuilder.build(schedule.getId());
+                    Link metricLink = new Link("metric",uri.toString());
+                    ms.addLink(metricLink);
+                }
+                // create link to the resource
+                uriBuilder = uriInfo.getBaseUriBuilder();
+                uriBuilder.path("resource/" + schedule.getResource().getId());
+                uri = uriBuilder.build();
+                Link link = new Link("resource",uri.toString());
+                ms.addLink(link);
+
+                ret.add(ms);
+            }
         }
 
-        return ret;
-    }
+        // What media type does the user request?
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
 
-    public String getSchedulesHtml(int resourceId, UriInfo uriInfo) {
-        List<MetricSchedule> list = getSchedules(resourceId, uriInfo);
-        return renderTemplate("listMetricSchedule", list);
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listMetricSchedule", ret), mediaType);
+        }
+        else {
+            builder = Response.ok(ret,mediaType);
+        }
+
+        return builder.build();
     }
 
     @Override

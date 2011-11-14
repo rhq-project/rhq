@@ -3807,6 +3807,11 @@
                 <!-- TODO For RHQ 4.3: Java upgrade step for rhq_drift_template_map conversion and removal -->
             </schemaSpec>
 
+            <schemaSpec version="2.116">
+                <!-- Increase the max length of a product version from 50 to 100. -->
+                <schema-alterColumn table="RHQ_PRD_VER" column="VERSION" columnType="VARCHAR2" precision="100" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

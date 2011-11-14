@@ -123,7 +123,7 @@ public class FilterFileVisitor implements FileVisitor {
             filterPattern = filter.getPattern();
         }
 
-        return new PathFilter(FilenameUtils.normalize(filterPath.getAbsolutePath()).replaceAll("\\\\", "/"),
+        return new PathFilter(FilenameUtils.normalize(filterPath.getAbsolutePath()).replace("\\", "/"),
             filterPattern);
     }
 

@@ -597,10 +597,6 @@
            <version>2.4.3</version>
          </plugin>
          <plugin>
-           <artifactId>maven-scm-plugin</artifactId>
-           <version>1.4</version>
-         </plugin>
-         <plugin>
            <artifactId>maven-site-plugin</artifactId>
            <version>3.0</version>
          </plugin>
@@ -811,32 +807,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.scm</groupId>
-            <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.3</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-          <updateDependencies>false</updateDependencies>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-scm-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.scm</groupId>
-            <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.3</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>

@@ -600,6 +600,12 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(NOT_SUPPORTED)
     public void pinSnapshot(Subject subject, int driftDefId, int snapshotVersion) {
         DriftDefinition driftDef = driftManager.getDriftDefinition(subject, driftDefId);
+
+        if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
+            throw new IllegalArgumentException(("Cannot repin a definition that has been created from a pinned " +
+                "template."));
+        }
+
         driftDef.setPinned(true);
         driftManager.updateDriftDefinition(subject, driftDef);
 

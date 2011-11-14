@@ -220,11 +220,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 pinToTemplate();
             }
-
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return !pinnedToTemplate;
-            }
         });
     }
 

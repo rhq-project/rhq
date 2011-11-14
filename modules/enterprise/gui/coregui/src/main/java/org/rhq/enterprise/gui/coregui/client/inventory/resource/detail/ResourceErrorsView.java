@@ -50,10 +50,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
+
     private static final String ERROR_ICON = "[SKIN]/Dialog/warn.png";
 
-    public ResourceErrorsView(String locatorId, String string, Criteria criteria, Object object, String[] strings) {
+    private ResourceTitleBar titleBar;
+
+    public ResourceErrorsView(String locatorId, Criteria criteria, ResourceTitleBar titleBar) {
         super(locatorId, MSG.common_title_component_errors(), criteria);
+
+        this.titleBar = titleBar;
+
         setWidth100();
         setHeight100();
         setShowHeader(false);
@@ -138,6 +144,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
                     for (ListGridRecord record : selection) {
                         resourceErrorIds[i++] = record.getAttributeAsInt(Field.ID);
                     }
+
                     GWTServiceLookup.getResourceService().deleteResourceErrors(resourceErrorIds,
                         new AsyncCallback<Void>() {
                             @Override
@@ -158,6 +165,12 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
             });
     }
 
+    @Override
+    public void refresh() {
+        super.refresh();
+        this.titleBar.refresh();
+    }
+
     private void popupDetails(String details) {
         final Window winModal = new LocatableWindow(extendLocatorId("errorDetailsWin"));
         winModal.setTitle(MSG.common_title_component_errors());
@@ -172,9 +185,9 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         winModal.setCanDragResize(true);
         winModal.centerInPage();
         winModal.addCloseClickHandler(new CloseClickHandler() {
-            @Override
             public void onCloseClick(CloseClientEvent event) {
                 winModal.markForDestroy();
+                titleBar.refresh();
             }
         });
 
@@ -186,4 +199,5 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         winModal.addItem(htmlPane);
         winModal.show();
     }
+
 }

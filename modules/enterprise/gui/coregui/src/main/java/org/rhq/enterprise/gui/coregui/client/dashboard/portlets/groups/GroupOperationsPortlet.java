@@ -59,7 +59,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -106,14 +105,18 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     protected int groupId;
     protected boolean portletConfigInitialized = false;
     private ResourceGroupComposite groupComposite;
-    protected String baseViewPath = "";
     protected LocatableCanvas recentOperationsContent = new LocatableCanvas(extendLocatorId("RecentOperations"));
     protected String locatorId;
 
-    public GroupOperationsPortlet(String locatorId, int groupId) {
+    private boolean isAutoGroup;
+    private boolean isAutoCluster;
+
+    public GroupOperationsPortlet(String locatorId, EntityContext context) {
         super(locatorId);
         this.locatorId = locatorId;
-        this.groupId = groupId;
+        this.groupId = context.getGroupId();
+        this.isAutoGroup = context.isAutoGroup();
+        this.isAutoCluster = context.isAutoCluster();
     }
 
     @Override
@@ -299,7 +302,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupOperationsPortlet(locatorId, context.getGroupId());
+            return new GroupOperationsPortlet(locatorId, context);
         }
     }
 
@@ -328,15 +331,11 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     }
 
     private boolean isAutoGroup() {
-        return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
+        return this.isAutoGroup;
     }
 
     private boolean isAutoCluster() {
-        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
-    }
-
-    public String getBaseViewPath() {
-        return baseViewPath;
+        return this.isAutoCluster;
     }
 
     protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {

@@ -67,7 +67,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -82,9 +81,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class GroupMetricsPortlet extends LocatableVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     private int groupId = -1;
+    private boolean isAutoCluster;
+    private boolean isAutoGroup;
     protected LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
     protected boolean currentlyLoading = false;
-    protected String baseViewPath = "";
     protected long start = -1;
     protected long end = -1;
 
@@ -110,9 +110,11 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
     }
 
-    public GroupMetricsPortlet(String locatorId, int groupId) {
+    public GroupMetricsPortlet(String locatorId, EntityContext context) {
         super(locatorId);
-        this.groupId = groupId;
+        this.groupId = context.getGroupId();
+        this.isAutoGroup = context.isAutoGroup();
+        this.isAutoCluster = context.isAutoCluster();
     }
 
     @Override
@@ -166,7 +168,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupMetricsPortlet(locatorId, context.getGroupId());
+            return new GroupMetricsPortlet(locatorId, context);
         }
     }
 
@@ -509,15 +511,11 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     }
 
     private boolean isAutoGroup() {
-        return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
+        return this.isAutoGroup;
     }
 
     private boolean isAutoCluster() {
-        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
-    }
-
-    public String getBaseViewPath() {
-        return baseViewPath;
+        return this.isAutoCluster;
     }
 
     protected void setRefreshing(boolean currentlyRefreshing) {

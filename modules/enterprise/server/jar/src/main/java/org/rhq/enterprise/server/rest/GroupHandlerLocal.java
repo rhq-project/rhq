@@ -44,7 +44,7 @@ public interface GroupHandlerLocal {
 
     @POST
     @Path("/")
-    public Response createGroup(ResourceGroup group, @Context Request request, @Context HttpHeaders headers,
+    public Response createGroup(GroupRest group, @Context Request request, @Context HttpHeaders headers,
                              @Context UriInfo uriInfo);
 
     @PUT

@@ -28,8 +28,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
@@ -51,6 +54,9 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
     @EJB
     ResourceManagerLocal resourceManager;
+
+    @EJB
+    ResourceTypeManagerLocal resourceTypeManager;
 
     public Response getGroups(@Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
@@ -104,19 +110,33 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
     @Override
     @POST
     @Path("/")
-    public Response createGroup(ResourceGroup group, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response createGroup(GroupRest group, @Context Request request, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        ResourceGroup newGroup = new ResourceGroup(group.getName());
+        if (group.getResourceTypeId()!=null) {
+
+            ResourceType resourceType = null;
+            try {
+                resourceType = resourceTypeManager.getResourceTypeById(caller,group.getResourceTypeId());
+                newGroup.setResourceType(resourceType);
+            } catch (ResourceTypeNotFoundException e) {
+                e.printStackTrace();  // TODO: Customise this generated block
+                throw new StuffNotFoundException("ResourceType with id " + group.getResourceTypeId());
+            }
+        }
 
         Response.ResponseBuilder builder;
         try {
-            ResourceGroup newGroup = resourceGroupManager.createResourceGroup(caller,group);
+            newGroup = resourceGroupManager.createResourceGroup(caller,newGroup);
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/group/{id}");
             URI uri = uriBuilder.build(newGroup.getId());
 
             builder=Response.created(uri);
+            putToCache(newGroup.getId(),ResourceGroup.class,newGroup);
         } catch (Exception e) {
             e.printStackTrace();  // TODO: Customise this generated block
-            builder=Response.serverError();
+            builder=Response.status(Response.Status.NOT_ACCEPTABLE);
         }
         return builder.build();
     }
@@ -135,6 +155,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         try {
             resourceGroup = resourceGroupManager.updateResourceGroup(caller,resourceGroup);
             builder=Response.ok(fillGroup(resourceGroup,uriInfo));
+            putToCache(resourceGroup.getId(),ResourceGroup.class,resourceGroup);
         }
         catch (Exception e) {
             builder = Response.status(Response.Status.NOT_ACCEPTABLE); // TODO correct?
@@ -150,6 +171,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
 
         try {
             resourceGroupManager.deleteResourceGroup(caller,id);
+            removeFromCache(id,ResourceGroup.class);
             return Response.ok().build();
         } catch (ResourceGroupDeleteException e) {
             e.printStackTrace();  // TODO: Customise this generated block
@@ -196,8 +218,13 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         if (res==null)
             throw new StuffNotFoundException("Resource with id " + resourceId);
 
-        // TODO do we want/ need to check that the group category stays the same?
+        // A resource type is set for the group, so only allow to add resources with the same type.
+        if (resourceGroup.getResourceType()!=null) {
+            if (!res.getResourceType().equals(resourceGroup.getResourceType()))
+                return Response.status(Response.Status.NOT_ACCEPTABLE).build();
+        }
 
+        // TODO if comp group and no resourceTypeId set, shall we allow to have it change to a mixed group?
         resourceGroup.addExplicitResource(res);
 
         return Response.ok().build(); // TODO right code?
@@ -246,6 +273,7 @@ public class GroupHandlerBean extends AbstractRestBean implements GroupHandlerLo
         GroupRest gr = new GroupRest(group.getName());
         gr.setId(group.getId());
         gr.setCategory(group.getGroupCategory());
+        gr.setRecursive(group.isRecursive());
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/group/{id}");
         URI uri = uriBuilder.build(group.getId());

@@ -36,6 +36,14 @@
         <tr>
             <td>Category</td><td>${var.category}</td>
         </tr>
+        <#if var.resourceTypeId??>
+        <tr>
+            <td>ResourceType id</td><td></td>
+        </tr>
+        </#if>
+        <tr>
+            <td>Recursive</td><td>${var.recursive?string("Yes","No")}</td>
+        </tr>
     </table>
     <a href="/rest/1/group/${var.id?c}/resources.html">Resources</a><br/>
 </html>

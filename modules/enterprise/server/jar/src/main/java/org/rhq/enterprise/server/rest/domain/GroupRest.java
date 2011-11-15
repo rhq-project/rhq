@@ -18,6 +18,8 @@ public class GroupRest {
 
     int id;
     private String name;
+    private Integer resourceTypeId;
+    private boolean recursive;
     private GroupCategory category;
 
     List<Link> links = new ArrayList<Link>();
@@ -43,6 +45,22 @@ public class GroupRest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Integer getResourceTypeId() {
+        return resourceTypeId;
+    }
+
+    public void setResourceTypeId(Integer resourceTypeId) {
+        this.resourceTypeId = resourceTypeId;
+    }
+
+    public boolean isRecursive() {
+        return recursive;
+    }
+
+    public void setRecursive(boolean recursive) {
+        this.recursive = recursive;
     }
 
     public GroupCategory getCategory() {

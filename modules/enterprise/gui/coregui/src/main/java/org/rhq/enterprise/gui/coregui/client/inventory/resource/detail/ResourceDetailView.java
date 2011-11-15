@@ -373,7 +373,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             }
         });
 
-        boolean enabled = globalPermissions.contains(Permission.MANAGE_INVENTORY);
+        boolean enabled = globalPermissions.contains(Permission.MANAGE_SETTINGS);
         viewFactory = (!enabled) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {

@@ -157,9 +157,12 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
                 int complianceCode = record.getAttributeAsInt(ATTR_COMPLIANCE);
                 DriftComplianceStatus complianceStatus = DriftComplianceStatus.fromCode(complianceCode);
                 switch (complianceStatus) {
-                    case OUT_OF_COMPLIANCE_NO_BASEDIR: return MSG.view_drift_table_out_of_compliance_no_basedir();
-                    case OUT_OF_COMPLIANCE_DRIFT: return MSG.view_drift_table_out_of_compliance_drift();
-                    default: return "";
+                case OUT_OF_COMPLIANCE_NO_BASEDIR:
+                    return MSG.view_drift_table_out_of_compliance_no_basedir();
+                case OUT_OF_COMPLIANCE_DRIFT:
+                    return MSG.view_drift_table_out_of_compliance_drift();
+                default:
+                    return "";
                 }
             }
         });
@@ -225,6 +228,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
 
             nameField.setWidth("20%");
             enabledField.setWidth(60);
+            inComplianceField.setWidth(100);
             driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
             baseDirField.setWidth("*");
@@ -239,7 +243,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
             changeSetField.setWidth(70);
             changeSetTimeField.setWidth(100);
             enabledField.setWidth(60);
-            inComplianceField.setWidth(60);
+            inComplianceField.setWidth(100);
             driftHandlingModeField.setWidth("15%");
             intervalField.setWidth(70);
             baseDirField.setWidth("*");
@@ -359,8 +363,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_IS_ENABLED, String.valueOf(def.isEnabled()));
         record.setAttribute(ATTR_IS_ENABLED_ICON, ImageManager.getAvailabilityIcon(def.isEnabled()));
         record.setAttribute(ATTR_COMPLIANCE, def.getComplianceStatus().ordinal());
-        record.setAttribute(ATTR_COMPLIANCE_ICON, ImageManager.getAvailabilityIcon(
-            def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
+        record.setAttribute(ATTR_COMPLIANCE_ICON, ImageManager
+            .getAvailabilityIcon(def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
         record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager

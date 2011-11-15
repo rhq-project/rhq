@@ -9,7 +9,7 @@
 MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
 MAIN_CLASS=test.RmiClient
 
-JBOSS_HOME=/home/ips/Applications/jboss-eap-5.1/jboss-as
+JBOSS_HOME=/home/ips/Applications/jboss-eap-5.1.1/jboss-as
 if [ ! -d "$JBOSS_HOME" ]; then
    echo "Dir specified by JBOSS_HOME variable ($JBOSS_HOME) does not exist."
    exit 1

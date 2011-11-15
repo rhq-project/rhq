@@ -84,7 +84,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             ResourceType resourceType = context.getResourceType();
 
             for (AugeasNode node : directories) {
-                Configuration pluginConfiguration = new Configuration();
+                Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
                 String ifmoduleParams = AugeasNodeSearch.getNodeKey(node, parentNode);
                 List<AugeasNode> params = node.getChildByLabel("param");

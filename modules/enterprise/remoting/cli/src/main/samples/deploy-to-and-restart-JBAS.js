@@ -172,24 +172,13 @@ function _loadGroupMembers(group) {
 }
 
 function _allResourceIds(group) {
-    var set = new java.util.HashSet;
-
-    var resourceIdPicker = function(resource) {
-        set.add(resource.id);
-    }
+    var list = [];
 
     if (group.explicitResources != null) {
-        foreach(group.explicitResources, resourceIdPicker);
+        foreach(group.explicitResources, function(resource) {
+            list.push(resource.id);
+        });
     }
-
-    if (group.implicitResources != null) {
-        foreach(group.implicitResources, resourceIdPicker);
-    }
-
-    var list = [];
-    foreach(set, function(id) {
-        list.push(id);
-    });
 
     return list;
 }

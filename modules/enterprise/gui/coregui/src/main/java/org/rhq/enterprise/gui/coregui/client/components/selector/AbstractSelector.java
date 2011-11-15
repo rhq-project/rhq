@@ -63,6 +63,7 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VStack;
 
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
@@ -189,6 +190,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
             // LEFT SIDE
             this.messageLayout = new Label();
             this.messageLayout.setMargin(3);
+            this.messageLayout.setAutoHeight();
             addMember(this.messageLayout);
             this.availableFilterForm = getAvailableFilterForm();
             if (this.availableFilterForm != null) {
@@ -376,10 +378,10 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
                     int totalAvailableRecords = totalRecords - assignedRecords.length;
                     if (availableRecords.size() < totalAvailableRecords) {
                         // TODO: i18n
-                        messageLayout.setContents("<b>Note:</b> Only " + availableRecords.size() + " out of "
-                            + totalAvailableRecords + " available " + getItemTitle()
-                            + " are listed - please specify more specific filters below to find the " + getItemTitle()
-                            + " for which you are looking.");
+                        messageLayout.setContents(imgHTML(ImageManager.getAvailabilityYellowIcon()) + " Only "
+                            + availableRecords.size() + " out of " + totalAvailableRecords + " available "
+                            + getItemTitle() + " are listed. Use the search fields below to find the " + getItemTitle()
+                            + " you want.");
                     } else {
                         // Clear the warning message, if any, from the previous fetch.
                         // Note, surprisingly, setContents(null) doesn't work.

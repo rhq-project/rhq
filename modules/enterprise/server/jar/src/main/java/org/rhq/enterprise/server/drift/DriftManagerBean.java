@@ -44,6 +44,9 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
@@ -65,10 +68,8 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
@@ -76,6 +77,8 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -97,9 +100,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import difflib.DiffUtils;
-import difflib.Patch;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -534,8 +534,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         PageList<DriftDefinition> definitions = findDriftDefinitionsByCriteria(subject, criteria);
 
         if (definitions.isEmpty()) {
-            log.warn("Could not find drift definition for [resourceId: " + resourceId + ", driftDefinitionName: " +
-                summary.getDriftDefinitionName() + "]. Will not be able check compliance for thiis drift definition");
+            log.warn("Could not find drift definition for [resourceId: " + resourceId + ", driftDefinitionName: "
+                + summary.getDriftDefinitionName() + "]. Will not be able check compliance for thiis drift definition");
         } else {
             updateCompliance(subject, definitions.get(0), summary);
         }
@@ -602,8 +602,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         DriftDefinition driftDef = driftManager.getDriftDefinition(subject, driftDefId);
 
         if (driftDef.getTemplate() != null && driftDef.getTemplate().isPinned()) {
-            throw new IllegalArgumentException(("Cannot repin a definition that has been created from a pinned " +
-                "template."));
+            throw new IllegalArgumentException(("Cannot repin a definition that has been created from a pinned "
+                + "template."));
         }
 
         driftDef.setPinned(true);
@@ -627,7 +627,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             throw new RuntimeException("Failed to pin snapshot", e);
         }
 
-        AgentClient agent = agentManager.getAgentClient(subject, driftDef.getResource().getId());
+        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource().getId());
         DriftAgentService driftService = agent.getDriftAgentService();
         driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
     }

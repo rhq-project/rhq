@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugins.drift.mongodb;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -177,7 +178,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 ds.save(changeSet);
 
                 if (!missingContent.isEmpty()) {
-                    AgentClient agent = getAgentManager().getAgentClient(subject, resourceId);
+                    AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
                     DriftAgentService driftService = agent.getDriftAgentService();
                     driftService.requestDriftFiles(resourceId, headers, missingContent);
                 }

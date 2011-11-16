@@ -37,7 +37,6 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 /**
  * Component class for the JMS subsystem
@@ -98,7 +97,7 @@ public class JmsComponent extends BaseComponent {
             report.setResourceName(report.getUserSpecifiedResourceName());
         }
 
-        System.out.println(report);
+        log.info(report);
         return report;
     }
 

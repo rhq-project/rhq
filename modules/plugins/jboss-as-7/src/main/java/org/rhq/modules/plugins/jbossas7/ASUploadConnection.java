@@ -53,7 +53,7 @@ public class ASUploadConnection {
 
     private static final String UPLOAD_URL_PATH = ASConnection.MANAGEMENT + "/add-content";
 
-    private final Log log = LogFactory.getLog(ASUploadConnection.class);
+    private static final Log log = LogFactory.getLog(ASUploadConnection.class);
 
     BufferedOutputStream os = null;
     InputStream is = null;
@@ -122,7 +122,7 @@ public class ASUploadConnection {
                 log.warn("- no InputStream available -");
 
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            log.error(e);
         }
         finally {
             closeQuietly(is);
@@ -191,7 +191,7 @@ public class ASUploadConnection {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace(); // TODO
+                log.error(e);
                 return true;
             }
         }

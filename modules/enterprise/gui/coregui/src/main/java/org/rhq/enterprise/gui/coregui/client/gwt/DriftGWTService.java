@@ -150,4 +150,5 @@ public interface DriftGWTService extends RemoteService {
      */
     void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException;
 
+    void updateTemplate(DriftDefinitionTemplate template) throws RuntimeException;
 }

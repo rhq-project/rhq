@@ -376,7 +376,7 @@ public class RemoteClient implements RhqFacade {
     public SynchronizationManagerRemote getSynchronizationManager() {
         return RemoteClientProxy.getProcessor(this, RhqManagers.SynchronizationManager);
     }
-    
+
     /**
      * Returns the map of all remote managers running in the server that this
      * client can talk to.
@@ -391,7 +391,9 @@ public class RemoteClient implements RhqFacade {
             for (RhqManagers manager : RhqManagers.values()) {
                 try {
                     Method m = this.getClass().getMethod("get" + manager.name());
-                    this.managers.put(manager.name(), m.invoke(this));
+                    if (manager.enabled()) {
+                        this.managers.put(manager.name(), m.invoke(this));
+                    }
                 } catch (Throwable e) {
                     LOG.error("Failed to load manager " + manager + " due to missing class.", e);
                 }
@@ -470,10 +472,10 @@ public class RemoteClient implements RhqFacade {
                 dummy_sslbuilder.setKeyStoreURL(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH));
             } catch (Exception e) {
                 // this probably is due to the fact that the keystore doesn't exist yet - let's prepare one now
-                SecurityUtil.createKeyStore(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH), config
-                    .get(SSLSocketBuilder.REMOTING_KEY_ALIAS), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", config
-                    .get(SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD), config
-                    .get(SSLSocketBuilder.REMOTING_KEY_PASSWORD), "DSA", 36500);
+                SecurityUtil.createKeyStore(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH),
+                    config.get(SSLSocketBuilder.REMOTING_KEY_ALIAS), "CN=RHQ, OU=RedHat, O=redhat.com, C=US",
+                    config.get(SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD),
+                    config.get(SSLSocketBuilder.REMOTING_KEY_PASSWORD), "DSA", 36500);
 
                 // now try to set it again, if an exception is still thrown, it's an unrecoverable error
                 dummy_sslbuilder.setKeyStoreURL(config.get(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH));

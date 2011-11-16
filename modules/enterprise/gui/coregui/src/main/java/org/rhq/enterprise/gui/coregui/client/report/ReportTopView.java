@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
@@ -122,8 +123,9 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
-                        .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                    return new SubsystemOperationHistoryListView(
+                        extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions()
+                            .contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
@@ -136,8 +138,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
-            .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
+        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions",
+            MSG.view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
             }
@@ -152,9 +154,16 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
-            recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
-            recentDriftsItem);
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
+                recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
+                recentDriftsItem);
+        } else {
+            return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, suspectMetricsItem,
+                recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
+                recentDriftsItem);
+        }
     }
 
     private NavigationSection buildInventorySection() {
@@ -165,12 +174,12 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
-            .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
-            public Canvas createView() {
-                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
-            }
-        });
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
+            ImageManager.getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
+                public Canvas createView() {
+                    return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
+                }
+            });
 
         return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
     }

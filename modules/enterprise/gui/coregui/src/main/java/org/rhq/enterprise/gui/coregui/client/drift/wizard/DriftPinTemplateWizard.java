@@ -112,7 +112,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_wizard_addDef_failure(template.getName()),
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_wizard_pinTemplate_failure(template.getName()),
                         caught);
                     getView().closeDialog();
                 }

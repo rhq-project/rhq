@@ -823,15 +823,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
     }
 
-    private void updateCompliance(DriftDefinition updatedDef) {
-        DriftDefinition currentDef = entityManager.find(DriftDefinition.class, updatedDef.getId());
-
-        // check to see if we are unpinning the definition
-        if (currentDef.isPinned() && !updatedDef.isPinned()) {
-            updatedDef.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
-        }
-    }
-
     @Override
     public boolean isBinaryFile(Subject subject, Drift<?, ?> drift) {
         String path = drift.getPath();

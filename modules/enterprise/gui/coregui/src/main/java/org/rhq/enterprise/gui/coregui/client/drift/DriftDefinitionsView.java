@@ -141,14 +141,14 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_defConfirm(),
+        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(),
             new AbstractTableAction(deleteEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     delete(selection);
                 }
             });
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_defConfirmAll(),
+        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();

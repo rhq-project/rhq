@@ -112,7 +112,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     //spinder [BZ 731864] defining variable that can be set at build time to enable/disable TAG ui components. 
     // This will be set to 'false' on the release branch.
-    private static boolean enableTagsForUI = true;
+    private static boolean enableTagsForUI = false;
 
     public static boolean isTagsEnabledForUI() {
         return enableTagsForUI;

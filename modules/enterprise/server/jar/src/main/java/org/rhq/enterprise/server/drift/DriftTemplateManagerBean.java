@@ -81,6 +81,11 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         DriftDefinition definition) {
 
         try {
+            // before we do anything, validate certain field values to prevent downstream errors            
+            if (isUserDefined) {
+                DriftManagerBean.validateDriftDefinition(definition);
+            }
+
             ResourceType resourceType = resourceTypeMgr.getResourceTypeById(subject, resourceTypeId);
             DriftDefinitionTemplate template = new DriftDefinitionTemplate();
             template.setName(definition.getName());
@@ -89,8 +94,8 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
             template.setTemplateDefinition(definition);
 
             if (isDuplicateName(resourceType, template)) {
-                throw new IllegalArgumentException("Drift definition template name must be unique. A template named " +
-                    "[" + template.getName() + "] already exists for " + resourceType);
+                throw new IllegalArgumentException("Drift definition template name must be unique. A template named "
+                    + "[" + template.getName() + "] already exists for " + resourceType);
             }
 
             resourceType.addDriftDefinitionTemplate(template);

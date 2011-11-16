@@ -93,14 +93,23 @@ public class ServerInformation {
     private static final String UNDEPLOYED_H2_JMS_FILENAME = "jms-h2.rej";
     private static final String UNDEPLOYED_SQLSERVER_JMS_FILENAME = "jms-sqlserver.rej";
     private static final String SERVER_PROPERTIES_FILENAME = "rhq-server.properties";
-
+    private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH = 
+        "org/rhq/enterprise/installer/ProductInfo.properties";
+    private static final String JON_UNSUPPORTED_FEATURES_ENABLED_SYSPROP = "jon.unsupportedFeaturesEnabled";
+    
     private MBeanServer mbeanServer = null;
     private File deployDirectory = null;
     private File binDirectory = null;
     private File logDirectory = null;
     private File dataDirectory = null;
     private File confDirectory = null;
+    private Properties productInfo = null;
 
+    public enum Product {
+        RHQ,
+        JON
+    }
+    
     public ServerInformation() {
         // This is called both within the context of the GUI and the auto-install startup servlet.
         // Make sure you don't do anything that shouldn't be done from within the startup servlet.
@@ -232,7 +241,7 @@ public class ServerInformation {
             dbsetup.setup(dbsetupSchemaXmlFile);
             dbsetup.setup(dbsetupDataXmlFile, null, true, false);
         } catch (Exception e) {
-            LOG.fatal("Cannot install the database schema - RHQ Server will not run properly", e);
+            LOG.fatal("Cannot install the database schema - " + getProduct() + " Server will not run properly.", e);
             throw e;
         }
 
@@ -274,7 +283,7 @@ public class ServerInformation {
 
             startAnt(new File(dbupgradeXmlFile), "db-ant-tasks.properties", antProps, logfile);
         } catch (Exception e) {
-            LOG.fatal("Cannot upgrade the database schema - RHQ Server will not run properly", e);
+            LOG.fatal("Cannot upgrade the database schema - " + getProduct() + " Server will not run properly.", e);
             throw e;
         }
 
@@ -972,6 +981,42 @@ public class ServerInformation {
         }
 
         return result;
+    }
+    
+    public Product getProduct() {
+        Properties productInfo = getProductInfo();
+        return (productInfo.getProperty("shortName").equals("JON")) ? Product.JON : Product.RHQ;
+    }
+    
+    private Properties getProductInfo() {
+        if (this.productInfo == null) {
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            InputStream inputStream = classLoader.getResourceAsStream(PRODUCT_INFO_PROPERTIES_RESOURCE_PATH);
+            if (inputStream != null) {
+                Properties props = new Properties();
+                try {
+                    try {
+                        props.load(inputStream);
+                    } finally {
+                        inputStream.close();
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException("Failed to load product info properties from class loader resource ["
+                            + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
+                }
+
+                return props;
+            } else {
+                throw new IllegalStateException("Failed to find class loader resource ["
+                        + PRODUCT_INFO_PROPERTIES_RESOURCE_PATH + "].");
+            }
+        }
+
+        return this.productInfo;
+    }
+    
+    public boolean isUnsupportedJonFeaturesEnabled() {
+        return Boolean.getBoolean(JON_UNSUPPORTED_FEATURES_ENABLED_SYSPROP);
     }
 
     private int getAffinityGroupId(DatabaseType db, Connection conn, String affinityGroup) {

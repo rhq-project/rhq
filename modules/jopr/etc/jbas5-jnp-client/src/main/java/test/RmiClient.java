@@ -26,7 +26,7 @@ public class RmiClient
    public static void main(String[] args)
       throws Exception
    {          
-      String jnpUrl = (args.length == 1) ? args[0] : "jnp://127.0.0.51:1099";
+      String jnpUrl = (args.length == 1) ? args[0] : "jnp://127.0.0.1:1099";
       
       Properties env = new Properties();
       env.setProperty(Context.PROVIDER_URL, jnpUrl);

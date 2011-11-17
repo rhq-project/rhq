@@ -18,12 +18,19 @@ unzip $JBOSS_ZIPFILENAME >/dev/null
 rm $JBOSS_ZIPFILENAME
 
 # Remove the JBoss files we don't want included in our bundle.
-JBOSS_BASEDIRNAME=`echo jboss*`
 cd jboss*
-rm -rf mod_cluster picketlink resteasy seam
-cd jboss-as 2>/dev/null
-if [ $? -eq 0 ]; then
-   JBOSS_CONFIG_DIR="jboss-as/server/production"
+JBOSS_BASEDIR=`pwd`
+if [ -d jboss-as ]; then
+   cd jboss-as
+   EAP=1   
+fi
+JBOSS_AS_DIR=`pwd`
+
+rm -f bin/*.bat
+rm -rf docs
+
+if [ "$EAP" = 1 ]; then
+   JBOSS_CONFIG_DIR="server/production"
    cd server   
    rm -rf all default minimal standard web
 else    
@@ -31,15 +38,13 @@ else
    cd server
    rm -rf all minimal
 fi
-cd ..
-rm -f bin/*.bat
-rm -rf docs
 
 # Recreate the JBoss zipfile now that we've removed everything we don't want in
-# the bundle.
-cd $TMPDIR
-zip -r9 $JBOSS_ZIPFILENAME $JBOSS_BASEDIRNAME >/dev/null
-rm -rf $JBOSS_BASEDIRNAME
+# the bundle. But get rid of the top-level directory, since that is managed by
+# the RHQ bundle deployer.
+cd $JBOSS_AS_DIR
+zip -r9 $TMPDIR/$JBOSS_ZIPFILENAME * >/dev/null
+rm -rf $JBOSS_BASEDIR
 
 # Create the bundle recipe file.
 cd $TMPDIR

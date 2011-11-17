@@ -217,7 +217,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                  * which would require the user to hit the back button twice to return to the previous page.
                  */
                 if (selectedDashboardView != null) {
-                    CoreGUI.goToView(LinkManager.getDashboardLink(Integer.valueOf(selectedTab.getName())));
+                    CoreGUI.goToView(LinkManager.getDashboardLink(Integer.valueOf(selectedTab.getName())), true);
                 }
 
                 selectedDashboardView = (DashboardView) selectedTab.getPane();
@@ -482,7 +482,12 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             }
         }
 
-        tabSet.selectTab(selectedTab);
+        if (!selectedTab.equals(tabSet.getSelectedTab())) {
+            tabSet.selectTab(selectedTab);
+
+        } else if (viewPath.isRefresh()) {
+            refresh();
+        }
     }
 
     public Dashboard getDashboard() {
@@ -506,6 +511,15 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         for (Tab t : tabSet.getTabs()) {
             DashboardView view = (DashboardView) t.getPane();
             t.setTitle(view.getDashboard().getName());
+        }
+    }
+
+    @Override
+    public void refresh() {
+        if (isInitialized()) {
+            if (null != selectedDashboardView && selectedDashboardView.isDrawn()) {
+                selectedDashboardView.rebuild();
+            }
         }
     }
 

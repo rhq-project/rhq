@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Properties;
 
 import javax.management.MBeanServer;
@@ -157,6 +158,17 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
             productInfo.setUrlDomain(props.getProperty("urlDomain"));
             productInfo.setUrl(props.getProperty("url"));
             productInfo.setVersion(props.getProperty("version"));
+
+            HashMap<String, String> helpViewContent = new HashMap<String, String>();
+
+            for (String propertyName : props.stringPropertyNames()) {
+                if (propertyName.startsWith("view_help_section")) {
+                    helpViewContent.put(propertyName, props.getProperty(propertyName));
+                }
+            }
+
+            productInfo.setHelpViewContent(helpViewContent);
+
             return productInfo;
         } else {
             throw new IllegalStateException("Failed to find class loader resource ["

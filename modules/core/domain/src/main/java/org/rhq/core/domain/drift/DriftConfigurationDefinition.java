@@ -539,7 +539,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createIncludePattern(boolean readOnly) {
         String name = PROP_PATTERN;
-        String description = "Pathname pattern that must match for the items in the directory path to be included.";
+        String description = "Pathname pattern that must match for the items in the directory path to be included. '*' matches zero or more characters, '?' matches one character. For example, '*.txt' (no quotes) will match text files in the filter's path directory.  '**/*.txt' will match text files in any subdirectory below the filter's path directory";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.STRING;
 

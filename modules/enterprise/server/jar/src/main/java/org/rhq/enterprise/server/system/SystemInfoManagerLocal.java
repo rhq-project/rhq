@@ -16,29 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.rest;
+package org.rhq.enterprise.server.system;
 
-import javax.ws.rs.ApplicationPath;
+import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import javax.ejb.Local;
 
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.core.domain.auth.Subject;
 
 /**
- * JAX-RS application class, defining the base http context.
- * This is called upon servlet startup or when the first request hits
- * the REST endpoint.
- *
+ * Provide system information
  * @author Heiko W. Rupp
  */
-@ApplicationPath("/rest")
-public class RHQApplication extends javax.ws.rs.core.Application {
+@Local
+public interface SystemInfoManagerLocal {
 
-    Log log = LogFactory.getLog(RHQApplication.class);
+    /**
+     * Return the system information to the caller.
+     * Returned content may vary depending on the caller and his rights to
+     * see various details
+     * @param caller User calling the method
+     * @return Map of system information.
+     */
+    Map<String,String> getSystemInformation(Subject caller);
 
-    public RHQApplication() {
-        log.info("Starting RHQ REST ");
-
-    }
+    /**
+     * Dump the system information to the server log file
+     * @param caller
+     */
+    void dumpToLog(Subject caller);
 }

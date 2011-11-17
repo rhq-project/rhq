@@ -86,6 +86,11 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     @Override
+    public void dumpToLog() {
+        systemManager.dumpSystemInfo(getSessionSubject());
+    }
+
+    @Override
     public HashMap<String, String> getAgentVersionProperties() throws RuntimeException {
         try {
             File file = agentManager.getAgentUpdateVersionFile();

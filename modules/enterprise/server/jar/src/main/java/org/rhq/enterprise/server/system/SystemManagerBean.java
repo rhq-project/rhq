@@ -117,6 +117,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @IgnoreDependency
     private SubjectManagerLocal subjectManager;
 
+    @EJB
+    @IgnoreDependency
+    private SystemInfoManagerLocal systemInfoManager;
+
     private static SystemSettings cachedSystemSettings = null;
     private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
 
@@ -227,7 +231,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
 
         // verify each new setting and persist them to the database
-        // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is        
+        // note that if a new setting is the same as the old one, we do nothing - leave the old entity as is
         for (Map.Entry<SystemSetting, String> e : settings.entrySet()) {
             SystemSetting prop = e.getKey();
             String value = e.getValue();
@@ -244,7 +248,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             } else {
                 //make sure we compare the new value with a database-agnostic value
                 //it is important to compare in the database-agnostic format instead
-                //of database specific because the conversion isn't reflective.   
+                //of database specific because the conversion isn't reflective.
                 //Some legacy code somewhere is (or just used to) store booleans as "0"s and "1"s
                 //even though they are stored as strings and thus don't suffer from Oracle's
                 //lack of support for boolean data type. If we encounter such values, we convert
@@ -773,5 +777,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         ProductInfo productInfo = coreServer.getProductInfo();
         return productInfo;
+    }
+
+    @Override
+    public void dumpSystemInfo(Subject subject) {
+        systemInfoManager.dumpToLog(subject);
     }
 }

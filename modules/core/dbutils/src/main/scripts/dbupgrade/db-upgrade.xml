@@ -3789,9 +3789,6 @@
                 </schema-directSQL>                                                
                 <schema-alterColumn table="RHQ_DRIFT" column="PATH_DIRECTORY" nullable="FALSE" />      
                           
-                <!-- make drift_change_set_id not nullable ( should already have a value, just enforce it going forward -->
-                <schema-alterColumn table="RHQ_DRIFT" column="DRIFT_CHANGE_SET_ID" nullable="FALSE" />                
-
                 <!--  add new drift_set_id column and FK -->
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_SET_ID" columnType="INTEGER"/>
                 <schema-directSQL>

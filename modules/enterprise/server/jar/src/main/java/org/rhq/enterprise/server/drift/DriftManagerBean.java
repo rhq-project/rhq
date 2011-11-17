@@ -838,14 +838,17 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         filtersList.add(driftDef.getExcludes());
         for (List<Filter> filterList : filtersList) {
             for (Filter filter : filterList) {
-                if (!filter.getPath().matches(DriftConfigurationDefinition.PROP_FILTER_PATH_REGEX_PATTERN)) {
+                String path = (null == filter.getPath()) ? null : filter.getPath().trim();
+                if (null != path && !path.isEmpty()
+                    && !path.matches(DriftConfigurationDefinition.PROP_FILTER_PATH_REGEX_PATTERN)) {
                     throw new IllegalArgumentException("Drift definition filter path contains invalid characters: "
-                        + filter.getPath());
+                        + path);
                 }
-                if (null != filter.getPattern()
-                    && !filter.getPattern().matches(DriftConfigurationDefinition.PROP_FILTER_PATTERN_REGEX_PATTERN)) {
+                String pattern = (null == filter.getPattern()) ? null : filter.getPattern().trim();
+                if (null != pattern && !pattern.isEmpty()
+                    && !pattern.matches(DriftConfigurationDefinition.PROP_FILTER_PATTERN_REGEX_PATTERN)) {
                     throw new IllegalArgumentException("Drift definition filter pattern contains invalid characters: "
-                        + filter.getPattern());
+                        + pattern);
                 }
             }
         }

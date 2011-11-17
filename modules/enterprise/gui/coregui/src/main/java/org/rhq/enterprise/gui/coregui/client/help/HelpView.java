@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.MissingResourceException;
 
 import com.smartgwt.client.widgets.Canvas;
-
 import com.smartgwt.client.widgets.Label;
+
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.MessageConstants;
@@ -53,7 +53,9 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
 
     private static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
 
-    private static ProductInfo PRODUCT_INFO;
+    private final ProductInfo productInfo = CoreGUI.get().getProductInfo();
+    private final MessageConstants messageConstants = CoreGUI.getMessageConstants();
+    private boolean contentFromProductInfo;
 
     public HelpView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -94,7 +96,6 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
                     final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
-                    ProductInfo productInfo = CoreGUI.get().getProductInfo();
                     aboutModalWindow.setTitle(MSG.view_aboutBox_title(productInfo.getFullName()));
                     aboutModalWindow.show();
                     return aboutModalWindow;
@@ -106,21 +107,21 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     }
 
     private void addUrlSections(List<NavigationSection> sections) {
+        this.selectContentLocation();
 
-        MessageConstants mc = CoreGUI.getMessageConstants();
-        int numSections = Integer.valueOf(mc.view_help_section_count());
+        int numSections = Integer.valueOf(this.getContent("view_help_section_count"));
 
         for (int i = 1; i <= numSections; ++i) {
-            int numItems = Integer.valueOf(mc.getString("view_help_section_" + i + "_item_count"));
+            int numItems = Integer.valueOf(this.getContent("view_help_section_" + i + "_item_count"));
             NavigationItem[] items = new NavigationItem[numItems];
-            String sectionTitle = mc.getString("view_help_section_" + i + "_title");
+            String sectionTitle = this.getContent("view_help_section_" + i + "_title");
 
             for (int j = 1; j <= numItems; ++j) {
-                String title = mc.getString("view_help_section_" + i + "_propTitle_" + j);
-                final String url = mc.getString("view_help_section_" + i + "_propUrl_" + j);
+                String title = this.getContent("view_help_section_" + i + "_propTitle_" + j);
+                final String url = this.getContent("view_help_section_" + i + "_propUrl_" + j);
                 String icon;
                 try {
-                    icon = mc.getString("view_help_section_" + i + "_propIcon_" + j);
+                    icon = this.getContent("view_help_section_" + i + "_propIcon_" + j);
                 } catch (MissingResourceException e) {
                     icon = "[SKIN]/../headerIcons/document.png";
                 }
@@ -139,4 +140,38 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         }
     }
 
+    /**
+     * Preselects content location.
+     *
+     * I18N GWT bakes all the messages into the compiled Javascript (it is impossible to change anything
+     * without recompiling the entire project). However, there is a need to dynamically change the help
+     * content after the code is compiled and shipped. ProductInfo is dynamically loaded at runtime from disk.
+     * This implementation allows runtime location selection for help page content:
+     * 1) ProductInfo
+     * 2) I18N GWT system
+     *
+     * NOTE: All the content is loaded from a single location and production info properties file gets priority.
+     */
+    private void selectContentLocation() {
+        if (productInfo.getHelpViewContent().containsKey("view_help_section_count")) {
+            //use the product info file for help content
+            this.contentFromProductInfo = true;
+        } else {
+            //use the I18N mechanism for help content
+            this.contentFromProductInfo = false;
+        }
+    }
+
+    /**
+     * Retrieves help view content from the selected content location.
+     *
+     * @return help view content
+     */
+    private String getContent(String key) {
+        if (this.contentFromProductInfo) {
+            return productInfo.getHelpViewContent().get(key);
+        } else {
+            return messageConstants.getString(key);
+        }
+    }
 }

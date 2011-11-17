@@ -105,7 +105,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration());
         vLayout.addMember(titleBar);
 
-        Label label = new Label(MSG.view_admin_landing());
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+
+        Label label = new Label(MSG.view_admin_landing(productInfo.getShortName()));
         label.setPadding(10);
         vLayout.addMember(label);
 

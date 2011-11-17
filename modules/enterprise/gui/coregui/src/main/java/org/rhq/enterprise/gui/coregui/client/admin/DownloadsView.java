@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -59,9 +60,12 @@ public class DownloadsView extends LocatableVLayout {
     private SectionStackSection cliSection;
     private SectionStackSection bundleSection;
     private SectionStackSection connectorsSection;
+    private ProductInfo productInfo;
 
     public DownloadsView(String locatorId) {
         super(locatorId);
+        productInfo = CoreGUI.get().getProductInfo();
+
         setHeight100();
         setWidth100();
 
@@ -140,7 +144,7 @@ public class DownloadsView extends LocatableVLayout {
                 StaticTextItem helpItem = new StaticTextItem("agentHelp");
                 helpItem.setColSpan(2);
                 helpItem.setShowTitle(false);
-                helpItem.setValue(MSG.view_admin_downloads_agent_help());
+                helpItem.setValue(MSG.view_admin_downloads_agent_help(productInfo.getShortName()));
 
                 form.setItems(versionItem, buildItem, md5Item, linkItem, spacerItem, helpItem);
 
@@ -191,7 +195,7 @@ public class DownloadsView extends LocatableVLayout {
                 StaticTextItem helpItem = new StaticTextItem("clientHelp");
                 helpItem.setColSpan(2);
                 helpItem.setShowTitle(false);
-                helpItem.setValue(MSG.view_admin_downloads_cli_help());
+                helpItem.setValue(MSG.view_admin_downloads_cli_help(productInfo.getShortName()));
 
                 form.setItems(versionItem, buildItem, md5Item, linkItem, spacerItem, helpItem);
 
@@ -230,7 +234,7 @@ public class DownloadsView extends LocatableVLayout {
                 StaticTextItem helpItem = new StaticTextItem("bundleHelp");
                 helpItem.setColSpan(2);
                 helpItem.setShowTitle(false);
-                helpItem.setValue(MSG.view_admin_downloads_bundle_help());
+                helpItem.setValue(MSG.view_admin_downloads_bundle_help(productInfo.getShortName()));
 
                 form.setItems(linkItem, spacerItem, helpItem);
 
@@ -262,7 +266,7 @@ public class DownloadsView extends LocatableVLayout {
                     StaticTextItem helpText = new StaticTextItem("connectorHelp");
                     helpText.setColSpan(2);
                     helpText.setShowTitle(false);
-                    helpText.setValue(MSG.view_admin_downloads_connectors_help());
+                    helpText.setValue(MSG.view_admin_downloads_connectors_help(productInfo.getShortName()));
                     items[i] = helpText;
                     i++;
 

@@ -331,7 +331,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             History.newItem(getDefaultView());
         } else {
 
-            // otherwise just fire an event for the bookmarked URL they are returning to
+            // otherwise just fire an event for the bookmarked URL they are returning to and
+            // ensure it is refreshed if it is a RefreshableView
+            pendingRefresh = true;
             History.fireCurrentHistoryState();
         }
 

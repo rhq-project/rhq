@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -75,6 +75,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.file.FileUtil;
@@ -91,7 +92,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  * @author Jay Shaughnessy
  */
-@SuppressWarnings( { "unused" })
+@SuppressWarnings({ "unused" })
 @Test
 public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
@@ -123,14 +124,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
         resourceManager = LookupUtil.getResourceManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         this.ps.startMasterPluginContainer();
-
         // try and clean up any junk that may be lying around from a failed run
         cleanupDatabase();
     }
@@ -580,6 +579,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         // verify our composite criteria query can return more than one item
         Bundle b2 = createBundle("two");
         assertNotNull(b2);
+        criteria.addSortName(PageOrdering.ASC);
         results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
         assert results.size() == 2 : results;
         assert results.get(0).getBundleId().equals(b1.getId());
@@ -596,19 +596,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleVersion b2_bv1 = createBundleVersion(b2.getName() + "-5", "9.1", b2);
         assertNotNull(b2_bv1);
         assertEquals("9.1", b2_bv1.getVersion());
-
-        results = bundleManager.findBundlesWithLatestVersionCompositesByCriteria(overlord, criteria);
-        assert results.size() == 2 : results;
-        assert results.get(0).getBundleId().equals(b1.getId());
-        assert results.get(0).getBundleName().equals(b1.getName());
-        assert results.get(0).getBundleDescription().equals(b1.getDescription());
-        assert results.get(0).getLatestVersion().equals("2.0");
-        assert results.get(0).getVersionsCount().longValue() == 4L;
-        assert results.get(1).getBundleId().equals(b2.getId());
-        assert results.get(1).getBundleName().equals(b2.getName());
-        assert results.get(1).getBundleDescription().equals(b2.getDescription());
-        assert results.get(1).getLatestVersion().equals("9.1");
-        assert results.get(1).getVersionsCount().longValue() == 1L;
 
         // test sorting of the BundleWithLastestVersionComposite
         criteria.addSortName(PageOrdering.DESC);
@@ -818,6 +805,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
+        c.addSortName(PageOrdering.ASC);
         bundles = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles);
         assertEquals(2, bundles.size());
@@ -875,7 +863,12 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
 
         // return all with no optional data
         c.addFilterName(TEST_PREFIX);
+        c.fetchBundle(true);
+        PageControl pc = new PageControl();
+        pc.addDefaultOrderingField("version");
+        c.setPageControl(pc);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
+
         bv = bvs.get(1);
         assertNotNull(bvs);
         assertEquals(3, bvs.size());

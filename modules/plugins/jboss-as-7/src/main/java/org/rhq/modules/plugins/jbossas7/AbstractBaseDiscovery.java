@@ -125,14 +125,21 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
 
             Element mgmtInterface = (Element) mgmtInterfaces.item(i);
             if (mgmtInterface.getNodeName().equals("http-interface")) {
-                String tmp = mgmtInterface.getAttribute("port");
-                int port = Integer.valueOf(tmp);
+                String tmp = mgmtInterface.getAttribute("port"); // TODO if we don't find it, check for socket-binding
+                int port;
+                if (!tmp.isEmpty())
+                    port = Integer.valueOf(tmp);
+                else
+                    port = DEFAULT_MGMT_PORT;
                 HostPort hp = new HostPort();
                 hp.isLocal=true; // TODO adjust when host != localhost
                 hp.port = port;
 
                 String nIf = mgmtInterface.getAttribute("interface");
-                hp.host = getInterface(nIf, commandLine);
+                if (!nIf.isEmpty())
+                    hp.host = getInterface(nIf, commandLine);
+                else
+                    hp.host = "localhost";
                 return hp;
             }
         }

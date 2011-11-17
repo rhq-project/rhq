@@ -72,11 +72,13 @@ public class DriftPinTemplateWizardConfigStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
-        Configuration templateConfig = editor.getConfiguration();
-        PropertySimple templateNameProp = templateConfig.getSimple(DriftConfigurationDefinition.PROP_NAME);
+        if (wizard.isCreateTemplate()) {
+            Configuration templateConfig = editor.getConfiguration();
+            PropertySimple templateNameProp = templateConfig.getSimple(DriftConfigurationDefinition.PROP_NAME);
 
-        if (!isTemplateNameUnique(templateNameProp.getStringValue())) {
-            templateNameProp.setErrorMessage(MSG.view_drift_wizard_pinTemplate_duplicate_name_error());
+            if (!isTemplateNameUnique(templateNameProp.getStringValue())) {
+                templateNameProp.setErrorMessage(MSG.view_drift_wizard_pinTemplate_duplicate_name_error());
+            }
         }
 
         if (wizard.isCreateTemplate() && (null == editor || !editor.validate())) {

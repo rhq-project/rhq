@@ -3682,7 +3682,7 @@
                           ALTER TABLE RHQ_DRIFT_CONFIG_ID_SEQ RENAME TO RHQ_DRIFT_DEFINITION_ID_SEQ
                      </statement>
                      <statement targetDBVendor="oracle">
-                         ALTER TABLE RENAME RHQ_DRIFT_CONFIG_ID_SEQ TO RHQ_DRIFT_DEFINITION_ID_SEQ
+                          RENAME RHQ_DRIFT_CONFIG_ID_SEQ TO RHQ_DRIFT_DEFINITION_ID_SEQ
                      </statement>                
                 </schema-directSQL>
 

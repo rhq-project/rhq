@@ -122,6 +122,9 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                 String icon;
                 try {
                     icon = this.getContent("view_help_section_" + i + "_propIcon_" + j);
+                    if (icon == null) {
+                        icon = "[SKIN]/../headerIcons/document.png";
+                    }
                 } catch (MissingResourceException e) {
                     icon = "[SKIN]/../headerIcons/document.png";
                 }

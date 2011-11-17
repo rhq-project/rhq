@@ -27,10 +27,12 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
@@ -51,7 +53,12 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
     public static final String NAME = MSG.view_portlet_defaultName_message();
 
     private static final String MESSAGE_PROPERTY = "message";
-    private static final String DEFAULT_MESSAGE = MSG.view_dashboardsManager_message_title_details();
+    //    private static final String DEFAULT_MESSAGE = MSG.view_dashboardsManager_message_title_details();
+    private static String DEFAULT_MESSAGE;
+    {
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+        DEFAULT_MESSAGE = MSG.view_dashboardsManager_message_title_details(productInfo.getShortName());
+    }
 
     public MessagePortlet(String locatorId) {
         super(locatorId);

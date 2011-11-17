@@ -23,9 +23,12 @@ import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +55,12 @@ import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
  */
 public class ConfigurationBean {
     private static final Log LOG = LogFactory.getLog(ConfigurationBean.class);
+
+    private static Set<String> JON_SUPPORTED_DATABASE_TYPES = new HashSet<String>(2);
+    static {
+        JON_SUPPORTED_DATABASE_TYPES.add("PostgreSQL");
+        JON_SUPPORTED_DATABASE_TYPES.add("Oracle");
+    }
 
     private enum ExistingSchemaOption {
         OVERWRITE, KEEP, SKIP
@@ -138,8 +147,30 @@ public class ConfigurationBean {
 
     public void initConfiguration() {
         if (configuration == null) {
-            Properties properties = serverInfo.getServerProperties();
+            Properties properties = serverInfo.getServerProperties();            
             List<PropertyItem> itemDefs = new ServerProperties().getPropertyItems();
+            
+            if ((serverInfo.getProduct() == ServerInformation.Product.JON) && 
+                !serverInfo.isUnsupportedJonFeaturesEnabled()) {
+                LOG.debug("Hiding the embedded agent props and the unsupported DB types...");
+                for (PropertyItem itemDef : itemDefs) {
+                    if (itemDef.getPropertyName().startsWith(ServerProperties.PREFIX_PROP_EMBEDDED_AGENT)) {
+                        itemDef.setHidden(true);
+                    }
+                    
+                    if (itemDef.getPropertyName().equals(ServerProperties.PROP_DATABASE_TYPE)) {
+                        List<SelectItem> options = itemDef.getOptions();
+                        for (Iterator<SelectItem> iterator = options.iterator(); iterator.hasNext(); ) {
+                            SelectItem option = iterator.next();
+                            String databaseType = (String) option.getValue();
+                            if (!JON_SUPPORTED_DATABASE_TYPES.contains(databaseType)) {
+                                iterator.remove();
+                            }
+                        }
+                    }
+                }
+            }
+                        
             configuration = new ArrayList<PropertyItemWithValue>();
 
             for (PropertyItem itemDef : itemDefs) {
@@ -759,7 +790,8 @@ public class ConfigurationBean {
             // now deploy RHQ Server fully
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {
-            LOG.fatal("Failed to updated properties and fully deploy - RHQ Server will not function properly", e);
+            LOG.fatal("Failed to update properties and fully deploy - " + serverInfo.getProduct()
+                + " Server will not function properly.", e);
             lastError = I18Nmsg.getMsg(InstallerI18NResourceKeys.SAVE_FAILURE, ThrowableUtil.getAllMessages(e));
 
             return StartPageResults.ERROR;

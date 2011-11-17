@@ -77,7 +77,9 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
@@ -743,11 +745,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef) {
 
-        // before we do anything, make sure the drift def name is valid
-        if (!driftDef.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
-            throw new IllegalArgumentException("Drift definition name contains invalid characters: "
-                + driftDef.getName());
-        }
+        // before we do anything, validate certain field values to prevent downstream errors
+        validateDriftDefinition(driftDef);
 
         switch (entityContext.getType()) {
         case Resource:
@@ -823,12 +822,32 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
     }
 
-    private void updateCompliance(DriftDefinition updatedDef) {
-        DriftDefinition currentDef = entityManager.find(DriftDefinition.class, updatedDef.getId());
-
-        // check to see if we are unpinning the definition
-        if (currentDef.isPinned() && !updatedDef.isPinned()) {
-            updatedDef.setComplianceStatus(DriftComplianceStatus.IN_COMPLIANCE);
+    public static void validateDriftDefinition(DriftDefinition driftDef) {
+        if (!driftDef.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
+            throw new IllegalArgumentException("Drift definition name contains invalid characters: "
+                + driftDef.getName());
+        }
+        BaseDirectory baseDir = driftDef.getBasedir();
+        if (null == baseDir
+            || !baseDir.getValueName().matches(DriftConfigurationDefinition.PROP_BASEDIR_PATH_REGEX_PATTERN)) {
+            throw new IllegalArgumentException(
+                "Drift definition base directory is null or contains invalid characters: " + baseDir.getValueName());
+        }
+        List<List<Filter>> filtersList = new ArrayList<List<Filter>>(2);
+        filtersList.add(driftDef.getIncludes());
+        filtersList.add(driftDef.getExcludes());
+        for (List<Filter> filterList : filtersList) {
+            for (Filter filter : filterList) {
+                if (!filter.getPath().matches(DriftConfigurationDefinition.PROP_FILTER_PATH_REGEX_PATTERN)) {
+                    throw new IllegalArgumentException("Drift definition filter path contains invalid characters: "
+                        + filter.getPath());
+                }
+                if (null != filter.getPattern()
+                    && !filter.getPattern().matches(DriftConfigurationDefinition.PROP_FILTER_PATTERN_REGEX_PATTERN)) {
+                    throw new IllegalArgumentException("Drift definition filter pattern contains invalid characters: "
+                        + filter.getPattern());
+                }
+            }
         }
     }
 

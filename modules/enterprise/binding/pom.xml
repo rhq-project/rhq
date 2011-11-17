@@ -13,6 +13,7 @@
     <properties>
         <persistence-api.version>1.0</persistence-api.version>
         <opencsv.version>1.8</opencsv.version>
+        <filtered.location>src/main/java</filtered.location>
     </properties>
 
     <dependencies>
@@ -197,6 +198,7 @@
     </dependencies>
 
     <build>
+        <sourceDirectory>${filtered.location}</sourceDirectory>
         <plugins>
 
             <plugin>
@@ -410,5 +412,52 @@
                 </plugins>
             </build>
         </profile>
+        
+      <!-- Profile activated explicitly by command line call, or brew property.  -->
+      <profile>
+            <id>disable-tags</id>
+            <activation>
+                <property>
+                    <name>brew</name>
+                </property>
+            </activation>
+            <build>
+            
+               <resources>
+                 <resource>
+                   <directory>src/main/java</directory>
+                   <filtering>true</filtering>
+                   <targetPath>../filtered-sources/java</targetPath>
+                 </resource>
+                 <resource>
+                   <directory>src/main/resources</directory>
+                   <filtering>true</filtering>
+                 </resource>
+               </resources>
+            
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+
+                            <execution>
+                                <id>update-enabled-slsbs-for-remote</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>generate-sources</phase>
+                                <configuration>
+                                    <tasks>                                        
+                                        <!-- Ex. -DTagManager=false will disable the TagManager from remote api if this profile is active. -->
+                                        <echo>Updating remote api to exclude RemoteManagers passed in.</echo>
+                                    </tasks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
     </profiles>
 </project>

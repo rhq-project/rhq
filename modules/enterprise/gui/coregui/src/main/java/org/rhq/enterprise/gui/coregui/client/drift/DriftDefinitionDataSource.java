@@ -158,9 +158,9 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
                 DriftComplianceStatus complianceStatus = DriftComplianceStatus.fromCode(complianceCode);
                 switch (complianceStatus) {
                 case OUT_OF_COMPLIANCE_NO_BASEDIR:
-                    return MSG.view_drift_table_out_of_compliance_no_basedir();
+                    return MSG.view_drift_table_hover_outOfCompliance_noBaseDir();
                 case OUT_OF_COMPLIANCE_DRIFT:
-                    return MSG.view_drift_table_out_of_compliance_drift();
+                    return MSG.view_drift_table_hover_outOfCompliance_drift();
                 default:
                     return "";
                 }

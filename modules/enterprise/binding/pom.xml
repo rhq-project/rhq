@@ -192,9 +192,10 @@
         </dependency>
 
         <dependency>
-            <groupId>jboss</groupId>
+            <groupId>javassist</groupId>
             <artifactId>javassist</artifactId>
         </dependency>
+
     </dependencies>
 
     <build>

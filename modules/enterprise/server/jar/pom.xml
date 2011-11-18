@@ -154,7 +154,7 @@
       </dependency>
 
       <dependency>
-         <groupId>jboss</groupId>
+         <groupId>javassist</groupId>
          <artifactId>javassist</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
          <scope>test</scope>

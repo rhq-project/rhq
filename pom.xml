@@ -62,7 +62,7 @@
     <jboss-jta.version>4.2.3.SP7</jboss-jta.version>
     <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
-    <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
+    <jboss-javassist.version>3.9.0.GA</jboss-javassist.version>
     <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
     <!-- End: JBoss AS Dependency Versions -->
 
@@ -242,7 +242,7 @@
       </dependency>
 
       <dependency>
-        <groupId>jboss</groupId>
+        <groupId>javassist</groupId>
         <artifactId>javassist</artifactId>
         <version>${jboss-javassist.version}</version>
       </dependency>

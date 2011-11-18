@@ -389,7 +389,7 @@
 
       <!-- ============ Testing ========================-->
       <dependency>
-          <groupId>jboss</groupId>
+          <groupId>javassist</groupId>
           <artifactId>javassist</artifactId>
           <scope>test</scope>
       </dependency>

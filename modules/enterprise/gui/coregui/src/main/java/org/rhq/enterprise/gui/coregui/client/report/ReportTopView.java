@@ -112,20 +112,20 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem recentConfigurationChangesItem = new NavigationItem(ResourceConfigurationHistoryListView.VIEW_ID,
-            "subsystems/configure/Configure_16.png", new ViewFactory() {
+        NavigationItem recentConfigurationChangesItem = new NavigationItem(
+            ResourceConfigurationHistoryListView.VIEW_ID, "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                    return new ResourceConfigurationHistoryListView(
+                        extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()), getGlobalPermissions()
+                            .contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemOperationHistoryListView(
-                        extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions()
-                            .contains(Permission.MANAGE_INVENTORY));
+                    return new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
+                        .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
@@ -138,8 +138,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions",
-            MSG.view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
+        NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
+            .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
             }
@@ -174,14 +174,22 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
-            ImageManager.getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
-                public Canvas createView() {
-                    return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
-                }
-            });
+        NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
+            .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
+            public Canvas createView() {
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
+            }
+        });
 
-        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
+        NavigationItem driftComplianceItem = new NavigationItem(DriftComplianceReport.VIEW_ID, ImageManager
+            .getDriftIcon(), new ViewFactory() {
+            public Canvas createView() {
+                return new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName()));
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+
+        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem,
+            driftComplianceItem);
     }
 
 }

@@ -496,7 +496,11 @@ checkout_release_branch()
        [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
 
        git checkout --track "origin/$RELEASE_BRANCH"
-       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+       if [ "$?" -ne 0 ];
+       then
+         git checkout "$RELEASE_BRANCH"
+       fi
+       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)." 
 
        git reset --hard "origin/$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."

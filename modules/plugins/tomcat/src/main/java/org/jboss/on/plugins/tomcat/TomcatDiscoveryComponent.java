@@ -24,6 +24,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -352,7 +353,43 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
             return null;
         }
         
-        File tomcatDir = new File(ewsDir, "share/apache-tomcat-6.0.24");
+        //EWS supports tomcat 5 or 6 and starts them using the tomcat5.exe or
+        //tomcat6.exe. The catalina homes we want for them are stored inside
+        //$EWS_HOME/share/tomcat-<version>, where version differs.
+        //EWS 1.0.1 uses tomcat 6.0.24, while EWS 1.0.2 uses tomcat 6.0.32
+        
+        //To support this in a forwards compatiblish way, let's assume that
+        //EWS is going to keep the practice of calling the main exes tomcat<MAJOR_VERSION>.exe
+        //and that the catalina homes are going to get stored in
+        //share/apache-tomcat-<MAJOR_VERSION>.x.y.
+        
+        String tomcatExeName = exePath.getName().toLowerCase();
+        
+        //extract the major version from the exe name
+        int dotPos = tomcatExeName.lastIndexOf(".exe");
+        if (dotPos < 1) { //paranoia, leaves out ".exe", too
+            return null;
+        }
+        
+        String majorVersion = tomcatExeName.substring(dotPos - 1, dotPos);
+        
+        //now try to find the directory with the corresponding tomcat install
+        //in the $EWS_HOME/share
+        final String catalinaHomePrefix = "apache-tomcat-" + majorVersion;
+        File[] tomcatInstallDirs = new File(ewsDir, "share").listFiles(new FileFilter() {            
+            public boolean accept(File pathname) {                
+                return pathname.isDirectory() && pathname.getName().startsWith(catalinaHomePrefix);
+            }
+        });
+
+        if (tomcatInstallDirs.length == 0) {
+            return null;
+        } else if (tomcatInstallDirs.length > 1) {
+            log.warn("Could not unambiguously determine the tomcat installation dir for EWS executable " + exePath.getAbsolutePath() + ". The candidates are: " + Arrays.asList(tomcatInstallDirs));
+            return null;
+        }
+        
+        File tomcatDir = tomcatInstallDirs[0];
 
         if (tomcatDir.exists()) {
             log.debug("Detected EWS installation. catalina.home found at " + tomcatDir.getAbsolutePath());

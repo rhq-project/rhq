@@ -236,3 +236,18 @@ unset_script_debug_mode()
    set +x
 }
 
+
+#========================================================================================
+# Description: Print function information (name and parameters).
+#========================================================================================
+print_function_information()
+{
+   function_name=$1
+   shift
+
+   function_parameters=$(printf ", %s " "$@")
+   function_parameters=${function_parameters:1}
+
+   echo "+ $function_name ($function_parameters)"
+}
+

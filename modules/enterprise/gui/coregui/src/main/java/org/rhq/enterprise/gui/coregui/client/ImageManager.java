@@ -99,7 +99,14 @@ public class ImageManager {
      * Returns a generic pinned icon.
      */
     public static String getPinnedIcon() {
-        return "[SKIN]/headerIcons/pin_down.png";
+        return "subsystems/drift/Pinned_active.png";
+    }
+
+    /**
+     * Returns a generic pinned icon.
+     */
+    public static String getPinnedInactiveIcon() {
+        return "subsystems/drift/Pinned_inactive.png";
     }
 
     public static String getDriftIcon() {

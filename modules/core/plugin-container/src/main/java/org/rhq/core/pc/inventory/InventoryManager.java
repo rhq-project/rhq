@@ -586,8 +586,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // because the above uses the Callable interface (on purpose), the avail executor will not
             // hand the report off to the Inventory Manager for sending to the server. Because this report
             // will not be sent to the server, we need to be careful because our ResourceContainers will
-            // still have their avaialabilities updated. This may mean a change in availability detected
-            // in the above scan will not make its way to the server. To avoid the possibliity of losing
+            // still have their availabilities updated. This may mean a change in availability detected
+            // in the above scan will not make its way to the server. To avoid the possibility of losing
             // availability status changes, we need to tell the real availability executor to send a
             // full report next time it runs its periodic scan. (RHQ-1997)
             this.availabilityExecutor.sendFullReportNextTime();
@@ -602,7 +602,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     @NotNull
-    // TODO (ips): Perhaps refactor this so that it shares code with AvailablityExecutor.checkInventory().
+    // TODO (ips): Perhaps refactor this so that it shares code with AvailabilityExecutor.checkInventory().
     public Availability getCurrentAvailability(Resource resource) {
         AvailabilityType availType = null; // i.e. UNKNOWN;
         ResourceContainer resourceContainer = getResourceContainer(resource);
@@ -614,7 +614,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     // We have acquired the lock.
                     try {
                         ResourceCategory resourceCategory = resource.getResourceType().getCategory();
-                        // Give the call to getAvailablity() a bit more time if the Resource is a server.
+                        // Give the call to getAvailability() a bit more time if the Resource is a server.
                         long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
                         // We already possess the lock, so tell the proxy not to do any locking of its own.
                         resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
@@ -623,13 +623,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     } catch (PluginContainerException e) {
                         log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
                     } catch (RuntimeException e) {
-                        log.error("Call to getAvailablity() on ResourceComponent for " + resource + " failed.", e);
+                        log.error("Call to getAvailability() on ResourceComponent for " + resource + " failed.", e);
                         availType = AvailabilityType.DOWN;
                     } finally {
                         lock.unlock();
                     }
                 } else {
-                    // Some other thread possesses the lock - return the last-collected availablity for the Resource if
+                    // Some other thread possesses the lock - return the last-collected availability for the Resource if
                     // there is one.
                     if (resourceContainer.getAvailability() != null)
                         return resourceContainer.getAvailability();
@@ -733,7 +733,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + "]"
                         + " failed to upgrade, which makes it impossible to support the legacy manual-add implementation. Either upgrade the plugin ["
                         + resourceType.getPlugin()
-                        + "] to successfully upgrade all resources or consider implementing the ManuallAdd facet.";
+                        + "] to successfully upgrade all resources or consider implementing the ManualAdd facet.";
                     log.info(message);
                     throw new PluginContainerException(message, e);
                 }
@@ -2335,7 +2335,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                                     + discoveryComponent.getClass().getName()
                                     + " returned multiple resources that point to the same plugin configuration object on the "
                                     + "resource type [" + resourceType + "]. This is not allowed, please use "
-                                    + "ResoureDiscoveryContext.getDefaultPluginConfiguration() "
+                                    + "ResourceDiscoveryContext.getDefaultPluginConfiguration() "
                                     + "for each discovered resource.");
                         }
                         Resource newResource = InventoryManager.createNewResource(discoveredResource);

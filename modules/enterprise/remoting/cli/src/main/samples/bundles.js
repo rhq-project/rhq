@@ -1,18 +1,16 @@
 /**
  * file: bundles.js
  * 
- * description: this file contains a couple of example functions for more convenient
- * work with the bundle subsystem.
+ * description: this file contains a few helper functions to make working 
+ * with the bundle subsystem more convenient.
  * This script has a dependency on util.js. To load this script's functions into your 
- * CLI session execute the following from the CLI shell,
+ * CLI session, execute the following commands from the CLI shell:
  *
  *   $ login <username> <password>
  *   $ exec -f samples/util.js
  *   $ exec -f samples/bundles.js
  *
- * Note that you must login before you can load the scripts. Also please note
- * that if a function is not documented, then it is not intended for public
- * use. It is used only as an internal helper function.
+ * Note that you must login before you can load the scripts.
  *
  * author: lkrejci@redhat.com
  */
@@ -109,14 +107,16 @@ function createBundleDestination(destinationName, description, bundleName, group
  * @param bundleVersion the bundle version to deploy (or id thereof)
  * @param deploymentConfiguration the deployment configuration. This can be an ordinary
  * javascript object (hash) or an instance of RHQ's Configuration. If it is the former,
- * it is converted to the Configuration instance using the <code>asConfiguration</code>
+ * it is converted to a Configuration instance using the <code>asConfiguration</code>
  * function from <code>util.js</code>. Please consult the documentation of that method
  * to understand the limitations of that approach.
  * @param description the deployment description
+ * @param isCleanDeployment if true, perform a wipe of the deploy directory prior to the deployment; if false,
+ * perform as an upgrade to the existing deployment, if any
  * 
  * @return the BundleDeployment instance describing the deployment
  */
-function deployBundle(destination, bundleVersion, deploymentConfiguration, description) {
+function deployBundle(destination, bundleVersion, deploymentConfiguration, description, isCleanDeployment) {
 	var destinationId = destination;
 	if (typeof(destination) == 'object') {
 		destinationId = destination.id;
@@ -134,7 +134,7 @@ function deployBundle(destination, bundleVersion, deploymentConfiguration, descr
 	
 	var deployment = BundleManager.createBundleDeployment(bundleVersionId, destinationId, description, deploymentConfig);
 	
-	deployment = BundleManager.scheduleBundleDeployment(deployment.id, false);
+	deployment = BundleManager.scheduleBundleDeployment(deployment.id, isCleanDeployment);
 	
 	var crit = new BundleDeploymentCriteria;
 	crit.addFilterId(deployment.id);
@@ -151,3 +151,4 @@ function deployBundle(destination, bundleVersion, deploymentConfiguration, descr
 	
 	return deployment;
 }
+

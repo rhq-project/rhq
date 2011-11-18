@@ -181,8 +181,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         tabSet.setWidth100();
         tabSet.setHeight100();
 
-        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode() : MSG
-            .common_title_edit_mode());
+        editButton = new LocatableIButton(extendLocatorId("Mode"), editMode ? MSG.common_title_view_mode()
+            : MSG.common_title_edit_mode());
         editButton.setAutoFit(true);
         editButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -192,8 +192,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             }
         });
 
-        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"), MSG
-            .common_title_new_dashboard());
+        final IButton newDashboardButton = new LocatableIButton(extendLocatorId("New"),
+            MSG.common_title_new_dashboard());
         newDashboardButton.setAutoFit(true);
         newDashboardButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -378,8 +378,14 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         dashboard.addPortlet(summary, columnIndex, rowIndex++);
 
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
-        news.getConfiguration().put(
-            new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
+        if (isRHQ) {
+            news.getConfiguration().put(
+                new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
+        } else {
+            news.getConfiguration().put(
+                new PropertySimple("address",
+                    "https://access.redhat.com/ext/software/JBoss_Operations_Network/portlet?jonVersion=3.0"));
+        }
         dashboard.addPortlet(news, columnIndex, rowIndex++);
 
         // Right Column

@@ -75,7 +75,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 String serverNameFull;
                 String serverName;
                 String psName = psr.getProcessScan().getName();
-                String description = discoveryContext.getResourceType().getDescription();
+                String description;
                 String homeDir = getHomeDirFromCommandLine(commandLine);
                 String version = determineServerVersionFromHomeDir(homeDir);
                 boolean isEAP = false;
@@ -115,7 +115,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     String host = findHost(psr.getProcessInfo(), true);
                     config.put(new PropertySimple("domainHost", host));
 
-                    fillUserPassFromFile(config, "domain", homeDir);
+                    fillUserPassFromFile(config, AS7Mode.DOMAIN, homeDir);
 
                     // provide running config
                     String domainConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.DOMAIN);
@@ -157,7 +157,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     config.put(new PropertySimple("config",serverConfig));
                     config.put(new PropertySimple("startScript",AS7Mode.STANDALONE.getStartScript()));
 
-                    fillUserPassFromFile(config, "standalone", serverNameFull);
+                    fillUserPassFromFile(config, AS7Mode.STANDALONE, serverNameFull);
 
                     //preload server.log file for event log monitoring
                     logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
@@ -173,6 +173,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 HostPort managmentPort = getManagementPortFromHostXml(commandLine);
                 config.put(new PropertySimple("hostname", managmentPort.host));
                 config.put(new PropertySimple("port", managmentPort.port));
+                config.put(new PropertySimple("realm",getManagementSecurtiyRealmFromHostXml()));
+
                 //            String javaClazz = psr.getProcessInfo().getName();
 
                 /*
@@ -207,11 +209,14 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
     }
 
-    private void fillUserPassFromFile(Configuration config, String mode, String baseDir) {
+    private void fillUserPassFromFile(Configuration config, AS7Mode mode, String baseDir) {
 
-        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
+//        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
+        String realm = getManagementSecurtiyRealmFromHostXml();
+        String fileName = getSecurityPropertyFileFromHostXml(baseDir,mode, realm);
 
-        File file = new File(configDir, "mgmt-users.properties");
+
+        File file = new File(fileName);
         if (!file.exists() || !file.canRead()) {
             if (log.isDebugEnabled())
                 log.debug("No console user properties file found at [" + file.getAbsolutePath()
@@ -234,7 +239,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 String user = line.substring(0, line.indexOf("="));
                 String pass = line.substring(line.indexOf("=") + 1);
                 config.put(new PropertySimple("user", user));
-                config.put(new PropertySimple("password", pass));
+//                config.put(new PropertySimple("password", pass));  // this is now hashed, so no point in supplying it
 
             }
         } catch (IOException e) {

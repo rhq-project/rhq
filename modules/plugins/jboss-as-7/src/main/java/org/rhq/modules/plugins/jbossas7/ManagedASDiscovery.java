@@ -48,6 +48,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
  *
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("unused")
 public class ManagedASDiscovery extends AbstractBaseDiscovery
 
 {
@@ -138,7 +139,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
     }
 
     private ServerInfo getBindingsFromDC(HostPort domainController, String serverGroup) {
-        ASConnection dcConnection = new ASConnection(domainController.host, domainController.port);
+        ASConnection dcConnection = new ASConnection(domainController.host, domainController.port, "-TODO-", "-TODO-"); // TODO where do we get these from?
         List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
         Address theAddress = new Address("server-group", serverGroup);
         Operation op = new ReadResource(theAddress);

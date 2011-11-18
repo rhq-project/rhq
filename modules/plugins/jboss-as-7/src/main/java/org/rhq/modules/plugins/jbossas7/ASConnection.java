@@ -23,15 +23,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
@@ -51,15 +50,17 @@ public class ASConnection {
     String urlString;
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
-    private HttpURLConnection conn;
+    Authenticator passwordAuthenticator ;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
      * #executeRaw.
      * @param host Host of the DomainController or standalone server
      * @param port Port of the JSON api.
+     * @param user user needed for authentication
+     * @param password password needed for authentication
      */
-    public ASConnection(String host, int port) {
+    public ASConnection(String host, int port, String user, String password) {
 
         try {
             url = new URL("http", host, port, MANAGEMENT);
@@ -68,6 +69,9 @@ public class ASConnection {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
+
+        passwordAuthenticator = new AS7Authenticator(user,password);
+        Authenticator.setDefault(passwordAuthenticator);
 
         // read system property "as7plugin.verbose"
         verbose = Boolean.getBoolean("as7plugin.verbose");
@@ -92,14 +96,15 @@ public class ASConnection {
         InputStream inputStream = null;
         BufferedReader br = null;
         InputStream es = null;
+        HttpURLConnection conn=null;
         long t1 = System.currentTimeMillis();
         try {
-
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
-            conn.addRequestProperty("Content-Type","application/json");
+            conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept","application/json");
+
             OutputStream out = conn.getOutputStream();
 
             String result = mapper.writeValueAsString(operation);
@@ -236,6 +241,7 @@ public class ASConnection {
 
         if (node==null) {
             log.warn("Operation [" + op + "] returned null");
+            return null;
         }
         try {
             Result res;
@@ -250,22 +256,5 @@ public class ASConnection {
         }
     }
 
-    public void writeValue(OutputStream out, Object value) throws IOException, JsonGenerationException,
-        JsonMappingException {
-        //    JsonGenerator jgen = _jsonFactory.createJsonGenerator(out, JsonEncoding.UTF8);
-        //    JsonGenerator jgen = mapper.createJsonGenerator(out, JsonEncoding.UTF8);
-        //    JsonGenerator jgen = new Js
-        //    boolean closed = false;
-        //    try {
-        //        writeValue(jgen, value);
-        //        closed = true;
-        //        jgen.close();
-        //    } finally {
-        //        if (!closed) {
-        //            jgen.close();
-        //        }
-        //    }
-
-    }
 
 }

@@ -62,7 +62,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         conf.put(new PropertySimple("needed","test"));
         conf.put(new PropertySimple("optional",null));
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 1;
         Operation step1 = cop.step(0);
@@ -89,7 +89,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyList);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -120,7 +120,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyMap);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -148,7 +148,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyMap);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -176,7 +176,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyMap);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -207,7 +207,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyList);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -240,7 +240,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         conf.put(propertyList);
         conf.put(new PropertySimple("port-offset",0));
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 3 : "#Steps should be 3 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -289,7 +289,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         conf.put(propertyList);
         conf.put(new PropertySimple("port-offset",0));
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
 
         assert cop.numberOfSteps() == 5 : "#Steps should be 5 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);

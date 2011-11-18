@@ -89,6 +89,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     String host;
     int port;
     private boolean verbose = ASConnection.verbose;
+    String managementUser;
+    String managementPassword;
 
     /**
      * Return availability of this resource
@@ -99,7 +101,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         ReadResource op = new ReadResource(address);
         Result res = connection.execute(op);
 
-        return res.isSuccess()? AvailabilityType.UP: AvailabilityType.DOWN;
+        return (res!=null && res.isSuccess()) ? AvailabilityType.UP: AvailabilityType.DOWN;
     }
 
 
@@ -115,7 +117,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             host = pluginConfiguration.getSimpleValue("hostname", LOCALHOST);
             String portString = pluginConfiguration.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
             port = Integer.parseInt(portString);
-            connection = new ASConnection(host,port);
+            managementUser = pluginConfiguration.getSimpleValue("user","-unset-");
+            managementPassword = pluginConfiguration.getSimpleValue("password","-unset-");
+            connection = new ASConnection(host,port, managementUser, managementPassword);
         }
         else {
             connection = ((BaseComponent)context.getParentResourceComponent()).getASConnection();
@@ -310,7 +314,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ASUploadConnection uploadConnection = new ASUploadConnection(host,port);
+        ASUploadConnection uploadConnection = new ASUploadConnection(host,port, managementUser, managementPassword);
         OutputStream out = uploadConnection.getOutputStream(details.getFileName());
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 

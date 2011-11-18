@@ -24,15 +24,16 @@ import java.io.InputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.system.ProcessInfo;
 
 /**
@@ -40,14 +41,24 @@ import org.rhq.core.system.ProcessInfo;
  * in the area of processes and host.xml
  * @author Heiko W. Rupp
  */
-public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T> {
+public class AbstractBaseDiscovery  {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
     static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
+    static final String CALL_READ_STANDALONE_OR_HOST_XML_FIRST = "hostXml is null. You need to call 'readStandaloneOrHostXml' first.";
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
+    private XPathFactory factory;
+
+
+
+    protected AbstractBaseDiscovery() {
+        synchronized (this) {
+            factory = XPathFactory.newInstance();
+        }
+    }
 
     /**
      * Read the host.xml or standalone.xml file depending on isDomainMode. If isDomainMode is true,
@@ -58,6 +69,10 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      */
     protected void readStandaloneOrHostXml(ProcessInfo processInfo, boolean isDomainMode) {
         String hostXmlFile = getHostXmlFileLocation(processInfo,isDomainMode);
+        readStandaloneOrHostXmlFromFile(hostXmlFile);
+    }
+
+    protected void readStandaloneOrHostXmlFromFile(String hostXmlFile) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -107,98 +122,49 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      */
     protected HostPort getManagementPortFromHostXml(String[] commandLine) {
         if (hostXml==null)
-            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
-        Element host =  hostXml.getDocumentElement();
-        NodeList interfaceParent = host.getElementsByTagName("management-interfaces");
-        if (interfaceParent ==null || interfaceParent.getLength()==0) {
-            log.warn("No <management-interfaces> found in host.xml");
-            return new HostPort();
-        }
-        NodeList mgmtInterfaces = interfaceParent.item(0).getChildNodes();
-        if (mgmtInterfaces==null || mgmtInterfaces.getLength()==0) {
-            log.warn("No <*-interface> found in host.xml");
-            return new HostPort();
-        }
-        for (int i = 0 ; i < mgmtInterfaces.getLength(); i++) {
-            if (!(mgmtInterfaces.item(i) instanceof Element))
-                continue;
+            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
-            Element mgmtInterface = (Element) mgmtInterfaces.item(i);
-            if (mgmtInterface.getNodeName().equals("http-interface")) {
-                String tmp = mgmtInterface.getAttribute("port"); // TODO if we don't find it, check for socket-binding
-                int port;
-                if (!tmp.isEmpty())
-                    port = Integer.valueOf(tmp);
-                else
-                    port = DEFAULT_MGMT_PORT;
-                HostPort hp = new HostPort();
-                hp.isLocal=true; // TODO adjust when host != localhost
-                hp.port = port;
+        String portString;
+        String interfaceExpession;
 
-                String nIf = mgmtInterface.getAttribute("interface");
-                if (!nIf.isEmpty())
-                    hp.host = getInterface(nIf, commandLine);
-                else
-                    hp.host = "localhost";
-                return hp;
-            }
+        String socketBindingName = obtainXmlPropertyViaXPath(
+                "//management/management-interfaces/http-interface/socket-binding/@http");
+        if (socketBindingName==null || socketBindingName.isEmpty()) {
+            // old AS7.0, early 7.1 style
+            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
+            String interfaceName = obtainXmlPropertyViaXPath(
+                    "//management/management-interfaces/http-interface/@interface");
+            interfaceExpession = obtainXmlPropertyViaXPath(
+                    "/server/interfaces/interface[@name='" + interfaceName + "']/inet-address/@value");
         }
-        return new HostPort();
+        else {
+            // later AS7.1 and EAP6
+            portString = obtainXmlPropertyViaXPath(
+                    "/server/socket-binding-group/socket-binding[@name='" + socketBindingName + "']/@port");
+            String interfaceName = obtainXmlPropertyViaXPath(
+                    "/server/socket-binding-group/socket-binding[@name='" + socketBindingName + "']/@interface");
+
+            // TODO the next may also be expressed differently
+            interfaceExpession = obtainXmlPropertyViaXPath(
+                    "/server/interfaces/interface[@name='" + interfaceName + "']/inet-address/@value");
+
+        }
+        HostPort hp = new HostPort();
+
+        if (!interfaceExpession.isEmpty())
+            hp.host = replaceDollarExpression(interfaceExpession, commandLine);
+        else
+            hp.host = "localhost"; // Fallback
+
+
+        if (portString!=null && !portString.isEmpty()) {
+            hp.port = Integer.valueOf(portString);
+        }
+        else
+            hp.port = 9990; // Fallback to default
+        return hp;
     }
 
-    /**
-     * Try to obtain the management interface IP from the host/standalone.xml files
-     *
-     * @param nIf Interface to look for
-     * @param commandLine Command line arguments of the process
-     * @return IP address to use
-     */
-    private String getInterface(String nIf, String[] commandLine) {
-        if (hostXml==null)
-            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
-
-        Element host =  hostXml.getDocumentElement();
-        NodeList interfaceParent = host.getElementsByTagName("interfaces");
-        if (interfaceParent ==null || interfaceParent.getLength()==0) {
-            log.warn("No <interfaces> found in host.xml");
-            return null;
-        }
-        NodeList mgmtInterfaces = interfaceParent.item(0).getChildNodes();
-        if (mgmtInterfaces==null || mgmtInterfaces.getLength()==0) {
-            log.warn("No <*-interface> found in host.xml");
-            return null;
-        }
-        for (int i = 0 ; i < mgmtInterfaces.getLength(); i++) {
-            if (!(mgmtInterfaces.item(i) instanceof Element))
-                continue;
-            Element mgmtInterface = (Element) mgmtInterfaces.item(i);
-            if (mgmtInterface.getNodeName().equals("interface")) {
-                String name = mgmtInterface.getAttribute("name");
-                if (!name.equals(nIf))
-                    continue;
-
-                NodeList nl = mgmtInterface.getChildNodes();
-                if (nl!=null) {
-                    for (int j = 0 ; j < nl.getLength(); j++) {
-                        if (!(nl.item(j) instanceof Element))
-                            continue;
-
-                        String nodeName = nl.item(j).getNodeName();
-                        if (nodeName.equals("any-ipv4-address"))
-                            return "0.0.0.0";
-
-                        String value = ((Element) nl.item(j)).getAttribute("value");
-                        value = replaceExpression(value, commandLine);
-                        return value;
-
-                        // TODO check for <any> and so on
-                    }
-                }
-            }
-
-        }
-        return null;  // TODO: Customise this generated block
-    }
 
     /**
      * Check if the passed value has an expression in the form of ${var} or ${var:default},
@@ -209,7 +175,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      * @param commandLine The command line from the process
      * @return resolved value
      */
-    private String replaceExpression(String value, String[] commandLine) {
+    private String replaceDollarExpression(String value, String[] commandLine) {
         if (!value.contains("${"))
             return value;
 
@@ -250,12 +216,12 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
 
     /**
      * Try to determine the host name - that is the name of a standalone server or a
-     * host in domain mode by looking at the standalone/host.xml files
+     * host in domain mode by looking at the standalone.xml/host.xml files
      * @return server name
      */
     protected String findHostName() {
         if (hostXml==null)
-            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
+            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
         String hostName = hostXml.getDocumentElement().getAttribute("name");
         return hostName;
@@ -267,29 +233,53 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
      */
     protected HostPort getDomainControllerFromHostXml() {
         if (hostXml==null)
-            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
+            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
-        Element host =  hostXml.getDocumentElement();
-        NodeList dcParent = host.getElementsByTagName("domain-controller");
-        if (dcParent==null || dcParent.getLength()==0)
-            return new HostPort(false);
-        NodeList interfs = dcParent.item(0).getChildNodes();
-        for (int i = 0; i < interfs.getLength(); i++) {
-            if (!(interfs.item(i)instanceof Element))
-                continue;
 
-            Element interf = (Element) interfs.item(i);
-            if (interf.getNodeName().equals("local"))
-                return new HostPort();
+        // first check remote, as we can't distinguish between a missing local element or
+        // and empty one which is the default
+        String remoteHost = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@host");
+        String portString = obtainXmlPropertyViaXPath("/host/domain-controller/remote/@port");
 
-            // not local, so get the remote
-            HostPort hp = new HostPort(false);
-            hp.host = interf.getAttribute("host");
-            hp.port = Integer.parseInt(interf.getAttribute("port"));
-            return hp;
+        HostPort hp;
+        if (!remoteHost.isEmpty() && !portString.isEmpty()) {
+            hp = new HostPort(false);
+            hp.host = remoteHost;
+            hp.port = Integer.parseInt(portString);
+        }
+        else {
+            hp = new HostPort(true);
+            hp.port = 9999;
         }
 
-        return new HostPort(false);
+        return hp;
+
+    }
+
+    String getManagementSecurtiyRealmFromHostXml() {
+        if (hostXml==null)
+            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
+
+        String realm = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
+
+        return realm;
+    }
+
+    String getSecurityPropertyFileFromHostXml(String baseDir, AS7Mode mode, String realm) {
+        if (hostXml==null)
+            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
+
+        // TODO make realm variable
+        String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm + "']/authentication/properties/@path");
+        String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm + "']/authentication/properties/@relative-to");
+
+        String fullName ;
+        if (relDir.equals("jboss.server.config.dir"))
+            fullName = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator + fileName;
+        else
+            fullName = relDir + File.separator + fileName;
+
+        return fullName;
     }
 
     /**
@@ -330,6 +320,34 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> impl
         }
         return version;
     }
+
+    /**
+     * Run the passed xpathExpression on the prepopulated hostXml document and
+     * return the target element or attribute as a String.
+     * @param xpathExpression XPath Expression to evaluate
+     * @return String value of the Element or Attribute the XPath was pointing to.
+     *     Null in case the xpathExpression could not be evaluated.
+     * @throws IllegalArgumentException if hostXml is null
+     *
+     */
+    protected String obtainXmlPropertyViaXPath(String xpathExpression) {
+        if (hostXml==null)
+            throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
+
+
+        XPath xpath = factory.newXPath();
+        try {
+            XPathExpression expr = xpath.compile(xpathExpression);
+
+            Object result = expr.evaluate(hostXml, XPathConstants.STRING);
+
+            return result.toString();
+        } catch (XPathExpressionException e) {
+            log.error("Evaluation XPath expression failed: " + e.getMessage());
+            return null;
+        }
+    }
+
 
     /**
      * Helper class that holds information about the host,port tuple

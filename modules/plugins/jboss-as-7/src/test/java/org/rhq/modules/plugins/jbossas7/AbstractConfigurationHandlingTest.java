@@ -28,7 +28,6 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.testng.annotations.BeforeSuite;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
@@ -97,7 +96,7 @@ public class AbstractConfigurationHandlingTest {
         JsonNode content;
 
         public FakeConnection() {
-            super("localhost", 1234);
+            super("localhost", 1234, "fake", "fake");
         }
 
         public void setContent(JsonNode content) {

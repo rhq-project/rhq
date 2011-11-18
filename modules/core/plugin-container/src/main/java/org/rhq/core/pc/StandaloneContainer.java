@@ -21,7 +21,6 @@ package org.rhq.core.pc;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,7 @@ import java.util.Stack;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
@@ -75,8 +75,6 @@ public class StandaloneContainer {
     InventoryManager inventoryManager;
     /** Global operation counter */
     Integer opId = 0;
-    /** Map of resource plugin configurations */
-    Map<Integer, Configuration> resConfigMap = new HashMap<Integer, Configuration>();
     /** variable set by find() and which can be used in set() */
     int dollarR = 0;
     /** Do we read from stdin ? */
@@ -340,32 +338,58 @@ public class StandaloneContainer {
 
     }
 
-    private void setResourcePluginConfig(String[] tokens,boolean pluginConfig) {
+    private void setResourcePluginConfig(String[] tokens,boolean isPluginConfig) throws PluginContainerException {
         if (resourceId == 0) {
             System.err.println("No resource set");
             return;
         }
 
 
+        Configuration newConfig = null;
         Configuration config = null;
-        if (tokens.length > 1)
-            config = createConfigurationFromString(tokens[1]);
-        else {
+        boolean merge=false;
+        int pos = 1;
+        if (tokens.length < 2) {
+            System.err.println("Need at least 1 token");
+            return;
+        }
+        if (tokens[1].equals("-m")) {
+            merge = true;
+            pos++;
+        }
+        if (tokens.length < pos+1) {
             System.err.println("Need at least 1 token");
             return;
         }
 
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,config,resourceId);
+        newConfig = createConfigurationFromString(tokens[pos]);
 
         ConfigurationManager cm = pc.getConfigurationManager();
 
-        if (pluginConfig) {
-            pc.getInventoryManager().getResourceContainer(resourceId).getResource().setPluginConfiguration(config);
-        } else
+        if (isPluginConfig) {
+            Resource targetResource = pc.getInventoryManager().getResourceContainer(resourceId).getResource();
+            config = targetResource.getPluginConfiguration();
+            if (merge) {
+                // copy over existing properties that are not in newConfig
+                for (Property p : config.getProperties()) {
+                    if (newConfig.get(p.getName())==null)
+                        newConfig.put(p);
+                }
+            }
+
+            targetResource.setPluginConfiguration(newConfig);
+        } else {
+            config = pc.getConfigurationManager().loadResourceConfiguration(resourceId);
+            if (merge) {
+                // copy over existing properties that are not in newConfig
+                for (Property p : config.getProperties()) {
+                    if (newConfig.get(p.getName())==null)
+                        newConfig.put(p);
+                }
+            }
+            ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1,newConfig,resourceId);
             cm.updateResourceConfiguration(request);
-
-
-
+        }
     }
 
 
@@ -715,7 +739,7 @@ public class StandaloneContainer {
     }
 
     private void showConfig(Configuration config) {
-        System.out.println(config.getProperties());
+        System.out.println(config.getProperties()); // TODO convert to input format or key=value or json
     }
 
 }

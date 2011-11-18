@@ -61,6 +61,10 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
 
             return postProcessResult(name,res);
         }
+        else if (name.equals("installRhqUser")) {
+            return installManagementUser(parameters, pluginConfiguration, AS7Mode.HOST);
+        }
+
 
         // Defer other stuff to the base component for now
         return super.invokeOperation(name, parameters);

@@ -54,28 +54,47 @@ public class Domain2Descriptor {
     private void run(String[] args) {
 
         D2DMode mode = null;
-        int pos = 0;
-        if (args[0].startsWith("-")) {
-            if (args[0].equals("-m"))
-                mode = D2DMode.METRICS;
-            else if (args[0].equals("-p"))
-                mode = D2DMode.PROPERTIES;
-            else if (args[0].equals("-o"))
-                mode = D2DMode.OPERATION;
-            else {
-                usage();
-                return;
-            }
-            pos++;
-        }
+        String user = null;
+        String pass = null;
 
-        String path = args[pos];
+        int pos = 0;
+        boolean optionFound=false;
+
+        String arg;
+        do {
+            arg = args[pos];
+            if (arg.startsWith("-")) {
+                if (args[0].equals("-m"))
+                    mode = D2DMode.METRICS;
+                else if (arg.equals("-p"))
+                    mode = D2DMode.PROPERTIES;
+                else if (arg.equals("-o"))
+                    mode = D2DMode.OPERATION;
+                else if (arg.startsWith("-U")) {
+                    String tmp = arg.substring(2);
+                    if (!tmp.contains(":"))
+                        usage();
+                    user = tmp.substring(0,tmp.indexOf(":"));
+                    pass = tmp.substring(tmp.indexOf(":")+1);
+                }
+                else {
+                    usage();
+                    return;
+                }
+                pos++;
+                optionFound=true;
+            }
+            else
+                optionFound=false;
+        }while(optionFound);
+
+        String path = arg;
         path = path.replaceAll("/",","); // Allow path from jboss-admin.sh's pwd command
         String childType = null;
         if (args.length>pos+1)
             childType = args[pos+1];
 
-        ASConnection conn = new ASConnection("localhost",9990);
+        ASConnection conn = new ASConnection("localhost",9990, user, pass);
 
         Address address = new Address(path);
         Operation op = new Operation("read-resource-description",address);
@@ -87,6 +106,10 @@ public class Domain2Descriptor {
             op.addAdditionalProperty("include-runtime",true);
 
         ComplexResult res = conn.executeComplex(op);
+        if (res==null) {
+            System.err.println("Got no result");
+            return;
+        }
         if (!res.isSuccess()) {
             System.err.println("Failure: " + res.getFailureDescription());
             return;
@@ -313,6 +336,8 @@ public class Domain2Descriptor {
             typeString = "long"; break;
         case BIG_DECIMAL:
             typeString = "long"; break; // TODO better float or double?
+        case DOUBLE:
+            typeString = "long"; break; // TODO float or double?
         case LIST:
             typeString = "-list-";
             break; // Handled below
@@ -412,6 +437,7 @@ public class Domain2Descriptor {
         System.out.println(" -p create properties (default)");
         System.out.println(" -m create metrics");
         System.out.println(" -o create operations");
+        System.out.println(" -U<user>:<pass>  - supply credentials to talk to AS7" );
     }
 
     public enum Type {
@@ -421,7 +447,8 @@ public class Domain2Descriptor {
         LONG,
         BIG_DECIMAL,
         OBJECT,
-        LIST
+        LIST,
+        DOUBLE
 
         ;
     }

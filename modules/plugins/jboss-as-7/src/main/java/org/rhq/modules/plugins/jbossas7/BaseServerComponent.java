@@ -19,12 +19,19 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.ConnectException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -137,6 +144,11 @@ public class BaseServerComponent extends BaseComponent {
      */
     protected OperationResult postProcessResult(String name, Result res) {
         OperationResult operationResult = new OperationResult();
+        if (res==null) {
+            operationResult.setErrorMessage("No result received from server");
+            return operationResult;
+        }
+
         if (name.equals("shutdown") || name.equals("reload")) {
             /*
              * Shutdown needs a special treatment, because after sending the operation, if shutdown suceeds,
@@ -168,4 +180,55 @@ public class BaseServerComponent extends BaseComponent {
         return operationResult;
     }
 
+    protected OperationResult installManagementUser(Configuration parameters, Configuration pluginConfig, AS7Mode mode) {
+        String user = parameters.getSimpleValue("user","");
+        String password = parameters.getSimpleValue("password","");
+
+        OperationResult result = new OperationResult();
+        if (user.isEmpty() || password.isEmpty()) {
+            result.setErrorMessage("User and Password must not be empty");
+            return result;
+        }
+
+        String baseDir = pluginConfig.getSimpleValue("baseDir","");
+        if (baseDir.isEmpty()) {
+            result.setErrorMessage("No baseDir found, can not continue");
+            return result;
+        }
+        String standaloneXmlFile = pluginConfig.getSimpleValue("config",mode.getDefaultXmlFile());
+
+        String standaloneXml = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator + standaloneXmlFile;
+
+        AbstractBaseDiscovery abd = new AbstractBaseDiscovery();
+        abd.readStandaloneOrHostXmlFromFile(standaloneXml);
+
+        String realm = pluginConfig.getSimpleValue("realm","ManagementRealm");
+        String propertiesFilePath = abd.getSecurityPropertyFileFromHostXml(baseDir,mode, realm);
+
+
+        Properties p = new Properties();
+        try {
+            UsernamePasswordHashUtil util = new UsernamePasswordHashUtil();
+            String value = util.generateHashedHexURP(user, realm, password.toCharArray());
+
+
+            FileInputStream fis = new FileInputStream(propertiesFilePath);
+            p.load(fis);
+            fis.close();
+            p.setProperty(user,value);
+            FileOutputStream fos = new FileOutputStream(propertiesFilePath);
+            p.store(fos,null);
+            fos.flush();
+            fos.close();
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            result.setErrorMessage(e.getMessage());
+        } catch (NoSuchAlgorithmException nsae) {
+            log.error(nsae.getMessage());
+            result.setErrorMessage(nsae.getMessage());
+        }
+        result.setSimpleResult("User/Password set or updated");
+
+        return result;
+    }
 }

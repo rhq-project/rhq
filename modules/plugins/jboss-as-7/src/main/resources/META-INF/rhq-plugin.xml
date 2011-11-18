@@ -50,31 +50,11 @@
         xmlns:c="urn:xmlns:rhq-configuration"
         >
 
-    <depends plugin="JMX" useClasses="true"/>
-
 
     <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
       ~~      additional 'Personalities' for the kinds of servers (PM, SM, Standalone AS, Managed AS)
       -->
 
-    <!-- TODO do we want to show the process controller at all? We have no benefit from it
-    <server name="ProcessController"
-            discovery="BaseProcessDiscovery"
-            class="BaseComponent"
-            description="Reaper process for other AS7 services"
-            >
-
-        <plugin-configuration>
-            <c:simple-property name="hostname" default="localhost" required="true"/>
-            <c:simple-property name="port" default="9990" type="integer" required="true"/>
-
-        </plugin-configuration>
-
-        <process-scan name="ProcessController" query="process|basename|match=^java.*,arg|org.jboss.as.process-controller|match=.*"/>
-
-
-    </server>
-    -->
     <server name="JBossAS7 Host Controller"
             discovery="BaseProcessDiscovery"
             class="HostControllerComponent"
@@ -84,8 +64,8 @@
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" required="true" description="Host name of the domain API"/>
             <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
-            <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
-            <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
+            <c:simple-property name="user" type="string" default="rhqadmin" description="Management user for a secured Host controller" required="false"/>
+            <c:simple-property name="password" type="password" default="rhqadmin" description="Password for the management user" required="false"/>
             <c:simple-property name="domainConfig" type="string" default="domain.xml" description="Running configuration (domain part)" displayName="Domain Configuration"/>
             <c:simple-property name="hostConfig" type="string" default="host.xml" description="Running configuration (host part)" displayName="Host Configuration"/>
             <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
@@ -179,6 +159,15 @@
                 <c:simple-property name="operationResult" description="Outcome of the stop operation"/>
             </results>
         </operation>
+        <operation name="installRhqUser" description="Installs a user in the server for management" displayName="Install RHQ user">
+            <parameters>
+                <c:simple-property name="user" displayName="Username" description="Name of the management user" default="rhqadmin"/>
+                <c:simple-property name="password" displayName="Password" description="Password of this management user" default="rhqadmin" type="password"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
 
 
         <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
@@ -191,6 +180,11 @@
         <metric property="_internal:maxTime" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
+
+        <metric property="server-state" dataType="trait" displayName="Server state" description="Detailed server state"
+                displayType="summary"/>
+        <metric property="release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
+        <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -206,11 +200,10 @@
             </c:group>
 -->
 
-            <c:group name="children:extension" displayName="Installed extensions">
-
+            <c:group name="children:extension" displayName="Installed extensions" hiddenByDefault="true">
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
                     <c:map-property name="*" displayName="Name" readOnly="true">
-                        <c:simple-property name="module" displayName="Module name"/>
+                        <c:simple-property name="module" displayName="Module name" readOnly="true"/>
                     </c:map-property>
                 </c:list-property>
             </c:group>
@@ -332,8 +325,8 @@
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" required="true"/>
             <c:simple-property name="port" default="9990" type="integer" required="true"/>
-            <c:simple-property name="user" type="string" description="Management user for a secured AS" required="false"/>
-            <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
+            <c:simple-property name="user" default="rhqadmin" type="string" description="Management user for a secured AS" required="false"/>
+            <c:simple-property name="password" default="rhqadmin" type="password" description="Password for the management user" required="false"/>
             <c:simple-property name="config" type="string" default="standalone.xml" description="Running configuration" displayName="Configuration"/>
             <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/standalone.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
@@ -404,6 +397,15 @@
                 <c:simple-property name="operationResult"/>
             </results>
         </operation>
+        <operation name="installRhqUser" description="Installs a user in the server for management" displayName="Install RHQ user">
+            <parameters>
+                <c:simple-property name="user" displayName="Username" description="Name of the management user" default="rhqadmin"/>
+                <c:simple-property name="password" displayName="Password" description="Password of this management user" default="rhqadmin" type="password"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
 
 
         <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
@@ -415,6 +417,11 @@
         <metric property="_internal:maxTime" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
+
+        <metric property="server-state" dataType="trait" displayName="Server state" description="Detailed server state"
+                displayType="summary"/>
+        <metric property="release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
+        <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -431,11 +438,10 @@
             </c:group>
 -->
 
-            <c:group name="children:extension" displayName="Installed extensions">
-
+            <c:group name="children:extension" displayName="Installed extensions" hiddenByDefault="true">
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
                     <c:map-property name="*" displayName="Name" readOnly="true">
-                        <c:simple-property name="module" displayName="Module name"/>
+                        <c:simple-property name="module" displayName="Module name" readOnly="true"/>
                     </c:map-property>
                 </c:list-property>
             </c:group>
@@ -515,31 +521,98 @@
             </results>
         </operation>
 
-        <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
+        <metric property="server-state" dataType="trait" displayName="Server state" description="Detailed server state"
                 displayType="summary"/>
+        <metric property="release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
+        <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
 
          <event name="logEntry" description="an entry in a log file"/>
 
     </server>
 
 
-      <server name="JBoss AS JVM"
-              description="JVM of the JBossAS"
-              sourcePlugin="JMX"
-              sourceType="JMX Server"
-              discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
-              class="org.rhq.plugins.jmx.JMXServerComponent"
-              singleton="true">
+    <server name="JVM"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            description="Information about the underlying JVM"
+            singleton="true">
         <runs-inside>
             <parent-resource-type name="JBossAS7 Managed Server"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
-      </server>
 
-    <server name="Messaging"
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="core-service=platform-mbean"/>
+        </plugin-configuration>
+
+        <service name="Operating System"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                 >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="type=operating-system"/>
+            </plugin-configuration>
+
+            <metric property="available-processors"
+                    description="The number of processors available to the Java virtual machine."/>
+            <metric property="system-load-average"
+                    description="The system load average for the last minute. The load average may not be available on some platforms; if the load average is not available, a negative value is returned."/>
+         </service>
+
+        <service name="Runtime"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                 >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="type=runtime"/>
+            </plugin-configuration>
+
+            <metric property="uptime" description="The uptime of the Java virtual machine in milliseconds."/>
+         </service>
+
+        <service name="Threading"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="type=threading"/>
+            </plugin-configuration>
+
+            <metric property="thread-count" description="The current number of live threads including both daemon and non-daemon threads."/>
+            <metric property="peak-thread-count" description="The peak live thread count since the Java virtual machine started or peak was reset."/>
+            <metric property="total-started-thread-count" description="The total number of threads created and also started since the Java virtual machine started."/>
+            <metric property="daemon-thread-count" description="The current number of live daemon threads."/>
+            <metric property="current-thread-cpu-time" description="The total CPU time for the current thread in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' undefined."/>
+            <metric property="current-thread-user-time" description="The CPU time that the current thread has executed in user mode in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' the result will be undefined "/>
+
+            <resource-configuration>
+                <c:simple-property name="thread-contention-monitoring-enabled" required="false" type="boolean" readOnly="false" description="Whether thread contention monitoring is enabled."/>
+                <c:simple-property name="thread-cpu-time-enabled" required="false" type="boolean" readOnly="false" description="Whether thread CPU time measurement is enabled."/>
+                <c:list-property name="all-thread-ids" description="All live thread IDs. If a security manager is installed and the caller does not have ManagementPermission('monitor'), the result will be und
+                ." >
+                    <c:simple-property name="all-thread-ids" />
+                </c:list-property>
+                <c:simple-property name="thread-contention-monitoring-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports thread contention monitoring."/>
+                <c:simple-property name="thread-cpu-time-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine implementation supports CPU time measurement for any thread."/>
+                <c:simple-property name="current-thread-cpu-time-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports CPU time measurement for the current thread."/>
+                <c:simple-property name="object-monitor-usage-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports monitoring of object monitor usage."/>
+                <c:simple-property name="synchronizer-usage-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports monitoring of ownable synchronizer usage."/>
+            </resource-configuration>
+         </service>
+
+
+
+    </server>
+
+    <server name="Messaging-Provider"
             discovery="SubsystemDiscovery"
             class="BaseComponent"
-            description="The HornetQ based messaging subsystem"
+            description="The messaging subsystems"
             singleton="true"
             >
         <runs-inside>
@@ -551,82 +624,94 @@
             <c:simple-property name="path" readOnly="true" default="subsystem=messaging"/>
         </plugin-configuration>
 
-        <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
-            <parameters>
-                <c:simple-property name="name" description="Name of the Destination" required="true"/>
-                <c:list-property name="entries" description="The JNDI names the destination should be bound to." required="true">
-                    <c:simple-property name="entry" description="A single JNDI name. Note, this is relative to java:jboss/jms/"/>
-                </c:list-property>
-                <c:simple-property name="type" description="Type of Destination to create" default="Queue">
-                    <c:property-options>
-                        <c:option value="jms-queue" name="Queue"/>
-                        <c:option value="jms-topic" name="Topic"/>
-                    </c:property-options>
-                </c:simple-property>
-                <c:simple-property name="durable" description="Defines whether the queue is durable (for Queues only)." type="boolean" default="false"/>
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult"/>
-            </results>
-        </operation>
-        <operation name="destination:remove" displayName="Remove Destination" description="Remove a destination">
-            <parameters>
-                <c:simple-property name="name" description="Name of the Destination" required="true"/>
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult"/>
-            </results>
-        </operation>
+        <server name="HornetQ"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent"
+                description="The HornetQ based messaging subsystem"
+                >
 
-        <resource-configuration>
-            <c:simple-property name="journal-min-files" />
-            <c:simple-property name="journal-type" />
-        </resource-configuration>
-
-        <service name="JMS Queue"
-            discovery="SubsystemDiscovery"
-            class="JmsComponent"
-            createDeletePolicy="delete-only"
-            >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="jms-queue"/>
+                <c:simple-property name="path" readOnly="true" default="hornetq-server"/>
             </plugin-configuration>
+
+
+            <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
+                <parameters>
+                    <c:simple-property name="name" description="Name of the Destination" required="true"/>
+                    <c:list-property name="entries" description="The JNDI names the destination should be bound to." required="true">
+                        <c:simple-property name="entry" description="A single JNDI name. Note, this is relative to java:jboss/jms/"/>
+                    </c:list-property>
+                    <c:simple-property name="type" description="Type of Destination to create" default="Queue">
+                        <c:property-options>
+                            <c:option value="jms-queue" name="Queue"/>
+                            <c:option value="jms-topic" name="Topic"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="durable" description="Defines whether the queue is durable (for Queues only)." type="boolean" default="false"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+            <operation name="destination:remove" displayName="Remove Destination" description="Remove a destination">
+                <parameters>
+                    <c:simple-property name="name" description="Name of the Destination" required="true"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
 
             <resource-configuration>
-                <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
-                                   description="Whether the queue is durable or not."/>
-                <c:list-property name="entries" required="false"  readOnly="true"
-                                 description="The jndi names the queue will be bound to.">
-                    <c:simple-property name="entries" type="string"/>
-                </c:list-property>
-                <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
+                <c:simple-property name="journal-min-files" />
+                <c:simple-property name="journal-type" />
             </resource-configuration>
-        </service>
-        <service name="JMS Topic"
-            discovery="SubsystemDiscovery"
-            class="JmsComponent"
-            createDeletePolicy="delete-only"
-            >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="jms-topic"/>
-            </plugin-configuration>
-            <resource-configuration>
-                <c:list-property name="entries" required="false"  readOnly="true"
-                                 description="The jndi names the queue will be bound to.">
-                    <c:simple-property name="entries" type="string"/>
-                </c:list-property>
-            </resource-configuration>
-        </service>
-        <service name="Connection-Factory"
-            discovery="SubsystemDiscovery"
-            class="JmsComponent"
-            createDeletePolicy="both"
-            >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="connection-factory"/>
-            </plugin-configuration>
-        </service>
 
+            <service name="JMS Queue"
+                discovery="SubsystemDiscovery"
+                class="JmsComponent"
+                createDeletePolicy="delete-only"
+                >
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="jms-queue"/>
+                </plugin-configuration>
+
+                <resource-configuration>
+                    <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
+                                       description="Whether the queue is durable or not."/>
+                    <c:list-property name="entries" required="false"  readOnly="true"
+                                     description="The jndi names the queue will be bound to.">
+                        <c:simple-property name="entries" type="string"/>
+                    </c:list-property>
+                    <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
+                </resource-configuration>
+            </service>
+            <service name="JMS Topic"
+                discovery="SubsystemDiscovery"
+                class="JmsComponent"
+                createDeletePolicy="delete-only"
+                >
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="jms-topic"/>
+                </plugin-configuration>
+                <resource-configuration>
+                    <c:list-property name="entries" required="false"  readOnly="true"
+                                     description="The jndi names the queue will be bound to.">
+                        <c:simple-property name="entries" type="string"/>
+                    </c:list-property>
+                </resource-configuration>
+            </service>
+            <service name="Connection-Factory"
+                discovery="SubsystemDiscovery"
+                class="JmsComponent"
+                createDeletePolicy="both"
+                >
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="connection-factory"/>
+                </plugin-configuration>
+            </service>
+
+        </server>
     </server>
 
     <server name="JBossWeb"
@@ -649,61 +734,64 @@
                                description="The web container's default virtual server."/>
             <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true"
                                description="Add the native initialization listener to the web container."/>
-            <c:map-property name="configuration" description="The common web container configuration." >
-                <c:map-property name="static-resources" description="Configuration for static resources" >
-                    <c:simple-property name="listings" required="false" type="boolean" readOnly="true" defaultValue="false"
+            <c:simple-property name="instance-id" readOnly="true" required="false" type="string" description="The identifier for this server instance."/>
+            <c:group name="child:configuration=static-resources" displayName="Static Resources" >
+                    <c:simple-property name="listings" required="false" type="boolean" defaultValue="false"
                                        description="Enable folder listings."/>
-                    <c:simple-property name="sendfile" required="false" type="integer" readOnly="true" defaultValue="49152"
+                    <c:simple-property name="sendfile" required="false" type="integer" defaultValue="49152"
                                        description="Enable sendfile if possible, for files bigger than the specified byte size."/>
-                    <c:simple-property name="read-only" required="false" type="boolean" readOnly="true" defaultValue="true"
+                    <c:simple-property name="file-encoding" required="false" description="Force a file encoding." type="string"/>
+                    <c:simple-property name="read-only" required="false" type="boolean"  defaultValue="true"
                                         description="Allow write HTTP methods (PUT, DELETE)."/>
-                    <c:simple-property name="webdav" required="false" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="webdav" required="false" type="boolean"  defaultValue="false"
                                        description="Enable WebDAV functionality."/>
                     <c:simple-property name="secret" required="false" type="string" readOnly="true" description="Secret for WebDAV locking operations."/>
-                    <c:simple-property name="max-depth" required="false" type="integer" readOnly="true" defaultValue="3"
+                    <c:simple-property name="max-depth" required="false" type="integer" defaultValue="3"
                                        description="Maximum recursion for PROPFIND."/>
-                    <c:simple-property name="disabled" required="false" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="disabled" required="false" type="boolean" defaultValue="false"
+                                       description="Enable the default Servlet mapping."/>
+            </c:group>
+            <c:group name="child:configuration=jsp-configuration" displayName="JSP Configuration">
+                    <c:simple-property name="development" required="false" type="boolean"  default="false"
+                                        description="Enable the development mode, which gives more information when an error occurs. And also enables automatic JSP recompiles."/>
+                    <c:simple-property name="disabled" required="false" type="boolean" defaultValue="false"
                                        description="Enable the JSP container."/>
-                </c:map-property>
-                <c:map-property name="jsp-configuration" description="JSP container configuration">
-                    <c:simple-property name="development" required="false" type="boolean" readOnly="true" defaultValue="false"
-                                       description="Enable the development mode, which gives more information when an error occurs."/>
-                    <c:simple-property name="file-encoding" required="false" type="string" readOnly="true" description="Force a file encoding."/>
-                    <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="true" defaultValue="true"
+                    <c:simple-property name="keep-generated" required="false" type="boolean" defaultValue="true"
                                        description="Keep the generated Servlets."/>
                     <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="true" defaultValue="true"
-                                       description="Trim some spaces from the generated Servlet."/>
-                    <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Trim some spaces from the generated Servlet."/> <!-- TODO make r/w when https://issues.jboss.org/browse/AS7-3097 is solved -->
+                    <c:simple-property name="tag-pooling" required="false" type="boolean"  defaultValue="true"
                                        description="Enable tag pooling."/>
-                    <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="true" defaultValue="true"
+                    <c:simple-property name="mapped-file" required="false" type="boolean" defaultValue="true"
                                        description="Map to the JSP source."/>
-                    <c:simple-property name="check-interval" required="false" type="integer" readOnly="true" defaultValue="0"
-                                       description="Check interval for JSP updates using a background thread."/>
-                    <c:simple-property name="modification-test-interval" required="false" type="integer" readOnly="true" defaultValue="4"
+                    <c:simple-property name="check-interval" required="false" type="integer"  defaultValue="60"
+                                       description="Check interval for JSP updates using a background thread."/> <!-- TODO revisit default when https://issues.jboss.org/browse/AS7-3098 is fixed -->
+                    <c:simple-property name="modification-test-interval" required="false" type="integer" defaultValue="4"
                                        description="Minimum amount of time between two tests for updates, in seconds."/>
-                    <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="recompile-on-fail" required="false" type="boolean" defaultValue="false"
                                        description="Retry failed JSP compilations on each request."/>
-                    <c:simple-property name="smap" required="false" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="smap" required="false" type="boolean"  defaultValue="false"
                                        description="Enable SMAP."/>
-                    <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="dump-smap" required="false" type="boolean" defaultValue="false"
                                        description="Write SMAP data to a file."/>
-                    <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="true"
+                    <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean"
                                        defaultValue="false"
                                        description="Generate String constants as char arrays."/>
-                    <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" defaultValue="false"
                                        description="Enable errors when using a bad class in useBean."/>
-                    <c:simple-property name="scratch-dir" required="false" type="string" readOnly="true" description="Specify a different work directory."/>
-                    <c:simple-property name="source-vm" required="false" type="string" readOnly="true" defaultValue="1.5"
+                    <c:simple-property name="scratch-dir" required="false" type="string"  description="Specify a different work directory."/>
+                    <c:simple-property name="source-vm" required="false" type="string"  defaultValue="1.5"
                                        description="Source VM level for compilation."/>
-                    <c:simple-property name="target-vm" required="false" type="string" readOnly="true" defaultValue="1.5"
+                    <c:simple-property name="target-vm" required="false" type="string"  defaultValue="1.5"
                                        description="Target VM level for compilation."/>
-                    <c:simple-property name="java-encoding" required="false" type="string" readOnly="true" defaultValue="UTF-8"
+                    <c:simple-property name="java-encoding" required="false" type="string"  defaultValue="UTF-8"
                                        description="Specify the encoding used for Java sources."/>
-                    <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="true" defaultValue="true"
+                    <c:simple-property name="x-powered-by" required="false" type="boolean"  defaultValue="true"
                                        description="Enable advertising the JSP engine in x-powered-by."/>
-                    <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="true" defaultValue="true"
+                    <c:simple-property name="display-source-fragment" required="false" type="boolean" defaultValue="true"
                                        description="When a runtime error occurs, attempts to display corresponding JSP source fragment."/>
-                </c:map-property>
+            </c:group>
+ <!--           <c:group name="child:configuration=container" displayName="Container">
                 <c:list-property name="mime-mapping" description="A mime-mapping definition." >
                     <c:map-property name="mime-mapping" >
                             <c:simple-property name="name" description="A MIME mapping name"/>
@@ -713,8 +801,8 @@
                 <c:list-property name="welcome-file" description="A welcome file declaration." >
                     <c:simple-property name="welcome-file" />
                 </c:list-property>
-            </c:map-property>
-        </resource-configuration>
+            </c:group>
+-->        </resource-configuration>
 
         <service name="Connector"
                  discovery="SubsystemDiscovery"
@@ -726,41 +814,41 @@
             </plugin-configuration>
 
 
-            <metric property="bytesSent" measurementType="trendsup"/>
-            <metric property="bytesReceived" measurementType="trendsup"/>
-            <metric property="processingTime" measurementType="trendsup" units="milliseconds"/>
-            <metric property="errorCount" measurementType="trendsup" displayType="summary"/>
-            <metric property="maxTime" units="milliseconds"/>
-            <metric property="requestCount" measurementType="trendsup" displayType="summary"/>
+            <metric property="bytesSent" measurementType="trendsup" description="Number of byte sent by the connector."/>
+            <metric property="bytesReceived" measurementType="trendsup" description="Number of byte received by the connector (POST data)."/>
+            <metric property="processingTime" measurementType="trendsup" units="milliseconds" description="Processing time used by the connector. Im milli-seconds."/>
+            <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
+            <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
+            <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
 
             <resource-configuration>
-                <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
-                <c:simple-property name="socket-binding" required="true" type="string" readOnly="true"
+                <c:simple-property name="protocol" required="true" type="string" description="The web connector protocol."/>
+                <c:simple-property name="socket-binding" required="true" type="string"
                                    description="The web connector socket-binding reference, this connector should be bound to.">
                     <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/> <!-- TODO different for Domain vs standalone -->
                 </c:simple-property>
-                <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme." required="true"/>
-                <c:simple-property name="executor" type="string" readOnly="true" required="false"
+                <c:simple-property name="scheme" type="string" default="http" description="The web connector scheme." required="true"/>
+                <c:simple-property name="executor" type="string" required="false"
                                    description="The name of the executor that should be used for the processing threads of this connector. Defaults to using an internal pool."/>
-                <c:simple-property name="enabled" type="boolean" readOnly="true" defaultValue="true"
+                <c:simple-property name="enabled" type="boolean" default="true"
                                    description="Defines whether the connector should be started on startup."/>
-                <c:simple-property name="enable-lookups" type="boolean" readOnly="true" defaultValue="false"
+                <c:simple-property name="enable-lookups" type="boolean" defaultValue="false"
                                    description="Enable DNS lookups for Servlet API."/>
-                <c:simple-property name="proxy-name" type="string" readOnly="true" required="false"
+                <c:simple-property name="proxy-name" type="string" required="false"
                                    description="The host name that will be used when sending a redirect. The default value is null."/>
-                <c:simple-property name="proxy-port" type="integer" readOnly="true" required="false"
+                <c:simple-property name="proxy-port" type="integer" required="false"
                                    description="The port that will be used when sending a redirect."/>
-                <c:simple-property name="max-post-size" type="integer" readOnly="true" defaultValue="2097152"
+                <c:simple-property name="max-post-size" type="integer" defaultValue="2097152"
                                    description="Maximum size in bytes of a POST request that can be parsed by the container."/>
-                <c:simple-property name="max-save-post-size" type="integer" readOnly="true" defaultValue="4096"
+                <c:simple-property name="max-save-post-size" type="integer" defaultValue="4096"
                                    description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes."/>
                 <c:simple-property name="secure" type="boolean" readOnly="true" defaultValue="false"
                                    description="Indicates if content sent or recieved by the connector is secured from the user perspective."/>
                 <c:simple-property name="redirect-port" type="integer" readOnly="true" defaultValue="8443"
                                    description="The port for redirection to a secure connector."/>
-                <c:simple-property name="max-connections" type="integer" readOnly="true" required="false"
+                <c:simple-property name="max-connections" type="integer" required="false"
                                    description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
-                <c:list-property name="virtual-server" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers." readOnly="true" required="false">
+                <c:list-property name="virtual-server" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers." required="false">
                     <c:simple-property name="virtual-server" />
                 </c:list-property>
                 <c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
@@ -795,10 +883,10 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:list-property name="alias" >
+                <c:list-property name="alias" description="The virtual server aliases" displayName="Virtual server aliases" >
                     <c:simple-property name="alias" />
                 </c:list-property>
-                <c:simple-property name="default-web-module" type="string" readOnly="true" defaultValue="ROOT.war"
+                <c:simple-property name="default-web-module" type="string" defaultValue="ROOT.war"
                          description="The web module deployment name that will be mapped as the root webapp."/>
                 <c:map-property name="access-log" description="The access log configuration for this virtual server." >
                     <c:simple-property name="pattern" type="string" readOnly="true" defaultValue="common" required="false" description="The access log pattern."/>
@@ -825,7 +913,7 @@
                         </c:list-property>
                     </c:map-property>
                 </c:list-property>
-                <c:simple-property name="enable-welcome-root" type="boolean" />
+                <c:simple-property name="enable-welcome-root" type="boolean" description="Whether or not the bundled welcome directory is used as the root web context."/>
             </resource-configuration>
         </service>
 

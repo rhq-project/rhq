@@ -120,6 +120,15 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             operation = new ReadChildrenResources(address,type);
             operation.addAdditionalProperty("recursive", "true");
         }
+        else if (groupName.startsWith("child:")) {
+            String subPath = groupName.substring("child:".length());
+            if (!subPath.contains("="))
+                throw new IllegalArgumentException("subPath of 'child:' expression has no =");
+
+            Address address1 = new Address(address);
+            address1.addSegment(subPath);
+            operation = new ReadResource(address1);
+        }
         else {
             throw new IllegalArgumentException("Unknown operation in group name [" + groupName + "]");
         }

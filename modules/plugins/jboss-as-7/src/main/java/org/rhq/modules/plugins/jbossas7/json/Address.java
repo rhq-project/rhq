@@ -83,15 +83,24 @@ public class Address {
 
             if (tmp.contains("=")) {
                 // strip / from the start of the key if it happens to be there
-                if (tmp.startsWith("/"))
-                    tmp = tmp.substring(1);
-
-                String[] pair = tmp.split("=");
-                PROPERTY_VALUE valuePair = new PROPERTY_VALUE(pair[0], pair[1]);
+                PROPERTY_VALUE valuePair = pathFromSegment(tmp);
                 this.path.add(valuePair);
             }
         }
 
+    }
+
+    /**
+     * Generates a path from a segment in the form of key=value.
+     * @param segment A segment in the form key=value
+     * @return A path
+     */
+    private PROPERTY_VALUE pathFromSegment(String segment) {
+        if (segment.startsWith("/"))
+            segment = segment.substring(1);
+
+        String[] pair = segment.split("=");
+        return new PROPERTY_VALUE(pair[0], pair[1]);
     }
 
     /**
@@ -101,6 +110,14 @@ public class Address {
      */
     public void add(String key, String value) {
         path.add(new PROPERTY_VALUE(key,value));
+    }
+
+    public void addSegment(String segment) {
+        if (!segment.contains("="))
+            throw new IllegalArgumentException("Segment [" + segment + "] contains no '='");
+
+        PROPERTY_VALUE pv = pathFromSegment(segment);
+        path.add(pv);
     }
 
     @Override

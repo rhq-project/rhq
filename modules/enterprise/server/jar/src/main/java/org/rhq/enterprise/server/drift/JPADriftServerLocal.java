@@ -131,4 +131,6 @@ public interface JPADriftServerLocal {
     int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 
     String getDriftFileBits(String hash);
+
+    byte[] getDriftFileAsByteArray(String hash);
 }

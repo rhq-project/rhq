@@ -684,6 +684,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    public byte[] getDriftFileAsByteArray(Subject subject, String hash) {
+        log.debug("Retrieving drift file content for " + hash);
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.getDriftFileAsByteArray(subject, hash);
+    }
+
+    @Override
     public FileDiffReport generateUnifiedDiff(Subject subject, Drift<?, ?> drift) {
         log.debug("Generating diff for " + drift);
         String oldContent = getDriftFileBits(subject, drift.getOldDriftFile().getHashId());

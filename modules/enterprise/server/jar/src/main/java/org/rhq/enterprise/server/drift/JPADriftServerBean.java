@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -497,14 +498,18 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     @Override
     public String getDriftFileBits(String hash) {
         // TODO add security
+        return new String(getDriftFileAsByteArray(hash), Charset.defaultCharset());
+    }
+
+    @Override
+    public byte[] getDriftFileAsByteArray(String hash) {
         try {
             JPADriftFileBits content = (JPADriftFileBits) entityManager.createNamedQuery(
                 JPADriftFileBits.QUERY_FIND_BY_ID).setParameter("hashId", hash).getSingleResult();
             if (content.getDataSize() == null || content.getDataSize() < 1) {
-                return "";
+                return new byte[] {};
             }
-            byte[] bytes = StreamUtil.slurp(content.getBlob().getBinaryStream());
-            return new String(bytes);
+            return StreamUtil.slurp(content.getBlob().getBinaryStream());
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

@@ -146,4 +146,6 @@ public interface DriftServerPluginFacet {
      * @return The content as a string
      */
     String getDriftFileBits(Subject subject, String hash);
+
+    byte[] getDriftFileAsByteArray(Subject subject, String hash);
 }

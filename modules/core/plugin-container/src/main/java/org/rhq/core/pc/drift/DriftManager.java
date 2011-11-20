@@ -211,6 +211,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                         snapshot.getVersion(), snapshot.getVersion());
                     File deltaFile = new File(currentSnapshotFile.getParentFile(), "drift-changeset.txt");
                     Headers deltaHeaders = createHeaders(resource.getId(), driftDefinition);
+                    deltaHeaders.setVersion(snapshot.getVersion());
                     deltaHeaders.setType(DRIFT);
                     writeSnapshotToFile(deltaSnapshot, deltaFile, deltaHeaders);
                 }

@@ -610,6 +610,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         driftDef.setPinned(true);
         driftManager.updateDriftDefinition(subject, driftDef);
+        driftDef.getResource().setAgentSynchronizationNeeded();
 
         DriftSnapshotRequest snapshotRequest = new DriftSnapshotRequest(driftDefId, snapshotVersion);
         DriftSnapshot snapshot = getSnapshot(subject, snapshotRequest);
@@ -629,9 +630,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             throw new RuntimeException("Failed to pin snapshot", e);
         }
 
-        AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource().getId());
-        DriftAgentService driftService = agent.getDriftAgentService();
-        driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
+        try {
+            AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource().getId());
+            DriftAgentService driftService = agent.getDriftAgentService();
+            driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
+        } catch (Exception e) {
+            log.warn("Unable to notify agent that DriftDefinition[driftDefinitionId: " + driftDefId +
+                ", driftDefinitionName: " + driftDef.getName() + "] has been pinned. The agent may be down.", e);
+        }
     }
 
     @TransactionAttribute(NOT_SUPPORTED)

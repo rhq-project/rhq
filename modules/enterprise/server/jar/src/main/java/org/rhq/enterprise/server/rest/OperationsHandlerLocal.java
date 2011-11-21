@@ -19,6 +19,8 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.jboss.resteasy.annotations.cache.Cache;
+
 import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 
@@ -28,12 +30,13 @@ import org.rhq.enterprise.server.rest.domain.OperationRest;
  */
 @Local
 @Path("/operation")
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
 public interface OperationsHandlerLocal {
 
 
     @GET
     @Path("definition/{id}")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @Cache(maxAge = 1200)
     public Response getOperationDefinition(@PathParam("id") int definitionId,
                                            @QueryParam("resourceId") Integer resourceId,
                                            @Context UriInfo uriInfo,
@@ -42,33 +45,32 @@ public interface OperationsHandlerLocal {
 
     @GET
     @Path("definitions")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public List<OperationDefinitionRest> getOperationDefinitions(@QueryParam("resourceId") Integer resourceId,
+    @Cache(maxAge = 1200)
+    public Response getOperationDefinitions(@QueryParam("resourceId") Integer resourceId,
                                             @Context UriInfo uriInfo,
                                             @Context Request request
     );
 
     @POST
     @Path("definition/{id}")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     public Response createOperation(@PathParam("id") int definitionId,
                                     @QueryParam("resourceId") Integer resourceId,
                                     @Context UriInfo uriInfo);
 
     @GET
     @Path("{id}")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     public Response getOperation(@PathParam("id") int operationId);
 
     @PUT
     @Path("{id}")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     public Response updateOperation(@PathParam("id") int operationId, OperationRest operation, @Context UriInfo uriInfo);
 
     @DELETE
     @Path("{id}")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     public Response cancelOperation(@PathParam("id") int operationId);
 
+    @GET
+    @Path("history/{id}")
+    public Response outcome(@PathParam("id") String jobName);
 }

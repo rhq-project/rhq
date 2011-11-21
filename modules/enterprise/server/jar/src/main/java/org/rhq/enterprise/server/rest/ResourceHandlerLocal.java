@@ -34,6 +34,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.jboss.resteasy.annotations.cache.Cache;
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.LinkResources;
@@ -59,12 +60,13 @@ public interface ResourceHandlerLocal {
     })
     @GET
     @Path("/{id}")
-
+    @Cache(isPrivate = true,maxAge = 120)
     Response getResource(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
     @GET
     @Path("/platforms")
+            @Cache(isPrivate = true,maxAge = 300)
     Response getPlatforms(@Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo);
 
@@ -82,6 +84,7 @@ public interface ResourceHandlerLocal {
     @GET
     @Path("/{id}/schedules")
     @LinkResource(rel="schedules",value = MetricSchedule.class)
+    @Cache(isPrivate = true,maxAge = 60)
     Response getSchedules(@PathParam("id") int resourceId,
                                       @QueryParam("type") @DefaultValue("all") String scheduleType,
                                       @Context Request request,

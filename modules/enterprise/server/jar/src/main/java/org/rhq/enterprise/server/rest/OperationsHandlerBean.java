@@ -9,12 +9,13 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -22,9 +23,17 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.criteria.OperationHistoryCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.HistoryJobId;
+import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -86,19 +95,14 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
         }
 
-        CacheControl cc = new CacheControl();
-        cc.setMaxAge(1200); // Definitions are very stable, so caching for 20mins is ok
-        cc.setPrivate(false);
         builder.tag(eTag);
-        builder.cacheControl(cc);
 
         return builder.build();
 
     }
 
     @Override
-    // TODO find out why a return type of Response lets this fail for XML (even with @Wrapped annotation
-    public List<OperationDefinitionRest> getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request) {
+    public Response getOperationDefinitions(Integer resourceId, UriInfo uriInfo, Request request) {
 
         if (resourceId == null)
             throw new ParameterMissingException("resourceId");
@@ -109,16 +113,15 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
         ResourceType resourceType = res.getResourceType();
 
-/*
         EntityTag eTag = new EntityTag(Integer.toHexString(resourceType.hashCode()));
         Response.ResponseBuilder builder = request.evaluatePreconditions(eTag);
         if (builder==null) {
-*/
 
             Set<OperationDefinition> opDefList = resourceType.getOperationDefinitions();
             List<OperationDefinitionRest> resultList = new ArrayList<OperationDefinitionRest>(opDefList.size());
 
             for (OperationDefinition def : opDefList) {
+                putToCache(def.getId(),OperationDefinition.class,def);
                 OperationDefinitionRest odr = new OperationDefinitionRest();
                 odr.setId(def.getId());
                 odr.setName(def.getName());
@@ -130,21 +133,13 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
                 resultList.add(odr);
             }
-        return resultList;
 
-/*
-
-            builder = Response.ok(resultList);
+            GenericEntity<List<OperationDefinitionRest>> entity = new GenericEntity<List<OperationDefinitionRest>>(resultList){};
+            builder = Response.ok(entity);
         }
 
-        CacheControl cc = new CacheControl();
-        cc.setMaxAge(1200); // Definitions are very stable, so caching for 20mins is ok
-        cc.setPrivate(false);
         builder.tag(eTag);
-        builder.cacheControl(cc);
-
         return builder.build();
-*/
 
     }
 
@@ -203,19 +198,30 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
 
         if (operation.getState().equals("creating") && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
             // TODO check all the required parameters for persence before allowing to submit
-            Link link = new Link("submit","TODO");
-            operation.addLink(link);
+            operation.setState("ready");
+        }
+        if (operation.getState().equals("ready")) {
+            // todo check params
+
+            // submit
+            ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,new Configuration(),"TEst");
+            JobId jobId = new JobId(sched.getJobName(),sched.getJobGroup());
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/operation/history/{id}");
+            URI uri = uriBuilder.build(jobId);
+            Link histLink = new Link("history",uri.toString());
+            operation.addLink(histLink);
 
         }
-        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/operation/{id}");
-        URI uri = uriBuilder.build(operation.getId());
-        Link editLink = new Link("edit",uri.toString());
-        operation.addLink(editLink);
-
+        else {
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/operation/{id}");
+            URI uri = uriBuilder.build(operation.getId());
+            Link editLink = new Link("edit",uri.toString());
+            operation.addLink(editLink);
+        }
         // Update item in cache
         putToCache(operation.getId(),OperationRest.class,operation);
-
         Response.ResponseBuilder builder = Response.ok(operation);
         return builder.build();
     }
@@ -233,4 +239,30 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
         return null;  // TODO: Customise this generated block
     }
 
+    @Override
+    @GET
+    @Path("history/{id}")
+    public Response outcome(@PathParam("id") String jobName) {
+
+/*
+        ResourceOperationSchedule schedule = opsManager.getResourceOperationSchedule(caller,operationHistoryId);
+        if (schedule==null)
+            throw new StuffNotFoundException("OperationSchedule with id " + operationHistoryId);
+*/
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addFilterJobId(new JobId(jobName));
+
+        OperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
+        List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
+        if (list==null || list.isEmpty())
+            throw new StuffNotFoundException("OperationHistory with id " + new HistoryJobId(jobName));
+
+        history = list.get(0);
+        String ret = history.getStatus().getDisplayName();
+        // TODO get history.results with the help of the property definition
+
+        return Response.ok(ret).build();
+
+    }
 }

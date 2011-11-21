@@ -123,8 +123,8 @@
                 <attribute name="wakeUpIntervalSeconds">5</attribute>
                 <!-- Cache wide default -->
                 <region name="/_default_">
-                    <attribute name="maxNodes">5000</attribute>
-                    <attribute name="timeToLiveSeconds">1000</attribute>
+                    <attribute name="maxNodes">50000</attribute>
+                    <attribute name="timeToLiveSeconds">3600</attribute>
                 </region>
                 <region name="/schedules">
                     <attribute name="maxNodes">5000</attribute>

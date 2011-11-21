@@ -31,7 +31,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
@@ -41,8 +40,6 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-
-import com.arjuna.ats.internal.jdbc.drivers.modifiers.list;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -85,29 +82,14 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     public Response getResource(int id, @Context Request request, @Context HttpHeaders headers,
                          @Context UriInfo uriInfo) {
 
-        // Create a cache control
-        CacheControl cc = new CacheControl();
-        cc.setMaxAge(300); // Resources are valid for 5 mins
-        cc.setPrivate(false); // Proxies may cache this
-
         Resource res;
-        res = getFromCache(id,Resource.class);
-        if (res==null) {
-            res = resMgr.getResource(caller, id);
-            if (res!=null)
-                putToCache(id, Resource.class,res);
-            else
-                throw new StuffNotFoundException("Resource with id " + id);
-        }
-
-        Response.ResponseBuilder builder=null;
+        res = fetchResource(id);
 
         long mtime = res.getMtime();
         EntityTag eTag = new EntityTag(Long.toOctalString(res.hashCode()+ mtime)); // factor in mtime in etag
-        builder = request.evaluatePreconditions(new Date(mtime),eTag);
+        Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(mtime),eTag);
 
         if (builder!=null) {
-            builder.cacheControl(cc);
             return builder.build();
         }
 
@@ -218,7 +200,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         if (scheduleType.equals("metric"))
             scheduleType=DataType.MEASUREMENT.toString().toLowerCase();
 
-        Resource res = resMgr.getResource(caller, resourceId);
+        Resource res = fetchResource(resourceId);
 
         Set<MeasurementSchedule> schedules = res.getSchedules();
         List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
@@ -273,18 +255,10 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                          @Context UriInfo uriInfo) {
         PageControl pc = new PageControl();
         Resource parent;
-        parent = getFromCache(id,Resource.class);
-        if (parent==null) {
-            parent = resMgr.getResource(caller,id);
-            if (parent==null)
-                throw new StuffNotFoundException("Resource with id " + id);
-            else
-                putToCache(id,Resource.class,parent);
-        }
+        parent = fetchResource(id);
         List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,parent,InventoryStatus.COMMITTED,pc);
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
         for (Resource r: ret) {
-            putToCache(r.getId(),Resource.class,r);
             ResourceWithType rwt = fillRWT(r, uriInfo);
             rwtList.add(rwt);
         }
@@ -319,4 +293,18 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         }
         return links;
     }
+
+    private Resource fetchResource(int resourceId) {
+        Resource res;
+        res = getFromCache(resourceId,Resource.class);
+        if (res==null) {
+            res = resMgr.getResource(caller, resourceId);
+            if (res!=null)
+                putToCache(resourceId, Resource.class,res);
+            else
+                throw new StuffNotFoundException("Resource with id " + resourceId);
+        }
+        return res;
+    }
+
 }

@@ -25,12 +25,14 @@ package org.rhq.enterprise.server.rest;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -51,6 +53,7 @@ import org.jboss.cache.Node;
 import org.jboss.cache.TreeCacheMBean;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -61,7 +64,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * @author Heiko W. Rupp
  */
 @Stateless
-@Resource(name="cache",type= TreeCacheMBean.class,mappedName = "RhqCache")
+@javax.annotation.Resource(name="cache",type= TreeCacheMBean.class,mappedName = "RhqCache")
 public class AbstractRestBean {
 
     Log log = LogFactory.getLog(getClass().getName());
@@ -70,7 +73,7 @@ public class AbstractRestBean {
     Subject caller;
 
     /** The cache to use */
-    @Resource(name="cache")
+    @javax.annotation.Resource(name="cache")
     TreeCacheMBean treeCache;
 
     /**
@@ -204,6 +207,94 @@ public class AbstractRestBean {
         return putToCache(fqn,o);
     }
 
+    protected void putResourceToCache(Resource res) {
+        putToCache(res.getId(),Resource.class,res);
+
+        Fqn callerFqn = new Fqn(new String[]{"user", String.valueOf(caller.getId()),"resources"});
+        Set<Integer> visibleResources;
+        try {
+            if (treeCache.exists(callerFqn)) {
+                Node n = treeCache.get(callerFqn);
+                visibleResources = (Set<Integer>) n.get("visibleResources");
+            }
+            else {
+                visibleResources = new HashSet<Integer>();
+            }
+            visibleResources.add(res.getId());
+            treeCache.put(callerFqn,"visibleResources",visibleResources);
+
+            Fqn resourceMeta = new Fqn(new String[] { "resourceMeta"});
+            Map<Integer,Integer> childParentMap;
+            if (treeCache.exists(resourceMeta)) {
+                childParentMap = (Map<Integer, Integer>) treeCache.get(resourceMeta,"childParentMap");
+            }
+            else {
+                childParentMap = new HashMap<Integer,Integer>();
+            }
+            int pid = res.getParentResource() == null ? 0 : res.getParentResource().getId();
+            childParentMap.put(res.getId(), pid);
+            treeCache.put(resourceMeta,"childParentMap",childParentMap);
+        } catch (CacheException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        }
+    }
+
+    protected List<Resource> getResourcesFromCacheByParentId(int pid) {
+        List<Integer> candidateIds = new ArrayList<Integer>();
+        List<Resource> ret = new ArrayList<Resource>();
+
+        // First determine candidate children
+        Map<Integer,Integer> childParentMap;
+        Fqn resourceMeta = new Fqn(new String[] { "resourceMeta"});
+        if (treeCache.exists(resourceMeta)) {
+            try {
+                childParentMap = (Map<Integer, Integer>) treeCache.get(resourceMeta,"childParentMap");
+                for (Map.Entry<Integer,Integer> entry : childParentMap.entrySet()) {
+                    if (entry.getValue() == pid)
+                        candidateIds.add(entry.getKey());
+                }
+                // then see if the current user can see them
+                Fqn callerFqn = new Fqn(new String[]{"user", String.valueOf(caller.getId()),"resources"});
+                Set<Integer> visibleResources = (Set<Integer>) treeCache.get(callerFqn,"visibleResources");
+                Iterator<Integer> iter = candidateIds.iterator();
+                while (iter.hasNext()) {
+                    Integer resId = iter.next();
+                    if (!visibleResources.contains(resId)) {
+                        iter.remove();
+                    }
+                }
+
+                // Last but not least, get the resources and return them
+                for (Integer resId : candidateIds) {
+                    ret.add(getFromCache(resId, Resource.class));
+                }
+            } catch (CacheException e) {
+                e.printStackTrace();  // TODO: Customise this generated block
+            }
+
+        }
+        return ret;
+    }
+
+    protected Resource getResourceFromCache(int resourceid) {
+
+        Resource res = null;
+        // check if the current user can see the resource
+        Fqn callerFqn = new Fqn(new String[]{"user", String.valueOf(caller.getId()),"resources"});
+        if (treeCache.exists(callerFqn)) {
+            try {
+                Set<Integer> visibleResources = (Set<Integer>) treeCache.get(callerFqn,"visibleResources");
+                if (visibleResources.contains(resourceid))
+                    res = getFromCache(resourceid,Resource.class);
+            } catch (CacheException e) {
+                e.printStackTrace();  // TODO: Customise this generated block
+            }
+        }
+
+        return res;
+    }
+
+
     /**
      * Construct a Fqn object from the passed data
      * @param id Id of the target object
@@ -244,12 +335,46 @@ public class AbstractRestBean {
         if (parent!=null) {
             rwt.setParentId(parent.getId());
         }
+        else
+            rwt.setParentId(0);
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/operation/definitions");
         uriBuilder.queryParam("resourceId",res.getId());
         URI uri = uriBuilder.build();
         Link link = new Link("operationDefinitions",uri.toString());
         rwt.addLink(link);
+
+/*
+        for (Resource child : getResourcesFromCacheByParentId(res.getId())) {
+            uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}");
+            uri = uriBuilder.build(child.getId());
+            link = new Link("child",uri.toString());
+            rwt.addLink(link);
+        }
+*/
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/{id}");
+        uri = uriBuilder.build(res.getId());
+        link = new Link("self",uri.toString());
+        rwt.addLink(link);
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/{id}/schedules");
+        uri = uriBuilder.build(res.getId());
+        link = new Link("schedules",uri.toString());
+        rwt.addLink(link);
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/{id}/children");
+        uri = uriBuilder.build(res.getId());
+        link = new Link("children",uri.toString());
+        rwt.addLink(link);
+        if (parent!=null) {
+            uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/{id}/");
+            uri = uriBuilder.build(parent.getId());
+            link = new Link("parent",uri.toString());
+            rwt.addLink(link);
+        }
 
         return rwt;
     }

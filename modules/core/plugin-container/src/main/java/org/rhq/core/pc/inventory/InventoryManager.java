@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2494,6 +2494,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.info("Got unknown resource: " + syncInfo.getId());
             } else {
                 Resource resource = container.getResource();
+                // Ensure the Resource classloader is initialized on the Resource container.
+                initResourceContainer(resource);
+
                 if (log.isDebugEnabled()) {
                     log.debug("Local Resource: id=" + resource.getId() + ", status=" + resource.getInventoryStatus()
                         + ", mtime=" + resource.getMtime());

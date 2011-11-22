@@ -112,8 +112,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
             public void onRecordClick(RecordClickEvent event) {
                 switch (entityContext.getType()) {
                 case Resource:
-                    CoreGUI.goToView(LinkManager.getDriftCarouselSnapshotLink(entityContext.getResourceId(), event
-                        .getRecord().getAttributeAsInt(ATTR_ID), 0));
+                    CoreGUI.goToView(LinkManager.getDriftDefinitionInitialSnapshotLink(entityContext.getResourceId(),
+                        event.getRecord().getAttributeAsInt(ATTR_ID)));
                     break;
                 default:
                     throw new IllegalArgumentException("Entity Type not supported");

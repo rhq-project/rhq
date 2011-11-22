@@ -230,7 +230,8 @@ public class DriftDetector implements Runnable {
                             log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
                         }
 
-                        FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file));
+                        FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file),
+                            file.lastModified(), file.length());
                         deltaEntries.add(newEntry);
                         snapshotEntries.add(newEntry);
                     } catch (IOException e) {
@@ -296,12 +297,27 @@ public class DriftDetector implements Runnable {
                 deltaEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
             } else {
                 processedFiles.add(file);
-                String currentSHA = sha256(file);
-                if (!currentSHA.equals(entry.getNewSHA())) {
+                // if we do not have the last modification time and the file size, then we
+                // have to compare SHAs. We can wind up without a timestamp of a file size
+                // when the agent is restarted and the data directory is purged. The server
+                // sends snapshots down to the agent and since the server does not store the
+                // file modification time or size, the fields will get initialized to -1.
+                if (entry.getLastModified() == -1 && entry.getSize() == -1) {
+                    String currentSHA = sha256(file);
+                    if (!entry.getNewSHA().equals(currentSHA)) {
+                        FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA,
+                        file.lastModified(), file.length());
+                        deltaEntries.add(modifiedEntry);
+                        snapshotEntries.add(modifiedEntry);
+                    }
+                } else if (entry.getLastModified() != -1 && entry.getSize() != -1 &&
+                    (entry.getLastModified() != file.lastModified() || entry.getSize() != file.length())) {
                     if (log.isDebugEnabled()) {
                         log.debug("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
                     }
-                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA);
+                    String currentSHA = sha256(file);
+                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA,
+                        file.lastModified(), file.length());
                     deltaEntries.add(modifiedEntry);
                     snapshotEntries.add(modifiedEntry);
                 } else {
@@ -492,7 +508,8 @@ public class DriftDetector implements Runnable {
                         if (log.isDebugEnabled()) {
                             log.debug("Adding " + file.getPath() + " to coverage change set for " + schedule);
                         }
-                        writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
+                        writer.write(addedFileEntry(relativePath(basedir, file), sha256(file), file.lastModified(),
+                            file.length()));
                     } catch (IOException e) {
                         log.error("An error occurred while generating a coverage change set for " + schedule + ": "
                             + e.getMessage());

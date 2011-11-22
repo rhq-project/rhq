@@ -19,13 +19,6 @@
 
 package org.rhq.common.drift;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.List;
-
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
@@ -33,6 +26,14 @@ import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.testng.Assert.assertEquals;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Date;
+import java.util.List;
+
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 public class ChangeSetWriterImplTest {
 
@@ -69,9 +70,10 @@ public class ChangeSetWriterImplTest {
         headers.setType(COVERAGE);
         headers.setVersion(1);
 
+        long timestamp = new Date().getTime();
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
-        writer.write(addedFileEntry("conf/myconf.conf", "a34ef6"));
+        writer.write(addedFileEntry("conf/myconf.conf", "a34ef6", timestamp, 1024L));
         writer.close();
 
         File metaDataFile = writer.getChangeSetFile();
@@ -80,7 +82,7 @@ public class ChangeSetWriterImplTest {
         assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath()
             + " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(6), "A a34ef6 0 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "A 1024 " + timestamp + " a34ef6 0 conf/myconf.conf");
     }
 
     @Test
@@ -108,7 +110,7 @@ public class ChangeSetWriterImplTest {
         assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath()
             + " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(6), "R 0 a34ef6 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "R -1 -1 0 a34ef6 conf/myconf.conf");
     }
 
     @Test
@@ -127,7 +129,8 @@ public class ChangeSetWriterImplTest {
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
-        writer.write(changedFileEntry("conf/myconf.conf", "a34ef6", "c2d55f"));
+        long timestamp = new Date().getTime();
+        writer.write(changedFileEntry("conf/myconf.conf", "a34ef6", "c2d55f", timestamp, 1024L));
         writer.close();
 
         File metaDataFile = writer.getChangeSetFile();
@@ -136,7 +139,7 @@ public class ChangeSetWriterImplTest {
         assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath()
             + " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(6), "C c2d55f a34ef6 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "C 1024 " + timestamp + " c2d55f a34ef6 conf/myconf.conf");
     }
 
     /**
@@ -173,13 +176,15 @@ public class ChangeSetWriterImplTest {
         String[] expectedFields = expected.split(" ");
         String[] actualFields = actual.split(" ");
 
-        assertEquals(expectedFields.length, 4, "<" + expected + "> should contain 4 fields");
-        assertEquals(actualFields.length, 4, "<" + actual + "> should contain 4 fields");
+        assertEquals(expectedFields.length, 6, "<" + expected + "> should contain 6 fields");
+        assertEquals(actualFields.length, 6, "<" + actual + "> should contain 6 fields");
 
-        assertEquals(actualFields[0], expectedFields[0], "The first column, the SHA-256, is wrong");
-        assertEquals(actualFields[1], expectedFields[1], "The second column, the old SHA-256, is wrong");
-        assertEquals(actualFields[2], expectedFields[2], "The third column, the file name, is wrong");
-        assertEquals(actualFields[3], expectedFields[3], "The fourth column, the type, is wrong");
+        assertEquals(actualFields[0], expectedFields[0], "The first column, the type, is wrong");
+        assertEquals(actualFields[1], expectedFields[1], "The second column, the file size, is wrong");
+        assertEquals(actualFields[2], expectedFields[2], "The third column, the last modification time, is wrong");
+        assertEquals(actualFields[3], expectedFields[3], "The fourth column, the SHA-256, is wrong");
+        assertEquals(actualFields[4], expectedFields[4], "The fifth column, the old SHA-256, is wrong");
+        assertEquals(actualFields[5], expectedFields[5], "The sixth column, the file name, is wrong");
     }
 
 }

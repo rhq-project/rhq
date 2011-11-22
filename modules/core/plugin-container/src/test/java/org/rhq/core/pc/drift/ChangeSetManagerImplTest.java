@@ -53,7 +53,7 @@ public class ChangeSetManagerImplTest extends DriftTest {
         String serverConfHash = sha256(serverConf);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
-        writer.write(addedFileEntry("conf/server.conf", serverConfHash));
+        writer.write(addedFileEntry("conf/server.conf", serverConfHash, serverConf.lastModified(), serverConf.length()));
         writer.close();
 
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId(), config);
@@ -72,7 +72,7 @@ public class ChangeSetManagerImplTest extends DriftTest {
         Headers headers = createHeaders(config, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.write(addedFileEntry("conf/server.conf", sha256(serverConf)));
+        writer.write(addedFileEntry("conf/server.conf", sha256(serverConf), serverConf.lastModified(), serverConf.length()));
         writer.close();
 
         assertTrue(changeSetMgr.changeSetExists(resourceId(), headers), "Expected to find change set file.");

@@ -761,11 +761,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             for (Drift drift : snapshot.getDriftInstances()) {
                 switch (drift.getCategory()) {
                 case FILE_ADDED:
-                    writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
+                    writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId(), -1L, -1L));
                     break;
                 case FILE_CHANGED:
                     writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
-                        drift.getNewDriftFile().getHashId()));
+                        drift.getNewDriftFile().getHashId(), -1L, -1L));
                     break;
                 default:  // FILE_REMOVED
                     writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));

@@ -229,9 +229,13 @@ public class DriftTest {
     }
 
     protected File createRandomFile(File dir, String fileName) throws Exception {
+        return createRandomFile(dir, fileName, 32);
+    }
+
+    protected File createRandomFile(File dir, String fileName, int numBytes) throws Exception {
         File file = new File(dir, fileName);
         FileOutputStream stream = new FileOutputStream(file);
-        byte[] bytes = new byte[32];
+        byte[] bytes = new byte[numBytes];
         random.nextBytes(bytes);
         write(bytes, stream);
         stream.close();

@@ -315,6 +315,12 @@
       <priority value="OFF"/>
    </category>
 
+   <!-- Suppress "firstResult/maxResults specified with collection fetch; applying in memory!" WARN messages
+        (see https://bugzilla.redhat.com/show_bug.cgi?id=620603). -->
+   <category name="org.hibernate.hql.ast.QueryTranslatorImpl">
+      <priority value="ERROR"/>
+   </category>
+
    <!-- log SQL statements -->
    <!--
    <category name="org.hibernate.SQL">

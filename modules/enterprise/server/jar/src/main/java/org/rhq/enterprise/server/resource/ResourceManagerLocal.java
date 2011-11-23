@@ -485,6 +485,8 @@ public interface ResourceManagerLocal {
      */
     List<Integer> uninventoryResources(Subject subject, int[] resourceIds);
 
+    List<ResourceInstallCount> findResourceComplianceCounts(Subject subject);
+
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 
     PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria);

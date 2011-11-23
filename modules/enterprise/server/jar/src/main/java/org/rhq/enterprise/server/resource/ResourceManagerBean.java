@@ -2372,20 +2372,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {
+        String queryName = groupByVersions ? Resource.QUERY_RESOURCE_VERSION_REPORT : Resource.QUERY_RESOURCE_REPORT;
+        Query query = entityManager.createNamedQuery(queryName);
+        List<ResourceInstallCount> results = query.getResultList();
+
+        return results;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<ResourceInstallCount> findResourceComplianceCounts(Subject subject) {
         Query query = null;
         List<ResourceInstallCount> results = null;
 
-        if (!groupByVersions) {
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_REPORT);
-            results = query.getResultList();
-        } else {
-            //query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_REPORT);
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE);
-            results = query.getResultList();
+        query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE);
+        results = query.getResultList();
 
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE);
-            results.addAll(query.getResultList());
-        }
+        query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE);
+        results.addAll(query.getResultList());
 
         return results;
     }

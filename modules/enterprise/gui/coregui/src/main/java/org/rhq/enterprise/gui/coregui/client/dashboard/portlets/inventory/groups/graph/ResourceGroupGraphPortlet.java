@@ -54,10 +54,10 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetric";
-    // A default displayed, persisted name for the portlet    
+    // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_groupMetric();
 
-    // set on initial configuration, the window for this portlet view. 
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
     public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
@@ -79,8 +79,13 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
         }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            setEntityId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID).getIntegerValue());
-            setDefinitionId(storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
+            Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID).getIntegerValue();
+            if (integerValue!=null)
+                setEntityId(integerValue);
+
+            PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            if (propertySimple!=null && propertySimple.getIntegerValue()!=null)
+                setDefinitionId(propertySimple.getIntegerValue());
         }
     }
 
@@ -92,11 +97,12 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
     protected void onDraw() {
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
-        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            super.onDraw();
-        } else {
+        PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
+        if (simple == null || simple.getIntegerValue()==null) {
             removeMembers(getMembers());
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
+        } else {
+            super.onDraw();
         }
     }
 
@@ -113,7 +119,7 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
             .extendLocatorId("Selector"), GroupCategory.COMPATIBLE, false);
         resourceGroupSelector.setWidth(700);
         resourceGroupSelector.setHeight(300);
-        //TODO, would probaby be nice to find a way to seed assigned with the current group 
+        //TODO, would probaby be nice to find a way to seed assigned with the current group
         //ListGridRecord rec = new ListGridRecord();
         //rec.setAttribute("id", getEntityId());
         //rec.setAttribute("name", "current");
@@ -152,10 +158,14 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
         final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            form.setValue(CFG_RESOURCE_GROUP_ID, storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID)
-                .getIntegerValue());
-            form.setValue(CFG_DEFINITION_ID, storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID)
-                .getIntegerValue());
+            Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID)
+                    .getIntegerValue();
+            if (integerValue!=null)
+                form.setValue(CFG_RESOURCE_GROUP_ID, integerValue);
+
+            PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            if (propertySimple!=null && propertySimple.getIntegerValue()!=null)
+                form.setValue(CFG_DEFINITION_ID, propertySimple.getIntegerValue());
         }
 
         selectorItem.setCanvas(resourceGroupSelector);
@@ -184,10 +194,11 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
         removeMembers(getMembers());
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
-        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            renderGraph();
-        } else {
+        PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
+        if (simple == null | simple.getIntegerValue()==null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
+        } else {
+            renderGraph();
         }
     }
 

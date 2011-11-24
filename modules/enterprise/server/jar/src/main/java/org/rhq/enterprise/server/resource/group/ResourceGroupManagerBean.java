@@ -206,6 +206,11 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "] does not have permission to modify Resource group with id [" + groupId + "].");
         }
 
+        //roles are not to be updated by this call but the group entity
+        //owns the relationship. Let's make sure we don't change the assigned roles here.
+        group.getRoles().clear();
+        group.getRoles().addAll(attachedGroup.getRoles());
+        
         if (changeType == null) {
             changeType = RecursivityChangeType.None;
             if (attachedGroup.isRecursive() == true && group.isRecursive() == false) {

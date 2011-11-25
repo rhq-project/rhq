@@ -15,24 +15,13 @@
    <name>RHQ Byteman Plugin</name>
    <description>a plugin for managing VMs with a byteman agent installed</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/byteman/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/byteman/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/byteman/</scm.module.path>
-   </properties>
-
    <dependencies>
-
       <dependency>
          <groupId>org.jboss.byteman</groupId>
          <artifactId>byteman</artifactId>
          <version>1.2.1</version>
          <scope>provided</scope>
       </dependency>
-
    </dependencies>
 
    <build>

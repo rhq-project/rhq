@@ -16,14 +16,7 @@
    <description>JSF utility classes, validators, converters, etc. that are used by both enterprise and embedded
    </description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/domain</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/domain</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/core/gui/</scm.module.path>
-
       <!-- dependency versions -->
       <el.version>1.0</el.version>
       <seam.version>2.1.0.SP1</seam.version>

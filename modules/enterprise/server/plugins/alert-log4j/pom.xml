@@ -13,16 +13,6 @@
 
     <name>RHQ Enterprise Server Log4J Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-log4j/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-log4j/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-snmp/</scm.module.path>
-    </properties>
-
-
     <build>
         <plugins>
 

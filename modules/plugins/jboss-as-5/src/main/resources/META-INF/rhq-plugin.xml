@@ -1073,7 +1073,7 @@
 
           <metric displayName="Version Name" property="MCBean|MCServer|*|versionName"
                   dataType="trait" displayType="summary"
-                  description="the code name for the this app server instance's major version (AS 5.0 = Morpheus, AS 5.1 = The Oracle, AS 6.0 = Neo)"/>
+                  description="the code name for this app server's version (AS 5.0 = Morpheus, AS 5.1 = The Oracle, AS 6.x = Neo)"/>
 
           <metric displayName="Build Date" property="MCBean|MCServer|*|buildDate"
                   dataType="trait" displayType="summary"

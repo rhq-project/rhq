@@ -15,15 +15,6 @@
     <name>RHQ Enterprise Content HTTP Support</name>
     <description>Provides http export for content in RHQ.</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/content_http-war/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/content_http-war/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/gui/content_http-war/</scm.module.path>
-    </properties>
-
     <dependencies>
 
         <!-- Internal Deps -->

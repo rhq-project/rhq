@@ -15,15 +15,6 @@
     <name>RHQ File Template Bundle Server Plugin</name>
     <description>Server side plugin that manages file template bundles</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/filetemplate-bundle/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/filetemplate-bundle/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/filetemplate-bundle/</scm.module.path>
-    </properties>
-
     <dependencies>
 
         <!-- Internal Deps -->

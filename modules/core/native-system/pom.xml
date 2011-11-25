@@ -18,15 +18,6 @@
      Java API that wraps the native library used to access low-level system resources natively.
   </description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/native-system</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/native-system</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/core/native-system/</scm.module.path>
-  </properties>
-
   <dependencies>
 
     <dependency>

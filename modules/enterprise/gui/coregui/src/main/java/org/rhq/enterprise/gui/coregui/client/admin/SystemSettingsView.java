@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * A simple form to view and edit the server system settings.
- * 
+ *
  * @author John Mazzitelli
  */
 public class SystemSettingsView extends LocatableVLayout implements PropertyValueChangeListener {
@@ -72,6 +72,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     private LocatableVLayout canvas;
     private ConfigurationEditor editor;
     private IButton saveButton;
+    private IButton dumpToLogButton;
 
     public SystemSettingsView(String locatorId) {
         super(locatorId);
@@ -100,14 +101,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 canvas.addMember(getServerDetails());
 
                 Configuration config = result.toConfiguration();
-                
+
                 //convert stuff for the display purposes
                 PropertySimple prop = config.getSimple(SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName());
                 prop.setStringValue(convertMillisToMinutes(prop.getStringValue()));
-                
+
                 prop = config.getSimple(SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToHours(prop.getStringValue()));
-                
+
                 prop = config.getSimple(SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToDays(prop.getStringValue()));
 
@@ -151,7 +152,17 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 });
                 toolStrip.addMember(saveButton);
 
+                dumpToLogButton = new LocatableIButton(extendLocatorId("Dummp"),MSG.common_button_dump_sysInfo_to_log());
+                dumpToLogButton.addClickHandler(new ClickHandler() {
+                    @Override
+                    public void onClick(ClickEvent clickEvent) {
+                        dumpToLog();
+                    }
+                });
+                toolStrip.addMember(dumpToLogButton);
+
                 canvas.addMember(toolStrip);
+
             }
 
             @Override
@@ -220,6 +231,22 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         }
     }
 
+    private void dumpToLog() {
+        GWTServiceLookup.getSystemService().dumpToLog(new AsyncCallback<Void>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                CoreGUI.getMessageCenter().notify(
+                                           new Message(MSG.view_admin_systemSettings_dumpToLogFailed(), Severity.Warning));
+            }
+
+            @Override
+            public void onSuccess(Void aVoid) {
+                CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_admin_systemSettings_dumpedToLog(), Severity.Info));
+            }
+        });
+    }
+
     private String convertMinutesToMillis(String num) {
         return num == null ? "0" : String.valueOf(Long.parseLong(num) * 60 * 1000);
     }
@@ -266,7 +293,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         dataManagerGroup.setDisplayName(MSG.view_admin_systemSettings_group_dataMgr());
         dataManagerGroup.setDefaultHidden(false);
         dataManagerGroup.setOrder(1);
-        
+
         PropertyGroupDefinition baselineGroup = new PropertyGroupDefinition("baseline");
         baselineGroup.setDisplayName(MSG.view_admin_systemSettings_group_baseline());
         baselineGroup.setDefaultHidden(false);
@@ -281,18 +308,18 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         driftGroup.setDisplayName(MSG.view_admin_systemSettings_group_drift());
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
-        
+
         for(SystemSetting prop : SystemSetting.values()) {
-            
+
             //don't include the readonly properties in the configuration editor
             if (prop.isReadOnly()) {
                 continue;
             }
-            
+
             PropertyDefinitionSimple pd = prop.createPropertyDefinition();
-            
+
             def.put(pd);
-            
+
             switch(prop) {
 
             ///////////////////////////////////
@@ -308,7 +335,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.setDescription(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_name());
                 pd.setPropertyGroupDefinition(generalGroup);
-                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(2), null)); // don't allow less than 2m since it will cause too many false backfills 
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(2), null)); // don't allow less than 2m since it will cause too many false backfills
                 pd.setDefaultValue("15");
                 break;
             case AGENT_AUTO_UPDATE_ENABLED:
@@ -332,7 +359,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
             ////////////////////////////////////////
             // Data Manager Configuration Properties
-                
+
             case DATA_MAINTENANCE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_DataMaintenance_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DataMaintenance_name());
@@ -340,7 +367,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("1");
                 break;
-                
+
             case AVAILABILITY_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_AvailabilityPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_AvailabilityPurge_name());
@@ -348,7 +375,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("365");
                 break;
-                
+
             case ALERT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_AlertPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_AlertPurge_name());
@@ -356,7 +383,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("31");
                 break;
-                
+
             case TRAIT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_TraitPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_TraitPurge_name());
@@ -364,7 +391,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("365");
                 break;
-                
+
             case RT_DATA_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_RtDataPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_RtDataPurge_name());
@@ -372,7 +399,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("31");
                 break;
-                
+
             case EVENT_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_EventPurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_EventPurge_name());
@@ -380,7 +407,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("14");
                 break;
-                
+
             case DRIFT_FILE_PURGE_PERIOD:
                 pd.setDescription(MSG.view_admin_systemSettings_DriftFilePurge_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
@@ -388,14 +415,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("31");
                 break;
-                
+
             case DATA_REINDEX_NIGHTLY:
                 pd.setDescription(MSG.view_admin_systemSettings_DataReindex_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_DataReindex_name());
                 pd.setPropertyGroupDefinition(dataManagerGroup);
                 pd.setDefaultValue("true");
                 break;
-                
+
             //////////////////////////////////////////////
             // Automatic Baseline Configuration Properties
 
@@ -406,12 +433,12 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(0), null));
                 pd.setDefaultValue("3");
                 break;
-                
+
             case BASE_LINE_DATASET:
                 pd.setDescription(MSG.view_admin_systemSettings_BaselineDataSet_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_BaselineDataSet_name());
                 pd.setPropertyGroupDefinition(baselineGroup);
-                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our raw tables don't hold more 
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our raw tables don't hold more
                 pd.setDefaultValue("7");
                 break;
 
@@ -424,63 +451,63 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("false");
                 break;
-                
+
             case LDAP_NAMING_PROVIDER_URL:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPUrl_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPUrl_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("ldap://localhost");
                 break;
-                
+
             case USE_SSL_FOR_LDAP:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPProtocol_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPProtocol_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("false");
                 break;
-                
+
             case LDAP_LOGIN_PROPERTY:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPLoginProperty_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPLoginProperty_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("cn");
                 break;
-                
+
             case LDAP_FILTER:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPFilter_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPFilter_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
                 break;
-                
+
             case LDAP_GROUP_FILTER:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupFilter_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupFilter_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("rhqadmin");
                 break;
-             
+
             case LDAP_GROUP_MEMBER:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupMember_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
                 break;
-                
+
             case LDAP_BASE_DN:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBaseDN_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBaseDN_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("o=RedHat,c=US");
                 break;
-                
+
             case LDAP_BIND_DN:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBindDN_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindDN_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
                 pd.setDefaultValue("");
                 break;
-                
+
             case LDAP_BIND_PW:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPBindPW_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPBindPW_name());
@@ -491,12 +518,12 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
             ///////////////////////////////////////////
             // Drift Server Configuration Properties //
             ///////////////////////////////////////////
-                
+
             case ACTIVE_DRIFT_PLUGIN:
                 pd.setDescription(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_name());
                 pd.setPropertyGroupDefinition(driftGroup);
-                
+
                 List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
                 for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
                     options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey()));

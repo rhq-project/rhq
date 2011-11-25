@@ -409,17 +409,25 @@ public class FileUtil {
                 first = false;
             }
             regex.append("(");
-            File path = new File(filter.getPath());
+            File pathFile = new File(filter.getPath());
 
-            if (isEmpty(filter.getPattern()) && path.isDirectory()) {
+            if (isEmpty(filter.getPattern()) && pathFile.isDirectory()) {
                 regex.append(".*");
-            } else if (isEmpty(filter.getPattern()) && !path.isDirectory()) {
-                buildPatternRegex(path.getAbsolutePath(), regex);
+            } else if (isEmpty(filter.getPattern()) && !pathFile.isDirectory()) {
+                buildPatternRegex(pathFile.getAbsolutePath(), regex);
+
             } else if (!isEmpty(filter.getPattern())) {
                 // note that this case assumes path is a directory. We probably
                 // need another if else block for when there is a pattern and
                 // path is not a directory.
-                regex.append(path).append("/").append("(");
+
+                // escape win separators because backslash is a regex character
+                String pathString = pathFile.getAbsolutePath();
+                if (!pathString.endsWith(File.separator)) {
+                    pathString += File.separator;
+                }
+                pathString = pathString.replace("\\", "\\\\");
+                regex.append(pathString).append("(");
                 buildPatternRegex(filter.getPattern(), regex);
                 regex.append(")");
             }
@@ -432,8 +440,11 @@ public class FileUtil {
         for (int i = 0; i < pattern.length(); i++) {
             char c = pattern.charAt(i);
             if (c == '?') {
+                // ? match any character
                 regex.append('.');
+
             } else if (c == '*') {
+                // ? match zero or more characters                
                 if (i + 1 < pattern.length()) {
                     char c2 = pattern.charAt(i + 1);
                     if (c2 == '*') {
@@ -442,13 +453,23 @@ public class FileUtil {
                         continue;
                     }
                 }
-                regex.append("[^/]*");
+                String separator = File.separator;
+                if ("\\".equals(separator)) {
+                    separator = "\\\\";
+                }
+                regex.append("[^" + separator + "]*");
+
             } else if (c == '.') {
+                // escape file extensions because dot is a regex character
                 regex.append("\\.");
+
+            } else if (c == '\\') {
+                // escape windows separators because backslash is a regex character
+                regex.append("\\\\");
+
             } else {
                 regex.append(c);
             }
-            // TODO: Escape backslashes.
         }
     }
 

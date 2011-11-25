@@ -15,11 +15,6 @@
 
   <name>RHQ Sample Perspective War</name>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</developerConnection>
-  </scm>
-
   <dependencyManagement>
 
     <dependencies>

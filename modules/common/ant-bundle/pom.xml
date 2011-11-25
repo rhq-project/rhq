@@ -15,15 +15,6 @@
     <name>RHQ Ant Bundle Plugins Common Library</name>
     <description>A library with the code common to the agent and server plugins for Ant Bundles</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/ant-bundle/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/ant-bundle/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/common/ant-bundle/</scm.module.path>
-    </properties>
-
     <dependencies>
 
         <dependency>

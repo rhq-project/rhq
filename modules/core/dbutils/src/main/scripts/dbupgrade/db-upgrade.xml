@@ -3656,13 +3656,13 @@
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_DEF_TEMPLATE foreign key to RHQ_RESOURCE_TYPE">
                         ALTER TABLE RHQ_DRIFT_DEF_TEMPLATE
-                        ADD CONSTRAINT RHQ_DTM_RESOURCE_TYPE_ID_FK
+                        ADD CONSTRAINT RHQ_DDT_RESOURCE_TYPE_ID_FK
                         FOREIGN KEY (RESOURCE_TYPE_ID)
                         REFERENCES RHQ_RESOURCE_TYPE (ID)
                     </statement>
                     <statement desc="Creating RHQ_DRIFT_DEF_TEMPLATE foreign key to RHQ_CONFIG">
                         ALTER TABLE RHQ_DRIFT_DEF_TEMPLATE
-                        ADD CONSTRAINT RHQ_DTM_CONFIG_ID_FK
+                        ADD CONSTRAINT RHQ_DDT_CONFIG_ID_FK
                         FOREIGN KEY (CONFIG_ID)
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
@@ -3682,7 +3682,7 @@
                           ALTER TABLE RHQ_DRIFT_CONFIG_ID_SEQ RENAME TO RHQ_DRIFT_DEFINITION_ID_SEQ
                      </statement>
                      <statement targetDBVendor="oracle">
-                         ALTER TABLE RENAME RHQ_DRIFT_CONFIG_ID_SEQ TO RHQ_DRIFT_DEFINITION_ID_SEQ
+                          RENAME RHQ_DRIFT_CONFIG_ID_SEQ TO RHQ_DRIFT_DEFINITION_ID_SEQ
                      </statement>                
                 </schema-directSQL>
 
@@ -3789,9 +3789,6 @@
                 </schema-directSQL>                                                
                 <schema-alterColumn table="RHQ_DRIFT" column="PATH_DIRECTORY" nullable="FALSE" />      
                           
-                <!-- make drift_change_set_id not nullable ( should already have a value, just enforce it going forward -->
-                <schema-alterColumn table="RHQ_DRIFT" column="DRIFT_CHANGE_SET_ID" nullable="FALSE" />                
-
                 <!--  add new drift_set_id column and FK -->
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_SET_ID" columnType="INTEGER"/>
                 <schema-directSQL>

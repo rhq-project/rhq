@@ -13,23 +13,12 @@
 
     <name>RHQ Enterprise Server SNMP Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-snmp/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-snmp/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-snmp/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <dependency>
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
             <version>1.8.2</version>
         </dependency>
-
     </dependencies>
 
     <build>

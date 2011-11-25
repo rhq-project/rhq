@@ -76,7 +76,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
     private int resourceId = -1;
 
     public ResourceMetricsPortlet(String locatorId, int resourceId) {
-        super(locatorId, -1);
+        super(locatorId, EntityContext.forResource(-1));
         this.resourceId = resourceId;
     }
 

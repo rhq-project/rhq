@@ -80,6 +80,20 @@ public class DriftSnapshotRequest implements Serializable {
     }
 
     /**
+     * Creates a snapshot request with the specified version range
+     *
+     * @param driftDefinitionId The id of the drift definition
+     * @param startVersion The snapshot start version inclusive
+     * @param endVersion The snapshot end version inclusive
+     */
+    public DriftSnapshotRequest(int driftDefinitionId, Integer startVersion, Integer endVersion) {
+        this.driftDefinitionId = driftDefinitionId;
+        this.startVersion = startVersion;
+        version = endVersion;
+        includeDriftInstances = true;
+    }
+
+    /**
      * Get the requested snapshot version for the specified drift definition, narrowed to
      * files in the specified directory.
      * </br>

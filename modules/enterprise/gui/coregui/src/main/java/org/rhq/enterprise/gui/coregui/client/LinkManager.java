@@ -28,6 +28,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
+import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionsView;
 
 /**
  * @author Greg Hinkle
@@ -514,7 +515,13 @@ public class LinkManager {
     }
 
     public static String getDriftDefinitionEditLink(int resourceId, int driftDefId) {
-        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/Edit";
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/"
+            + DriftDefinitionsView.DetailView.Edit.name();
+    }
+
+    public static String getDriftDefinitionInitialSnapshotLink(int resourceId, int driftDefId) {
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/"
+            + DriftDefinitionsView.DetailView.InitialSnapshot.name();
     }
 
     public static String getDriftCarouselDriftLink(int resourceId, int driftDefId, String driftId) {

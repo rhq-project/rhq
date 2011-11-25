@@ -15,17 +15,7 @@
     <name>RHQ Enterprise Server URL Content Source Plugin</name>
     <description>URL Content Source Plugin</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/url/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/url/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/url/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <!-- Internal Deps -->
         <dependency>
             <groupId>org.rhq</groupId>

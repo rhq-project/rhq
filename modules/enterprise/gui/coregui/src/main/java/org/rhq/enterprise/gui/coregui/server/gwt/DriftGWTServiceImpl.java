@@ -185,15 +185,6 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException {
-        try {
-            this.driftManager.updateDriftDefinition(getSessionSubject(), entityContext, driftDef);
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public String getDriftFileBits(String hash) throws RuntimeException {
         try {
             return driftManager.getDriftFileBits(getSessionSubject(), hash);
@@ -253,6 +244,24 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
 
         try {
             driftTemplateManager.pinTemplate(getSessionSubject(), templateId, snapshotDriftDefId, snapshotVersion);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void updateDriftDefinition(EntityContext entityContext, DriftDefinition driftDef) throws RuntimeException {
+        try {
+            this.driftManager.updateDriftDefinition(getSessionSubject(), entityContext, driftDef);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void updateTemplate(DriftDefinitionTemplate driftDefTemplate) throws RuntimeException {
+        try {
+            this.driftTemplateManager.updateTemplate(getSessionSubject(), driftDefTemplate);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

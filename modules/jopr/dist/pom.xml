@@ -15,15 +15,6 @@
   <name>Jopr Distros</name>
   <description>parent POM for all Jopr distributions</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/dist/</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/dist/</scm.module.path>
-  </properties>
-
   <modules>
     <!-- Note, The Jopr Agent is the RHQ Agent verbatim. There is no need currently to make any tweaks. -->
     <module>server</module>

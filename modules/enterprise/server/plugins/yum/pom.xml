@@ -15,15 +15,6 @@
     <name>RHQ Enterprise Server Yum Content Source Plugin</name>
     <description>JBoss Operations Network Enterprise Server Yum Content Source Plugin</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/yum/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/yum/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/yum/</scm.module.path>
-    </properties>
-
     <dependencies>
 
         <!-- Internal Deps -->

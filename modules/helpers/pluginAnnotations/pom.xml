@@ -19,11 +19,6 @@
     <name>RHQ plugin annotations</name>
     <description>Annotations to help generate plugin descriptors</description>
 
-    <scm>
-      <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
-    </scm>
-
     <build>
  
      <plugins>

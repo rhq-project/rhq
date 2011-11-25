@@ -623,59 +623,58 @@ public class ResourceTreeView extends LocatableVLayout {
 
                                     }
                                 });
+                            }//end dashboard iteration
 
-                                //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
-                                String currentViewPath = History.getToken();
-                                if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
-                                    MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
-                                    defSubItem.addItem(addGraphItem);
+                            //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
+                            String currentViewPath = History.getToken();
+                            if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
+                                MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+                                defSubItem.addItem(addGraphItem);
 
-                                    addGraphItem.addClickHandler(new ClickHandler() {
-                                        public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                            //generate javascript to call out to.
-                                            //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
-                                            if (getScheduleDefinitionId(resource, def.getName()) > -1) {
-                                                String resourceGraphElements = resource.getId() + ","
-                                                    + getScheduleDefinitionId(resource, def.getName());
+                                addGraphItem.addClickHandler(new ClickHandler() {
+                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                        //generate javascript to call out to.
+                                        //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
+                                        if (getScheduleDefinitionId(resource, def.getName()) > -1) {
+                                            String resourceGraphElements = resource.getId() + ","
+                                                + getScheduleDefinitionId(resource, def.getName());
 
-                                                //construct portal.war url to access
-                                                String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
-                                                baseUrl += "?id=" + resource.getId();
-                                                baseUrl += "&view=Default";
-                                                baseUrl += "&action=addChart&metric=" + resourceGraphElements;
-                                                baseUrl += "&view=Default";
-                                                final String url = baseUrl;
-                                                //initiate HTTP request
-                                                final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
+                                            //construct portal.war url to access
+                                            String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+                                            baseUrl += "?id=" + resource.getId();
+                                            baseUrl += "&view=Default";
+                                            baseUrl += "&action=addChart&metric=" + resourceGraphElements;
+                                            baseUrl += "&view=Default";
+                                            final String url = baseUrl;
+                                            //initiate HTTP request
+                                            final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
 
-                                                try {
-                                                    b.setCallback(new RequestCallback() {
-                                                        public void onResponseReceived(final Request request,
-                                                            final Response response) {
+                                            try {
+                                                b.setCallback(new RequestCallback() {
+                                                    public void onResponseReceived(final Request request,
+                                                        final Response response) {
                                                             Log
                                                                 .trace("Successfully submitted request to add graph to view:"
-                                                                    + url);
+                                                            + url);
 
-                                                            //kick off a page reload.
-                                                            String currentViewPath = History.getToken();
-                                                            CoreGUI.goToView(currentViewPath, true);
-                                                        }
+                                                        //kick off a page reload.
+                                                        String currentViewPath = History.getToken();
+                                                        CoreGUI.goToView(currentViewPath, true);
+                                                    }
 
-                                                        @Override
-                                                        public void onError(Request request, Throwable t) {
-                                                            Log.trace("Error adding Metric:" + url, t);
-                                                        }
-                                                    });
-                                                    b.send();
-                                                } catch (RequestException e) {
-                                                    Log.trace("Error adding Metric:" + url, e);
-                                                }
+                                                    @Override
+                                                    public void onError(Request request, Throwable t) {
+                                                        Log.trace("Error adding Metric:" + url, t);
+                                                    }
+                                                });
+                                                b.send();
+                                            } catch (RequestException e) {
+                                                Log.trace("Error adding Metric:" + url, e);
                                             }
                                         }
-                                    });
-                                }
-                                //                            }//end trait check
-                            }//end dashboard iteration
+                                    }
+                                });
+                            } // end add the "add to view" menu item
                         }//end trait exclusion
                     }//end measurement def iteration
 

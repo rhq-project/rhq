@@ -112,7 +112,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private void showResourceList(Criteria criteria) {
         hideResourceList();
-        resourceList = new ResourceInstallReportResourceSearchView(extendLocatorId("resourceList"), criteria);
+        resourceList = new ResourceSearchView(extendLocatorId("resourceList"), criteria);
         addMember(resourceList);
         markForRedraw();
     }
@@ -141,28 +141,18 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
 
-            ListGridField fieldInCompliance = new ListGridField(DataSource.Field.IN_COMPLIANCE, MSG
-                .common_title_in_compliance());
-            HashMap<String, String> complianceIcons = new HashMap<String, String>();
-            complianceIcons.put("true", ImageManager.getAvailabilityIcon(true));
-            complianceIcons.put("false", ImageManager.getAvailabilityIcon(false));
-            fieldInCompliance.setValueIcons(complianceIcons);
-            fieldInCompliance.setType(ListGridFieldType.ICON);
-
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
             fieldCategory.setWidth(70);
             fieldVersion.setWidth("*");
             fieldCount.setWidth(60);
-            fieldInCompliance.setWidth(100);
 
             // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
             //                       uncomment these lines to allow grouping by the plugin or category fields.
             /*getListGrid().setCanGroupBy(true);
             fieldTypeName.setCanGroupBy(false);
             fieldVersion.setCanGroupBy(false);
-            fieldCount.setCanGroupBy(false);
-            fieldInCompliance.setCanGroupBy(false);*/
+            fieldCount.setCanGroupBy(false); */
 
             fieldTypeName.setCellFormatter(new CellFormatter() {
                 @Override
@@ -212,7 +202,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 }
             });
 
-            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldInCompliance);
+            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount);
         }
 
         private String getResourceTypeTableUrl(ListGridRecord selected) {
@@ -239,7 +229,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 public static final String TYPEID = "typeId"; // int
                 public static final String VERSION = "version"; // String
                 public static final String OBJECT = "object";
-                public static final String IN_COMPLIANCE = "inCompliance";
             }
 
             @Override
@@ -258,10 +247,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 record.setAttribute(Field.TYPEID, from.getTypeId());
                 record.setAttribute(Field.VERSION, from.getVersion());
                 record.setAttribute(Field.OBJECT, from);
-
-                if (from.getNumDriftTemplates() > 0) {
-                    record.setAttribute(Field.IN_COMPLIANCE, Boolean.toString(from.isInCompliance()));
-                }
 
                 return record;
             }

@@ -72,6 +72,13 @@ public abstract class BaseDispatchAction extends DispatchAction {
             throw new ServletException("dispatch parameter [" + parameter + "] not found");
         }
 
+        name = name.replaceAll("<","&lt;")
+                .replaceAll("\"","&quot;")
+                .replaceAll(">","&gt;")
+                .replaceAll("&","&amp;")
+                .replaceAll("'","&#x27;")
+                .replaceAll("/","&#x2F;");
+
         // look up the dispatch method
         String methodName = getKeyMethodMap().getProperty(name);
         if (methodName == null) {

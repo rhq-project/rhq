@@ -255,7 +255,10 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         //order the components
         addMember(top);
-        addMember(tagEditorView);
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            addMember(tagEditorView);
+        }
         addMember(details);
         ResourceTitleBar.this.markForRedraw();
     }
@@ -298,6 +301,10 @@ public class ResourceTitleBar extends LocatableVLayout {
 
             markForRedraw();
         }
+    }
+
+    public ResourceComposite getResource() {
+        return resourceComposite;
     }
 
     void displayResourceName(String resourceName) {

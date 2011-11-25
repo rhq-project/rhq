@@ -15,15 +15,6 @@
    <name>RHQ Postgres Plugin</name>
    <description>A plugin for managing PostgreSQL</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/postgres</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/postgres</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/postgres/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

@@ -2047,9 +2047,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         ResourceError error = entityManager.find(ResourceError.class, resourceErrorId);
 
         if (error != null) {
-            if (!authorizationManager.canViewResource(user, error.getResource().getId())) {
-                throw new PermissionException("Cannot delete resource error [" + resourceErrorId + "]. User [" + user
-                    + "] does not have permission to operate on resource [" + error.getResource().getName() + "].");
+            if (!authorizationManager.hasResourcePermission(user, Permission.MODIFY_RESOURCE, error.getResource()
+                .getId())) {
+                throw new PermissionException("Cannot delete Resource error [" + resourceErrorId + "]. User [" + user
+                    + "] does not have permission to modify Resource [" + error.getResource().getName() + "].");
             }
 
             entityManager.remove(error);
@@ -2372,20 +2373,25 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions) {
+        String queryName = groupByVersions ? Resource.QUERY_RESOURCE_VERSION_REPORT : Resource.QUERY_RESOURCE_REPORT;
+        Query query = entityManager.createNamedQuery(queryName);
+        List<ResourceInstallCount> results = query.getResultList();
+
+        return results;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<ResourceInstallCount> findResourceComplianceCounts(Subject subject) {
         Query query = null;
         List<ResourceInstallCount> results = null;
 
-        if (!groupByVersions) {
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_REPORT);
-            results = query.getResultList();
-        } else {
-            //query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_REPORT);
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE);
-            results = query.getResultList();
+        query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_IN_COMPLIANCE);
+        results = query.getResultList();
 
-            query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE);
-            results.addAll(query.getResultList());
-        }
+        query = entityManager.createNamedQuery(Resource.QUERY_RESOURCE_VERSION_AND_DRIFT_OUT_OF_COMPLIANCE);
+        results.addAll(query.getResultList());
 
         return results;
     }

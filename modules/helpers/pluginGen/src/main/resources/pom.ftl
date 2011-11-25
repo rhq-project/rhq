@@ -44,7 +44,6 @@
     </#if>
 
     <properties>
-        <scm.module.path>TODO</scm.module.path>
         <rhq.version><#if props.rhqVersion??>${props.rhqVersion}<#else >1.3.0-SNAPSHOT</#if></rhq.version> <!-- TODO adjust, see above too -->
     </properties>
 

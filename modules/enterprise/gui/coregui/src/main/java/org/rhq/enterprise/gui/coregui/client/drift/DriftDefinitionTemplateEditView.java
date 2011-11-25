@@ -28,8 +28,10 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -56,6 +58,8 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
     private ConfigurationEditor editor;
     private ToolStrip buttonbar;
     private IButton saveButton;
+
+    private DriftDefinitionTemplate driftTemplate;
 
     private boolean refreshing = false;
 
@@ -118,13 +122,13 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
 
                 public void onSuccess(final PageList<DriftDefinitionTemplate> result) {
 
-                    DriftDefinitionTemplate template = result.get(0);
+                    driftTemplate = result.get(0);
 
                     editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
-                        .getExistingTemplateInstance(), template.getConfiguration());
+                        .getExistingTemplateInstance(), driftTemplate.getConfiguration());
                     editor.setOverflow(Overflow.AUTO);
                     editor.addPropertyValueChangeListener(DriftDefinitionTemplateEditView.this);
-                    editor.setReadOnly(!hasWriteAccess);
+                    editor.setReadOnly(!hasWriteAccess || !driftTemplate.isUserDefined());
                     addMember(editor);
 
                     saveButton.disable();
@@ -141,34 +145,21 @@ public class DriftDefinitionTemplateEditView extends LocatableVLayout implements
     }
 
     private void save() {
-        //        
-        //        Configuration updatedConfiguration = editor.getConfiguration();
-        //
-        //        GWTServiceLookup.getDriftService().updateDriftDefinition(context, new DriftDefinition(updatedConfiguration),
-        //            new AsyncCallback<Void>() {
-        //                public void onFailure(Throwable caught) {
-        //                    CoreGUI.getErrorHandler().handleError(MSG.view_configurationDetails_error_updateFailure(), caught);
-        //                }
-        //
-        //                public void onSuccess(Void result) {
-        //                    Message message = new Message(MSG.view_drift_success_defUpdated(), Message.Severity.Info);
-        //
-        //                    switch (context.getType()) {
-        //                    case Resource:
-        //                        int resourceId = context.getResourceId();
-        //
-        //                        String driftHistoryUrl = LinkManager.getResourceTabLink(resourceId,
-        //                            ResourceDetailView.Tab.DRIFT, ResourceDetailView.ConfigurationSubTab.HISTORY);
-        //                        driftHistoryUrl = driftHistoryUrl.substring(1); // chop off the leading '#'
-        //                        CoreGUI.goToView(driftHistoryUrl, message);
-        //
-        //                        break;
-        //
-        //                    default:
-        //                        throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
-        //                    }
-        //                }
-        //            });
+
+        Configuration updatedConfiguration = editor.getConfiguration();
+        DriftDefinition updatedDefinition = new DriftDefinition(updatedConfiguration);
+        driftTemplate.setTemplateDefinition(updatedDefinition);
+
+        GWTServiceLookup.getDriftService().updateTemplate(driftTemplate, new AsyncCallback<Void>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_configurationDetails_error_updateFailure(), caught);
+            }
+
+            public void onSuccess(Void result) {
+                Message message = new Message(MSG.view_drift_success_templateUpdated(), Message.Severity.Info);
+                CoreGUI.getMessageCenter().notify(message);
+            }
+        });
     }
 
     @Override

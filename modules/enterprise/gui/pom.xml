@@ -19,15 +19,6 @@
   <name>RHQ Enterprise GUI</name>
   <description>parent POM for modules comprising the RHQ enterprise GUI</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/enterprise/gui/</scm.module.path>
-  </properties>
-
   <profiles>
 
     <profile>

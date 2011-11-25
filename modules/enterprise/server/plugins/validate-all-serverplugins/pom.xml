@@ -15,15 +15,6 @@
    <name>RHQ Validate All Server Plugins</name>
    <description>Test POM that will validate all RHQ server plugins</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/validate-all-serverplugins</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/validate-all-serverplugins</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/enterprise/server/plugins/validate-all-serverplugins/</scm.module.path>
-   </properties>
-
    <build>
       <plugins>
          <plugin>

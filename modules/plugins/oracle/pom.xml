@@ -15,15 +15,6 @@
    <name>RHQ Oracle Plugin</name>
    <description>A plugin for managing Oracle Database Servers</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/oracle</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/oracle</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/oracle/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

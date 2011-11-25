@@ -16,17 +16,7 @@
    <name>RHQ Core Perspective Parent</name>
    <description>parent POM for modules comprising the RHQ Core Perspective</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/plugins/perspectives/core</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/plugins/perspectives/core/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/enterprise/plugins/perspectives/core/</scm.module.path>
-   </properties>
-
    <profiles>
-
       <profile>
          <id>default</id>
          <activation>

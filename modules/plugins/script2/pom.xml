@@ -15,16 +15,6 @@
     <name>RHQ Script2 Plugin</name>
     <description>Plugin that allows monitoring via scripting languages (Ruby, Python)</description>
 
-    <scm>
-       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/script2</connection>
-       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/script2/</developerConnection>
-    </scm>
-
-
-    <properties>
-        <scm.module.path>modules/plugins/script2</scm.module.path>
-    </properties>
-
     <build>
         <plugins>
             <plugin>

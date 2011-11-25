@@ -125,7 +125,7 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_template_delete_confirm(),
+        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteTemplate(),
             new AbstractTableAction(deleteEnablement) {
 
                 boolean result = false;
@@ -167,14 +167,15 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
         GWTServiceLookup.getDriftService().deleteDriftDefinitionTemplates(templateIds, new AsyncCallback<Void>() {
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_template_delete_failure(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteTemplates(), caught);
                 DriftDefinitionTemplatesView.this.refresh();
             }
 
             @Override
             public void onSuccess(Void result) {
-                CoreGUI.getMessageCenter().notify(new Message(MSG.view_drift_template_delete_success(
-                    Integer.toString(records.length)), Message.Severity.Info));
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_drift_success_deleteTemplate(Integer.toString(records.length)),
+                        Message.Severity.Info));
                 DriftDefinitionTemplatesView.this.refresh();
             }
         });

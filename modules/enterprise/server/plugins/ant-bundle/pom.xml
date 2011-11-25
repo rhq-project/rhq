@@ -15,19 +15,8 @@
     <name>RHQ Ant Bundle Server Plugin</name>
     <description>Server side plugin that manages ant-scripted bundles</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/ant-bundle/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/ant-bundle/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/ant-bundle/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <!-- Internal Deps -->
-
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>

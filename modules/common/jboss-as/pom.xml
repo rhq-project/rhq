@@ -14,17 +14,7 @@
    <name>RHQ JBossAS 4/5 Plugins Common Library</name>
    <description>A library with the code common to the JBoss AS 4 and 5 plugins</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/jboss-as/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/common/jboss-as/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/common/jboss-as/</scm.module.path>
-   </properties>
-
    <dependencies>
-
       <dependency>
          <groupId>ant</groupId>
          <artifactId>ant</artifactId>

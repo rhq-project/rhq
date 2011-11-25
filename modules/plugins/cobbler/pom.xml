@@ -17,18 +17,11 @@
    <name>RHQ Cobbler File Plugin</name>
    <description>A plugin for managing the system cobbler file</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/cobbler</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/cobbler</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/cobbler/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
-
       <dependency>
          <groupId>ant-contrib</groupId>
          <artifactId>ant-contrib</artifactId>

@@ -13,13 +13,7 @@
 
     <name>RHQ Enterprise Server Roles Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-roles/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-roles/</developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-roles/</scm.module.path>
         <seam.version>2.1.0.SP1</seam.version>
     </properties>
 

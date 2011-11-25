@@ -13,23 +13,12 @@
 
     <name>RHQ Enterprise Server Microblog Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-microblog/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-microblog/</developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-microblog/</scm.module.path>
-    </properties>
-
     <dependencies>
-
         <dependency>
             <groupId>org.twitter4j</groupId>
             <artifactId>twitter4j-core</artifactId>
             <version>${twitter4j.version}</version>
         </dependency>
-
     </dependencies>
 
     <build>

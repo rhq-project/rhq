@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
@@ -111,11 +112,12 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem recentConfigurationChangesItem = new NavigationItem(ResourceConfigurationHistoryListView.VIEW_ID,
-            "subsystems/configure/Configure_16.png", new ViewFactory() {
+        NavigationItem recentConfigurationChangesItem = new NavigationItem(
+            ResourceConfigurationHistoryListView.VIEW_ID, "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                    return new ResourceConfigurationHistoryListView(
+                        extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()), getGlobalPermissions()
+                            .contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
@@ -152,9 +154,16 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
-            recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
-            recentDriftsItem);
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
+                recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
+                recentDriftsItem);
+        } else {
+            return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, suspectMetricsItem,
+                recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
+                recentDriftsItem);
+        }
     }
 
     private NavigationSection buildInventorySection() {
@@ -172,7 +181,15 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem);
+        NavigationItem driftComplianceItem = new NavigationItem(DriftComplianceReport.VIEW_ID, ImageManager
+            .getDriftIcon(), new ViewFactory() {
+            public Canvas createView() {
+                return new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName()));
+            }
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+
+        return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem,
+            driftComplianceItem);
     }
 
 }

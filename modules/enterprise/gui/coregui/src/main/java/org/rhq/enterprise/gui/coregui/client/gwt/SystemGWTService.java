@@ -28,7 +28,7 @@ import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
  * Provides information about the server as well as a way to reconfigure parts of the server.
- * 
+ *
  * @author John Mazzitelli
  * @author Ian Springer
  */
@@ -43,7 +43,7 @@ public interface SystemGWTService extends RemoteService {
     void setSystemSettings(SystemSettings settings) throws RuntimeException;
 
     /**
-     * @return metadata properties about the agent download available on the server. 
+     * @return metadata properties about the agent download available on the server.
      */
     HashMap<String, String> getAgentVersionProperties() throws RuntimeException;
 
@@ -51,13 +51,13 @@ public interface SystemGWTService extends RemoteService {
      * Returns the name and download URL (key and value respectively) of all connector downloads
      * available on the server. The URL is relative to the server's host and port (i.e. only
      * the path of the URL is returned).
-     * 
+     *
      * @return information about connectors that can be downloaded from the server
      */
     HashMap<String, String> getConnectorDownloads() throws RuntimeException;
 
     /**
-     * @return metadata properties about the CLI download available on the server. 
+     * @return metadata properties about the CLI download available on the server.
      */
     HashMap<String, String> getClientVersionProperties() throws RuntimeException;
 
@@ -66,13 +66,19 @@ public interface SystemGWTService extends RemoteService {
      * standalone bundle deployer tool available on the server for download.
      * The URL is relative to the server's host and port (i.e. only
      * the path of the URL is returned).
-     * 
+     *
      * The bundle deployer is a standalone tool that bundle authors/developers can use
      * to test their bundles prior to uploading to RHQ and deploying to managed platforms.
-     * 
+     *
      * @return information about the bundle deployer tool that can be downloaded from the server
      */
     HashMap<String, String> getBundleDeployerDownload() throws RuntimeException;
-    
+
     Boolean isLdapAuthorizationEnabled() throws RuntimeException;
+
+    /**
+     * GWT-RPC service  asynchronous (client-side) interface
+     * @see SystemGWTService
+     */
+    void dumpToLog();
 }

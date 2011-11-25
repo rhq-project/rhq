@@ -16,15 +16,6 @@
    <name>RHQ Hibernate Plugin</name>
    <description>A plugin for managing Hibernate services</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hibernate/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/plugins/hibernate/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/hibernate/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

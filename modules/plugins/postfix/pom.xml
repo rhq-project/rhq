@@ -15,13 +15,7 @@
    <name>RHQ Augeas-based Postfix Plugin</name>
    <description>A plugin for managing the RHEL Postfix server</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/postfix</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/postfix</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/postfix/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

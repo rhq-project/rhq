@@ -15,11 +15,6 @@
 
     <name>RHQ Enterprise Server Groovy Script Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/groovy-script/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/groovy-script/</developerConnection>
-    </scm>
-
     <dependencies>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>

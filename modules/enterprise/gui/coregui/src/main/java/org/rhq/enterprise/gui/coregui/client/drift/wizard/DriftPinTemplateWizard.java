@@ -30,7 +30,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -41,13 +41,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
-    private Table<?> table;
-
-    public DriftPinTemplateWizard(ResourceType resourceType, DriftDefinition driftDef, int snapshotVersion,
-        Table<?> table) {
+    public DriftPinTemplateWizard(ResourceType resourceType, DriftDefinition driftDef, int snapshotVersion) {
 
         super(resourceType, driftDef, snapshotVersion);
-        this.table = table;
 
         final ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
@@ -108,19 +104,20 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
                         new Message(MSG.view_drift_wizard_pinTemplate_success(template.getName()),
                             Message.Severity.Info));
                     getView().closeDialog();
-                    DriftPinTemplateWizard.this.table.refresh();
+                    CoreGUI.goToView(LinkManager.getDriftDefinitionsLink(getSnapshotDriftDef().getResource().getId()),
+                        true);
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_wizard_addDef_failure(template.getName()),
-                        caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_drift_wizard_pinTemplate_failure(template.getName()), caught);
                     getView().closeDialog();
                 }
             });
 
     }
 
-    public static void showWizard(final int snapshpotDriftDefId, final int snapshotVersion, final Table<?> table) {
+    public static void showWizard(final int snapshpotDriftDefId, final int snapshotVersion) {
 
         // get the relevant DriftDefinition
         DriftDefinitionCriteria ddc = new DriftDefinitionCriteria();
@@ -153,7 +150,7 @@ public class DriftPinTemplateWizard extends AbstractDriftPinTemplateWizard {
 
                             public void onTypesLoaded(ResourceType type) {
                                 DriftPinTemplateWizard wizard = new DriftPinTemplateWizard(type, driftDef,
-                                    snapshotVersion, table);
+                                    snapshotVersion);
                                 wizard.startWizard();
                             }
                         });

@@ -14,13 +14,7 @@
    <name>RHQ Virtualization Plugin</name>
    <description>Plugin used to manage virtualization</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/virt/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/virt/</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/virt/</scm.module.path>
       <libvirt-java.version>0.4.1</libvirt-java.version>
    </properties>
 

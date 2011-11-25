@@ -123,8 +123,7 @@ public class FilterFileVisitor implements FileVisitor {
             filterPattern = filter.getPattern();
         }
 
-        return new PathFilter(FilenameUtils.normalize(filterPath.getAbsolutePath()).replace("\\", "/"),
-            filterPattern);
+        return new PathFilter(FilenameUtils.normalize(filterPath.getAbsolutePath()), filterPattern);
     }
 
     private boolean isEmpty(String s) {
@@ -145,8 +144,8 @@ public class FilterFileVisitor implements FileVisitor {
             }
         } else {
             // else neither includes nor excludes is empty
-            if (includesPattern.matcher(file.getAbsolutePath()).matches() &&
-                !excludesPattern.matcher(file.getAbsolutePath()).matches()) {
+            if (includesPattern.matcher(file.getAbsolutePath()).matches()
+                && !excludesPattern.matcher(file.getAbsolutePath()).matches()) {
                 visitor.visit(file);
             }
         }

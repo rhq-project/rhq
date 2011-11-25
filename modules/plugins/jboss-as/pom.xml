@@ -15,19 +15,8 @@
    <name>RHQ JBossAS 3.2.x/4.x Plugin</name>
    <description>A plugin for managing JBoss Application Server 3.2.x/4.x</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jboss-as/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/jboss-as/</scm.module.path>
-   </properties>
-
    <dependencies>
-
       <!-- internal -->
-
       <!-- TODO: Move this up to the parent pom. -->
       <dependency>
          <groupId>${rhq.groupId}</groupId>

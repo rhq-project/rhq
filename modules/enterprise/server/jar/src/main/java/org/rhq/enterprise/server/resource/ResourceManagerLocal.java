@@ -103,8 +103,8 @@ public interface ResourceManagerLocal {
      * method, make sure you have a specific reason for it; check to see if calling
      * {@link #uninventoryResource(Subject, int)} would not be more appropriate.
      *
-     * @param user     the user deleting the resource
-     * @param resource the resource to be deleted
+     * @param user       the user deleting the resource
+     * @param resourceId the ID of the resource to be deleted
      */
     void uninventoryResourceAsyncWork(Subject user, int resourceId);
 
@@ -300,9 +300,6 @@ public interface ResourceManagerLocal {
     PageList<Resource> findResourceByIds(Subject subject, int[] resourceIds, boolean attachParentResource,
         PageControl pageControl);
 
-    /**
-     * @see ResourceManagerRemote#getResourceTree(int)
-     */
     Resource getResourceTree(int rootResourceId, boolean recursive);
 
     /**
@@ -351,7 +348,9 @@ public interface ResourceManagerLocal {
     void addResourceError(ResourceError resourceError);
 
     /**
-     * Deletes the given resource error, effectively removing it from its resource's list of errors.
+     * Deletes the given resource error, effectively removing it from its resource's list of errors. Requires the
+     * specified user to possess the {@link org.rhq.core.domain.authz.Permission#MODIFY_RESOURCE MODIFY_RESOURCE}
+     * permission for the Resource with which the error is associated.
      *
      * @param user the user deleting the resource error
      * @param resourceErrorId identifies the resource error to delete
@@ -415,11 +414,11 @@ public interface ResourceManagerLocal {
 
     /**
      * Load the entire list of resources under an agent. Tries to do so in as few
-     * queries as possible while prefectching the information necessary to create a tree
+     * queries as possible while prefetching the information necessary to create a tree
      * view of the platform inventory. This includes resource type and subcategory information
      * as well as current availability and structure.
      *
-     * This method also returns placesholder {@link org.rhq.core.domain.resource.composite.LockedResource}
+     * This method also returns placeholder "locked" ResourceFlyweight
      * objects for resources that a user should not have visibility to in order to keep the tree a
      * directed graph.
      *
@@ -484,6 +483,8 @@ public interface ResourceManagerLocal {
      *         their childrens' IDs
      */
     List<Integer> uninventoryResources(Subject subject, int[] resourceIds);
+
+    List<ResourceInstallCount> findResourceComplianceCounts(Subject subject);
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 

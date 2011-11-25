@@ -433,8 +433,11 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         if (null != carouselStartFilter) {
             int newEnd = carouselStartFilter + 1;
             setCarouselEndFilter(newEnd);
+
+            // it's ok if this is higher than the current max, the actual fetch will make sure the
+            // values are sane.
+            setCarouselStartFilter(carouselStartFilter + carouselSizeFilter);
         }
-        setCarouselStartFilter(null);
 
         buildCarousel(true);
     }
@@ -449,6 +452,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
             newStart = (newStart < carouselSizeFilter) ? carouselSizeFilter : newStart;
             setCarouselStartFilter(newStart);
         }
+
         setCarouselEndFilter(null);
 
         buildCarousel(true);
@@ -803,7 +807,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
         }
 
         try {
-            carouselStartFilter = Integer.valueOf((String) criteriaMap.get(FILTER_CAROUSEL_START));
+            carouselStartFilter = (Integer) criteriaMap.get(FILTER_CAROUSEL_START);
         } catch (Exception e) {
             carouselStartFilter = null;
         }
@@ -1054,12 +1058,6 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
     }
 
     protected void setCarouselStartFilter(Integer carouselStartFilter) {
-        // bump up the start filter max if need be
-        Integer max = getCarouselStartFilterMax();
-        if (null != max && max < carouselStartFilter) {
-            setCarouselStartFilterMax(carouselStartFilter);
-        }
-
         this.carouselStartFilter = carouselStartFilter;
 
         if (null != carouselStartFilter) {

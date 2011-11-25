@@ -19,15 +19,6 @@
     <name>RHQ AS7 Integration Test</name>
     <description>Integration tests for the AS7 plugin</description>
 
-    <scm>
-       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/integration-tests/jboss-as-7-plugin-test</connection>
-       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/integration-tests/jboss-as-7-plugin-test</developerConnection>
-    </scm>
-
-    <properties>
-       <scm.module.path>modules/integration-tests/jboss-as-7-plugin-test</scm.module.path>
-    </properties>
-
     <build>
         <plugins>
             <plugin>

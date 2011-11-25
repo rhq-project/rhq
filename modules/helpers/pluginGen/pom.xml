@@ -19,12 +19,6 @@
     <name>RHQ plugin generator</name>
     <description>Helper to generate plugin skeletons</description>
 
-    <scm>
-      <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
-    </scm>
-
-
     <build>
      <plugins>
 

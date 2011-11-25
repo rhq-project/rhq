@@ -15,10 +15,6 @@
     <name>RHQ Twitter Plugin</name>
     <description>Do some Twitter statistics monitoring</description>
 
-    <properties>
-        <scm.module.path>modules/plugins/twitter</scm.module.path>
-    </properties>
-
     <build>
         <plugins>
             <plugin>

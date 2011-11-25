@@ -15,17 +15,7 @@
    <name>RHQ JDBC Trace Plugin</name>
    <description>a plugin that traces JDBC invocations via byte-code manipulation</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jdbctrace/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jdbctrace/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/jdbctrace/</scm.module.path>
-   </properties>
-
    <dependencies>
-
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-byteman-plugin</artifactId>

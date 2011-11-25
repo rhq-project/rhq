@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.List;
+
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -64,8 +66,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
-import java.util.List;
-
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ GUI.
  *
@@ -110,6 +110,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     // while also changing the main content. Typically we refresh only when the path is not changed.
     private static boolean pendingRefresh = false;
 
+    //spinder [BZ 731864] defining variable that can be set at build time to enable/disable TAG ui components. 
+    // This will be set to 'false' on the release branch.
+    private static boolean enableTagsForUI = true;
+
+    public static boolean isTagsEnabledForUI() {
+        return enableTagsForUI;
+    }
+
     private RootCanvas rootCanvas;
     private MenuBarView menuBarView;
     private Footer footer;
@@ -129,7 +137,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
 
         rpcTimeout = -1;
-        String rpcTimeoutParam =  Location.getParameter("rpcTimeout");
+        String rpcTimeoutParam = Location.getParameter("rpcTimeout");
         if (rpcTimeoutParam != null) {
             try {
                 rpcTimeout = Integer.parseInt(rpcTimeoutParam) * 1000;
@@ -323,7 +331,9 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             History.newItem(getDefaultView());
         } else {
 
-            // otherwise just fire an event for the bookmarked URL they are returning to
+            // otherwise just fire an event for the bookmarked URL they are returning to and
+            // ensure it is refreshed if it is a RefreshableView
+            pendingRefresh = true;
             History.fireCurrentHistoryState();
         }
 

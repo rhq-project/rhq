@@ -141,7 +141,9 @@ public class ResourceError implements Serializable {
     }
 
     public void setSummary(String summary) {
-        if (summary != null && summary.length() > MAX_SUMMARY_LENGTH) {
+        if (summary == null) {
+            summary = "An error occurred.";
+        } else if (summary.length() > MAX_SUMMARY_LENGTH) {
             summary = summary.substring(0, MAX_SUMMARY_LENGTH - 3) + "...";
         }
         this.summary = summary;

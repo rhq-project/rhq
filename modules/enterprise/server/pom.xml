@@ -16,15 +16,6 @@
   <name>RHQ Enterprise Server Parent</name>
   <description>RHQ enterprise server parent POM</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/enterprise/server/</scm.module.path>
-  </properties>
-
   <profiles>
 
     <profile>

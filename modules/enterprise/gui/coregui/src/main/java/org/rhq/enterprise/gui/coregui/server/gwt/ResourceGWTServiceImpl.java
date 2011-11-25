@@ -151,6 +151,25 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public List<ResourceInstallCount> findResourceComplianceCounts() throws RuntimeException {
+        try {
+            List<ResourceInstallCount> result = resourceManager.findResourceComplianceCounts(getSessionSubject());
+            return SerialUtility.prepare(result, "ResourceService.findResourceComplianceCounts");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException {
+        try {
+            List<ResourceInstallCount> result = resourceManager.findResourceInstallCounts(getSessionSubject(),
+                groupByVersions);
+            return SerialUtility.prepare(result, "ResourceService.findResourceInstallCounts");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     /** Locate ProblemResourcesComposites and generate the disambiguation reports for them.
      *  Criteria passed in not currently used.
      */
@@ -363,16 +382,6 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             Resource result = discoveryBoss.manuallyAddResource(getSessionSubject(), resourceTypeId, parentResourceId,
                 pluginConfiguration);
             return SerialUtility.prepare(result, "ResourceService.manuallyAddResource");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    public List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException {
-        try {
-            List<ResourceInstallCount> result = resourceManager.findResourceInstallCounts(getSessionSubject(),
-                groupByVersions);
-            return SerialUtility.prepare(result, "ResourceService.findResourceInstallCounts");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

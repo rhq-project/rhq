@@ -15,13 +15,7 @@
    <name>RHQ GRUB Plugin</name>
    <description>A plugin for managing the GRUB boot loader</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/grub</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/grub</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/grub/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

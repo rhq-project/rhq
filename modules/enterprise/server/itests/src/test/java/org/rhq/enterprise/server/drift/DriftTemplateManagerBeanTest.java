@@ -194,6 +194,21 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
+        expectedExceptions = EJBException.class,
+        expectedExceptionsMessageRegExp = ".*template name must be unique.*")
+    @InitDB(false)
+    public void doNotAllowDuplicateTemplateNames() {
+        DriftDefinition definition = new DriftDefinition(new Configuration());
+        definition.setName("test::createTemplateForNegativeUpdateTests");
+        definition.setEnabled(true);
+        definition.setDriftHandlingMode(normal);
+        definition.setInterval(2400L);
+        definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        templateMgr.createTemplate(getOverlord(), resourceType.getId(), true, definition);
+    }
+
     public void createAndUpdateTemplate() {
         // create the template
         DriftDefinition definition = new DriftDefinition(new Configuration());

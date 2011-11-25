@@ -22,12 +22,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+
 import java.util.EnumSet;
 import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -36,23 +42,31 @@ import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * Extends the ResourceSearchView with drift compliance information.
+ * 
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public class ResourceInstallReportResourceSearchView extends ResourceSearchView {
+public class DriftComplianceReportResourceSearchView extends ResourceSearchView {
 
     private final int resourceTypeId;
 
-    public ResourceInstallReportResourceSearchView(String locatorId, Criteria criteria) {
+    public DriftComplianceReportResourceSearchView(String locatorId, Criteria criteria) {
         super(locatorId, criteria);
 
         setInitialCriteriaFixed(true);
@@ -72,10 +86,47 @@ public class ResourceInstallReportResourceSearchView extends ResourceSearchView 
 
         List<ListGridField> fields = super.createFields();
 
+        // replace the cell formatter on the name field to go directly to drift tab
+        ListGridField nameField = null;
+        for (ListGridField field : fields) {
+            if (NAME.propertyName().equals(field.getName())) {
+                nameField = field;
+                break;
+            }
+        }
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String url = LinkManager.getResourceTabLink(record.getAttributeAsInt("id"),
+                    ResourceDetailView.Tab.DRIFT, null);
+                String name = StringUtility.escapeHtml(value.toString());
+                return SeleniumUtility.getLocatableHref(url, name, null);
+            }
+        });
+
         IconField inComplianceField = new IconField(DataSource.ATTR_IN_COMPLIANCE, MSG.common_title_in_compliance(), 95);
+        inComplianceField.setCanSortClientOnly(true);
         fields.add(inComplianceField);
 
         return fields;
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+
+        // replace the doubleClickHandler to go directly to drift tab        
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String selectedId = selectedRows[0].getAttribute("id");
+                    CoreGUI.goToView(LinkManager.getResourceTabLink(Integer.valueOf(selectedId),
+                        ResourceDetailView.Tab.DRIFT, null));
+                }
+            }
+        });
+
     }
 
     private class DataSource extends ResourceDatasource {
@@ -108,6 +159,12 @@ public class ResourceInstallReportResourceSearchView extends ResourceSearchView 
         protected ResourceCriteria getFetchCriteria(DSRequest request) {
             ResourceCriteria criteria = super.getFetchCriteria(request);
             criteria.fetchDriftDefinitions(true);
+
+            // filter out unsortable fields (i.e. fields sorted client-side only)
+            PageControl pageControl = getPageControl(request);
+            pageControl.removeOrderingField(ATTR_IN_COMPLIANCE);
+            criteria.setPageControl(pageControl);
+
             return criteria;
         }
 

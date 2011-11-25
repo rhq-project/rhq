@@ -20,11 +20,25 @@ package org.rhq.enterprise.server.rest;
 
 import javax.ws.rs.ApplicationPath;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.enterprise.server.util.LookupUtil;
+
 /**
- * JAX-RS application class, defining the base http context
+ * JAX-RS application class, defining the base http context.
+ * This is called upon servlet startup or when the first request hits
+ * the REST endpoint.
+ *
  * @author Heiko W. Rupp
  */
 @ApplicationPath("/rest")
 public class RHQApplication extends javax.ws.rs.core.Application {
 
+    Log log = LogFactory.getLog(RHQApplication.class);
+
+    public RHQApplication() {
+        log.info("Starting RHQ REST ");
+
+    }
 }

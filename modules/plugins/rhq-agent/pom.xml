@@ -15,15 +15,6 @@
    <name>RHQ RHQ-Agent Plugin</name>
    <description>a plugin for monitoring RHQ agents</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/rhq-agent</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/rhq-agent</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/rhq-agent/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

@@ -11,15 +11,6 @@
     <name>RHQ Enterprise Server CLI Script Alert Plugin</name>
     <description>An alert sender able to execute an arbitrary CLI script as a response to an alert</description>
 
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-cli/</scm.module.path>
-    </properties>
-
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-cli/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-cli/</developerConnection>
-    </scm>
-
     <dependencies>
         <dependency>
             <groupId>org.rhq</groupId>

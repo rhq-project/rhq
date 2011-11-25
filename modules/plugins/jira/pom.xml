@@ -15,16 +15,6 @@
    <name>RHQ Jira Plugin</name>
    <description>A plugin for monitoring Jira</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jira</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jira</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/jira/</scm.module.path>
-   </properties>
-
-
     <dependencies>
         <!-- scope provided means it is only used for compilation and not included in jar
         <dependency>

@@ -16,15 +16,6 @@
    <name>RHQ Enterprise Safe WebService Invoker</name>
    <description>A webservice invoker that safely calls returns ejb3 pojo's with lazy attributes</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/safe-invoker/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/safe-invoker/</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/enterprise/server/safe-invoker/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

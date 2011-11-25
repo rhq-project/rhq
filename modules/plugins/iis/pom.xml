@@ -15,19 +15,6 @@
    <name>RHQ IIS Plugin</name>
    <description>a plugin for managing Microsoft Internet Information Server (IIS)</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/iis</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/iis</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/iis/</scm.module.path>
-   </properties>
-
-   <dependencies>
-
-   </dependencies>
-
    <profiles>
       <profile>
          <id>integration-tests</id>

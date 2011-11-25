@@ -74,7 +74,7 @@ public interface SystemManagerLocal {
 
     /**
      * Reindexes all tables that need to be periodically reindexed.
-     * For Oracle, this "rebuilds" the indexes, for PostgreSQL, its a "reindex". 
+     * For Oracle, this "rebuilds" the indexes, for PostgreSQL, its a "reindex".
      *
      * @param  whoami the user requesting the operation
      *
@@ -138,9 +138,9 @@ public interface SystemManagerLocal {
     boolean isExperimentalFeaturesEnabled();
 
     boolean isLdapAuthorizationEnabled();
-    
+
     void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException;
-    
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -154,10 +154,12 @@ public interface SystemManagerLocal {
     SystemSettings getSystemSettings(Subject subject);
 
     void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
-    
+
     @Deprecated
     Properties getSystemConfiguration(Subject subject);
 
     @Deprecated
     void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception;
+
+    void dumpSystemInfo(Subject subject);
 }

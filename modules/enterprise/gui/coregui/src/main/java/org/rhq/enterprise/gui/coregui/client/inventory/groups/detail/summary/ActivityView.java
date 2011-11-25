@@ -339,4 +339,11 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         return ((name != null) && (dashboardView != null) && name.equals(dashboardView.getDashboard().getName()));
     }
 
+    @Override
+    public void refresh() {
+        if (isInitialized()) {
+            dashboardView.rebuild();
+        }
+    }
+
 }

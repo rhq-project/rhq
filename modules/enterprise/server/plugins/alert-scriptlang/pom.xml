@@ -16,18 +16,6 @@
 
     <name>RHQ Enterprise Server Script lang Alert Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-scriptlang/
-        </connection>
-        <developerConnection>
-            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/alert-scriptlang/
-        </developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/alert-scriptlang/</scm.module.path>
-    </properties>
-
     <dependencies>
 
         <dependency>

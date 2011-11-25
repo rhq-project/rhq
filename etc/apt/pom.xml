@@ -15,15 +15,6 @@
    <name>RHQ Apt Plugin</name>
    <description>A plugin for managing the apt based features</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/apt</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/apt</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/apt/</scm.module.path>
-   </properties>
-
    <dependencies>
 
       <dependency>

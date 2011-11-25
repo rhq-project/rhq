@@ -71,6 +71,10 @@ public interface ResourceGWTService extends RemoteService {
 
     PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException;
 
+    List<ResourceInstallCount> findResourceComplianceCounts() throws RuntimeException;
+
+    List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException;
+
     Resource getPlatformForResource(int resourceId) throws RuntimeException;
 
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
@@ -94,5 +98,4 @@ public interface ResourceGWTService extends RemoteService {
 
     List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException;
 
-    List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException;
 }

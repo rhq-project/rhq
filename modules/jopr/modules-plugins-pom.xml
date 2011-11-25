@@ -17,15 +17,6 @@
 	<name>Jopr Plugins</name>
 	<description>parent POM for all Jopr plugins</description>
 
-    <scm>
-		<connection>scm:svn:http://svn.jboss.org/repos/jopr/tags/Jopr_2_3_0_EmbJopr_1_3_0-1/modules/plugins</connection>
-		<developerConnection>scm:svn:https://svn.jboss.org/repos/jopr/tags/Jopr_2_3_0_EmbJopr_1_3_0-1/modules/plugins</developerConnection>
-	</scm>
-
-    <properties>
-		<scm.module.path>modules/plugins/</scm.module.path>
-	</properties>
-
     <dependencies>
         <dependency>
           <groupId>${rhq.groupId}</groupId>

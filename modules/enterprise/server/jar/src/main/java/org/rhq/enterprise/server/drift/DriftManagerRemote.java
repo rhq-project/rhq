@@ -104,6 +104,8 @@ public interface DriftManagerRemote {
      */
     String getDriftFileBits(Subject subject, String hash);
 
+    byte[] getDriftFileAsByteArray(Subject subject, String hash);
+
     /**
      * Calculate and return requested Drift Snapshot.
      *  

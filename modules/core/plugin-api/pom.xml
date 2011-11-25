@@ -15,15 +15,6 @@
    <name>RHQ Plugin API</name>
    <description>RHQ Plugin API used to write custom plugins</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/plugin-api</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/plugin-api</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/core/plugin-api/</scm.module.path>
-  </properties>
-
    <dependencies>
 
       <!-- Internal Deps -->

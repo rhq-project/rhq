@@ -15,23 +15,12 @@
    <name>RHQ JMX Plugin</name>
    <description>a plugin for managing a generic JMX-enabled application</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jmx</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jmx</developerConnection>
-   </scm>
-
-   <properties>
-      <scm.module.path>modules/plugins/jmx/</scm.module.path>
-   </properties>
-
    <dependencies>
-
       <dependency>
          <groupId>mc4j</groupId>
          <artifactId>org-mc4j-ems</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
-
    </dependencies>
 
    <build>

@@ -15,13 +15,7 @@
    <name>RHQ SSHD Plugin</name>
    <description>A plugin for managing the OpenSSH daemon</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sshd</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sshd</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/sshd/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

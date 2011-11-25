@@ -13,22 +13,6 @@
 
     <name>RHQ Enterprise Server CLI Package Type Plugin</name>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/packagetype-cli/
-        </connection>
-        <developerConnection>
-            scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/packagetype-cli/
-        </developerConnection>
-    </scm>
-
-    <properties>
-        <scm.module.path>modules/enterprise/server/plugins/packagetype-cli/</scm.module.path>
-    </properties>
-
-    <dependencies>
-
-    </dependencies>
-
     <build>
         <plugins>
 

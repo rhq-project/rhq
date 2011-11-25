@@ -41,6 +41,15 @@ public class ResourceInstallCount implements Serializable {
     public ResourceInstallCount() {
     }
 
+    public ResourceInstallCount(String typeName, String typePlugin, ResourceCategory category, int typeId, long count) {
+        this(typeName, typePlugin, category, typeId, count, null, -1, -1);
+    }
+
+    public ResourceInstallCount(String typeName, String typePlugin, ResourceCategory category, int typeId, long count,
+        String version) {
+        this(typeName, typePlugin, category, typeId, count, version, -1, -1);
+    }
+
     public ResourceInstallCount(String typeName, String typePlugin, ResourceCategory category, int typeId, long count,
         String version, int numDriftTemplates, int inCompliance) {
         this.count = count;
@@ -52,16 +61,6 @@ public class ResourceInstallCount implements Serializable {
         this.numDriftTemplates = numDriftTemplates;
         this.inCompliance = inCompliance == 0;
     }
-
-
-    public ResourceInstallCount(String typeName, String typePlugin, ResourceCategory category, int typeId, long count) {
-        this.count = count;
-        this.typeName = typeName;
-        this.typePlugin = typePlugin;
-        this.category = category;
-        this.typeId = typeId;
-    }
-
 
     public long getCount() {
         return count;

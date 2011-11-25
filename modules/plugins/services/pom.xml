@@ -14,9 +14,6 @@
     <name>RHQ Services Plugin</name>
     <description>Do some System config services stuff</description>
 
-    <properties>
-        <scm.module.path>modules/plugins/services</scm.module.path>
-    </properties>
     <build>
         <plugins>
             <plugin>

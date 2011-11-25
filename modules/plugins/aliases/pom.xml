@@ -17,13 +17,7 @@
    <name>RHQ Aliases File Plugin</name>
    <description>A plugin for managing the system aliases file</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/aliases</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/aliases</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/aliases/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

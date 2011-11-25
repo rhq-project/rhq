@@ -15,13 +15,7 @@
    <name>RHQ Augeas-based Samba Plugin</name>
    <description>A plugin for managing the RHEL samba file</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/samba</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/samba</developerConnection>
-   </scm>
-
    <properties>
-      <scm.module.path>modules/plugins/samba/</scm.module.path>
       <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 

@@ -19,6 +19,7 @@
 package org.rhq.core.domain.common;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 /**
  * Product (i.e. RHQ or JON) information.
@@ -27,7 +28,7 @@ import java.io.Serializable;
  */
 public class ProductInfo implements Serializable {
     private static final long serialVersionUID = 1L;
-    
+
     private String shortName;
     private String name;
     private String fullName;
@@ -38,6 +39,7 @@ public class ProductInfo implements Serializable {
     private String version;
     private String buildNumber;
     private String helpDocRoot;
+    private HashMap<String, String> helpViewContent;
 
     public String getShortName() {
         return shortName;
@@ -117,5 +119,13 @@ public class ProductInfo implements Serializable {
 
     public void setHelpDocRoot(String helpDocRoot) {
         this.helpDocRoot = helpDocRoot;
+    }
+
+    public HashMap<String, String> getHelpViewContent() {
+        return helpViewContent;
+    }
+
+    public void setHelpViewContent(HashMap<String, String> helpViewContent) {
+        this.helpViewContent = helpViewContent;
     }
 }

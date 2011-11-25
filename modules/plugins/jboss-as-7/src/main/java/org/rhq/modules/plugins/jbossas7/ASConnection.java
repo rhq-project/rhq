@@ -183,14 +183,14 @@ public class ASConnection {
                 try {
                     br.close();
                 } catch (IOException e) {
-                    e.printStackTrace(); // TODO: Customise this generated block
+                    log.error(e.getMessage());
                 }
             }
             if (es != null) {
                 try {
                     es.close();
                 } catch (IOException e) {
-                    e.printStackTrace(); // TODO: Customise this generated block
+                    log.error(e.getMessage());
                 }
             }
             long t2 = System.currentTimeMillis();
@@ -245,7 +245,7 @@ public class ASConnection {
                 res = mapper.readValue(node, Result.class);
             return res;
         } catch (IOException e) {
-            e.printStackTrace(); // TODO: Customise this generated block
+            log.error(e.getMessage());
             return null;
         }
     }

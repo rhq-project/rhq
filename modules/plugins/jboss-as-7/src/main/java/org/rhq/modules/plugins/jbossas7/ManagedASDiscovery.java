@@ -62,72 +62,76 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
 
         for (ProcessScanResult psr : scans) {
 
-            // get the HostController, as this is an indicator for managed AS
-            String psName = psr.getProcessScan().getName();
-            if (!psName.equals("HostController"))
-                continue;
+            try {
+                // get the HostController, as this is an indicator for managed AS
+                String psName = psr.getProcessScan().getName();
+                if (!psName.equals("HostController"))
+                    continue;
 
-            // Now we have the host controller, lets get the host.xml file
-            // and obtain the servers from there.
-            ProcessInfo processInfo = psr.getProcessInfo();
-            readStandaloneOrHostXml(processInfo, true);
-            String hostName = findHostName();
-            HostPort managementHostPort = getManagementPortFromHostXml(processInfo.getCommandLine());
+                // Now we have the host controller, lets get the host.xml file
+                // and obtain the servers from there.
+                ProcessInfo processInfo = psr.getProcessInfo();
+                readStandaloneOrHostXml(processInfo, true);
+                String hostName = findHostName();
+                HostPort managementHostPort = getManagementPortFromHostXml(processInfo.getCommandLine());
 
-            List<ServerInfo> serverNames = getServersFromHostXml();
-            for (ServerInfo serverInfo : serverNames) {
+                List<ServerInfo> serverNames = getServersFromHostXml();
+                for (ServerInfo serverInfo : serverNames) {
 
-                Configuration config = discoveryContext.getDefaultPluginConfiguration();
-                config.put(new PropertySimple("domainHost", hostName));
-                config.put(new PropertySimple("group", serverInfo.group));
-                config.put(new PropertySimple("port", managementHostPort.port));
-                config.put(new PropertySimple("hostname", managementHostPort.host));
-                if (serverInfo.bindingGroup != null) {
-                    config.put(new PropertySimple("socket-binding-group", serverInfo.bindingGroup));
+                    Configuration config = discoveryContext.getDefaultPluginConfiguration();
+                    config.put(new PropertySimple("domainHost", hostName));
+                    config.put(new PropertySimple("group", serverInfo.group));
+                    config.put(new PropertySimple("port", managementHostPort.port));
+                    config.put(new PropertySimple("hostname", managementHostPort.host));
+                    if (serverInfo.bindingGroup != null) {
+                        config.put(new PropertySimple("socket-binding-group", serverInfo.bindingGroup));
+                        config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
+                    } else {
+                        HostPort dcHP = getDomainControllerFromHostXml();
+                        if (dcHP.port == 9999)
+                            dcHP.port = 9990; // TODO Hack until JBAS-9306 is solved
+
+                        ServerInfo dcInfo = getBindingsFromDC(dcHP, serverInfo.group);
+                        config.put(new PropertySimple("socket-binding-group", dcInfo.bindingGroup));
+                        config.put(new PropertySimple("socket-binding-port-offset", dcInfo.portOffset));
+                    }
                     config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
-                } else {
-                    HostPort dcHP = getDomainControllerFromHostXml();
-                    if (dcHP.port == 9999)
-                        dcHP.port = 9990; // TODO Hack until JBAS-9306 is solved
 
-                    ServerInfo dcInfo = getBindingsFromDC(dcHP, serverInfo.group);
-                    config.put(new PropertySimple("socket-binding-group", dcInfo.bindingGroup));
-                    config.put(new PropertySimple("socket-binding-port-offset", dcInfo.portOffset));
+                    String path = "host=" + hostName + ",server-config=" + serverInfo.name;
+                    config.put(new PropertySimple("path", path));
+
+                    // TODO this fails for the downed servers.
+                    // get from the domain or other place as soon as the domain provides it.
+                    String homeDir = getHomeDirFromCommandLine(processInfo.getCommandLine());
+                    initLogFile(scans, serverInfo.name, config, homeDir);
+
+                    String version = determineServerVersionFromHomeDir(homeDir);
+                    String resourceDescription;
+
+                    String resourceName = serverInfo.name;
+
+                    if (homeDir.contains("eap")) {
+                        version = "EAP " + version;
+                        resourceDescription = "Managed JBoss Enterprise Application Platform 6 server";
+                        resourceName = "EAP " + resourceName;
+                    }
+                    else {
+                        resourceDescription = "Managed AS7 server";
+                    }
+
+                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
+                        hostName + "/" + serverInfo.name, // key
+                        resourceName, // Name
+                        version, // TODO  get from Domain as soon as it is provided
+                            resourceDescription, // Description
+                        config, null);
+
+                    // Add to return values
+                    discoveredResources.add(detail);
+                    log.info("Discovered new ...  " + discoveryContext.getResourceType() + ", " + serverInfo);
                 }
-                config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
-
-                String path = "host=" + hostName + ",server-config=" + serverInfo.name;
-                config.put(new PropertySimple("path", path));
-
-                // TODO this fails for the downed servers.
-                // get from the domain or other place as soon as the domain provides it.
-                String homeDir = getHomeDirFromCommandLine(processInfo.getCommandLine());
-                initLogFile(scans, serverInfo.name, config, homeDir);
-
-                String version = determineServerVersionFromHomeDir(homeDir);
-                String resourceDescription;
-
-                String resourceName = serverInfo.name;
-
-                if (homeDir.contains("eap")) {
-                    version = "EAP " + version;
-                    resourceDescription = "Managed JBoss Enterprise Application Platform 6 server";
-                    resourceName = "EAP " + resourceName;
-                }
-                else {
-                    resourceDescription = "Managed AS7 server";
-                }
-
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
-                    hostName + "/" + serverInfo.name, // key
-                    resourceName, // Name
-                    version, // TODO  get from Domain as soon as it is provided
-                        resourceDescription, // Description
-                    config, null);
-
-                // Add to return values
-                discoveredResources.add(detail);
-                log.info("Discovered new ...  " + discoveryContext.getResourceType() + ", " + serverInfo);
+            } catch (Exception e) {
+                log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + psr + " :" + e.getMessage());
             }
         }
         return discoveredResources;

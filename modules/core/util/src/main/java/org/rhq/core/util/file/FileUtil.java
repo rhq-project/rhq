@@ -68,9 +68,9 @@ public class FileUtil {
     /**
      * Given a directory, this will recursively purge all child directories and files.
      * If dir is actually a normal file, it will be deleted but only if deleteIt is true.
-     * 
+     *
      * If deleteIt is true, the directory itself will be deleted, otherwise it will remain (albeit empty).
-     * 
+     *
      * @param dir the directory to purge (if <code>null</code>, this method does nothing and returns normally)
      * @param deleteIt if <code>true</code> delete the directory itself, otherwise leave it but purge its children
      */
@@ -297,7 +297,7 @@ public class FileUtil {
     /**
      * Strips the drive letter from the given Windows path. The drive letter is returned
      * or <code>null</code> is returned if there was no drive letter in the path.
-     *  
+     *
      * @param path the path string that will be altered to have its drive letter stripped.
      * @return if there was a drive letter, it will be returned. If no drive letter was in path, null is returned
      */
@@ -326,7 +326,7 @@ public class FileUtil {
      * Return just the filename portion (the portion right of the last path separator string)
      * @param path
      * @param separator
-     * @return null if path is null, otherwise the trimmed filename  
+     * @return null if path is null, otherwise the trimmed filename
      */
     public static String getFileName(String path, String separator) {
         if (null == path) {
@@ -353,11 +353,13 @@ public class FileUtil {
 
         while (!directories.isEmpty()) {
             File dir = directories.pop();
-            for (File file : dir.listFiles()) {
-                if (file.isDirectory()) {
-                    directories.push(file);
-                } else {
-                    visitor.visit(file);
+            if (dir.listFiles()!=null) {
+                for (File file : dir.listFiles()) {
+                    if (file.isDirectory()) {
+                        directories.push(file);
+                    } else {
+                        visitor.visit(file);
+                    }
                 }
             }
         }
@@ -444,7 +446,7 @@ public class FileUtil {
                 regex.append('.');
 
             } else if (c == '*') {
-                // ? match zero or more characters                
+                // ? match zero or more characters
                 if (i + 1 < pattern.length()) {
                     char c2 = pattern.charAt(i + 1);
                     if (c2 == '*') {

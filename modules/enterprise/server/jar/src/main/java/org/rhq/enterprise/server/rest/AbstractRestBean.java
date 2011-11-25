@@ -146,7 +146,7 @@ public class AbstractRestBean {
     protected <T>T getFromCache(Fqn fqn,Class<T> clazz) {
         Object o=null;
         if (treeCache.exists(fqn)) {
-            log.info("Hit for " + fqn.toString());
+            log.debug("Hit for " + fqn.toString());
             try{
                 Node n = treeCache.get(fqn);
                 Set<Integer> readers= (Set<Integer>) n.get("readers");
@@ -154,11 +154,10 @@ public class AbstractRestBean {
                     o = n.get("item");
                 }
                 else {
-                    log.info("No object for caller " +caller.toString() + " found");
+                    log.debug("No object for caller " +caller.toString() + " found");
                 }
             } catch (CacheException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
-                log.info("Miss for " + fqn.toString());
+                log.debug("Miss for " + fqn.toString());
             }
         }
         return (T)o;
@@ -187,9 +186,9 @@ public class AbstractRestBean {
             treeCache.put(fqn,"readers",readers);
             treeCache.put(fqn,"item",o);
             success = true;
-            log.info("Put " + fqn);
+            log.debug("Put " + fqn);
         } catch (CacheException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            log.warn(e.getMessage());
         }
         return success;
     }
@@ -235,7 +234,7 @@ public class AbstractRestBean {
             childParentMap.put(res.getId(), pid);
             treeCache.put(resourceMeta,"childParentMap",childParentMap);
         } catch (CacheException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            log.warn(e.getMessage());
         }
     }
 
@@ -269,7 +268,7 @@ public class AbstractRestBean {
                     ret.add(getFromCache(resId, Resource.class));
                 }
             } catch (CacheException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
+                log.warn(e.getMessage());
             }
 
         }
@@ -287,7 +286,7 @@ public class AbstractRestBean {
                 if (visibleResources.contains(resourceid))
                     res = getFromCache(resourceid,Resource.class);
             } catch (CacheException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
+                log.warn(e.getMessage());
             }
         }
 
@@ -316,7 +315,7 @@ public class AbstractRestBean {
         if (treeCache.exists(fqn)) {
             try {
                 treeCache.remove(fqn);
-                log.info("Cancel " + fqn);
+                log.debug("Cancel " + fqn);
                 return true;
             } catch (CacheException e) {
                 return false;

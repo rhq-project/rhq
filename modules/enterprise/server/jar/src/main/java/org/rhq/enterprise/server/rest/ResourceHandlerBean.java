@@ -200,7 +200,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         if (scheduleType.equals("metric"))
             scheduleType=DataType.MEASUREMENT.toString().toLowerCase();
 
-        Resource res = fetchResource(resourceId);
+        Resource res = resMgr.getResource(caller,resourceId); // Don't fetch(), as this would yield a LazyLoadException
 
         Set<MeasurementSchedule> schedules = res.getSchedules();
         List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
@@ -290,6 +290,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             Link link = new Link();
             link.setRel("alert");
             link.setHref("/alert/" + al.getId());
+            links.add(link);
         }
         return links;
     }

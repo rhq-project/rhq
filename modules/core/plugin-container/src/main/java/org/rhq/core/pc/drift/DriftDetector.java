@@ -222,8 +222,8 @@ public class DriftDetector implements Runnable {
                         if (!file.canRead()) {
                             if (log.isDebugEnabled()) {
                                 log.debug("Skipping " + file.getPath() + " since it is not readable.");
-                                return;
                             }
+                            return;
                         }
 
                         if (log.isInfoEnabled()) {

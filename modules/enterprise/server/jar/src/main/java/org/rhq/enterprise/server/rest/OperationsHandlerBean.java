@@ -1,8 +1,27 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.server.rest;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -14,6 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
@@ -24,6 +44,8 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.criteria.OperationHistoryCriteria;
@@ -40,6 +62,7 @@ import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
+import org.rhq.enterprise.server.rest.domain.OperationHistoryRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 
 /**
@@ -204,7 +227,13 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
             // todo check params
 
             // submit
-            ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,new Configuration(),"TEst");
+
+            Configuration parameters = new Configuration();
+            for (Map.Entry<String,Object> entry : operation.getParams().entrySet()) {
+                parameters.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
+            }
+            ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,
+                    parameters,"TEst");
             JobId jobId = new JobId(sched.getJobName(),sched.getJobGroup());
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/operation/history/{id}");
@@ -242,27 +271,45 @@ public class OperationsHandlerBean extends AbstractRestBean implements Operation
     @Override
     @GET
     @Path("history/{id}")
-    public Response outcome(@PathParam("id") String jobName) {
+    public Response outcome(@PathParam("id") String jobName, @Context UriInfo uriInfo) {
 
-/*
-        ResourceOperationSchedule schedule = opsManager.getResourceOperationSchedule(caller,operationHistoryId);
-        if (schedule==null)
-            throw new StuffNotFoundException("OperationSchedule with id " + operationHistoryId);
-*/
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
         criteria.addFilterJobId(new JobId(jobName));
 
-        OperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
+        ResourceOperationHistory history ;//= opsManager.getOperationHistoryByJobId(caller,jobName);
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
-        if (list==null || list.isEmpty())
+        if (list==null || list.isEmpty()) {
+            log.info("No history with id " + new HistoryJobId(jobName) + " found");
             throw new StuffNotFoundException("OperationHistory with id " + new HistoryJobId(jobName));
+        }
 
         history = list.get(0);
-        String ret = history.getStatus().getDisplayName();
-        // TODO get history.results with the help of the property definition
+        String status;
+        if (history.getStatus()==null)
+            status = " - no infomation yet -";
+        else
+            status = history.getStatus().getDisplayName();
 
-        return Response.ok(ret).build();
+        OperationHistoryRest hist = new OperationHistoryRest();
+        hist.setStatus(status);
+        if (history.getErrorMessage()!=null)
+            hist.setErrorMessage(history.getErrorMessage());
+        if (history.getResults()!=null) {
+            Configuration results = history.getResults();
+            for (Property p : results.getProperties()) {
+                hist.getResult().put(p.getName(),p.toString());
+            }
+        }
+
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/operation/history/{id}");
+        URI url = uriBuilder.build(new JobId(jobName));
+        Link self = new Link("self",url.toString());
+        hist.getLinks().add(self);
+
+
+        return Response.ok(hist).build();
 
     }
 }

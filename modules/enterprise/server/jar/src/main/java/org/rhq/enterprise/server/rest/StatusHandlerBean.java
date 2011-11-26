@@ -18,9 +18,12 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.util.Map;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -39,6 +42,7 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Status;
+import org.rhq.enterprise.server.system.SystemInfoManagerLocal;
 
 /**
  * Return system status
@@ -50,48 +54,14 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
 
 
     @EJB
-    MeasurementScheduleManagerLocal scheduleManager;
-    @EJB
-    ResourceManagerLocal resourceManager;
-    @EJB
-    AlertManagerLocal alertManager;
-    @EJB
-    AlertDefinitionManagerLocal alertDefinitionManager;
+    SystemInfoManagerLocal infoMgr;
 
     @Override
     public Response getStatus(HttpHeaders httpHeaders) {
 
+        Map<String,String> statusMap = infoMgr.getSystemInformation (caller);
         Status status = new Status();
-
-        ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterResourceCategories(ResourceCategory.PLATFORM);
-        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList<Resource> resList = resourceManager.findResourcesByCriteria(caller,criteria);
-        status.setPlatforms(resList.getTotalSize());
-        criteria = new ResourceCriteria();
-        criteria.addFilterResourceCategories(ResourceCategory.SERVER);
-        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        resList = resourceManager.findResourcesByCriteria(caller,criteria);
-        status.setServers(resList.getTotalSize());
-        criteria = new ResourceCriteria();
-        criteria.addFilterResourceCategories(ResourceCategory.SERVICE);
-        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        resList = resourceManager.findResourcesByCriteria(caller,criteria);
-        status.setServices(resList.getTotalSize());
-
-        AlertCriteria alertCriteria = new AlertCriteria();
-        alertCriteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList<Alert> alertList = alertManager.findAlertsByCriteria(caller,alertCriteria);
-        status.setAlerts(alertList.getTotalSize());
-
-        AlertDefinitionCriteria alertDefinitionCriteria = new AlertDefinitionCriteria();
-        alertDefinitionCriteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList<AlertDefinition> defList = alertDefinitionManager.findAlertDefinitionsByCriteria(caller,alertDefinitionCriteria);
-        status.setAlertDefinitions(defList.getTotalSize());
-
-        status.setSchedules(-1); // TODO
-
-        status.setMetricsMin(scheduleManager.getScheduledMeasurementsPerMinute());
+        status.setValues(statusMap);
 
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
         Response.ResponseBuilder builder;

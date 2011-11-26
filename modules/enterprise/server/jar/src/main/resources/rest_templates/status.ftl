@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,23 +27,10 @@
             <td>Name</td><td>Value</td>
         </tr>
         </thead>
+        <#list var.values?keys as key>
         <tr>
-            <td>Alert definitions</td><td>${var.alertDefinitions}</td>
+            <td>${key}</td><td>${var.values[key]}</td>
         </tr>
-        <tr>
-            <td>Alerts</td><td>${var.alerts}</td>
-        </tr>
-        <tr>
-            <td>Platforms</td><td>${var.platforms}</td>
-        </tr>
-        <tr>
-            <td>Servers</td><td>${var.servers}</td>
-        </tr>
-        <tr>
-            <td>Services</td><td>${var.services}</td>
-        </tr>
-        <tr>
-            <td>Metrics/min</td><td>${var.metricsMin}</td>
-        </tr>
+        </#list>
     </table>
 </html>

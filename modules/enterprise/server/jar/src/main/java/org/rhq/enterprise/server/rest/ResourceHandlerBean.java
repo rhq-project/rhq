@@ -31,6 +31,8 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
@@ -192,6 +194,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
     public Response getSchedules(int resourceId,
                                              String scheduleType,
+                                             boolean enabledOnly,
                                           @Context Request request,
                                           @Context HttpHeaders headers,
                                           @Context UriInfo uriInfo) {
@@ -200,7 +203,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         if (scheduleType.equals("metric"))
             scheduleType=DataType.MEASUREMENT.toString().toLowerCase();
 
-        Resource res = resMgr.getResource(caller,resourceId); // Don't fetch(), as this would yield a LazyLoadException
+        Resource res = resMgr.getResource(caller, resourceId); // Don't fetch(), as this would yield a LazyLoadException
 
         Set<MeasurementSchedule> schedules = res.getSchedules();
         List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
@@ -212,26 +215,28 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
             if ("all".equals(scheduleType) ||
                     scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase()) ) {
-                MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                        schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
-                        definition.getDataType().toString());
-                UriBuilder uriBuilder;
-                URI uri;
-                if (definition.getDataType()== DataType.MEASUREMENT) {
+                if (!enabledOnly || (enabledOnly && schedule.isEnabled() )) {
+                    MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                            schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                            definition.getDataType().toString());
+                    UriBuilder uriBuilder;
+                    URI uri;
+                    if (definition.getDataType()== DataType.MEASUREMENT) {
+                        uriBuilder = uriInfo.getBaseUriBuilder();
+                        uriBuilder.path("/metric/data/{id}");
+                        uri = uriBuilder.build(schedule.getId());
+                        Link metricLink = new Link("metric",uri.toString());
+                        ms.addLink(metricLink);
+                    }
+                    // create link to the resource
                     uriBuilder = uriInfo.getBaseUriBuilder();
-                    uriBuilder.path("/metric/data/{id}");
-                    uri = uriBuilder.build(schedule.getId());
-                    Link metricLink = new Link("metric",uri.toString());
-                    ms.addLink(metricLink);
-                }
-                // create link to the resource
-                uriBuilder = uriInfo.getBaseUriBuilder();
-                uriBuilder.path("resource/" + schedule.getResource().getId());
-                uri = uriBuilder.build();
-                Link link = new Link("resource",uri.toString());
-                ms.addLink(link);
+                    uriBuilder.path("resource/" + schedule.getResource().getId());
+                    uri = uriBuilder.build();
+                    Link link = new Link("resource",uri.toString());
+                    ms.addLink(link);
 
-                ret.add(ms);
+                    ret.add(ms);
+                }
             }
         }
 

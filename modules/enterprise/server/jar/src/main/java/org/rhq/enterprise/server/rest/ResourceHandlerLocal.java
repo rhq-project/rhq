@@ -87,6 +87,7 @@ public interface ResourceHandlerLocal {
     @Cache(isPrivate = true,maxAge = 60)
     Response getSchedules(@PathParam("id") int resourceId,
                                       @QueryParam("type") @DefaultValue("all") String scheduleType,
+                                      @QueryParam("enabledOnly") @DefaultValue("true") boolean enabledOnly,
                                       @Context Request request,
                                       @Context HttpHeaders headers,
                                       @Context UriInfo uriInfo);

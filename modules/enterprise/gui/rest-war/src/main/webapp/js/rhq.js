@@ -1,17 +1,44 @@
-function whisker(scheduleId,divId) {
-// Width and height of the chart to print
-    var w = 240,
-            h = 125;
+var rhq = {
 
-// div#one is the div with the id 'one' ( <div id="one"/>)
-    var svg = d3.select("body").select("div#"+divId).append("svg:svg")
-            .attr("width", w)
-            .attr("height", h);
-//  .append("svg:g");
-//    .attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")");
+dashboard : function() {
+    // get all platforms
+    $.get('/rest/1/resource/platforms', function(data) {
+
+    var table = $("#table");
+    for (var i = 0; i < data.length ; i++ ) {
+      var resource = data[i];
+
+      var rowId = "tr" + i ;
+      table.append('<tr id="'+ rowId + '">');
+
+      // Now get the schedules for this resource
+      var resId = resource.resourceId;
+      console.log(resId);
+
+         $.getJSON("/rest/1/resource/"+resId+"/schedules.json?type=metric&enabledOnly=true", function (json2) {
+
+         var tr = $("#" + rowId);
+         for ( var n = 0 ; n < json2.length ; n ++ ) {
+            var tdid = "td_" + i + "_" + n;
+            var schedule = json2[n];
+            var td = tr.append('<td id="'+tdid+'">');
+            $("#"+tdid).html(schedule.displayName + " (" + schedule.scheduleId + ')<br/><div id="d' + tdid +'"/>');
+          rhq.whisker(schedule.scheduleId,tdid,180,90);
+         }
+        })
+     }
+    })
+    },
+whisker: function(scheduleId,divId,w,h) {
+
     d3.json(
             '/rest/1/metric/data/'+scheduleId+'.json?hideEmpty=true',
             function (jsondata) {
+//   console.log(scheduleId +", "+ divId);
+    var svg = d3.select("body").select("#"+divId);
+       svg=svg.append("svg:svg")
+            .attr("width", w)
+            .attr("height", h);
 
                 var points = jsondata.dataPoints;
                 var minVal = jsondata.min;
@@ -22,7 +49,6 @@ function whisker(scheduleId,divId) {
 
                 var minTsD = new Date(minTs);
                 var maxTsD = new Date(maxTs);
-                console.log(minTs, minTsD, maxTs, maxTsD);
 
                 // X axis goes from lowest to highest timestamp
                 var x = d3.time.scale().domain([minTsD,maxTsD]).range([0,w]);
@@ -89,4 +115,6 @@ function whisker(scheduleId,divId) {
                         .attr("fill", "lightpink");
 
             });
-}
+} // whisker
+
+};//var rhq

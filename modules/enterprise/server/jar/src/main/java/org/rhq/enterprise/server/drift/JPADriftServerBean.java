@@ -346,8 +346,10 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
                         if (version > 0) {
                             for (FileEntry entry : reader) {
-                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                boolean addToList =
+                                    isBinaryContentStorageEnabled() || !DriftUtil.isBinaryFile(entry.getFile());
+                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles, addToList);
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
 
                                 // TODO Figure out an efficient way to save coverage change sets.
                                 // The initial/coverage change set could contain hundreds or even thousands
@@ -373,7 +375,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             summary.setInitialChangeSet(true);
                             JPADriftSet driftSet = new JPADriftSet();
                             for (FileEntry entry : reader) {
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                boolean addToList =
+                                    isBinaryContentStorageEnabled() || !DriftUtil.isBinaryFile(entry.getFile());
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
                                 String path = FileUtil.useForwardSlash(entry.getFile());
                                 // A Drift always has a changeSet. Note that in this code section the changeset is
                                 // always going to be set to a DriftDefinition's changeSet. But that is not always the
@@ -430,7 +434,12 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         }
     }
 
-    private JPADriftFile getDriftFile(String sha256, List<JPADriftFile> emptyDriftFiles) {
+    private boolean isBinaryContentStorageEnabled() {
+        String binaryContent = System.getProperty("default.rhq.server.drift.binary.content", "0");
+        return binaryContent.equals("1");
+    }
+
+    private JPADriftFile getDriftFile(String sha256, List<JPADriftFile> emptyDriftFiles, boolean addToList) {
         JPADriftFile result = null;
 
         if (null == sha256 || "0".equals(sha256)) {
@@ -441,7 +450,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         // if the JPADriftFile is not yet in the db, then it needs to be fetched from the agent
         if (null == result) {
             result = persistDriftFile(new JPADriftFile(sha256));
-            emptyDriftFiles.add(result);
+            if (addToList) {
+                emptyDriftFiles.add(result);
+            }
         }
 
         return result;

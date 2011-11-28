@@ -22,7 +22,7 @@
 
    <property name="rhq.sync.endpoint-address" value="false"/>
 
-   <property name="default.rhq.server.drift.binary.content" value="0"/>
+   <property name="default.rhq.server.drift.binary.content" value="false"/>
 
    <target name="set-predeploy-prop">
       <condition property="predeploy" value="true">
@@ -48,6 +48,7 @@
       <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.dev.quartz.driverDelegateClass}" />
       <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.dev.quartz.selectWithLockSQL}" />
       <property name="rhq.server.quartz.lockHandlerClass" value="${rhq.dev.quartz.lockHandlerClass}" />
+      <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
    </target>
 
    <target name="set-default-server-props" unless="predeploy">
@@ -65,6 +66,7 @@
       <property name="rhq.server.quartz.driverDelegateClass" value="${default.rhq.server.quartz.driverDelegateClass}" />
       <property name="rhq.server.quartz.selectWithLockSQL" value="${default.rhq.server.quartz.selectWithLockSQL}" />
       <property name="rhq.server.quartz.lockHandlerClass" value="${default.rhq.server.quartz.lockHandlerClass}" />
+      <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
    </target>
 
    <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -604,12 +606,13 @@ rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 # you have to deal with IP address changes.
 rhq.sync.endpoint-address=false
 
-# Enabling this property has two effects. First, it will cause the server to
-# request that agents send binary content for files being monitored for drift.
-# Secondly, the server will persist that binary content. The property is
-# enabled when it is to set a value of 1. Any other value will cause this
-# feature to be disabled.
-# default.rhq.server.drift.binary.content=0
+# When this is enabled, the server will request that agents send content for
+# for binary files that are being monitored for drift. The content for those
+# files will then be persisted on the server. By default, the server does not
+# persist content for well known binary file types like .ear, .war, .zip, .so,
+# etc. The server does however persist content for text files or any other
+# files that are not known binary types.
+# rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
 
 # Auto-Install Pre-Configuration Settings
 # If you wish to circumvent the installer webapp and auto-install the server

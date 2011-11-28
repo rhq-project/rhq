@@ -306,6 +306,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         throws Exception {
         final Resource resource = getResource(resourceId);
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
+        final boolean storeBinaryContent = isBinaryContentStorageEnabled();
 
         try {
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
@@ -346,8 +347,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
                         if (version > 0) {
                             for (FileEntry entry : reader) {
-                                boolean addToList =
-                                    isBinaryContentStorageEnabled() || !DriftUtil.isBinaryFile(entry.getFile());
+                                boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
                                 JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles, addToList);
                                 JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
 
@@ -375,8 +375,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             summary.setInitialChangeSet(true);
                             JPADriftSet driftSet = new JPADriftSet();
                             for (FileEntry entry : reader) {
-                                boolean addToList =
-                                    isBinaryContentStorageEnabled() || !DriftUtil.isBinaryFile(entry.getFile());
+                                boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
                                 JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
                                 String path = FileUtil.useForwardSlash(entry.getFile());
                                 // A Drift always has a changeSet. Note that in this code section the changeset is
@@ -435,8 +434,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     private boolean isBinaryContentStorageEnabled() {
-        String binaryContent = System.getProperty("default.rhq.server.drift.binary.content", "0");
-        return binaryContent.equals("1");
+        String binaryContent = System.getProperty("rhq.server.drift.store-binary-content", "false");
+        return binaryContent.equals("true");
     }
 
     private JPADriftFile getDriftFile(String sha256, List<JPADriftFile> emptyDriftFiles, boolean addToList) {

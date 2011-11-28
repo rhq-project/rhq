@@ -285,7 +285,7 @@ set_local_and_environment_variables()
 
    if [ "$RELEASE_TYPE" = "enterprise" ];
    then
-      MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
+      MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Pdisable-tags -DTagManager=false -Dfiltered.location=target/filtered-sources/java"
    fi
 
    if [ -n "$DEBUG_MODE" ]; then
@@ -496,7 +496,11 @@ checkout_release_branch()
        [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
 
        git checkout --track "origin/$RELEASE_BRANCH"
-       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
+       if [ "$?" -ne 0 ];
+       then
+         git checkout "$RELEASE_BRANCH"
+       fi
+       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)." 
 
        git reset --hard "origin/$RELEASE_BRANCH"
        [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."

@@ -66,6 +66,17 @@ public class DriftConfigurationDefinition implements Serializable {
     // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
     public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
 
+    // because we know drift definition base directory paths and filter paths will actually be used by the agent's
+    // plugin container as part of regex expressions, we must make sure they are restricted to only be characters
+    // valid for file system paths and regex.  And, additionally for filter patterns, the (ant-style) filter
+    // wildcards. Thus, we only allow the base paths to include the separator characters "\", "/", the windows
+    // drive character ":" and the filename characters (see PROP_NAME_REGEX_PATTERN).  Filter paths can
+    // contain the same as the base path, less the drive character.  And filter patterns are the same as
+    // filter paths, plus the wildcard characters. "*", "?".
+    public static final String PROP_BASEDIR_PATH_REGEX_PATTERN = "[ \\.\\-\\w/\\:\\\\]+";
+    public static final String PROP_FILTER_PATH_REGEX_PATTERN = "[ \\.\\-\\w/\\\\]+";
+    public static final String PROP_FILTER_PATTERN_REGEX_PATTERN = "[ \\.\\-\\w/\\\\\\?\\*]+";
+
     public static final boolean DEFAULT_ENABLED = true;
     public static final boolean DEFAULT_ATTACHED = true;
     public static final long DEFAULT_INTERVAL = 1800L;
@@ -103,9 +114,9 @@ public class DriftConfigurationDefinition implements Serializable {
     private static final ConfigurationDefinition NEW_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE = new ConfigurationDefinition(
         "NEW_RESOURCE_DRIFT_DEF_BY_PINNED_TEMPLATE", "A new resource drift definition created from a pinned template");
 
-    private static final ConfigurationDefinition EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE =
-        new ConfigurationDefinition("EXISTING_RESOURCE_DRIFT_DEF_BY_PINNED_TEMPLATE",
-            "An existing resource drift definition created from a pinned template");
+    private static final ConfigurationDefinition EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE = new ConfigurationDefinition(
+        "EXISTING_RESOURCE_DRIFT_DEF_BY_PINNED_TEMPLATE",
+        "An existing resource drift definition created from a pinned template");
 
     private static final ConfigurationDefinition NEW_TEMPLATE_INSTANCE = new ConfigurationDefinition(
         "NEW_TEMPLATE_DRIFT_CONFIG_DEF", "A new template drift definition");
@@ -201,10 +212,13 @@ public class DriftConfigurationDefinition implements Serializable {
         EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createName(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
             true));
-        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createDescription(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
-        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createInterval(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE
+            .put(createDescription(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE
+            .put(createInterval(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
         EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createEnabled(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
-        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createDriftHandlingMode(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
+        EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE
+            .put(createDriftHandlingMode(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE));
         EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createBasedir(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
             true));
         EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE.put(createIncludes(EXISTING_RESOURCE_INSTANCE_BY_PINNED_TEMPLATE,
@@ -261,9 +275,9 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setAllowCustomEnumeratedValue(false);
         pd.setConfigurationDefinition(configDef);
 
-        RegexConstraint constrait = new RegexConstraint();
-        constrait.setDetails(PROP_NAME_REGEX_PATTERN);
-        pd.addConstraints(constrait);
+        RegexConstraint constraint = new RegexConstraint();
+        constraint.setDetails(PROP_NAME_REGEX_PATTERN);
+        pd.addConstraints(constraint);
 
         return pd;
     }
@@ -303,10 +317,10 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createAttached(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_ATTACHED;
-        String description = "A flag that indicates whether or not the definition is attached to the template from " +
-            "which it is created. When a template is updated, the changes will be propagated to any attached " +
-            "definitions. Furthermore, if you pin an existing template to a snapshot, then attached definitions will " +
-            "become pinned as well. Finally, if you delete a template, attached definitions will also be deleted.";
+        String description = "A flag that indicates whether or not the definition is attached to the template from "
+            + "which it is created. When a template is updated, the changes will be propagated to any attached "
+            + "definitions. Furthermore, if you pin an existing template to a snapshot, then attached definitions will "
+            + "become pinned as well. Finally, if you delete a template, attached definitions will also be deleted.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.BOOLEAN;
 
@@ -461,6 +475,11 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);
+
+        RegexConstraint constraint = new RegexConstraint();
+        constraint.setDetails(PROP_BASEDIR_PATH_REGEX_PATTERN);
+        pd.addConstraints(constraint);
+
         return pd;
     }
 
@@ -477,6 +496,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(8);
         pd.setConfigurationDefinition(configDef);
+
         return pd;
     }
 
@@ -493,6 +513,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
+
         return pd;
     }
 
@@ -508,12 +529,17 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(0);
         pd.setAllowCustomEnumeratedValue(false);
+
+        RegexConstraint constraint = new RegexConstraint();
+        constraint.setDetails(PROP_FILTER_PATH_REGEX_PATTERN);
+        pd.addConstraints(constraint);
+
         return pd;
     }
 
     private static PropertyDefinitionSimple createIncludePattern(boolean readOnly) {
         String name = PROP_PATTERN;
-        String description = "Pathname pattern that must match for the items in the directory path to be included.";
+        String description = "Pathname pattern that must match for the items in the directory path to be included. '*' matches zero or more characters, '?' matches one character. For example, '*.txt' (no quotes) will match text files in the filter's path directory.  '**/*.txt' will match text files in any subdirectory below the filter's path directory";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.STRING;
 
@@ -523,6 +549,11 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);
+
+        RegexConstraint constraint = new RegexConstraint();
+        constraint.setDetails(PROP_FILTER_PATTERN_REGEX_PATTERN);
+        pd.addConstraints(constraint);
+
         return pd;
     }
 

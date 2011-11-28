@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -62,7 +63,7 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
 
             int packageTypeId = Integer.parseInt(getFormField(formFields, "packageTypeId", null));
             String packageName = getFormField(formFields, "name", file.getName());
-            packageName = new File(packageName).getName();
+            packageName = FileUtil.getFileName(FileUtil.useForwardSlash(packageName), "/"); // strip path, get just filename
             String version = getFormField(formFields, "version", "0");
             String archIdField = getFormField(formFields, "archId", null);
             int architectureId = (null != archIdField) ? Integer.parseInt(archIdField) : contentManager

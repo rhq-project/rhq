@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -36,6 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
@@ -49,6 +52,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -76,12 +81,15 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
     public static final String ATTR_CHANGE_SET_VERSION = "changesetVersion";
     public static final String ATTR_COMPLIANCE = "compliance";
     public static final String ATTR_COMPLIANCE_ICON = "complianceIcon";
+    public static final String ATTR_ATTACHED = "attached";
+    public static final String ATTR_TEMPLATE = "template";
 
     public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
     public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private EntityContext entityContext;
+    private Set<Permission> globalPermissions;
 
     public DriftDefinitionDataSource() {
         this(EntityContext.forSubsystemView());
@@ -112,8 +120,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
             public void onRecordClick(RecordClickEvent event) {
                 switch (entityContext.getType()) {
                 case Resource:
-                    CoreGUI.goToView(LinkManager.getDriftCarouselSnapshotLink(entityContext.getResourceId(), event
-                        .getRecord().getAttributeAsInt(ATTR_ID), 0));
+                    CoreGUI.goToView(LinkManager.getDriftDefinitionInitialSnapshotLink(entityContext.getResourceId(),
+                        event.getRecord().getAttributeAsInt(ATTR_ID)));
                     break;
                 default:
                     throw new IllegalArgumentException("Entity Type not supported");
@@ -157,24 +165,52 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
                 int complianceCode = record.getAttributeAsInt(ATTR_COMPLIANCE);
                 DriftComplianceStatus complianceStatus = DriftComplianceStatus.fromCode(complianceCode);
                 switch (complianceStatus) {
-                    case OUT_OF_COMPLIANCE_NO_BASEDIR: return MSG.view_drift_table_out_of_compliance_no_basedir();
-                    case OUT_OF_COMPLIANCE_DRIFT: return MSG.view_drift_table_out_of_compliance_drift();
-                    default: return "";
+                case OUT_OF_COMPLIANCE_NO_BASEDIR:
+                    return MSG.view_drift_table_hover_outOfCompliance_noBaseDir();
+                case OUT_OF_COMPLIANCE_DRIFT:
+                    return MSG.view_drift_table_hover_outOfCompliance_drift();
+                default:
+                    return "";
                 }
             }
         });
         fields.add(inComplianceField);
 
+        /*
         ListGridField driftHandlingModeField = new ListGridField(ATTR_DRIFT_HANDLING_MODE, MSG
             .view_drift_table_driftHandlingMode());
         fields.add(driftHandlingModeField);
+        */
 
+        /*
         ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
         fields.add(intervalField);
+        */
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
         changeSetTimeField.setCanSortClientOnly(true);
         fields.add(baseDirField);
+
+        ListGridField attachedField = new ListGridField(ATTR_ATTACHED, MSG.view_drift_table_attached());
+        fields.add(attachedField);
+
+        ListGridField templateField = new ListGridField(ATTR_TEMPLATE, MSG.view_drift_table_template());
+        templateField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                DriftDefinition def = (DriftDefinition) listGridRecord.getAttributeAsObject(ATTR_ENTITY);
+                if (null != globalPermissions && globalPermissions.contains(Permission.MANAGE_SETTINGS)) {
+                    int typeId = def.getResource().getResourceType().getId();
+                    int templateId = def.getTemplate().getId();
+                    String link = LinkManager.getDriftTemplateLink(typeId, templateId);
+                    return SeleniumUtility.getLocatableHref(link, o.toString(), null);
+
+                } else {
+                    return o.toString();
+                }
+            }
+        });
+        templateField.setCanSortClientOnly(true);
+        fields.add(templateField);
 
         ListGridField editField = new ListGridField(ATTR_EDIT, MSG.common_title_edit());
         editField.setType(ListGridFieldType.IMAGE);
@@ -225,9 +261,12 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
 
             nameField.setWidth("20%");
             enabledField.setWidth(60);
-            driftHandlingModeField.setWidth("10%");
-            intervalField.setWidth(100);
+            inComplianceField.setWidth(100);
+            //driftHandlingModeField.setWidth("10%");
+            //intervalField.setWidth(100);
             baseDirField.setWidth("*");
+            attachedField.setWidth(70);
+            templateField.setWidth("25%");
             pinnedField.setWidth(70);
             changeSetField.setWidth(70);
             changeSetTimeField.setWidth(100);
@@ -239,10 +278,12 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
             changeSetField.setWidth(70);
             changeSetTimeField.setWidth(100);
             enabledField.setWidth(60);
-            inComplianceField.setWidth(60);
-            driftHandlingModeField.setWidth("15%");
-            intervalField.setWidth(70);
+            inComplianceField.setWidth(100);
+            //driftHandlingModeField.setWidth("15%");
+            //intervalField.setWidth(70);
             baseDirField.setWidth("*");
+            attachedField.setWidth(70);
+            templateField.setWidth("25%");
             pinnedField.setWidth(70);
             editField.setWidth(70);
         }
@@ -261,8 +302,21 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
                     processResponse(request.getRequestId(), response);
                 }
 
-                public void onSuccess(PageList<DriftDefinitionComposite> result) {
-                    dataRetrieved(result, response, request);
+                public void onSuccess(final PageList<DriftDefinitionComposite> result) {
+
+                    // if we don't have them grab the global perms to see later if we can link to to templates.
+                    if (null == globalPermissions) {
+                        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+                            @Override
+                            public void onPermissionsLoaded(Set<Permission> permissions) {
+                                globalPermissions = (permissions != null) ? permissions : new HashSet<Permission>();
+                                dataRetrieved(result, response, request);
+                            }
+                        });
+
+                    } else {
+                        dataRetrieved(result, response, request);
+                    }
                 }
             });
     }
@@ -322,12 +376,14 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         }
 
         criteria.fetchConfiguration(true);
+        criteria.fetchTemplate(true);
 
         // filter out unsortable fields (i.e. fields sorted client-side only)
         PageControl pageControl = getPageControl(request);
         pageControl.removeOrderingField(ATTR_BASE_DIR_STRING);
         pageControl.removeOrderingField(ATTR_CHANGE_SET_CTIME);
         pageControl.removeOrderingField(ATTR_CHANGE_SET_VERSION);
+        pageControl.removeOrderingField(ATTR_TEMPLATE);
         criteria.setPageControl(pageControl);
 
         return criteria;
@@ -349,7 +405,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         ListGridRecord record = new ListGridRecord();
 
         // We need this for Detect Now support
-        record.setAttribute(ATTR_ENTITY, from.getDriftDefinition());
+        record.setAttribute(ATTR_ENTITY, def);
 
         record.setAttribute(ATTR_ID, def.getId());
         record.setAttribute(ATTR_NAME, def.getName());
@@ -359,12 +415,14 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_IS_ENABLED, String.valueOf(def.isEnabled()));
         record.setAttribute(ATTR_IS_ENABLED_ICON, ImageManager.getAvailabilityIcon(def.isEnabled()));
         record.setAttribute(ATTR_COMPLIANCE, def.getComplianceStatus().ordinal());
-        record.setAttribute(ATTR_COMPLIANCE_ICON, ImageManager.getAvailabilityIcon(
-            def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
+        record.setAttribute(ATTR_COMPLIANCE_ICON, ImageManager
+            .getAvailabilityIcon(def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
         record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
             .getUnpinnedIcon());
+        record.setAttribute(ATTR_ATTACHED, def.isAttached() ? MSG.common_val_yes() : MSG.common_val_no());
+        record.setAttribute(ATTR_TEMPLATE, def.getTemplate().getName());
 
         record.setAttribute(ATTR_CHANGE_SET_VERSION, (null != changeSet) ? String.valueOf(changeSet.getVersion()) : MSG
             .common_label_none());

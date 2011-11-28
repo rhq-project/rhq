@@ -65,10 +65,14 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
+    public enum DetailView {
+        Carousel, Edit, InitialSnapshot
+    };
+
     private EntityContext context;
     private boolean hasWriteAccess;
     private DriftDefinitionDataSource dataSource;
-    private boolean useEditDetailsView;
+    private DetailView detailsView = DetailView.Carousel;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -141,14 +145,14 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_defConfirm(),
+        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_confirm_deleteDefs(),
             new AbstractTableAction(deleteEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     delete(selection);
                 }
             });
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_defConfirmAll(),
+        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_confirm_deleteAllDefs(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
@@ -243,10 +247,17 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
 
     @Override
     public void renderView(ViewPath viewPath) {
-        // we have two detail views for drift defs, the config editor and the carousel. figure out which one we're
-        // dealing with. The default is the carousel, anything further in the path we assume to be /Edit 
-        if (!viewPath.isEnd()) {
-            this.useEditDetailsView = !viewPath.isNextEnd() && "Edit".equals(viewPath.getNext().getPath());
+        // we have three detail views for drift defs, the carousel, the the config editor, and the initial snapshot.
+        // Figure out which one we're dealing with. The default is the carousel. 
+        this.detailsView = DetailView.Carousel;
+
+        if (!viewPath.isEnd() && !viewPath.isNextEnd()) {
+            if (DetailView.Edit.name().equals(viewPath.getNext().getPath())) {
+                this.detailsView = DetailView.Edit;
+
+            } else if (DetailView.InitialSnapshot.name().equals(viewPath.getNext().getPath())) {
+                this.detailsView = DetailView.InitialSnapshot;
+            }
         }
 
         super.renderView(viewPath);
@@ -254,11 +265,17 @@ public class DriftDefinitionsView extends TableSection<DriftDefinitionDataSource
 
     @Override
     public Canvas getDetailsView(Integer driftDefId) {
-        if (this.useEditDetailsView) {
-            return new DriftDefinitionEditView(extendLocatorId("DefinitionEdit"), context, driftDefId, hasWriteAccess);
-        }
+        switch (detailsView) {
+        case Edit:
+            return new DriftDefinitionEditView(extendLocatorId("Edit"), context, driftDefId, hasWriteAccess);
 
-        return new DriftCarouselView(extendLocatorId("Carousel"), context, driftDefId, hasWriteAccess);
+        case InitialSnapshot:
+            return new DriftSnapshotView(extendLocatorId("InitialSnapshot"), null, context.getResourceId(), driftDefId,
+                0, hasWriteAccess);
+
+        default:
+            return new DriftCarouselView(extendLocatorId("Carousel"), context, driftDefId, hasWriteAccess);
+        }
     }
 
     public EntityContext getContext() {

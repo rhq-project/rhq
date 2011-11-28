@@ -47,6 +47,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -107,8 +108,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
         for (OperationDefinition operationDefinition : operationDefinitions) {
             this.operationIdToNameMap.put(operationDefinition.getId(), operationDefinition.getName());
             this.operationNameToDescriptionMap.put(operationDefinition.getName(), operationDefinition.getDescription());
-            this.operationNameToParametersDefinitionMap.put(operationDefinition.getName(), operationDefinition
-                .getParametersConfigurationDefinition());
+            this.operationNameToParametersDefinitionMap.put(operationDefinition.getName(),
+                operationDefinition.getParametersConfigurationDefinition());
         }
     }
 
@@ -175,13 +176,13 @@ public abstract class AbstractOperationScheduleDetailsView extends
             }
         });
 
-        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION, MSG
-            .view_operationScheduleDetails_field_description());
+        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION,
+            MSG.view_operationScheduleDetails_field_description());
         this.operationDescriptionItem.setShowTitle(false);
         items.add(this.operationDescriptionItem);
 
-        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS, MSG
-            .view_operationScheduleDetails_field_parameters());
+        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS,
+            MSG.view_operationScheduleDetails_field_parameters());
         this.operationParametersItem.setColSpan(2);
         items.add(this.operationParametersItem);
 
@@ -237,20 +238,21 @@ public abstract class AbstractOperationScheduleDetailsView extends
         supportedUnits.add(TimeUnit.SECONDS);
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
-        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, MSG
-            .view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly(), this.notesForm);
-        timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout());
+        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
+            MSG.view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly(), this.notesForm);
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+        timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout(productInfo.getShortName()));
         notesFields.add(timeoutItem);
 
         if (!isNewRecord()) {
             StaticTextItem nextFireTimeItem = new StaticTextItem(
-                AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME, MSG
-                    .dataSource_operationSchedule_field_nextFireTime());
+                AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
+                MSG.dataSource_operationSchedule_field_nextFireTime());
             notesFields.add(nextFireTimeItem);
         }
 
-        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, MSG
-            .dataSource_operationSchedule_field_description());
+        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION,
+            MSG.dataSource_operationSchedule_field_description());
         notesItem.setWidth(450);
         notesItem.setHeight(60);
         notesItem.setShowTitle(true);
@@ -336,8 +338,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     @Override
     protected void save(DSRequest requestProperties) {
         if ((null != this.operationParametersConfigurationEditor && !this.operationParametersConfigurationEditor
-            .isValid())
-            || !this.triggerEditor.validate()) {
+            .isValid()) || !this.triggerEditor.validate()) {
             {
                 Message message = new Message(MSG.widget_recordEditor_warn_validation(this.getDataTypeName()),
                     Message.Severity.Warning, EnumSet.of(Message.Option.Transient));

@@ -132,4 +132,9 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     public String getDriftFileBits(Subject subject, String hash) {
         return getJPADriftServer().getDriftFileBits(hash);
     }
+
+    @Override
+    public byte[] getDriftFileAsByteArray(Subject subject, String hash) {
+        return getJPADriftServer().getDriftFileAsByteArray(hash);
+    }
 }

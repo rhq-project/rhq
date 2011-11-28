@@ -23,8 +23,10 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -76,6 +78,15 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
+        if (wizard.getEntityContext().getType() == EntityContext.Type.ResourceTemplate) {
+            Configuration templateConfig = editor.getConfiguration();
+            PropertySimple templateNameProp = templateConfig.getSimple(DriftConfigurationDefinition.PROP_NAME);
+
+            if (!isTemplateNameUnique(templateNameProp.getStringValue())) {
+                templateNameProp.setErrorMessage(MSG.view_drift_wizard_pinTemplate_duplicate_name_error());
+            }
+        }
+
         if (editor != null && editor.validate()) {
             wizard.setNewConfiguration(editor.getConfiguration());
             wizard.execute();
@@ -83,6 +94,15 @@ public class DriftAddDefinitionWizardConfigStep extends AbstractWizardStep {
         }
 
         return false;
+    }
+
+    private boolean isTemplateNameUnique(String templateName) {
+        for (DriftDefinitionTemplate template : wizard.getType().getDriftDefinitionTemplates()) {
+            if (template.getName().equals(templateName)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public String getName() {

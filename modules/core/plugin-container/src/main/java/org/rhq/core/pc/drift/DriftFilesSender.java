@@ -1,8 +1,10 @@
 package org.rhq.core.pc.drift;
 
-import static org.rhq.core.util.file.FileUtil.copyFile;
-
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -13,6 +15,7 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.util.stream.StreamUtil;
 
 public class DriftFilesSender implements Runnable {
 
@@ -60,7 +63,8 @@ public class DriftFilesSender implements Runnable {
                 if (file == null || !file.exists()) {
                     log.warn("Unable to find file for " + driftFile);
                 } else {
-                    copyFile(file, new File(contentDir, driftFile.getHashId()));
+                    StreamUtil.copy(new BufferedInputStream(new FileInputStream(file)), new BufferedOutputStream(
+                        new FileOutputStream(new File(contentDir, driftFile.getHashId()))), true);
                 }
             }
             driftClient.sendChangeSetContentToServer(resourceId, headers.getDriftDefinitionName(), contentDir);
@@ -72,11 +76,15 @@ public class DriftFilesSender implements Runnable {
     private File find(DriftFile driftFile) throws IOException {
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, headers.getDriftDefinitionName());
 
-        for (FileEntry entry : reader) {
-            if (entry.getNewSHA().equals(driftFile.getHashId())) {
-                return new File(headers.getBasedir(), entry.getFile());
+        try {
+            for (FileEntry entry : reader) {
+                if (entry.getNewSHA().equals(driftFile.getHashId())) {
+                    return new File(headers.getBasedir(), entry.getFile());
+                }
             }
+            return null;
+        } finally {
+            reader.close();
         }
-        return null;
     }
 }

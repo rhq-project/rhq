@@ -57,45 +57,52 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
  * @author Greg Hinkle
  */
 public enum RhqManagers {
-    AlertManager(AlertManagerRemote.class), //
-    AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
-    AvailabilityManager(AvailabilityManagerRemote.class), //
-    BundleManager(BundleManagerRemote.class), //
-    CallTimeDataManager(CallTimeDataManagerRemote.class), //
-    RepoManager(RepoManagerRemote.class), //
-    ConfigurationManager(ConfigurationManagerRemote.class), //
-    ContentManager(ContentManagerRemote.class), //
-    DataAccessManager(DataAccessManagerRemote.class), //
-    DriftManager(DriftManagerRemote.class), //
-    DriftTemplateManager(DriftTemplateManagerRemote.class),
-    DiscoveryBoss(DiscoveryBossRemote.class), //
-    EventManager(EventManagerRemote.class), //
-    MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
-    MeasurementDataManager(MeasurementDataManagerRemote.class), //
-    MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), //
-    MeasurementScheduleManager(MeasurementScheduleManagerRemote.class), //
-    OperationManager(OperationManagerRemote.class), //
-    ResourceManager(ResourceManagerRemote.class), //
-    ResourceFactoryManager(ResourceFactoryManagerRemote.class), //
-    ResourceGroupManager(ResourceGroupManagerRemote.class), //
-    ResourceTypeManager(ResourceTypeManagerRemote.class), //
-    RoleManager(RoleManagerRemote.class), //
-    SavedSearchManager(SavedSearchManagerRemote.class), //
-    SubjectManager(SubjectManagerRemote.class), //
-    SupportManager(SupportManagerRemote.class), //
-    SystemManager(SystemManagerRemote.class), //
-    RemoteInstallManager(RemoteInstallManagerRemote.class), //
-    TagManager(TagManagerRemote.class), //
-    SynchronizationManager(SynchronizationManagerRemote.class);
+    AlertManager(AlertManagerRemote.class, "${AlertManager}"), //
+    AlertDefinitionManager(AlertDefinitionManagerRemote.class, "${AlertDefinitionManager}"), //
+    AvailabilityManager(AvailabilityManagerRemote.class, "${AvailabilityManager}"), //
+    BundleManager(BundleManagerRemote.class, "${BundleManager}"), //
+    CallTimeDataManager(CallTimeDataManagerRemote.class, "${CallTimeDataManager}"), //
+    RepoManager(RepoManagerRemote.class, "${RepoManager}"), //
+    ConfigurationManager(ConfigurationManagerRemote.class, "${ConfigurationManager}"), //
+    ContentManager(ContentManagerRemote.class, "${ContentManager}"), //
+    DataAccessManager(DataAccessManagerRemote.class, "${DataAccessManager}"), //
+    DriftManager(DriftManagerRemote.class, "${DriftManager}"), //
+    DriftTemplateManager(DriftTemplateManagerRemote.class, "${DriftTemplateManager}"), //
+    DiscoveryBoss(DiscoveryBossRemote.class, "${DiscoveryBoss}"), //
+    EventManager(EventManagerRemote.class, "${EventManager}"), //
+    MeasurementBaselineManager(MeasurementBaselineManagerRemote.class, "${MeasurementBaselineManager}"), //
+    MeasurementDataManager(MeasurementDataManagerRemote.class, "${MeasurementDataManager}"), //
+    MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class, "${MeasurementDefinitionManager}"), //
+    MeasurementScheduleManager(MeasurementScheduleManagerRemote.class, "${MeasurementScheduleManager}"), //
+    OperationManager(OperationManagerRemote.class, "${OperationManager}"), //
+    ResourceManager(ResourceManagerRemote.class, "${ResourceManager}"), //
+    ResourceFactoryManager(ResourceFactoryManagerRemote.class, "${ResourceFactoryManager}"), //
+    ResourceGroupManager(ResourceGroupManagerRemote.class, "${ResourceGroupManager}"), //
+    ResourceTypeManager(ResourceTypeManagerRemote.class, "${ResourceTypeManager}"), //
+    RoleManager(RoleManagerRemote.class, "${RoleManager}"), //
+    SavedSearchManager(SavedSearchManagerRemote.class, "${SavedSearchManager}"), //
+    SubjectManager(SubjectManagerRemote.class, "${SubjectManager}"), //
+    SupportManager(SupportManagerRemote.class, "${SupportManager}"), //
+    SystemManager(SystemManagerRemote.class, "${SystemManager}"), //
+    RemoteInstallManager(RemoteInstallManagerRemote.class, "${RemoteInstallManager}"), //
+    TagManager(TagManagerRemote.class, "${TagManager}"), //
+    SynchronizationManager(SynchronizationManagerRemote.class, "${SynchronizationManager}");
 
     private Class<?> remote;
     private String remoteName;
     private String beanName;
+    private boolean enabled;
 
-    private RhqManagers(Class<?> remote) {
+    private RhqManagers(Class<?> remote, String enable) {
         this.remote = remote;
         this.beanName = this.name() + "Bean";
         this.remoteName = this.name() + "Remote";
+        //defaults and evaluates to TRUE unless the string contains "false". Done to defend against 
+        //possible errors in string replacement during rhq build.
+        this.enabled = true;
+        if ((enable != null) && (enable.trim().length() > 0)) {
+            this.enabled = (enable.trim().equalsIgnoreCase("false")) ? Boolean.FALSE : Boolean.TRUE;
+        }
     }
 
     public static RhqManagers forInterface(Class<?> iface) {
@@ -118,5 +125,9 @@ public enum RhqManagers {
 
     public String remoteName() {
         return this.remoteName;
+    }
+
+    public boolean enabled() {
+        return this.enabled;
     }
 }

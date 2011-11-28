@@ -30,6 +30,7 @@ import org.richfaces.model.UploadItem;
 
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * Session bean used to maintain information about an uploaded file.
@@ -82,7 +83,8 @@ public class FileUploadUIBean {
                 throw new FileNotFoundException("The uploaded file [" + uploadedFile + "] does not exist!");
             }
 
-            String uploadedFilename = getFileItem().getFileName(); // careful, IE passes in the full absolute path here - currently we don't care here
+            String uploadedFilename = getFileItem().getFileName(); // careful, IE and Chrome passes in the full absolute path here
+            uploadedFilename = FileUtil.getFileName(FileUtil.useForwardSlash(uploadedFilename), "/"); // strip path, get just filename
             long uploadedFileSize = uploadedFile.length();
             log.info("A file named [" + uploadedFilename + "] with a size of [" + uploadedFileSize
                 + "] has been uploaded to [" + uploadedFile + "]");

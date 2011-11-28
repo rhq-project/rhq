@@ -103,10 +103,11 @@ public class ServerProperties {
     public static final String PROP_SECURITY_CLIENT_TRUSTSTORE_PASSWORD = "rhq.server.client.security.truststore.password";
     public static final String PROP_SECURITY_CLIENT_SERVER_AUTH_MODE_ENABLED = "rhq.server.client.security.server-auth-mode-enabled";
 
-    public static final String PROP_EMBEDDED_AGENT_ENABLED = "rhq.server.embedded-agent.enabled";
-    public static final String PROP_EMBEDDED_AGENT_NAME = "rhq.server.embedded-agent.name";
-    public static final String PROP_EMBEDDED_AGENT_DISABLE_NATIVE_SYSTEM = "rhq.server.embedded-agent.disable-native-system";
-    public static final String PROP_EMBEDDED_AGENT_RESET_CONFIGURATION = "rhq.server.embedded-agent.reset-configuration";
+    public static final String PREFIX_PROP_EMBEDDED_AGENT = "rhq.server.embedded-agent.";
+    public static final String PROP_EMBEDDED_AGENT_ENABLED = PREFIX_PROP_EMBEDDED_AGENT + "enabled";
+    public static final String PROP_EMBEDDED_AGENT_NAME = PREFIX_PROP_EMBEDDED_AGENT + "name";
+    public static final String PROP_EMBEDDED_AGENT_DISABLE_NATIVE_SYSTEM = PREFIX_PROP_EMBEDDED_AGENT + "disable-native-system";
+    public static final String PROP_EMBEDDED_AGENT_RESET_CONFIGURATION = PREFIX_PROP_EMBEDDED_AGENT + "reset-configuration";
 
     public static final String PROP_EMAIL_SMTP_HOST = "rhq.server.email.smtp-host";
     public static final String PROP_EMAIL_SMTP_PORT = "rhq.server.email.smtp-port";

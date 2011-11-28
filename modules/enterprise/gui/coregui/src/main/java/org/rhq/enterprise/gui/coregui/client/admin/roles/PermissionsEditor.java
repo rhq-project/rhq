@@ -45,6 +45,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -143,6 +144,8 @@ public class PermissionsEditor extends LocatableVStack {
     }
 
     private ListGrid createGlobalPermissionsGrid() {
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+
         ListGrid grid = createPermissionsGrid("GlobalPermissions");
 
         // TODO: Add table title.
@@ -154,8 +157,8 @@ public class PermissionsEditor extends LocatableVStack {
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
         descriptionField.setWrap(true);
 
-        final ListGridField authorizedField = createAuthorizedField("authorized", MSG
-            .view_adminRoles_permissions_isAuthorized(), "name", grid);
+        final ListGridField authorizedField = createAuthorizedField("authorized",
+            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid);
 
         grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
 
@@ -164,21 +167,21 @@ public class PermissionsEditor extends LocatableVStack {
             "global/Locked", Permission.MANAGE_SECURITY, MSG.view_adminRoles_permissions_permDesc_manageSecurity());
         records.add(record);
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageInventory(),
-            "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY, MSG
-                .view_adminRoles_permissions_permDesc_manageInventory());
+            "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY,
+            MSG.view_adminRoles_permissions_permDesc_manageInventory());
         records.add(record);
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSettings(),
-            "subsystems/configure/Configure", Permission.MANAGE_SETTINGS, MSG
-                .view_adminRoles_permissions_permDesc_manageSettings());
+            "subsystems/configure/Configure", Permission.MANAGE_SETTINGS,
+            MSG.view_adminRoles_permissions_permDesc_manageSettings(productInfo.getShortName()));
         records.add(record);
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundles(),
-            "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE, MSG
-                .view_adminRoles_permissions_permDesc_manageBundles());
+            "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
+            MSG.view_adminRoles_permissions_permDesc_manageBundles());
         records.add(record);
 
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
-            "subsystems/content/Content", Permission.MANAGE_REPOSITORIES, MSG
-                .view_adminRoles_permissions_permDesc_manageRepositories());
+            "subsystems/content/Content", Permission.MANAGE_REPOSITORIES,
+            MSG.view_adminRoles_permissions_permDesc_manageRepositories());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
@@ -207,63 +210,63 @@ public class PermissionsEditor extends LocatableVStack {
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
         ListGridRecord record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_inventory(),
-            "subsystems/inventory/Inventory", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_inventory(), Permission.MODIFY_RESOURCE, MSG
-                .view_adminRoles_permissions_permWriteDesc_inventory());
+            "subsystems/inventory/Inventory", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_inventory(), Permission.MODIFY_RESOURCE,
+            MSG.view_adminRoles_permissions_permWriteDesc_inventory());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageMeasurements(),
-            "subsystems/monitor/Monitor", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_manageMeasurements(), Permission.MANAGE_MEASUREMENTS, MSG
-                .view_adminRoles_permissions_permWriteDesc_manageMeasurements());
+            "subsystems/monitor/Monitor", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_manageMeasurements(), Permission.MANAGE_MEASUREMENTS,
+            MSG.view_adminRoles_permissions_permWriteDesc_manageMeasurements());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageAlerts(),
-            "subsystems/alert/Alerts", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_manageAlerts(), Permission.MANAGE_ALERTS, MSG
-                .view_adminRoles_permissions_permWriteDesc_manageAlerts());
+            "subsystems/alert/Alerts", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_manageAlerts(), Permission.MANAGE_ALERTS,
+            MSG.view_adminRoles_permissions_permWriteDesc_manageAlerts());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_configure(),
-            "subsystems/configure/Configure", Permission.CONFIGURE_READ, MSG
-                .view_adminRoles_permissions_permReadDesc_configure(), Permission.CONFIGURE_WRITE, MSG
-                .view_adminRoles_permissions_permWriteDesc_configure());
+            "subsystems/configure/Configure", Permission.CONFIGURE_READ,
+            MSG.view_adminRoles_permissions_permReadDesc_configure(), Permission.CONFIGURE_WRITE,
+            MSG.view_adminRoles_permissions_permWriteDesc_configure());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_control(),
-            "subsystems/control/Operation", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_control(), Permission.CONTROL, MSG
-                .view_adminRoles_permissions_permWriteDesc_control());
+            "subsystems/control/Operation", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_control(), Permission.CONTROL,
+            MSG.view_adminRoles_permissions_permWriteDesc_control());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageEvents(),
-            "subsystems/event/Events", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_manageEvents(), Permission.MANAGE_EVENTS, MSG
-                .view_adminRoles_permissions_permWriteDesc_manageEvents());
+            "subsystems/event/Events", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_manageEvents(), Permission.MANAGE_EVENTS,
+            MSG.view_adminRoles_permissions_permWriteDesc_manageEvents());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageContent(),
-            "subsystems/content/Content", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_manageContent(), Permission.MANAGE_CONTENT, MSG
-                .view_adminRoles_permissions_permWriteDesc_manageContent());
+            "subsystems/content/Content", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_manageContent(), Permission.MANAGE_CONTENT,
+            MSG.view_adminRoles_permissions_permWriteDesc_manageContent());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_createChildResources(),
-            "subsystems/inventory/CreateChild", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_createChildResources(), Permission.CREATE_CHILD_RESOURCES,
+            "subsystems/inventory/CreateChild", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_createChildResources(), Permission.CREATE_CHILD_RESOURCES,
             MSG.view_adminRoles_permissions_permWriteDesc_createChildResources());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_deleteChildResources(),
-            "subsystems/inventory/DeleteChild", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_deleteChildResources(), Permission.DELETE_RESOURCE, MSG
-                .view_adminRoles_permissions_permWriteDesc_deleteChildResources());
+            "subsystems/inventory/DeleteChild", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_deleteChildResources(), Permission.DELETE_RESOURCE,
+            MSG.view_adminRoles_permissions_permWriteDesc_deleteChildResources());
         records.add(record);
 
         record = createResourcePermissionRecord(MSG.view_adminRoles_permissions_perm_manageDrift(),
-            "subsystems/drift/Drift", Permission.VIEW_RESOURCE, MSG
-                .view_adminRoles_permissions_permReadDesc_manageDrift(), Permission.MANAGE_DRIFT, MSG
-                .view_adminRoles_permissions_permWriteDesc_manageDrift());
+            "subsystems/drift/Drift", Permission.VIEW_RESOURCE,
+            MSG.view_adminRoles_permissions_permReadDesc_manageDrift(), Permission.MANAGE_DRIFT,
+            MSG.view_adminRoles_permissions_permWriteDesc_manageDrift());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));

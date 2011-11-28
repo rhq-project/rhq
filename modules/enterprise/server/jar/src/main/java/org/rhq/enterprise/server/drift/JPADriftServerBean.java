@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -305,6 +306,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         throws Exception {
         final Resource resource = getResource(resourceId);
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
+        final boolean storeBinaryContent = isBinaryContentStorageEnabled();
 
         try {
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
@@ -345,8 +347,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
                         if (version > 0) {
                             for (FileEntry entry : reader) {
-                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
+                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles, addToList);
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
 
                                 // TODO Figure out an efficient way to save coverage change sets.
                                 // The initial/coverage change set could contain hundreds or even thousands
@@ -372,7 +375,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             summary.setInitialChangeSet(true);
                             JPADriftSet driftSet = new JPADriftSet();
                             for (FileEntry entry : reader) {
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
                                 String path = FileUtil.useForwardSlash(entry.getFile());
                                 // A Drift always has a changeSet. Note that in this code section the changeset is
                                 // always going to be set to a DriftDefinition's changeSet. But that is not always the
@@ -429,7 +433,12 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         }
     }
 
-    private JPADriftFile getDriftFile(String sha256, List<JPADriftFile> emptyDriftFiles) {
+    private boolean isBinaryContentStorageEnabled() {
+        String binaryContent = System.getProperty("rhq.server.drift.store-binary-content", "false");
+        return binaryContent.equals("true");
+    }
+
+    private JPADriftFile getDriftFile(String sha256, List<JPADriftFile> emptyDriftFiles, boolean addToList) {
         JPADriftFile result = null;
 
         if (null == sha256 || "0".equals(sha256)) {
@@ -440,7 +449,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         // if the JPADriftFile is not yet in the db, then it needs to be fetched from the agent
         if (null == result) {
             result = persistDriftFile(new JPADriftFile(sha256));
-            emptyDriftFiles.add(result);
+            if (addToList) {
+                emptyDriftFiles.add(result);
+            }
         }
 
         return result;
@@ -497,14 +508,18 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     @Override
     public String getDriftFileBits(String hash) {
         // TODO add security
+        return new String(getDriftFileAsByteArray(hash), Charset.defaultCharset());
+    }
+
+    @Override
+    public byte[] getDriftFileAsByteArray(String hash) {
         try {
             JPADriftFileBits content = (JPADriftFileBits) entityManager.createNamedQuery(
                 JPADriftFileBits.QUERY_FIND_BY_ID).setParameter("hashId", hash).getSingleResult();
             if (content.getDataSize() == null || content.getDataSize() < 1) {
-                return "";
+                return new byte[] {};
             }
-            byte[] bytes = StreamUtil.slurp(content.getBlob().getBinaryStream());
-            return new String(bytes);
+            return StreamUtil.slurp(content.getBlob().getBinaryStream());
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

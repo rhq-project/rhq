@@ -24,8 +24,10 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
@@ -67,10 +69,11 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
             TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
             supportedUnits.add(TimeUnit.SECONDS);
             supportedUnits.add(TimeUnit.MINUTES);
-            timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, MSG
-                .view_operationScheduleDetails_field_timeout(), TimeUnit.MILLISECONDS, supportedUnits, false, false,
+            timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
+                MSG.view_operationScheduleDetails_field_timeout(), TimeUnit.MILLISECONDS, supportedUnits, false, false,
                 vLayout);
-            timeoutItem.setContextualHelp(MSG.widget_resourceFactoryWizard_timeoutHelp());
+            ProductInfo productInfo = CoreGUI.get().getProductInfo();
+            timeoutItem.setContextualHelp(MSG.widget_resourceFactoryWizard_timeoutHelp(productInfo.getShortName()));
 
             DynamicForm timeoutForm = new DynamicForm();
             timeoutForm.setFields(timeoutItem);

@@ -26,6 +26,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
@@ -103,7 +105,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration());
         vLayout.addMember(titleBar);
 
-        Label label = new Label(MSG.view_admin_landing());
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+
+        Label label = new Label(MSG.view_admin_landing(productInfo.getShortName()));
         label.setPadding(10);
         vLayout.addMember(label);
 
@@ -127,6 +131,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildTopologySection() {
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
+
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS_VIEW_ID, "types/Server_up_16.png",
             new ViewFactory() {
                 public Canvas createView() {
@@ -165,8 +172,16 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
-        return new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem, affinityGroupsItem,
-            partitionEventsItem, remoteAgentInstallItem);
+        //BZ: 753211
+        NavigationSection topologyRegion = null;
+        if (isRHQ) {
+            topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
+                affinityGroupsItem, partitionEventsItem, remoteAgentInstallItem);
+        } else {
+            topologyRegion = new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem,
+                affinityGroupsItem, partitionEventsItem);
+        }
+        return topologyRegion;
     }
 
     private NavigationSection buildConfigurationSection() {

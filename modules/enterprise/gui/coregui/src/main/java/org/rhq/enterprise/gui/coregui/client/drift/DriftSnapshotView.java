@@ -239,7 +239,7 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
     }
 
     private void pinToTemplate() {
-        DriftPinTemplateWizard.showWizard(driftDefId, version, DriftSnapshotView.this);
+        DriftPinTemplateWizard.showWizard(driftDefId, version);
         // we can refresh the table buttons immediately since the wizard is a dialog, the
         // user can't access enabled buttons anyway.
         DriftSnapshotView.this.refreshTableInfo();

@@ -129,8 +129,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result == null || result.size() != 1) {
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_titleBar_group_failInfo(group.getName(), String
-                                .valueOf(ResourceGroupTitleBar.this.group.getId())));
+                            MSG.view_titleBar_group_failInfo(group.getName(),
+                                String.valueOf(ResourceGroupTitleBar.this.group.getId())));
                         return;
                     }
 
@@ -164,8 +164,8 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        MSG.view_titleBar_group_failInfo(group.getName(), String
-                            .valueOf(ResourceGroupTitleBar.this.group.getId())), caught);
+                        MSG.view_titleBar_group_failInfo(group.getName(),
+                            String.valueOf(ResourceGroupTitleBar.this.group.getId())), caught);
                 }
             });
 
@@ -201,7 +201,10 @@ public class ResourceGroupTitleBar extends LocatableVLayout {
         if (this.supportsFavorite) {
             hlayout.addMember(favoriteButton);
         }
-        addMember(tagEditorView);
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            addMember(tagEditorView);
+        }
     }
 
     private void loadTags(final TagEditorView tagEditorView) {

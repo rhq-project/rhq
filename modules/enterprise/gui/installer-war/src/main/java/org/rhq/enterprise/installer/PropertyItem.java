@@ -205,4 +205,21 @@ public class PropertyItem {
     private Locale getLocale() {
         return FacesContext.getCurrentInstance().getViewRoot().getLocale();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PropertyItem that = (PropertyItem) o;
+
+        if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return propertyName != null ? propertyName.hashCode() : 0;
+    }
 }

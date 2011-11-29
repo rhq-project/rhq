@@ -152,9 +152,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             try {
                 syncWithServer(r, d);
                 schedulesQueue.addSchedule(new DriftDetectionSchedule(r.getId(), d));
-            } catch (IOException e) {
+
+            } catch (Throwable t) {
+                // catch throwable, don't prevent agent startup just due to a bad definition
                 log.error("Failed to sync with server for " + toString(r.getId(), d) + ". Drift detection will not be "
-                    + "scheduled.", e);
+                    + "scheduled.", t);
             }
         }
 
@@ -681,7 +683,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         // find out the type of base location that is specified by the drift def
         DriftDefinition.BaseDirectory baseDir = driftDefinition.getBasedir();
         if (baseDir == null) {
-            throw new IllegalArgumentException("Missing basedir in drift definition");
+            throw new IllegalArgumentException("Base directory is null for drift definition ["
+                + driftDefinition.getName() + "]");
         }
 
         // based on the type of base location, determine the root base directory

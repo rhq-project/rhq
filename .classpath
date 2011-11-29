@@ -167,6 +167,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/filtered-sources/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/enterprise/binding/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/binding/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/coregui/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/coregui/target/generated-sources/gwt"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>

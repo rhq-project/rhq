@@ -259,8 +259,9 @@
          </configuration>
       </content>
 
-      <drift-definition name="Template-Base Files"
-                        description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
+      <drift-definition
+            name="Template-Base Files"
+            description="Monitor base application server files for drift. It defines monitoring for some standard sub-directories of the HOME directory.  Note, it is not recommeded to monitor all files for an application server. There are many files, and many temp files.">
          <basedir>
             <value-context>pluginConfiguration</value-context>
             <value-name>jbossHomeDir</value-name>
@@ -2267,6 +2268,15 @@
             </configuration>
          </content>
 
+         <drift-definition 
+               name="Template-Files" 
+               description="Monitor files comprising the enterprise application archive (EAR).  Use filters for more fine-grained monitoring. Or, create definitions only on the embedded WAR resources themselves.">
+            <basedir>
+               <value-context>pluginConfiguration</value-context>
+               <value-name>filename</value-name>
+            </basedir>
+         </drift-definition>
+
          <service name="Embedded Web Application (WAR)"
                   class="org.rhq.plugins.jbossas.WarComponent"
                   discovery="org.rhq.plugins.jbossas.EmbeddedWarDiscoveryComponent"
@@ -2384,6 +2394,15 @@
             <metric property="Vhost.name" displayName="Vhost" dataType="trait"
                     description="Virtual hosts this app runs on"/>
 
+            <drift-definition 
+               name="Template-Files" 
+               description="Monitor files comprising the embedded web application archive (WAR).  Use filters for more fine-grained monitoring.">
+               <basedir>
+                  <value-context>pluginConfiguration</value-context>
+                  <value-name>filename</value-name>
+               </basedir>
+            </drift-definition>
+
          </service>
 
       </service>
@@ -2460,55 +2479,55 @@
                  dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
                  description="the minimum, maximum, and average response times for HTTP requests serviced by this webapp"/>
 
-            <metric property="Servlet.MinResponseTime" displayName="Min. Servlet Resp. Time"
+         <metric property="Servlet.MinResponseTime" displayName="Min. Servlet Resp. Time"
                     units="milliseconds"
                     description="Minimum response time of a servlet"/>
 
-            <metric property="Servlet.AvgResponseTime" displayName="Avg. Servlet Resp. Time"
+         <metric property="Servlet.AvgResponseTime" displayName="Avg. Servlet Resp. Time"
                     units="milliseconds"
                     description="Average response time of a servlet"/>
 
-            <metric property="Servlet.MaxResponseTime" displayName="Max. Servlet Resp. Time"
+         <metric property="Servlet.MaxResponseTime" displayName="Max. Servlet Resp. Time"
                     units="milliseconds"
                     description="Maximum response time of a servlet"/>
 
-            <metric property="Servlet.TotalTime" displayName="Total processing time"
+         <metric property="Servlet.TotalTime" displayName="Total processing time"
                  units="milliseconds"
                  description="Total processing time of the webapp" measurementType="trendsup"/>
 
-            <metric property="Servlet.NumRequests" displayName="Requests served"
+         <metric property="Servlet.NumRequests" displayName="Requests served"
                     units="none" description="Number of requests served by servlets"
                     measurementType="trendsup" displayType="summary"/>
 
-            <metric property="Servlet.NumErrors" displayName="Errors while processing"
+         <metric property="Servlet.NumErrors" displayName="Errors while processing"
                     units="none" description="Number of errors while processing"
                     measurementType="trendsup" displayType="summary"/>
 
-            <metric property="Session.activeSessions" displayName="Currently Active Sessions"
+         <metric property="Session.activeSessions" displayName="Currently Active Sessions"
                     units="none" description="Number active sessions for the webapp right now" />
 
-            <metric property="Session.maxActive" displayName="Maximum number of Active Sessions"
+         <metric property="Session.maxActive" displayName="Maximum number of Active Sessions"
                     units="none" description="Maximum number of active sessions for the webapp" />
 
-            <metric property="Session.sessionCounter" displayName="Sessions created"
+         <metric property="Session.sessionCounter" displayName="Sessions created"
                     units="none" description="Number of sessions created for the webapp"
                     measurementType="trendsup" />
 
-            <metric property="Session.expiredSessions" displayName="Expired Sessions"
+         <metric property="Session.expiredSessions" displayName="Expired Sessions"
                     units="none" description="Number of expired sessions for the webapp"
                     measurementType="trendsup" />
 
-            <metric property="Session.rejectedSessions" displayName="Rejected Sessions"
+         <metric property="Session.rejectedSessions" displayName="Rejected Sessions"
                     units="none" description="Number of sessions rejected for the webapp"
                     measurementType="trendsup" />
 
-            <metric property="Session.sessionAverageAliveTime" displayName="Session Average alive time"
+         <metric property="Session.sessionAverageAliveTime" displayName="Session Average alive time"
                     units="seconds" description="Average alive time of a Sessions" />
 
-            <metric property="Session.sessionMaxAliveTime" displayName="Max Session alive time"
+         <metric property="Session.sessionMaxAliveTime" displayName="Max Session alive time"
                     units="seconds" description="Maximum alive time of a Sessions" />
 
-            <metric property="Vhost.name" displayName="Vhost" dataType="trait"
+         <metric property="Vhost.name" displayName="Vhost" dataType="trait"
                     description="Virtual hosts this app runs on"/>
 
          <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
@@ -2523,6 +2542,15 @@
                </c:group>
             </configuration>
          </content>
+
+         <drift-definition 
+            name="Template-Files" 
+               description="Monitor files comprising the web application archive (WAR).  Use filters for more fine-grained monitoring.">
+            <basedir>
+               <value-context>pluginConfiguration</value-context>
+               <value-name>filename</value-name>
+            </basedir>
+         </drift-definition>
 
       </service>
 

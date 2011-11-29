@@ -33,28 +33,28 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 /**
  * @author Ian Springer
  */
-public class EmbeddedManagedDeploymentComponent extends AbstractManagedDeploymentComponent
-        implements MeasurementFacet
-{
+public class EmbeddedManagedDeploymentComponent extends AbstractManagedDeploymentComponent implements MeasurementFacet {
     private static final String CUSTOM_PARENT_TRAIT = "custom.parent";
+    private static final String CUSTOM_PATH_TRAIT = "custom.path";
 
     // ------------ MeasurementFacet Implementation ------------
 
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
-            throws Exception
-    {
-        Set<MeasurementScheduleRequest> remainingRequests = new HashSet();
-        for (MeasurementScheduleRequest request : requests)
-        {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+        Set<MeasurementScheduleRequest> remainingRequests = new HashSet<MeasurementScheduleRequest>();
+        for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
-            if (metricName.equals(CUSTOM_PARENT_TRAIT))
-            {
+            if (metricName.equals(CUSTOM_PARENT_TRAIT)) {
                 String parentDeploymentName = getManagedDeployment().getParent().getName();
                 MeasurementDataTrait trait = new MeasurementDataTrait(request, parentDeploymentName);
                 report.addData(trait);
-            }
-            else
-            {
+
+            } else if (metricName.equals(CUSTOM_PATH_TRAIT)) {
+                boolean exploded = this.deploymentFile.isDirectory();
+                if (exploded) {
+                    MeasurementDataTrait trait = new MeasurementDataTrait(request, this.deploymentFile.getPath());
+                    report.addData(trait);
+                }
+            } else {
                 remainingRequests.add(request);
             }
         }

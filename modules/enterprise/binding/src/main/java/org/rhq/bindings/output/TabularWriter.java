@@ -79,6 +79,8 @@ public class TabularWriter {
     static {
         SIMPLE_TYPES.add(Byte.class);
         SIMPLE_TYPES.add(Byte.TYPE);
+        SIMPLE_TYPES.add(Character.class);
+        SIMPLE_TYPES.add(Character.TYPE);
         SIMPLE_TYPES.add(Short.class);
         SIMPLE_TYPES.add(Short.TYPE);
         SIMPLE_TYPES.add(Integer.class);
@@ -130,7 +132,48 @@ public class TabularWriter {
         }
 
         if (object != null && object.getClass().isArray()) {
-            print((Object[]) object);
+            if (!object.getClass().getComponentType().isPrimitive()) {
+                print((Object[]) object);
+            } else {
+                Class<?> oClass = object.getClass();
+                // note: we assume single-dimension arrays!
+                out.println("Array of " + (oClass.getComponentType().getName()));
+                if (oClass == byte[].class) {
+                    for (byte i : (byte[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == short[].class) {
+                    for (short i : (short[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == int[].class) {
+                    for (int i : (int[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == long[].class) {
+                    for (long i : (long[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == char[].class) {
+                    for (char i : (char[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == float[].class) {
+                    for (float i : (float[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == double[].class) {
+                    for (double i : (double[]) object) {
+                        this.out.println(i);
+                    }
+                } else if (oClass == boolean[].class) {
+                    for (boolean i : (boolean[]) object) {
+                        this.out.println(i);
+                    }
+                } else {
+                    this.out.println("*Printing of this data type is not supported*");
+                }
+            }
             return;
         }
 
@@ -285,7 +328,7 @@ public class TabularWriter {
                         for (Object object : list) {
                             data[i++][0] = (String) object;
                         }
-
+                        this.print(data);
                     } else {
 
                         if (consistentMaps(list)) {
@@ -318,30 +361,33 @@ public class TabularWriter {
                                 }
                             }
 
-                            headers = new String[pdList.size()];
-                            data = new String[list.size()][pdList.size()];
+                            if (pdList.isEmpty()) {
+                                printStrings(list);
+                            } else {
+                                headers = new String[pdList.size()];
+                                data = new String[list.size()][pdList.size()];
 
-                            for (PropertyDescriptor pd : pdList) {
-                                headers[i++] = pd.getName();
-                            }
-                            i = 0;
-                            for (Object row : list) {
-                                int j = 0;
                                 for (PropertyDescriptor pd : pdList) {
-
-                                    Object val = "?";
-                                    val = invoke(row, pd.getReadMethod());
-                                    if (val == null) {
-                                        data[i][j++] = "";
-                                    } else {
-                                        data[i][j++] = shortVersion(val);
-                                    }
+                                    headers[i++] = pd.getName();
                                 }
-                                i++;
+                                i = 0;
+                                for (Object row : list) {
+                                    int j = 0;
+                                    for (PropertyDescriptor pd : pdList) {
+
+                                        Object val = "?";
+                                        val = invoke(row, pd.getReadMethod());
+                                        if (val == null) {
+                                            data[i][j++] = "";
+                                        } else {
+                                            data[i][j++] = shortVersion(val);
+                                        }
+                                    }
+                                    i++;
+                                }
+
+                                this.print(data);
                             }
-
-                            this.print(data);
-
                         }
                     }
                 } catch (Exception e) {
@@ -530,13 +576,11 @@ public class TabularWriter {
             for (Integer col : columns) {
                 actualColumnWidths[col] = maxColumnWidth;
             }
-        }
-        else if (columns.size() == 0) {
+        } else if (columns.size() == 0) {
             // If the columns list is empty then that means that there is enough available
             // space for each column so we are done.
             return;
-        }
-        else if (extraSpace > 0) {
+        } else if (extraSpace > 0) {
             // Since we have extra space, we will go ahead and recalculate the widths for
             // those columns still needing space
             int newMaxColumnWidth = (maxColumnWidth + extraSpace) / columns.size();

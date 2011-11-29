@@ -63,7 +63,7 @@
                {
                   linkText = "${bundle.alreadyInstalledStartedLink}";
                   document.getElementById('pleasewait-image').src="/images/finished.gif";
-                  document.getElementById('progressBarMessage').innerHTML='<a class="small" href="/">' + linkText + '<\/a>';
+                  document.getElementById('progressBarMessage').innerHTML='<a class="small" href="/coregui">' + linkText + '<\/a>';
                   // this will immediately forward to the start page, uncomment if we want that functionality
                   // window.location.replace( startPage );
                }

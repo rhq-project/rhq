@@ -65,7 +65,7 @@ public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryCompone
 
         // Once we've finished making sure the plugin configurations have the data we need:
         // 1) First the stuff generic to all WARs...
-        JBossASServerComponent<?> grandparentJBossASComponent = parentEarComponent.getParentResourceComponent();
+        JBossASServerComponent grandparentJBossASComponent = parentEarComponent.getParentResourceComponent();
         resourceDetails = WarDiscoveryHelper.initPluginConfigurations(grandparentJBossASComponent, resourceDetails,
             parentEarComponent);
 
@@ -74,7 +74,7 @@ public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryCompone
         for (DiscoveredResourceDetails resource : resourceDetails) {
             Configuration pluginConfiguration = resource.getPluginConfiguration();
             pluginConfiguration.put(new PropertySimple(WarComponent.FILE_NAME, parentEarFullFileName
-                + pluginConfiguration.getSimpleValue(WarComponent.NAME_CONFIG_PROP, "")));
+                + resource.getResourceName()));
         }
 
         return resourceDetails;

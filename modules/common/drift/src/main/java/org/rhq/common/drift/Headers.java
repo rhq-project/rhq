@@ -128,4 +128,10 @@ public class Headers implements Serializable {
         this.version = version;
     }
 
+    @Override
+    public String toString() {
+        return "Headers [driftDefinitionName=" + driftDefinitionName + ", resourceId=" + resourceId + ", version="
+            + version + "]";
+    }
+
 }

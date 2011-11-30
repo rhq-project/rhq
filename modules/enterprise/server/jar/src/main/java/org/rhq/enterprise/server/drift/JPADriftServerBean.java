@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
@@ -300,10 +301,38 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         df.setStatus(LOADED);
     }
 
+    // This facade does not start, or participate in, a transaction so that it can execute its work
+    // in two new transactions.  The first transaction ensures all new entities are committed to the
+    // database.  The second transaction can then safely ackknowledge that the changeset is persisted
+    // and request drift file content, if necessary.
     @Override
-    @TransactionAttribute(REQUIRES_NEW)
+    @TransactionAttribute(NOT_SUPPORTED)
     public DriftChangeSetSummary storeChangeSet(Subject subject, final int resourceId, final File changeSetZip)
         throws Exception {
+
+        // a List to be populated by storeChangeSetInNewTransaction for use in ackChangeSetInNewTransaction
+        List<JPADriftFile> driftFilesToRequest = new ArrayList<JPADriftFile>();
+        // a 1 element array so storeChangeSetInNewTransaction can return the Headers for use in ackChangeSetInNewTransaction 
+        Headers[] headers = new Headers[1];
+
+        DriftChangeSetSummary result = JPADriftServer.storeChangeSetInNewTransaction(subject, resourceId, changeSetZip,
+            driftFilesToRequest, headers);
+
+        if (null == result) {
+            return result;
+        }
+
+        JPADriftServer.ackChangeSetInNewTransaction(subject, resourceId, headers[0], driftFilesToRequest);
+
+        return result;
+    }
+
+    @Override
+    @TransactionAttribute(REQUIRES_NEW)
+    public DriftChangeSetSummary storeChangeSetInNewTransaction(Subject subject, final int resourceId,
+        final File changeSetZip, final List<JPADriftFile> driftFilesToRequest, final Headers[] headers)
+        throws Exception {
+
         final Resource resource = getResource(resourceId);
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
         final boolean storeBinaryContent = isBinaryContentStorageEnabled();
@@ -313,104 +342,81 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
                 @Override
                 public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
-                    List<JPADriftFile> emptyDriftFiles = new ArrayList<JPADriftFile>();
+
                     JPADriftChangeSet driftChangeSet = null;
 
-                    try {
-                        ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(
-                            stream)), false);
+                    ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(stream)),
+                        false);
 
-                        // store the new change set info (not the actual blob)
-                        DriftDefinition driftDef = findDriftDefinition(resource, reader.getHeaders());
-                        if (driftDef == null) {
-                            log.error("Unable to locate DriftDefinition for Resource [" + resource
-                                + "]. Change set cannot be saved.");
-                            return false;
-                        }
-                        // TODO: Commenting out the following line for now. We want to set the
-                        // version to the value specified in the headers, but we may want to also
-                        // validate it against the latest version we have in the database so that
-                        // we can make sure that the agent is in sync with the server.
-                        //
-                        //int version = getChangeSetVersion(resource, config);
-                        int version = reader.getHeaders().getVersion();
-
-                        DriftChangeSetCategory category = reader.getHeaders().getType();
-                        driftChangeSet = new JPADriftChangeSet(resource, version, category, driftDef);
-                        entityManager.persist(driftChangeSet);
-
-                        summary.setCategory(category);
-                        summary.setResourceId(resourceId);
-                        summary.setDriftDefinitionName(reader.getHeaders().getDriftDefinitionName());
-                        summary.setDriftHandlingMode(driftDef.getDriftHandlingMode());
-                        summary.setCreatedTime(driftChangeSet.getCtime());
-
-                        if (version > 0) {
-                            for (FileEntry entry : reader) {
-                                boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
-                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles, addToList);
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
-
-                                // TODO Figure out an efficient way to save coverage change sets.
-                                // The initial/coverage change set could contain hundreds or even thousands
-                                // of entries. We probably want to consider doing some kind of batch insert
-                                //
-                                // jsanda
-
-                                // use a path with only forward slashing to ensure consistent paths across reports
-                                String path = FileUtil.useForwardSlash(entry.getFile());
-                                JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
-                                    newDriftFile);
-                                entityManager.persist(drift);
-
-                                // we are taking advantage of the fact that we know the summary is only used by the server
-                                // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
-                                // not alert on coverage reports) - so don't waste memory by collecting all the paths
-                                // when we know they aren't going to be used anyway.
-                                if (category == DriftChangeSetCategory.DRIFT) {
-                                    summary.addDriftPathname(path);
-                                }
-                            }
-                        } else {
-                            summary.setInitialChangeSet(true);
-                            JPADriftSet driftSet = new JPADriftSet();
-                            for (FileEntry entry : reader) {
-                                boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles, addToList);
-                                String path = FileUtil.useForwardSlash(entry.getFile());
-                                // A Drift always has a changeSet. Note that in this code section the changeset is
-                                // always going to be set to a DriftDefinition's changeSet. But that is not always the
-                                // case, it could also be set to a DriftDefinitionTemplate's changeSet.
-                                driftSet.addDrift(new JPADrift(driftChangeSet, path, entry.getType(), null,
-                                    newDriftFile));
-                            }
-                            entityManager.persist(driftSet);
-                            driftChangeSet.setInitialDriftSet(driftSet);
-                            entityManager.merge(driftChangeSet);
-                        }
-
-                        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-                        DriftAgentService service = agentClient.getDriftAgentService();
-
-                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftDefinitionName());
-
-                        // send a message to the agent requesting the empty JPADriftFile content
-                        if (!emptyDriftFiles.isEmpty()) {
-                            try {
-                                if (service.requestDriftFiles(resourceId, reader.getHeaders(), emptyDriftFiles)) {
-                                    for (DriftFile driftFile : emptyDriftFiles) {
-                                        driftFile.setStatus(DriftFileStatus.REQUESTED);
-                                    }
-                                }
-                            } catch (Exception e) {
-                                log.warn(" Unable to inform agent of drift file request  [" + emptyDriftFiles + "]", e);
-                            }
-                        }
-                    } catch (Exception e) {
-                        String msg = "Failed to store drift changeset [" + driftChangeSet + "]";
-                        log.error(msg, e);
+                    // store the new change set info (not the actual blob)
+                    DriftDefinition driftDef = findDriftDefinition(resource, reader.getHeaders());
+                    if (driftDef == null) {
+                        log.error("Unable to locate DriftDefinition for Resource [" + resource
+                            + "]. Change set cannot be saved.");
                         return false;
                     }
+                    // TODO: Commenting out the following line for now. We want to set the
+                    // version to the value specified in the headers, but we may want to also
+                    // validate it against the latest version we have in the database so that
+                    // we can make sure that the agent is in sync with the server.
+                    //
+                    //int version = getChangeSetVersion(resource, config);
+                    int version = reader.getHeaders().getVersion();
+
+                    DriftChangeSetCategory category = reader.getHeaders().getType();
+                    driftChangeSet = new JPADriftChangeSet(resource, version, category, driftDef);
+                    entityManager.persist(driftChangeSet);
+
+                    summary.setCategory(category);
+                    summary.setResourceId(resourceId);
+                    summary.setDriftDefinitionName(reader.getHeaders().getDriftDefinitionName());
+                    summary.setDriftHandlingMode(driftDef.getDriftHandlingMode());
+                    summary.setCreatedTime(driftChangeSet.getCtime());
+
+                    if (version > 0) {
+                        for (FileEntry entry : reader) {
+                            boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
+                            JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), driftFilesToRequest, addToList);
+                            JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), driftFilesToRequest, addToList);
+
+                            // TODO Figure out an efficient way to save coverage change sets.
+                            // The initial/coverage change set could contain hundreds or even thousands
+                            // of entries. We probably want to consider doing some kind of batch insert
+                            //
+                            // jsanda
+
+                            // use a path with only forward slashing to ensure consistent paths across reports
+                            String path = FileUtil.useForwardSlash(entry.getFile());
+                            JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                newDriftFile);
+                            entityManager.persist(drift);
+
+                            // we are taking advantage of the fact that we know the summary is only used by the server
+                            // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
+                            // not alert on coverage reports) - so don't waste memory by collecting all the paths
+                            // when we know they aren't going to be used anyway.
+                            if (category == DriftChangeSetCategory.DRIFT) {
+                                summary.addDriftPathname(path);
+                            }
+                        }
+                    } else {
+                        summary.setInitialChangeSet(true);
+                        JPADriftSet driftSet = new JPADriftSet();
+                        for (FileEntry entry : reader) {
+                            boolean addToList = storeBinaryContent || !DriftUtil.isBinaryFile(entry.getFile());
+                            JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), driftFilesToRequest, addToList);
+                            String path = FileUtil.useForwardSlash(entry.getFile());
+                            // A Drift always has a changeSet. Note that in this code section the changeset is
+                            // always going to be set to a DriftDefinition's changeSet. But that is not always the
+                            // case, it could also be set to a DriftDefinitionTemplate's changeSet.
+                            driftSet.addDrift(new JPADrift(driftChangeSet, path, entry.getType(), null, newDriftFile));
+                        }
+                        entityManager.persist(driftSet);
+                        driftChangeSet.setInitialDriftSet(driftSet);
+                        entityManager.merge(driftChangeSet);
+                    }
+
+                    headers[0] = reader.getHeaders();
 
                     return true;
                 }
@@ -423,13 +429,40 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             if (null != resource) {
                 msg += resource;
             } else {
-                msg += ("resourceId " + resourceId);
+                msg += ("resourceId [" + resourceId + "]");
             }
             log.error(msg, e);
 
             return null;
+
         } finally {
             // delete the changeSetFile?
+        }
+    }
+
+    @Override
+    @TransactionAttribute(REQUIRES_NEW)
+    public void ackChangeSetInNewTransaction(Subject subject, final int resourceId, final Headers headers,
+        final List<JPADriftFile> driftFilesToRequest) throws Exception {
+
+        try {
+            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+            DriftAgentService service = agentClient.getDriftAgentService();
+
+            service.ackChangeSet(resourceId, headers.getDriftDefinitionName());
+
+            // send a message to the agent requesting the necessary JPADriftFile content. Note that the
+            // driftFile status has been set to REQUESTED outside of this call.
+            if (!driftFilesToRequest.isEmpty()) {
+                try {
+                    service.requestDriftFiles(resourceId, headers, driftFilesToRequest);
+
+                } catch (Exception e) {
+                    log.warn("Unable to inform agent of drift file request  [" + driftFilesToRequest + "]", e);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Unable to acknowledge changeSet storage with agent for " + headers, e);
         }
     }
 
@@ -446,9 +479,15 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         }
 
         result = entityManager.find(JPADriftFile.class, sha256);
-        // if the JPADriftFile is not yet in the db, then it needs to be fetched from the agent
+        // if the JPADriftFile is not yet in the db then persist it, and mark it requested if content is to be fetched
+        // note - by immediately setting the initial status to REQUESTED we avoid a future update and a
+        // potential deadlock scenario where the REQUESTED and LOADED status updates can happen simultaneously 
         if (null == result) {
-            result = persistDriftFile(new JPADriftFile(sha256));
+            JPADriftFile driftFile = new JPADriftFile(sha256);
+            if (addToList) {
+                driftFile.setStatus(DriftFileStatus.REQUESTED);
+            }
+            result = persistDriftFile(driftFile);
             if (addToList) {
                 emptyDriftFiles.add(result);
             }

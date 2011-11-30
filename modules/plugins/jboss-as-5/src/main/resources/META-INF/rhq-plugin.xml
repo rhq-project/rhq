@@ -2313,15 +2313,6 @@
             	&deploymentContentConfigProps;
             </content>
 
-            <drift-definition 
-                  name="Template-Files" 
-                  description="Monitor files comprising the enterprise application archive (EAR).  Use filters for more fine-grained monitoring. Or, create definitions only on the embedded WAR resources themselves.">
-               <basedir>
-                  <value-context>measurementTrait</value-context>
-                  <value-name>custom.path</value-name>
-               </basedir>
-            </drift-definition>
-
         </service>
 
         <service name="Web Application (WAR)"
@@ -2372,15 +2363,6 @@
             <content name="file" displayName="WAR File" category="deployable" isCreationType="true">
                 &deploymentContentConfigProps;
             </content>
-
-            <drift-definition 
-                  name="Template-Files" 
-                  description="Monitor files comprising the web application archive (WAR).  Use filters for more fine-grained monitoring.">
-               <basedir>
-                  <value-context>measurementTrait</value-context>
-                  <value-name>custom.path</value-name>
-               </basedir>
-            </drift-definition>
 
             <service name="Web Application Context"
                      class="WebApplicationContextComponent"
@@ -2444,20 +2426,8 @@
             <metric property="custom.parent" displayName="Parent"
                     dataType="trait" displayType="summary"
                     description="the name of this WAR's parent deployment"/>
-            <metric property="custom.path" displayName="Path"
-                    dataType="trait" displayType="summary"
-                    description="the absolute path of this WAR directory (not supported for WAR's embedded in non-exploded EARs)"/>
 
             &webApplicationMetrics;
-
-            <drift-definition 
-               name="Template-Files" 
-               description="Monitor files comprising the embedded web application archive (WAR).  Use filters for more fine-grained monitoring.">
-               <basedir>
-                  <value-context>measurementTrait</value-context>
-                  <value-name>custom.path</value-name>
-               </basedir>
-            </drift-definition>
 
             <service name="Embedded Web Application Context"
                      class="WebApplicationContextComponent"

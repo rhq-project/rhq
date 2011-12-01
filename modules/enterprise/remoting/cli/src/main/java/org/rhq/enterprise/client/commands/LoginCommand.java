@@ -30,7 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 /**

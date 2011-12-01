@@ -12,7 +12,7 @@ import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.core.Conversation;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 
 /**

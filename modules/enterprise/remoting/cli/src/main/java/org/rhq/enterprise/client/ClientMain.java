@@ -46,6 +46,7 @@ import mazz.i18n.Msg;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.clientapi.RemoteClient;
 
 /**
  * @author Greg Hinkle

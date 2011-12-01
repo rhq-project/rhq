@@ -11,8 +11,8 @@ import java.util.ArrayList;
 
 import org.testng.annotations.Test;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;

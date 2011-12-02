@@ -354,7 +354,18 @@
          <fileset dir="${jboss.home}" includes="*.*" />
       </delete>
 
-      <!-- make sure our downloads directories exist -->
+  	 <!-- make sure the top level downloads directory exists -->
+  	 <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" />
+  	
+     <!-- deploy all the static downloadable content -->
+     <echo>Deploying static downloadable content</echo>
+     <copy todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" 
+           verbose="true"
+           failonerror="false">
+     	<fileset dir="${basedir}/src/main/downloadable-resources" />
+  	 </copy>
+  	
+     <!-- make sure our downloads directories exist -->
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" />

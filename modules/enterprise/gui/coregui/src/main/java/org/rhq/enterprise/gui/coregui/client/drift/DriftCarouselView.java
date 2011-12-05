@@ -167,7 +167,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                             break;
                         }
                     }
-                    if (null == maxSnapshotVersion || maxSnapshotVersion < carouselStart) {
+                    if (null == maxSnapshotVersion || null == carouselStart || maxSnapshotVersion < carouselStart) {
                         maxSnapshotVersion = carouselStart;
                         setCarouselStartFilterMax(maxSnapshotVersion);
                     }

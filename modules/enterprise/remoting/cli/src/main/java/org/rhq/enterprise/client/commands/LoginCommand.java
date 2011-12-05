@@ -115,7 +115,7 @@ public class LoginCommand implements ClientCommand {
 
         Subject subject = remoteClient.login(username, password);
 
-        ProductInfo info = remoteClient.getSystemManager().getServerDetails(subject).getProductInfo();
+        ProductInfo info = remoteClient.getSystemManager().getProductInfo(subject);
         String version = info.getVersion()
             + " (" + info.getBuildNumber() + ")";
         client.getPrintWriter().println("Remote server version is: " + version);

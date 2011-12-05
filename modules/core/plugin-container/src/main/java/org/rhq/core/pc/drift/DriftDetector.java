@@ -543,7 +543,13 @@ public class DriftDetector implements Runnable {
         if (basedir.equals(file)) {
             return ".";
         }
-        return file.getAbsolutePath().substring(basedir.getAbsolutePath().length() + 1);
+        String filePath = file.getAbsolutePath();
+        String basedirPath = basedir.getAbsolutePath();
+        int basedirLen = basedirPath.length();
+        if (!basedirPath.endsWith(File.separator)) {
+            ++basedirLen;
+        }
+        return filePath.substring(basedirLen);
     }
 
     private String sha256(File file) throws IOException {

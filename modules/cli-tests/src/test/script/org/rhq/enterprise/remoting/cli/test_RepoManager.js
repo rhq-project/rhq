@@ -462,7 +462,7 @@ function testDeploy() {
    Assert.assertNumberEqualsJS( pvsInRepo.get(0).getId(), pv.getId(), "unexpected pv returned" );
 
    // do the update
-   ContentManager.deployPackages( [war.getId()], [pv.getId()] );
+   ContentManager.deployPackages( [war.getId()], [pv.getId()], "Test Note" );
 
    // Make sure things still look good
 

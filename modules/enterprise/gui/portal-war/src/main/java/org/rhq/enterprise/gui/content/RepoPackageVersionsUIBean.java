@@ -68,7 +68,7 @@ public class RepoPackageVersionsUIBean extends PagedDataTableUIBean {
                 resourceIds[i] = resources.get(i).getId();
             }
 
-            contentManager.deployPackages(subject, resourceIds, packageIds);
+            contentManager.deployPackages(subject, resourceIds, packageIds, "Repository package install");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to deploy packages: " + packageIds
                 + " to Resources subscribed to repository: " + repoId + " Error: " + e.getMessage());

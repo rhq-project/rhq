@@ -345,7 +345,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             + (System.currentTimeMillis() - start) + "ms");
     }
 
-    public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds) {
+    public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
         for (int resourceId : resourceIds) {
             Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
             for (int packageVersionId : packageVersionIds) {
@@ -359,7 +359,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 packages.add(details);
             }
 
-            deployPackages(user, resourceId, packages, null);
+            deployPackages(user, resourceId, packages, requestNotes);
         }
     }
 

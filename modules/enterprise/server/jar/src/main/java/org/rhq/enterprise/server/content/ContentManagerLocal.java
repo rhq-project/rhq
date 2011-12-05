@@ -64,18 +64,18 @@ public interface ContentManagerLocal {
      * upon persist.
      */
     public static final String UPLOAD_FILE_SIZE = "fileSize";
-    
+
     public static final String UPLOAD_FILE_INSTALL_DATE = "fileInstallDate";
-    
+
     /**
      * This doesn't seem to serve any purpose.
      */
     public static final String UPLOAD_OWNER = "owner";
-    
+
     public static final String UPLOAD_FILE_NAME = "fileName";
-    
+
     public static final String UPLOAD_MD5 = "md5";
-    
+
     /**
      * This is currently ignored as the SHA is computed upon
      * persist.
@@ -338,7 +338,6 @@ public interface ContentManagerLocal {
      */
     PackageType getResourceCreationPackageType(int resourceTypeId);
 
-   
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -362,9 +361,9 @@ public interface ContentManagerLocal {
     public void deletePackageVersion(Subject subject, int packageVersionId);
 
     /**
-     * @see {@link ContentManagerRemote#deployPackages(Subject, int[], int[])}
+     * @see {@link ContentManagerRemote#deployPackages(Subject, int[], int[], String)}
      */
-    void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds);
+    void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes);
 
     /**
      * @see {@link ContentManagerRemote#findArchitectures(Subject)}
@@ -381,12 +380,12 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findPackageType(Subject, Integer, String)}
      */
     PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
-    
+
     /**
      * @see {@link ContentManagerRemote#findPackageTypeWithVersionFormat(Subject, Integer, String)}
      */
     PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject, Integer resourceTypeId, String packageTypeName);
-    
+
     /**
      * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}
      */
@@ -430,7 +429,7 @@ public interface ContentManagerLocal {
      * @throws IllegalArgumentException if the supplied package type has non-null resource type
      */
     PackageType persistServersidePackageType(PackageType packageType);
-    
+
     void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams);
 
     void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails);

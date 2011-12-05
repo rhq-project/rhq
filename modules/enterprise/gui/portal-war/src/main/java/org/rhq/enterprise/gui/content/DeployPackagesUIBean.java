@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIData;
 import javax.faces.model.DataModel;
@@ -34,7 +31,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -85,11 +81,10 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
         // Going forward, we'll need to create this earlier and store the user entered configuration in these
         // objects.  jdobies, Mar 3, 2008
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-        Set<ResourcePackageDetails> packagesToDeploy = new HashSet<ResourcePackageDetails>(packageIds.length);
-        for (int pkgId : packageIds) {
-            PackageVersion packageVersion = contentUIManager.getPackageVersion(pkgId);
-            ResourcePackageDetails pkgDetails = ContentUtils.toResourcePackageDetails(packageVersion);
-            packagesToDeploy.add(pkgDetails);
+        int[] packagesVersionsIdsToDeploy = new int[packageIds.length];
+        for (int iterator = 0; iterator < packageIds.length; iterator++) {
+            PackageVersion packageVersion = contentUIManager.getPackageVersion(packageIds[iterator]);
+            packagesVersionsIdsToDeploy[iterator] = packageVersion.getId();
         }
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -97,7 +92,7 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
 
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            contentManager.deployPackages(subject, resource.getId(), packagesToDeploy, notes);
+            contentManager.deployPackages(subject, new int[] { resource.getId() }, new int[] {}, notes);
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not send deploy request to agent", e);
         }

@@ -109,10 +109,11 @@ public interface ContentManagerRemote {
      * @param packageVersionIds packageVersions we want to install
      */
     @WebMethod
-    void deployPackages( //
+    void deployPackages(
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds, //
-        @WebParam(name = "packageVersionIds") int[] packageVersionIds);
+        @WebParam(name = "packageVersionIds") int[] packageVersionIds,
+        @WebParam(name = "requestNotes") String requestNotes);
 
     /**
      * Returns all architectures known to the system.
@@ -157,7 +158,7 @@ public interface ContentManagerRemote {
         @WebParam(name = "resourceTypeId") Integer resourceTypeId,
         @WebParam(name = "packageTypeName") String packageTypeName
         );
-    
+
     /**
      * Similar to {@link #findPackageType(Subject, Integer, String)} but
      * returns the package type along with the version format specification.
@@ -172,6 +173,7 @@ public interface ContentManagerRemote {
         @WebParam(name = "subject") Subject subject,
         @WebParam(name ="resourceTypeId") Integer resourceTypeId,
         @WebParam(name = "packageTypeName") String packageTypeName);
+
     /**
      * @param subject
      * @param criteria {@link InstalledPackageCriteria}
@@ -210,7 +212,7 @@ public interface ContentManagerRemote {
     PageList<Package> findPackagesByCriteria(
         @WebParam(name = "subject") Subject subject,
         @WebParam(name = "criteria") PackageCriteria criteria);
-    
+
     /**
      * Akin to {@link #findPackagesByCriteria(Subject, PackageCriteria)} but also
      * determines the latest version of the returned packages.
@@ -222,11 +224,11 @@ public interface ContentManagerRemote {
      * @return
      * @throws IllegalArgumentException if the criteria doesn't define a repo filter
      */
-    @WebMethod    
+    @WebMethod
     PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(
         @WebParam(name = "subject") Subject subject, 
         @WebParam(name = "criteria") PackageCriteria criteria);
-    
+
     /**
      * For a resource that is content-backed (aka package-backed), this call will return InstalledPackage information
      * for the backing content (package).

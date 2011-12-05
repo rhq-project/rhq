@@ -545,7 +545,8 @@ public class ResourceClientProxy {
             remoteClient.getContentManager().deployPackages(
                     remoteClient.getSubject(),
                     new int[] { resourceClientProxy.getId()},
-                    new int[] {pv.getId()});
+                    new int[] {pv.getId()},
+                    "CLI deployment request");
 
 
         }

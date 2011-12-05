@@ -520,8 +520,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         contentManager.deletePackageVersion(subject, packageVersionId);
     }
 
-    public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds) {
-        contentManager.deployPackages(subject, resourceIds, packageVersionIds);
+    public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
+        contentManager.deployPackages(subject, resourceIds, packageVersionIds, requestNotes);
     }
 
     public List<Architecture> findArchitectures(Subject subject) {
@@ -1202,7 +1202,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public void setSystemSettings(Subject subject, SystemSettings settings) throws Exception {
         systemManager.setSystemSettings(subject, settings);
     }
-    
+
     //SYSTEMMANAGER: END ------------------------------------
 
     //SYNCHRONIZATIONMANANGER: BEGIN -------------------------

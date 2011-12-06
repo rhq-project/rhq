@@ -242,7 +242,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
         }
         changeSetCriteria.addFilterStartVersion(String.valueOf(startVersion));
 
-        // apply the drift-level carousel filters in order to filter out changesets that have no applicab;e drift 
+        // apply the drift-level carousel filters in order to filter out changesets that have no applicable drift 
         Criteria criteria = getCurrentCriteria();
         DriftCategory[] driftCategoriesFilter = RPCDataSource.getArrayFilter(criteria,
             DriftDataSource.FILTER_CATEGORIES, DriftCategory.class);

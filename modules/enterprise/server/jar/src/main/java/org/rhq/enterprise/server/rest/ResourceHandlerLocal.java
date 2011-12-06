@@ -88,6 +88,7 @@ public interface ResourceHandlerLocal {
     Response getSchedules(@PathParam("id") int resourceId,
                                       @QueryParam("type") @DefaultValue("all") String scheduleType,
                                       @QueryParam("enabledOnly") @DefaultValue("true") boolean enabledOnly,
+                                      @QueryParam("name") String name,
                                       @Context Request request,
                                       @Context HttpHeaders headers,
                                       @Context UriInfo uriInfo);

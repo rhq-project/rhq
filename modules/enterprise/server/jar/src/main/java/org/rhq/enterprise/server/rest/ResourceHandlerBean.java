@@ -195,6 +195,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     public Response getSchedules(int resourceId,
                                              String scheduleType,
                                              boolean enabledOnly,
+                                             String name,
                                           @Context Request request,
                                           @Context HttpHeaders headers,
                                           @Context UriInfo uriInfo) {
@@ -216,26 +217,28 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             if ("all".equals(scheduleType) ||
                     scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase()) ) {
                 if (!enabledOnly || (enabledOnly && schedule.isEnabled() )) {
-                    MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                            schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
-                            definition.getDataType().toString());
-                    UriBuilder uriBuilder;
-                    URI uri;
-                    if (definition.getDataType()== DataType.MEASUREMENT) {
+                    if (name==null || (name!=null && name.equals(definition.getName()))) {
+                        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                                definition.getDataType().toString());
+                        UriBuilder uriBuilder;
+                        URI uri;
+                        if (definition.getDataType()== DataType.MEASUREMENT) {
+                            uriBuilder = uriInfo.getBaseUriBuilder();
+                            uriBuilder.path("/metric/data/{id}");
+                            uri = uriBuilder.build(schedule.getId());
+                            Link metricLink = new Link("metric",uri.toString());
+                            ms.addLink(metricLink);
+                        }
+                        // create link to the resource
                         uriBuilder = uriInfo.getBaseUriBuilder();
-                        uriBuilder.path("/metric/data/{id}");
-                        uri = uriBuilder.build(schedule.getId());
-                        Link metricLink = new Link("metric",uri.toString());
-                        ms.addLink(metricLink);
-                    }
-                    // create link to the resource
-                    uriBuilder = uriInfo.getBaseUriBuilder();
-                    uriBuilder.path("resource/" + schedule.getResource().getId());
-                    uri = uriBuilder.build();
-                    Link link = new Link("resource",uri.toString());
-                    ms.addLink(link);
+                        uriBuilder.path("resource/" + schedule.getResource().getId());
+                        uri = uriBuilder.build();
+                        Link link = new Link("resource",uri.toString());
+                        ms.addLink(link);
 
-                    ret.add(ms);
+                        ret.add(ms);
+                    }
                 }
             }
         }

@@ -39,7 +39,7 @@ import org.jboss.resteasy.spi.touri.URITemplate;
  * A (partial) resource with some type information
  * @author Heiko W. Rupp
  */
-@XmlRootElement
+@XmlRootElement(name="resource")
 /*
 @XmlAccessorType(XmlAccessType.NONE)
 @URITemplate("{id}")

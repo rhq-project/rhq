@@ -26,6 +26,7 @@ import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFor
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
  * @author Greg Hinkle
@@ -57,6 +59,14 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         this.canManageBundles = canManageBundles;
         setDataSource(new BundleDeploymentDataSource());
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
+    }
+
+    @Override
+    protected LocatableListGrid createListGrid(String locatorId) {
+        LocatableListGrid grid = super.createListGrid(locatorId);
+        grid.setSortField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME);
+        grid.setSortDirection(SortDirection.DESCENDING);
+        return grid;
     }
 
     @Override

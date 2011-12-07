@@ -26,6 +26,7 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>javax.persistence</groupId>
             <artifactId>persistence-api</artifactId>
@@ -40,6 +41,14 @@
                 section. -->
             <scope>provided</scope>
         </dependency>
+        
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-ejb3x</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+        
     </dependencies>
 
     <build>

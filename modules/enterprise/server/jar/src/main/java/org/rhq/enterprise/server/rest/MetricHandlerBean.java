@@ -133,7 +133,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         res.setMaxTimeStamp(maxTime);
         res.setMinTimeStamp(minTime);
 */
-            res = fill(list,scheduleId,hideEmpty);
+            fill(res, list,scheduleId,hideEmpty);
         }
 
         CacheControl cc = new CacheControl();
@@ -156,10 +156,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return builder.build();
     }
 
-    private MetricAggregate fill(List<MeasurementDataNumericHighLowComposite> list,int scheduleId , boolean hideEmpty) {
+    private MetricAggregate fill(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list, int scheduleId,
+                                 boolean hideEmpty) {
         long minTime=Long.MAX_VALUE;
         long maxTime=0;
-        MetricAggregate res = new MetricAggregate();
         res.setScheduleId(scheduleId);
 
         for (MeasurementDataNumericHighLowComposite c : list) {
@@ -214,8 +214,9 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,dataPoints);
             if (!listList.isEmpty()) {
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
-                MetricAggregate ma = fill(list,scheduleId,hideEmpty);
-                resList.add(ma);
+                MetricAggregate res = new MetricAggregate();
+                fill(res, list,scheduleId,hideEmpty);
+                resList.add(res);
             }
             else
                 throw new StuffNotFoundException("Metrics for schedule " + scheduleId);

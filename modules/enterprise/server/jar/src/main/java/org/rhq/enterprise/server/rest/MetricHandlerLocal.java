@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -54,7 +55,7 @@ public interface MetricHandlerLocal {
     Response getMetricData(@PathParam("scheduleId") int scheduleId,
                                   @QueryParam("startTime")  long startTime,
                                   @QueryParam("endTime") long endTime,
-                                  @QueryParam("dataPoints") int dataPoints,
+                                  @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
                                   @QueryParam("hideEmpty") boolean hideEmpty,
                                   @Context Request request,
                                   @Context HttpHeaders headers);

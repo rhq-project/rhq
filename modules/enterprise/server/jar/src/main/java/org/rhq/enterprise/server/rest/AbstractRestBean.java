@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ejb.Stateless;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -63,7 +62,6 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * For the cache and its evicion policies see rhq-cache-service.xml
  * @author Heiko W. Rupp
  */
-@Stateless
 @javax.annotation.Resource(name="cache",type= TreeCacheMBean.class,mappedName = "RhqCache")
 public class AbstractRestBean {
 

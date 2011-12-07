@@ -46,4 +46,5 @@ public interface Wizard {
      * This is called when the cancel button or the wizard window's "X" close button is clicked. 
      */
     void cancel();
+
 }

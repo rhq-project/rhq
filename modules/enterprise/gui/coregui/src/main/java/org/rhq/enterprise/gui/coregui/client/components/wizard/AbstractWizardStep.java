@@ -28,6 +28,10 @@ public abstract class AbstractWizardStep implements WizardStep {
 
     abstract public String getName();
 
+    public boolean isNextButtonEnabled() {
+        return true;
+    }
+
     public boolean nextPage() {
         return true;
     }
@@ -35,4 +39,5 @@ public abstract class AbstractWizardStep implements WizardStep {
     public boolean previousPage() {
         return true;
     }
+
 }

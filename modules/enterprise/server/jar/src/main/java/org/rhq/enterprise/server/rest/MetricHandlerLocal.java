@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.rest;
 
-import java.io.InputStream;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -53,6 +52,17 @@ public interface MetricHandlerLocal {
     @Path("data/{scheduleId}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     Response getMetricData(@PathParam("scheduleId") int scheduleId,
+                                  @QueryParam("startTime")  long startTime,
+                                  @QueryParam("endTime") long endTime,
+                                  @QueryParam("dataPoints") int dataPoints,
+                                  @QueryParam("hideEmpty") boolean hideEmpty,
+                                  @Context Request request,
+                                  @Context HttpHeaders headers);
+
+    @GET
+    @Path("data")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
+    Response getMetricDataMulti(@QueryParam("sid") String scheduleIds,
                                   @QueryParam("startTime")  long startTime,
                                   @QueryParam("endTime") long endTime,
                                   @QueryParam("dataPoints") int dataPoints,

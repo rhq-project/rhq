@@ -26,9 +26,14 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -38,6 +43,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.jboss.cache.Fqn;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -73,7 +79,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                          @Context Request request,
                                          @Context HttpHeaders headers) {
 
-        if (dataPoints<0)
+        if (dataPoints<=0)
             throw new IllegalArgumentException("dataPoints must be >0 ");
 
         if (startTime==0) {
@@ -103,11 +109,14 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
                 schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, dataPoints);
 
+/*
         long minTime=Long.MAX_VALUE;
         long maxTime=0;
+*/
 
         if (!listList.isEmpty()) {
             List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
+/*
             for (MeasurementDataNumericHighLowComposite c : list) {
                 long timestamp = c.getTimestamp();
                 if (!Double.isNaN(c.getValue()) || !hideEmpty) {
@@ -123,6 +132,9 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         }
         res.setMaxTimeStamp(maxTime);
         res.setMinTimeStamp(minTime);
+*/
+            res = fill(list,scheduleId,hideEmpty);
+        }
 
         CacheControl cc = new CacheControl();
         int maxAge = (int) (schedule.getInterval() / 1000L)/2; // millis  ; half of schedule interval
@@ -144,6 +156,76 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return builder.build();
     }
 
+    private MetricAggregate fill(List<MeasurementDataNumericHighLowComposite> list,int scheduleId , boolean hideEmpty) {
+        long minTime=Long.MAX_VALUE;
+        long maxTime=0;
+        MetricAggregate res = new MetricAggregate();
+        res.setScheduleId(scheduleId);
+
+        for (MeasurementDataNumericHighLowComposite c : list) {
+            long timestamp = c.getTimestamp();
+            if (!Double.isNaN(c.getValue()) || !hideEmpty) {
+                MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
+                res.addDataPoint(dp);
+            }
+            if (timestamp <minTime)
+                minTime= timestamp;
+            if (timestamp >maxTime)
+                maxTime= timestamp;
+        }
+        res.setNumDataPoints(list.size());
+        res.setMaxTimeStamp(maxTime);
+        res.setMinTimeStamp(minTime);
+
+        return res;
+    }
+
+    @Override
+    @GET
+    @Path("data")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_HTML})
+    public Response getMetricDataMulti(@QueryParam("sid") String schedules, @QueryParam("startTime") long startTime,
+                                       @QueryParam("endTime") long endTime, @QueryParam("dataPoints") int dataPoints,
+                                       @QueryParam("hideEmpty") boolean hideEmpty, @Context Request request,
+                                       @Context HttpHeaders headers) {
+
+        if (startTime==0) {
+            endTime = System.currentTimeMillis();
+            startTime = endTime - EIGHT_HOURS;
+        }
+
+        String[] tmp = schedules.split(",");
+        Integer[] scheduleIds = new Integer[tmp.length];
+        try {
+            for (int i = 0; i < tmp.length ; i++)
+                scheduleIds[i] = Integer.parseInt(tmp[i]);
+        }
+        catch (NumberFormatException nfe) {
+            throw new IllegalArgumentException("Bad input: " + nfe.getMessage());
+        }
+
+        List<MetricAggregate> resList = new ArrayList<MetricAggregate>(scheduleIds.length);
+        for (Integer scheduleId : scheduleIds) {
+            MeasurementSchedule sched = scheduleManager.getScheduleById(caller,scheduleId);
+            if (sched==null)
+                throw new StuffNotFoundException("Schedule with id " + scheduleId);
+            int definitionId = sched.getDefinition().getId();
+            List<List<MeasurementDataNumericHighLowComposite>> listList =
+                dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,dataPoints);
+            if (!listList.isEmpty()) {
+                List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
+                MetricAggregate ma = fill(list,scheduleId,hideEmpty);
+                resList.add(ma);
+            }
+            else
+                throw new StuffNotFoundException("Metrics for schedule " + scheduleId);
+        }
+
+        GenericEntity<List<MetricAggregate>> metAgg = new GenericEntity<List<MetricAggregate>>(resList) {};
+
+        return Response.ok(metAgg).build();
+
+    }
 
     /**
      * Return a metric schedule with the respective status codes for cache validation

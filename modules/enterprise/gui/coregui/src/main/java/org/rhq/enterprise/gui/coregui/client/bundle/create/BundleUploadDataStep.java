@@ -64,7 +64,7 @@ public class BundleUploadDataStep extends AbstractWizardStep {
             mainLayout = new LocatableVLayout("BundleCreateUploadData");
         }
 
-        mainLayout.setMargin(Integer.valueOf(20));
+        mainLayout.setMargin(20);
         mainLayout.setWidth100();
         mainLayout.setHeight(10);
 

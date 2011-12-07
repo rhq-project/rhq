@@ -62,7 +62,9 @@ public class LocalClientProxy extends AbstractRhqFacadeProxy<LocalClient> {
 
             //run this through the privileged block to elevate the privs of the script
             //the scripts don't have the AllowEjbAccessPermission but this code has
-            //all perms.
+            //all perms (or at least all perms assigned to it by the current context,
+            //which at the time of writing is defined by the rhq-server.policy file
+            //which gives all code all permissions).
             return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 @Override
                 public Object run() throws Exception {

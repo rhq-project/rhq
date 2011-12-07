@@ -145,8 +145,7 @@ public class DriftDetailsView extends LocatableVLayout {
             case FILE_CHANGED:
                 category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
                 oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
-                oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(), driftDetails
-                    .getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion());
+                oldFileLink = spacer;
                 newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
                 newFileLink = spacer;
                 break;

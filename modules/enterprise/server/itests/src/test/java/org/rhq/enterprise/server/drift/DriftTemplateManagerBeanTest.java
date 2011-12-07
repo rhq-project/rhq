@@ -59,7 +59,6 @@ import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftSet;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
@@ -68,11 +67,12 @@ import org.rhq.test.TransactionCallback;
 
 public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
+    private static final String TEST_CREATE_TEMPLATE = "test-createTemplateForNegativeUpdateTests";
+    private static final String TEST_PIN_TEMPLATE = "test-pinTemplate";
+
     private DriftTemplateManagerLocal templateMgr;
 
     private DriftManagerLocal driftMgr;
-
-    private List<Resource> resources = new LinkedList<Resource>();
 
     private JPADrift drift1;
     private JPADrift drift2;
@@ -117,7 +117,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     public void createNewTemplate() {
         final DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test::createNewTemplate");
+        definition.setName("test-createNewTemplate");
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
         definition.setInterval(2400L);
@@ -148,7 +148,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
     public void createTemplateForNegativeUpdateTests() {
         DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test::createTemplateForNegativeUpdateTests");
+        definition.setName(TEST_CREATE_TEMPLATE);
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
         definition.setInterval(2400L);
@@ -159,48 +159,40 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertNotNull("Failed to load template", loadTemplate(definition.getName()));
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
-        expectedExceptions = EJBException.class,
-        expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*base directory.*cannot be modified")
     @InitDB(false)
     public void doNotAllowBaseDirToBeUpdated() {
-        DriftDefinitionTemplate template = loadTemplate("test::createTemplateForNegativeUpdateTests");
+        DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
         DriftDefinition definition = template.getTemplateDefinition();
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/TEST"));
 
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
-        expectedExceptions = EJBException.class,
-        expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*filters.*cannot be modified")
     @InitDB(false)
     public void doNotAllowFiltersToBeUpdated() {
-        DriftDefinitionTemplate template = loadTemplate("test::createTemplateForNegativeUpdateTests");
+        DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
         DriftDefinition definition = template.getTemplateDefinition();
         definition.addExclude(new Filter("/foo/bar/TEST/conf", "*.xml"));
 
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
-        expectedExceptions = EJBException.class,
-        expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*name.*cannot be modified")
     @InitDB(false)
     public void doNotAllowTemplateNameToBeUpdated() {
-        DriftDefinitionTemplate template = loadTemplate("test::createTemplateForNegativeUpdateTests");
+        DriftDefinitionTemplate template = loadTemplate(TEST_CREATE_TEMPLATE);
         template.setName("A new name");
 
         templateMgr.updateTemplate(getOverlord(), template);
     }
 
-    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests",
-        expectedExceptions = EJBException.class,
-        expectedExceptionsMessageRegExp = ".*template name must be unique.*")
+    @Test(dependsOnMethods = "createTemplateForNegativeUpdateTests", expectedExceptions = EJBException.class, expectedExceptionsMessageRegExp = ".*template name must be unique.*")
     @InitDB(false)
     public void doNotAllowDuplicateTemplateNames() {
         DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test::createTemplateForNegativeUpdateTests");
+        definition.setName(TEST_CREATE_TEMPLATE);
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
         definition.setInterval(2400L);
@@ -212,7 +204,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     public void createAndUpdateTemplate() {
         // create the template
         DriftDefinition definition = new DriftDefinition(new Configuration());
-        definition.setName("test::updateTemplate");
+        definition.setName("test-updateTemplate");
         definition.setDescription("update template test");
         definition.setEnabled(true);
         definition.setDriftHandlingMode(normal);
@@ -252,12 +244,11 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
             String msg = "Failed to propagate update to attached definition " + toString(updatedDef) + " - ";
             DriftDefinition updatedTemplateDef = updatedTemplate.getTemplateDefinition();
 
-            assertEquals(msg + "enabled property not updated", updatedTemplateDef.isEnabled(),
-                updatedDef.isEnabled());
-            assertEquals(msg + "driftHandlingMode property not updated",
-                updatedTemplateDef.getDriftHandlingMode(), updatedDef.getDriftHandlingMode());
-            assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(),
-                updatedDef.getInterval());
+            assertEquals(msg + "enabled property not updated", updatedTemplateDef.isEnabled(), updatedDef.isEnabled());
+            assertEquals(msg + "driftHandlingMode property not updated", updatedTemplateDef.getDriftHandlingMode(),
+                updatedDef.getDriftHandlingMode());
+            assertEquals(msg + "interval property not updated", updatedTemplateDef.getInterval(), updatedDef
+                .getInterval());
         }
 
         // verify that the detached definitions have not been updated.
@@ -266,25 +257,23 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
             String msg = "Detached definition " + toString(def) + " should not get updated - ";
 
             assertEquals(msg + "enabled property was modified", def.isEnabled(), defAfterUpdate.isEnabled());
-            assertEquals(msg + "driftHandlingMode property was modified", def.getDriftHandlingMode(),
-                defAfterUpdate.getDriftHandlingMode());
+            assertEquals(msg + "driftHandlingMode property was modified", def.getDriftHandlingMode(), defAfterUpdate
+                .getDriftHandlingMode());
             assertEquals(msg + "interval property was modified", def.getInterval(), defAfterUpdate.getInterval());
         }
     }
 
-
-    @SuppressWarnings("unchecked")
     public void pinTemplate() throws Exception {
         // First create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("test::pinTemplate");
+        templateDef.setName(TEST_PIN_TEMPLATE);
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);
         templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(),
-            resourceType.getId(), true, templateDef);
+        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
+            templateDef);
 
         // next create some resource level definitions
         final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
@@ -338,10 +327,11 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertTrue("Template should be marked pinned", updatedTemplate.isPinned());
     }
 
+    @SuppressWarnings("unchecked")
     @Test(dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void persistChangeSetWhenTemplateGetsPinned() throws Exception {
-        DriftDefinitionTemplate template = loadTemplate("test::pinTemplate");
+        DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterId(template.getChangeSetId());
@@ -352,9 +342,8 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertEquals("Expected to find change set for pinned template", 1, changeSets.size());
 
         JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
-        List<? extends Drift> expectedDrifts = asList(
-            new JPADrift(expectedChangeSet, "drift.1", FILE_ADDED, null, driftFile1),
-            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+        List<? extends Drift> expectedDrifts = asList(new JPADrift(expectedChangeSet, "drift.1", FILE_ADDED, null,
+            driftFile1), new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
 
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
         List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
@@ -375,7 +364,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     @Test(dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void updateAttachedDefinitionsWhenTemplateGetsPinned() throws Exception {
-        DriftDefinitionTemplate template = loadTemplate("test::pinTemplate");
+        DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
         // get the attached definitions
         List<DriftDefinition> attachedDefs = new LinkedList<DriftDefinition>();
@@ -392,7 +381,7 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     @Test(dependsOnMethods = "pinTemplate")
     @InitDB(false)
     public void doNotUpdateDetachedDefinitionsWhenTemplateGetsPinned() throws Exception {
-        DriftDefinitionTemplate template = loadTemplate("test::pinTemplate");
+        DriftDefinitionTemplate template = loadTemplate(TEST_PIN_TEMPLATE);
 
         // get the detached definitions
         List<DriftDefinition> detachedDefs = new LinkedList<DriftDefinition>();
@@ -409,14 +398,14 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
     public void deleteTemplate() throws Exception {
         // first create the template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
-        templateDef.setName("test::pinTemplate");
+        templateDef.setName(TEST_PIN_TEMPLATE);
         templateDef.setEnabled(true);
         templateDef.setDriftHandlingMode(normal);
         templateDef.setInterval(2400L);
         templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
 
-        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(),
-            resourceType.getId(), true, templateDef);
+        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
+            templateDef);
 
         // next create some resource level definitions
         final DriftDefinition attachedDef1 = createDefinition(template, "attachedDef1", true);
@@ -472,22 +461,23 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         // verify that attached definitions along with their change sets have
         // been deleted
         assertNull("Change sets belonging to attached definitions should be deleted", loadChangeSet(changeSet0.getId()));
-        assertNull("Attached definition " + toString(attachedDef1) + " should be deleted",
-            loadDefinition(attachedDef1.getId()));
-        assertNull("Attached definition " + toString(attachedDef2) + " should be deleted",
-            loadDefinition(attachedDef2.getId()));
+        assertNull("Attached definition " + toString(attachedDef1) + " should be deleted", loadDefinition(attachedDef1
+            .getId()));
+        assertNull("Attached definition " + toString(attachedDef2) + " should be deleted", loadDefinition(attachedDef2
+            .getId()));
 
         // verify that detached definitions along with their change sets have not been deleted
-        assertNotNull("Change sets belonging to detached definitions should not be deleted",
-            loadChangeSet(changeSet1.getId()));
+        assertNotNull("Change sets belonging to detached definitions should not be deleted", loadChangeSet(changeSet1
+            .getId()));
         assertDetachedDefinitionNotDeleted(detachedDef1.getId());
         assertDetachedDefinitionNotDeleted(detachedDef2.getId());
 
         // verify that the template itself has been deleted
-        assertNull("The template " + toString(template) + " should have been deleted",
-            loadTemplate(template.getName(), false));
+        assertNull("The template " + toString(template) + " should have been deleted", loadTemplate(template.getName(),
+            false));
     }
 
+    @SuppressWarnings("unchecked")
     private void assertDefinitionIsPinned(DriftDefinition definition) throws Exception {
         // verify that the definition is marked as pinned
         assertTrue("Expected " + toString(definition) + " to be pinned", definition.isPinned());
@@ -503,9 +493,8 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         assertEquals("Expected to find one change set", 1, changeSets.size());
 
         JPADriftChangeSet expectedChangeSet = new JPADriftChangeSet(resource, 1, COVERAGE, null);
-        List<? extends Drift> expectedDrifts = asList(
-            new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED, null, driftFile1),
-            new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
+        List<? extends Drift> expectedDrifts = asList(new JPADrift(expectedChangeSet, drift1.getPath(), FILE_ADDED,
+            null, driftFile1), new JPADrift(expectedChangeSet, drift2.getPath(), FILE_ADDED, null, driftFile2));
 
         DriftChangeSet<?> actualChangeSet = changeSets.get(0);
         List<? extends Drift> actualDrifts = new ArrayList(actualChangeSet.getDrifts());
@@ -519,8 +508,8 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
         criteria.addFilterStartVersion(1);
         criteria.addFilterDriftDefinitionId(definition.getId());
 
-        assertEquals("There should not be any drift change sets", 0,
-            driftMgr.findDriftChangeSetsByCriteria(getOverlord(), criteria).size());
+        assertEquals("There should not be any drift change sets", 0, driftMgr.findDriftChangeSetsByCriteria(
+            getOverlord(), criteria).size());
     }
 
     private void assertDefinitionIsNotPinned(DriftDefinition definition) throws Exception {
@@ -534,15 +523,14 @@ public class DriftTemplateManagerBeanTest extends DriftServerTest {
 
         PageList<? extends DriftChangeSet<?>> changeSets = driftMgr.findDriftChangeSetsByCriteria(getOverlord(),
             criteria);
-        assertEquals("Did not expect to find any change sets for " + toString(definition) + ". Note that this " +
-            "assertion method assumes that the definition you are testing is not supposed to have any change sets.",
+        assertEquals("Did not expect to find any change sets for " + toString(definition) + ". Note that this "
+            + "assertion method assumes that the definition you are testing is not supposed to have any change sets.",
             0, changeSets.size());
     }
 
     private void assertDriftTemplateEquals(String msg, DriftDefinitionTemplate expected, DriftDefinitionTemplate actual) {
-        AssertUtils
-            .assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected, actual,
-                "id", "resourceType", "ctime", "templateDefinition");
+        AssertUtils.assertPropertiesMatch(msg + ": basic drift definition template properties do not match", expected,
+            actual, "id", "resourceType", "ctime", "templateDefinition");
         assertDriftDefEquals(msg + ": template definitions do not match", expected.getTemplateDefinition(), actual
             .getTemplateDefinition());
     }

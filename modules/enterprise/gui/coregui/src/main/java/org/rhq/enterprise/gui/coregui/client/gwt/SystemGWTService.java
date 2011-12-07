@@ -57,6 +57,17 @@ public interface SystemGWTService extends RemoteService {
     HashMap<String, String> getConnectorDownloads() throws RuntimeException;
 
     /**
+     * Returns the name and download URL (key and value respectively) of all CLI alert scripts
+     * that are available on the server for download. These are just scripts that users can 
+     * then use to create actual cli scripts for alert notifications. These scripts will usually
+     * require some tweaking to be usable as alert scripts.
+     * 
+     * @return info about the available CLI alert scripts
+     * @throws RuntimeException
+     */
+    HashMap<String, String> getCliAlertScriptDownloads() throws RuntimeException;
+
+    /**
      * @return metadata properties about the CLI download available on the server.
      */
     HashMap<String, String> getClientVersionProperties() throws RuntimeException;

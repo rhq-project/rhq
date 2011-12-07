@@ -39,8 +39,9 @@ import org.rhq.enterprise.server.system.ServerVersion;
 public interface DiscoveryBossRemote {
 
     /**
-     * Analogous to the GUI feature Import Resources in the auto discovery queue. Note, to query for
-     * Resources with a specific InnventryStatus see {@link ResourceManagerRemote.findResourcesByCriteria(ResourceCriteria)}
+     * Analogous to the GUI feature Import Resources in the auto discovery queue.
+     * Note, to query for Resources with a specific InventoryStatus, see
+     * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
      * 
      * @param subject
      * @param resourceIds
@@ -50,8 +51,9 @@ public interface DiscoveryBossRemote {
         @WebParam(name = "resourceIds") int[] resourceIds);
 
     /**
-     * Analogous to the GUI feature Ignore Resources in the auto discovery queue. Note, to query for
-     * Resources with a specific InnventryStatus see {@link ResourceManagerRemote.findResourcesByCriteria(ResourceCriteria)}
+     * Analogous to the GUI feature Ignore Resources in the auto discovery queue.
+     * Note, to query for Resources with a specific InventoryStatus, see
+     * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
      * 
      * @param subject
      * @param resourceIds
@@ -61,8 +63,9 @@ public interface DiscoveryBossRemote {
         @WebParam(name = "resourceIds") int[] resourceIds);
 
     /**
-     * Analogous to the GUI feature Unignore Resources in the auto discovery queue. Note, to query for
-     * Resources with a specific InnventryStatus see {@link ResourceManagerRemote.findResourcesByCriteria(ResourceCriteria)}
+     * Analogous to the GUI feature Unignore Resources in the auto discovery queue.
+     * Note, to query for Resources with a specific InventoryStatus, see
+     * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
      * 
      * @param subject
      * @param resourceIds

@@ -353,8 +353,9 @@ public class FileUtil {
 
         while (!directories.isEmpty()) {
             File dir = directories.pop();
-            if (dir.listFiles()!=null) {
-                for (File file : dir.listFiles()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File file : files) {
                     if (file.isDirectory()) {
                         directories.push(file);
                     } else {

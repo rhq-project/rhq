@@ -46,6 +46,7 @@
             <module>server/ear</module>
             <module>binding</module>
             <module>server/client-api</module>            
+            <module>server/itests</module>
          </modules>
       </profile>
 

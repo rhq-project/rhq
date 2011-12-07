@@ -44,6 +44,7 @@ import jline.ConsoleReader;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.utility.ReflectionUtility;
+import org.rhq.enterprise.clientapi.RemoteClientProxy;
 
 /**
  * A Contextual JavaScript interactive completor. Not perfect, but

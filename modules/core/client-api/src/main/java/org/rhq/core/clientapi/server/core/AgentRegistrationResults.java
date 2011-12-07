@@ -31,7 +31,7 @@ import org.rhq.core.domain.cloud.composite.FailoverListComposite.ServerEntry;
 /**
  * These are the results of a successful agent registration. After the agent has been registered by the server, this
  * object will contain the identification information assigned to the agent by the server.  It will also contain the
- * list of servers this agent can fail over to an in high availability setup.
+ * list of servers this agent can fail over to in a high availability setup.
  *
  * @author John Mazzitelli
  */

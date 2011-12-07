@@ -32,6 +32,7 @@ import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -92,6 +93,8 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         grid.setCanExpandRecords(true);
         grid.setExpansionMode(ExpansionMode.DETAIL_FIELD);
         grid.setDetailField("message");
+        grid.setSortField("timestamp");
+        grid.setSortDirection(SortDirection.ASCENDING);
 
         ListGridField action = new ListGridField("action", MSG.view_bundle_deploy_action());
         action.setAutoFitWidth(true);

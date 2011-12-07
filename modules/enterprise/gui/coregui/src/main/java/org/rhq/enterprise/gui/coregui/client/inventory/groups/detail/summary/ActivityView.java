@@ -18,11 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -36,16 +34,11 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardCategory;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -55,7 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetricsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOperationsPortlet;
@@ -211,44 +203,6 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
         //figure out which portlets to display and how
         Map<String, String> groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupComposite);
-
-        //initiate asynch call to execute and then update the dashboard with bundle deployment portlet if necessary
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterId(group.getId());
-        criteria.fetchExplicitResources(true);
-        criteria.setPageControl(new PageControl(0, 1));
-        GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceGroup>>() {
-                @Override
-                public void onSuccess(PageList<ResourceGroup> results) {
-                    if (!results.isEmpty()) {
-                        ResourceGroup grp = results.get(0);
-                        Set<Resource> explicitMembers = grp.getExplicitResources();
-                        Resource[] currentResources = new Resource[explicitMembers.size()];
-                        explicitMembers.toArray(currentResources);
-                        Map<String, String> portletToAdd = new HashMap<String, String>();
-                        //membership dynamically determined if all platforms then will be compatible.
-                        if (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)) {
-                            if (currentResources[0].getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
-                                //this portlet allowed to add bundle portlet monitoring
-                                portletToAdd.put(GroupBundleDeploymentsPortlet.KEY, GroupBundleDeploymentsPortlet.NAME);
-                            }
-                            if (!portletToAdd.isEmpty()) {
-                                //update dashboard with that portlet and reload
-                                updateDashboardWithPortlets(portletToAdd, dashboard, 100);
-                                //request reload of dashboard widget
-                                setDashboard(dashboard);
-                                markForRedraw();
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving information for group [" + group.getId() + "]:" + caught.getMessage());
-                }
-            });
 
         //reset positioning parameters
         colLeft = 0;

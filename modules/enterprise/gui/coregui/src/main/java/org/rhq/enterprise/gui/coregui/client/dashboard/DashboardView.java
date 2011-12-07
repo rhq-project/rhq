@@ -246,8 +246,8 @@ public class DashboardView extends LocatableVLayout {
                     } else {
                         // TODO: i18n
                         Message message = new Message("There is already a dashboard named '" + trimmedName
-                            + "'. Please specify a name that is not already in use.", Message.Severity.Error,
-                            EnumSet.of(Message.Option.Transient));
+                            + "'. Please specify a name that is not already in use.", Message.Severity.Error, EnumSet
+                            .of(Message.Option.Transient));
                         CoreGUI.getMessageCenter().notify(message);
                         nameItem.setValue(storedDashboard.getName());
                     }
@@ -298,8 +298,6 @@ public class DashboardView extends LocatableVLayout {
                 }
             }
         });
-
-
 
         // build the menu of valid portlets for this context, sorted by portlet name
         final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));
@@ -512,6 +510,7 @@ public class DashboardView extends LocatableVLayout {
                 groupMenuMap.remove(GroupOobsPortlet.KEY);
                 groupMenuMap.remove(GroupPkgHistoryPortlet.KEY);
                 groupMenuMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+                groupMenuMap.remove(GroupBundleDeploymentsPortlet.KEY);
 
             } else {
                 // for compatible may still need to do some pruning.

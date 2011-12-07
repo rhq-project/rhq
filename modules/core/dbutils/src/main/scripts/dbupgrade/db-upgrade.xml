@@ -3781,12 +3781,11 @@
                 <!-- RHQ_DRIFT -->
                 <!--  Add new path_directory column -->                
                 <schema-addColumn   table="RHQ_DRIFT" column="PATH_DIRECTORY" columnType="VARCHAR2" precision="1024" />
-                <!-- TODO: This needs to be a java update step! -->
-                <schema-directSQL>
-                    <statement desc="RHQ_DRIFT_DEFINITION: set drift_handling_mode column (normal)">
-                        UPDATE RHQ_DRIFT SET PATH_DIRECTORY = PATH
-                    </statement>
-                </schema-directSQL>                                                
+                
+                <!-- Set the new path_directory column using the current path column values -->
+                <schema-javaTask className="DriftPathDirectoryDatabaseUpgradeTask" />                
+
+                <!-- Now it is safe to set the new path_directory column not null -->
                 <schema-alterColumn table="RHQ_DRIFT" column="PATH_DIRECTORY" nullable="FALSE" />      
                           
                 <!--  add new drift_set_id column and FK -->
@@ -3800,8 +3799,10 @@
                     </statement>
                 </schema-directSQL>
 
-                <!-- TODO For RHQ 4.3: Java upgrade step to set path_directory from path in rhq_drift -->
-                <!-- TODO For RHQ 4.3: Java upgrade step for rhq_drift_template_map conversion and removal -->
+                <!-- Morph rhq_drift_template_map rows into rhq_drift_def_template rows. The rhq_drift_template_map
+                     table is obsolete. -->
+                <schema-javaTask className="DriftTemplateMapDatabaseUpgradeTask" />                
+
             </schemaSpec>
 
             <schemaSpec version="2.116">

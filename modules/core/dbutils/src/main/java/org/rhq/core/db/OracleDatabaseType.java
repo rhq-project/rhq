@@ -95,6 +95,10 @@ public abstract class OracleDatabaseType extends DatabaseType {
         }
     }
 
+    public String getSequenceInsertValue(Connection conn, String sequenceName) {
+        return sequenceName + ".NEXTVAL";
+    }
+
     /**
      * @see DatabaseType#getNextSequenceValue(Connection, String, String)
      */

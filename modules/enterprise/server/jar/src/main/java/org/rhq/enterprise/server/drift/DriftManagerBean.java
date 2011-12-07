@@ -119,48 +119,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Stateless
 public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
-    private static Set<String> binaryFileTypes = new HashSet<String>();
-
-    static {
-        binaryFileTypes.add("jar");
-        binaryFileTypes.add("war");
-        binaryFileTypes.add("ear");
-        binaryFileTypes.add("sar"); // jboss service
-        binaryFileTypes.add("har"); // hibernate archive
-        binaryFileTypes.add("rar"); // resource adapter
-        binaryFileTypes.add("wsr"); // jboss web service archive
-        binaryFileTypes.add("zip");
-        binaryFileTypes.add("tar");
-        binaryFileTypes.add("bz2");
-        binaryFileTypes.add("gz");
-        binaryFileTypes.add("rpm");
-        binaryFileTypes.add("so");
-        binaryFileTypes.add("dll");
-        binaryFileTypes.add("exe");
-        binaryFileTypes.add("jpg");
-        binaryFileTypes.add("png");
-        binaryFileTypes.add("jpeg");
-        binaryFileTypes.add("gif");
-        binaryFileTypes.add("pdf");
-        binaryFileTypes.add("swf");
-        binaryFileTypes.add("bpm");
-        binaryFileTypes.add("tiff");
-        binaryFileTypes.add("svg");
-        binaryFileTypes.add("doc");
-        binaryFileTypes.add("mp3");
-        binaryFileTypes.add("wav");
-        binaryFileTypes.add("m4a");
-        binaryFileTypes.add("mov");
-        binaryFileTypes.add("mpeg");
-        binaryFileTypes.add("avi");
-        binaryFileTypes.add("mp4");
-        binaryFileTypes.add("wmv");
-        binaryFileTypes.add("deb");
-        binaryFileTypes.add("sit");
-        binaryFileTypes.add("iso");
-        binaryFileTypes.add("dmg");
-    }
-
     // TODO Should security checks be handled here instead of delegating to the drift plugin?
     // Currently any security checks that need to be performed are delegated to the plugin.
     // This is fine *so far* since the only plugin is the default which is our existing SLSB
@@ -869,14 +827,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public boolean isBinaryFile(Subject subject, Drift<?, ?> drift) {
-        String path = drift.getPath();
-        int index = path.lastIndexOf('.');
-
-        if (index == -1 || index == path.length() - 1) {
-            return false;
-        }
-
-        return binaryFileTypes.contains(path.substring(index + 1, path.length()));
+        return DriftUtil.isBinaryFile(drift);
     }
 
     @Override

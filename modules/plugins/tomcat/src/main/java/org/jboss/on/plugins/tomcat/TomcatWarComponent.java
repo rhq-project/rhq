@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -450,8 +451,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", getResourceContext().getPluginConfiguration().getSimpleValue(
-            PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%",
+            getResourceContext().getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
@@ -633,9 +634,15 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return packages;
     }
 
-    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
-    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
-    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
+    /**
+     * Retrieve SHA 256 for a deployed app.
+     * 1) If the app is exploded then look into the manifest file for the RHQ-Sha265 attribute.
+     * The SHA should have been computed and the attribute added during package deployment.
+     * 2) If the app is not exploded then compute the SHA256 for the archive.
+     *
+     * @param file application file
+     * @return the SHA 256
+     */
     private String getSHA256(File file) {
 
         String sha256 = null;
@@ -644,8 +651,15 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
             File app = new File(file.getPath());
             if (app.isDirectory()) {
-                File associatedWarFile = new File(app.getAbsolutePath() + ".war");
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(associatedWarFile);
+                File manifestFile = new File(app.getAbsolutePath(), "META-INF/MANIFEST.MF");
+                InputStream manifestStream = new FileInputStream(manifestFile);
+                Manifest manifest = null;
+                try {
+                    manifest = new Manifest(manifestStream);
+                    sha256 = manifest.getMainAttributes().getValue("RHQ-Sha256");
+                } finally {
+                    manifestStream.close();
+                }
             } else {
                 sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
             }
@@ -733,9 +747,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
         File file = new File(fileName);
         if (!file.exists()) {
-            log
-                .warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
-                    + fileName);
+            log.warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
+                + fileName);
         } else {
             deleteApp(pluginConfiguration, file, false, true);
         }

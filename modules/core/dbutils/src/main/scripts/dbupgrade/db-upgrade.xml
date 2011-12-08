@@ -3823,7 +3823,12 @@
             </schemaSpec>
 
 <!-- JON 3.0 RELEASE uses DB Schema 2.116 -->
-                        
+            
+            <schemaSpec version="2.117">
+                <!-- Remove an obsolete drift table that may be hanging around -->
+                <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" />                
+            </schemaSpec>
+            
         </dbupgrade>
     </target>
 </project>

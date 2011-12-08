@@ -19,26 +19,8 @@
 
 package org.rhq.core.pc.drift;
 
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.util.file.FileUtil.copyFile;
-import static org.rhq.core.util.file.FileUtil.forEachFile;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.FileEntry;
@@ -48,6 +30,17 @@ import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileVisitor;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.*;
+
+import static org.rhq.common.drift.FileEntry.*;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.util.file.FileUtil.copyFile;
+import static org.rhq.core.util.file.FileUtil.forEachFile;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -76,14 +69,17 @@ public class DriftDetector implements Runnable {
     public void run() {
         log.debug("Starting drift detection...");
         long startTime = System.currentTimeMillis();
+        boolean updateSchedule = true;
+        DriftDetectionSchedule schedule = null;
         try {
             if (log.isDebugEnabled()) {
                 log.debug("Fetching next schedule from " + scheduleQueue);
             }
 
-            DriftDetectionSchedule schedule = scheduleQueue.getNextSchedule();
+            schedule = scheduleQueue.getNextSchedule();
             if (schedule == null) {
                 log.debug("No schedules are in the queue.");
+                updateSchedule = false;
                 return;
             }
 
@@ -93,17 +89,26 @@ public class DriftDetector implements Runnable {
             }
 
             if (schedule.getNextScan() > (System.currentTimeMillis() + 100L)) {
-                log.debug("Skipping " + schedule + " because it is too early to do the next detection.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Skipping " + schedule + " because it is too early to do the next detection.");
+                }
+                updateSchedule = false;
                 return;
             }
 
             if (!schedule.getDriftDefinition().isEnabled()) {
-                log.debug("Skipping " + schedule + " because the drift definition is disabled.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Skipping " + schedule + " because the drift definition is disabled.");
+                }
+                updateSchedule = false;
                 return;
             }
 
             if (previousSnapshotExists(schedule)) {
-                log.debug("Skipping " + schedule + " because server has not yet acked previous change set");
+                if (log.isDebugEnabled()) {
+                    log.debug("Skipping " + schedule + " because server has not yet acked previous change set");
+                }
+                updateSchedule = false;
                 return;
             }
 
@@ -140,7 +145,7 @@ public class DriftDetector implements Runnable {
 
         } finally {
             try {
-                scheduleQueue.deactivateSchedule();
+                scheduleQueue.deactivateSchedule(updateSchedule);
                 long endTime = System.currentTimeMillis();
                 log.debug("Finished drift detection in " + (endTime - startTime) + " ms");
 

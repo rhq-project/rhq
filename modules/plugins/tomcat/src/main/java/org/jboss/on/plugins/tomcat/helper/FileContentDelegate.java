@@ -26,9 +26,12 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -77,10 +80,33 @@ public class FileContentDelegate {
      *                  it is written, using the package name as the base directory; if <code>false</code> the
      *                  content will be written to directly to a file using the package name as the file name
      */
-    public void createContent(File contentFile, InputStream content, boolean unzip) {
+    public void createContent(File contentFile, InputStream content, boolean unzip, String sha) {
         try {
             if (unzip) {
                 ZipUtil.unzipFile(content, contentFile);
+
+                File manifestFile = new File(contentFile, "META-INF/MANIFEST.MF");
+                Manifest manifest;
+                if (manifestFile.exists()) {
+                    FileInputStream inputStream = new FileInputStream(manifestFile);
+                    try {
+                        manifest = new Manifest(inputStream);
+                    } finally {
+                        inputStream.close();
+                    }
+                } else {
+                    manifest = new Manifest();
+                }
+
+                Attributes attribs = manifest.getMainAttributes();
+                attribs.putValue("RHQ-Sha256", sha);
+
+                FileOutputStream outputStream = new FileOutputStream(manifestFile);
+                try {
+                    manifest.write(outputStream);
+                } finally {
+                    outputStream.close();
+                }
             } else {
                 FileUtil.writeFile(content, contentFile);
             }

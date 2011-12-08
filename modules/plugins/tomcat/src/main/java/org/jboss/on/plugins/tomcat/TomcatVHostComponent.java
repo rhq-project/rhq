@@ -54,6 +54,7 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -231,6 +232,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         return report;
     }
 
+    @SuppressWarnings("static-access")
     private void warCreate(CreateResourceReport report) throws Exception {
         ResourcePackageDetails details = report.getPackageDetails();
         PackageDetailsKey key = details.getKey();
@@ -307,11 +309,11 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
         InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        fileContent.createContent(path, isForTempDir, explodeOnDeploy);
+        String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(tempFile);
+        fileContent.createContent(path, isForTempDir, explodeOnDeploy, sha);
 
-        // Resource key is a canonical objectName similar to :        
-        // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none        
-
+        // Resource key is a canonical objectName similar to:
+        // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none
         String objectName = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=//" + getName()
             + "/" + contextRoot;
 

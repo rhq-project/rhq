@@ -3629,7 +3629,9 @@
 <!-- RHQ 4.1 RELEASE uses DB Schema 2.114 -->
 
 <!-- RHQ 4.2 RELEASE uses DB Schema 2.114
-     Note, the 4.1 to 4.2 upgrade is broken because most ofthe changes in 2.115 should have gone into 4.2. 
+     Note, the 4.1 to 4.2 upgrade is broken because a 4.2 dbsetup actually creates a 2.115 schema. So,
+     for 4.2 dbs to upgrade to 4.3 the schema version must first be corrected and set the schema
+     version to 2.115. 
 -->
 
             <schemaSpec version="2.115">                                                                
@@ -3686,22 +3688,15 @@
                      </statement>                
                 </schema-directSQL>
 
-                <!--  increase size from 128 to 512 -->
-                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="NAME" columnType="VARCHAR2" precision="512" />
-
                 <!--  add new columns -->
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DESCRIPTION" columnType="VARCHAR2" precision="512" />                
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DRIFT_HANDLING_MODE" columnType="VARCHAR2" precision="20" />
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="IS_PINNED" columnType="BOOLEAN"/>
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" columnType="BOOLEAN"/>
-                <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" columnType="INTEGER"/>
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DRIFT_DEF_TEMPLATE_ID" columnType="INTEGER"/>
            
                 <!--  initialize new required columns -->            
                 <schema-directSQL>
-                    <statement desc="RHQ_DRIFT_DEFINITION: set compliance_status column (in compliance)">
-                        UPDATE RHQ_DRIFT_DEFINITION SET COMPLIANCE_STATUS = 0
-                    </statement>
                     <statement targetDBVendor="postgresql" desc="RHQ_DRIFT_DEFINITION: set is_pinned column (false)">
                         UPDATE RHQ_DRIFT_DEFINITION SET IS_PINNED = FALSE
                     </statement>
@@ -3719,8 +3714,7 @@
                     </statement>
                 </schema-directSQL>                
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_PINNED" nullable="FALSE"/>
-                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" nullable="FALSE"/>
-                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" nullable="FALSE"/>   
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" nullable="FALSE"/>   
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="DRIFT_HANDLING_MODE" nullable="FALSE" />
 
                 <!--  add new FK -->
@@ -3771,8 +3765,8 @@
                 <!--  Add new drift_handling_mode column -->
                 <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_HANDLING_MODE" columnType="VARCHAR2" precision="20" />
                 <schema-directSQL>
-                    <statement desc="RHQ_DRIFT_DEFINITION: set drift_handling_mode column (normal)">
-                        UPDATE RHQ_DRIFT_DEFINITION SET DRIFT_HANDLING_MODE = 'normal'
+                    <statement desc="RHQ_DRIFT_CHANGE_SET: set drift_handling_mode column (normal)">
+                        UPDATE RHQ_DRIFT_CHANGE_SET SET DRIFT_HANDLING_MODE = 'normal'
                     </statement>
                 </schema-directSQL>                                
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_HANDLING_MODE" nullable="FALSE" />
@@ -3805,11 +3799,31 @@
 
             </schemaSpec>
 
+<!-- RHQ 4.2 RELEASE uses DB Schema 2.114, which is incorrect, it should have been 2.115. So, for the
+     upgrade to work for an RHQ 4.2 install the schema version must be set to 2.115 prior to the upgrade.
+     
+     The 4.2 upgrade should start with 2.116.
+-->
             <schemaSpec version="2.116">
+                <!-- RHQ_DRIFT_DEFINITION changes -->                                
+                <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" columnType="INTEGER"/>
+                <schema-directSQL>
+                    <statement desc="RHQ_DRIFT_DEFINITION: set compliance_status column (in compliance)">
+                        UPDATE RHQ_DRIFT_DEFINITION SET COMPLIANCE_STATUS = 0
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" nullable="FALSE"/>                
+                
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="NAME" columnType="VARCHAR2" precision="512" />
+                
+                
+                <!-- RHQ_PRD_VER changes -->                
                 <!-- Increase the max length of a product version from 50 to 100. -->
                 <schema-alterColumn table="RHQ_PRD_VER" column="VERSION" columnType="VARCHAR2" precision="100" />
             </schemaSpec>
 
+<!-- JON 3.0 RELEASE uses DB Schema 2.116 -->
+                        
         </dbupgrade>
     </target>
 </project>

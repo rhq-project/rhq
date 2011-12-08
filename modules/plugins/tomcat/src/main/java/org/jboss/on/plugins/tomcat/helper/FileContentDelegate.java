@@ -37,6 +37,7 @@ import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 
@@ -80,12 +81,13 @@ public class FileContentDelegate {
      *                  it is written, using the package name as the base directory; if <code>false</code> the
      *                  content will be written to directly to a file using the package name as the file name
      */
-    public void createContent(File contentFile, InputStream content, boolean unzip, String sha) {
+    @SuppressWarnings("static-access")
+    public void createContent(File destination, File content, boolean unzip) {
         try {
             if (unzip) {
-                ZipUtil.unzipFile(content, contentFile);
+                ZipUtil.unzipFile(content, destination);
 
-                File manifestFile = new File(contentFile, "META-INF/MANIFEST.MF");
+                File manifestFile = new File(destination, "META-INF/MANIFEST.MF");
                 Manifest manifest;
                 if (manifestFile.exists()) {
                     FileInputStream inputStream = new FileInputStream(manifestFile);
@@ -99,6 +101,7 @@ public class FileContentDelegate {
                 }
 
                 Attributes attribs = manifest.getMainAttributes();
+                String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(content);
                 attribs.putValue("RHQ-Sha256", sha);
 
                 FileOutputStream outputStream = new FileOutputStream(manifestFile);
@@ -108,10 +111,11 @@ public class FileContentDelegate {
                     outputStream.close();
                 }
             } else {
-                FileUtil.writeFile(content, contentFile);
+                InputStream contentStream = new BufferedInputStream(new FileInputStream(content));
+                FileUtil.writeFile(contentStream, destination);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error creating artifact for contentFile: " + contentFile, e);
+            throw new RuntimeException("Error creating artifact for contentFile: " + destination, e);
         }
     }
 

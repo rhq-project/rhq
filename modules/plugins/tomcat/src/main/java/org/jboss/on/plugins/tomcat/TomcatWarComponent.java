@@ -43,6 +43,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
+import org.jboss.on.plugins.tomcat.helper.FileContentDelegate;
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -507,15 +508,17 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             log.warn("Failed to create app backup but proceeding with redeploy of " + appFile.getPath() + ": " + e);
         }
 
+        FileContentDelegate contentDelegate = new FileContentDelegate(appFile.getParentFile(), packageDetails.getName());
+
         try {
             // Write the new bits for the application. If successful Tomcat will pick it up and complete the deploy.
-            moveTempFileToDeployLocation(tempFile, appFile, isExploded);
+            contentDelegate.createContent(appFile, tempFile, isExploded);
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
                 FileUtils.purge(appFile, true);
-                moveTempFileToDeployLocation(backupFile, appFile, isExploded);
+                contentDelegate.createContent(appFile, backupFile, isExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             } catch (Exception e1) {
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
@@ -534,17 +537,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         response.addPackageResponse(packageResponse);
 
         return response;
-    }
-
-    private void moveTempFileToDeployLocation(File tempFile, File appFile, boolean isExploded) throws IOException {
-        InputStream tempIs = null;
-        if (isExploded) {
-            tempIs = new BufferedInputStream(new FileInputStream(tempFile));
-            appFile.mkdir();
-            ZipUtil.unzipFile(tempIs, appFile);
-        } else {
-            tempFile.renameTo(appFile);
-        }
     }
 
     private File backupAppBitsToTempFile(File appFile) throws Exception {

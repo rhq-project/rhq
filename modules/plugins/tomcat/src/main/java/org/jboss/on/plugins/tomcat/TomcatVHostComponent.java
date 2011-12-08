@@ -23,13 +23,10 @@
 
 package org.jboss.on.plugins.tomcat;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
@@ -54,7 +51,6 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ApplicationServerComponent;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -308,9 +304,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         }
 
         FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
-        InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(tempFile);
-        fileContent.createContent(path, isForTempDir, explodeOnDeploy, sha);
+        fileContent.createContent(path, tempFile, explodeOnDeploy);
 
         // Resource key is a canonical objectName similar to:
         // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none

@@ -35,7 +35,7 @@ public interface ScheduleQueue {
      * at the head of the queue to become active. If there is no active schedule this
      * method simply does nothing and returns.
      */
-    void deactivateSchedule();
+    void deactivateSchedule(boolean updateSchedule);
 
     /**
      * Adds a schedule to the queue for processing by the drift detector

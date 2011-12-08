@@ -81,7 +81,6 @@ public class FileContentDelegate {
      *                  it is written, using the package name as the base directory; if <code>false</code> the
      *                  content will be written to directly to a file using the package name as the file name
      */
-    @SuppressWarnings("static-access")
     public void createContent(File destination, File content, boolean unzip) {
         try {
             if (unzip) {
@@ -101,7 +100,7 @@ public class FileContentDelegate {
                 }
 
                 Attributes attribs = manifest.getMainAttributes();
-                String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(content);
+                String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(content);
                 attribs.putValue("RHQ-Sha256", sha);
 
                 FileOutputStream outputStream = new FileOutputStream(manifestFile);

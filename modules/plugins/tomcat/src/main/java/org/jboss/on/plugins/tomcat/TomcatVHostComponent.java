@@ -228,7 +228,6 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         return report;
     }
 
-    @SuppressWarnings("static-access")
     private void warCreate(CreateResourceReport report) throws Exception {
         ResourcePackageDetails details = report.getPackageDetails();
         PackageDetailsKey key = details.getKey();

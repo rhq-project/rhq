@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
@@ -130,7 +131,11 @@ public class DriftAddDefinitionWizardInfoStep extends AbstractWizardStep {
 
         DriftDefinitionTemplate selectedTemplate = templatesMap.get(key);
         wizard.setSelectedTemplate(selectedTemplate);
-        wizard.setNewStartingConfiguration(selectedTemplate.createConfiguration());
+        Configuration startingConfig = selectedTemplate.createConfiguration();
+        // don't propogate the template name or desc to the def, force the user to enter a name, and optionally, a def
+        startingConfig.remove(DriftConfigurationDefinition.PROP_NAME);
+        startingConfig.remove(DriftConfigurationDefinition.PROP_DESCRIPTION);
+        wizard.setNewStartingConfiguration(startingConfig);
         String description = selectedTemplate.getDescription();
         description = (null == description) ? MSG.common_val_none() : description;
         form.getItem("Description").setValue(description);

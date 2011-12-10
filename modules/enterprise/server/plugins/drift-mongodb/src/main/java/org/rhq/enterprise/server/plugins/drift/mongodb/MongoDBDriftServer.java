@@ -359,4 +359,10 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public byte[] getDriftFileAsByteArray(Subject subject, String hash) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

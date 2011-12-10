@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  */
 public class WizardView extends LocatableVLayout {
+
     static private final Messages MSG = CoreGUI.getMessages();
 
     static private final String CANCEL = MSG.common_button_cancel();
@@ -229,7 +230,7 @@ public class WizardView extends LocatableVLayout {
             .size())));
         stepLabel.setWrap(false);
 
-        WizardStep step = wizardSteps.get(currentStep);
+        final WizardStep step = wizardSteps.get(currentStep);
 
         stepTitleLabel.setContents(step.getName());
 
@@ -255,7 +256,7 @@ public class WizardView extends LocatableVLayout {
         }
         currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
 
-        // if null advance to the next step by automatically "clicking" the Next button
+        // if null, advance to the next step by automatically "clicking" the Next button
         if (null == currentCanvas) {
             if (step.nextPage()) {
                 wizardSteps.get(currentStep).nextPage();
@@ -282,7 +283,7 @@ public class WizardView extends LocatableVLayout {
 
                     cancelButton.setDisabled(false);
                     previousButton.setDisabled(stepIndex == 0);
-                    nextButton.setDisabled(false);
+                    nextButton.setDisabled(!step.isNextButtonEnabled());
 
                     for (IButton button : customButtons) {
                         button.setDisabled(false);
@@ -356,4 +357,10 @@ public class WizardView extends LocatableVLayout {
     public void decrementStep() {
         setStep(currentStep - 1);
     }
+
+    public void updateButtonEnablement() {
+        WizardStep step = wizard.getSteps().get(currentStep);
+        getNextButton().setDisabled(!step.isNextButtonEnabled());
+    }
+
 }

@@ -212,7 +212,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("!!! A server has registered under a loopback address [{0}] - this should only be done for testing and demo purposes. "
         + "Only agents running on the same machine as that server will be able to interact with that server successfully. "
         + "Please double check that you really want your server to have a public endpoint of [{0}]. "
-        + "See the Administration > High Availability > Servers menu in the server GUI to change the public endpoint of the server.")
+        + "See the Administration (Topology) > Servers menu in the server GUI to change the public endpoint of the server.")
     String FAILOVER_LIST_HAS_LOCALHOST = "AgentMain.failover-list-has-localhost";
 
     @I18NMessage("The server failover list has been loaded from [{0}] - there are [{1}] servers in the list")
@@ -249,7 +249,7 @@ public interface AgentI18NResourceKeys {
         + "Please double check all public endpoints of your servers and ensure\\n\\\n"
         + "they are all reachable by this agent. The failed server endpoints are:\\n\\\n" //
         + "{1}\\n\\\n" //
-        + "See the Administration > High Availability > Servers in the server GUI\\n\\\n"
+        + "See the Administration (Topology) > Servers in the server GUI\\n\\\n"
         + "to change the public endpoint of a server.\\n\\\n"
         + "THIS AGENT WILL WAIT UNTIL ONE OF ITS SERVERS BECOMES REACHABLE!")
     String FAILOVER_LIST_CHECK_FAILED = "AgentMain.failover-list-check-failed";

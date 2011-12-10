@@ -23,6 +23,7 @@
 package org.rhq.core.pc.bundle;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
@@ -47,10 +48,10 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
-import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -72,6 +73,7 @@ import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * Manages the bundle subsystem, which allows bundles of content to be installed. 
@@ -172,6 +174,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         File bundleFilesDir = new File(pluginTmpDir, "bundle-versions/"
                             + bundleDeployment.getBundleVersion().getId());
                         bundleFilesDir.mkdirs();
+
+                        // clean up any old downloads we may have retrieved before. This helps clean out
+                        // our temp directory so we don't unnecessarily fill up our file system with obsolete files
+                        removeOldDownloadedBundleFiles(bundleFilesDir);
+
+                        // now download the bundle files we need for the current deployment
                         Map<PackageVersion, File> downloadedFiles = downloadBundleFiles(resourceDeployment,
                             bundleFilesDir);
 
@@ -308,6 +316,35 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             category, status, message, attachment);
         log.debug("Reporting deployment step [" + history + "] to Server...");
         getBundleServerService().addDeploymentHistory(bundleResourceDeployment.getId(), history);
+    }
+
+    /**
+     * Given a directory where the current deployment's bundle files will reside, this method will clear out
+     * any other files located in other peer directories. In other words, the given directory and all its
+     * subdirectories and child files are left untouched, but all files and directories found in peer
+     * directories are wiped. This helps clean out our temp directory so we don't fill up the file system
+     * with old downloaded files that we don't need anymore. See BZ 752550.
+     *
+     * @param currentBundleVersionFilesDir
+     */
+    private void removeOldDownloadedBundleFiles(final File currentBundleVersionFilesDir) {
+        File parent = null;
+        try {
+            parent = currentBundleVersionFilesDir.getParentFile();
+            File[] doomedFiles = parent.listFiles(new FileFilter() {
+                public boolean accept(File child) {
+                    return !currentBundleVersionFilesDir.equals(child);
+                }
+            });
+            for (File doomedFile : doomedFiles) {
+                FileUtil.purge(doomedFile, true);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to clean up old downloaded bundle files in ["
+                + parent
+                + "]. You can ignore this but if the agent is asked to deploy a lot of bundles, the file system may fill up."
+                + " Cause: " + e);
+        }
     }
 
     /**

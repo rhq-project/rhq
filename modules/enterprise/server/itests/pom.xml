@@ -104,7 +104,7 @@
       <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
 
       <dependency>
-         <groupId>jboss</groupId>
+         <groupId>javassist</groupId>
          <artifactId>javassist</artifactId>
          <scope>test</scope>
       </dependency>

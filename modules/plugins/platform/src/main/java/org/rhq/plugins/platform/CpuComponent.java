@@ -124,14 +124,15 @@ public class CpuComponent implements ResourceComponent<PlatformComponent>, Measu
                     CpuEntry previousCpu = cpuCache.put(property, currentCpu);
                     previousCpu = (null == previousCpu) ? startCpuEntry : previousCpu;
 
-                    // if for some reason the delta time is excessive then toss
-                    // the metric, since it depends on a reasonable interval between
-                    // prev and curr. This can happen due to avail down or a newly
-                    // activated metric. Allow up to twice the metric interval.
+                    // if for some reason the delta time is excessive then toss the metric, since it depends 
+                    // on a reasonable interval between prev and curr. This can happen due to avail down or a newly
+                    // activated metric. Allow up to twice the metric interval. If the metric interval is
+                    // 0 (for a live data request) then just use a 10 minute interval.
                     Number num = null;
                     long deltaTime = currentCpu.getTimestamp() - previousCpu.getTimestamp();
+                    long metricInterval = (0 < request.getInterval()) ? request.getInterval() : 600000L;
 
-                    if (deltaTime <= (2 * request.getInterval())) {
+                    if (deltaTime <= (2 * metricInterval)) {
                         // Use the same calculation that SIGAR uses to generate the percentages. The difference is that
                         // we use a safe "previous" cpu record.                      
                         num = getPercentage(previousCpu.getCpu(), cpu, property);

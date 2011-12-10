@@ -1,14 +1,13 @@
 package org.rhq.core.pc.drift;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ScheduleQueueImpl implements ScheduleQueue {
 
@@ -25,6 +24,8 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     private DriftDetectionSchedule activeSchedule;
 
     private Runnable deactivationTask;
+
+    private Log log = LogFactory.getLog(ScheduleQueueImpl.class);
 
     @Override
     public DriftDetectionSchedule getNextSchedule() {
@@ -66,16 +67,28 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     @Override
-    public void deactivateSchedule() {
+    public void deactivateSchedule(boolean updateSchedule) {
         try {
             lock.writeLock().lock();
             if (deactivationTask != null) {
                 deactivationTask.run();
             }
+
             if (activeSchedule == null) {
                 return;
             }
-            activeSchedule.updateShedule();
+
+            if (updateSchedule) {
+                activeSchedule.updateShedule();
+            }
+
+            if (log.isDebugEnabled()) {
+                SimpleDateFormat formatter = new SimpleDateFormat();
+                formatter.applyPattern("hh:mm:ss:SSS a");
+                log.debug("The next drift detection run for " + activeSchedule + " is set for " +
+                        formatter.format(new Date(activeSchedule.getNextScan())));
+            }
+
             queue.offer(activeSchedule);
             activeSchedule = null;
         } finally {

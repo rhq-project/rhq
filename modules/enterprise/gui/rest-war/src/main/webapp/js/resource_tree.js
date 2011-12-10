@@ -17,8 +17,7 @@ var r = 960 / 2;
 
 // d3.json("/rest/1/resource/10702/hierarchy.json", function(json) {
  d3.json("/rest/1/resource/" + resourceId + "/hierarchy.json", function(json) {
-   var inner = json.resourceWithChildren;
-   var nodes = tree.nodes(inner);
+   var nodes = tree.nodes(json);
 
    var link = vis.selectAll("path.link")
    .data(tree.links(nodes))

@@ -21,7 +21,7 @@
 
 /**
  * description: Generates a snapshot of changes sets belonging to a particular
- * drift configuration of a specific resource. By default all change sets are
+ * drift definition of a specific resource. By default all change sets are
  * included in the snapshot. An optional third argument can be specified to
  * limit or control the number of change sets included in the snapshot.
  *
@@ -32,10 +32,11 @@
  * arguments:
  *   rid: A resource id, expected to be an integer
  *
- *   cname: The drift configuration name as a string
+ *   defName: The drift definition name as a string
  *
- *   filters: (optional) A map or JS object that limits the number of
- *   change sets included in the snapshot
+ *   filter: (optional) A map or JS object that limits the number of
+ *   change sets included in the snapshot. It should specify two
+ *   properties - startVersion and endVersion.
  *
  * return: A org.rhq.core.domamin.drift.DriftSnapshot object
  *
@@ -44,48 +45,33 @@
  *   // mydrift drift configuration.
  *   createSnapshot(123, 'mydrift') 
  *
- *   // generates a snapshot starting a change set version 3 and including
- *   // everything more recent than it.
- *   createSnapshot(123, 'mydrift', {"startVersion": 3})
- *
  *   // generates a snapshot that includes change sets 3 through 5 inclusive.
- *   createSnapshot(123, 'mydrift', {"startVersion": 3, "endVersion": 5})   
- *
- *   // generates a snaphot that includes everything after the specified
- *   // timestamp. Note that the timestamp should be specified in milliseconds.
- *   createSnapshot(123, 'mydrift', {"createdAfter": 1314811734365})
- *
- *   // generates a snapshot that includes all change sets that were created
- *   // between the two timestamps.
- *   createSnapshot(123, 'mydrift', {"createdAfter": 1314811734365, "createdBefore": 9994811734365})
+ *   createSnapshot(123, 'mydrift', {startVersion: 3, endVersion: 5})
  */
-function createSnapshot(rid, cname) {
-  var config = findDriftConfig(rid, function(c) { return cname.equals(c.name) });
-
-  var criteria = GenericDriftChangeSetCriteria();
-  criteria.addFilterResourceId(rid);
-  criteria.addFilterDriftConfigurationId(config.id);
+function createSnapshot(rid, defName) {
+  var driftDef = findDriftDefinition(rid, function(d) { return defName.equals(d.name) });
+  var snapshotRequest;
 
   if (arguments.length > 2) {
     var filters = arguments[2];
-    for (key in filters) {
-      criteria['addFilter' + key[0].toUpperCase() + key.substring(1)](filters[key]);
-    } 
+    snapshotRequest = DriftSnapshotRequest(driftDef.id, filters.startVersion, filters.endVersion);
+  } else {
+    snapshotRequest = DriftSnapshotRequest(driftDef.id);
   }
 
-  return DriftManager.createSnapshot(criteria);
+  return DriftManager.getSnapshot(snapshotRequest);
 }
 
-function findDriftConfig(rid, filter) {
+function findDriftDefinition(rid, filter) {
   var criteria = ResourceCriteria();
   criteria.addFilterId(rid);
-  criteria.fetchDriftConfigurations(true);
+  criteria.fetchDriftDefinitions(true);
   
   var resources = ResourceManager.findResourcesByCriteria(criteria);
   var resource = resources.get(0);
 
-  return find(resource.driftConfigurations, function(config) {
-    return filter(DriftConfiguration(config));
+  return find(resource.driftDefinitions, function(config) {
+    return filter(DriftDefinition(config));
   });
 }
 
@@ -111,7 +97,7 @@ function findDriftConfig(rid, filter) {
  *   s2.
  *
  * return: This function does not return a useful value. It may be an empty
- * string or it could be null. Instead of returns its results, the function
+ * string or it could be null. Instead of returning its results, the function
  * prints them to the CLI console. As such, this function is intended for
  * use from the interactive CLI shell.
  *
@@ -137,8 +123,8 @@ function diff(s1, s2) {
     } 
     
     var pathFilter = function(entry) { return entry.path == path; };
-    var e1 = find(s1.entries, pathFilter);
-    var e2 = find(s2.entries, pathFilter);
+    var e1 = find(s1.driftInstances, pathFilter);
+    var e2 = find(s2.driftInstances, pathFilter);
 
     var fileDiff = DriftManager.generateUnifiedDiff(e1, e2);
     foreach(fileDiff.diff, println);
@@ -190,7 +176,7 @@ function diff(s1, s2) {
  *   $ history.view(1)  // returns the full contents of version 1 of the file
  *   $ history.compare(1, 2)  // generates and prints a unified diff of versions 1 and 2
  */
-function fetchHistory(rid, configName, path) {
+function fetchHistory(rid, driftDefName, path) {
   function History() {
     var entries = [];
 
@@ -210,7 +196,7 @@ function fetchHistory(rid, configName, path) {
 
       var drifts = DriftManager.findDriftsByCriteria(criteria);
       foreach(drifts, function(drift) {
-        if (drift.changeSet.driftConfiguration.name == configName && 
+        if (drift.changeSet.driftDefinition.name == driftDefName &&
           drift.path == path) {
             entries.push(drift);
         }
@@ -234,7 +220,7 @@ function fetchHistory(rid, configName, path) {
       if (drift == null) {
         return "Could not find version " + version;
       }
-      return DriftManager.getDriftFileBits(drift.newDriftFile.hashId);
+      return java.lang.String(DriftManager.getDriftFileAsByteArray(drift.newDriftFile.hashId));
     }
 
     this.compare = function(v1, v2) {

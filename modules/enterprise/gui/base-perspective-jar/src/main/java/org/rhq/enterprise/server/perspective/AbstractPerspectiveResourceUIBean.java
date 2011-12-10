@@ -7,7 +7,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 /**

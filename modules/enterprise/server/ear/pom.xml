@@ -93,7 +93,7 @@
              <groupId>javassist</groupId>
              <artifactId>javassist</artifactId>
            </exclusion>
-         </exclusions>         
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -125,6 +125,69 @@
          <dependency> <groupId>jboss</groupId> <artifactId>jboss-seam</artifactId> <version>${seam.version}</version>
          </dependency>
       -->
+
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxrs</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>jar</scope>
+           <exclusions>
+               <exclusion>
+                   <groupId>org.apache.httpcomponents</groupId>
+                   <artifactId>httpclient</artifactId>
+               </exclusion>
+               <exclusion>
+                   <groupId>org.apache.httpcomponents</groupId>
+                   <artifactId>httpcore</artifactId>
+               </exclusion>
+               <exclusion>
+                   <groupId>javassist</groupId>
+                   <artifactId>javassist</artifactId>
+               </exclusion>
+           </exclusions>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jackson-provider</artifactId>
+           <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-links</artifactId>
+           <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.freemarker</groupId>
+           <artifactId>freemarker</artifactId>
+           <version>${freemarker.version}</version>
+           <type>jar</type>
+       </dependency>
+       <dependency>
+             <groupId>org.jboss.resteasy</groupId>
+             <artifactId>resteasy-yaml-provider</artifactId>
+             <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.yaml</groupId>
+           <artifactId>snakeyaml</artifactId>
+           <version>1.8</version>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxb-provider</artifactId>
+           <version>${resteasy.version}</version>
+           <exclusions>
+               <exclusion>
+                   <groupId>com.sun.xml.bind</groupId>
+                   <artifactId>jaxb-impl</artifactId>
+               </exclusion>
+               <exclusion>
+                   <groupId>com.sun.xml.stream</groupId>
+                   <artifactId>sjsxp</artifactId>
+               </exclusion>
+           </exclusions>
+       </dependency>
+
 
    </dependencies>
 
@@ -349,13 +412,13 @@
                           <artifactId>packagetype-cli</artifactId>
                           <version>${project.version}</version>
                         </artifactItem>
-                        
+
                         <artifactItem>
                           <groupId>org.rhq</groupId>
                           <artifactId>rhq-serverplugin-drift</artifactId>
                           <version>${project.version}</version>
                         </artifactItem>
-                        
+
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>

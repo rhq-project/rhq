@@ -77,4 +77,6 @@ public abstract class AbstractWizard implements Wizard {
     public WizardView getView() {
         return view;
     }
+
+
 }

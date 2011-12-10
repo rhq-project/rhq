@@ -18,12 +18,15 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.XmlTransient;
 
-import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
-import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
 import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
@@ -31,8 +34,6 @@ import org.jboss.resteasy.spi.touri.URITemplate;
  * @author Heiko W. Rupp
  */
 @XmlRootElement
-//@XmlType(propOrder = {"scheduleId","scheduleName","displayName","enabled","collectionInterval","unit","type"})
-@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 @URITemplate("/metric/schedule/{id}")
 public class MetricSchedule {
 
@@ -43,6 +44,8 @@ public class MetricSchedule {
     String displayName;
     String unit;
     String type;
+    transient long mtime;
+    List<Link> links = new ArrayList<Link>();
 
     @SuppressWarnings("unused")
     public MetricSchedule() {
@@ -118,4 +121,49 @@ public class MetricSchedule {
 //    public String getEnabled() {
 //        return String.valueOf(enabled);
 //    }
+
+    @XmlTransient
+    public long getMtime() {
+        return mtime;
+    }
+
+    public void setMtime(long mtime) {
+        this.mtime = mtime;
+    }
+
+    public void addLink(Link link) {
+        links.add(link);
+    }
+
+    @XmlElementRef
+    public List<Link> getLinks() {
+        return links;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MetricSchedule that = (MetricSchedule) o;
+
+        if (collectionInterval != that.collectionInterval) return false;
+        if (mtime != that.mtime) return false;
+        if (scheduleId != that.scheduleId) return false;
+        if (enabled != null ? !enabled.equals(that.enabled) : that.enabled != null) return false;
+        if (scheduleName != null ? !scheduleName.equals(that.scheduleName) : that.scheduleName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = scheduleId;
+        result = 31 * result + (scheduleName != null ? scheduleName.hashCode() : 0);
+        result = 31 * result + (enabled != null ? enabled.hashCode() : 0);
+        result = 31 * result + (int) (collectionInterval ^ (collectionInterval >>> 32));
+        result = 31 * result + (int) (mtime ^ (mtime >>> 32));
+        return result;
+    }
+
 }

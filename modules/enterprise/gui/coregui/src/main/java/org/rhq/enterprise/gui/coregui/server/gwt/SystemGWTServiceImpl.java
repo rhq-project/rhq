@@ -130,6 +130,26 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     @Override
+    public HashMap<String, String> getCliAlertScriptDownloads() throws RuntimeException {
+        try {
+            File downloadsDir = getCliAlertScriptDownloadsDir();
+            List<File> files = getFiles(downloadsDir);
+            if (files == null) {
+                return new HashMap<String, String>(0);                
+            } else {
+                HashMap<String, String> ret = new HashMap<String, String>(files.size());
+                
+                for(File file : files) {
+                    ret.put(file.getName(), "/downloads/cli-alert-scripts/" + file.getName());
+                }
+                return ret;
+            }
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
     public HashMap<String, String> getClientVersionProperties() throws RuntimeException {
         File versionFile = new File(getClientDownloadDir(), "rhq-client-version.properties");
         try {
@@ -182,6 +202,15 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         return downloadDir;
     }
 
+    private File getCliAlertScriptDownloadsDir() {
+        File serverHomeDir = getServerHomeDir();
+        File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/cli-alert-scripts");
+        if (!downloadDir.exists()) {
+            throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+    
     private File getClientDownloadDir() {
         File serverHomeDir = getServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");

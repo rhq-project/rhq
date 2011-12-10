@@ -409,6 +409,10 @@ public class ResourceGroup extends Group {
     @ManyToMany
     private Set<Resource> implicitResources;
 
+    //TODO ResourceGroup probably isn't the right owning side of this relationship
+    //this means that any update of a group can update the role membership,
+    //which is not something one normally does. Maybe the more logical owner of this
+    //relationship would be the Role.
     @JoinTable(name = "RHQ_ROLE_RESOURCE_GROUP_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_GROUP_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
     @ManyToMany
     private Set<Role> roles = new HashSet<Role>();
@@ -562,15 +566,22 @@ public class ResourceGroup extends Group {
     }
 
     public Set<Role> getRoles() {
+        //even though the field has an initializer, it can end up
+        //being null after deserialization. Because there is no
+        //setter and there are some other public methods depending
+        //on this not being null, let's make it lazy init.
+        if (roles == null) {
+            roles = new HashSet<Role>();
+        }
         return roles;
     }
 
     public void addRole(Role role) {
-        this.roles.add(role);
+        getRoles().add(role);
     }
 
     public void removeRole(Role role) {
-        this.roles.remove(role);
+        getRoles().remove(role);
     }
 
     @NotNull

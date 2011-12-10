@@ -64,7 +64,7 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, Reso
      * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.info("Discovering RHQ Agent...");
+        log.debug("Discovering RHQ Agent...");
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
 

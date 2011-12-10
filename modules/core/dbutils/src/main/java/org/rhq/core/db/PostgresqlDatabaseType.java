@@ -64,7 +64,7 @@ public abstract class PostgresqlDatabaseType extends DatabaseType {
      * @see DatabaseType#getSequenceValue(Connection, String, String)
      */
     public int getSequenceValue(Connection conn, String table, String key) throws SQLException {
-        String query = "SELECT last_value FROM " + table + "_" + key + "_seq";
+        String query = "SELECT currval('" + table + "_" + key + "_seq')";
         PreparedStatement selectPS = null;
         ResultSet rs = null;
 

@@ -22,28 +22,39 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-
-import org.jboss.resteasy.spi.Link;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -70,44 +81,74 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     AlertManagerLocal alertManager;
 
     @Override
-    public ResourceWithType getResource(int id) {
+    public Response getResource(int id, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo) {
 
-        Resource res = resMgr.getResource(caller, id);
+        Resource res;
+        res = fetchResource(id);
 
-        ResourceWithType rwt = fillRWT(res);
+        long mtime = res.getMtime();
+        EntityTag eTag = new EntityTag(Long.toOctalString(res.hashCode()+ mtime)); // factor in mtime in etag
+        Response.ResponseBuilder builder = request.evaluatePreconditions(new Date(mtime),eTag);
 
-        return rwt;
+        if (builder!=null) {
+            return builder.build();
+        }
+
+
+        ResourceWithType rwt = fillRWT(res, uriInfo);
+
+        // What media type does the user request?
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("resourceWithType", rwt), mediaType);
+        }
+        else {
+            builder = Response.ok(rwt);
+        }
+
+        return builder.build();
     }
 
-    @Override
-    public String getResourceHtml(int id) {
-        ResourceWithType rwt = getResource(id);
-        return renderTemplate("resourceWithType.ftl", rwt);
-    }
 
     @Override
-    public List<ResourceWithType> getPlatforms() {
+    public Response getPlatforms(@Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo) {
 
         PageControl pc = new PageControl();
         List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM, InventoryStatus.COMMITTED, pc) ;
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
         for (Resource r: ret) {
-            ResourceWithType rwt = fillRWT(r);
+            putToCache(r.getId(),Resource.class,r);
+            ResourceWithType rwt = fillRWT(r, uriInfo);
             rwtList.add(rwt);
         }
-        return rwtList;
-    }
+        // What media type does the user request?
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
 
-    @Override
-    public String getPlatformsHtml() {
-        List<ResourceWithType> list = getPlatforms();
-        return renderTemplate("listResourceWithType", list);
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
+        }
+        else {
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+            builder = Response.ok(list);
+        }
+
+        return builder.build();
     }
 
     @Override
     public ResourceWithChildren getHierarchy(int baseResourceId) {
         // TODO optimize to do less recursion
-        Resource start = resMgr.getResource(caller,baseResourceId);
+        Resource start;
+        start = getFromCache(baseResourceId,Resource.class);
+        if (start==null) {
+            start = resMgr.getResource(caller,baseResourceId);
+            if (start!=null)
+                putToCache(start.getId(),Resource.class,start);
+        }
         ResourceWithChildren rwc = getHierarchy(start);
         /*new ResourceWithChildren(""+start.getId(),start.getName());
 
@@ -134,6 +175,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             for (Resource res : ret) {
                 ResourceWithChildren child = getHierarchy(res);
                 resList.add(child);
+                putToCache(res.getId(),Resource.class,res);
             }
             if (!resList.isEmpty())
                 rwc.setChildren(resList);
@@ -150,59 +192,101 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return availabilityRest;
     }
 
-    private ResourceWithType fillRWT(Resource res) {
-        ResourceType resourceType = res.getResourceType();
-        ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId());
-        rwt.setTypeName(resourceType.getName());
-        rwt.setTypeId(resourceType.getId());
-        rwt.setPluginName(resourceType.getPlugin());
-        Resource parent = res.getParentResource();
-        if (parent!=null) {
-            rwt.setParentId(parent.getId());
-        }
-        return rwt;
-    }
+    public Response getSchedules(int resourceId,
+                                             String scheduleType,
+                                             boolean enabledOnly,
+                                             String name,
+                                          @Context Request request,
+                                          @Context HttpHeaders headers,
+                                          @Context UriInfo uriInfo) {
 
-    public List<MetricSchedule> getSchedules(int resourceId) {
+        // allow metric as input
+        if (scheduleType.equals("metric"))
+            scheduleType=DataType.MEASUREMENT.toString().toLowerCase();
 
-        Resource res = resMgr.getResource(caller, resourceId);
+        Resource res = resMgr.getResource(caller, resourceId); // Don't fetch(), as this would yield a LazyLoadException
 
         Set<MeasurementSchedule> schedules = res.getSchedules();
         List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
         for (MeasurementSchedule schedule : schedules) {
+            putToCache(schedule.getId(),MeasurementSchedule.class,schedule);
             MeasurementDefinition definition = schedule.getDefinition();
-            MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                    schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
-                    definition.getDataType().toString());
-            ret.add(ms);
+
+            // user can opt to e.g. only get "measurement" or "trait" metrics
+
+            if ("all".equals(scheduleType) ||
+                    scheduleType.toLowerCase().equals(definition.getDataType().toString().toLowerCase()) ) {
+                if (!enabledOnly || (enabledOnly && schedule.isEnabled() )) {
+                    if (name==null || (name!=null && name.equals(definition.getName()))) {
+                        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                                definition.getDataType().toString());
+                        UriBuilder uriBuilder;
+                        URI uri;
+                        if (definition.getDataType()== DataType.MEASUREMENT) {
+                            uriBuilder = uriInfo.getBaseUriBuilder();
+                            uriBuilder.path("/metric/data/{id}");
+                            uri = uriBuilder.build(schedule.getId());
+                            Link metricLink = new Link("metric",uri.toString());
+                            ms.addLink(metricLink);
+                        }
+                        // create link to the resource
+                        uriBuilder = uriInfo.getBaseUriBuilder();
+                        uriBuilder.path("resource/" + schedule.getResource().getId());
+                        uri = uriBuilder.build();
+                        Link link = new Link("resource",uri.toString());
+                        ms.addLink(link);
+
+                        ret.add(ms);
+                    }
+                }
+            }
         }
 
-        return ret;
-    }
+        // What media type does the user request?
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
 
-    public String getSchedulesHtml(int resourceId) {
-        List<MetricSchedule> list = getSchedules(resourceId);
-        return renderTemplate("listMetricSchedule", list);
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listMetricSchedule", ret), mediaType);
+        }
+        else {
+            GenericEntity<List<MetricSchedule>> list = new GenericEntity<List<MetricSchedule>>(ret){};
+            builder = Response.ok(list,mediaType);
+        }
+
+        return builder.build();
     }
 
     @Override
-    public List<ResourceWithType> getChildren(int id) {
+    public Response getChildren(int id, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo) {
         PageControl pc = new PageControl();
-        Resource parent = resMgr.getResource(caller,id);
+        Resource parent;
+        parent = fetchResource(id);
         List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,parent,InventoryStatus.COMMITTED,pc);
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
         for (Resource r: ret) {
-            ResourceWithType rwt = fillRWT(r);
+            ResourceWithType rwt = fillRWT(r, uriInfo);
             rwtList.add(rwt);
         }
 
-        return rwtList;
+        // What media type does the user request?
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder = Response.ok(renderTemplate("listResourceWithType", rwtList), mediaType);
+        }
+        else {
+            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList){};
+            builder = Response.ok(list);
+        }
+
+        return builder.build();
+
     }
 
-    public String getChildrenHtml(int id) {
-        List<ResourceWithType> list = getChildren(id);
-        return renderTemplate("listResourceWithType", list);
-    }
 
     @Override
     public List<Link> getAlertsForResource(int resourceId) {
@@ -212,9 +296,24 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         List<Link> links = new ArrayList<Link>(alerts.size());
         for (Alert al: alerts) {
             Link link = new Link();
-            link.setRelationship("alert");
+            link.setRel("alert");
             link.setHref("/alert/" + al.getId());
+            links.add(link);
         }
         return links;
     }
+
+    private Resource fetchResource(int resourceId) {
+        Resource res;
+        res = getFromCache(resourceId,Resource.class);
+        if (res==null) {
+            res = resMgr.getResource(caller, resourceId);
+            if (res!=null)
+                putToCache(resourceId, Resource.class,res);
+            else
+                throw new StuffNotFoundException("Resource with id " + resourceId);
+        }
+        return res;
+    }
+
 }

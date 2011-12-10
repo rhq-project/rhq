@@ -60,6 +60,7 @@ public class DownloadsView extends LocatableVLayout {
     private SectionStackSection cliSection;
     private SectionStackSection bundleSection;
     private SectionStackSection connectorsSection;
+    private SectionStackSection cliAlertScriptsSection;
     private ProductInfo productInfo;
 
     public DownloadsView(String locatorId) {
@@ -83,17 +84,20 @@ public class DownloadsView extends LocatableVLayout {
         cliSection = new SectionStackSection(MSG.view_admin_downloads_cliDownload());
         bundleSection = new SectionStackSection(MSG.view_admin_downloads_bundleDownload());
         connectorsSection = new SectionStackSection(MSG.view_admin_downloads_connectorsDownload());
-
+        cliAlertScriptsSection = new SectionStackSection(MSG.view_admin_downloads_cliAlertScriptsDownload());
+        
         agentSection.setExpanded(false);
         cliSection.setExpanded(false);
         bundleSection.setExpanded(false);
         connectorsSection.setExpanded(false);
-
+        cliAlertScriptsSection.setExpanded(false);
+        
         sectionStack.addSection(agentSection);
         sectionStack.addSection(cliSection);
         sectionStack.addSection(bundleSection);
         sectionStack.addSection(connectorsSection);
-
+        sectionStack.addSection(cliAlertScriptsSection);
+        
         addMember(sectionStack);
     }
 
@@ -105,6 +109,7 @@ public class DownloadsView extends LocatableVLayout {
         prepareCLISection();
         prepareBundleSection();
         prepareConnectorsSection();
+        prepareCliAlertScriptsSection();
     }
 
     private void prepareAgentSection() {
@@ -296,6 +301,56 @@ public class DownloadsView extends LocatableVLayout {
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_connectors_loadError(), caught);
+            }
+        });
+    }
+    
+    private void prepareCliAlertScriptsSection() {
+        systemManager.getCliAlertScriptDownloads(new AsyncCallback<HashMap<String, String>>() {
+
+            @Override
+            public void onSuccess(HashMap<String, String> result) {
+                LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("cliAlertScripts"));
+                form.setMargin(10);
+                form.setWidth100();
+
+                if (result != null && !result.isEmpty()) {
+                    int i = 0;
+                    FormItem[] items = new FormItem[result.size() + 1];
+
+                    StaticTextItem helpText = new StaticTextItem("cliAlertScriptsHelp");
+                    helpText.setColSpan(2);
+                    helpText.setShowTitle(false);
+                    helpText.setValue(MSG.view_admin_downloads_cliAlertScripts_help());
+                    items[i] = helpText;
+                    i++;
+
+                    for (Map.Entry<String, String> entry : result.entrySet()) {
+                        LinkItem linkItem = new LinkItem("cliAlertScriptLink" + i);
+                        linkItem.setColSpan(2);
+                        linkItem.setShowTitle(false);
+                        linkItem.setLinkTitle(entry.getKey());
+                        linkItem.setValue(entry.getValue());
+                        items[i] = linkItem;
+                        i++;
+                    }
+                    form.setItems(items);
+                } else {
+                    StaticTextItem item = new StaticTextItem("noCliAlertScripts");
+                    item.setColSpan(2);
+                    item.setShowTitle(false);
+                    item.setValue(MSG.view_admin_downloads_cliAlertScripts_none());
+                    form.setItems(item);
+                }
+
+                cliAlertScriptsSection.setItems(form);
+                cliAlertScriptsSection.setExpanded(true);
+                sectionStack.markForRedraw();
+            }
+            
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_cliAlertScripts_loadError(), caught);
             }
         });
     }

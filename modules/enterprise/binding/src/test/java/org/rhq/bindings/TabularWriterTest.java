@@ -23,6 +23,8 @@
 
 package org.rhq.bindings;
 
+import static org.testng.Assert.assertEquals;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -42,8 +44,6 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.shared.ResourceBuilder;
 
-import static org.testng.Assert.*;
-
 public class TabularWriterTest {
 
     StringWriter stringWriter;
@@ -54,6 +54,60 @@ public class TabularWriterTest {
     public void initFixture() {
         stringWriter = new StringWriter();
         writer = new TabularWriter(new PrintWriter(stringWriter));
+    }
+
+    @Test
+    public void testPrintEntityArray() {
+        User[] users = new User[] { new User(1, "rhqadmin", "rhqadmin"), new User(222, "name", "pw") };
+
+        writer.print(users);
+
+        assertLineEquals(1, "id  password username", "Cannot print entity array header");
+        // skip line 2 - its the separator "--------------"
+        assertLineEquals(3, "1   rhqadmin rhqadmin", "Cannot print first entity array item");
+        assertLineEquals(4, "222 pw       name    ", "Cannot print second entity array item");
+    }
+
+    /**
+     * This tests printing String arrays via the print(Object) API
+     */
+    @Test
+    public void testPrintStringArray() {
+        String[] objArray = new String[] { new String("first string"), new String("second string") };
+        Object obj = objArray;
+        writer.print(obj);
+
+        // first two lines are the header and "----" separator
+        assertLineEquals(3, "first string ", "Cannot print first string array item");
+        assertLineEquals(4, "second string", "Cannot print first string array item");
+    }
+
+    /**
+     * This tests printing "primitive object" arrays via the print(Object) API
+     */
+    @Test
+    public void testPrintObjectArray() {
+        Integer[] objArray = new Integer[] { new Integer("123"), new Integer("789") };
+        Object obj = objArray;
+        writer.print(obj);
+
+        String expected = "Array of java.lang.Integer\n123\n789\n";
+        String actual = stringWriter.toString();
+        assertEquals(actual, expected, "Could not print an object Integer array");
+    }
+
+    /**
+     * This tests printing primitive arrays via the print(Object) API
+     */
+    @Test
+    public void testPrintPrimaryArray() {
+        byte[] primitiveArray = "abc".getBytes();
+        Object obj = primitiveArray;
+        writer.print(obj);
+
+        String expected = "Array of byte\n" + (int) 'a' + '\n' + (int) 'b' + '\n' + (int) 'c' + '\n';
+        String actual = stringWriter.toString();
+        assertEquals(actual, expected, "Could not print a primitive byte array");
     }
 
     @Test

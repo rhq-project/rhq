@@ -19,6 +19,7 @@
 package org.rhq.core.db.ant.dbupdate;
 
 import org.testng.annotations.Test;
+
 import org.rhq.core.db.ant.dbupgrade.SchemaVersion;
 
 /**
@@ -50,6 +51,7 @@ public class SchemaVersionTest {
      * Tests checking between versions.
      */
     public void testBetween() {
+        assert new SchemaVersion("2.115.1").between(new SchemaVersion("2.115"), new SchemaVersion("2.116"));
         assert new SchemaVersion("2").between(new SchemaVersion("1"), new SchemaVersion("3"));
         assert new SchemaVersion("222").between(new SchemaVersion("111"), new SchemaVersion("333"));
         assert new SchemaVersion("1.0.2").between(new SchemaVersion("1.0.0"), new SchemaVersion("1.0.3"));

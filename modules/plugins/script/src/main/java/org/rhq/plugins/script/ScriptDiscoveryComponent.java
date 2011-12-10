@@ -52,7 +52,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
     private final Log log = LogFactory.getLog(ScriptDiscoveryComponent.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-        log.info("Processing discovered management script resources");
+        log.debug("Processing discovered management script resources...");
 
         HashSet<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 

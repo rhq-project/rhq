@@ -70,7 +70,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
     private int driftDefId;
     private EntityContext context;
     private boolean hasWriteAccess;
-    private Integer maxCarouselEndFilter;
+    private Integer maxSnapshotVersion;
     private ArrayList<Record> selectedRecords = new ArrayList<Record>();
     private boolean useDriftDetailsView;
 
@@ -157,11 +157,9 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                             }
                         });
 
+                        // descending order, so highest changeset version first
                         if (null == carouselStart) {
                             carouselStart = changeSet.getVersion();
-                            if (null == maxCarouselEndFilter) {
-                                maxCarouselEndFilter = carouselStart;
-                            }
                         }
                         carouselEnd = changeSet.getVersion();
 
@@ -169,20 +167,20 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                             break;
                         }
                     }
+                    if (null == maxSnapshotVersion || null == carouselStart || maxSnapshotVersion < carouselStart) {
+                        maxSnapshotVersion = carouselStart;
+                        setCarouselStartFilterMax(maxSnapshotVersion);
+                    }
+
+                    setCarouselStartFilter(carouselStart);
+                    setCarouselEndFilter(carouselEnd);
+                    setCarouselSizeFilter(carouselSize);
 
                     if (!isRefresh) {
                         DriftCarouselView.super.onDraw();
                     } else {
                         DriftCarouselView.this.refreshCarouselInfo();
                     }
-
-                    Integer currentStartFilterMax = getCarouselStartFilterMax();
-                    if (null == currentStartFilterMax || currentStartFilterMax < carouselStart) {
-                        setCarouselStartFilterMax(carouselStart);
-                    }
-                    setCarouselStartFilter(carouselStart);
-                    setCarouselEndFilter(carouselEnd);
-                    setCarouselSizeFilter(carouselSize);
                 }
 
                 public void onFailure(Throwable caught) {
@@ -220,32 +218,31 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
      * @param changeSetCriteria
      */
     private void addCarouselCriteria(GenericDriftChangeSetCriteria changeSetCriteria) {
-        Integer carouselStartFilter;
-        Integer carouselEndFilter;
+        Integer startVersion; // low snapshot version (carouselEndFilter)
+        Integer endVersion; // high snapshot version (carouselStartFilter)
 
-        // if no startFilter is set then include changesets up to the most recent
-        try {
-            carouselStartFilter = Integer.valueOf(getCarouselStartFilter());
-            if (carouselStartFilter > 0) {
-                changeSetCriteria.addFilterEndVersion(String.valueOf(carouselStartFilter));
-            }
-        } catch (Exception e) {
-            carouselStartFilter = null;
+        // if no startFilter is set then don't limit the endVersion
+        endVersion = getCarouselStartFilter();
+        if (null != endVersion) {
+            changeSetCriteria.addFilterEndVersion(String.valueOf(endVersion));
         }
 
         // if no endFilter is set then include changesets greater than 0 (never include 0, the initial snapshot)
-        try {
-            carouselEndFilter = Integer.valueOf(getCarouselEndFilter());
-            if (carouselEndFilter < 1) {
-                carouselEndFilter = 1;
-            } else if (carouselEndFilter <= maxCarouselEndFilter) {
-                changeSetCriteria.addFilterStartVersion(String.valueOf(carouselEndFilter));
-            }
-        } catch (Exception e) {
-            carouselEndFilter = null;
+        // else ensure endFilter is not greater than makes sense 
+        startVersion = getCarouselEndFilter();
+        if (null == startVersion || 1 > startVersion) {
+            startVersion = 1;
+
+        } else if (null != endVersion && startVersion > endVersion) {
+            startVersion = endVersion;
         }
 
-        // apply the drift-level carousel filters in order to filter out changesets that have no applicab;e drift 
+        if (null != maxSnapshotVersion && startVersion > maxSnapshotVersion) {
+            startVersion = maxSnapshotVersion;
+        }
+        changeSetCriteria.addFilterStartVersion(String.valueOf(startVersion));
+
+        // apply the drift-level carousel filters in order to filter out changesets that have no applicable drift 
         Criteria criteria = getCurrentCriteria();
         DriftCategory[] driftCategoriesFilter = RPCDataSource.getArrayFilter(criteria,
             DriftDataSource.FILTER_CATEGORIES, DriftCategory.class);

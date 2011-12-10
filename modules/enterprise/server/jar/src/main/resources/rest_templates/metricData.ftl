@@ -24,7 +24,7 @@
     <script type="text/javascript" src="/rest/js/d3.js"></script>
     <script type="text/javascript" src="/rest/js/d3.layout.js"></script>
     <script type="text/javascript" src="/rest/js/d3.time.js"></script>
-    <script type="text/javascript" src="/rest/js/whisker.js"></script>
+    <script type="text/javascript" src="/rest/js/rhq.js"></script>
 <table border=1>
     <thead>
     <tr>
@@ -44,7 +44,7 @@
         <td>Max</td><td>${var.max}</td>
     </tr>
     <tr>
-        <td><a align="top" href="javascript:whisker(${sched?c},'one')">DataPoints</a></td><td>
+        <td><a align="top" href="javascript:rhq.whisker(${sched?c},'one',400,200)">DataPoints</a></td><td>
         <table>
             <thead>
             <tr>

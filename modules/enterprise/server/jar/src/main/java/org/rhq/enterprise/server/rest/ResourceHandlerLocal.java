@@ -21,17 +21,26 @@ package org.rhq.enterprise.server.rest;
 import java.util.List;
 
 import javax.ejb.Local;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
+import org.jboss.resteasy.annotations.cache.Cache;
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.LinkResources;
-import org.jboss.resteasy.spi.Link;
 
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -40,7 +49,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * Interface class that describes the REST interface
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/html"})
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Path("/resource")
 @Local
 public interface ResourceHandlerLocal {
@@ -51,23 +60,15 @@ public interface ResourceHandlerLocal {
     })
     @GET
     @Path("/{id}")
-    @Produces({"application/json","application/xml"})
-    ResourceWithType getResource(@PathParam("id") int id);
-
-    @GET
-    @Path("/{id}")
-    @Produces("text/html")
-    String getResourceHtml(@PathParam("id") int id);
+    @Cache(isPrivate = true,maxAge = 120)
+    Response getResource(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
     @GET
     @Path("/platforms")
-    @Produces({"application/json","application/xml"})
-    List<ResourceWithType> getPlatforms();
-
-    @GET
-    @Path("/platforms")
-    @Produces("text/html")
-    String getPlatformsHtml();
+            @Cache(isPrivate = true,maxAge = 300)
+    Response getPlatforms(@Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
 
     @GET
@@ -82,32 +83,27 @@ public interface ResourceHandlerLocal {
 
     @GET
     @Path("/{id}/schedules")
-    @Produces({"application/json","application/xml"})
     @LinkResource(rel="schedules",value = MetricSchedule.class)
-    List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
+    @Cache(isPrivate = true,maxAge = 60)
+    Response getSchedules(@PathParam("id") int resourceId,
+                                      @QueryParam("type") @DefaultValue("all") String scheduleType,
+                                      @QueryParam("enabledOnly") @DefaultValue("true") boolean enabledOnly,
+                                      @QueryParam("name") String name,
+                                      @Context Request request,
+                                      @Context HttpHeaders headers,
+                                      @Context UriInfo uriInfo);
 
-    @GET
-    @Path("/{id}/schedules")
-    @Produces("text/html")
-    @LinkResource(rel="schedules",value = MetricSchedule.class)
-    String getSchedulesHtml(@PathParam("id") int resourceId);
 
     @GET
     @Path("/{id}/children")
-    @Produces({"application/json","application/xml"})
     @LinkResource(rel="children", value = ResourceWithType.class)
-    List<ResourceWithType> getChildren(@PathParam("id") int id);
+    Response getChildren(@PathParam("id") int id, @Context Request request, @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
 
-    @GET
-    @Path("/{id}/children")
-    @Produces("text/html")
-    @LinkResource(rel="children", value = ResourceWithType.class)
-    String getChildrenHtml(@PathParam("id") int id);
 
     @AddLinks
     @GET
     @Path(("/{id}/alerts"))
-//    @LinkResource(rel="alerts", value = AlertRest.class)
     List<Link> getAlertsForResource(@PathParam("id") int resourceId); // TODO paging + status
 
 }

@@ -22,6 +22,9 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -30,22 +33,17 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
-import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
-import org.jboss.resteasy.links.AddLinks;
-import org.jboss.resteasy.links.LinkResource;
-import org.jboss.resteasy.links.RESTServiceDiscovery;
 import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A (partial) resource with some type information
  * @author Heiko W. Rupp
  */
-@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
-@XmlRootElement
+@XmlRootElement(name="resource")
+/*
 @XmlAccessorType(XmlAccessType.NONE)
-//@XmlType(propOrder = {"resourceId","resourceName","parentId","parentName","typeId","typeName","pluginId","pluginName","rest"})
 @URITemplate("{id}")
+*/
 public class ResourceWithType {
 
     String resourceName;
@@ -54,8 +52,8 @@ public class ResourceWithType {
     Integer typeId;
     String pluginName;
     Integer parentId;
+    List<Link> links = new ArrayList<Link>();
 
-	private RESTServiceDiscovery rest;
 
     public ResourceWithType() {
     }
@@ -78,7 +76,6 @@ public class ResourceWithType {
         this.resourceName = resourceName;
     }
 
-    @XmlAttribute
     @XmlID
     public String getResourceId() {
         return String.valueOf(resourceId);
@@ -124,12 +121,15 @@ public class ResourceWithType {
     }
 
     @XmlElementRef
-    public RESTServiceDiscovery getRest() {
-        return rest;
+    public List<Link> getLinks() {
+        return links;
     }
 
-    public void setRest(RESTServiceDiscovery rest) {
-        this.rest = rest;
+    public void setLinks(List<Link> links) {
+        this.links = links;
     }
 
+    public void addLink(Link link) {
+        links.add(link);
+    }
 }

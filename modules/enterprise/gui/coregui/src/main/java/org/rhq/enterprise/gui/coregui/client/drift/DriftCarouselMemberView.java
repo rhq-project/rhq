@@ -71,6 +71,7 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
 
         super(locatorId, null, context, hasWriteAccess, initialCriteria);
 
+        this.carouselCriteria = initialCriteria;
         this.changeSet = driftChangeSet;
         ((DriftCarouselDataSource) getDataSource()).setChangeSetId(this.changeSet.getId());
 

@@ -48,10 +48,10 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceMetric";
-    // A default displayed, persisted name for the portlet    
+    // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_resourceMetric();
 
-    // set on initial configuration, the window for this portlet view. 
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
     public static final String CFG_RESOURCE_ID = "resourceId";
@@ -73,8 +73,19 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            setEntityId(storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue());
-            setDefinitionId(storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID).getIntegerValue());
+            PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
+            if (propertySimple!=null) {
+                Integer integerValue = propertySimple.getIntegerValue();
+                if (integerValue!=null)
+                    setEntityId(integerValue);
+            }
+            propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            if (propertySimple!=null) {
+
+                Integer integerValue = propertySimple.getIntegerValue();
+                if (integerValue!=null)
+                    setDefinitionId(integerValue);
+            }
         }
     }
 
@@ -86,11 +97,12 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
     protected void onDraw() {
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
 
-        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            super.onDraw();
-        } else {
+        PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
+        if (simple == null || simple.getIntegerValue()==null) {
             removeMembers(getMembers());
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
+        } else {
+            super.onDraw();
         }
     }
 
@@ -133,10 +145,15 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
             });
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            form.setValue(CFG_RESOURCE_ID, storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID)
-                .getIntegerValue());
-            form.setValue(CFG_DEFINITION_ID, storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID)
-                .getIntegerValue());
+            Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID).getIntegerValue();
+            if (integerValue!=null) {
+                form.setValue(CFG_RESOURCE_ID, integerValue);
+            }
+
+            PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            if (propertySimple!=null && propertySimple.getIntegerValue()!=null) {
+                form.setValue(CFG_DEFINITION_ID, propertySimple.getIntegerValue());
+            }
         }
 
         form.setFields(resourceLookupComboBoxItem, metric);
@@ -164,10 +181,11 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
         removeMembers(getMembers());
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
-        if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            renderGraph();
-        } else {
+        PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
+        if (simple == null || simple.getIntegerValue()==null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
+        } else {
+            renderGraph();
         }
     }
 

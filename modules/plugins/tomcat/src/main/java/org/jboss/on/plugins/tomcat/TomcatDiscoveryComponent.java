@@ -575,6 +575,14 @@ public class TomcatDiscoveryComponent implements ResourceDiscoveryComponent, Man
         return (isEWS(catalinaHome) && catalinaHome.endsWith(EWS_TOMCAT_6));
     }
 
+    public static boolean isRPMTomcat5(String catalinaHome) {
+        return catalinaHome.endsWith(EWS_TOMCAT_5);
+    }
+    
+    public static boolean isRPMTomcat6(String catalinaHome) {
+        return catalinaHome.endsWith(EWS_TOMCAT_6);
+    }
+    
     private void populateJMXConfiguration(Configuration configuration, String[] commandLine) {
         // null for manual add, properties will already be set
         if (null == commandLine) {

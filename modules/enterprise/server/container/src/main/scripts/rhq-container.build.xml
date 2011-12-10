@@ -22,6 +22,8 @@
 
    <property name="rhq.sync.endpoint-address" value="false"/>
 
+   <property name="default.rhq.server.drift.binary.content" value="false"/>
+
    <target name="set-predeploy-prop">
       <condition property="predeploy" value="true">
          <or>
@@ -46,6 +48,7 @@
       <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.dev.quartz.driverDelegateClass}" />
       <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.dev.quartz.selectWithLockSQL}" />
       <property name="rhq.server.quartz.lockHandlerClass" value="${rhq.dev.quartz.lockHandlerClass}" />
+      <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
    </target>
 
    <target name="set-default-server-props" unless="predeploy">
@@ -63,6 +66,7 @@
       <property name="rhq.server.quartz.driverDelegateClass" value="${default.rhq.server.quartz.driverDelegateClass}" />
       <property name="rhq.server.quartz.selectWithLockSQL" value="${default.rhq.server.quartz.selectWithLockSQL}" />
       <property name="rhq.server.quartz.lockHandlerClass" value="${default.rhq.server.quartz.lockHandlerClass}" />
+      <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
    </target>
 
    <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -356,7 +360,18 @@
          <fileset dir="${jboss.home}" includes="*.*" />
       </delete>
 
-      <!-- make sure our downloads directories exist -->
+  	 <!-- make sure the top level downloads directory exists -->
+  	 <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" />
+  	
+     <!-- deploy all the static downloadable content -->
+     <echo>Deploying static downloadable content</echo>
+     <copy todir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads" 
+           verbose="true"
+           failonerror="false">
+     	<fileset dir="${basedir}/src/main/downloadable-resources" />
+  	 </copy>
+  	
+     <!-- make sure our downloads directories exist -->
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-agent" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-client" />
       <mkdir dir="${jboss.deploy.dir}/${rhq.earName}/rhq-downloads/rhq-plugins" />
@@ -416,27 +431,6 @@
          </fileset>
       </move>
 
-      <echo>Adding REST support ...</echo>
-      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-jaxrs/${resteasy.version}/resteasy-jaxrs-${resteasy.version}.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-jettison-provider/${resteasy.version}/resteasy-jettison-provider-${resteasy.version}.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-jaxb-provider/${resteasy.version}/resteasy-jaxb-provider-${resteasy.version}.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-links/${resteasy.version}/resteasy-links-${resteasy.version}.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/jboss/resteasy/jaxrs-api/${resteasy.version}/jaxrs-api-${resteasy.version}.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-
-      <!-- TODO define versions of the following in the root pom -->
-      <copy file="${settings.localRepository}/org/scannotation/scannotation/1.0.3/scannotation-1.0.3.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/codehaus/jettison/jettison/1.2/jettison-1.2.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/freemarker/freemarker/2.3.18/freemarker-2.3.18.jar"
-            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
 
    </target>
 
@@ -607,6 +601,14 @@ rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 # change frequently, but it can be of use in other deployment settings where
 # you have to deal with IP address changes.
 rhq.sync.endpoint-address=false
+
+# When this is enabled, the server will request that agents send content for
+# for binary files that are being monitored for drift. The content for those
+# files will then be persisted on the server. By default, the server does not
+# persist content for well known binary file types like .ear, .war, .zip, .so,
+# etc. The server does however persist content for text files or any other
+# files that are not known binary types.
+# rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
 
 # Auto-Install Pre-Configuration Settings
 # If you wish to circumvent the installer webapp and auto-install the server

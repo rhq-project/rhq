@@ -1,8 +1,8 @@
 package org.rhq.core.pc.drift;
 
-import java.io.File;
-
 import org.rhq.core.domain.drift.DriftDefinition;
+
+import java.io.File;
 
 class DriftClientTestStub implements DriftClient {
 
@@ -13,6 +13,8 @@ class DriftClientTestStub implements DriftClient {
     private int sendChangeSetInvocationCount;
 
     private int reportMissingBaseDirInvocationCount;
+
+    private int sendChangeSetContentInvocationCount;
 
     @Override
     public void sendChangeSetToServer(DriftDetectionSummary detectionSummary) {
@@ -28,6 +30,11 @@ class DriftClientTestStub implements DriftClient {
 
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir) {
+        ++sendChangeSetContentInvocationCount;
+    }
+
+    public int getSendChangeSetContentInvocationCount() {
+        return sendChangeSetContentInvocationCount;
     }
 
     @Override

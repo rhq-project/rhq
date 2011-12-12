@@ -19,18 +19,17 @@
 
 package org.rhq.core.pc.drift;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.JPADriftFile;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
@@ -39,7 +38,7 @@ import static org.testng.Assert.assertTrue;
 
 public class DriftFilesSenderTest extends DriftTest {
 
-    DriftClient driftClient;
+    DriftClientTestStub driftClient;
 
     DriftFilesSender sender;
 
@@ -159,6 +158,31 @@ public class DriftFilesSenderTest extends DriftTest {
 
         assertEquals(contentDir.list().length, 1, "Expected to find one file in " + contentDir.getAbsolutePath());
         assertFileCopiedToContentDir(contentDir, server2ConfHash);
+    }
+
+    @Test
+     public void doNotSendEmptyZipFileToServer() throws Exception {
+        String driftDefName = "empty_content_test";
+
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+
+        String serverConfHash = sha256(serverConf);
+
+        Headers headers = createHeaders(driftDefName, COVERAGE);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.write(addedFileEntry("conf/server.conf", serverConfHash));
+        writer.close();
+
+        serverConf.delete();
+
+        sender.setDriftFiles(driftFiles(serverConfHash));
+        sender.setHeaders(headers);
+        sender.run();
+
+        assertEquals(driftClient.getSendChangeSetContentInvocationCount(), 0,
+                "Do not call DriftClient to send content to server when there is no content to send.");
     }
 
     /**

@@ -57,7 +57,7 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS, query = "" //
         + "SELECT pv FROM PackageVersion AS pv " //
         + " WHERE pv.generalPackage.name = :packageName " //
@@ -66,6 +66,12 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "   AND ( ( NOT pv.sha256 IS NULL AND pv.sha256 = :sha ) OR "
         + "         ( pv.sha256 IS NULL AND pv.architecture.name = :architectureName AND pv.version = :version ) "
         + "       ) "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_SHA, query = "" //
+        + "SELECT pv FROM PackageVersion AS pv " //
+        + " WHERE pv.generalPackage.name = :packageName " //
+        + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
+        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //
+        + "   AND pv.sha256 = :sha "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),

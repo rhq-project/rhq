@@ -203,13 +203,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // If the package exists see if package version already exists
             if (null != generalPackage) {
                 Query packageVersionQuery = entityManager
-                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS);
+                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_SHA);
                 packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
                 packageVersionQuery.setParameter("packageName", discoveredPackage.getName());
                 packageVersionQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
                 packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-                packageVersionQuery.setParameter("architectureName", discoveredPackage.getArchitectureName());
-                packageVersionQuery.setParameter("version", discoveredPackage.getVersion());
                 packageVersionQuery.setParameter("sha", discoveredPackage.getSHA256());
                 List<PackageVersion> resultPackageVersions = packageVersionQuery.getResultList();
                 if (resultPackageVersions.size() > 0) {
@@ -546,10 +544,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // We're closing out the package request for this package version, so remove it from the cache of entries
             // that need to be closed
             inProgressEntries.remove(packageVersion);
-
-            if (singleResponse.getResult() == ContentResponseResult.SUCCESS) {
-                updateInstalledPackages(resource, packageVersion);
-            }
         }
 
         // For any entries that were not closed, add closing entries
@@ -2075,39 +2069,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (Exception ex) {
             log.error("An error occurred while writing Blob contents out to stream :" + ex.getMessage());
             ex.printStackTrace();
-        }
-    }
-
-    /**
-     * Update the set of installed packages for a content type resource.
-     * Existing installed packages are purged and a new set of installed
-     * packages is created. Currently, a content type resource has only
-     * and only one installed package.
-     *
-     * @param resource resource
-     * @param packageVersion package version
-     */
-    @SuppressWarnings("unchecked")
-    private void updateInstalledPackages(Resource resource, PackageVersion packageVersion) {
-        if (resource.getResourceType().getCreationDataType() == ResourceCreationDataType.CONTENT) {
-            Query installedPackageQuery = entityManager.createNamedQuery(InstalledPackage.QUERY_FIND_BY_RESOURCE_ID);
-            installedPackageQuery.setParameter("resourceId", resource.getId());
-
-            List<InstalledPackage> installedPackages = installedPackageQuery.getResultList();
-            if ((installedPackages != null) && (installedPackages.size() > 0)) {
-                for (InstalledPackage installedPackage : installedPackages) {
-                    entityManager.refresh(installedPackage);
-                    entityManager.remove(installedPackage);
-                }
-            }
-
-            InstalledPackage installedPackage = new InstalledPackage();
-            installedPackage.setInstallationDate(System.currentTimeMillis());
-            installedPackage.setPackageVersion(packageVersion);
-            installedPackage.setResource(resource);
-            entityManager.persist(installedPackage);
-
-            entityManager.flush();
         }
     }
 }

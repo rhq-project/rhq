@@ -74,7 +74,6 @@ import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
@@ -615,8 +614,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
             String sha256 = getSHA256(file);
-            JarContentFileInfo info = new JarContentFileInfo(file);
-            String version = getVersion(info, sha256);
+            String version = getVersion(sha256);
 
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
@@ -673,22 +671,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return sha256;
     }
 
-    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
-        // Version string in order of preference
-        // manifestVersion + sha256, sha256, manifestVersion, "0"
-        String version = "0";
-        String manifestVersion = fileInfo.getVersion(null);
-
-        if ((null != manifestVersion) && (null != sha256)) {
-            // this protects against the occasional differing binaries with poor manifest maintenance  
-            version = manifestVersion + " [sha256=" + sha256 + "]";
-        } else if (null != sha256) {
-            version = "[sha256=" + sha256 + "]";
-        } else if (null != manifestVersion) {
-            version = manifestVersion;
-        }
-
-        return version;
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
     }
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {

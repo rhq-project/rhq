@@ -66,6 +66,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
 import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
@@ -513,32 +514,26 @@ public class ResourceClientProxy {
                 throw new IllegalArgumentException("File expected, found directory: " + file.getAbsolutePath());
             }
 
-
-            InstalledPackage oldPackage = getBackingContent();
-
-
-            String oldVersion = oldPackage.getPackageVersion().getVersion();
-            String newVersion = "1.0";
-            if (oldVersion != null && oldVersion.length() != 0) {
-                String[] parts = oldVersion.split("[^a-zA-Z0-9]");
-                String lastPart = parts[parts.length-1];
-                try {
-                    int lastNumber = Integer.parseInt(lastPart);
-                    newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
-                } catch (NumberFormatException nfe) {
-                    newVersion = oldVersion + ".1";
-                }
+            byte[] fileContents = new ScriptUtil(remoteClient).getFileBytes(filename);
+            String sha = null;
+            try {
+                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileContents);
+            }
+            catch(Exception e){
+                //do nothing because the sha will remain null.
+                LOG.error("Message digest for the package bits failed.", e);
             }
 
-            byte[] fileContents = new ScriptUtil(remoteClient).getFileBytes(filename);
+            String version = "[sha256="+sha+"]";
 
+            InstalledPackage oldPackage = getBackingContent();
 
             PackageVersion pv =
                     remoteClient.getContentManager().createPackageVersion(
                         remoteClient.getSubject(),
                         oldPackage.getPackageVersion().getGeneralPackage().getName(),
                         oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
-                        newVersion,
+                        version,
                         oldPackage.getPackageVersion().getArchitecture().getId(),
                         fileContents);
 
@@ -547,8 +542,6 @@ public class ResourceClientProxy {
                     new int[] { resourceClientProxy.getId()},
                     new int[] {pv.getId()},
                     "CLI deployment request");
-
-
         }
 
         public void retrieveBackingContent(String fileName) throws IOException {

@@ -26,7 +26,6 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftDefinition;
 
 public interface ChangeSetManager {
 
@@ -66,11 +65,4 @@ public interface ChangeSetManager {
     ChangeSetWriter getChangeSetWriter(int resourceId, Headers headers) throws IOException;
 
     ChangeSetWriter getChangeSetWriter(File changeSetFile, Headers headers) throws IOException;
-
-    ChangeSetWriter getChangeSetWriterForUpdate(int resourceId, Headers headers) throws IOException;
-
-    void updateChangeSet(int resourceId, Headers headers) throws IOException;
-
-    void addFileToChangeSet(int resourceId, DriftDefinition driftDefinition, File file);
-
 }

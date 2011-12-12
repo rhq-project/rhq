@@ -19,8 +19,26 @@
 
 package org.rhq.core.pc.drift;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.util.file.FileUtil.copyFile;
+import static org.rhq.core.util.file.FileUtil.forEachFile;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.FileEntry;
@@ -31,19 +49,12 @@ import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileVisitor;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.*;
-
-import static org.rhq.common.drift.FileEntry.*;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.util.file.FileUtil.copyFile;
-import static org.rhq.core.util.file.FileUtil.forEachFile;
-
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
+
+    static final String FILE_CHANGESET_FULL = "changeset.txt";
+    static final String FILE_CHANGESET_DELTA = "drift-changeset.txt";
+    static final String FILE_SNAPSHOT_PINNED = "snapshot.pinned";
 
     private ScheduleQueue scheduleQueue;
 
@@ -178,7 +189,7 @@ public class DriftDetector implements Runnable {
         File snapshotFile = currentSnapshot;
 
         if (schedule.getDriftDefinition().isPinned()) {
-            snapshotFile = new File(snapshotFile.getParentFile(), "snapshot.pinned");
+            snapshotFile = new File(snapshotFile.getParentFile(), FILE_SNAPSHOT_PINNED);
         }
 
         final File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftDefinition()));
@@ -240,14 +251,16 @@ public class DriftDetector implements Runnable {
                                 log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
                             }
 
-                        FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file),
-                            file.lastModified(), file.length());
-                        deltaEntries.add(newEntry);
-                        snapshotEntries.add(newEntry);
-                    } catch (IOException e) {
-                        log.error("An error occurred while generating a drift change set for " + schedule + ": "
-                            + e.getMessage());
-                        throw new DriftDetectionException("An error occurred while generating a drift change set", e);
+                            FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file), file
+                                .lastModified(), file.length());
+                            deltaEntries.add(newEntry);
+                            snapshotEntries.add(newEntry);
+                        } catch (IOException e) {
+                            log.error("An error occurred while generating a drift change set for " + schedule + ": "
+                                + e.getMessage());
+                            throw new DriftDetectionException("An error occurred while generating a drift change set",
+                                e);
+                        }
                     }
                 }));
             }
@@ -261,6 +274,7 @@ public class DriftDetector implements Runnable {
             // the current snapshot to match the pinned snapshot. Note though
             // that we increment the snapshot version in order to let the server
             // know about the state change.
+            // if no timestamp must re-gen the files.
             if (schedule.getDriftDefinition().isPinned() && newVersion > 1
                 && !isPreviousChangeSetEmpty(schedule.getResourceId(), schedule.getDriftDefinition())) {
                 currentSnapshot.delete();
@@ -335,19 +349,19 @@ public class DriftDetector implements Runnable {
                 if (entry.getLastModified() == -1 && entry.getSize() == -1) {
                     String currentSHA = sha256(file);
                     if (!entry.getNewSHA().equals(currentSHA)) {
-                        FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA,
-                        file.lastModified(), file.length());
+                        FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA, file
+                            .lastModified(), file.length());
                         deltaEntries.add(modifiedEntry);
                         snapshotEntries.add(modifiedEntry);
                     }
-                } else if (entry.getLastModified() != -1 && entry.getSize() != -1 &&
-                    (entry.getLastModified() != file.lastModified() || entry.getSize() != file.length())) {
+                } else if (entry.getLastModified() != -1 && entry.getSize() != -1
+                    && (entry.getLastModified() != file.lastModified() || entry.getSize() != file.length())) {
                     if (log.isDebugEnabled()) {
                         log.debug("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
                     }
                     String currentSHA = sha256(file);
-                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA,
-                        file.lastModified(), file.length());
+                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA, file
+                        .lastModified(), file.length());
                     deltaEntries.add(modifiedEntry);
                     snapshotEntries.add(modifiedEntry);
                 } else {
@@ -443,7 +457,7 @@ public class DriftDetector implements Runnable {
 
         ChangeSetReader reader = null;
         try {
-            File deltaChangeSet = new File(currentSnapsotFile.getParentFile(), "drift-changeset.txt");
+            File deltaChangeSet = new File(currentSnapsotFile.getParentFile(), FILE_CHANGESET_DELTA);
             reader = changeSetMgr.getChangeSetReader(deltaChangeSet);
 
             int numEntries = 0;
@@ -511,7 +525,7 @@ public class DriftDetector implements Runnable {
                 writer = null;
             }
             if (schedule.getDriftDefinition().isPinned()) {
-                copyFile(snapshot, new File(snapshot.getParentFile(), "snapshot.pinned"));
+                copyFile(snapshot, new File(snapshot.getParentFile(), FILE_SNAPSHOT_PINNED));
             }
             summary.setNewSnapshot(snapshot);
         } finally {

@@ -201,7 +201,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 // change set.
                 DriftSnapshot pinnedSnapshot = driftServer.getSnapshot(driftDefinition.getId(), 0, 0);
                 Headers pinnedHeaders = createHeaders(resource.getId(), driftDefinition);
-                File pinnedSnapshotFile = new File(currentSnapshotFile.getParent(), "snapshot.pinned");
+                File pinnedSnapshotFile = new File(currentSnapshotFile.getParent(), DriftDetector.FILE_SNAPSHOT_PINNED);
                 log.info("Preparing to write pinned snapshot to disk for "
                     + toString(resource.getId(), driftDefinition));
                 writeSnapshotToFile(pinnedSnapshot, pinnedSnapshotFile, pinnedHeaders);
@@ -212,7 +212,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     // drift that has already been reported to the server.
                     DriftSnapshot deltaSnapshot = driftServer.getSnapshot(driftDefinition.getId(), snapshot
                         .getVersion(), snapshot.getVersion());
-                    File deltaFile = new File(currentSnapshotFile.getParentFile(), "drift-changeset.txt");
+                    File deltaFile = new File(currentSnapshotFile.getParentFile(), DriftDetector.FILE_CHANGESET_DELTA);
                     Headers deltaHeaders = createHeaders(resource.getId(), driftDefinition);
                     deltaHeaders.setVersion(snapshot.getVersion());
                     deltaHeaders.setType(DRIFT);
@@ -546,7 +546,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             public void run() {
                 File currentSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(), schedule
                     .getDriftDefinition().getName(), COVERAGE);
-                File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+                File pinnedSnapshot = new File(currentSnapshot.getParentFile(), DriftDetector.FILE_SNAPSHOT_PINNED);
                 pinnedSnapshot.delete();
 
                 if (log.isDebugEnabled()) {
@@ -561,7 +561,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void updateDriftDetection(int resourceId, DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
         File currentSnapshot = changeSetMgr.findChangeSet(resourceId, driftDef.getName(), COVERAGE);
-        File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+        File pinnedSnapshot = new File(currentSnapshot.getParentFile(), DriftDetector.FILE_SNAPSHOT_PINNED);
         Headers headers = createHeaders(resourceId, driftDef);
 
         try {
@@ -777,8 +777,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId(), -1L, -1L));
                     break;
                 case FILE_CHANGED:
-                    writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
-                        drift.getNewDriftFile().getHashId(), -1L, -1L));
+                    writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(), drift
+                        .getNewDriftFile().getHashId(), -1L, -1L));
                     break;
                 default: // FILE_REMOVED
                     writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));

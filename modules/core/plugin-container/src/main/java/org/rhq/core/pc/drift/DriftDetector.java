@@ -346,7 +346,7 @@ public class DriftDetector implements Runnable {
                 // when the agent is restarted and the data directory is purged. The server
                 // sends snapshots down to the agent and since the server does not store the
                 // file modification time or size, the fields will get initialized to -1.
-                if (entry.getLastModified() == -1 && entry.getSize() == -1) {
+                if (entry.getLastModified() == -1 || entry.getSize() == -1) {
                     String currentSHA = sha256(file);
                     if (!entry.getNewSHA().equals(currentSHA)) {
                         FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA, file

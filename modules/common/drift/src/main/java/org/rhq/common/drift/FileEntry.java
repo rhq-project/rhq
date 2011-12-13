@@ -29,7 +29,7 @@ import java.util.Date;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.util.file.FileUtil;
 
-public class FileEntry implements Serializable {
+public class FileEntry implements Serializable, Comparable<FileEntry> {
 
     private static final long serialVersionUID = 1L;
 
@@ -117,9 +117,23 @@ public class FileEntry implements Serializable {
         return size;
     }
 
+    public void setLastModified(Long lastModified) {
+        this.lastModified = lastModified;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
+    }
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "[newSHA: " + newSHA + ", oldSHA: " + oldSHA + ", file: " + file
             + ", type: " + type.code() + ", lastModified: " + new Date(lastModified) + ", size: " + size + "]";
+    }
+
+    // Support Sets and Ordering by deferring to a String compare on the file path
+    @Override
+    public int compareTo(FileEntry o) {
+        return this.file.compareTo(o.getFile());
     }
 }

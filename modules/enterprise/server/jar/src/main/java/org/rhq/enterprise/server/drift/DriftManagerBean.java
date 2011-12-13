@@ -68,8 +68,11 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComplianceStatus;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
+import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDetails;
@@ -78,9 +81,6 @@ import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.DriftSnapshotRequest;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.drift.Filter;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
-import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -803,7 +803,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         if (null == baseDir
             || !baseDir.getValueName().matches(DriftConfigurationDefinition.PROP_BASEDIR_PATH_REGEX_PATTERN)) {
             throw new IllegalArgumentException(
-                "Drift definition base directory is null or contains invalid characters: " + baseDir.getValueName());
+                "Drift definition base directory is null or contains invalid characters: " + baseDir);
         }
         List<List<Filter>> filtersList = new ArrayList<List<Filter>>(2);
         filtersList.add(driftDef.getIncludes());

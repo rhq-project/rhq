@@ -508,7 +508,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             log.warn("Failed to create app backup but proceeding with redeploy of " + appFile.getPath() + ": " + e);
         }
 
-        FileContentDelegate contentDelegate = new FileContentDelegate(appFile.getParentFile(), packageDetails.getName());
+        FileContentDelegate contentDelegate = new FileContentDelegate(appFile.getParentFile());
 
         try {
             // Write the new bits for the application. If successful Tomcat will pick it up and complete the deploy.
@@ -650,13 +650,20 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             File app = new File(file.getPath());
             if (app.isDirectory()) {
                 File manifestFile = new File(app.getAbsolutePath(), "META-INF/MANIFEST.MF");
-                InputStream manifestStream = new FileInputStream(manifestFile);
-                Manifest manifest = null;
-                try {
-                    manifest = new Manifest(manifestStream);
-                    sha256 = manifest.getMainAttributes().getValue("RHQ-Sha256");
-                } finally {
-                    manifestStream.close();
+                if (manifestFile.exists()) {
+                    InputStream manifestStream = new FileInputStream(manifestFile);
+                    Manifest manifest = null;
+                    try {
+                        manifest = new Manifest(manifestStream);
+                        sha256 = manifest.getMainAttributes().getValue("RHQ-Sha256");
+                    } finally {
+                        manifestStream.close();
+                    }
+                }
+
+                if (sha256 == null || sha256.trim().isEmpty()) {
+                    FileContentDelegate fileContentDelegate = new FileContentDelegate(app);
+                    sha256 = fileContentDelegate.calculateSHAForCotent(app);
                 }
             } else {
                 sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);

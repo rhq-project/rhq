@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.Stack;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -49,24 +50,18 @@ import org.rhq.core.util.file.FileUtil;
 * @author Jason Dobies
 */
 public class FileContentDelegate {
-    // Attributes  --------------------------------------------
 
     private File deployDirectory;
-    private String packageTypeName;
 
-    // Constructors  --------------------------------------------
-
-    public FileContentDelegate(File directory, String packageTypeName) {
+    public FileContentDelegate(File directory) {
         this.deployDirectory = directory;
-        this.packageTypeName = packageTypeName;
     }
 
-    // Public  --------------------------------------------
-
-    public String getPackageTypeName() {
-        return packageTypeName;
-    }
-
+    /**
+     * Getter for deployment directory.
+     *
+     * @return deploy directory
+     */
     public File getDirectory() {
         return deployDirectory;
     }
@@ -85,30 +80,8 @@ public class FileContentDelegate {
         try {
             if (unzip) {
                 ZipUtil.unzipFile(content, destination);
-
-                File manifestFile = new File(destination, "META-INF/MANIFEST.MF");
-                Manifest manifest;
-                if (manifestFile.exists()) {
-                    FileInputStream inputStream = new FileInputStream(manifestFile);
-                    try {
-                        manifest = new Manifest(inputStream);
-                    } finally {
-                        inputStream.close();
-                    }
-                } else {
-                    manifest = new Manifest();
-                }
-
-                Attributes attribs = manifest.getMainAttributes();
                 String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(content);
-                attribs.putValue("RHQ-Sha256", sha);
-
-                FileOutputStream outputStream = new FileOutputStream(manifestFile);
-                try {
-                    manifest.write(outputStream);
-                } finally {
-                    outputStream.close();
-                }
+                writeSHAToManifest(destination, sha);
             } else {
                 InputStream contentStream = new BufferedInputStream(new FileInputStream(content));
                 FileUtil.writeFile(contentStream, destination);
@@ -116,6 +89,50 @@ public class FileContentDelegate {
         } catch (IOException e) {
             throw new RuntimeException("Error creating artifact for contentFile: " + destination, e);
         }
+    }
+
+    /**
+     * Calculate SHA256 for the content of an exploded war deployment. This method should be used to
+     * compute the SHA256 for content deployed outside RHQ or for the initial content delivered
+     * with the server.
+     *
+     * @param deploymentDirectory app deployment folder
+     * @return
+     */
+    public String calculateSHAForCotent(File deploymentDirectory) {
+        String sha = null;
+        try {
+            if (deploymentDirectory.isDirectory()) {
+                MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+
+                Stack<File> unvisitedFolders = new Stack<File>();
+                unvisitedFolders.add(deploymentDirectory);
+                while (!unvisitedFolders.empty()) {
+                    for (File file : unvisitedFolders.pop().listFiles()) {
+                        if (file.isDirectory()) {
+                            unvisitedFolders.add(file);
+                        } else {
+                            FileInputStream inputStream = null;
+                            try {
+                                inputStream = new FileInputStream(file);
+                                messageDigest.add(inputStream);
+                            } finally {
+                                if (inputStream != null) {
+                                    inputStream.close();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                sha = messageDigest.getDigestString();
+                writeSHAToManifest(deploymentDirectory, sha);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating artifact for contentFile: " + deploymentDirectory, e);
+        }
+
+        return sha;
     }
 
     public File getPath(PackageDetails details) {
@@ -180,5 +197,47 @@ public class FileContentDelegate {
          * discovery for artifacts of your particular content type
          */
         return null;
+    }
+
+    /**
+     * Write the SHA256 to the manifest using the RHQ-Sha256 attribute tag.
+     *
+     * @param deploymentFolder app deployment folder
+     * @param sha SHA256
+     * @throws IOException
+     */
+    private void writeSHAToManifest(File deploymentFolder, String sha) throws IOException {
+        File manifestFile = new File(deploymentFolder, "META-INF/MANIFEST.MF");
+        Manifest manifest;
+        if (manifestFile.exists()) {
+            FileInputStream inputStream = new FileInputStream(manifestFile);
+            try {
+                manifest = new Manifest(inputStream);
+            } finally {
+                inputStream.close();
+            }
+        } else {
+            manifest = new Manifest();
+            manifestFile.getParentFile().mkdirs();
+            manifestFile.createNewFile();
+        }
+
+        Attributes attribs = manifest.getMainAttributes();
+
+        //The main section of the manifest file does not get saved if both of
+        //these two attributes are missing. Please see Attributes implementation.
+        if (!attribs.containsKey(Attributes.Name.MANIFEST_VERSION.toString())
+            && !attribs.containsKey(Attributes.Name.SIGNATURE_VERSION.toString())) {
+            attribs.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
+        }
+
+        attribs.putValue("RHQ-Sha256", sha);
+
+        FileOutputStream outputStream = new FileOutputStream(manifestFile);
+        try {
+            manifest.write(outputStream);
+        } finally {
+            outputStream.close();
+        }
     }
 }

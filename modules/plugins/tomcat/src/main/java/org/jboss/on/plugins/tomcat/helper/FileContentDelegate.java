@@ -51,6 +51,9 @@ import org.rhq.core.util.file.FileUtil;
 */
 public class FileContentDelegate {
 
+    private static final String RHQ_SHA_256 = "RHQ-Sha256";
+    private static final String MANIFEST_RELATIVE_PATH = "META-INF/MANIFEST.MF";
+
     private File deployDirectory;
 
     public FileContentDelegate(File directory) {
@@ -92,44 +95,38 @@ public class FileContentDelegate {
     }
 
     /**
-     * Calculate SHA256 for the content of an exploded war deployment. This method should be used to
-     * compute the SHA256 for content deployed outside RHQ or for the initial content delivered
-     * with the server.
+     * Retrieves the SHA256 for a deployed application.
+     * 1) If the app is exploded then return RHQ-Sha256 manifest attribute.
+     *   1.1) If RHQ-Sha256 is missing then compute it, save it and return the result.
+     * 2) If the app is an archive then compute SHA256 on fly and return it.
      *
-     * @param deploymentDirectory app deployment folder
+     * @param deploymentFile deployment file
      * @return
      */
-    public String calculateSHAForCotent(File deploymentDirectory) {
+    public String getSHA(File deploymentFile) {
         String sha = null;
         try {
-            if (deploymentDirectory.isDirectory()) {
-                MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
-
-                Stack<File> unvisitedFolders = new Stack<File>();
-                unvisitedFolders.add(deploymentDirectory);
-                while (!unvisitedFolders.empty()) {
-                    for (File file : unvisitedFolders.pop().listFiles()) {
-                        if (file.isDirectory()) {
-                            unvisitedFolders.add(file);
-                        } else {
-                            FileInputStream inputStream = null;
-                            try {
-                                inputStream = new FileInputStream(file);
-                                messageDigest.add(inputStream);
-                            } finally {
-                                if (inputStream != null) {
-                                    inputStream.close();
-                                }
-                            }
-                        }
+            if (deploymentFile.isDirectory()) {
+                File manifestFile = new File(deploymentFile.getAbsolutePath(), MANIFEST_RELATIVE_PATH);
+                if (manifestFile.exists()) {
+                    InputStream manifestStream = new FileInputStream(manifestFile);
+                    Manifest manifest = null;
+                    try {
+                        manifest = new Manifest(manifestStream);
+                        sha = manifest.getMainAttributes().getValue(RHQ_SHA_256);
+                    } finally {
+                        manifestStream.close();
                     }
                 }
 
-                sha = messageDigest.getDigestString();
-                writeSHAToManifest(deploymentDirectory, sha);
+                if (sha == null || sha.trim().isEmpty()) {
+                    sha = computeAndSaveSHA(deploymentFile);
+                }
+            } else {
+                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(deploymentFile);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Error creating artifact for contentFile: " + deploymentDirectory, e);
+        } catch (IOException ex) {
+            throw new RuntimeException("Problem calculating digest of package [" + deploymentFile.getPath() + "].", ex);
         }
 
         return sha;
@@ -200,6 +197,50 @@ public class FileContentDelegate {
     }
 
     /**
+     * Compute SHA256 for the content of an exploded war deployment. This method should be used to
+     * compute the SHA256 for content deployed outside RHQ or for the initial content delivered
+     * with the server.
+     *
+     * @param deploymentDirectory app deployment folder
+     * @return
+     */
+    private String computeAndSaveSHA(File deploymentDirectory) {
+        String sha = null;
+        try {
+            if (deploymentDirectory.isDirectory()) {
+                MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+
+                Stack<File> unvisitedFolders = new Stack<File>();
+                unvisitedFolders.add(deploymentDirectory);
+                while (!unvisitedFolders.empty()) {
+                    for (File file : unvisitedFolders.pop().listFiles()) {
+                        if (file.isDirectory()) {
+                            unvisitedFolders.add(file);
+                        } else {
+                            FileInputStream inputStream = null;
+                            try {
+                                inputStream = new FileInputStream(file);
+                                messageDigest.add(inputStream);
+                            } finally {
+                                if (inputStream != null) {
+                                    inputStream.close();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                sha = messageDigest.getDigestString();
+                writeSHAToManifest(deploymentDirectory, sha);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating artifact for contentFile: " + deploymentDirectory, e);
+        }
+
+        return sha;
+    }
+
+    /**
      * Write the SHA256 to the manifest using the RHQ-Sha256 attribute tag.
      *
      * @param deploymentFolder app deployment folder
@@ -207,7 +248,7 @@ public class FileContentDelegate {
      * @throws IOException
      */
     private void writeSHAToManifest(File deploymentFolder, String sha) throws IOException {
-        File manifestFile = new File(deploymentFolder, "META-INF/MANIFEST.MF");
+        File manifestFile = new File(deploymentFolder, MANIFEST_RELATIVE_PATH);
         Manifest manifest;
         if (manifestFile.exists()) {
             FileInputStream inputStream = new FileInputStream(manifestFile);
@@ -231,7 +272,7 @@ public class FileContentDelegate {
             attribs.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
         }
 
-        attribs.putValue("RHQ-Sha256", sha);
+        attribs.putValue(RHQ_SHA_256, sha);
 
         FileOutputStream outputStream = new FileOutputStream(manifestFile);
         try {

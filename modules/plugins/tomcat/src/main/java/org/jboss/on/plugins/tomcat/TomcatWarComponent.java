@@ -34,7 +34,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -71,7 +70,6 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
@@ -633,43 +631,18 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     }
 
     /**
-     * Retrieve SHA 256 for a deployed app.
-     * 1) If the app is exploded then look into the manifest file for the RHQ-Sha265 attribute.
-     * The SHA should have been computed and the attribute added during package deployment.
-     * 2) If the app is not exploded then compute the SHA256 for the archive.
+     * Retrieve SHA256 for a deployed app.
      *
      * @param file application file
-     * @return the SHA 256
+     * @return SHA256 of the content
      */
     private String getSHA256(File file) {
-
         String sha256 = null;
 
         try {
-            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
-            File app = new File(file.getPath());
-            if (app.isDirectory()) {
-                File manifestFile = new File(app.getAbsolutePath(), "META-INF/MANIFEST.MF");
-                if (manifestFile.exists()) {
-                    InputStream manifestStream = new FileInputStream(manifestFile);
-                    Manifest manifest = null;
-                    try {
-                        manifest = new Manifest(manifestStream);
-                        sha256 = manifest.getMainAttributes().getValue("RHQ-Sha256");
-                    } finally {
-                        manifestStream.close();
-                    }
-                }
-
-                if (sha256 == null || sha256.trim().isEmpty()) {
-                    FileContentDelegate fileContentDelegate = new FileContentDelegate(app);
-                    sha256 = fileContentDelegate.calculateSHAForCotent(app);
-                }
-            } else {
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
-            }
-        } catch (IOException iex) {
-            //log exception but move on, discovery happens often. No reason to hold up anything.
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(file);
+            sha256 = fileContentDelegate.getSHA(file);
+        } catch (Exception iex) {
             if (log.isDebugEnabled()) {
                 log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }

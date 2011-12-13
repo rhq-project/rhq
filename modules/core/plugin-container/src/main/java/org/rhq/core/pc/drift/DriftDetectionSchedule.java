@@ -43,6 +43,7 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
     public DriftDetectionSchedule copy() {
         DriftDetectionSchedule copy = new DriftDetectionSchedule(resourceId, new DriftDefinition(driftDef
             .getConfiguration().deepCopyWithoutProxies()));
+        copy.driftDef.setId(driftDef.getId());
         copy.nextScan = nextScan;
         return copy;
     }

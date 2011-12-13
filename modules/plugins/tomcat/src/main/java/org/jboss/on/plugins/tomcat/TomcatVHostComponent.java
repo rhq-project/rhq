@@ -302,7 +302,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
             return;
         }
 
-        FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
+        FileContentDelegate fileContent = new FileContentDelegate(deployDir);
         fileContent.createContent(path, tempFile, explodeOnDeploy);
 
         // Resource key is a canonical objectName similar to:

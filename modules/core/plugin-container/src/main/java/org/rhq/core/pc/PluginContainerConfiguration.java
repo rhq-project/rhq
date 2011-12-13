@@ -453,7 +453,7 @@ public class PluginContainerConfiguration {
     }
 
     /**
-     * When measurement's are scheduled for collection, the collection will be performed by threads from a thread pool.
+     * When measurements are scheduled for collection, the collection will be performed by threads from a thread pool.
      * This defines the number of threads within that thread pool, effectively defining the number of measurements that
      * can be collected concurrently.
      *
@@ -465,9 +465,9 @@ public class PluginContainerConfiguration {
     }
 
     /**
-     * Defines the number of threads that can concurrent collection measurements.
+     * Defines the number of threads that can concurrently collection measurements.
      *
-     * @param size the new size of the threadpool
+     * @param size the new size of the thread pool
      */
     public void setMeasurementCollectionThreadPoolSize(int size) {
         configuration.put(MEASUREMENT_COLLECTION_THREADCOUNT_PROP, Integer.valueOf(size));
@@ -609,7 +609,7 @@ public class PluginContainerConfiguration {
     /**
      * Defines the number of threads that can concurrent execute operations.
      *
-     * @param size the new size of the threadpool
+     * @param size the new size of the thread pool
      */
     public void setOperationInvokerThreadPoolSize(int size) {
         configuration.put(OPERATION_INVOKER_THREADCOUNT_PROP, Integer.valueOf(size));

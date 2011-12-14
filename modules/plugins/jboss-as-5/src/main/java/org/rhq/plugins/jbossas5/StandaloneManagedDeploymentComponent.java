@@ -58,11 +58,10 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
+import org.rhq.plugins.jbossas5.util.FileContentDelegate;
 
 /**
  * A resource component for managing a standalone/top-level Profile Service managed deployment.
@@ -144,9 +143,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 + getResourceDescription() + " does not exist.");
 
         String fileName = this.deploymentFile.getName();
-        JarContentFileInfo fileInfo = new JarContentFileInfo(this.deploymentFile);
-        String sha256 = getSHA256(fileInfo);
-        String version = getVersion(fileInfo, sha256);
+        String sha256 = getSHA256(this.deploymentFile);
+        String version = getVersion(sha256);
         // Package name is the deployment's file name (e.g. foo.ear).
         PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
         ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
@@ -164,46 +162,29 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return packages;
     }
 
-    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
-    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
-    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
-    private String getSHA256(JarContentFileInfo fileInfo) {
-
+    /**
+     * Retrieve SHA256 for a deployed app.
+     *
+     * @param file application file
+     * @return SHA256 of the content
+     */
+    private String getSHA256(File file) {
         String sha256 = null;
 
         try {
-            sha256 = fileInfo.getAttributeValue(RHQ_SHA256, null);
-            if (null == sha256) {
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileInfo
-                    .getContentFile());
-            }
-        } catch (IOException iex) {
-            //log exception but move on, discovery happens often. No reason to hold up anything.
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(file, null, null);
+            sha256 = fileContentDelegate.getSHA(file);
+        } catch (Exception iex) {
             if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + fileInfo.getContentFile().getPath() + "]."
-                    + iex.getMessage());
+                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }
         }
 
         return sha256;
     }
 
-    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
-        // Version string in order of preference
-        // manifestVersion + sha256, sha256, manifestVersion, "0"
-        String version = "0";
-        String manifestVersion = fileInfo.getVersion(null);
-
-        if ((null != manifestVersion) && (null != sha256)) {
-            // this protects against the occasional differing binaries with poor manifest maintenance  
-            version = manifestVersion + " [sha256=" + sha256 + "]";
-        } else if (null != sha256) {
-            version = "[sha256=" + sha256 + "]";
-        } else if (null != manifestVersion) {
-            version = manifestVersion;
-        }
-
-        return version;
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
@@ -238,8 +219,11 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         log.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
+        String sha = null;
         try {
             tempFile = writeNewAppBitsToTempFile(contentServices, packageDetails);
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(null, null, null);
+            sha = fileContentDelegate.computeSHAForArchive(tempFile);
         } catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
                 packageDetails);
@@ -319,6 +303,19 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         // Deploy was successful!
         deleteBackupOfOriginalFile(backupOfOriginalFile);
+
+        if (this.deploymentFile.isDirectory()) {
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(deploymentFile, null, null);
+            try {
+                //This is a simulation of create content from FileContentDelegate split across
+                //this deployment method because JBoss AS5 is using a different deployment model.
+                //The SHA256 was pre-computed earlier (at the time the temp content file was created).
+                //The only thing left at this point is to store it in the manifest file.
+                fileContentDelegate.writeSHAToManifest(deploymentFile, sha);
+            } catch (IOException e) {
+                log.error("Unable to save SHA to manifest file for " + this.deploymentFile.getPath() + ".", e);
+            }
+        }
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),

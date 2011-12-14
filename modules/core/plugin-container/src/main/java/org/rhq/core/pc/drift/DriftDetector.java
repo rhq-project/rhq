@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.pc.drift;
 
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
@@ -30,6 +29,7 @@ import static org.rhq.core.util.file.FileUtil.forEachFile;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -49,6 +49,11 @@ import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileVisitor;
 
+/**
+ * Mechanism to detect and report Drift for active Drift Definitions.
+ * 
+ * @author John Sanda
+ */
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
 
@@ -220,119 +225,142 @@ public class DriftDetector implements Runnable {
         }
 
         final List<FileEntry> unchangedEntries = new LinkedList<FileEntry>();
-        final List<FileEntry> removedEntries = new LinkedList<FileEntry>();
-        final List<FileEntry> cantReadEntries = new LinkedList<FileEntry>();
         final List<FileEntry> changedEntries = new LinkedList<FileEntry>();
+        final List<FileEntry> removedEntries = new LinkedList<FileEntry>();
+        final List<FileEntry> addedEntries = new LinkedList<FileEntry>();
+        // for pinned snapshots, keep track of the original FileEntry objects for changed entries. These
+        // are used if we re-write the pinned snapshot file.
         final List<FileEntry> changedPinnedEntries = isPinned ? new LinkedList<FileEntry>() : null;
 
-        ChangeSetReader snapshotReader = null;
-        int newVersion;
-        boolean updateSnapshot = false;
         try {
-            snapshotReader = changeSetMgr.getChangeSetReader(snapshotFile);
-
-            if (!basedir.exists()) {
-                log.warn("The base directory [" + basedir.getAbsolutePath() + "] for " + schedule + " does not exist.");
-            }
-
-            if (isPinned) {
-                // If pinned we compare against the pinned snapshot but we need to know the current snapshot version,
-                // get it from the current full snapshot.
-                ChangeSetReader currentFullSnapshotReader = null;
-                try {
-                    currentFullSnapshotReader = changeSetMgr.getChangeSetReader(currentFullSnapshot);
-                    newVersion = currentFullSnapshotReader.getHeaders().getVersion() + 1;
-                } finally {
-                    currentFullSnapshotReader.close();
-                }
-            } else {
-                newVersion = snapshotReader.getHeaders().getVersion() + 1;
-            }
-
-            // First look for files that have either been modified or deleted
-            updateSnapshot = scanSnapshotFiles(schedule, basedir, snapshotReader, newFiles, unchangedEntries,
-                removedEntries, cantReadEntries, changedEntries, changedPinnedEntries);
-
-        } finally {
-            snapshotReader.close();
-        }
-
-        // if necessary, re-write the pinned snapshot file because we've updated timestamp/filesize info, which
-        // on subsequent detection runs will help us avoid SHA generation. It must maintain the same entries.
-        if (isPinned && updateSnapshot) {
-            changedPinnedEntries.addAll(unchangedEntries);
-
-            backupAndDeleteCurrentSnapshot(snapshotFile);
-            updatePinnedSnapshot(schedule, snapshotFile, changedPinnedEntries);
-        }
-
-        final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>(unchangedEntries);
-        snapshotEntries.addAll(changedEntries);
-
-        final List<FileEntry> deltaEntries = new LinkedList<FileEntry>(changedEntries);
-        deltaEntries.addAll(removedEntries);
-        deltaEntries.addAll(cantReadEntries);
-
-        for (File file : newFiles) {
+            ChangeSetReader snapshotReader = null;
+            int newVersion;
+            boolean updateSnapshot = false;
             try {
-                if (log.isInfoEnabled()) {
-                    log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
+                snapshotReader = changeSetMgr.getChangeSetReader(snapshotFile);
+
+                if (!basedir.exists()) {
+                    log.warn("The base directory [" + basedir.getAbsolutePath() + "] for " + schedule
+                        + " does not exist.");
                 }
 
-                FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file), file.lastModified(),
-                    file.length());
+                if (isPinned) {
+                    // If pinned we compare against the pinned snapshot but we need to know the current snapshot version,
+                    // get it from the current full snapshot.
+                    ChangeSetReader currentFullSnapshotReader = null;
+                    try {
+                        currentFullSnapshotReader = changeSetMgr.getChangeSetReader(currentFullSnapshot);
+                        newVersion = currentFullSnapshotReader.getHeaders().getVersion() + 1;
+                    } finally {
+                        currentFullSnapshotReader.close();
+                    }
+                } else {
+                    newVersion = snapshotReader.getHeaders().getVersion() + 1;
+                }
 
-                deltaEntries.add(newEntry);
-                snapshotEntries.add(newEntry);
+                // First look for files that have either been changed or removed
+                updateSnapshot = scanSnapshot(schedule, basedir, snapshotReader, newFiles, unchangedEntries,
+                    changedEntries, removedEntries, changedPinnedEntries);
 
-            } catch (IOException e) {
-                log.error("An error occurred while generating a drift change set for " + schedule + ": "
-                    + e.getMessage());
-                throw new DriftDetectionException("An error occurred while generating a drift change set", e);
+            } finally {
+                snapshotReader.close();
             }
-        }
 
-        if (deltaEntries.isEmpty()) {
-            File newSnapshot = currentFullSnapshot;
+            // if necessary, re-write the pinned snapshot file because we've updated timestamp/filesize info, which
+            // on subsequent detection runs will help us avoid SHA generation. It must maintain the same entries.
+            if (isPinned && updateSnapshot) {
+                changedPinnedEntries.addAll(unchangedEntries);
 
-            if (!isPinned) {
-                // If unpinned and there is no detected drift then we generally don't need to add/update any files.
-                // But, if we have timestamp/filesize updates then we want to replace the current snapshot with
-                // the updated entries, so we can avoid SHA generation on subsequent runs.
-                if (updateSnapshot) {
-                    currentFullSnapshot.delete();
-                    newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion - 1);
+                backupAndDeleteCurrentSnapshot(snapshotFile);
+                updatePinnedSnapshot(schedule, snapshotFile, changedPinnedEntries);
+            }
+
+            // add new files to the snapshotEntries and deltaEntries
+            for (File file : newFiles) {
+                try {
+                    if (log.isInfoEnabled()) {
+                        log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
+                    }
+
+                    FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file), file.lastModified(),
+                        file.length());
+
+                    addedEntries.add(newEntry);
+
+                } catch (IOException e) {
+                    log.error("An error occurred while generating a drift change set for " + schedule + ": "
+                        + e.getMessage());
+                    throw new DriftDetectionException("An error occurred while generating a drift change set", e);
                 }
+            }
+
+            // The new snapshot contains all changed, unchanged and added files. Not removed files.  
+            final List<FileEntry> snapshotEntries = new LinkedList<FileEntry>(unchangedEntries);
+            snapshotEntries.addAll(changedEntries);
+            snapshotEntries.addAll(addedEntries);
+
+            // The snapshot delta contains all changed, added and removed files.  
+            final List<FileEntry> deltaEntries = new LinkedList<FileEntry>(changedEntries);
+            deltaEntries.addAll(removedEntries);
+            deltaEntries.addAll(addedEntries);
+
+            if (deltaEntries.isEmpty()) {
+                File newSnapshot = currentFullSnapshot;
+
+                if (!isPinned) {
+                    // If unpinned and there is no detected drift then we generally don't need to add/update any files.
+                    // But, if we have timestamp/filesize updates then we want to replace the current snapshot with
+                    // the updated entries, so we can avoid SHA generation on subsequent runs.
+                    if (updateSnapshot) {
+                        currentFullSnapshot.delete();
+                        newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion - 1);
+                    }
+                } else {
+                    // If pinned and returning to compliance (meaning no drift now but the previous snapshot did have drift)
+                    // then we need to reset the current snapshot to match the pinned snapshot. Note though that we
+                    // increment the snapshot version in order to let the server know about the state change.
+                    if (newVersion > 1
+                        && !isPreviousChangeSetEmpty(schedule.getResourceId(), schedule.getDriftDefinition())) {
+                        currentFullSnapshot.delete();
+                        newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
+
+                        updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, currentFullSnapshot,
+                            newSnapshot);
+                    }
+                }
+
+                summary.setNewSnapshot(newSnapshot);
+
             } else {
-                // If pinned and returning to compliance (meaning no drift now but the previous snapshot did have drift)
-                // then we need to reset the current snapshot to match the pinned snapshot. Note though that we
-                // increment the snapshot version in order to let the server know about the state change.
-                if (newVersion > 1
-                    && !isPreviousChangeSetEmpty(schedule.getResourceId(), schedule.getDriftDefinition())) {
-                    currentFullSnapshot.delete();
-                    newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
+                // if there is drift, but we're pinned and the drift is the same as the previous detection, just
+                // mark it as a repeat to indicate that we're out of compliance but not in any new way.
+                if (isPinned && newVersion > 1 && isSameAsPreviousChangeSet(deltaEntries, currentFullSnapshot)) {
+                    summary.setVersion(newVersion - 1);
+                    summary.setRepeat(true);
 
-                    updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, currentFullSnapshot, newSnapshot);
+                    return;
                 }
+
+                // otherwise, generate a new current snapshot, and a snapshot delta reflecting the latest drift
+                File oldSnapshot = backupAndDeleteCurrentSnapshot(currentFullSnapshot);
+                File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
+
+                updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, oldSnapshot, newSnapshot);
             }
+        } finally {
+            // Help out the garbage collector by clearing all of our collections
+            safeClear(newFiles, unchangedEntries, changedEntries, changedPinnedEntries);
+        }
+    }
 
-            summary.setNewSnapshot(newSnapshot);
-
-        } else {
-            // if there is drift, but we're pinned and the drift is the same as the previous detection, just
-            // mark it as a repeat to indicate that we're out of compliance but not in any new way.
-            if (isPinned && newVersion > 1 && isSameAsPreviousChangeSet(deltaEntries, currentFullSnapshot)) {
-                summary.setVersion(newVersion - 1);
-                summary.setRepeat(true);
-
-                return;
+    static private void safeClear(Collection<?>... collections) {
+        if (null == collections) {
+            return;
+        }
+        for (Collection<?> c : collections) {
+            if (null != c) {
+                c.clear();
             }
-
-            // otherwise, generate a new current snapshot, and a snapshot delta reflecting the latest drift
-            File oldSnapshot = backupAndDeleteCurrentSnapshot(currentFullSnapshot);
-            File newSnapshot = updateCurrentSnapshot(schedule, snapshotEntries, newVersion);
-
-            updateDeltaSnapshot(summary, schedule, deltaEntries, newVersion, oldSnapshot, newSnapshot);
         }
     }
 
@@ -363,10 +391,9 @@ public class DriftDetector implements Runnable {
      * snapshot should be re-written to disk even if there was no drift.
      * @throws IOException
      */
-    private boolean scanSnapshotFiles(DriftDetectionSchedule schedule, File basedir, ChangeSetReader snapshotReader,
-        Set<File> newFiles, List<FileEntry> unchangedEntries, List<FileEntry> removedEntries,
-        List<FileEntry> cantReadEntries, List<FileEntry> modifiedEntries, List<FileEntry> changedPinnedEntries)
-        throws IOException {
+    private boolean scanSnapshot(DriftDetectionSchedule schedule, File basedir, ChangeSetReader snapshotReader,
+        Set<File> newFiles, List<FileEntry> unchangedEntries, List<FileEntry> changedEntries,
+        List<FileEntry> removedEntries, List<FileEntry> changedPinnedEntries) throws IOException {
 
         boolean result = false;
 
@@ -374,10 +401,11 @@ public class DriftDetector implements Runnable {
             File file = new File(basedir, entry.getFile());
             newFiles.remove(file);
 
-            if (!file.exists()) {
-                // The file has been deleted since the last scan
+            if (!(file.exists() && file.canRead())) {
+                // The file has been deleted or is no longer readable, since the last scan
                 if (log.isDebugEnabled()) {
-                    log.debug("Detected deleted file for " + schedule + " --> " + file.getAbsolutePath());
+                    log.debug("Detected " + (file.exists() ? "unreadable" : "deleted") + " file for " + schedule
+                        + " --> " + file.getAbsolutePath());
                 }
                 removedEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
 
@@ -387,37 +415,25 @@ public class DriftDetector implements Runnable {
 
                 continue;
 
-            } else if (!file.canRead()) {
-                if (log.isDebugEnabled()) {
-                    log.debug(file.getPath() + " is no longer readable. Treating it as a deleted file.");
-                }
-                cantReadEntries.add(removedFileEntry(entry.getFile(), entry.getNewSHA()));
-
-                if (null != changedPinnedEntries) {
-                    changedPinnedEntries.add(entry);
-                }
-
-                continue;
-
             } else {
                 String currentSHA = null;
-                boolean isModified = false;
+                boolean isChanged = false;
 
                 // perform a SHA comparison if we are unable to compare size and lastModified or if the
-                // size or lastModified test fails.  We may not have size of lastModified values for the
+                // size or lastModified test fails.  We may not have size or lastModified values for the
                 // entry when the current snapshot was provided by the server, either due to a synch or
                 // pinning scenario.  The server does not store that information and will provide -1 for defaults.
                 if (entry.getLastModified() == -1 || entry.getSize() == -1
                     || entry.getLastModified() != file.lastModified() || entry.getSize() != file.length()) {
 
                     currentSHA = sha256(file);
-                    isModified = !entry.getNewSHA().equals(currentSHA);
+                    isChanged = !entry.getNewSHA().equals(currentSHA);
                 }
 
-                if (isModified) {
-                    FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA, file
+                if (isChanged) {
+                    FileEntry changedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA, file
                         .lastModified(), file.length());
-                    modifiedEntries.add(modifiedEntry);
+                    changedEntries.add(changedEntry);
 
                     if (null != changedPinnedEntries) {
                         changedPinnedEntries.add(entry);

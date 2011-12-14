@@ -113,9 +113,9 @@ public class JarContentDelegate extends FileContentDelegate {
                 } catch (Exception e) {
                     // leave as null
                 }
-                String version = getVersion(manifestVersion, sha256);
+
                 ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(file.getName(),
-                    version, getPackageTypeName(), "noarch"));
+                    getVersion(sha256), getPackageTypeName(), "noarch"));
 
                 packages.add(details);
                 details.setFileCreatedDate(file.lastModified()); // Why don't we have a last modified time?
@@ -140,21 +140,7 @@ public class JarContentDelegate extends FileContentDelegate {
         return packages;
     }
 
-    private String getVersion(String manifestVersion, String sha256) {
-        // Version string in order of preference
-        // manifestVersion + sha256, sha256, manifestVersion, "0"
-        String version = "0";
-
-        if ((null != manifestVersion) && (null != sha256)) {
-            // this protects against the occasional differing binaries with poor manifest maintenance  
-            version = manifestVersion + " [sha256=" + sha256 + "]";
-        } else if (null != sha256) {
-            version = "[sha256=" + sha256 + "]";
-        } else if (null != manifestVersion) {
-            version = manifestVersion;
-        }
-
-        return version;
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
     }
-
 }

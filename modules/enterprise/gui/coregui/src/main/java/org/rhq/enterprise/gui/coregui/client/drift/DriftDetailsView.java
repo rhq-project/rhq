@@ -47,6 +47,7 @@ import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.drift.util.DiffUtility;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -286,77 +287,29 @@ public class DriftDetailsView extends LocatableVLayout {
         return window;
     }
 
-    private LocatableWindow createDiffViewer(String contents, String path, int oldVersion, int newVersion) {
-        VLayout layout = new VLayout();
-        DynamicForm form = new DynamicForm();
-        form.setWidth100();
-        form.setHeight100();
-
-        CanvasItem canvasItem = new CanvasItem();
-        canvasItem.setColSpan(2);
-        canvasItem.setShowTitle(false);
-        canvasItem.setWidth("*");
-        canvasItem.setHeight("*");
-
-        Canvas canvas = new Canvas();
-        canvas.setContents(contents);
-        canvasItem.setCanvas(canvas);
-
-        form.setItems(canvasItem);
-        layout.addMember(form);
-
-        PopupWindow window = new PopupWindow("diffViewer", layout);
-        window.setTitle(path + ":" + oldVersion + ":" + newVersion);
-        window.setIsModal(false);
-
-        return window;
-    }
-
     private LinkItem createViewDiffLink(final Drift<?, ?> drift, final int oldVersion) {
         LinkItem viewDiffLink = new LinkItem("viewDiff");
         viewDiffLink.setLinkTitle("(view diff)");
         viewDiffLink.setShowTitle(false);
 
         viewDiffLink.addClickHandler(new ClickHandler() {
-            @Override
             public void onClick(ClickEvent clickEvent) {
                 GWTServiceLookup.getDriftService().generateUnifiedDiff(drift, new AsyncCallback<FileDiffReport>() {
-                    @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to generate diff", caught);
+                        CoreGUI.getErrorHandler().handleError("Failed to generate diff.", caught);
                     }
 
-                    @Override
                     public void onSuccess(FileDiffReport diffReport) {
                         int newVersion = drift.getChangeSet().getVersion();
-                        String diffContents = toHtml(diffReport.getDiff(), oldVersion, newVersion);
-                        LocatableWindow window = createDiffViewer(diffContents, drift.getPath(), oldVersion, newVersion);
+                        String diffContents = DiffUtility.formatAsHtml(diffReport.getDiff(), oldVersion, newVersion);
+                        LocatableWindow window = DiffUtility.createDiffViewerWindow(diffContents, drift.getPath(),
+                            oldVersion, newVersion);
                         window.show();
                     }
                 });
             }
         });
         return viewDiffLink;
-    }
-
-    private String toHtml(List<String> deltas, int oldVersion, int newVersion) {
-        StringBuilder diff = new StringBuilder();
-        diff.append("<font color=\"red\">").append(deltas.get(0)).append(":").append(oldVersion).append("</font><br/>");
-        diff.append("<font color=\"green\">").append(deltas.get(1)).append(":").append(newVersion).append(
-            "</font><br/>");
-
-        for (String line : deltas.subList(2, deltas.size())) {
-            if (line.startsWith("@@")) {
-                diff.append("<font color=\"purple\">").append(line).append("</font><br/>");
-            } else if (line.startsWith("-")) {
-                diff.append("<font color=\"red\">").append(line).append("</font><br/>");
-            } else if (line.startsWith("+")) {
-                diff.append("<font color=\"green\">").append(line).append("</font><br/>");
-            } else {
-                diff.append(line).append("<br/>");
-            }
-        }
-        return diff.toString();
     }
 
 }

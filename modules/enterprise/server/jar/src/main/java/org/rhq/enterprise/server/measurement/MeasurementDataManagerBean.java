@@ -724,8 +724,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
         int definitionId, long beginTime, long endTime, int numPoints) {
 
-        List<List<MeasurementDataNumericHighLowComposite>> ret = findDataForContext(subject, EntityContext
-            .forGroup(groupId), definitionId, beginTime, endTime, numPoints);
+        List<List<MeasurementDataNumericHighLowComposite>> ret = findDataForContext(subject,
+            EntityContext.forGroup(groupId), definitionId, beginTime, endTime, numPoints);
         return ret;
     }
 
@@ -790,6 +790,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         AgentClient ac = agentClientManager.getAgentClient(agent);
         Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
             createRequests(definitions));
+        //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
+        //            Global UI Exceptions when attempting to serialize null responses.
+        if (values == null) {
+            values = Collections.emptySet();
+        }
 
         return values;
     }

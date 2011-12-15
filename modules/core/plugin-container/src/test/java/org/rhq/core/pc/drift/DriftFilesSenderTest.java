@@ -70,7 +70,7 @@ public class DriftFilesSenderTest extends DriftTest {
         Headers headers = createHeaders(driftDefName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.write(addedFileEntry("server.conf", serverConfHash));
+        writer.write(addedFileEntry("server.conf", serverConfHash, serverConf.lastModified(), serverConf.length()));
         writer.close();
 
         sender.setDriftFiles(driftFiles(serverConfHash));
@@ -198,7 +198,8 @@ public class DriftFilesSenderTest extends DriftTest {
         Headers headers = createHeaders(driftDefName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.write(addedFileEntry("conf/server.conf", serverConfHash));
+        writer
+            .write(addedFileEntry("conf/server.conf", serverConfHash, serverConf.lastModified(), serverConf.length()));
         writer.close();
 
         serverConf.delete();

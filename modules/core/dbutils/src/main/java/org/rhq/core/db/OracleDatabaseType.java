@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import mazz.i18n.Logger;
+
 /**
  * Superclass of all versions of the Oracle database.
  *
@@ -32,6 +34,8 @@ import java.util.List;
  *
  */
 public abstract class OracleDatabaseType extends DatabaseType {
+    private static final Logger LOG = DbUtilsI18NFactory.getLogger(OracleDatabaseType.class);
+
     /**
      * The vendor name for all Oracle databases.
      */
@@ -150,7 +154,24 @@ public abstract class OracleDatabaseType extends DatabaseType {
 
         sql += ")";
 
-        executeSql(conn, sql);
+        try {
+            executeSql(conn, sql);
+        } catch (SQLException e) {
+            // Oracle throws an exception if you try to set nullable to its current setting. Ignore errors
+            // generated when a nullable setting is already the way we want it to be.
+            // ORA-01442: column to be modified to NOT NULL is already NOT NULL
+            // ORA-01451: column to be modified to NULL cannot be modified to NULL
+            if (nullable != null) {
+                String msg = e.getMessage();
+                if (msg.contains("ORA-01442") || msg.contains("ORA-01451")) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Ignoring exception, column already set to nullable=" + nullable, e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
+        }
 
         if ((reindex != null) && reindex.booleanValue()) {
             reindexTable(conn, table);

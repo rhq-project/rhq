@@ -158,7 +158,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         File changeSet1 = new File(changeSetsDir, "changeset-1.txt");
         ChangeSetWriter writer = new ChangeSetWriterImpl(changeSet1, headers);
-        writer.write(addedFileEntry("test/file-1", file1Hash));
+        writer.write(addedFileEntry("test/file-1", file1Hash, 56789L, 1024L));
         writer.close();
 
         File changeSet1Zip = new File(changeSetsDir, "changeset-1.zip");
@@ -188,7 +188,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         File changeSet2 = new File(changeSetsDir, "changeset-2.txt");
 
         writer = new ChangeSetWriterImpl(changeSet2, headers);
-        writer.write(changedFileEntry("test/file-1", file1Hash, modifiedFile1Hash));
+        writer.write(changedFileEntry("test/file-1", file1Hash, modifiedFile1Hash, 56789L, 1024L));
         writer.close();
 
         File changeSet2Zip = new File(changeSetsDir, "changeset-2.zip");

@@ -57,14 +57,31 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
     public void write(FileEntry entry) throws IOException {
         switch (entry.getType()) {
         case FILE_ADDED:
-            writer.write(entry.getType().code() + " " + entry.getNewSHA() + " 0 " + entry.getFile() + "\n");
+            writer.write(
+                entry.getType().code() + " " +
+                entry.getSize() + " " +
+                entry.getLastModified() + " " +
+                entry.getNewSHA() +
+                " 0 " +
+                entry.getFile() + "\n");
             break;
         case FILE_CHANGED:
-            writer.write(entry.getType().code() + " " + entry.getNewSHA() + " " + entry.getOldSHA() + " " +
+            writer.write(
+                entry.getType().code() + " " +
+                entry.getSize() + " " +
+                entry.getLastModified() + " " +
+                entry.getNewSHA() + " " +
+                entry.getOldSHA() + " " +
                 entry.getFile() + "\n");
             break;
         case FILE_REMOVED:
-            writer.write(entry.getType().code() + " 0 " + entry.getOldSHA() + " " + entry.getFile() + "\n");
+            writer.write(
+                entry.getType().code() + " " +
+                "-1 " +
+                "-1 " +
+                "0 " +
+                entry.getOldSHA() + " " +
+                entry.getFile() + "\n");
             break;
         }
     }

@@ -421,17 +421,20 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     //       corresponding metric defs - one for the raw value and one for the derived per-minute value. There's no
     //       way to tell which value the caller wants. For now, it assumes the caller wants the raw value.
     //      (ips, 09/05/08)
+    // spinder 12/16/11. BZ 760139. Modified to return empty sets instead of 'null' even for erroneous conditions.
+    //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues 
+    //         won't have to additionally check for null values now. This is a safe and better pattern.       
     public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
         if (requests.size() == 0) {
             // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
             return Collections.emptySet();
         }
         MeasurementFacet measurementFacet;
-        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager().getResourceContainer(
-            resourceId);
+        ResourceContainer resourceContainer = PluginContainer.getInstance().getInventoryManager()
+            .getResourceContainer(resourceId);
         if (resourceContainer == null) {
             LOG.warn("Can not get resource container for resource with id " + resourceId);
-            return null;
+            return Collections.emptySet();
         }
         Resource resource = resourceContainer.getResource();
         ResourceType resourceType = resource.getResourceType();
@@ -443,7 +446,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
                 FACET_METHOD_TIMEOUT, true, true);
         } catch (Exception e) {
             LOG.warn("Cannot get measurement facet for Resource [" + resourceId + "]. Cause: " + e);
-            return null;
+            return Collections.emptySet();
         }
 
         MeasurementReport report = new MeasurementReport();
@@ -457,7 +460,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             measurementFacet.getValues(report, allMeasurements);
         } catch (Throwable t) {
             LOG.error("Could not get measurement values", t);
-            return null;
+            return Collections.emptySet();
         }
 
         Set<MeasurementData> values = new HashSet<MeasurementData>();

@@ -18,73 +18,25 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static java.util.Arrays.asList;
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftComplianceStatus.IN_COMPLIANCE;
-import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
-
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.MessageProducer;
-import javax.jms.ObjectMessage;
-import javax.jms.Queue;
-import javax.jms.Session;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import difflib.DiffUtils;
 import difflib.Patch;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
-
 import org.jboss.remoting.CannotConnectException;
-
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.GenericDriftCriteria;
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftComplianceStatus;
-import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.criteria.*;
+import org.rhq.core.domain.drift.*;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
-import org.rhq.core.domain.drift.DriftDefinitionComparator;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
-import org.rhq.core.domain.drift.DriftDefinitionComposite;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
-import org.rhq.core.domain.drift.DriftDetails;
-import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftSnapshotRequest;
-import org.rhq.core.domain.drift.FileDiffReport;
-import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -102,6 +54,28 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.jms.*;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.File;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.IN_COMPLIANCE;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_DRIFT;
+
+import java.lang.IllegalStateException;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -716,7 +690,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef) {
-
         // before we do anything, validate certain field values to prevent downstream errors
         validateDriftDefinition(driftDef);
 
@@ -726,6 +699,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             Resource resource = entityManager.find(Resource.class, resourceId);
             if (null == resource) {
                 throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
+            }
+
+            if (!isDriftMgmtSupported(resource)) {
+                throw new IllegalArgumentException("Cannot create drift definition. The resource type " +
+                        resource.getResourceType() + " does not support drift management");
             }
 
             // Update or add the driftDef as necessary
@@ -752,6 +730,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             }
 
             if (!isUpdated) {
+                validateTemplateForNewDef(driftDef, resource);
                 resource.addDriftDefinition(driftDef);
                 // We call persist here because if this definition is created
                 // from a pinned template, then we need to generate the initial
@@ -823,6 +802,32 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                         + pattern);
                 }
             }
+        }
+    }
+
+    private boolean isDriftMgmtSupported(Resource resource) {
+        ResourceType type = resource.getResourceType();
+        return type.getDriftDefinitionTemplates() != null && !type.getDriftDefinitionTemplates().isEmpty();
+    }
+
+    private void validateTemplateForNewDef(DriftDefinition driftDef, Resource resource) {
+        if (driftDef.getTemplate() == null) {
+            return;
+        }
+
+        DriftDefinitionTemplate template = entityManager.find(DriftDefinitionTemplate.class,
+                driftDef.getTemplate().getId());
+
+        if (template == null) {
+            throw new IllegalArgumentException("Cannot create drift definition with template " +
+                    DriftDefinitionTemplate.class.getSimpleName() + "[" + driftDef.getTemplate().getName() +
+                    "] that has not been saved");
+        }
+
+        if (!template.getResourceType().equals(resource.getResourceType())) {
+            throw new IllegalArgumentException("Cannot create drift definition with template " +
+                    DriftDefinitionTemplate.class.getSimpleName() + "[" + driftDef.getTemplate().getName() +
+                    "] that is from a different resource type, " + template.getResourceType());
         }
     }
 

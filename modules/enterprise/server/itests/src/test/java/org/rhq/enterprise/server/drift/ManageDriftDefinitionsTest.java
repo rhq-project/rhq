@@ -19,54 +19,62 @@
 
 package org.rhq.enterprise.server.drift;
 
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
+import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
+import org.rhq.core.domain.drift.*;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.shared.ResourceBuilder;
+import org.rhq.core.domain.shared.ResourceTypeBuilder;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.test.AssertUtils;
+import org.rhq.test.TransactionCallback;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import javax.ejb.EJBException;
+import javax.persistence.EntityManager;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
+import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.BeforeClass;
-
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
-import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftComplianceStatus;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.JPADrift;
-import org.rhq.core.domain.drift.JPADriftChangeSet;
-import org.rhq.core.domain.drift.JPADriftFile;
-import org.rhq.core.domain.drift.JPADriftSet;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
-import org.rhq.test.AssertUtils;
-import org.rhq.test.TransactionCallback;
-
 public class ManageDriftDefinitionsTest extends DriftServerTest {
+
+    private final String DRIFT_NOT_SUPPORTED_TYPE = getClass().getSimpleName() + "DRIFT_NOT_SUPPORTED_RESOURCE_TYPE";
+
+    private final String DRIFT_NOT_SUPPORTED_RESOURCE = getClass().getSimpleName() + "DRIFT_NOT_SUPPORTED_RESOURCE";
 
     private DriftManagerLocal driftMgr;
 
     private DriftTemplateManagerLocal templateMgr;
 
+    private ResourceType driftNotSupportedType;
+
+    private Resource driftNotSupportedResource;
+
     @BeforeClass
     public void initClass() throws Exception {
         driftMgr = getDriftManager();
         templateMgr = getDriftTemplateManager();
+    }
+
+    @Override
+    protected void purgeDB(EntityManager em) {
+        deleteEntity(Resource.class, DRIFT_NOT_SUPPORTED_RESOURCE, em);
+        deleteEntity(ResourceType.class, DRIFT_NOT_SUPPORTED_TYPE, em);
     }
 
     public void createDefinitionFromUnpinnedTemplate() {
@@ -94,6 +102,52 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
 
         assertEquals("The drift definition was not persisted correctly", 0, comparator.compare(definition, newDef));
         assertEquals("The template association was not set on the definition", template, newDef.getTemplate());
+    }
+
+    public void createEntitiesThatDoNotSupportDrift() {
+        // first create the resource type that does not support drift
+        driftNotSupportedType = new ResourceTypeBuilder()
+                .createResourceType()
+                .withId(0)
+                .withName(DRIFT_NOT_SUPPORTED_TYPE)
+                .withCategory(SERVER)
+                .withPlugin(DRIFT_NOT_SUPPORTED_TYPE.toLowerCase())
+                .build();
+
+        // create a resource of the type that does not support drift
+        driftNotSupportedResource = new ResourceBuilder()
+                .createResource()
+                .withId(0)
+                .withName(DRIFT_NOT_SUPPORTED_RESOURCE)
+                .withResourceKey(DRIFT_NOT_SUPPORTED_RESOURCE)
+                .withRandomUuid()
+                .withResourceType(driftNotSupportedType)
+                .build();
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                EntityManager em = getEntityManager();
+                em.persist(driftNotSupportedType);
+                em.persist(driftNotSupportedResource);
+            }
+        });
+    }
+
+    @Test(dependsOnMethods = "createEntitiesThatDoNotSupportDrift",
+            expectedExceptions = EJBException.class,
+            expectedExceptionsMessageRegExp = ".*Cannot create drift definition.*type.*does not support drift management")
+    @InitDB(false)
+    public void doNotAllowDefinitionToBeCreatedForTypeThatDoesNotSupportDrift() {
+        DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setName("test_typeDoesNotSupportDrift");
+        driftDef.setEnabled(true);
+        driftDef.setInterval(1800L);
+        driftDef.setDriftHandlingMode(normal);
+        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(driftNotSupportedResource.getId()),
+                driftDef);
     }
 
     @SuppressWarnings("unchecked")
@@ -209,8 +263,19 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
     }
 
     public void unpinDefinition() {
+        // First create the template
+        final DriftDefinition templateDef = new DriftDefinition(new Configuration());
+        templateDef.setName("test_unpin_def_template");
+        templateDef.setEnabled(true);
+        templateDef.setDriftHandlingMode(normal);
+        templateDef.setInterval(2400L);
+        templateDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+
+        final DriftDefinitionTemplate template = templateMgr.createTemplate(getOverlord(), resourceType.getId(), true,
+                templateDef);
+
         // First create the definition
-        DriftDefinition definition = new DriftDefinition(new Configuration());
+        DriftDefinition definition = template.createDefinition();
         definition.setName("test_unpin");
         definition.setEnabled(true);
         definition.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));

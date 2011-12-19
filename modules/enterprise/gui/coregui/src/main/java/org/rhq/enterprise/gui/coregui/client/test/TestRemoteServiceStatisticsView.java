@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.test;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
@@ -31,11 +28,10 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -43,6 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Record.Summary;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * A view that gives a display of statistics for all remote services executed since the application was loaded.
@@ -288,7 +287,7 @@ public class TestRemoteServiceStatisticsView extends Table {
             centerInPage();
             addCloseClickHandler(new CloseClickHandler() {
                 @Override
-                public void onCloseClick(CloseClientEvent event) {
+                public void onCloseClick(CloseClickEvent event) {
                     markForDestroy();
                 }
             });
@@ -319,7 +318,7 @@ public class TestRemoteServiceStatisticsView extends Table {
             centerInPage();
             addCloseClickHandler(new CloseClickHandler() {
                 @Override
-                public void onCloseClick(CloseClientEvent event) {
+                public void onCloseClick(CloseClickEvent event) {
                     view.refreshTimer.cancel();
                     view.refreshOnPageChange = false;
                     view.markForDestroy();

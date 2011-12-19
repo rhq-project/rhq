@@ -18,16 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
-
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -37,14 +33,17 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A canvas that shows basic information/properties on a specific group.
@@ -124,7 +123,7 @@ public class GeneralProperties extends LocatableVLayout {
             nameItem = togglableNameItem;
         } else {
             StaticTextItem staticNameItem = new StaticTextItem();
-            staticNameItem.setOutputAsHTML(true);
+            staticNameItem.setEscapeHTML(true);
             nameItem = staticNameItem;
         }
 

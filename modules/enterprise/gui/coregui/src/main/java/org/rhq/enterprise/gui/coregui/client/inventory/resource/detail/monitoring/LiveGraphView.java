@@ -18,27 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Set;
-
-import ca.nanometrics.gflot.client.Axis;
-import ca.nanometrics.gflot.client.DataPoint;
-import ca.nanometrics.gflot.client.PlotItem;
-import ca.nanometrics.gflot.client.PlotModel;
-import ca.nanometrics.gflot.client.PlotModelStrategy;
-import ca.nanometrics.gflot.client.PlotPosition;
-import ca.nanometrics.gflot.client.SeriesHandler;
-import ca.nanometrics.gflot.client.SimplePlot;
+import ca.nanometrics.gflot.client.*;
 import ca.nanometrics.gflot.client.event.PlotHoverListener;
 import ca.nanometrics.gflot.client.jsni.Plot;
-import ca.nanometrics.gflot.client.options.AxisOptions;
-import ca.nanometrics.gflot.client.options.GridOptions;
-import ca.nanometrics.gflot.client.options.LineSeriesOptions;
-import ca.nanometrics.gflot.client.options.PlotOptions;
-import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
-import ca.nanometrics.gflot.client.options.TickFormatter;
-
+import ca.nanometrics.gflot.client.options.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -47,13 +30,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
-import com.smartgwt.client.widgets.events.MouseOutEvent;
-import com.smartgwt.client.widgets.events.MouseOutHandler;
-
+import com.smartgwt.client.widgets.events.*;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -64,6 +41,10 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWidgetCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -290,7 +271,7 @@ public class LiveGraphView extends LocatableVLayout {
         graphPopup.show();
 
         graphPopup.addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClientEvent closeClientEvent) {
+            public void onCloseClick(CloseClickEvent closeClientEvent) {
                 graph.stop();
                 graphPopup.destroy();
             }

@@ -18,19 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.rpc;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
-import com.google.gwt.user.client.rpc.impl.Serializer;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
-
+import com.google.gwt.user.client.rpc.impl.RpcStatsContext;
+import com.google.gwt.user.client.rpc.impl.Serializer;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A custom {@link RemoteServiceProxy} that injects additional management and monitoring functionality into the 
@@ -70,9 +70,9 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
      */
     @Override
     protected <T> RequestBuilder doPrepareRequestBuilder(ResponseReader responseReader, String methodName,
-        int invocationCount, String requestData, AsyncCallback<T> callback) {
+        RpcStatsContext statsContext, String requestData, AsyncCallback<T> callback) {
 
-        RequestBuilder rb = super.doPrepareRequestBuilder(responseReader, methodName, invocationCount, requestData,
+        RequestBuilder rb = super.doPrepareRequestBuilder(responseReader, methodName, statsContext, requestData,
             callback);
 
         String sessionId = UserSessionManager.getSessionId();
@@ -91,10 +91,11 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
     // TODO: add handled to capture timeout failure and retry (at least once) to add resilience to GWT service calls?
     @Override
     protected <T> RequestCallback doCreateRequestCallback(ResponseReader responseReader, String methodName,
-        int invocationCount, AsyncCallback<T> callback) {
+        RpcStatsContext statsContext, AsyncCallback<T> callback) {
 
-        RequestCallback original = super.doCreateRequestCallback(responseReader, methodName, invocationCount, callback);
-        TrackingRequestCallback trackingCallback = new TrackingRequestCallback(invocationCount, methodName, original);
+        RequestCallback original = super.doCreateRequestCallback(responseReader, methodName, statsContext, callback);
+        TrackingRequestCallback trackingCallback = new TrackingRequestCallback(statsContext.getRequestId(), methodName,
+                original);
 
         RPCTracker.getInstance().register(trackingCallback);
 
@@ -102,14 +103,14 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
     }
 
     @Override
-    protected <T> Request doInvoke(ResponseReader responseReader, String methodName, int invocationCount,
+    protected <T> Request doInvoke(ResponseReader responseReader, String methodName, RpcStatsContext statsContext,
         String requestData, AsyncCallback<T> callback) {
 
         if (Log.isDebugEnabled()) {
             Log.debug("RPC method invocation: " + methodName);
         }
         if (bypassMethods.contains(methodName) || !UserSessionManager.isLoggedOut()) {
-            return super.doInvoke(responseReader, methodName, invocationCount, requestData, callback);
+            return super.doInvoke(responseReader, methodName, statsContext, requestData, callback);
         }
 
         return null;

@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.operation;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -33,15 +29,14 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -64,6 +59,10 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
 
 /**
  * @author Jay Shaughnessy
@@ -239,7 +238,7 @@ public class OperationHistoryDataSource extends
                     winModal.centerInPage();
                     winModal.addCloseClickHandler(new CloseClickHandler() {
                         @Override
-                        public void onCloseClick(CloseClientEvent event) {
+                        public void onCloseClick(CloseClickEvent event) {
                             winModal.markForDestroy();
                         }
                     });

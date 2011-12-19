@@ -30,7 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.RemoteClient;
+import org.rhq.enterprise.clientapi.RemoteClient;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
@@ -115,7 +115,7 @@ public class LoginCommand implements ClientCommand {
 
         Subject subject = remoteClient.login(username, password);
 
-        ProductInfo info = remoteClient.getSystemManager().getServerDetails(subject).getProductInfo();
+        ProductInfo info = remoteClient.getSystemManager().getProductInfo(subject);
         String version = info.getVersion()
             + " (" + info.getBuildNumber() + ")";
         client.getPrintWriter().println("Remote server version is: " + version);

@@ -167,7 +167,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                             break;
                         }
                     }
-                    if (null == maxSnapshotVersion || maxSnapshotVersion < carouselStart) {
+                    if (null == maxSnapshotVersion || null == carouselStart || maxSnapshotVersion < carouselStart) {
                         maxSnapshotVersion = carouselStart;
                         setCarouselStartFilterMax(maxSnapshotVersion);
                     }
@@ -242,7 +242,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
         }
         changeSetCriteria.addFilterStartVersion(String.valueOf(startVersion));
 
-        // apply the drift-level carousel filters in order to filter out changesets that have no applicab;e drift 
+        // apply the drift-level carousel filters in order to filter out changesets that have no applicable drift 
         Criteria criteria = getCurrentCriteria();
         DriftCategory[] driftCategoriesFilter = RPCDataSource.getArrayFilter(criteria,
             DriftDataSource.FILTER_CATEGORIES, DriftCategory.class);
@@ -267,11 +267,18 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
 
             public void executeAction(Object actionValue) {
 
-                String id1 = selectedRecords.get(0).getAttribute(DriftDataSource.ATTR_ID);
-                String id2 = selectedRecords.get(1).getAttribute(DriftDataSource.ATTR_ID);
-                final String path = selectedRecords.get(0).getAttribute(DriftDataSource.ATTR_PATH);
+                Record record1 = selectedRecords.get(0);
+                Record record2 = selectedRecords.get(1);
+                final String path = record1.getAttribute(DriftDataSource.ATTR_PATH);
+                String id1 = record1.getAttribute(DriftDataSource.ATTR_ID);
+                String id2 = record2.getAttribute(DriftDataSource.ATTR_ID);
+                // regardless of selection order, compare the same way, showing newest changes with '+' signs 
+                int version1 = record1.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_VERSION);
+                int version2 = record2.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_VERSION);
+                String diffOldId = (version1 < version2) ? id1 : id2;
+                String diffNewId = (version1 < version2) ? id2 : id1;
 
-                GWTServiceLookup.getDriftService().generateUnifiedDiffByIds(id1, id2,
+                GWTServiceLookup.getDriftService().generateUnifiedDiffByIds(diffOldId, diffNewId,
                     new AsyncCallback<FileDiffReport>() {
                         @Override
                         public void onFailure(Throwable caught) {

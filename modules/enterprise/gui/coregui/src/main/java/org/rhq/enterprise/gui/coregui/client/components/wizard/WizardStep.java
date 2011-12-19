@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,17 +25,53 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
+ * A step in a {@link Wizard wizard}.
+ * 
  * @author Greg Hinkle
  */
 public interface WizardStep {
 
     Messages MSG = CoreGUI.getMessages();
 
+    /**
+     * Returns the canvas containing this step's widget content. This method should <b>not</b> add the canvas to the
+     * parent canvas - the wizard framework will take care of that.
+     *
+     * @param parent the parent canvas to which the returned canvas will be added -
+     *
+     * @return the canvas containing this step's widget content
+     */
     Canvas getCanvas(Locatable parent);
 
+    /**
+     * Returns true if this step's Next or Finish button should be enabled, or false if it should be disabled.
+     *
+     * @return true if this step's Next or Finish button should be enabled, or false if it should be disabled
+     */
+    boolean isNextButtonEnabled();
+
+    /**
+     * Called when the user clicks this step's Next or Finish button. If all required data has been entered for the
+     * step and is valid, true should be returned, and the wizard will advance to the next step, otherwise false
+     * should be returned, and the wizard will not advance.
+     *
+     * @return true if all required data has been entered for the step and is valid, or false otherwise
+     */
     boolean nextPage();
 
+    /**
+     * Called when the user clicks this step's Previous button. Should return true if the wizard should go to the
+     * previous step, or false if it should not.
+     *
+     * @return true if the wizard should go to the previous step, or false if it should not.
+     */
     boolean previousPage();
 
+    /**
+     * Returns the title of this step, to be displayed in the wizard modal's title bar.
+     *
+     * @return the title of this step, to be displayed in the wizard modal's title bar
+     */
     String getName();
+
 }

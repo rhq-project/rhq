@@ -149,7 +149,7 @@ public class DriftDefinition implements Serializable {
         name = (null != name) ? name.trim() : name;
 
         if (null == name || "".equals(name)) {
-            throw new IllegalArgumentException("Drift congig name can not be null or empty");
+            throw new IllegalArgumentException("Drift definition name can not be null or empty");
         }
 
         this.name = name;
@@ -534,7 +534,7 @@ public class DriftDefinition implements Serializable {
         List<Filter> filters = new ArrayList<Filter>();
         for (Property property : filtersListProperty.getList()) {
             PropertyMap filter = (PropertyMap) property;
-            filters.add(new Filter(filter.getSimpleValue(DriftConfigurationDefinition.PROP_PATH, ""), filter
+            filters.add(new Filter(filter.getSimpleValue(DriftConfigurationDefinition.PROP_PATH, "."), filter
                 .getSimpleValue(DriftConfigurationDefinition.PROP_PATTERN, "")));
         }
 

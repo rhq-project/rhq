@@ -589,12 +589,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         try {
-            AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource().getId());
+            AgentClient agent = agentManager.getAgentClient(subjectManager.getOverlord(), driftDef.getResource()
+                .getId());
             DriftAgentService driftService = agent.getDriftAgentService();
             driftService.pinSnapshot(driftDef.getResource().getId(), driftDef.getName(), snapshot);
         } catch (Exception e) {
-            log.warn("Unable to notify agent that DriftDefinition[driftDefinitionId: " + driftDefId +
-                ", driftDefinitionName: " + driftDef.getName() + "] has been pinned. The agent may be down.", e);
+            log.warn("Unable to notify agent that DriftDefinition[driftDefinitionId: " + driftDefId
+                + ", driftDefinitionName: " + driftDef.getName() + "] has been pinned. The agent may be down.", e);
         }
     }
 
@@ -745,7 +746,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                         break;
                     } else {
                         throw new IllegalArgumentException(
-                            "You cannot change an existing drift definition's base directory or includes/excludes filters.");
+                            "A new definition must have a unique name. An existing definition cannot update it's base directory or includes/excludes filters.");
                     }
                 }
             }

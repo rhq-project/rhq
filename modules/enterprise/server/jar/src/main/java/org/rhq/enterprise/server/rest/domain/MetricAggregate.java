@@ -41,15 +41,17 @@ public class MetricAggregate {
     long maxTimeStamp;
 
     public MetricAggregate() {
+        dataPoints = new ArrayList<DataPoint>();
     }
 
     public MetricAggregate(Integer scheduleId, double min, double avg, double max) {
+        this();
         this.scheduleId = scheduleId;
 
         this.min = min;
         this.avg = avg;
         this.max = max;
-        dataPoints = new ArrayList<DataPoint>();
+
     }
 
     @XmlElement

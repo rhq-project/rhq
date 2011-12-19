@@ -560,6 +560,20 @@ public abstract class DatabaseType {
     public abstract int getNextSequenceValue(Connection conn, String table, String key) throws SQLException;
 
     /**
+     * A utility that returns the string for sequence use in an Insert statement
+     *
+     * @param  conn  The connection to use to get the sequence value.
+     * @param  sequenceName  The sequence name for the table.
+     *
+     * @return the sequence generating string
+     *
+     * @throws SQLException
+     */
+    public String getSequenceInsertValue(Connection conn, String sequenceName) {
+        return "nextval('" + sequenceName + "')";
+    }
+
+    /**
      * Creates a sequence with the given name. Its initial value is specified along with its increment (both are
      * specified as Strings).
      *
@@ -570,13 +584,15 @@ public abstract class DatabaseType {
      * @param seqIdCacheSize
      * @throws SQLException
      */
-    public void createSequence(Connection conn, String name, String initial, String increment, String seqIdCacheSize) throws SQLException {
+    public void createSequence(Connection conn, String name, String initial, String increment, String seqIdCacheSize)
+        throws SQLException {
         CreateSequenceExprBuilder builder = CreateSequenceExprBuilder.getBuilder(this);
         HashMap<String, Object> terms = new HashMap<String, Object>();
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_NAME, name);
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_START, initial);
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_INCREMENT, increment);
-        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, CreateSequenceExprBuilder.getSafeSequenceCacheSize(builder, seqIdCacheSize));
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, CreateSequenceExprBuilder.getSafeSequenceCacheSize(
+            builder, seqIdCacheSize));
         executeSql(conn, builder.build(terms));
     }
 

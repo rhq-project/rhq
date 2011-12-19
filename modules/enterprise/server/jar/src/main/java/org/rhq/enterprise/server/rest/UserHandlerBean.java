@@ -32,10 +32,13 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -66,15 +69,20 @@ public class UserHandlerBean extends AbstractRestBean implements UserHandlerLoca
     @EJB
     ResourceHandlerLocal resourceHandler;
 
+    @EJB
+    ResourceManagerLocal resourceManager;
+
     @Override
     @GET
     @Path("favorites/r")
-    public List<ResourceWithType> getFavorites() {
+    public List<ResourceWithType> getFavorites(UriInfo uriInfo) {
 
         Set<Integer> favIds = getResourceIdsForFavorites();
         List<ResourceWithType> ret = new ArrayList<ResourceWithType>();
         for (Integer id : favIds) {
-            ResourceWithType rwt = resourceHandler.getResource(id);
+            Resource res = resourceManager.getResource(caller,id);
+
+            ResourceWithType rwt = fillRWT(res,uriInfo);
             ret.add(rwt);
         }
         return ret;

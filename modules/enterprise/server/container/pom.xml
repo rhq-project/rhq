@@ -109,24 +109,6 @@
             <version>1.7.3</version>
      </dependency>
 
-      <dependency>
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jaxrs-all</artifactId>
-          <scope>provided</scope>
-          <version>${resteasy.version}</version>
-          <type>pom</type>
-      </dependency>
-      <dependency>
-          <groupId>org.jboss.resteasy</groupId>
-          <artifactId>resteasy-jettison-provider</artifactId>
-      </dependency>
-
-     <dependency>
-        <groupId>javassist</groupId>
-        <artifactId>javassist</artifactId>
-        <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-     </dependency>
-
   </dependencies>
 
   <build>
@@ -193,7 +175,6 @@
                   <property name="jsf-impl.version" value="${jsf-impl.version}" />
                   <property name="hibernate3.version" value="${hibernate3.version}" />
                   <property name="quartz.version" value="${quartz.version}" />
-                  <property name="resteasy.version" value="${resteasy.version}" />
 
                   <!-- dev DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
                   <property name="rhq.dev.ds.connection-url" value="${rhq.dev.ds.connection-url}" />

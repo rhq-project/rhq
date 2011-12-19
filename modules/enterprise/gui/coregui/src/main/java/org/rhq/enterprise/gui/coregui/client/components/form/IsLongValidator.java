@@ -62,11 +62,16 @@ public class IsLongValidator extends CustomValidator {
         }
 
         String baseStringValue = stripOffNegativeSignAndLeadingZeroes(stringValue, isNegative);
-        updateInputValue((isNegative) ? "-" : "" + baseStringValue);
+        String normalizedValue;
+        if (isNegative) {
+            normalizedValue = "-" + baseStringValue;
+        } else {
+            normalizedValue = baseStringValue;
+        }
+        updateInputValue(normalizedValue);
 
         // all zeroes, optionally prefixed with negative sign, is valid
-        if (baseStringValue.length() == 0) {
-            updateInputValue("0");
+        if (baseStringValue.equals("0")) {
             return true;
         }
 
@@ -107,7 +112,7 @@ public class IsLongValidator extends CustomValidator {
             charsToSkip++;
         }
 
-        for (int i = charsToSkip; i < stringValue.length(); i++) {
+        for (int i = charsToSkip; i < stringValue.length() - 1; i++) {
             if (stringValue.charAt(i) == '0') {
                 charsToSkip++;
             } else {

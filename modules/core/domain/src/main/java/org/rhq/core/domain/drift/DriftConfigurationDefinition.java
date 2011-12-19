@@ -519,8 +519,8 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createIncludePath(boolean readOnly) {
         String name = PROP_PATH;
-        String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift definition.";
-        boolean required = true;
+        String description = "A file system directory path that is relative to (a sub-directory of) the base directory of the drift definition. The default is '.', the base directory itself.";
+        boolean required = false;
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
@@ -529,6 +529,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(0);
         pd.setAllowCustomEnumeratedValue(false);
+        pd.setDefaultValue(".");
 
         RegexConstraint constraint = new RegexConstraint();
         constraint.setDetails(PROP_FILTER_PATH_REGEX_PATTERN);
@@ -539,7 +540,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createIncludePattern(boolean readOnly) {
         String name = PROP_PATTERN;
-        String description = "Pathname pattern that must match for the items in the directory path to be included. '*' matches zero or more characters, '?' matches one character. For example, '*.txt' (no quotes) will match text files in the filter's path directory.  '**/*.txt' will match text files in any subdirectory below the filter's path directory";
+        String description = "Pathname pattern that must match for the items in the directory path to be included. '*' matches zero or more characters, '?' matches one character. For example, '*.txt' (no quotes) will match text files in the filter's path directory.  '**/*.txt' will match text files in any subdirectory below the filter's path directory.";
         boolean required = false;
         PropertySimpleType type = PropertySimpleType.STRING;
 

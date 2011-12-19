@@ -26,8 +26,6 @@ import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
-import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.RESTServiceDiscovery;
@@ -39,9 +37,7 @@ import org.jboss.resteasy.spi.touri.URITemplate;
  */
 @URITemplate("/alert/{id}")
 @XmlRootElement
-//@XmlType(propOrder = {"id","name","alertTime","description","alertDefinitionId","definitionEnabled","resourceId","resourceName","ackBy","ackTime","rest"})
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
-@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 public class AlertRest {
 
     private int id;

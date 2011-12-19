@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -27,70 +30,15 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class Status {
 
-    int platforms;
-    int servers;
-    int services;
-    int alerts;
-    int alertDefinitions;
-    int metricsMin;
-    int schedules;
-
+    Map<String,String> values = new HashMap<String, String>();
     public Status() {
     }
 
-    public int getPlatforms() {
-        return platforms;
+    public Map<String, String> getValues() {
+        return values;
     }
 
-    public void setPlatforms(int platforms) {
-        this.platforms = platforms;
-    }
-
-    public int getServers() {
-        return servers;
-    }
-
-    public void setServers(int servers) {
-        this.servers = servers;
-    }
-
-    public int getServices() {
-        return services;
-    }
-
-    public void setServices(int services) {
-        this.services = services;
-    }
-
-    public int getAlerts() {
-        return alerts;
-    }
-
-    public void setAlerts(int alerts) {
-        this.alerts = alerts;
-    }
-
-    public int getAlertDefinitions() {
-        return alertDefinitions;
-    }
-
-    public void setAlertDefinitions(int alertDefinitions) {
-        this.alertDefinitions = alertDefinitions;
-    }
-
-    public int getMetricsMin() {
-        return metricsMin;
-    }
-
-    public void setMetricsMin(int metricsMin) {
-        this.metricsMin = metricsMin;
-    }
-
-    public int getSchedules() {
-        return schedules;
-    }
-
-    public void setSchedules(int schedules) {
-        this.schedules = schedules;
+    public void setValues(Map<String, String> values) {
+        this.values = values;
     }
 }

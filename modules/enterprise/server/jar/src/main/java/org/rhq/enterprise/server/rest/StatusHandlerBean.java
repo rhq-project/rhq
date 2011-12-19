@@ -18,16 +18,18 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.util.Map;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -40,6 +42,7 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Status;
+import org.rhq.enterprise.server.system.SystemInfoManagerLocal;
 
 /**
  * Return system status
@@ -51,55 +54,24 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
 
 
     @EJB
-    MeasurementScheduleManagerLocal scheduleManager;
-    @EJB
-    ResourceManagerLocal resourceManager;
-    @EJB
-    AlertManagerLocal alertManager;
-    @EJB
-    AlertDefinitionManagerLocal alertDefinitionManager;
+    SystemInfoManagerLocal infoMgr;
 
     @Override
-    public Status getStatus() {
+    public Response getStatus(HttpHeaders httpHeaders) {
 
+        Map<String,String> statusMap = infoMgr.getSystemInformation (caller);
         Status status = new Status();
+        status.setValues(statusMap);
 
-        ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterResourceCategories(ResourceCategory.PLATFORM);
-        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList<Resource> resList = resourceManager.findResourcesByCriteria(caller,criteria);
-        status.setPlatforms(resList.getTotalSize());
-        criteria = new ResourceCriteria();
-        criteria.addFilterResourceCategories(ResourceCategory.SERVER);
-        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        resList = resourceManager.findResourcesByCriteria(caller,criteria);
-        status.setServers(resList.getTotalSize());
-        criteria = new ResourceCriteria();
-        criteria.addFilterResourceCategories(ResourceCategory.SERVICE);
-        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        resList = resourceManager.findResourcesByCriteria(caller,criteria);
-        status.setServices(resList.getTotalSize());
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder;
+        if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            String htmlString = renderTemplate("status",status);
+            builder = Response.ok(htmlString,mediaType);
+        } else  {
+            builder = Response.ok(status, httpHeaders.getAcceptableMediaTypes().get(0));
+        }
 
-        AlertCriteria alertCriteria = new AlertCriteria();
-        alertCriteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList<Alert> alertList = alertManager.findAlertsByCriteria(caller,alertCriteria);
-        status.setAlerts(alertList.getTotalSize());
-
-        AlertDefinitionCriteria alertDefinitionCriteria = new AlertDefinitionCriteria();
-        alertDefinitionCriteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
-        PageList<AlertDefinition> defList = alertDefinitionManager.findAlertDefinitionsByCriteria(caller,alertDefinitionCriteria);
-        status.setAlertDefinitions(defList.getTotalSize());
-
-        status.setSchedules(-1); // TODO
-
-        status.setMetricsMin(scheduleManager.getScheduledMeasurementsPerMinute());
-
-        return status;
-    }
-
-    @Override
-    public String getStatusHtml() {
-        Status status = getStatus();
-        return renderTemplate("status",status);
+        return builder.build();
     }
 }

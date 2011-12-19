@@ -46,7 +46,10 @@
             <td>Units</td><td>${var.unit}</td>
         </tr>
     </table>
-    <a href="/rest/1/metric/data/${var.scheduleId}.html">Metric data</a>
-    <br/>
-
+    Links<br/>
+    <ul>
+        <#list var.links as link>
+            <li><a href="${link.href}.html">${link.rel}</a> </li>
+        </#list>
+    </ul>
 </html>

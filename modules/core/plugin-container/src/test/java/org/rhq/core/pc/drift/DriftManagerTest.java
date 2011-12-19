@@ -260,7 +260,7 @@ public class DriftManagerTest extends DriftTest {
         assertTrue(changeSetDir.exists(), "The change set directory should not be deleted while the schedule is "
             + "still active.");
 
-        driftMgr.getSchedulesQueue().deactivateSchedule();
+        driftMgr.getSchedulesQueue().deactivateSchedule(false);
         assertFalse(changeSetDir.exists(), "The change set directory should have been deleted after the schedule is "
             + "deactivated.");
     }

@@ -19,22 +19,12 @@
 
 package org.rhq.core.pc.drift;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.apache.commons.io.FileUtils.copyFile;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.FileUtils.touch;
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import org.rhq.common.drift.*;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.SystemInfoFactory;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -43,18 +33,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import org.rhq.common.drift.ChangeSetReader;
-import org.rhq.common.drift.ChangeSetReaderImpl;
-import org.rhq.common.drift.ChangeSetWriter;
-import org.rhq.common.drift.ChangeSetWriterImpl;
-import org.rhq.common.drift.FileEntry;
-import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.system.OperatingSystemType;
-import org.rhq.core.system.SystemInfoFactory;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static org.apache.commons.io.FileUtils.*;
+import static org.rhq.common.drift.FileEntry.*;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.*;
 
 public class DriftDetectorTest extends DriftTest {
 
@@ -168,6 +155,30 @@ public class DriftDetectorTest extends DriftTest {
             changeSet);
     }
 
+    @Test
+    public void updateScheduleAfterGeneratingCoverageChangeSet() throws Exception {
+        DriftDefinition driftDef = driftDefinition("update-schedule-after-coverage-changeset",
+                resourceDir.getAbsolutePath());
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftDef);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+
+        long currentTime = System.currentTimeMillis();
+
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        assertTrue(schedule.getNextScan() >= (currentTime + driftDef.getInterval()),
+             "Failed to update schedule. next scan is  " + schedule.getNextScan() + " and should be greater than " +
+            (currentTime + driftDef.getInterval()));
+    }
+
+    @Test
+    public void updateScheduleAfterGeneratingDriftChangeSet() throws Exception {
+
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     public void doNotUpdateSnapshotOrGenerateDriftChangeSetIfNothingChanges() throws Exception {
@@ -219,12 +230,37 @@ public class DriftDetectorTest extends DriftTest {
         DriftDefinition def = driftDefinition("disabled-config-test", resourceDir.getAbsolutePath());
         def.setEnabled(false);
 
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), def);
+        long nextScan = schedule.getNextScan();
+
         File confDir = mkdir(resourceDir, "conf");
         File server1Conf = new File(confDir, "server-1.conf");
         touch(server1Conf);
 
-        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), def));
+        scheduleQueue.addSchedule(schedule);
         detector.run();
+
+        // make sure that the next scan time is not updated
+        assertEquals(schedule.getNextScan(), nextScan, "The next scan time for the drift detection schedule should " +
+                " not get updated if drift detection does not actually run for the definition.");
+    }
+
+    @Test
+    public void doNotUpdateScheduleIfItIsTooEarlyToRunDetection() throws Exception {
+        DriftDefinition driftDef = driftDefinition("schedule-not-ready-test", resourceDir.getAbsolutePath());
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftDef);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = new File(confDir, "server.conf");
+
+        scheduleQueue.addSchedule(schedule);
+        detector.run();
+
+        long nextScan = schedule.getNextScan();
+        detector.run();
+
+        assertEquals(schedule.getNextScan(), nextScan, "The next scan time for the drift detection schedule should " +
+            " not get updated if drift detection does not actually run for the definition.");
     }
 
     @Test

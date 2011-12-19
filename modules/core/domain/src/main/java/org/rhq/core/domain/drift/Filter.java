@@ -42,7 +42,7 @@ public class Filter implements Serializable {
 
     public void setPath(String path) {
         if (path == null) {
-            this.path = "";
+            this.path = ".";
         } else {
             this.path = path;
         }

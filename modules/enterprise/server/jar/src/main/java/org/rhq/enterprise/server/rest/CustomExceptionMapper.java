@@ -18,33 +18,51 @@
  */
 package org.rhq.enterprise.server.rest;
 
-import javax.ejb.EJBException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+
+import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 
 /**
  * Map a NotFoundException to a HTTP response with respective error message
  * @author Heiko W. Rupp
  */
 @Provider
-public class CustomExceptionMapper implements ExceptionMapper<EJBException> {
+public class CustomExceptionMapper implements ExceptionMapper<Exception> {
 
 
     @Override
-    public Response toResponse(EJBException e) {
+    public Response toResponse(Exception e) {
 
         Throwable cause = e.getCause();
+        Response.ResponseBuilder builder;
         if (cause !=null) {
+            Response.Status status;
             if (cause instanceof StuffNotFoundException)
-                return Response.status(Response.Status.NOT_FOUND)
-                .entity(cause.getMessage())
-                .build();
+                status =Response.Status.NOT_FOUND;
+            else if (cause instanceof ResourceNotFoundException)
+                status = Response.Status.NOT_FOUND;
+            else if (cause instanceof ParameterMissingException)
+                status = Response.Status.NOT_ACCEPTABLE;
+            else if (cause instanceof PermissionException)
+                status = Response.Status.FORBIDDEN;
             else
-                return Response.status(Response.Status.SERVICE_UNAVAILABLE)
-                        .entity(cause.getMessage())
-                        .build();
+                status = Response.Status.SERVICE_UNAVAILABLE;
+
+            builder = Response.status(status);
+            builder.entity(cause.getMessage());
         }
-        throw e;
+        else {
+            if (e instanceof PermissionException) {
+                builder = Response.status(Response.Status.FORBIDDEN);
+            } else {
+                builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            if (e.getMessage()!=null)
+                builder.entity(e.getMessage());
+        }
+        return builder.build();
     }
 }

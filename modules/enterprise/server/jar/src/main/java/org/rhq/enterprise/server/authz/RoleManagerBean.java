@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -183,16 +182,25 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             for (int roleId : doomedRoleIds) {
                 Role doomedRole = entityManager.find(Role.class, roleId);
 
+                //remove attached Subjects
                 Set<Subject> subjectsToUnhook = new HashSet<Subject>(doomedRole.getSubjects()); // avoid concurrent mod exception
                 for (Subject doomedSubjectRelationship : subjectsToUnhook) {
                     doomedRole.removeSubject(doomedSubjectRelationship);
                     entityManager.merge(doomedSubjectRelationship);
                 }
 
+                //remove attached ResourceGroups
                 Set<ResourceGroup> groupsToUnhook = new HashSet<ResourceGroup>(doomedRole.getResourceGroups()); // avoid concurrent mod exception
                 for (ResourceGroup doomedResourceGroupRelationship : groupsToUnhook) {
                     doomedRole.removeResourceGroup(doomedResourceGroupRelationship);
                     entityManager.merge(doomedResourceGroupRelationship);
+                }
+
+                //remove attached LDAP Subjects
+                Set<Subject> ldapSubjectsToUnhook = new HashSet<Subject>(doomedRole.getLdapSubjects()); // avoid concurrent mod exception
+                for (Subject doomedLdapSubjectRelationship : ldapSubjectsToUnhook) {
+                    doomedRole.removeLdapSubject(doomedLdapSubjectRelationship);
+                    entityManager.merge(doomedLdapSubjectRelationship);
                 }
 
                 doomedRole = entityManager.merge(doomedRole);
@@ -202,7 +210,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                 }
 
                 alertNotificationManager.cleanseAlertNotificationByRole(doomedRole.getId());
-                entityManager.remove(doomedRole); // there should not be any cascading - this does not touch subjects/groups
+                // Fetch the lazy Sets on the Role to be returned.
+                //[BZ 754693:] we must fetch the lazy sets of LDAP Groups here for correct cascade removal 
+                doomedRole.getResourceGroups().size();
+                doomedRole.getSubjects().size();
+                doomedRole.getLdapGroups().size();
+
+                entityManager.remove(doomedRole);
             }
         }
 
@@ -432,8 +446,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             }
 
             for (LdapGroup ldapGroup : newLdapGroups) {
-                LdapGroup attachedLdapGroup = (ldapGroup.getId() != 0) ?
-                    entityManager.find(LdapGroup.class, ldapGroup.getId()) : null;
+                LdapGroup attachedLdapGroup = (ldapGroup.getId() != 0) ? entityManager.find(LdapGroup.class,
+                    ldapGroup.getId()) : null;
                 if (attachedLdapGroup == null) {
                     ldapGroup.setRole(attachedRole);
                     entityManager.persist(ldapGroup);
@@ -669,8 +683,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                         + "], but subject was not found");
                 }
                 if (doomedSubject.getFsystem() || (authorizationManager.isSystemSuperuser(doomedSubject))) {
-                    throw new PermissionException("You cannot remove user[" + doomedSubject.getName()
-                        + "] from role[" + roleId + "] - roles are fixed for this user");
+                    throw new PermissionException("You cannot remove user[" + doomedSubject.getName() + "] from role["
+                        + roleId + "] - roles are fixed for this user");
                 }
                 role.removeSubject(doomedSubject);
             }
@@ -768,7 +782,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner<Role>(criteria, generator, entityManager);
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
+        @SuppressWarnings({ "UnnecessaryLocalVariable" })
         PageList<Role> roles = queryRunner.execute();
 
         return roles;

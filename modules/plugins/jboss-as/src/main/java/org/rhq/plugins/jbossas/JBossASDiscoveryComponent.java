@@ -66,7 +66,7 @@ import org.rhq.plugins.jbossas.util.JnpConfig;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
 /**
- * Discovers JBossAS 3.2.x and 4.x server instances.
+ * Discovers instances of JBoss AS 3.2.3 through 4.2.x, and JBoss EAP and SOA-P 4.x.
  *
  * @author John Mazzitelli
  * @author Ian Springer
@@ -296,8 +296,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
 
         final JBossProductType productType = installInfo.getProductType();
         String description = productType.DESCRIPTION + " " + installInfo.getMajorVersion();
-        boolean isInServer = isRhqServer(absoluteConfigPath);
-        if (isInServer) {
+        boolean isRhqServer = isRhqServer(absoluteConfigPath);
+        if (isRhqServer) {
             description += " hosting the RHQ Server";
 
             // RHQ-633 : We know this is an RHQ Server. Let's auto-configure for tracking its log file, which is not in
@@ -324,13 +324,13 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 }
             }
         }
-        final String PRODUCT_PREFIX = productType.name() + " ";
-        String name = PRODUCT_PREFIX
-            + formatServerName(bindingAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
-                absoluteConfigPath.getName(), isInServer);
-
-        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, PRODUCT_PREFIX
-            + installInfo.getVersion(), description, pluginConfiguration, processInfo);
+        
+        String name = formatServerName(bindingAddress, namingPort, discoveryContext.getSystemInformation().getHostname(),
+                absoluteConfigPath.getName(), productType, isRhqServer);
+        String version = productType.name() + " " + installInfo.getVersion();
+        
+        return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description, 
+            pluginConfiguration, processInfo);
     }
 
     /**
@@ -379,7 +379,8 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 try {
                     installInfo = new JBossInstallationInfo(homeDir);
                 } catch (IOException e) {
-                    throw new IllegalStateException(e);
+                    throw new IllegalStateException("Failed to determine installation info for JBoss home dir ["
+                        + homeDir + "].", e);
                 }
                 File configDir = (File) server.getAttribute(configObjectName, "ServerHomeDir");
 
@@ -405,51 +406,70 @@ public class JBossASDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                 // Now set default values on any props that are still not set.
                 setPluginConfigurationDefaults(pluginConfiguration);
 
-                String resourceName = formatServerName(bindAddress, jnpPort, context.getSystemInformation()
-                    .getHostname(), configName, isRhqServer(configDir));
+                JBossProductType productType = installInfo.getProductType();
+                String name = formatServerName(bindAddress, jnpPort, context.getSystemInformation().getHostname(),
+                    configName, productType, isRhqServer(configDir));
+                String description = productType.NAME +
+                    " server that the RHQ Plugin Container is running within";
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(),
-                    configDir.getAbsolutePath(), resourceName, version,
-                    "JBoss AS server that the RHQ Plugin Container is running within", pluginConfiguration, null);
+                    configDir.getAbsolutePath(), name, version, description, pluginConfiguration, null);
 
                 return resource;
             }
         } catch (Exception e) {
-            /* JBoss MBean doesn't exist - not a JBoss server. */
-            if (log.isDebugEnabled())
-                log.debug("Not detected to be embedded in a JBoss AS Server", e);
+            // JBoss MBean doesn't exist - not a JBoss server.
+            log.debug("Not detected to be embedded in a JBoss AS Server", e);
         }
 
         return null;
     }
 
     public String formatServerName(String bindingAddress, String jnpPort, String hostname, String configurationName,
-        boolean isRhq) {
+                                   JBossProductType productType, boolean isRhq) {
+        StringBuilder serverName = new StringBuilder();
 
-        if (isRhq) {
-            return hostname + " RHQ Server";
-        } else {
-            String hostnameToUse = hostname;
-
-            if (bindingAddress != null) {
-                try {
-                    InetAddress bindAddr = InetAddress.getByName(bindingAddress);
-                    if (!bindAddr.isAnyLocalAddress()) {
-                        //if the binding address != 0.0.0.0
-                        hostnameToUse = bindAddr.getHostName();
-                    }
-                } catch (UnknownHostException e) {
-                    //this should not happen?
-                    log.warn("Unknown hostname passed in as the binding address for JBoss AS server discovery: "
-                        + bindingAddress);
-                }
-            }
-
-            if (jnpPort != null && !jnpPort.equals(CHANGE_ME)) {
-                hostnameToUse += ":" + jnpPort;
-            }
-
-            return hostnameToUse + " " + configurationName;
+        if (!isRhq) {
+            // prefix w/ product name (e.g. "AS" or "EAP")
+            serverName.append(productType.name()).append(' ');
         }
+
+        String bindingHostname = getBindingHostname(bindingAddress);
+        if (bindingHostname != null) {
+            serverName.append(bindingHostname);
+        } else {
+            serverName.append(hostname);
+        }
+
+        if (jnpPort != null && !jnpPort.equals(CHANGE_ME)) {
+            serverName.append(':').append(jnpPort);
+        }
+
+        serverName.append(' ');
+        if (isRhq) {
+            serverName.append("RHQ Server");
+        } else {
+            serverName.append(configurationName);
+        }
+
+        return serverName.toString();
+    }
+
+    private String getBindingHostname(String bindingAddress) {
+        String bindingHostname = null;
+        if (bindingAddress != null) {
+            try {
+                InetAddress bindAddr = InetAddress.getByName(bindingAddress);
+                if (!bindAddr.isAnyLocalAddress()) {
+                    //if the binding address != 0.0.0.0
+                    bindingHostname = bindAddr.getHostName();
+                }
+            } catch (UnknownHostException e) {
+                //this should not happen?
+                log.warn("Unknown hostname passed in as the binding address for JBoss AS instance: "
+                    + bindingAddress);
+            }
+        }
+        return bindingHostname;
     }
 
     private static String getJnpURL(JBossInstanceInfo cmdLine, File installHome, File configDir) {

@@ -26,16 +26,12 @@ import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.drift.*;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.shared.ResourceBuilder;
-import org.rhq.core.domain.shared.ResourceTypeBuilder;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.TransactionCallback;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
-import javax.ejb.EJBException;
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +43,6 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftTemplateManager;
 
@@ -104,51 +99,60 @@ public class ManageDriftDefinitionsTest extends DriftServerTest {
         assertEquals("The template association was not set on the definition", template, newDef.getTemplate());
     }
 
-    public void createEntitiesThatDoNotSupportDrift() {
-        // first create the resource type that does not support drift
-        driftNotSupportedType = new ResourceTypeBuilder()
-                .createResourceType()
-                .withId(0)
-                .withName(DRIFT_NOT_SUPPORTED_TYPE)
-                .withCategory(SERVER)
-                .withPlugin(DRIFT_NOT_SUPPORTED_TYPE.toLowerCase())
-                .build();
+    // The following two tests are commented out because when they are enabled
+    // and all tests in the itests module are run, the @AfterClass method for
+    // DriftTemplateManagerBeanTest does not run immediately after all of its
+    // test methods have finished running. Instead, some of the tests in
+    // ManageDriftDefinitionsTest start running. This leads to some database
+    // constraint violations because of how agents are created in the parent
+    // class, DriftServerTest. See http://groups.google.com/group/testng-users/browse_thread/thread/da2790679a430d51?pli=1
+    // more info on the order in which TestNG executes tests.
 
-        // create a resource of the type that does not support drift
-        driftNotSupportedResource = new ResourceBuilder()
-                .createResource()
-                .withId(0)
-                .withName(DRIFT_NOT_SUPPORTED_RESOURCE)
-                .withResourceKey(DRIFT_NOT_SUPPORTED_RESOURCE)
-                .withRandomUuid()
-                .withResourceType(driftNotSupportedType)
-                .build();
-
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-                em.persist(driftNotSupportedType);
-                em.persist(driftNotSupportedResource);
-            }
-        });
-    }
-
-    @Test(dependsOnMethods = "createEntitiesThatDoNotSupportDrift",
-            expectedExceptions = EJBException.class,
-            expectedExceptionsMessageRegExp = ".*Cannot create drift definition.*type.*does not support drift management")
-    @InitDB(false)
-    public void doNotAllowDefinitionToBeCreatedForTypeThatDoesNotSupportDrift() {
-        DriftDefinition driftDef = new DriftDefinition(new Configuration());
-        driftDef.setName("test_typeDoesNotSupportDrift");
-        driftDef.setEnabled(true);
-        driftDef.setInterval(1800L);
-        driftDef.setDriftHandlingMode(normal);
-        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
-
-        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(driftNotSupportedResource.getId()),
-                driftDef);
-    }
+//    public void createEntitiesThatDoNotSupportDrift() {
+//        // first create the resource type that does not support drift
+//        driftNotSupportedType = new ResourceTypeBuilder()
+//                .createResourceType()
+//                .withId(0)
+//                .withName(DRIFT_NOT_SUPPORTED_TYPE)
+//                .withCategory(SERVER)
+//                .withPlugin(DRIFT_NOT_SUPPORTED_TYPE.toLowerCase())
+//                .build();
+//
+//        // create a resource of the type that does not support drift
+//        driftNotSupportedResource = new ResourceBuilder()
+//                .createResource()
+//                .withId(0)
+//                .withName(DRIFT_NOT_SUPPORTED_RESOURCE)
+//                .withResourceKey(DRIFT_NOT_SUPPORTED_RESOURCE)
+//                .withRandomUuid()
+//                .withResourceType(driftNotSupportedType)
+//                .build();
+//
+//        executeInTransaction(new TransactionCallback() {
+//            @Override
+//            public void execute() throws Exception {
+//                EntityManager em = getEntityManager();
+//                em.persist(driftNotSupportedType);
+//                em.persist(driftNotSupportedResource);
+//            }
+//        });
+//    }
+//
+//    @Test(dependsOnMethods = "createEntitiesThatDoNotSupportDrift",
+//            expectedExceptions = EJBException.class,
+//            expectedExceptionsMessageRegExp = ".*Cannot create drift definition.*type.*does not support drift management")
+//    @InitDB(false)
+//    public void doNotAllowDefinitionToBeCreatedForTypeThatDoesNotSupportDrift() {
+//        DriftDefinition driftDef = new DriftDefinition(new Configuration());
+//        driftDef.setName("test_typeDoesNotSupportDrift");
+//        driftDef.setEnabled(true);
+//        driftDef.setInterval(1800L);
+//        driftDef.setDriftHandlingMode(normal);
+//        driftDef.setBasedir(new DriftDefinition.BaseDirectory(fileSystem, "/foo/bar/test"));
+//
+//        driftMgr.updateDriftDefinition(getOverlord(), EntityContext.forResource(driftNotSupportedResource.getId()),
+//                driftDef);
+//    }
 
     @SuppressWarnings("unchecked")
     public void createDefinitionFromPinnedTemplate() throws Exception {

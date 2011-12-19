@@ -46,7 +46,15 @@ import java.io.IOException;
  * </ul>
  * <br/>
  * <br/>
- * FILE_ENTRY has four, space-delimited fields - type, new_sha, old_sha, file_name.<br/>
+ * FILE_ENTRY has six, space-delimited fields:
+ * <ul>
+ *   <li>type</li>
+ *   <li>file_size</li>
+ *   <li>timestamp</li>
+ *   <li>new_sha</li>
+ *   <li>old_sha</li>
+ *   <li>file_name</li>
+ * </ul>
  * Here is an example change set:
  *
  * <pre>
@@ -54,17 +62,19 @@ import java.io.IOException;
  * 2345
  * Core Server JARs
  * /var/lib/myserver
- * C 1706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c 1536b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c lib/foo.jar
- * A 2706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a 0 lib/bar.jar
- * R 0 2206b5af8e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a conf/foo.conf
+ * C 1024 1321975943000 1706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c 1536b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c lib/foo.jar
+ * A 512 1121975943000 2706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a 0 lib/bar.jar
+ * R -1 -1 0 2206b5af8e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a conf/foo.conf
  * </pre>
  *
  * Note that the file paths in each entry are relative to the path in the base directory
- * header. For the entry with a path of lib/bar.jar notice that the old_sha field has a
- * value of 0. This is because it is a new file, and there is no previous SHA-256 hash for
- * the file. For the entry with conf/foo.conf as its path, notices that the new_sha field
- * has a value of 0 for foo.conf. This is because the file has been deleted and so there is
- * no new SHA-256 hash.
+ * header. The timestamp field is the last modification time of the file. For the entry
+ * with a path of lib/bar.jar notice that the old_sha field has a value of 0. This is
+ * because it is a new file, and there is no previous SHA-256 hash for the file. For the
+ * entry with conf/foo.conf as its path, notices that the new_sha field has a value of 0 for foo.conf.
+ * This is because the file has been deleted and so there is no new SHA-256 hash. Also
+ * note that this entry has a value of -1 for its file size and timestamp fields. This
+ * denotes that those values are no longer available since the file was removed.
  * <p/>
  * Lastly and importantly, the format of this file is still subject to change. Additional
  * headers may be added, maybe allowing for optional headers. The format of the file entry

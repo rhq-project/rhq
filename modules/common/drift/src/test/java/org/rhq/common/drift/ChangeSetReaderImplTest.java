@@ -1,14 +1,15 @@
 package org.rhq.common.drift;
 
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
+
 import java.io.StringReader;
+import java.util.Date;
 
 import org.testng.annotations.Test;
 
 import org.rhq.core.util.MessageDigestGenerator;
-
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
-import static org.testng.Assert.assertEquals;
 
 public class ChangeSetReaderImplTest {
 
@@ -18,13 +19,14 @@ public class ChangeSetReaderImplTest {
     @SuppressWarnings("unchecked")
     public void readFileAddedEntry() throws Exception {
         String sha = sha256("myconf.conf");
+        long timestamp = new Date().getTime();
         String changeset = "1\n" +
                            "1\n" +
                            "file-added-test\n" +
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "A " + sha + " 0 conf/myconf.conf";
+                           "A 1024 " + timestamp + " " + sha + " 0 conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
@@ -39,7 +41,7 @@ public class ChangeSetReaderImplTest {
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
-        FileEntry expectedFileEntry = new FileEntry(sha, "0", "conf/myconf.conf", "A");
+        FileEntry expectedFileEntry = new FileEntry(sha, "0", "conf/myconf.conf", "A", timestamp, 1024L);
         FileEntry actualFileEntry = reader.read();
         reader.close();
 
@@ -56,7 +58,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "R 0 " + sha + " conf/myconf.conf";
+                           "R -1 -1 0 " + sha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
@@ -71,7 +73,7 @@ public class ChangeSetReaderImplTest {
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
-        FileEntry expectedFileEntry = new FileEntry("0", sha, "conf/myconf.conf", "R");
+        FileEntry expectedFileEntry = new FileEntry("0", sha, "conf/myconf.conf", "R", -1L, -1L);
         FileEntry actualFileEntry = reader.read();
         reader.close();
 
@@ -83,13 +85,14 @@ public class ChangeSetReaderImplTest {
     public void readChangedFileEntry() throws Exception {
         String oldSha = sha256("myconf.conf.old");
         String newSha = sha256("myconf.conf.new");
+        long timestamp = new Date().getTime();
         String changeset = "1\n" +
                            "1\n" +
                            "file-changed-test\n" +
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "C " + newSha + " " + oldSha + " conf/myconf.conf";
+                           "C 1024 " + timestamp + " " + newSha + " " + oldSha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
@@ -104,7 +107,7 @@ public class ChangeSetReaderImplTest {
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
-        FileEntry expectedFileEntry = new FileEntry(newSha, oldSha, "conf/myconf.conf", "C");
+        FileEntry expectedFileEntry = new FileEntry(newSha, oldSha, "conf/myconf.conf", "C", timestamp, 1024L);
         FileEntry actualFileEntry = reader.read();
         reader.close();
 
@@ -115,13 +118,14 @@ public class ChangeSetReaderImplTest {
     @SuppressWarnings("unchecked")
     public void readFileEntryWithSpacesInPath() throws Exception {
         String sha = sha256("file with spaces.conf");
+        long timestamp = new Date().getTime();
         String changeset = "1\n" +
                            "1\n" +
                            "file-name-test\n" +
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "A " + sha + " 0 conf/file with spaces.conf";
+                           "A 1024 " + timestamp + " " + sha + " 0 conf/file with spaces.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
@@ -136,7 +140,7 @@ public class ChangeSetReaderImplTest {
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
-        FileEntry expectedFileEntry = new FileEntry(sha, "0", "conf/file with spaces.conf", "A");
+        FileEntry expectedFileEntry = new FileEntry(sha, "0", "conf/file with spaces.conf", "A", timestamp, 1024L);
         FileEntry actualFileEntry = reader.read();
         reader.close();
 
@@ -162,8 +166,8 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "A " + sha256("resource.conf") +  " 0 conf/resource.conf\n" +
-                           "A " + sha256("resource.jar") + " 0 lib/resource.jar";
+                           "A 1024 5678 " + sha256("resource.conf") +  " 0 conf/resource.conf\n" +
+                           "A 1024 5678 " + sha256("resource.jar") + " 0 lib/resource.jar";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numEntries = 0;
@@ -185,7 +189,7 @@ public class ChangeSetReaderImplTest {
                            "myresource\n" +
                            "C\n" +
                            "1\n" +
-                           "A " + sha + " 0 conf/resource.conf\n";
+                           "A 1024 5678 " + sha + " 0 conf/resource.conf\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numEntries = 0;
@@ -227,9 +231,12 @@ public class ChangeSetReaderImplTest {
 
     void assertFileEntryEquals(FileEntry actual, FileEntry expected) {
         assertEquals(actual.getType(), expected.getType(), "The first column, the entry type, is wrong");
-        assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The second column, the new SHA-256, is wrong");
-        assertEquals(actual.getOldSHA (), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
-        assertEquals(actual.getFile(), expected.getFile(), "The fourth column, the file name, is wrong");
+        assertEquals(actual.getSize(), expected.getSize(), "The second column, the file size, is wrong");
+        assertEquals(actual.getLastModified(), expected.getLastModified(), "The third column, the last modification " +
+            "time, is wrong");
+        assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The fourth column, the new SHA-256, is wrong");
+        assertEquals(actual.getOldSHA (), expected.getOldSHA(), "The fifth column, the old SHA-256, is wrong");
+        assertEquals(actual.getFile(), expected.getFile(), "The sixth column, the file name, is wrong");
     }
 
     String sha256(String s) throws Exception {

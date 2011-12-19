@@ -19,30 +19,8 @@
 
 package org.rhq.core.pc.drift;
 
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_NO_BASEDIR;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
@@ -62,6 +40,18 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
+
+import java.io.*;
+import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import static org.rhq.common.drift.FileEntry.*;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.domain.drift.DriftComplianceStatus.OUT_OF_COMPLIANCE_NO_BASEDIR;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -201,7 +191,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 // change set.
                 DriftSnapshot pinnedSnapshot = driftServer.getSnapshot(driftDefinition.getId(), 0, 0);
                 Headers pinnedHeaders = createHeaders(resource.getId(), driftDefinition);
-                File pinnedSnapshotFile = new File(currentSnapshotFile.getParent(), "snapshot.pinned");
+                File pinnedSnapshotFile = new File(currentSnapshotFile.getParent(), DriftDetector.FILE_SNAPSHOT_PINNED);
                 log.info("Preparing to write pinned snapshot to disk for "
                     + toString(resource.getId(), driftDefinition));
                 writeSnapshotToFile(pinnedSnapshot, pinnedSnapshotFile, pinnedHeaders);
@@ -212,7 +202,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     // drift that has already been reported to the server.
                     DriftSnapshot deltaSnapshot = driftServer.getSnapshot(driftDefinition.getId(), snapshot
                         .getVersion(), snapshot.getVersion());
-                    File deltaFile = new File(currentSnapshotFile.getParentFile(), "drift-changeset.txt");
+                    File deltaFile = new File(currentSnapshotFile.getParentFile(), DriftDetector.FILE_CHANGESET_DELTA);
                     Headers deltaHeaders = createHeaders(resource.getId(), driftDefinition);
                     deltaHeaders.setVersion(snapshot.getVersion());
                     deltaHeaders.setType(DRIFT);
@@ -252,7 +242,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     if (log.isDebugEnabled()) {
                         log.debug("Resending " + contentZipFile.getPath());
                     }
-                    sendContentZipFile(Integer.parseInt(resourceDir.getName()), defDir.getName(), contentZipFile);
+                    sendChangeSetContentToServer(Integer.parseInt(resourceDir.getName()), defDir.getName(),
+                            contentZipFile);
                 }
             }
         }
@@ -343,46 +334,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, final File contentDir) {
-        ZipOutputStream stream = null;
-        try {
-            String timestamp = Long.toString(System.currentTimeMillis());
-            String contentFileName = "content_" + timestamp + ".zip";
-            final File zipFile = new File(contentDir.getParentFile(), contentFileName);
-            stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
-
-            for (File file : contentDir.listFiles()) {
-                FileInputStream fis = new FileInputStream(file);
-                try {
-                    stream.putNextEntry(new ZipEntry(file.getName()));
-                    StreamUtil.copy(fis, stream, false);
-                } finally {
-                    fis.close();
-                }
-            }
-            stream.close();
-            stream = null;
-            sendContentZipFile(resourceId, driftDefinitionName, zipFile);
-        } catch (IOException e) {
-            log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
-                + ", driftDefinition: " + driftDefinitionName + "]", e);
-        } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                }
-            }
-        }
-
-        for (File file : contentDir.listFiles()) {
-            if (!file.delete()) {
-                log.warn("Unable to clean up content directory. Failed to delete " + file.getPath());
-            }
-        }
-    }
-
-    private void sendContentZipFile(int resourceId, String driftDefName, File contentZipFile) {
+    public void sendChangeSetContentToServer(int resourceId, String driftDefName, File contentZipFile) {
         try {
             int startIndex = "content_".length();
             int endIndex = contentZipFile.getName().indexOf(".");
@@ -390,10 +342,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
             driftServer.sendFilesZip(resourceId, driftDefName, token, contentZipFile.length(),
-                remoteInputStream(new BufferedInputStream(new FileInputStream(contentZipFile))));
+                    remoteInputStream(new BufferedInputStream(new FileInputStream(contentZipFile))));
         } catch (FileNotFoundException e) {
             log.error("An error occurred while trying to send change set content zip file " + contentZipFile.getPath()
-                + " to server.", e);
+                    + " to server.", e);
         }
     }
 
@@ -546,7 +498,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             public void run() {
                 File currentSnapshot = changeSetMgr.findChangeSet(schedule.getResourceId(), schedule
                     .getDriftDefinition().getName(), COVERAGE);
-                File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+                File pinnedSnapshot = new File(currentSnapshot.getParentFile(), DriftDetector.FILE_SNAPSHOT_PINNED);
                 pinnedSnapshot.delete();
 
                 if (log.isDebugEnabled()) {
@@ -561,7 +513,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void updateDriftDetection(int resourceId, DriftDefinition driftDef, DriftSnapshot driftSnapshot) {
         File currentSnapshot = changeSetMgr.findChangeSet(resourceId, driftDef.getName(), COVERAGE);
-        File pinnedSnapshot = new File(currentSnapshot.getParentFile(), "snapshot.pinned");
+        File pinnedSnapshot = new File(currentSnapshot.getParentFile(), DriftDetector.FILE_SNAPSHOT_PINNED);
         Headers headers = createHeaders(resourceId, driftDef);
 
         try {
@@ -774,11 +726,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             for (Drift<?, ?> drift : snapshot.getDriftInstances()) {
                 switch (drift.getCategory()) {
                 case FILE_ADDED:
-                    writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
+                    writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId(), -1L, -1L));
                     break;
                 case FILE_CHANGED:
                     writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(), drift
-                        .getNewDriftFile().getHashId()));
+                        .getNewDriftFile().getHashId(), -1L, -1L));
                     break;
                 default: // FILE_REMOVED
                     writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));

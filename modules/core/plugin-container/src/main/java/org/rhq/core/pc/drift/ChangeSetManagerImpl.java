@@ -21,11 +21,7 @@ package org.rhq.core.pc.drift;
 
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.rhq.common.drift.ChangeSetReader;
@@ -34,8 +30,6 @@ import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.util.stream.StreamUtil;
 
 public class ChangeSetManagerImpl implements ChangeSetManager {
 
@@ -51,13 +45,13 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
         if (changeSetDir == null || !changeSetDir.exists()) {
             return false;
         }
-        return new File(changeSetDir, "changeset.txt").exists();
+        return new File(changeSetDir, DriftDetector.FILE_CHANGESET_FULL).exists();
     }
 
     @Override
     public File findChangeSet(int resourceId, String driftDefinitionName) throws IOException {
         File changeSetDir = findChangeSetDir(resourceId, driftDefinitionName);
-        File changeSetFile = new File(changeSetDir, "changeset.txt");
+        File changeSetFile = new File(changeSetDir, DriftDetector.FILE_CHANGESET_FULL);
 
         if (changeSetFile.exists()) {
             return changeSetFile;
@@ -76,9 +70,9 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
         switch (type) {
         case COVERAGE:
-            return new File(changeSetDir, "changeset.txt");
+            return new File(changeSetDir, DriftDetector.FILE_CHANGESET_FULL);
         case DRIFT:
-            return new File(changeSetDir, "drift-changeset.txt");
+            return new File(changeSetDir, DriftDetector.FILE_CHANGESET_DELTA);
         default:
             throw new IllegalArgumentException(type + " is not a recognized, supported change set type.");
         }
@@ -111,9 +105,9 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
         File changeSet;
         if (headers.getType() == COVERAGE) {
-            changeSet = new File(changeSetDir, "changeset.txt");
+            changeSet = new File(changeSetDir, DriftDetector.FILE_CHANGESET_FULL);
         } else {
-            changeSet = new File(changeSetDir, "drift-changeset.txt");
+            changeSet = new File(changeSetDir, DriftDetector.FILE_CHANGESET_DELTA);
         }
         return new ChangeSetWriterImpl(changeSet, headers);
     }
@@ -121,35 +115,6 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     @Override
     public ChangeSetWriter getChangeSetWriter(File changeSetFile, Headers headers) throws IOException {
         return new ChangeSetWriterImpl(changeSetFile, headers);
-    }
-
-    @Override
-    public ChangeSetWriter getChangeSetWriterForUpdate(int resourceId, Headers headers) throws IOException {
-        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
-        File changeSetDir = new File(resourceDir, headers.getDriftDefinitionName());
-
-        return new ChangeSetWriterImpl(new File(changeSetDir, "changeset.working"), headers);
-    }
-
-    @Override
-    public void updateChangeSet(int resourceId, Headers headers) throws IOException {
-        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
-        File changeSetDir = new File(resourceDir, headers.getDriftDefinitionName());
-        File newChangeSet = new File(changeSetDir, "changeset.working");
-        File changeSet = new File(changeSetDir, "changeset.txt");
-
-        if (!newChangeSet.exists()) {
-            return;
-        }
-
-        changeSet.delete();
-
-        StreamUtil.copy(new BufferedInputStream(new FileInputStream(newChangeSet)), new BufferedOutputStream(
-            new FileOutputStream(changeSet)));
-    }
-
-    @Override
-    public void addFileToChangeSet(int resourceId, DriftDefinition driftDefinition, File file) {
     }
 
     private File findChangeSetDir(int resourceId, String driftDefinitionName) {

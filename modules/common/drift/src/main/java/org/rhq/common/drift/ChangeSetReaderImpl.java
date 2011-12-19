@@ -19,6 +19,10 @@
 
 package org.rhq.common.drift;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -30,10 +34,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
 
 /**
  * Note that this implementation does not do any validation for the most part. It assumes
@@ -121,19 +121,30 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
             }
 
             if (line.charAt(0) == 'A') { // file added
-                String sha = line.substring(2, 66);
-                String fileName = line.substring(69);
-                return addedFileEntry(fileName, sha);
+                int fileSizeEndIndex = line.indexOf(' ', 2);
+                long size = Long.parseLong(line.substring(2, fileSizeEndIndex));
+                int lastModifiedEndIndex = line.indexOf(' ', fileSizeEndIndex + 1);
+                long lastModified = Long.parseLong(line.substring(fileSizeEndIndex + 1, lastModifiedEndIndex));
+                int shaEndIndex = lastModifiedEndIndex + 65;
+                String sha = line.substring(lastModifiedEndIndex + 1, shaEndIndex);
+                String fileName = line.substring(shaEndIndex + 3);
+                return addedFileEntry(fileName, sha, lastModified, size);
             }
             if (line.charAt(0) == 'C') { // file modified
-                String newSha = line.substring(2, 66);
-                String oldSha = line.substring(67, 131);
-                String fileName = line.substring(132);
-                return changedFileEntry(fileName, oldSha, newSha);
+                int fileSizeEndIndex = line.indexOf(' ', 2);
+                long size = Long.parseLong(line.substring(2, fileSizeEndIndex));
+                int lastModifiedEndIndex = line.indexOf(' ', fileSizeEndIndex + 1);
+                long lastModified = Long.parseLong(line.substring(fileSizeEndIndex + 1, lastModifiedEndIndex));
+                int newShaIndex = lastModifiedEndIndex + 65;
+                String newSha = line.substring(lastModifiedEndIndex + 1, newShaIndex);
+                int oldShaIndex = newShaIndex + 65;
+                String oldSha = line.substring(newShaIndex + 1, oldShaIndex);
+                String fileName = line.substring(oldShaIndex + 1);
+                return changedFileEntry(fileName, oldSha, newSha, lastModified, size);
             }
             if (line.charAt(0) == 'R') { // file deleted
-                String sha = line.substring(4, 68);
-                String fileName = line.substring(69);
+                String sha = line.substring(10, 74);
+                String fileName = line.substring(75);
                 return removedFileEntry(fileName, sha);
             }
 

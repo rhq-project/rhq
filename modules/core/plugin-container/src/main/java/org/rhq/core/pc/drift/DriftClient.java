@@ -24,7 +24,8 @@ public interface DriftClient {
      * @param driftDefinitionName
      * @param contentDir
      */
-    void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir);
+    //void sendChangeSetContentToServer(int resourceId, String driftDefinitionName, File contentDir);
+    void sendChangeSetContentToServer(int resourceId, String driftDefName, File contentZipFile);
 
     void repeatChangeSet(int resourceId, String driftDefName, int version);
 

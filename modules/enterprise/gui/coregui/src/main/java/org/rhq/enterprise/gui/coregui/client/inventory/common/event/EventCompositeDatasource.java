@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -99,22 +99,25 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         });
         severityField.setShowHover(true);
         severityField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                EventSeverity severity = EventSeverity.valueOf(record.getAttribute("severity"));
-                switch (severity) {
-                case DEBUG:
-                    return MSG.common_severity_debug();
-                case INFO:
-                    return MSG.common_severity_info();
-                case WARN:
-                    return MSG.common_severity_warn();
-                case ERROR:
-                    return MSG.common_severity_error();
-                case FATAL:
-                    return MSG.common_severity_fatal();
+                if (value == null) {
+                    return null;
                 }
-                return null;
+                EventSeverity severity = EventSeverity.valueOf((String)value);
+                switch (severity) {
+                    case DEBUG:
+                        return MSG.common_severity_debug();
+                    case INFO:
+                        return MSG.common_severity_info();
+                    case WARN:
+                        return MSG.common_severity_warn();
+                    case ERROR:
+                        return MSG.common_severity_error();
+                    case FATAL:
+                        return MSG.common_severity_fatal();
+                    default:
+                        return null;
+                }
             }
         });
         fields.add(severityField);
@@ -147,9 +150,11 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         });
         sourceField.setShowHover(true);
         sourceField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String sourceLocation = record.getAttribute("source");
+                if (value == null) {
+                    return null;
+                }
+                String sourceLocation = (String)value;
                 return (sourceLocation.length() > 40) ? sourceLocation : null;
             }
         });
@@ -166,7 +171,6 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
             });
             resourceNameField.setShowHover(true);
             resourceNameField.setHoverCustomizer(new HoverCustomizer() {
-
                 public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                     return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }

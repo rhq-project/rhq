@@ -19,26 +19,11 @@
 
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.NEVER;
-import static org.rhq.core.domain.common.EntityContext.forResource;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftSnapshotRequest;
+import org.rhq.core.domain.drift.*;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -48,6 +33,17 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import static javax.ejb.TransactionAttributeType.NEVER;
+import static org.rhq.core.domain.common.EntityContext.forResource;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 
 @Stateless
 public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, DriftTemplateManagerRemote {
@@ -205,13 +201,15 @@ public class DriftTemplateManagerBean implements DriftTemplateManagerLocal, Drif
         DriftDefinition templateDef = template.getTemplateDefinition();
 
         for (DriftDefinition resourceDef : template.getDriftDefinitions()) {
-            if (resourceDef.isAttached()) {
-                resourceDef.setInterval(templateDef.getInterval());
-                resourceDef.setDriftHandlingMode(templateDef.getDriftHandlingMode());
-                resourceDef.setEnabled(templateDef.isEnabled());
+            DriftDefinition driftDef = entityMgr.find(DriftDefinition.class, resourceDef.getId());
+            if (driftDef.isAttached()) {
+                driftDef.setInterval(templateDef.getInterval());
+                driftDef.setDriftHandlingMode(templateDef.getDriftHandlingMode());
+                driftDef.setEnabled(templateDef.isEnabled());
 
-                driftMgr.updateDriftDefinition(subject, forResource(resourceDef.getResource().getId()), resourceDef);
+                driftMgr.updateDriftDefinition(subject, forResource(driftDef.getResource().getId()), driftDef);
             }
         }
     }
+
 }

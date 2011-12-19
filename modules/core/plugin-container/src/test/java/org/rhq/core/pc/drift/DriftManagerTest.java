@@ -133,7 +133,8 @@ public class DriftManagerTest extends DriftTest {
         File changeSetDir = changeSetDir(config.getName());
         File snapshotFile = createRandomFile(changeSetDir, "changeset.txt");
         File previousSnapshotFile = createRandomFile(changeSetDir, "changeset.txt.previous");
-        File changeSetZipFile = createRandomFile(changeSetDir, "changeset_" + System.currentTimeMillis() + ".zip");
+
+        createRandomFile(changeSetDir, "changeset_" + System.currentTimeMillis() + ".zip");
 
         driftMgr.ackChangeSet(resourceId(), config.getName());
 
@@ -145,53 +146,11 @@ public class DriftManagerTest extends DriftTest {
     }
 
     @Test
-    public void writeContentZipFileToChangeSetContentDirectory() throws Exception {
-        String configName = "send-content-in-zip";
-        final File changeSetDir = changeSetDir(configName);
-        final File contentDir = mkdir(changeSetDir, "content");
-
-        createRandomFile(contentDir, "content-1");
-        createRandomFile(contentDir, "content-2");
-
-        setDriftServiceCallback(new DriftServiceCallback() {
-            @Override
-            public void execute() {
-                assertThatZipFileExists(changeSetDir, "content_", "Expected to find content zip file in "
-                    + changeSetDir.getPath() + ". The file name should follow the pattern "
-                    + "content_<integer_timestamp>.zip");
-            }
-        });
-
-        driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
-    }
-
-    @Test
-    public void sendContentToServerInZipFile() throws Exception {
-        String configName = "send-content-in-zip";
-        File changeSetDir = changeSetDir(configName);
-        File contentDir = mkdir(changeSetDir, "content");
-
-        final File content1 = createRandomFile(contentDir, "content-1");
-        final File content2 = createRandomFile(contentDir, "content-2");
-
-        setDriftServiceCallback(new DriftServiceCallback() {
-            @Override
-            public void execute() {
-                assertZipFileMatches(driftServerService.inputStream, content1, content2);
-            }
-        });
-
-        driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
-
-        // verify that the content directory is purged
-        assertThatDirectoryIsEmpty(contentDir);
-    }
-
-    @Test
     public void cleanUpWhenServerAcksChangeSetContent() throws Exception {
         String configName = "cleanup-when-server-acks-content";
         File changeSetDir = changeSetDir(configName);
-        File contentDir = mkdir(changeSetDir, "content");
+
+        mkdir(changeSetDir, "content");
 
         String token = Long.toString(System.currentTimeMillis());
         File contentZipFile = createRandomFile(changeSetDir, "content_" + token + ".zip");
@@ -307,10 +266,6 @@ public class DriftManagerTest extends DriftTest {
             assertEquals(actualHash, expectedHash, "The zip file content is wrong. The SHA-256 hash does not match "
                 + "for " + expectedFile.getName());
         }
-    }
-
-    private void assertThatDirectoryIsEmpty(File dir) {
-        assertEquals(dir.listFiles().length, 0, "Expected " + dir.getPath() + " to be empty");
     }
 
     private File findFile(File dir, File file) {

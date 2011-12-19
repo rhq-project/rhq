@@ -4,6 +4,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
+
 <f:view>
 <f:loadBundle var="bundle" basename="InstallerMessages" />
 
@@ -19,6 +20,13 @@
             var thisDiv = document.getElementById( _levelId );
             thisDiv.style.display = "block";
           }
+	 function checkForPassword() {
+            if ( document.getElementById('propForm:databasepassword').value  == '' ) {
+               alert("Please enter database password.");
+               return false;
+            }
+            return true;
+         }
       </script>
    </head>
 
@@ -144,6 +152,7 @@
                <h:outputText value="#{bundle.testDatabaseNote}" style="font-size: 100%"/>
                <h:panelGrid columns="2">
                   <h:commandButton id="testDatabaseButton"
+                                   onclick="if (!checkForPassword()) return false"
                                    action="#{configurationBean.testConnection}"
                                    value="#{bundle.testDatabaseButton}"/>
                   <h:panelGroup rendered="#{configurationBean.lastTest != null && configurationBean.lastTest != 'OK'}">
@@ -326,7 +335,11 @@
          </tr></table>
 --%>
          <table border="1"><tr>
-            <td><h:commandButton id="save" action="#{configurationBean.save}" value="#{bundle.save}" /></td>
+            <td><h:commandButton id="save" 
+                   onclick="if (!checkForPassword()) return false"
+                   action="#{configurationBean.save}"
+                   value="#{bundle.save}" />
+            </td>
          </tr></table>
       </p>
    </h:form>

@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.security;
+package org.rhq.jndi;
 
 import java.security.BasicPermission;
 
@@ -26,11 +26,11 @@ import java.security.BasicPermission;
  *
  * @author Lukas Krejci
  */
-public class AllowEjbAccessPermission extends BasicPermission {
+public class AllowRhqServerInternalsAccessPermission extends BasicPermission {
 
     private static final long serialVersionUID = 1L;
 
-    public AllowEjbAccessPermission() {
-        super("rhq.allow.ejb.access");
+    public AllowRhqServerInternalsAccessPermission() {
+        super("org.rhq.allow.server.internals.access");
     }
 }

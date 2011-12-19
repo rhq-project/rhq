@@ -225,6 +225,13 @@
    <!-- JNDI                                                                 -->
    <!-- ==================================================================== -->
 
+   <!-- This installs a custom initial context factory builder into the JVM
+        that will ensure that all the default InitialContexts are going to check
+        for the permission to access the RHQ internals. -->
+   <mbean code="org.rhq.jndi.mbean.AccessCheckingInitialContextFactoryBuilderInstaller"
+      name="org.rhq:service=AccessCheckingInitialContextFactoryBuilderInstaller">     
+   </mbean>
+   
    <!-- A simple mbean wrapper around the jndi Naming object. This
    only handles an in memory instance. The NamingService uses this
    as the JNDI store and exposes it remotely.

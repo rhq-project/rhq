@@ -22,9 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.SerializablePermission;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.security.PermissionCollection;
 import java.util.Collections;
 
@@ -41,9 +38,9 @@ import org.rhq.bindings.StandardScriptPermissions;
 import org.rhq.bindings.util.PackageFinder;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.LocalClient;
-import org.rhq.enterprise.server.security.AllowEjbAccessPermission;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 
 /**
  * 
@@ -78,7 +75,7 @@ public class EjbAccessTest extends AbstractEJB3Test {
             
             Assert.fail("The script shouldn't have been able to call local SLSB method.");
         } catch (ScriptException e) {
-            assert e.getMessage().contains(AllowEjbAccessPermission.class.getName());
+            checkIsDesiredSecurityException(e);
         }
     }
     
@@ -95,72 +92,91 @@ public class EjbAccessTest extends AbstractEJB3Test {
             
             Assert.fail("The script shouldn't have been able to call remote SLSB method directly.");
         } catch (ScriptException e) {
-            //TODO java.io.IOException: access denied (java.io.SerializablePermission enableSubclassImplementation)
-            assert e.getMessage().contains(AllowEjbAccessPermission.class.getName());
+            checkIsDesiredSecurityException(e);
         }
     }
     
-    public void testScriptCantUseSessionManager() throws ScriptException, IOException {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        
-        ScriptEngine engine = getEngine(overlord);
-        
-        try {
-            engine.eval("org.rhq.enterprise.server.auth.SessionManager.getInstance();");
-            
-            Assert.fail("The script shouldn't have been able to get instance of SessionManager.");
-        } catch (ScriptException e) {
-            assert e.getMessage().contains(AllowEjbAccessPermission.class.getName());
-        }
-    }
-
-    @SuppressWarnings("unused")
     public void testScriptCantUseSessionManagerMethods() throws Exception {
 
-        //The code below cannot work in Rhino because as of now, Rhino modifies
-        //the return value of Class.getDeclaredField() to be null when there
-        //is a security manager installed.
-        //This has been filed as a bug at Oracle (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7119959)
-        
-        if (true) {
-            return;
-        }
-        
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
         
         final ScriptEngine engine = getEngine(overlord);
             
         class G {
-            private String obtainSessionManagerUsingReflection = ""
-                + "var sessionManagerClass = java.lang.Class.forName(\"org.rhq.enterprise.server.auth.SessionManager\");\n"
-                + "println(sessionManagerClass);\n"
-                + "var managerField = sessionManagerClass.getDeclaredField(\"_manager\");\n"
-                + "println(managerField);\n"
-                + "managerField.setAccessible(true);\n"
-                + "var manager = managerField.get(null);\n"
-                + "println(manager);\n"
-                + "manager.";
+            private String sessionManager = ""
+                + "org.rhq.enterprise.server.auth.SessionManager.getInstance().";
             
             public void testInvoke(String methodCall) throws ScriptException {
-                String code = obtainSessionManagerUsingReflection + methodCall;
+                String code = sessionManager + methodCall;
 
                 try {
                     engine.eval(code);               
-                    Assert.fail("The script shouldn't have been able to a method on a SessionManager.");
+                    Assert.fail("The script shouldn't have been able to call a method on a SessionManager: " + methodCall);
                 } catch (ScriptException e) {
-                    assert e.getMessage().contains(AllowEjbAccessPermission.class.getName());
+                    checkIsDesiredSecurityException(e);
                 }
             }
         };
         G manager = new G();
         
-        manager.testInvoke("getLastAccess(0);");
+        manager.testInvoke("getlastAccess(0);");
         manager.testInvoke("getOverlord()");
         manager.testInvoke("getSubject(2);");
         manager.testInvoke("invalidate(0);");
         manager.testInvoke("invalidate(\"\");");
         manager.testInvoke("put(new org.rhq.core.domain.auth.Subject());");
         manager.testInvoke("put(new org.rhq.core.domain.auth.Subject(), 0);");
+    }
+    
+    public void testScriptCantObtainRawJDBCConnectionsWithoutCredentials() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        
+        ScriptEngine engine = getEngine(overlord);
+        
+        try {
+            engine.eval(""
+                + "context = new javax.naming.InitialContext();\n"
+                + "datasource = context.lookup('java:/RHQDS');\n"
+                + "con = datasource.getConnection();");
+            
+            Assert.fail("The script shouldn't have been able to obtain the datasource from the JNDI.");
+        } catch (ScriptException e) {
+            checkIsDesiredSecurityException(e);
+        }
+    }
+    
+    public void testScriptCantUseEntityManager() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
+        
+        ScriptEngine engine = getEngine(overlord);
+
+        try {
+            engine.eval(""
+                + "context = new javax.naming.InitialContext();\n"
+                + "entityManagerFactory = context.lookup('java:/RHQEntityManagerFactory');\n"
+                + "entityManager = entityManagerFactory.createEntityManager();\n"
+                + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
+            
+            Assert.fail("The script shouldn't have been able to use the EntityManager.");
+        } catch (ScriptException e) {
+            checkIsDesiredSecurityException(e);
+        }   
+        
+        //try harder with manually specifying the initial context factory
+        try {
+            engine.eval(""
+                + "env = new java.util.Hashtable();"
+                + "env.put('java.naming.factory.initial', 'org.jnp.interfaces.LocalOnlyContextFactory');"
+                + "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces');"
+                + "context = new javax.naming.InitialContext(env);\n"
+                + "entityManagerFactory = context.lookup('java:/RHQEntityManagerFactory');\n"
+                + "entityManager = entityManagerFactory.createEntityManager();\n"
+                + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
+            
+            Assert.fail("The script shouldn't have been able to use the EntityManager even using custom initial context factory.");
+        } catch (ScriptException e) {
+            checkIsDesiredSecurityException(e);
+        }           
     }
     
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
@@ -171,5 +187,12 @@ public class EjbAccessTest extends AbstractEJB3Test {
         perms.add(new SerializablePermission("enableSubclassImplementation"));
         
         return new SandboxedScriptEngine(engine, perms);
+    }
+    
+    private static void checkIsDesiredSecurityException(ScriptException e) {
+        String message = e.getMessage();
+        String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
+        
+        Assert.assertTrue(message.contains(permissionTrace), "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. " + message);
     }
 }

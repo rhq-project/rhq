@@ -17,30 +17,16 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.security;
-
-import java.security.Permission;
-
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.InvocationContext;
+package org.rhq.jndi.mbean;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class AllowEjbAccessInterceptor {
+public interface AccessCheckingInitialContextFactoryBuilderInstallerMBean {
 
-    private static final Permission PERM = new AllowEjbAccessPermission();
-
-    @AroundInvoke
-    public Object intercept(InvocationContext invocationContext) throws Exception {
-        //check that the caller has permissions to access the EJBs.
-        //normal code does, only alert CLI scripts that try to circumvent our
-        //manager proxies don't.
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) sm.checkPermission(PERM);
-        
-        return invocationContext.proceed();
-    }
+    void start() throws Exception;
+    
+    void stop() throws Exception;
 }

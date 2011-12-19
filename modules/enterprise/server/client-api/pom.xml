@@ -93,6 +93,13 @@
       </dependency>  
        
       <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-container-lib</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+      </dependency>
+      
+      <dependency>
          <groupId>hibernate</groupId>
          <artifactId>hibernate3</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->

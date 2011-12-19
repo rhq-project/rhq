@@ -9,12 +9,6 @@
 
    <assembly-descriptor>
 
-      <!-- This interceptor checks that the alert CLI scripts don't try to circumvent our access objects by accessing the local SLSB beans directly. -->
-      <interceptor-binding>
-         <ejb-name>*</ejb-name>
-         <interceptor-class>org.rhq.enterprise.server.security.AllowEjbAccessInterceptor</interceptor-class>
-      </interceptor-binding>
-
       <!-- all our EJB3 SLSBs can define custom @RequiredPermissions annotations for authorization checks-->
       <interceptor-binding>
          <ejb-name>*</ejb-name>

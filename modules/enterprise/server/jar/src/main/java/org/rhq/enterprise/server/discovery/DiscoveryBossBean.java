@@ -99,7 +99,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 @Stateless
-public class DiscoveryBossBean implements DiscoveryBossLocal {
+public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
 
     private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 

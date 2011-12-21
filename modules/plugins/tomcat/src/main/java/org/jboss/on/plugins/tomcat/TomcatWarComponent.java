@@ -72,6 +72,8 @@ import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.ContentFileInfo;
+import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
@@ -613,6 +615,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             String fileName = new File(fullFileName).getName();
             String sha256 = getSHA256(file);
             String version = getVersion(sha256);
+            String displayVersion = getDisplayVersion(file);
 
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
@@ -623,6 +626,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             details.setFileCreatedDate(null); // TODO: get created date via SIGAR
             details.setInstallationTimestamp(System.currentTimeMillis()); // TODO: anything better than discovery time
             details.setSHA256(sha256);
+            details.setDisplayVersion(displayVersion);
 
             packages.add(details);
         }
@@ -653,6 +657,20 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
     private String getVersion(String sha256) {
         return "[sha256=" + sha256 + "]";
+    }
+
+    /**
+     * Retrieve the display version for the component. The display version should be stored
+     * in the manifest of the application (implementation and/or specification version).
+     * It will attempt to retrieve the version for both archived or exploded deployments.
+     *
+     * @param file component file
+     * @return
+     */
+    private String getDisplayVersion(File file) {
+        //JarContentFileInfo extracts the version from archived and exploded deployments
+        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
+        return contentFileInfo.getVersion(null);
     }
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {

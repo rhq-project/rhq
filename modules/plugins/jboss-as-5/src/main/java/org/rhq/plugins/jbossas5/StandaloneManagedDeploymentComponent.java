@@ -60,6 +60,8 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.ContentFileInfo;
+import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 import org.rhq.plugins.jbossas5.util.FileContentDelegate;
 
@@ -145,6 +147,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         String fileName = this.deploymentFile.getName();
         String sha256 = getSHA256(this.deploymentFile);
         String version = getVersion(sha256);
+        String displayVersion = getDisplayVersion(deploymentFile);
+
         // Package name is the deployment's file name (e.g. foo.ear).
         PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
         ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
@@ -155,6 +159,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         packageDetails.setFileCreatedDate(null); // TODO: get created date via SIGAR
         packageDetails.setSHA256(sha256);
         packageDetails.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
+        packageDetails.setDisplayVersion(displayVersion);
 
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
         packages.add(packageDetails);
@@ -185,6 +190,20 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
     private String getVersion(String sha256) {
         return "[sha256=" + sha256 + "]";
+    }
+
+    /**
+     * Retrieve the display version for the component. The display version should be stored
+     * in the manifest of the application (implementation and/or specification version).
+     * It will attempt to retrieve the version for both archived or exploded deployments.
+     *
+     * @param file component file
+     * @return
+     */
+    private String getDisplayVersion(File file) {
+        //JarContentFileInfo extracts the version from archived and exploded deployments
+        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
+        return contentFileInfo.getVersion(null);
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {

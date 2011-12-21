@@ -416,6 +416,51 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
     }
 
+    public void test9() throws Exception {
+        String resultString = loadJsonFromFile("web.json");
+        ConfigurationDefinition definition = loadDescriptor("test9");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+        assert config!=null;
+        assert config.getProperties().size()==5 : "Got " + config.getProperties().size() + " props instead of 5";
+        PropertySimple simple = config.getSimple("check-interval");
+        assert simple !=null;
+        Integer integerValue = simple.getIntegerValue();
+        assert integerValue !=null : "check-interval was null";
+        assert integerValue ==17 : "check-interval was not 17 but " + integerValue;
+        PropertySimple disabled = config.getSimple("disabled");
+        assert disabled !=null : "disabled was null";
+        Boolean booleanValue = disabled.getBooleanValue();
+        assert booleanValue !=null;
+        assert booleanValue;
+        PropertySimple listings = config.getSimple("listings");
+        assert listings !=null;
+        Boolean booleanValue1 = listings.getBooleanValue();
+        assert booleanValue1 !=null;
+        assert !booleanValue1;
+        PropertySimple simple1 = config.getSimple("max-depth");
+        assert simple1 !=null;
+        Integer integerValue1 = simple1.getIntegerValue();
+        assert integerValue1 !=null;
+        assert integerValue1 ==3;
+        PropertySimple simple2 = config.getSimple("default-virtual-server");
+        assert simple2 !=null;
+        String stringValue = simple2.getStringValue();
+        assert stringValue !=null;
+        assert stringValue.equals("default-host");
+
+
+
+    }
+
     private String loadJsonFromFile(String fileName) throws Exception {
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(fileName);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));

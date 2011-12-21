@@ -765,7 +765,7 @@
                     <c:simple-property name="mapped-file" required="false" type="boolean" defaultValue="true"
                                        description="Map to the JSP source."/>
                     <c:simple-property name="check-interval" required="false" type="integer"  defaultValue="60"
-                                       description="Check interval for JSP updates using a background thread."/> <!-- TODO revisit default when https://issues.jboss.org/browse/AS7-3098 is fixed -->
+                                       description="Check interval in seconds for JSP updates using a background thread."/> <!-- TODO revisit default when https://issues.jboss.org/browse/AS7-3098 is fixed -->
                     <c:simple-property name="modification-test-interval" required="false" type="integer" defaultValue="4"
                                        description="Minimum amount of time between two tests for updates, in seconds."/>
                     <c:simple-property name="recompile-on-fail" required="false" type="boolean" defaultValue="false"

@@ -28,6 +28,8 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
@@ -35,6 +37,7 @@ import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 
 /**
@@ -107,6 +110,30 @@ public class AbstractConfigurationHandlingTest {
         public JsonNode executeRaw(Operation operation) {
             if (content==null)
                 throw new IllegalStateException("Content not yet set");
+
+            Address address = operation.getAddress();
+            if (address!=null && !address.isEmpty()) {
+                // we need to clone the content and then for the result find the right sub-content to put into result and
+                // return this one.
+
+                // find the sub-content we want
+                String[] parts = address.getPath().split("=");
+                String key = parts[0];
+                String val = parts[1];
+                JsonNode result  = content.get("result");
+                JsonNode keyNode = result.get(key);
+                JsonNode valNode = keyNode.get(val);
+
+                // clone the original content
+                ObjectMapper tmpMapper = new ObjectMapper();
+                JsonNode tmp = tmpMapper.createObjectNode();
+                ((ObjectNode)tmp).putAll(((ObjectNode)content));
+
+                // replace the result with the sub-content
+                ((ObjectNode)tmp).put("result",valNode);
+
+                return tmp;
+            }
             return content;
         }
     }

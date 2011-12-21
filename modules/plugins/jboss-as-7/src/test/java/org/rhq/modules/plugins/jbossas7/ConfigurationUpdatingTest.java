@@ -31,6 +31,7 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 
@@ -62,7 +63,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         conf.put(new PropertySimple("needed","test"));
         conf.put(new PropertySimple("optional",null));
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1;
         Operation step1 = cop.step(0);
@@ -89,7 +90,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyList);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -120,7 +121,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyMap);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -148,7 +149,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyMap);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -176,7 +177,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyMap);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -207,7 +208,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         conf.put(propertyList);
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -240,7 +241,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         conf.put(propertyList);
         conf.put(new PropertySimple("port-offset",0));
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 3 : "#Steps should be 3 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -289,7 +290,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         conf.put(propertyList);
         conf.put(new PropertySimple("port-offset",0));
 
-        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, null);
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
 
         assert cop.numberOfSteps() == 5 : "#Steps should be 5 but were " + cop.numberOfSteps();
         Operation step1 = cop.step(0);
@@ -316,5 +317,49 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step3.getAddress().get(0).equals("socket-binding=http");
         assert step4.getAddress().get(0).equals("socket-binding=https");
         assert step5.getAddress().get(0).equals("socket-binding=https");
+    }
+
+    public void test9() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test9");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+
+        conf.put(new PropertySimple("default-virtual-server","hulla")); // this is read-only and must not show up in result
+        conf.put(new PropertySimple("test-prop","Heiko"));
+        conf.put(new PropertySimple("check-interval",23));
+        conf.put(new PropertySimple("disabled",true));
+        conf.put(new PropertySimple("listings",false));
+        conf.put(new PropertySimple("max-depth",17));
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 5 : "#Steps should be 5 but were " + cop.numberOfSteps();
+
+        Operation step1 = cop.step(0);
+        Operation step2 = cop.step(1);
+        Operation step3 = cop.step(2);
+        Operation step4 = cop.step(3);
+        Operation step5 = cop.step(4);
+
+        assert step1.getAddress().isEmpty();
+        assert step2.getAddress().size()==1;
+        assert step3.getAddress().size()==1;
+        assert step4.getAddress().size()==1;
+        assert step5.getAddress().size()==1;
+        assert step2.getAddress().get(0).equals("configuration=jsp-configuration");
+        assert step3.getAddress().get(0).equals("configuration=jsp-configuration");
+        assert step4.getAddress().get(0).equals("configuration=static-resources");
+        assert step5.getAddress().get(0).equals("configuration=static-resources");
+
+        assert step1.getAdditionalProperties().get("name").equals("test-prop");
+        assert step1.getAdditionalProperties().get("value").equals("Heiko");
+        assert step2.getAdditionalProperties().get("name").equals("check-interval");
+        assert step2.getAdditionalProperties().get("value").equals("23");
+
     }
 }

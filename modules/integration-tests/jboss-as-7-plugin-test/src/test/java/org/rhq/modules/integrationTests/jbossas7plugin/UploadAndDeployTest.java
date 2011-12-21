@@ -90,7 +90,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.println("sha: " + bytes_value);
 
         System.out.println();
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
 
         Address deploymentsAddress = new Address("deployment", TEST_WAR);
         Operation op = new Operation("add",deploymentsAddress);
@@ -168,7 +168,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.println("sha: " + bytes_value);
 
         System.out.println();
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
 
 /*
         Address deploymentsAddress = new Address();
@@ -275,7 +275,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         cop.addStep(step2a);
 
 
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
         JsonNode ret = connection.executeRaw(cop);
         System.out.println(ret);
         System.out.flush();
@@ -326,7 +326,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         cop.addStep(step1);
 
 
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
         JsonNode ret = connection.executeRaw(cop);
         System.out.println(ret);
         System.out.flush();

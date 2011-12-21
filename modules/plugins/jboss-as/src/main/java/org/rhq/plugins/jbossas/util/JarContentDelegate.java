@@ -36,6 +36,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.file.ContentFileInfo;
+import org.rhq.core.util.file.JarContentFileInfo;
 
 /**
  * Discovers Jar files as artifacts including loading their manifest version into the artifact config.
@@ -121,6 +123,7 @@ public class JarContentDelegate extends FileContentDelegate {
                 details.setFileSize(file.length());
                 details.setClassification(MIME_TYPE_JAR);
                 details.setSHA256(sha256);
+                details.setDisplayVersion(getDisplayVersion(file));
 
                 details.setExtraProperties(config);
             } catch (IOException e) {
@@ -142,4 +145,17 @@ public class JarContentDelegate extends FileContentDelegate {
         return "[sha256=" + sha256 + "]";
     }
 
+    /**
+     * Retrieve the display version for the component. The display version should be stored
+     * in the manifest of the application (implementation and/or specification version).
+     * It will attempt to retrieve the version for both archived or exploded deployments.
+     *
+     * @param file component file
+     * @return
+     */
+    private String getDisplayVersion(File file) {
+        //JarContentFileInfo extracts the version from archived and exploded deployments
+        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
+        return contentFileInfo.getVersion(null);
+    }
 }

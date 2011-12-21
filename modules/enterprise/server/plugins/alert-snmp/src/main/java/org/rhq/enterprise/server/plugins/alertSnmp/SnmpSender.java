@@ -60,15 +60,29 @@ public class SnmpSender extends AlertSender {
             String platformName = lineage.get(0).getName();
             String conditions = alertManager.prettyPrintAlertConditions(alert, false);
             String alertUrl = alertManager.prettyPrintAlertURL(alert);
+            
+        	
+        	String hierarchy = getResourceHierarchyAsString(lineage);
 
             Date bootTime = new Date(); // TODO: want to use LookupUtil.getCoreServer().getBootTime() but ServiceMBean is not visible
             String result = snmpTrapSender.sendSnmpTrap(alert, alertParameters, platformName, conditions, bootTime,
-                alertUrl);
+                alertUrl, hierarchy);
             return SenderResult.getSimpleSuccess(result);
         } catch (Throwable t) {
             return SenderResult.getSimpleFailure("failed - cause: " + t);
         }
     }
+
+	private String getResourceHierarchyAsString(List<Resource> lineage) {
+		StringBuilder stringBuilder = new StringBuilder();
+		for (Resource resource : lineage) {
+			stringBuilder.append(resource.getName());
+			if (lineage.indexOf(resource) != lineage.size() - 1) {
+				stringBuilder.append("::");
+			}
+		}
+		return stringBuilder.toString();
+	}
 
     @Override
     public String previewConfiguration() {

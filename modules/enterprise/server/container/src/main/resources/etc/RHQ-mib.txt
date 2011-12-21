@@ -11,14 +11,14 @@ IMPORTS
         FROM SNMPv2-TC;
 
 rhqMIB MODULE-IDENTITY
-    LAST-UPDATED    "201010180000Z"
+    LAST-UPDATED    "201112200000Z"
     ORGANIZATION    "RHQ-Project"
     CONTACT-INFO    "http://www.rhq-project.org/"
     DESCRIPTION
         "The MIB module for RHQ alerts.
 
         This file is part of the RHQ management platform
-        Copyright (C) 2005-2010 Red Hat, Inc.
+        Copyright (C) 2005-2011 Red Hat, Inc.
         All rights reserved.
     "
 
@@ -26,6 +26,8 @@ rhqMIB MODULE-IDENTITY
     DESCRIPTION     "Initial version"
     REVISION        "201010180000Z"
     DESCRIPTION     "Better trap support"
+    REVISION        "201112200000Z"
+    DESCRIPTION     "Also emit resource lineage"
     ::= { snmpModules 1 }
 
 jboss       OBJECT IDENTIFIER ::= {enterprises 18016 }
@@ -85,6 +87,14 @@ alertUrl        OBJECT-TYPE
         "The url of the individual alert"
     ::= { alert 6 }
 
+alertHierarchy        OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..1024))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hierarchy of the resource that triggered the alert"
+    ::= { alert 6 }
+
 -- conformance information
 
 snmpMIBConformance
@@ -110,7 +120,8 @@ alertGroup OBJECT-GROUP
                 alertPlatformName,
                 alertCondition,
                 alertSeverity,
-                alertUrl }
+                alertUrl,
+                alertHierarchy }
     STATUS  current
     DESCRIPTION "A collection of objects providing information about an alert"
     ::= { snmpMIBGroups 1 }

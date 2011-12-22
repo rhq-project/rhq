@@ -77,7 +77,6 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
     private static final String[] CHECKED_SCHEMES = { "java" };
 
     private static final Set<InetAddress> SERVER_BIND_IPS;
-    
     static {
         SERVER_BIND_IPS = new HashSet<InetAddress>();
         
@@ -98,9 +97,10 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
             LOG.error("Could not obtain the list of local IPs", e);
         } catch (UnknownHostException e) {
             LOG.error("Failed to get the binding address of the RHQ server.", e);
-        }
-        
+        }        
     }
+    
+    private static final int JNP_PORT = Integer.parseInt(System.getProperty("rhq.server.startup.namingservice.port", "2099"));
     
     /**
      * This is the default initial context factory that is returned when no other is 
@@ -159,10 +159,7 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
                 
                 //check if we are accessing the RHQ server through some remoting
                 //interface.
-                //I just can't find where to read the magic number 1099 from.
-                //it is defined in the jboss config files, but in the code
-                //it seems hardcoded - see JDBCLoginModule.
-                if (uri.getPort() == 1099 && SERVER_BIND_IPS.contains(providerHost)) {                    
+                if (uri.getPort() == JNP_PORT && SERVER_BIND_IPS.contains(providerHost)) {                    
                     return new AccessCheckingInitialContextFactoryDecorator(factory, CHECKED_SCHEMES);
                 } else {
                     return new URLPreferringInitialContextFactoryDecorator(factory);

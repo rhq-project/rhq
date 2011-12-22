@@ -80,6 +80,8 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
 
         // Going forward, we'll need to create this earlier and store the user entered configuration in these
         // objects.  jdobies, Mar 3, 2008
+        // The following code is completely unnecessary as the package version ids are already
+        // stored in session.
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
         int[] packagesVersionsIdsToDeploy = new int[packageIds.length];
         for (int iterator = 0; iterator < packageIds.length; iterator++) {
@@ -92,7 +94,7 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
 
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            contentManager.deployPackages(subject, new int[] { resource.getId() }, new int[] {}, notes);
+            contentManager.deployPackages(subject, new int[] { resource.getId() }, packagesVersionsIdsToDeploy, notes);
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not send deploy request to agent", e);
         }

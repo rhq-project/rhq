@@ -89,18 +89,15 @@
              <h:panelGrid columns="2">
 
                 <h:panelGroup style="float: right">
-                   <b>Version <span class="required-marker-text">*</span></b>
+                   <b>Version</b>
                 </h:panelGroup>
                 <h:panelGroup style="clear: both">
-                   <h:inputText id="updateVersion" value="#{CreateNewPackageUIBean.version}" required="true"/>
-                   <h:message for="updateVersion" styleClass="ValidationErrorText"/>
+                   <h:inputText id="updateVersion" value="#{CreateNewPackageUIBean.version}"/>
                 </h:panelGroup>
 
              </h:panelGrid>
 
          </rich:panel>
-
-         <div class="note-panel"><span class="required-marker-text">*</span><span> denotes a required field.</span></div>
 
          <rich:panel>
 

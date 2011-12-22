@@ -1712,13 +1712,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         packageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         packageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
-        
+
         //populate extra details, persist
         if (packageUploadDetails != null) {
             packageVersion.setFileCreatedDate(Long.valueOf(packageUploadDetails
                 .get(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE)));
             packageVersion.setFileName(packageUploadDetails.get(ContentManagerLocal.UPLOAD_FILE_NAME));
             packageVersion.setMD5(packageUploadDetails.get(ContentManagerLocal.UPLOAD_MD5));
+            packageVersion.setDisplayVersion(packageUploadDetails.get(ContentManagerLocal.UPLOAD_DISPLAY_VERSION));
         }
 
         entityManager.merge(packageVersion);

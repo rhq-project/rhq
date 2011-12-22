@@ -76,6 +76,8 @@ public interface ContentManagerLocal {
 
     public static final String UPLOAD_MD5 = "md5";
 
+    public static final String UPLOAD_DISPLAY_VERSION = "displayVersion";
+
     /**
      * This is currently ignored as the SHA is computed upon
      * persist.

@@ -20,7 +20,7 @@
       <c:if test="<%= new ServerInformation().isFullyDeployed() && request.getRequestURI().indexOf("installer/start") == -1 %>">
       <script type="text/javascript" language="JavaScript">
 
-         var startPage = '/Dashboard.do';
+         var startPage = '/startupstatus';
          var xmlRequest = false;
 
          function doLoad()
@@ -49,7 +49,7 @@
             }
 
             xmlRequest.onreadystatechange = processStateChange;
-            xmlRequest.open('GET', startPage, true);
+            xmlRequest.open('HEAD', startPage, true);
             xmlRequest.send(null);
          }
 

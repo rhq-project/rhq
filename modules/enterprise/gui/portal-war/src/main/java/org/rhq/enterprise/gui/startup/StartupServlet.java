@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.startup;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
@@ -31,6 +32,8 @@ import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
@@ -44,7 +47,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
@@ -65,7 +67,17 @@ import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.*;
+import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
+import org.rhq.enterprise.server.scheduler.jobs.CheckForSuspectedAgentsJob;
+import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutConfigUpdatesJob;
+import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutContentRequestsJob;
+import org.rhq.enterprise.server.scheduler.jobs.CheckForTimedOutOperationsJob;
+import org.rhq.enterprise.server.scheduler.jobs.CloudManagerJob;
+import org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob;
+import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
+import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
+import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
@@ -73,12 +85,28 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
 /**
  * This servlet is ensured to be initialized after the rest of the RHQ Server has been deployed and started.
  * Specifically, we know that at {@link #init()} time, all EJBs have been deployed and available.
+ *
+ * This also accepts requests and responds with information regarding the state of the startup.
  */
 public class StartupServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
     private Log log = LogFactory.getLog(this.getClass());
+
+    private boolean initialized = false;
+
+    /**
+     * This merely returns an HTTP status code to indicate the status of the startup.
+     * Under normal conditions, this will always return a 200 status code.
+     */
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setHeader("Cache-Control", "no-cache, no-store");
+        resp.setHeader("Expires", "-1");
+        resp.setHeader("Pragma", "no-cache");
+        resp.setStatus(initialized ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+    }
 
     /**
      * Performs the final RHQ Server initialization work that needs to talk place. EJBs are available in this method.
@@ -87,6 +115,8 @@ public class StartupServlet extends HttpServlet {
      */
     @Override
     public void init() throws ServletException {
+        initialized = false;
+
         log.info("All business tier deployments are complete - finishing the startup...");
 
         // As a security measure, make sure the installer has been undeployed
@@ -138,6 +168,7 @@ public class StartupServlet extends HttpServlet {
 
         logServerStartedMessage();
 
+        initialized = true;
         return;
     }
 
@@ -339,8 +370,12 @@ public class StartupServlet extends HttpServlet {
 
         try {
             ServerCommunicationsServiceUtil.getService().startCommunicationServices();
-            ServerCommunicationsServiceUtil.getService().getServiceContainer().addCommandListener(
-                new ExternalizableStrategyCommandListener(org.rhq.core.server.ExternalizableStrategy.Subsystem.AGENT));
+            ServerCommunicationsServiceUtil
+                .getService()
+                .getServiceContainer()
+                .addCommandListener(
+                    new ExternalizableStrategyCommandListener(
+                        org.rhq.core.server.ExternalizableStrategy.Subsystem.AGENT));
         } catch (Exception e) {
             throw new ServletException("Cannot start the server-side communications services.", e);
         }
@@ -574,19 +609,19 @@ public class StartupServlet extends HttpServlet {
                     Server server = LookupUtil.getServerManager().getServer();
 
                     if (agentAddress == null || agentAddress.trim().equals("")) {
-                        overrides.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, server
-                            .getAddress());
+                        overrides.setProperty(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS,
+                            server.getAddress());
                     }
                     if (serverAddress == null || serverAddress.trim().equals("")) {
                         overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_ADDRESS, server.getAddress());
                     }
                     if (serverPort == null || serverPort.trim().equals("")) {
                         if (SecurityUtil.isTransportSecure(serverTransport)) {
-                            overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_PORT, Integer.toString(server
-                                .getSecurePort()));
+                            overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_PORT,
+                                Integer.toString(server.getSecurePort()));
                         } else {
-                            overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_PORT, Integer.toString(server
-                                .getPort()));
+                            overrides.setProperty(AgentConfigurationConstants_SERVER_BIND_PORT,
+                                Integer.toString(server.getPort()));
                         }
                     }
 
@@ -684,7 +719,8 @@ public class StartupServlet extends HttpServlet {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         ProductInfo productInfo = LookupUtil.getSystemManager().getProductInfo(overlord);
         log.info("--------------------------------------------------"); // 50 dashes
-        log.info(productInfo.getFullName() + " " + productInfo.getVersion() + " (build " + productInfo.getBuildNumber() + ") Server started.");
+        log.info(productInfo.getFullName() + " " + productInfo.getVersion() + " (build " + productInfo.getBuildNumber()
+            + ") Server started.");
         log.info("--------------------------------------------------"); // 50 dashes
     }
 

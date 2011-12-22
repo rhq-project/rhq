@@ -108,7 +108,11 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         addMember(backButton);
         addMember(headerLabel);
-        addMember(createTagEditor());
+
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            addMember(createTagEditor());
+        }
         addMember(createSummaryForm());
         addMember(tabs);
 
@@ -184,8 +188,8 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         StaticTextItem versionCountItem = new StaticTextItem("versionCount", MSG.view_bundle_list_versionsCount());
         versionCountItem.setValue(bundle.getBundleVersions() != null ? bundle.getBundleVersions().size() : 0);
 
-        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount", MSG
-            .view_bundle_list_destinationsCount());
+        StaticTextItem destinationsCountItem = new StaticTextItem("destinationsCount",
+            MSG.view_bundle_list_destinationsCount());
         destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
 
         StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());

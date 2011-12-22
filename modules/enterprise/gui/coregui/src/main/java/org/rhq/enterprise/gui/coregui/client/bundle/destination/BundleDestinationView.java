@@ -101,7 +101,12 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
 
         addMember(backButton);
         addMember(header);
-        addMember(createTagEditor());
+
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            addMember(createTagEditor());
+        }
+
         addMember(createSummaryForm());
         addMember(createDeploymentsTable());
         addMember(detail);
@@ -223,8 +228,8 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                                         new Message(MSG.view_bundle_dest_purgeSuccessful(destination.getName()),
                                             Message.Severity.Info));
                                     // Bundle destination is purged, go back to bundle destination view
-                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), destination
-                                        .getId()), true);
+                                    CoreGUI.goToView(
+                                        LinkManager.getBundleDestinationLink(bundle.getId(), destination.getId()), true);
                                 }
                             });
                         }

@@ -430,7 +430,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
         assert config!=null;
-        assert config.getProperties().size()==5 : "Got " + config.getProperties().size() + " props instead of 5";
+        assert config.getProperties().size()==5 : "Got " + config.getProperties().size() + " props instead of 5: " + config.getProperties().toString();
         PropertySimple simple = config.getSimple("check-interval");
         assert simple !=null;
         Integer integerValue = simple.getIntegerValue();

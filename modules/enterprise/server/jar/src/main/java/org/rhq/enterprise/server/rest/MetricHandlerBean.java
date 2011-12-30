@@ -18,18 +18,34 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.URI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.sql.DataSource;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -38,6 +54,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
@@ -45,9 +62,13 @@ import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
@@ -55,6 +76,7 @@ import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 
 /**
  * Deal with metrics
@@ -62,6 +84,7 @@ import org.rhq.enterprise.server.rest.domain.MetricSchedule;
  */
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MetricHandlerBean  extends AbstractRestBean implements MetricHandlerLocal {
 
     @EJB
@@ -70,6 +93,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     MeasurementScheduleManagerLocal scheduleManager;
     @EJB
     ResourceManagerLocal resMgr;
+
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource rhqDs;
+
 
     private static final long EIGHT_HOURS = 8 * 3600L * 1000L;
 
@@ -87,20 +114,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             startTime = endTime - EIGHT_HOURS;
         }
 
-
-        MeasurementSchedule schedule;
-        schedule = getFromCache(scheduleId,MeasurementSchedule.class);
-        if (schedule==null) {
-            schedule = scheduleManager.getScheduleById(caller,scheduleId);
-            if (schedule==null) {
-                throw new StuffNotFoundException("Schedule with id " + scheduleId);
-            }
-            else
-                putToCache(scheduleId,MeasurementSchedule.class,schedule);
-        }
-
-        if (schedule.getDefinition().getDataType()!= DataType.MEASUREMENT)
-            throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a (numerical) metric");
+        MeasurementSchedule schedule = obtainSchedule(scheduleId);
 
         MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
         MetricAggregate res = new MetricAggregate(scheduleId, aggr.getMin(),aggr.getAvg(),aggr.getMax());
@@ -156,6 +170,28 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return builder.build();
     }
 
+    /**
+     * Get the schedule for the passed schedule id
+     * @param scheduleId id to look up
+     * @return schedule
+     * @throws StuffNotFoundException if there is no schedule with the passed id
+     */
+    private MeasurementSchedule obtainSchedule(int scheduleId) {
+        MeasurementSchedule schedule;
+        schedule = getFromCache(scheduleId,MeasurementSchedule.class);
+        if (schedule==null) {
+            schedule = scheduleManager.getScheduleById(caller,scheduleId);
+            if (schedule==null) {
+                throw new StuffNotFoundException("Schedule with id " + scheduleId);
+            }
+            else
+                putToCache(scheduleId,MeasurementSchedule.class,schedule);
+        }
+
+        if (schedule.getDefinition().getDataType()!= DataType.MEASUREMENT)
+            throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a (numerical) metric");
+        return schedule;
+    }
     private MetricAggregate fill(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list, int scheduleId,
                                  boolean hideEmpty) {
         long minTime=Long.MAX_VALUE;
@@ -180,7 +216,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return res;
     }
 
-    @Override
     @GET
     @Path("data")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_HTML})
@@ -381,5 +416,140 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 schedule.isEnabled(),schedule.getInterval(),def.getUnits().toString(),def.getDataType().toString());
 
         return Response.ok(ret,httpHeaders.getAcceptableMediaTypes().get(0)).build();
+    }
+
+    @GET
+    @Path("data/{scheduleId}/raw")
+    public StreamingOutput getMetricDataRaw(@PathParam("scheduleId") int scheduleId,
+                                            @QueryParam("startTime") long startTime,
+                                            @QueryParam("endTime") long endTime,
+                                            long duration,
+                                            Request request,
+                                            HttpHeaders headers) {
+
+
+        if (endTime==0)
+            endTime = System.currentTimeMillis();
+        if (startTime==0)
+            startTime = endTime - EIGHT_HOURS;
+        if (duration>0) // overrides start time
+            startTime = endTime - duration*1000L; // duration is in seconds
+
+        if (startTime < System.currentTimeMillis()-7L*86400*1000)
+            throw new IllegalArgumentException("Start time is older than 7 days");
+
+        // Check if the schedule exists
+        obtainSchedule(scheduleId);
+
+        RawNumericJsonStreamingOutput so = new RawNumericJsonStreamingOutput();
+        so.scheduleId = scheduleId;
+        so.startTime = startTime;
+        so.endTime = endTime;
+
+
+        return so;
+    }
+
+    @Override
+    @PUT
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Path("data/{scheduleId}/raw/{timeStamp}")
+    public Response putMetricValue(@PathParam("scheduleId") int scheduleId, @PathParam("timeStamp") long timestamp,
+                                   NumericDataPoint point, @Context HttpHeaders headers) {
+
+        MeasurementSchedule schedule = obtainSchedule(scheduleId);
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
+        data.add(new MeasurementDataNumeric(point.getTimeStamp(),scheduleId,point.getValue()));
+
+        dataManager.addNumericData(data);
+
+        return Response.ok().build(); // TODO correct code?
+    }
+
+
+    @Override
+    @POST
+    @Path("data/raw")
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response postMetricValues(Collection<NumericDataPoint> points, @Context HttpHeaders headers) {
+
+        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(points.size());
+        for (NumericDataPoint point : points) {
+            data.add(new MeasurementDataNumeric(point.getTimeStamp(), point.getScheduleId(),point.getValue()));
+        }
+
+        dataManager.addNumericData(data);
+
+        return Response.ok().build();
+
+    }
+
+    /**
+     * Write the numeric data points to the output stream in JSON encoding
+     * without creating tons of objects in the middle to have them marshalled
+     * by JAX-RS
+     */
+    private class RawNumericJsonStreamingOutput implements StreamingOutput {
+
+        int scheduleId;
+        long startTime;
+        long endTime;
+
+        @Override
+        public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+
+            String[] tables = MeasurementDataManagerUtility.getTables(startTime,endTime);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0 ; i < tables.length ; i ++) {
+                sb.append("SELECT time_stamp,value FROM ");
+                sb.append(tables[i]);
+                sb.append(" WHERE schedule_id = ? AND time_stamp BETWEEN ? AND ?");
+                if (i < tables.length-1)
+                    sb.append(" UNION ALL ");
+            }
+
+
+
+
+            Connection connection = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+            try {
+                connection = rhqDs.getConnection();
+                ps = connection.prepareStatement( sb.toString() );
+                for (int i = 0; i < tables.length ; i++) {
+                    ps.setInt(i * 3 + 1, scheduleId);
+                    ps.setLong(i*3+2,startTime);
+                    ps.setLong(i*3+3,endTime);
+                }
+                rs = ps.executeQuery();
+
+                PrintWriter pw = new PrintWriter(outputStream);
+                pw.println("[");
+                while (rs.next()) {
+                    pw.print("{");
+                    pw.print("\"scheduleId\":");
+                    pw.print(scheduleId);
+                    pw.print(", ");
+                    pw.print("\"timeStamp\":");
+                    pw.print(rs.getLong(1));
+                    pw.print(", ");
+                    pw.print("\"value\":");
+                    pw.print(rs.getLong(2));
+                    pw.print("}");
+                    if (!rs.isLast())
+                        pw.print(",\n");
+                }
+                pw.println("]");
+                pw.flush();
+                pw.close();
+            } catch (SQLException e) {
+                log.error(e);
+            } finally {
+                JDBCUtil.safeClose(connection, ps, rs);
+            }
+        }
     }
 }

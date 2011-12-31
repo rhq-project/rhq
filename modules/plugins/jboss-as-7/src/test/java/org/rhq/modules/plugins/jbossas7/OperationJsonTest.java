@@ -59,6 +59,7 @@ public class OperationJsonTest {
         assert op!=null;
         assert op.getOperation()!=null : "op.operation was null!";
         assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
+        assert op.getName()!=null : "op.getName is null";
         assert op.getName().equals("socket-binding") : "attribute name  is " + op.getName() + " and not 'socket-binding'";
         assert op.getValue().equals("jndi") : "attribute value  is " + op.getValue();
         assert op.getAddress().size()==2 : "Address did not contain 2 parts, but " + op.getAddress().size();

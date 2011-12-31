@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -430,7 +431,8 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
         assert config!=null;
-        assert config.getProperties().size()==5 : "Got " + config.getProperties().size() + " props instead of 5: " + config.getProperties().toString();
+        Collection<Property> properties = config.getProperties();
+        assert properties.size()==6 : "Got " + properties.size() + " props instead of 6: " + properties.toString();
         PropertySimple simple = config.getSimple("check-interval");
         assert simple !=null;
         Integer integerValue = simple.getIntegerValue();

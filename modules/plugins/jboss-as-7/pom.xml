@@ -16,7 +16,7 @@
 
     <properties>
         <json.version>${project.json.version}</json.version>
-        <jackson.version>1.9.3</jackson.version>
+        <jackson.version>1.7.4</jackson.version>
         <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
     </properties>
 

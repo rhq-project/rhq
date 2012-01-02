@@ -510,6 +510,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                     sb.append(" UNION ALL ");
             }
 
+            sb.append(" ORDER BY time_stamp ASC");
 
 
 

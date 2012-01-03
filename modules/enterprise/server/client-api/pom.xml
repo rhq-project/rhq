@@ -17,15 +17,35 @@
 
     <properties>
         <persistence-api.version>1.0</persistence-api.version>
+        <rhq.server.datasource>java:/RHQDS</rhq.server.datasource>
+        <rhq.server.ds-mapping>PostgreSQL</rhq.server.ds-mapping>
+        
+        <!-- dependency versions -->
+        <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+        
+        <clean.db>true</clean.db>
     </properties>
 
     <dependencies>
+    
+      <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
+           reasons.  Maven orders the [test] classpath in the order listed in the pom.  We specifically
+           need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
+           loaded when testing.  -->
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>jboss-ejb3-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+    
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-script-bindings</artifactId>
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>javax.persistence</groupId>
             <artifactId>persistence-api</artifactId>
@@ -40,20 +60,333 @@
                 section. -->
             <scope>provided</scope>
         </dependency>
+        
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-ejb3x</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+      
+      <!-- Test deps - this insane list of deps is needed to get the embedded JBoss server with RHQ server deployed running -->
+      
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>test-utils</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-enterprise-server</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+      </dependency>  
+       
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-enterprise-server</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+      </dependency>  
+       
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-container-lib</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>hibernate</groupId>
+         <artifactId>hibernate3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.geronimo.specs</groupId>
+         <artifactId>geronimo-javamail_1.3.1_spec</artifactId>
+         <!-- The Sun javamail jar isn't available from a public repo due to licensing issues,
+              so use the Geronimo one instead. -->
+         <version>1.3</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>servlet-api</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>jsp-api</artifactId>
+         <version>2.0</version>
+         <scope>test</scope>
+      </dependency>
+
+      
+      <dependency>
+         <groupId>org.opensymphony.quartz</groupId>
+         <artifactId>quartz</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.opensymphony.quartz</groupId>
+         <artifactId>quartz-oracle</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-annotations-ejb3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-cache</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-common</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <!-- includes the org.jboss.ejb3.StrictMaxPool class, which is needed by the PoolClass annotation used on some
+           of our SLSB's -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-ejb3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-j2ee</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-jmx</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-system</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbosssx</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbpm</artifactId>
+         <version>3.1.1</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>antlr</groupId>
+         <artifactId>antlr</artifactId>
+         <version>2.7.7</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>javassist</groupId>
+         <artifactId>javassist</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>trove</groupId>
+         <artifactId>trove</artifactId>
+         <version>1.0.2</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>xerces</groupId>
+         <artifactId>xercesImpl</artifactId>
+         <version>2.8.1</version>
+         <scope>test</scope>
+      </dependency>
+
+       <dependency>
+           <groupId>net.sf.opencsv</groupId>
+           <artifactId>opencsv</artifactId>
+           <version>1.8</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>commons-jxpath</groupId>
+           <artifactId>commons-jxpath</artifactId>
+           <version>1.3</version>
+           <scope>test</scope>
+       </dependency>
+
+      <!-- for the transaction interrupt EJB3 interceptor -->
+      <dependency>
+         <groupId>org.jboss.transaction</groupId>
+         <artifactId>jboss-jta</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency> 
+      
+      <dependency>
+         <groupId>tomcat</groupId>
+         <artifactId>catalina</artifactId>
+         <version>5.5.20</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>tomcat</groupId>
+         <artifactId>tomcat-jk</artifactId>
+         <version>4.1.31</version>
+         <scope>test</scope>
+      </dependency>
+
+      <!-- Needed by com.jboss.jbossnetwork.apl.actions.xml.XPathProcessor; TODO: Remove once APL has been excised. -->
+      <dependency>
+         <groupId>xalan</groupId>
+         <artifactId>xalan</artifactId>
+         <version>2.5.1</version>
+         <scope>test</scope>
+      </dependency>
+
+       <dependency>
+           <groupId>com.jcraft</groupId>
+           <artifactId>jsch</artifactId>
+           <version>0.1.29</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxrs</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>test</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jettison-provider</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>test</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-links</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>test</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.el</groupId>
+           <artifactId>jboss-el</artifactId>
+           <version>2.0.1.GA</version>
+           <scope>test</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.freemarker</groupId>
+           <artifactId>freemarker</artifactId>
+           <version>2.3.18</version>
+           <scope>test</scope>
+       </dependency>
+                
     </dependencies>
 
     <build>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
+
         <plugins>
 
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                    <!-- <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE 
-                        -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
+             <plugin>
+               <artifactId>maven-surefire-plugin</artifactId>
+                <!-- Everything but the web service tests, this is the standard test execution -->
+               <configuration>
+                   <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                   <groups>${rhq.testng.includedGroups}</groups>
+                   <systemPropertyVariables>
+                      <embeddedDeployment>true</embeddedDeployment>
+                      <deploymentDirectory>target/test-classes</deploymentDirectory>
+                      <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                      <clean.db>${clean.db}</clean.db>
+                   </systemPropertyVariables>
+                   <argLine>-Djava.security.manager -Djava.security.policy==target/test-classes/security.policy</argLine>
+                   <additionalClasspathElements>
+                      <!-- The below is required for tests to run against Oracle. -->
+                      <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                   </additionalClasspathElements>
                 </configuration>
-            </plugin>
+             </plugin>
 
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <!--  in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
+               <execution>
+                  <id>Extract JMS classes from RAR needed for JMS tests</id>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <unzip src="src/test/resources/jms-ra.rar" dest="target">
+                           <patternset>
+                              <include name="jms-ra.jar"/>
+                           </patternset>
+                        </unzip>
+                        <unzip src="target/jms-ra.jar" dest="target/test-classes">
+                           <patternset>
+                              <include name="org/**"/>
+                           </patternset>
+                        </unzip>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+            </executions>
+         </plugin>
         </plugins>
     </build>
 

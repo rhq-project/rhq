@@ -69,6 +69,7 @@ public interface ContentManagerRemote {
         @WebParam(name = "packageName") String packageName, //
         @WebParam(name = "packageTypeId") int packageTypeId, //
         @WebParam(name = "version") String version, //
+        @WebParam(name = "displayVersion") String displayVersion, //
         @WebParam(name = "architectureId") Integer architectureId, //
         @WebParam(name = "packageBytes") byte[] packageBytes);
 

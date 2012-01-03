@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -760,7 +759,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             architecture = (Architecture) q.getSingleResult();
         }
         PackageVersion packageVersion = contentManager.createPackageVersion(subject, name, packageType.getId(),
-            version, architecture.getId(), fileStream);
+            version, null, architecture.getId(), fileStream);
 
         // set the PackageVersion's filename to the bundleFile name, it's left null by default
         packageVersion.setFileName(name);

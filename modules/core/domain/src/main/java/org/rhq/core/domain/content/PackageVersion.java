@@ -71,7 +71,8 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + " WHERE pv.generalPackage.name = :packageName " //
         + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //
-        + "   AND pv.sha256 = :sha "),
+        + "   AND pv.sha256 = :sha "
+        + " ORDER BY pv.id DESC "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),

@@ -22,7 +22,6 @@ package org.rhq.jndi;
 import java.util.Hashtable;
 
 import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
@@ -31,8 +30,7 @@ import javax.naming.spi.InitialContextFactory;
  * backed by the wrapped initial context factory.
  * <p>
  * This is to support contexts that don't need to be secured, yet we need to make sure to
- * break the call-chain loop caused by the {@link InitialContext} asking the RHQ's {@link AccessCheckingInitialContextFactoryBuilder} for
- * default contexts. 
+ * re-enable lookup of scheme-based names.
  *
  * @author Lukas Krejci
  */

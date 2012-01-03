@@ -35,17 +35,18 @@ import javax.naming.spi.NamingManager;
  * <p>
  * This is important because RHQ server has its own initial context factory
  * builder that creates factories that in turn create contexts. If the default
- * {@link InitialContext} implementation was used, we'd end up with a stack overflow
- * error caused by the callchain loop when the {@link InitialContext} would ask
- * the builder for a factory that would create another context that would ask the
- * builder for the factory, etc. ad infinitum. 
+ * {@link InitialContext} implementation was used, we'd never be able to lookup
+ * scheme-based names because the default implementation of the {@link InitialContext}
+ * always uses the default context of the builder if one is installed no matter 
+ * the scheme in the name. 
  * <p>
- * This class prevents that by acting exactly like the InitialContext would if
- * the initial context factory builder wasn't installed. This enables the callers
- * to still use the standard InitialContext when doing lookups etc. This standard
- * initial context will ask our initial context factory builder which will then
- * in chain create this {@link URLPreferringContext} that behaves like the original
- * InitialContext would if the builder wasn't there.
+ * The {@link AccessCheckingInitialContextFactoryBuilder} wraps the context returned
+ * by the factory in an instance of this class and thus is restoring the original
+ * intended behavior of the {@link InitialContext}. It looks at the name being looked
+ * up (bound or whatever) and prefers to use the URL context factories if the name
+ * contains the scheme (as does the {@link InitialContext} if no builder is installed).
+ * If the name doesn't contain a scheme, the provided default context factory is used to 
+ * look up the name.
  * 
  * @author Lukas Krejci
  */

@@ -1,5 +1,5 @@
 /** Jopr Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
     private static final List<String> EMS_ATTRIBUTE_DOC_BASE = Arrays.asList(new String[] { "docBase" });
     private static final List<String> EMS_ATTRIBUTE_PATH = Arrays.asList(new String[] { "path" });
     /** The name MBean attribute for each application is of the form "Tomcat WAR (//vHost/contextRoot)". */
-    private static final Pattern PATTERN_NAME = Pattern.compile("//(.*)(/.*)");
+    private static final Pattern PATTERN_NAME = Pattern.compile("^//([^/]+)(.*)$");
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
     private final Log log = LogFactory.getLog(this.getClass());

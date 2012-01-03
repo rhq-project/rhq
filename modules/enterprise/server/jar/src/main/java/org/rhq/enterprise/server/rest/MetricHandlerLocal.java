@@ -119,7 +119,7 @@ public interface MetricHandlerLocal {
      */
     @GET
     @Path("data/{scheduleId}/raw")
-    @Produces({MediaType.APPLICATION_JSON})
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     StreamingOutput getMetricDataRaw(@PathParam("scheduleId") int scheduleId,
                                      @QueryParam("startTime") long startTime,
                                      @QueryParam("endTime") long endTime,
@@ -133,15 +133,17 @@ public interface MetricHandlerLocal {
      * @param timestamp Timestamp of the entry
      * @param point Datapoint of class NumericDataPoint
      * @param headers Injected HTTP headers
+     * @param uriInfo Injected info about the uri
      * @return
      */
     @PUT
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @Path("data/{scheduleId}/raw/{timeStamp}")
-    Response putMetricValue(@PathParam("scheduleId")int scheduleId,
-                            @PathParam("timeStamp")long timestamp, NumericDataPoint point,
-                            @Context HttpHeaders headers);
+    Response putMetricValue(@PathParam("scheduleId") int scheduleId,
+                            @PathParam("timeStamp") long timestamp, NumericDataPoint point,
+                            @Context HttpHeaders headers,
+                            @Context UriInfo uriInfo);
 
     /**
      * Submit a series of (numerical) metric values to the server

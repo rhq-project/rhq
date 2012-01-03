@@ -123,30 +123,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
                 schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, dataPoints);
 
-/*
-        long minTime=Long.MAX_VALUE;
-        long maxTime=0;
-*/
-
         if (!listList.isEmpty()) {
             List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
-/*
-            for (MeasurementDataNumericHighLowComposite c : list) {
-                long timestamp = c.getTimestamp();
-                if (!Double.isNaN(c.getValue()) || !hideEmpty) {
-                    MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
-                    res.addDataPoint(dp);
-                }
-                if (timestamp <minTime)
-                    minTime= timestamp;
-                if (timestamp >maxTime)
-                    maxTime= timestamp;
-            }
-            res.setNumDataPoints(list.size());
-        }
-        res.setMaxTimeStamp(maxTime);
-        res.setMinTimeStamp(minTime);
-*/
             fill(res, list,scheduleId,hideEmpty);
         }
 
@@ -155,7 +133,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         cc.setMaxAge(maxAge); // these are seconds
         cc.setPrivate(false);
         cc.setNoCache(false);
-
 
         Response.ResponseBuilder builder;
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
@@ -224,6 +201,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                        @QueryParam("hideEmpty") boolean hideEmpty, @Context Request request,
                                        @Context HttpHeaders headers) {
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
         if (startTime==0) {
             endTime = System.currentTimeMillis();
             startTime = endTime - EIGHT_HOURS;
@@ -259,7 +238,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         GenericEntity<List<MetricAggregate>> metAgg = new GenericEntity<List<MetricAggregate>>(resList) {};
 
-        return Response.ok(metAgg).build();
+        return Response.ok(metAgg,mediaType).build();
 
     }
 
@@ -275,8 +254,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
      */
     public Response getSchedule(int scheduleId, Request request, HttpHeaders headers, UriInfo uriInfo) {
 
-        MeasurementSchedule schedule=null;
-        Response.ResponseBuilder builder=null;
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        MeasurementSchedule schedule;
+        Response.ResponseBuilder builder;
 
         // Create a cache control
         CacheControl cc = new CacheControl();
@@ -351,9 +332,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             Link updateLink = new Link("edit",uri.toString());
             metricSchedule.addLink(updateLink);
 
-            // What media type does the user request?
-            MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-
             if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
                 builder = Response.ok(renderTemplate("metricSchedule", metricSchedule), mediaType);
             }
@@ -427,6 +405,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                             Request request,
                                             HttpHeaders headers) {
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
         if (endTime==0)
             endTime = System.currentTimeMillis();
@@ -441,10 +420,11 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         // Check if the schedule exists
         obtainSchedule(scheduleId);
 
-        RawNumericJsonStreamingOutput so = new RawNumericJsonStreamingOutput();
+        RawNumericStreamingOutput so = new RawNumericStreamingOutput();
         so.scheduleId = scheduleId;
         so.startTime = startTime;
         so.endTime = endTime;
+        so.mediaType = mediaType;
 
 
         return so;
@@ -456,8 +436,9 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Path("data/{scheduleId}/raw/{timeStamp}")
     public Response putMetricValue(@PathParam("scheduleId") int scheduleId, @PathParam("timeStamp") long timestamp,
-                                   NumericDataPoint point, @Context HttpHeaders headers) {
+                                   NumericDataPoint point, @Context HttpHeaders headers, UriInfo uriInfo) {
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         MeasurementSchedule schedule = obtainSchedule(scheduleId);
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
@@ -465,7 +446,13 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         dataManager.addNumericData(data);
 
-        return Response.ok().build(); // TODO correct code?
+        UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/metric/data/{scheduleId}/raw");
+        uriBuilder.queryParam("startTime",timestamp);
+        uriBuilder.queryParam("endTime",timestamp);
+        URI uri = uriBuilder.build(scheduleId);
+
+        return Response.created(uri).type(mediaType).build();
     }
 
 
@@ -475,6 +462,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postMetricValues(Collection<NumericDataPoint> points, @Context HttpHeaders headers) {
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(points.size());
         for (NumericDataPoint point : points) {
             data.add(new MeasurementDataNumeric(point.getTimeStamp(), point.getScheduleId(),point.getValue()));
@@ -482,7 +470,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         dataManager.addNumericData(data);
 
-        return Response.ok().build();
+        return Response.noContent().type(mediaType).build();
 
     }
 
@@ -491,11 +479,12 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
      * without creating tons of objects in the middle to have them marshalled
      * by JAX-RS
      */
-    private class RawNumericJsonStreamingOutput implements StreamingOutput {
+    private class RawNumericStreamingOutput implements StreamingOutput {
 
         int scheduleId;
         long startTime;
         long endTime;
+        MediaType mediaType;
 
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
@@ -528,22 +517,38 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 rs = ps.executeQuery();
 
                 PrintWriter pw = new PrintWriter(outputStream);
-                pw.println("[");
-                while (rs.next()) {
-                    pw.print("{");
-                    pw.print("\"scheduleId\":");
-                    pw.print(scheduleId);
-                    pw.print(", ");
-                    pw.print("\"timeStamp\":");
-                    pw.print(rs.getLong(1));
-                    pw.print(", ");
-                    pw.print("\"value\":");
-                    pw.print(rs.getLong(2));
-                    pw.print("}");
-                    if (!rs.isLast())
-                        pw.print(",\n");
+
+                if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                    pw.println("[");
+                    while (rs.next()) {
+                        pw.print("{");
+                        pw.print("\"scheduleId\":");
+                        pw.print(scheduleId);
+                        pw.print(", ");
+                        pw.print("\"timeStamp\":");
+                        pw.print(rs.getLong(1));
+                        pw.print(", ");
+                        pw.print("\"value\":");
+                        pw.print(rs.getDouble(2));
+                        pw.print("}");
+                        if (!rs.isLast())
+                            pw.print(",\n");
+                    }
+                    pw.println("]");
                 }
-                pw.println("]");
+                else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
+                    pw.println("<collection>");
+                    while(rs.next()) {
+                        pw.print("  <numericDataPoint scheduleId=\"");
+                        pw.print(scheduleId);
+                        pw.print("\" timeStamp=\"");
+                        pw.print(rs.getLong(1));
+                        pw.print("\" value=\"");
+                        pw.print(rs.getDouble(2));
+                        pw.println("\"/>");
+                    }
+                    pw.println("</collection>");
+                }
                 pw.flush();
                 pw.close();
             } catch (SQLException e) {

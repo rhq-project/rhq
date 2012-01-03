@@ -18,12 +18,16 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
+import org.rhq.enterprise.server.rest.domain.RHQErrorWrapper;
 
 /**
  * Map a NotFoundException to a HTTP response with respective error message
@@ -32,9 +36,13 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 @Provider
 public class CustomExceptionMapper implements ExceptionMapper<Exception> {
 
+    @Context
+    HttpHeaders httpHeaders;
 
     @Override
     public Response toResponse(Exception e) {
+
+
 
         Throwable cause = e.getCause();
         Response.ResponseBuilder builder;
@@ -52,7 +60,8 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
                 status = Response.Status.SERVICE_UNAVAILABLE;
 
             builder = Response.status(status);
-            builder.entity(cause.getMessage());
+            String message = cause.getMessage();
+            wrapMessage(builder, message);
         }
         else {
             if (e instanceof PermissionException) {
@@ -60,9 +69,30 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
             } else {
                 builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
             }
-            if (e.getMessage()!=null)
-                builder.entity(e.getMessage());
+            if (e.getMessage()!=null) {
+                wrapMessage(builder,e.getMessage());
+            }
         }
         return builder.build();
+    }
+
+    /**
+     * Wrap the passed message according to the mediaType from the HttpHeader
+     * @param builder
+     * @param message
+     */
+    private void wrapMessage(Response.ResponseBuilder builder, String message) {
+
+        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+
+        if (mediaType.equals(MediaType.TEXT_PLAIN_TYPE)) {
+            builder.entity(message);
+        } else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+            builder.entity("<html><body><h1>Error</h1><h2>" + message + "</h2></body></html>");
+        } else {
+            RHQErrorWrapper error = new RHQErrorWrapper(message);
+            builder.entity(error);
+        }
+        builder.type(mediaType);
     }
 }

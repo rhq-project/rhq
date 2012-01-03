@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javassist.util.proxy.MethodHandler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import javassist.util.proxy.MethodHandler;
 
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
@@ -505,7 +505,7 @@ public class ResourceClientProxy {
             return remoteClient.getContentManager().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
         }
 
-        public void updateBackingContent(String filename) {
+        public void updateBackingContent(String filename, String contentVersion) {
             File file = new File(filename);
             if (!file.exists()) {
                 throw new IllegalArgumentException("File not found: " + file.getAbsolutePath());
@@ -524,7 +524,7 @@ public class ResourceClientProxy {
                 LOG.error("Message digest for the package bits failed.", e);
             }
 
-            String version = "[sha256="+sha+"]";
+            String packageVersion = "[sha256="+sha+"]";
 
             InstalledPackage oldPackage = getBackingContent();
 
@@ -533,7 +533,8 @@ public class ResourceClientProxy {
                         remoteClient.getSubject(),
                         oldPackage.getPackageVersion().getGeneralPackage().getName(),
                         oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
-                        version,
+                        packageVersion,
+                        contentVersion,
                         oldPackage.getPackageVersion().getArchitecture().getId(),
                         fileContents);
 
@@ -644,7 +645,7 @@ public class ResourceClientProxy {
         public InstalledPackage getBackingContent();
 
 
-        public void updateBackingContent(String fileName);
+        public void updateBackingContent(String fileName, String contentVersion);
 
 
         public void retrieveBackingContent(String fileName) throws IOException;

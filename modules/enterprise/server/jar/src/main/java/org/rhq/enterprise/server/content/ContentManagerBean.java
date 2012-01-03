@@ -93,7 +93,6 @@ import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -1234,7 +1233,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
-    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
+    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version, String displayVersion,
         Integer architectureId, byte[] packageBytes) {
 
         // Check permissions first
@@ -1243,13 +1242,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to create package versions");
         }
 
-        return createPackageVersion(subject, packageName, packageTypeId, version, (null == architectureId) ? getNoArchitecture()
+        return createPackageVersion(subject, packageName, packageTypeId, version, displayVersion, (null == architectureId) ? getNoArchitecture()
                 .getId() : architectureId, new ByteArrayInputStream(packageBytes));
     }
 
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String version, int architectureId, InputStream packageBitStream) {
+        String version, String displayVersion, int architectureId, InputStream packageBitStream) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
         packageVersionQuery.setParameter("name", packageName);
@@ -1260,7 +1259,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Result of the query should be either 0 or 1
         List existingVersionList = packageVersionQuery.getResultList();
         if (existingVersionList.size() > 0) {
-            return (PackageVersion) existingVersionList.get(0);
+            PackageVersion existingPackageVersion = (PackageVersion) existingVersionList.get(0);
+            if (displayVersion != null && !displayVersion.trim().isEmpty()) {
+                existingPackageVersion.setDisplayVersion(displayVersion);
+                existingPackageVersion = persistOrMergePackageVersionSafely(existingPackageVersion);
+            }
+
+            return existingPackageVersion;
         }
 
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
@@ -1315,6 +1320,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion.setPackageBits(bits);
         newPackageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         newPackageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
+        newPackageVersion.setDisplayVersion(displayVersion);
         
         existingPackage.addVersion(newPackageVersion);
 

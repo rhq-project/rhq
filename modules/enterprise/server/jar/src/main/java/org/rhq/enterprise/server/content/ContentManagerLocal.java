@@ -240,7 +240,7 @@ public interface ContentManagerLocal {
      *         one was found
      */
     PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        int architectureId, InputStream packageBitStream);
+        String displayVersion, int architectureId, InputStream packageBitStream);
 
     /**
      * This method is essentially the same as {@link #createPackageVersion(Subject, String, int, String, int, InputStream)}
@@ -350,7 +350,7 @@ public interface ContentManagerLocal {
      * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
      */
     PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        Integer architectureId, byte[] packageBytes);
+        String displayVersion, Integer architectureId, byte[] packageBytes);
 
     /**
      * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}

@@ -447,12 +447,12 @@ public class MeasurementDataManagerUtility {
         return tables;
     }
 
-    /** 
+    /**
      * The raw tables starting at the specified index. Can be useful for getting the tables in a necessary time order (like
      * oldest data first.
-     * 
-     * @param startIndex >= 0. If >= TABLE_COUNT normalized via modulo. 
-     * @return Array of raw table names starting with the table with the specified index. 
+     *
+     * @param startIndex >= 0. If >= TABLE_COUNT normalized via modulo.
+     * @return Array of raw table names starting with the table with the specified index.
      */
     public static String[] getAllRawTables(int startIndex) {
         String[] tables = new String[TABLE_COUNT];
@@ -465,9 +465,13 @@ public class MeasurementDataManagerUtility {
     }
 
     public static String[] getTables(long beginTime, long endTime) {
+        return getTables(beginTime, endTime,  System.currentTimeMillis());
+    }
+
+    public static String[] getTables(long beginTime, long endTime, long now) {
         List<String> tables = new ArrayList<String>();
 
-        long now = System.currentTimeMillis();
+
         if ((now - RAW_PURGE) < beginTime) {
             int startIndex = getTableIndex(beginTime);
             int endIndex = getTableIndex(endTime);

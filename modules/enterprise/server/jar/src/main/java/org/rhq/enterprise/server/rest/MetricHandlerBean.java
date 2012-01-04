@@ -407,14 +407,15 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
+        long now = System.currentTimeMillis();
         if (endTime==0)
-            endTime = System.currentTimeMillis();
+            endTime = now;
         if (startTime==0)
             startTime = endTime - EIGHT_HOURS;
         if (duration>0) // overrides start time
             startTime = endTime - duration*1000L; // duration is in seconds
 
-        if (startTime < System.currentTimeMillis()-7L*86400*1000)
+        if (startTime < now -7L*86400*1000)
             throw new IllegalArgumentException("Start time is older than 7 days");
 
         // Check if the schedule exists
@@ -425,6 +426,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         so.startTime = startTime;
         so.endTime = endTime;
         so.mediaType = mediaType;
+        so.now = now-1; // pass this so that the for the 7days case is still handled from raw tables.
 
 
         return so;
@@ -484,12 +486,13 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         int scheduleId;
         long startTime;
         long endTime;
+        long now;
         MediaType mediaType;
 
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
 
-            String[] tables = MeasurementDataManagerUtility.getTables(startTime,endTime);
+            String[] tables = MeasurementDataManagerUtility.getTables(startTime,endTime,now);
             StringBuilder sb = new StringBuilder();
             for (int i = 0 ; i < tables.length ; i ++) {
                 sb.append("SELECT time_stamp,value FROM ");

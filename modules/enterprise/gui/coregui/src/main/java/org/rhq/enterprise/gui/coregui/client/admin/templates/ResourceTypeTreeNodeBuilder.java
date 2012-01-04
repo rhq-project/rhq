@@ -25,6 +25,7 @@ import java.util.Set;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
@@ -118,8 +119,7 @@ public abstract class ResourceTypeTreeNodeBuilder {
                                     boolean isPlatform = (parentType.getCategory() == ResourceCategory.PLATFORM && isEmpty(parentType
                                         .getParentResourceTypes()));
                                     if (!isPlatform || !gotPlatform) {
-                                        treeNodes
-                                            .add(getTreeNodeInstance(composite, String.valueOf(parentType.getId())));
+                                        treeNodes.add(getTreeNodeInstance(composite, String.valueOf(parentType.getId())));
                                     }
                                     if (isPlatform) {
                                         gotPlatform = true;
@@ -132,7 +132,11 @@ public abstract class ResourceTypeTreeNodeBuilder {
                     platformsGrid.setData(platformsRecords.toArray(new ListGridRecord[platformsRecords.size()]));
                     platformServicesGrid.setData(platformServicesRecords
                         .toArray(new ListGridRecord[platformServicesRecords.size()]));
-                    serversGrid.getTree().linkNodes(treeNodes.toArray(new TreeNode[treeNodes.size()]));
+                    Tree tree = serversGrid.getTree();
+                    if (tree != null) {
+                        TreeNode[] treeNodeArray = treeNodes.toArray(new TreeNode[treeNodes.size()]);
+                        tree.linkNodes(treeNodeArray);
+                    }
                 }
 
                 @Override

@@ -158,7 +158,8 @@ public class AbstractBaseDiscovery  {
 
 
         if (portString!=null && !portString.isEmpty()) {
-            hp.port = Integer.valueOf(portString);
+            String tmp = replaceDollarExpression(portString,commandLine);
+            hp.port = Integer.valueOf(tmp);
         }
         else
             hp.port = 9990; // Fallback to default
@@ -197,15 +198,24 @@ public class AbstractBaseDiscovery  {
          * -D jboss.bind.address.management
          * or
          * -b management
-         * to find the management port
+         * to find the management addresss
          */
 
         String ret=null;
         for (String line: commandLine) {
-            if (line.contains("-bmanagement") || line.contains("jboss.bind.address.management")) {
-                ret = line.substring(line.indexOf("=")+1);
-                break;
+            if (expression.contains("address")) {
+                if (line.contains("-bmanagement") || line.contains("jboss.bind.address.management")) {
+                    ret = line.substring(line.indexOf("=")+1);
+                    break;
+                }
             }
+            else if (expression.contains("port")) {
+                if (line.contains(expression)) {
+                    ret = line.substring(line.indexOf("=")+1);
+                    break;
+                }
+            }
+
         }
         if (ret==null)
             ret = fallback;
@@ -269,12 +279,17 @@ public class AbstractBaseDiscovery  {
         if (hostXml==null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
-        // TODO make realm variable
         String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm + "']/authentication/properties/@path");
         String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm + "']/authentication/properties/@relative-to");
 
+        String dmode;
+        if (mode==AS7Mode.STANDALONE)
+            dmode="server";
+        else
+            dmode="domain";
+
         String fullName ;
-        if (relDir.equals("jboss.server.config.dir"))
+        if (relDir.equals("jboss." + dmode + ".config.dir"))
             fullName = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator + fileName;
         else
             fullName = relDir + File.separator + fileName;

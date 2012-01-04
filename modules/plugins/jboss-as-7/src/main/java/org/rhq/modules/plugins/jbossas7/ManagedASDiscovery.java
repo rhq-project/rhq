@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -49,7 +50,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class ManagedASDiscovery extends AbstractBaseDiscovery
+public class ManagedASDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
 
 {
 
@@ -144,7 +145,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
         Address theAddress = new Address("server-group", serverGroup);
         Operation op = new ReadResource(theAddress);
         ComplexResult res = (ComplexResult) dcConnection.execute(op, true);
-        if (res.isSuccess()) {
+        if (res!=null && res.isSuccess()) {
             if (res.getResult().containsKey("socket-binding-group")) {
                 String sbg = (String) res.getResult().get("socket-binding-group");
 

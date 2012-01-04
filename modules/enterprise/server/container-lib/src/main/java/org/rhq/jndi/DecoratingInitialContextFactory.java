@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,33 +20,44 @@
 package org.rhq.jndi;
 
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 
+import org.rhq.jndi.context.ContextDecoratorPicker;
+
 /**
- * A decorator of an {@link InitialContextFactory} that returns an {@link URLPreferringContext}
- * backed by the wrapped initial context factory.
- * <p>
- * This is to support contexts that don't need to be secured, yet we need to make sure to
- * re-enable lookup of scheme-based names.
+ * 
  *
  * @author Lukas Krejci
  */
-public class URLPreferringInitialContextFactoryDecorator implements InitialContextFactory {
+public class DecoratingInitialContextFactory implements InitialContextFactory {
 
-    private final InitialContextFactory factory;
+    private List<ContextDecoratorPicker> pickers;
+    private InitialContextFactory factory;
     
-    public URLPreferringInitialContextFactoryDecorator(InitialContextFactory factory) {
+    public DecoratingInitialContextFactory(InitialContextFactory factory, List<ContextDecoratorPicker> decoratorPickers) {
         this.factory = factory;
+        this.pickers = decoratorPickers;
     }
     
     public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
-        return new URLPreferringContext(environment, getFactory());
+        Context ctx = factory.getInitialContext(environment);
+        
+        try {
+            for(ContextDecoratorPicker picker : pickers) {
+                ctx = picker.wrapInAppropriateDecorator(ctx);
+            }
+        } catch (IllegalArgumentException e) {
+            NamingException ex = new NamingException();
+            ex.initCause(ex);
+            
+            throw e;
+        }
+        
+        return ctx;
     }
 
-    protected InitialContextFactory getFactory() {
-        return factory;
-    }
 }

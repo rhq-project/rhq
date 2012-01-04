@@ -27,6 +27,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -42,6 +43,18 @@ import javax.naming.spi.InitialContextFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jnp.interfaces.NamingContextFactory;
+
+import org.rhq.jndi.context.AccessCheckingContextDecorator;
+import org.rhq.jndi.context.AccessCheckingDirContextDecorator;
+import org.rhq.jndi.context.AccessCheckingEventContextDecorator;
+import org.rhq.jndi.context.AccessCheckingEventDirContextDecorator;
+import org.rhq.jndi.context.AccessCheckingLdapContextDecorator;
+import org.rhq.jndi.context.ContextDecoratorPicker;
+import org.rhq.jndi.context.URLPreferringContextDecorator;
+import org.rhq.jndi.context.URLPreferringDirContextDecorator;
+import org.rhq.jndi.context.URLPreferringEventContextDecorator;
+import org.rhq.jndi.context.URLPreferringEventDirContextDecorator;
+import org.rhq.jndi.context.URLPreferringLdapContextDecorator;
 
 /**
  * This initial context factory builder is installed early on during the RHQ server startup
@@ -67,7 +80,7 @@ import org.jnp.interfaces.NamingContextFactory;
  */
 public class AccessCheckingInitialContextFactoryBuilder implements InitialContextFactoryBuilder {
     private static final Log LOG = LogFactory.getLog(AccessCheckingInitialContextFactoryBuilder.class);
-    
+
     /**
      * The list of JNDI name schemes that should be checked for security permissions
      * (in addition to the names with no scheme).
@@ -79,14 +92,14 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
     private static final Set<InetAddress> SERVER_BIND_IPS;
     static {
         SERVER_BIND_IPS = new HashSet<InetAddress>();
-        
+
         try {
             String bindingAddressString = System.getProperty("jboss.bind.address");
             InetAddress bindingAddress = InetAddress.getByName(bindingAddressString);
-            
+
             if (bindingAddress.isAnyLocalAddress()) {
                 Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
-                while(ifaces.hasMoreElements()) {
+                while (ifaces.hasMoreElements()) {
                     NetworkInterface iface = ifaces.nextElement();
                     SERVER_BIND_IPS.addAll(Collections.list(iface.getInetAddresses()));
                 }
@@ -97,11 +110,12 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
             LOG.error("Could not obtain the list of local IPs", e);
         } catch (UnknownHostException e) {
             LOG.error("Failed to get the binding address of the RHQ server.", e);
-        }        
+        }
     }
-    
-    private static final int JNP_PORT = Integer.parseInt(System.getProperty("rhq.server.startup.namingservice.port", "2099"));
-    
+
+    private static final int JNP_PORT = Integer.parseInt(System.getProperty("rhq.server.startup.namingservice.port",
+        "2099"));
+
     /**
      * This is the default initial context factory that is returned when no other is 
      * configured using the environment variables.
@@ -147,31 +161,72 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
         });
     }
 
-    private static InitialContextFactory createSecureWrapper(InitialContextFactory factory, Hashtable<?, ?> environment) {
+    private static InitialContextFactory
+        createSecureWrapper(InitialContextFactory factory, Hashtable<?, ?> environment) {
         String providerUrl = (String) environment.get(Context.PROVIDER_URL);
-        
+
         if (providerUrl == null) {
-            return new AccessCheckingInitialContextFactoryDecorator(factory, CHECKED_SCHEMES);
+            return getAccessCheckingFactory(factory);
         } else {
             try {
                 URI uri = new URI(providerUrl);
                 InetAddress providerHost = InetAddress.getByName(uri.getHost());
-                
+
                 //check if we are accessing the RHQ server through some remoting
                 //interface.
-                if (uri.getPort() == JNP_PORT && SERVER_BIND_IPS.contains(providerHost)) {                    
-                    return new AccessCheckingInitialContextFactoryDecorator(factory, CHECKED_SCHEMES);
+                if (uri.getPort() == JNP_PORT && SERVER_BIND_IPS.contains(providerHost)) {
+                    return getAccessCheckingFactory(factory);
                 } else {
-                    return new URLPreferringInitialContextFactoryDecorator(factory);
+                    return getURLPreferringFactory(factory);
                 }
             } catch (URISyntaxException e) {
-                return new AccessCheckingInitialContextFactoryDecorator(factory, CHECKED_SCHEMES);
+                return getAccessCheckingFactory(factory);
             } catch (UnknownHostException e) {
                 //let the factory deal with the unknown host...
                 //this most probably shouldn't be secured because localhost addresses
                 //should be resolvable.
-                return new URLPreferringInitialContextFactoryDecorator(factory);
+                return getURLPreferringFactory(factory);
             }
         }
+    }
+
+    private static InitialContextFactory getAccessCheckingFactory(InitialContextFactory original) {
+        return new DecoratingInitialContextFactory(original, Arrays.asList(
+            getURLPreferringDecoratorPicker(), getAccessCheckingDecoratorPicker()));
+    }
+    
+    private static InitialContextFactory getURLPreferringFactory(InitialContextFactory original) {
+        return new DecoratingInitialContextFactory(original, Arrays.asList(
+            getURLPreferringDecoratorPicker()));
+    }
+
+    private static ContextDecoratorPicker getAccessCheckingDecoratorPicker() {
+        ContextDecoratorPicker ret = new ContextDecoratorPicker();
+
+        ret.setConstructorParameters(new Object[] { CHECKED_SCHEMES });
+        ret.setConstructorParameterTypes(new Class<?>[] { String[].class });
+
+        ret.getPossibleDecorators().add(AccessCheckingContextDecorator.class);
+        ret.getPossibleDecorators().add(AccessCheckingDirContextDecorator.class);
+        ret.getPossibleDecorators().add(AccessCheckingEventContextDecorator.class);
+        ret.getPossibleDecorators().add(AccessCheckingEventDirContextDecorator.class);
+        ret.getPossibleDecorators().add(AccessCheckingLdapContextDecorator.class);
+
+        return ret;
+    }
+
+    private static ContextDecoratorPicker getURLPreferringDecoratorPicker() {
+        ContextDecoratorPicker ret = new ContextDecoratorPicker();
+
+        ret.setConstructorParameters(null);
+        ret.setConstructorParameterTypes(null);
+
+        ret.getPossibleDecorators().add(URLPreferringContextDecorator.class);
+        ret.getPossibleDecorators().add(URLPreferringDirContextDecorator.class);
+        ret.getPossibleDecorators().add(URLPreferringEventContextDecorator.class);
+        ret.getPossibleDecorators().add(URLPreferringEventDirContextDecorator.class);
+        ret.getPossibleDecorators().add(URLPreferringLdapContextDecorator.class);
+
+        return ret;
     }
 }

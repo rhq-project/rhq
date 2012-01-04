@@ -56,6 +56,12 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
+         <artifactId>rhq-container-lib</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>

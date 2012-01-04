@@ -17,8 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.jndi;
+package org.rhq.jndi.context;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
@@ -30,6 +31,8 @@ import javax.naming.NameClassPair;
 import javax.naming.NameParser;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+
+import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 
 /**
  * This is the "meat" of the RHQ's secured JNDI access. This {@link Context} decorator
@@ -43,18 +46,32 @@ import javax.naming.NamingException;
  *
  * @author Lukas Krejci
  */
-public class AccessCheckingContextDecorator implements Context {
+public class AccessCheckingContextDecorator implements Context, ContextDecorator, Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     private static final AllowRhqServerInternalsAccessPermission PERM = new AllowRhqServerInternalsAccessPermission();
     private Context original;
     private List<String> checkedSchemes;
+    
+    public AccessCheckingContextDecorator(String... checkedSchemes) {
+        this.checkedSchemes = Arrays.asList(checkedSchemes);
+    }
     
     public AccessCheckingContextDecorator(Context original, String... checkedSchemes) {
         this.original = original;
         this.checkedSchemes = Arrays.asList(checkedSchemes);
     }
     
-    private static void check() {
+    public void init(Context ctx) {
+        this.original = ctx;
+    }
+    
+    protected Context getOriginal() {
+        return original;
+    }
+    
+    protected static void check() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) sm.checkPermission(PERM);              
     }
@@ -65,11 +82,11 @@ public class AccessCheckingContextDecorator implements Context {
         }        
     }
     
-    private void check(String name) {
+    protected void check(String name) {
         checkScheme(getURLScheme(name));
     }
     
-    private void check(Name name) {
+    protected void check(Name name) {
         if (name.size() == 0) {
             check();
         } else {

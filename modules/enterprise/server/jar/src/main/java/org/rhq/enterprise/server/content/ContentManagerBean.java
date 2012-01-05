@@ -202,12 +202,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // If the package exists see if package version already exists
             if (null != generalPackage) {
                 Query packageVersionQuery = entityManager
-                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_SHA);
+                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION);
                 packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
                 packageVersionQuery.setParameter("packageName", discoveredPackage.getName());
                 packageVersionQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
                 packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-                packageVersionQuery.setParameter("sha", discoveredPackage.getSHA256());
+                packageVersionQuery.setParameter("version", discoveredPackage.getVersion());
                 List<PackageVersion> resultPackageVersions = packageVersionQuery.getResultList();
                 if (resultPackageVersions.size() > 0) {
                     packageVersion = resultPackageVersions.get(0);

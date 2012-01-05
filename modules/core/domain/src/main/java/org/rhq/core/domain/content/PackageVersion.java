@@ -58,14 +58,13 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
  */
 @Entity
 @NamedQueries({
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS, query = "" //
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION, query = "" //
         + "SELECT pv FROM PackageVersion AS pv " //
         + " WHERE pv.generalPackage.name = :packageName " //
         + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //        
-        + "   AND ( ( NOT pv.sha256 IS NULL AND pv.sha256 = :sha ) OR "
-        + "         ( pv.sha256 IS NULL AND pv.architecture.name = :architectureName AND pv.version = :version ) "
-        + "       ) "),
+        + "   AND pv.version = :version "//
+        + " ORDER BY pv.id DESC "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_SHA, query = "" //
         + "SELECT pv FROM PackageVersion AS pv " //
         + " WHERE pv.generalPackage.name = :packageName " //
@@ -272,7 +271,7 @@ public class PackageVersion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_BY_PACKAGE_DETAILS = "PackageVersion.findByPackageDetails";
+    public static final String QUERY_FIND_BY_PACKAGE_VERSION = "PackageVersion.findByPackageVersion";
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
     public static final String QUERY_FIND_BY_PACKAGE_SHA = "PackageVersion.findByPackageSha";
     public static final String QUERY_FIND_BY_PACKAGE_SHA_RES_TYPE = "PackageVersion.findByPackageShaResType";

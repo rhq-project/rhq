@@ -402,7 +402,7 @@ public class TomcatServerOperationsDelegate {
 
     private void initProcessExecution(ProcessExecution processExecution) {
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(1000L); // 1 second // TODO: Should we wait longer than one second?
+        processExecution.setWaitForCompletion(120000L); // 120 seconds - that should be safe? // TODO: make this configurable 
         processExecution.setKillOnTimeout(false);
     }
 

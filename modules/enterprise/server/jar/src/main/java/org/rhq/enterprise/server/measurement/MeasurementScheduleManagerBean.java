@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -842,7 +843,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 }
             }
         } catch (Throwable t) {
-            log.warn("problem creating schedules for resourceIds [" + resourceIds + "]", t);
+            log.warn("problem creating schedules for resourceIds [" + Arrays.toString(resourceIds) + "]", t);
         }
 
         return;

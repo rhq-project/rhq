@@ -18,35 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSCallback;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.ResultSet;
-import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.data.*;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.*;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -71,7 +52,6 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -80,15 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
+
+import java.util.*;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -228,13 +202,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.flexRowDisplay = flexRowDisplay;
     }
 
-    // TODO: I think this should just be a simple getter.  Returning the canvas before we're initialized is likely
-    // a bad thing. -Jay. Will do after the 4.2 release as it doesn't seem to bite us at the moment.
-    /**
-     * Returns the encompassing canvas that contains all content for this table component.
-     * This content includes the list grid, the buttons, etc.
-     */
-    protected LocatableVLayout getTableContents() {
+    protected LocatableVLayout createTableContents() {
         if (null == contents) {
             contents = new LocatableVLayout(extendLocatorId("Contents"));
             contents.setWidth100();
@@ -244,17 +212,21 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return contents;
     }
 
+    public LocatableVLayout getTableContents() {
+        return contents;
+    }
+
     protected void configureTableContents(Layout contents) {
         contents.setWidth100();
         contents.setHeight100();
-        //contents.setOverflow(Overflow.AUTO);        
+        contents.setOverflow(Overflow.AUTO);
     }
 
     @Override
     protected void onInit() {
         super.onInit();
 
-        contents = getTableContents();
+        contents = createTableContents();
         configureTableContents(contents);
         addMember(contents);
 
@@ -315,8 +287,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             listGrid.setDataSource(dataSource);
         }
 
-        contents.addMember(listGrid);
-
         this.initialized = true;
     }
 
@@ -357,7 +327,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
             // Footer
 
-            // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
+            // A se cond toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
             this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
             footerExtraWidgets.setPadding(5);
@@ -452,7 +422,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         // logic. This happens in selenium testing or when a user navs away prior to the refresh.
         this.listGrid = null;
 
-        SeleniumUtility.destroyMembers(getTableContents());
+        SeleniumUtility.destroyMembers(createTableContents());
         super.destroy();
     }
 

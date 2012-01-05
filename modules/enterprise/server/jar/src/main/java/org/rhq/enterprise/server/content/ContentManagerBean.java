@@ -1603,8 +1603,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);
 
         // should not be more than 1
-        if ((null != ips) && (1 == ips.size())) {
-            result = ips.get(0);
+        if ((null != ips) && (ips.size() > 0)) {
+            int mostRecentPackageIndex = 0;
+
+            if (ips.size() > 1) {
+                for (int index = 1; index < ips.size(); index++) {
+                    if (ips.get(index).getInstallationDate() > ips.get(mostRecentPackageIndex).getInstallationDate()) {
+                        mostRecentPackageIndex = index;
+                    }
+                }
+            }
+
+            result = ips.get(mostRecentPackageIndex);
 
             // fetch these
             result.getPackageVersion().getGeneralPackage().getId();

@@ -342,7 +342,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * this only changes the visibility of canvases.
      */
     protected void switchToDetailsView() {
-        Canvas contents = createTableContents();
+        Canvas contents = getTableContents();
 
         // If the Table has not yet been initialized then ignore
         if (contents != null) {
@@ -404,7 +404,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * Switches to viewing the table, hiding the details canvas.
      */
     protected void switchToTableView() {
-        final Canvas contents = createTableContents();
+        final Canvas contents = getTableContents();
         if (contents != null) {
             // If this is not the initial display of the table, refresh the table's data. Otherwise, a refresh would be
             // redundant, since the data was just loaded when the table was drawn.

@@ -38,6 +38,7 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 public class JBossInstallationInfo {
     private static final String ANY_ADDRESS = "0.0.0.0";
     private static final String LOCALHOST_ADDRESS = "127.0.0.1";
+    private static final String EPP_IMPL_VERSION_PREFIX = "JBoss-EPP";
     private static final String SOA_IMPL_VERSION_PREFIX = "SOA-";
     private static final ComparableVersion VERSION_4_2 = new ComparableVersion("4.2");
 
@@ -56,8 +57,12 @@ public class JBossInstallationInfo {
         Attributes jarManifestAttributes = loadManifestAttributesFromJar(runJar);
         this.productType = JBossProductType.determineJBossProductType(jarManifestAttributes);
         this.version = getVersion(jarManifestAttributes);
+        int majorVersionIndex = version.indexOf('.');
+        if (-1 == majorVersionIndex) {
+            throw new RuntimeException("Unexpected run.jar implementation version, can't parse: " + this.version);
+        }
         this.defaultBindAddress = getDefaultServerName(this.version);
-        this.majorVersion = version.substring(0, version.indexOf('.'));
+        this.majorVersion = version.substring(0, majorVersionIndex);
     }
 
     public JBossProductType getProductType() {
@@ -103,15 +108,21 @@ public class JBossInstallationInfo {
             throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION
                 + "' MANIFEST.MF attribute not found.");
         }
+        if (implementationVersion.startsWith(EPP_IMPL_VERSION_PREFIX)) {
+            implementationVersion = implementationVersion.substring(EPP_IMPL_VERSION_PREFIX.length()).trim();
+        }
+
         int spaceIndex = implementationVersion.indexOf(' ');
         if (spaceIndex == -1) {
             throw new IllegalStateException("'" + Attributes.Name.IMPLEMENTATION_VERSION
                 + "' MANIFEST.MF attribute has an invalid value: " + implementationVersion);
         }
+
         String version = implementationVersion.substring(0, spaceIndex);
         if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
             version = version.substring(SOA_IMPL_VERSION_PREFIX.length());
         }
+
         return version;
     }
 

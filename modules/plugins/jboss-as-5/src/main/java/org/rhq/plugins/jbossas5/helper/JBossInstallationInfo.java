@@ -40,6 +40,7 @@ public class JBossInstallationInfo {
     private static final String LOCALHOST_ADDRESS = "127.0.0.1";
     private static final String SOA_IMPL_VERSION_PREFIX = "SOA-";
     private static final String EAP_IMPL_VERSION_PREFIX = "EAP-";
+    private static final String EPP_IMPL_VERSION_PREFIX = "JBoss-EPP";
     private static final ComparableVersion VERSION_4_2 = new ComparableVersion("4.2");
 
     private final JBossProductType productType;
@@ -53,11 +54,15 @@ public class JBossInstallationInfo {
         File runJar = new File(binDir, "run.jar");
         if (!runJar.exists()) {
             throw new RuntimeException(runJar + " does not exist - " + installationDir
-                    + " does not appear to be a JBoss installation/home directory.");
+                + " does not appear to be a JBoss installation/home directory.");
         }
         Attributes jarManifestAttributes = loadManifestAttributesFromJar(runJar);
         this.productType = JBossProductType.determineJBossProductType(jarManifestAttributes);
         this.version = getVersion(jarManifestAttributes);
+        int majorVersionIndex = version.indexOf('.');
+        if (-1 == majorVersionIndex) {
+            throw new RuntimeException("Unexpected run.jar implementation version, can't parse: " + this.version);
+        }
         this.defaultBindAddress = getDefaultServerName(this.version);
         this.isEap = determineEap(jarManifestAttributes);
         this.majorVersion = version.substring(0, version.indexOf('.'));
@@ -112,6 +117,10 @@ public class JBossInstallationInfo {
         String implementationVersion = jarManifestAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
         // e.g. AS 5.1: "Implementation-Version: 5.1.0.GA (build: SVNTag=JBoss_5_1_0_GA date=200905221634)"
         // e.g. EAP 5.0: "Implementation-Version: 5.0.0.Beta (build: SVNTag=JBPAPP_5_0_0_Beta date=200906191731)"
+        if (implementationVersion.startsWith(EPP_IMPL_VERSION_PREFIX)) {
+            implementationVersion = implementationVersion.substring(EPP_IMPL_VERSION_PREFIX.length()).trim();
+        }
+
         int spaceIndex = validateImplementationVersion(implementationVersion);
         String version = implementationVersion.substring(0, spaceIndex);
         if (version.startsWith(SOA_IMPL_VERSION_PREFIX)) {
@@ -120,6 +129,7 @@ public class JBossInstallationInfo {
         if (version.startsWith(EAP_IMPL_VERSION_PREFIX)) {
             version = version.substring(EAP_IMPL_VERSION_PREFIX.length());
         }
+
         return version;
     }
 

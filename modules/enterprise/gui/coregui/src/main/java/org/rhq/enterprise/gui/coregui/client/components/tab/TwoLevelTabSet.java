@@ -32,7 +32,8 @@ import java.util.Map;
 /**
  * A tab set where each {@link TwoLevelTab tab} has one or more {@link SubTab subtab}s.
  *
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
+ * @author John Sanda
  */
 public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
 

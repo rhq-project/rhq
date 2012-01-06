@@ -521,9 +521,9 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout) {
 
-        return createPackageBackedResource(subject, parentResourceId, newResourceTypeId, newResourceName,//
+        return createResource(subject, parentResourceId, newResourceTypeId, newResourceName,//
             pluginConfiguration, packageName, packageVersionNumber, architectureId,//
-            deploymentTimeConfiguration, packageBits, (Integer) null);
+            deploymentTimeConfiguration, new ByteArrayInputStream(packageBits), (Map<String, String>) null, timeout);
     }
 
     @Override

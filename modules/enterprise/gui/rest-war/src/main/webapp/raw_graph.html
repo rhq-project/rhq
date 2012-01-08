@@ -46,8 +46,9 @@ line {
   <body>
   <h1 id="resId">Resource</h1>
   <h2 id="header">Schedule</h2>
-<button id="dotsButton" onClick="transitionDots() ">Dots</button>
+<button id="dotsButton" onClick="transitionDots()">Dots</button>
 <button id="lineButton" onClick="transitionLine()">Lines</button>
+<button id="bothButton" onClick="transitionBoth()">Both</button>
 
   <div id="one"></div>
     <script type="text/javascript">
@@ -173,6 +174,10 @@ function transitionDots() {
 function transitionLine() {
  $(".linechart").attr("opacity",1);
  $(".dotschart").attr("opacity",0);
+}
+function transitionBoth() {
+ $(".linechart").attr("opacity",1);
+ $(".dotschart").attr("opacity",1);
 }
     </script>
   </body>

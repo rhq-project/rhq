@@ -20,12 +20,10 @@ package org.rhq.enterprise.server.plugins.url;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +47,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.xmlschema.XmlSchemas;
@@ -123,8 +122,9 @@ public class XmlIndexParser implements IndexParser {
         PackageDetailsKeyType keyType = pkg.getPackageDetailsKey();
 
         try {
-            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(keyType.getName(), keyType
-                .getVersion(), keyType.getPackageTypeName(), keyType.getArchitectureName(), keyType
+            String version = "[sha256=" + pkg.getSha256() + "]";
+            ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(keyType.getName(), version,
+                keyType.getPackageTypeName(), keyType.getArchitectureName(), keyType
                 .getResourceTypeName(), keyType.getResourceTypePlugin());
             ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setDisplayName(pkg.getDisplayName());
@@ -135,7 +135,6 @@ public class XmlIndexParser implements IndexParser {
             details.setFileName(pkg.getFileName());
             details.setFileSize(pkg.getFileSize());
             details.setFileCreatedDate(pkg.getFileCreatedDate());
-            details.setMD5(pkg.getMd5());
             details.setSHA256(pkg.getSha256());
             details.setLicenseName(pkg.getLicenseName());
             details.setLicenseVersion(pkg.getLicenseVersion());
@@ -293,12 +292,15 @@ public class XmlIndexParser implements IndexParser {
             }
         } else if (!file.getCanonicalPath().equals(new File(root, "content-index.xml").getCanonicalPath())) {
             String relativeLocation = file.getCanonicalPath().substring(root.getCanonicalPath().length() + 1);
-            String md5 = generateHash(file, "MD5");
-            String sha256 = generateHash(file, "SHA-256");
+
+            MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+            String sha256 = messageDigest.calcDigestString(file);
+
+            String version = "[sha256=" + sha256 + "]";
 
             PackageDetailsKeyType detailsKeyType = new PackageDetailsKeyType();
             detailsKeyType.setName(file.getName());
-            detailsKeyType.setVersion(md5);
+            detailsKeyType.setVersion(version);
             detailsKeyType.setPackageTypeName(packageTypeInfo.getPackageTypeName());
             detailsKeyType.setArchitectureName(packageTypeInfo.getArchitectureName());
             detailsKeyType.setResourceTypeName(packageTypeInfo.getResourceTypeName());
@@ -306,66 +308,16 @@ public class XmlIndexParser implements IndexParser {
 
             PackageDetailsType detailsType = new PackageDetailsType();
             detailsType.setPackageDetailsKey(detailsKeyType);
-            //detailsType.setResourceVersions();
             detailsType.setDisplayName(file.getName());
-            detailsType.setDisplayVersion(md5);
-            //detailsType.setShortDescription();
-            //detailsType.setLongDescription();
-            //detailsType.setClassification();
             detailsType.setFileName(file.getName());
             detailsType.setFileSize(file.length());
             detailsType.setFileCreatedDate(file.lastModified());
-            detailsType.setMd5(md5);
             detailsType.setSha256(sha256);
-            //detailsType.setLicenseName();
-            //detailsType.setLicenseVersion();
-            //detailsType.setMetadata();
-            //detailsType.setExtraProperties();
             detailsType.setLocation(relativeLocation);
 
             list.add(detailsType);
         }
 
         return;
-    }
-
-    /**
-     * Generates a hash code for the given file.
-     * @param file the file whose contents is used to generate the hash
-     * @param algorithm "MD5" or "SHA-256"
-     * @return 
-     * @return the hash as a string
-     * @throws Exception
-     */
-    protected static String generateHash(File file, String algorithm) throws Exception {
-        String hash;
-        FileInputStream is = null;
-        try {
-            MessageDigest messageDigest = MessageDigest.getInstance(algorithm);
-            is = new FileInputStream(file);
-
-            byte[] bytes = new byte[1024];
-            int len;
-            while ((len = is.read(bytes, 0, bytes.length)) != -1) {
-                messageDigest.update(bytes, 0, len);
-            }
-
-            bytes = messageDigest.digest();
-            StringBuffer sb = new StringBuffer(bytes.length * 2);
-
-            for (int i = 0; i < bytes.length; i++) {
-                int hi = (bytes[i] >> 4) & 0xf;
-                int lo = bytes[i] & 0xf;
-                sb.append(Character.forDigit(hi, 16));
-                sb.append(Character.forDigit(lo, 16));
-            }
-            hash = sb.toString();
-        } finally {
-            if (is != null) {
-                is.close();
-            }
-        }
-
-        return hash;
     }
 }

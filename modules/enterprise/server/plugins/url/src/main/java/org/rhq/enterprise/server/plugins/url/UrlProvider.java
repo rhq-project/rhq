@@ -315,9 +315,9 @@ public class UrlProvider implements ContentProvider, PackageSource {
         }
 
         if (pkg == null) {
-            String md5 = rpi.getMD5();
+            String sha256 = rpi.getSHA256();
             String name = new File(rpi.getLocation()).getName();
-            String version = md5; // very crude, but we don't know the "real" version so use md5 as the next best thing
+            String version = "[sha256=" + sha256 + "]";
             String packageTypeName = supportedPackageType.packageTypeName;
             String architectureName = supportedPackageType.architectureName;
             String resourceTypeName = supportedPackageType.resourceTypeName;
@@ -332,7 +332,7 @@ public class UrlProvider implements ContentProvider, PackageSource {
             pkg.setFileSize(new Long(urlConn.getContentLength()));
             pkg.setDisplayName(name);
             pkg.setFileName(name);
-            pkg.setMD5(md5);
+            pkg.setSHA256(sha256);
             pkg.setLocation(rpi.getLocation());
             pkg.setShortDescription(null);
         }

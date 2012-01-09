@@ -51,7 +51,7 @@ public class XmlIndexParserTest {
         assert details instanceof FullRemotePackageInfo : "Bad class=" + details.getClass();
         FullRemotePackageInfo fullDetails = (FullRemotePackageInfo) details;
         assert "Mazzlocation".equals(fullDetails.getLocation()) : fullDetails.getLocation();
-        assert "Mazzmd5".equals(fullDetails.getMD5()) : fullDetails.getMD5();
+        assert "Mazzsha256".equals(fullDetails.getSHA256()) : fullDetails.getSHA256();
         assert new URL("http://root/url/Mazzlocation").equals(fullDetails.getUrl()) : fullDetails.getUrl();
         assert "Mazzarchitecture-name".equals(fullDetails.getSupportedPackageType().architectureName) : fullDetails
             .getSupportedPackageType().architectureName;
@@ -140,7 +140,7 @@ public class XmlIndexParserTest {
         assert details instanceof FullRemotePackageInfo : "Bad class=" + details.getClass();
         fullDetails = (FullRemotePackageInfo) details;
         assert "WOTGORILLAlocation".equals(fullDetails.getLocation()) : fullDetails.getLocation();
-        assert null == fullDetails.getMD5() : fullDetails.getMD5();
+        assert null == fullDetails.getSHA256() : fullDetails.getSHA256();
         assert new URL("http://root/url/WOTGORILLAlocation").equals(fullDetails.getUrl()) : fullDetails.getUrl();
         assert "WOTGORILLAarchitecture-name".equals(fullDetails.getSupportedPackageType().architectureName) : fullDetails
             .getSupportedPackageType().architectureName;

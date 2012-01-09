@@ -349,13 +349,13 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             throw new IllegalStateException("Could not find MBean for WAR '" + getApplicationName() + "'.");
         }
 
-        EmsOperation mbeanOperation = this.webModuleMBean.getOperation(name);
+        // NOTE: None of the supported operations have any parameters or return values, which makes our job easier.
+        EmsOperation mbeanOperation = this.webModuleMBean.getOperation(name, new Class[0]);
         if (mbeanOperation == null) {
             throw new IllegalStateException("Operation [" + name + "] not found on bean ["
                 + this.webModuleMBean.getBeanName() + "]");
         }
 
-        // NOTE: None of the supported operations have any parameters or return values, which makes our job easier.
         Object[] paramValues = new Object[0];
         mbeanOperation.invoke(paramValues);
 
@@ -417,12 +417,15 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         String webModuleMBeanName = getWebModuleMBeanName();
         EmsBean result = null;
 
-        if (webModuleMBeanName != null) {
-            ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(webModuleMBeanName);
-            List<EmsBean> mBeans = getEmsConnection().queryBeans(queryUtility.getTranslatedQuery());
-            // There should only be one mBean for this match.
-            if (mBeans.size() == 1) {
-                result = mBeans.get(0);
+        if (null != webModuleMBeanName) {
+            EmsConnection conn = getEmsConnection();
+            if (null != conn) {
+                ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(webModuleMBeanName);
+                List<EmsBean> mBeans = conn.queryBeans(queryUtility.getTranslatedQuery());
+                // There should only be one mBean for this match.
+                if (mBeans.size() == 1) {
+                    result = mBeans.get(0);
+                }
             }
         }
 
@@ -449,8 +452,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", getResourceContext().getPluginConfiguration().getSimpleValue(
-            PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%",
+            getResourceContext().getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
@@ -741,9 +744,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
         File file = new File(fileName);
         if (!file.exists()) {
-            log
-                .warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
-                    + fileName);
+            log.warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
+                + fileName);
         } else {
             deleteApp(pluginConfiguration, file, false, true);
         }

@@ -129,7 +129,20 @@ public abstract class HubForm extends BaseValidatorForm {
     }
 
     public void setKeywords(String keywords) {
-        this.keywords = keywords;
+        if (keywords==null) {
+            this.keywords=null;
+            return;
+        }
+
+        this.keywords = keywords
+                .replaceAll("&","&amp;")
+                .replaceAll("<","&lt;")
+                .replaceAll("\"","&quot;")
+                .replaceAll(">","&gt;")
+                .replaceAll("'","&#x27;")
+                .replaceAll("/","&#x2F;");
+
+
     }
 
     public String getKeywords() {

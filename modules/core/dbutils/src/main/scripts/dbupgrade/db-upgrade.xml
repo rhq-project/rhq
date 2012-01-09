@@ -3370,12 +3370,12 @@
                     </statement>
                 </schema-directSQL>
 
-                <!-- Now add modify the permissions to give all the roles with MANAGE_INVENTORY
-                the new  MANAGE_REPOSITORIES privilege so that people's privs remain unchanged. -->
+                <!-- Now modify the permissions to give all the roles with MANAGE_INVENTORY, except for
+                all-resources-role, the new  MANAGE_REPOSITORIES privilege so that privs remain unchanged. -->
                 <schema-directSQL>
                     <statement>
                         INSERT INTO RHQ_PERMISSION (role_id, operation)
-                            SELECT role_id, 15 FROM RHQ_PERMISSION WHERE operation = 1
+                            SELECT role_id, 15 FROM RHQ_PERMISSION WHERE operation = 1 AND NOT role_id = 2 
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -3814,6 +3814,15 @@
             <schemaSpec version="2.117">
                 <!-- Remove an obsolete drift table that may be hanging around -->
                 <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" />                
+            </schemaSpec>
+
+            <schemaSpec version="2.118">
+                <!-- Correct an earlier upgrade issue where 'All Resources Role' was granted MANAGE_REPOSITORIES. -->
+                <schema-directSQL>
+                    <statement>
+                        DELETE FROM RHQ_PERMISSION WHERE role_id = 2 AND operation = 15  
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
             
         </dbupgrade>

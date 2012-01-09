@@ -159,14 +159,22 @@ public class RssFeedParser {
                 // Technically, this is a check for installable patches. But for now, that's the same as a cumulative
                 // patch
                 if (softwareType.equals(RSS_SOFTWARE_TYPE_BUGFIX) && instructionCompatibilityVersion != null) {
-                    String version = parseCumulativePatchVersion(packageName);
-                    if (version == null) {
-                        log.error("Could not parse version for package: " + packageName);
+                    String displayVersion = parseCumulativePatchVersion(packageName);
+                    if (displayVersion == null) {
+                        log.error("Could not parse version for package: " + packageName + ". Package skipped.");
                         continue;
                     }
 
+                    if (patch.getSha256() == null) {
+                        log.error("Could not parse SHA256 for package: " + packageName + ". Package skipped.");
+                        continue;
+                    }
+
+                    String version = "[sha256=" + patch.getSha256() + "]";
+
                     ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(packageName, version,
-                        PACKAGE_TYPE_CUMULATIVE_PATCH, ARCHITECTURE, RESOURCE_TYPE_JBOSS_AS, getPluginName(version));
+                        PACKAGE_TYPE_CUMULATIVE_PATCH, ARCHITECTURE, RESOURCE_TYPE_JBOSS_AS,
+                        getPluginName(displayVersion));
 
                     // If this package is already known to the server, don't add it as a new package
                     // Remove from the map; entries still in the map will be returned as deleted packages
@@ -187,6 +195,7 @@ public class RssFeedParser {
                     packageDetails.setLocation(patch.getAutomatedDownloadUrl());
                     packageDetails.setMD5(patch.getMd5());
                     packageDetails.setSHA256(patch.getSha256());
+                    packageDetails.setDisplayVersion(displayVersion);
 
                     packageDetails.setShortDescription(patch.getShortDescription());
                     packageDetails.setLongDescription(patch.getLongDescription());

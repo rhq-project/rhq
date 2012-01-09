@@ -58,8 +58,11 @@ public class ContentRepositoryTreeView extends LocatableTreeGrid {
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
-                String path = event.getNode().getAttribute("id").replaceAll(":", "/");
-                CoreGUI.goToView("Bundles/Repository/" + path);
+                String id = event.getNode().getAttribute("id");
+                if (id != null) {
+                    String path = id.replaceAll(":", "/");
+                    CoreGUI.goToView("Bundles/Repository/" + path);
+                }
             }
         });
     }

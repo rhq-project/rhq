@@ -1,0 +1,122 @@
+--- modules/enterprise/server/container-lib/src/main/java/org/rhq/jndi/AccessCheckingInitialContextFactoryBuilder.java
++++ modules/enterprise/server/container-lib/src/main/java/org/rhq/jndi/AccessCheckingInitialContextFactoryBuilder.java
+@@ -27,7 +27,7 @@
+ import java.net.UnknownHostException;
+ import java.security.AccessController;
+ import java.security.PrivilegedAction;
+-import java.util.ArrayList;
++import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.Enumeration;
+ import java.util.HashSet;
+@@ -37,10 +37,6 @@
+ import javax.naming.Context;
+ import javax.naming.InitialContext;
+ import javax.naming.NamingException;
+-import javax.naming.directory.DirContext;
+-import javax.naming.event.EventContext;
+-import javax.naming.event.EventDirContext;
+-import javax.naming.ldap.LdapContext;
+ import javax.naming.spi.InitialContextFactory;
+ import javax.naming.spi.InitialContextFactoryBuilder;
+ 
+@@ -49,10 +45,16 @@
+ import org.jnp.interfaces.NamingContextFactory;
+ 
+ import org.rhq.jndi.context.AccessCheckingContextDecorator;
+-import org.rhq.jndi.context.AccessCheckingContextDecoratorSetContext;
+-import org.rhq.jndi.context.ContextDecorator;
+-import org.rhq.jndi.context.URLPreferringContextDecoratorSetContext;
+-import org.rhq.jndi.util.DecoratorPicker;
++import org.rhq.jndi.context.AccessCheckingDirContextDecorator;
++import org.rhq.jndi.context.AccessCheckingEventContextDecorator;
++import org.rhq.jndi.context.AccessCheckingEventDirContextDecorator;
++import org.rhq.jndi.context.AccessCheckingLdapContextDecorator;
++import org.rhq.jndi.context.ContextDecoratorPicker;
++import org.rhq.jndi.context.URLPreferringContextDecorator;
++import org.rhq.jndi.context.URLPreferringDirContextDecorator;
++import org.rhq.jndi.context.URLPreferringEventContextDecorator;
++import org.rhq.jndi.context.URLPreferringEventDirContextDecorator;
++import org.rhq.jndi.context.URLPreferringLdapContextDecorator;
+ 
+ /**
+  * This initial context factory builder is installed early on during the RHQ server startup
+@@ -87,17 +89,6 @@
+      */
+     private static final String[] CHECKED_SCHEMES = { "java" };
+ 
+-    private static final Set<Class<? extends Context>> SUPPORTED_CONTEXT_INTERFACES;
+-    
+-    static {
+-        SUPPORTED_CONTEXT_INTERFACES = new HashSet<Class<? extends Context>>();
+-        SUPPORTED_CONTEXT_INTERFACES.add(Context.class);
+-        SUPPORTED_CONTEXT_INTERFACES.add(DirContext.class);
+-        SUPPORTED_CONTEXT_INTERFACES.add(EventContext.class);
+-        SUPPORTED_CONTEXT_INTERFACES.add(EventDirContext.class);
+-        SUPPORTED_CONTEXT_INTERFACES.add(LdapContext.class);
+-    }
+-    
+     private static final Set<InetAddress> SERVER_BIND_IPS;
+     static {
+         SERVER_BIND_IPS = new HashSet<InetAddress>();
+@@ -200,31 +191,42 @@
+     }
+ 
+     private static InitialContextFactory getAccessCheckingFactory(InitialContextFactory original) {
+-        ArrayList<DecoratorPicker<Context, ContextDecorator>> pickers = new ArrayList<DecoratorPicker<Context,ContextDecorator>>();
+-        pickers.add(getURLPreferringDecoratorPicker());
+-        pickers.add(getAccessCheckingDecoratorPicker());
+-        
+-        return new DecoratingInitialContextFactory(original, pickers);
++        return new DecoratingInitialContextFactory(original, Arrays.asList(
++            getURLPreferringDecoratorPicker(), getAccessCheckingDecoratorPicker()));
+     }
+-
++    
+     private static InitialContextFactory getURLPreferringFactory(InitialContextFactory original) {
+-        ArrayList<DecoratorPicker<Context, ContextDecorator>> pickers = new ArrayList<DecoratorPicker<Context,ContextDecorator>>();
+-        pickers.add(getURLPreferringDecoratorPicker());
+-
+-        return new DecoratingInitialContextFactory(original, pickers);
++        return new DecoratingInitialContextFactory(original, Arrays.asList(
++            getURLPreferringDecoratorPicker()));
+     }
+ 
+-    private static DecoratorPicker<Context, ContextDecorator> getAccessCheckingDecoratorPicker() {
+-        DecoratorPicker<Context, ContextDecorator> ret = new DecoratorPicker<Context, ContextDecorator>();
+-        ret.setContext(new AccessCheckingContextDecoratorSetContext(SUPPORTED_CONTEXT_INTERFACES, CHECKED_SCHEMES));
+-        
++    private static ContextDecoratorPicker getAccessCheckingDecoratorPicker() {
++        ContextDecoratorPicker ret = new ContextDecoratorPicker();
++
++        ret.setConstructorParameters(new Object[] { CHECKED_SCHEMES });
++        ret.setConstructorParameterTypes(new Class<?>[] { String[].class });
++
++        ret.getPossibleDecorators().add(AccessCheckingContextDecorator.class);
++        ret.getPossibleDecorators().add(AccessCheckingDirContextDecorator.class);
++        ret.getPossibleDecorators().add(AccessCheckingEventContextDecorator.class);
++        ret.getPossibleDecorators().add(AccessCheckingEventDirContextDecorator.class);
++        ret.getPossibleDecorators().add(AccessCheckingLdapContextDecorator.class);
++
+         return ret;
+     }
+ 
+-    private static DecoratorPicker<Context, ContextDecorator> getURLPreferringDecoratorPicker() {
+-        DecoratorPicker<Context, ContextDecorator> ret = new DecoratorPicker<Context, ContextDecorator>();
+-        ret.setContext(new URLPreferringContextDecoratorSetContext(SUPPORTED_CONTEXT_INTERFACES));
+-        
++    private static ContextDecoratorPicker getURLPreferringDecoratorPicker() {
++        ContextDecoratorPicker ret = new ContextDecoratorPicker();
++
++        ret.setConstructorParameters(null);
++        ret.setConstructorParameterTypes(null);
++
++        ret.getPossibleDecorators().add(URLPreferringContextDecorator.class);
++        ret.getPossibleDecorators().add(URLPreferringDirContextDecorator.class);
++        ret.getPossibleDecorators().add(URLPreferringEventContextDecorator.class);
++        ret.getPossibleDecorators().add(URLPreferringEventDirContextDecorator.class);
++        ret.getPossibleDecorators().add(URLPreferringLdapContextDecorator.class);
++
+         return ret;
+     }
+ }

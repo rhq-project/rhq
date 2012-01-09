@@ -20,7 +20,6 @@
 package org.rhq.bindings;
 
 import java.io.FilePermission;
-import java.io.SerializablePermission;
 import java.lang.reflect.ReflectPermission;
 import java.net.SocketPermission;
 import java.security.Permission;
@@ -84,11 +83,6 @@ public class StandardScriptPermissions extends PermissionCollection {
         add(new PropertyPermission("*", "read"));
         
         add(new ReflectPermission("suppressAccessChecks"));
-        
-        //these 2 are required for server-side scripts to be able to 
-        //invoke remote EJBs.
-        add(new SerializablePermission("enableSubclassImplementation"));
-        add(new RuntimePermission("reflectionFactoryAccess"));                
     }
     
     public void add(Permission permission) {

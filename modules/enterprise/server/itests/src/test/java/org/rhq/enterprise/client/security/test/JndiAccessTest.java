@@ -48,7 +48,7 @@ import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
  * @author Lukas Krejci
  */
 @Test
-public class EjbAccessTest extends AbstractEJB3Test {
+public class JndiAccessTest extends AbstractEJB3Test {
 
     public void testEjbsAccessibleThroughPrivilegedCode() {
         LookupUtil.getSubjectManager().getOverlord();

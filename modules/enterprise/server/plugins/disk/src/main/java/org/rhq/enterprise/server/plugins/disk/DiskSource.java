@@ -201,19 +201,22 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
                 if (file.getName().equals(repoName)) {
 
                     for (File filePackage : file.listFiles()) {
-                        ContentProviderPackageDetails details = createPackage(filePackage);
-                        if (details != null) {
-                            ContentProviderPackageDetails existing = findPackage(packages, details);
-                            if (existing == null) {
-                                report.addNewPackage(details);
-                            } else {
-                                packages.remove(existing); // it still exists, remove it from our list
-                                if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
-                                    report.addUpdatedPackage(details);
+                        if (!filePackage.isDirectory()) {
+                            ContentProviderPackageDetails details = createPackage(filePackage);
+                            if (details != null) {
+                                ContentProviderPackageDetails existing = findPackage(packages, details);
+                                if (existing == null) {
+                                    report.addNewPackage(details);
+                                } else {
+                                    packages.remove(existing); // it still exists, remove it from our list
+                                    if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
+                                        report.addUpdatedPackage(details);
+                                    }
                                 }
                             }
-                        } else {
-                            // file does not match any filter and is therefore an unknown type - ignore it
+                            else {
+                                // file does not match any filter and is therefore an unknown type - ignore it
+                            }
                         }
                     }
 

@@ -251,4 +251,14 @@ public class AccessCheckingContextDecorator implements Context, ContextDecorator
             return str.substring(0, colon_posn);
         return null;
     }            
+    
+    @Override
+    public int hashCode() {
+        return getOriginal() == null ? super.hashCode() : getOriginal().hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        return getOriginal() == null ? super.equals(o) : getOriginal().equals(o);
+    }
 }

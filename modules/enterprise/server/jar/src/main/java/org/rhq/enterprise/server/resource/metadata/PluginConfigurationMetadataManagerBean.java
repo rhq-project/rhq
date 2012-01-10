@@ -1,6 +1,5 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -58,8 +57,8 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
             // all new
             if (existingConfigurationDefinition == null) {
                 if (log.isDebugEnabled()) {
-                    log.debug(existingType + " currently does not have a plugin configuration definition. Adding " +
-                            "new plugin configuration.");
+                    log.debug(existingType + " currently does not have a plugin configuration definition. Adding "
+                        + "new plugin configuration.");
                 }
                 entityMgr.persist(newType.getPluginConfigurationDefinition());
                 existingType.setPluginConfigurationDefinition(newType.getPluginConfigurationDefinition());
@@ -72,8 +71,8 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
                     .updateConfigurationDefinition(newType.getPluginConfigurationDefinition(),
                         existingConfigurationDefinition);
 
-                if (updateReport.getNewPropertyDefinitions().size() > 0 ||
-                    updateReport.getUpdatedPropertyDefinitions().size() > 0) {
+                if (updateReport.getNewPropertyDefinitions().size() > 0
+                    || updateReport.getUpdatedPropertyDefinitions().size() > 0) {
                     Subject overlord = subjectMgr.getOverlord();
                     ResourceCriteria criteria = new ResourceCriteria();
                     criteria.addFilterResourceTypeId(existingType.getId());
@@ -99,6 +98,7 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
     private void updateResourcePluginConfiguration(Resource resource, ConfigurationDefinitionUpdateReport updateReport) {
         Configuration pluginConfiguration = resource.getPluginConfiguration();
         boolean modified = false;
+        @SuppressWarnings("unused")
         int numberOfProperties = pluginConfiguration.getProperties().size();
         ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
         Configuration templateConfiguration = template.getConfiguration();
@@ -106,10 +106,10 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
         for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
             if (propertyDef.isRequired()) {
                 Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                if (templateProperty==null) {
+                if (templateProperty == null) {
                     throw new IllegalArgumentException("The property [" + propertyDef.getName()
-                            + "] marked as required in the configuration definition of [" + propertyDef.getConfigurationDefinition().getName()
-                            + "] has no attribute 'default'");
+                        + "] marked as required in the configuration definition of ["
+                        + propertyDef.getConfigurationDefinition().getName() + "] has no attribute 'default'");
                 } else {
                     pluginConfiguration.put(templateProperty.deepCopy(false));
                     modified = true;
@@ -129,7 +129,7 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
         }
 
         if (modified) {
-            resource.setMtime(new Date().getTime());
+            resource.setAgentSynchronizationNeeded();
         }
     }
 }

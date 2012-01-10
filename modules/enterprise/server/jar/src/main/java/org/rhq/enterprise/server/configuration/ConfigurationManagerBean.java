@@ -136,7 +136,6 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-@SuppressWarnings({ "UnnecessaryLocalVariable", "UnnecessaryReturnStatement" })
 @Stateless
 @XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
@@ -220,6 +219,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Resource resource = update.getResource();
 
         // link to the newer, persisted configuration object -- regardless of errors
+        resource.setAgentSynchronizationNeeded();
         resource.setPluginConfiguration(update.getConfiguration());
 
         if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
@@ -1242,17 +1242,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return configService.validate(configuration, resourceId, isStructured);
     }
 
-    private boolean isRawSupported(int resourceId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
-        if (configDef == null) {
-            return false;
-        }
-
-        return (ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat() || (ConfigurationFormat.RAW == configDef
-            .getConfigurationFormat()));
-    }
-
     private boolean isStructuredAndRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
@@ -1691,7 +1680,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration getConfiguration(Subject subject, int configurationId) {
-        @SuppressWarnings({ "UnnecessaryLocalVariable" })
         Configuration configuration = getConfigurationById(configurationId);
         return configuration;
     }
@@ -2337,7 +2325,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return out;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(Subject subject,
         ResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2346,8 +2333,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 "resource", subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner<ResourceConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<ResourceConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2371,7 +2358,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(Subject subject,
         PluginConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2380,8 +2366,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 "resource", subject.getId());
         }
 
-        CriteriaQueryRunner<PluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<PluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner<PluginConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<PluginConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2405,7 +2391,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
         GroupResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2414,8 +2399,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 subject.getId());
         }
 
-        CriteriaQueryRunner<GroupResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria,
-            generator, entityManager);
+        CriteriaQueryRunner<GroupResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner<GroupResourceConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<GroupResourceConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2438,7 +2423,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2447,8 +2431,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 subject.getId());
         }
 
-        CriteriaQueryRunner<GroupPluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<GroupPluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner<GroupPluginConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<GroupPluginConfigurationUpdate> updates = queryRunner.execute();
 

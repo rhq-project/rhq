@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.discovery;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Date;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -44,12 +44,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
@@ -314,16 +314,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             final String randomSuffix = UUID.randomUUID().toString();
 
             final String triggerName = TRIGGER_PREFIX + " - " + randomSuffix;
-            SimpleTrigger trigger = new SimpleTrigger(triggerName, DEFAULT_JOB_GROUP,
-                    new Date());
+            SimpleTrigger trigger = new SimpleTrigger(triggerName, DEFAULT_JOB_GROUP, new Date());
 
             JobDataMap jobDataMap = new JobDataMap();
             jobDataMap.put(AgentInventoryStatusUpdateJob.KEY_TRIGGER_NAME, triggerName);
             jobDataMap.put(AgentInventoryStatusUpdateJob.KEY_TRIGGER_GROUP_NAME, DEFAULT_JOB_GROUP);
             AgentInventoryStatusUpdateJob.externalizeJobValues(jobDataMap,
-                    AgentInventoryStatusUpdateJob.PLATFORMS_COMMA_LIST, platforms);
+                AgentInventoryStatusUpdateJob.PLATFORMS_COMMA_LIST, platforms);
             AgentInventoryStatusUpdateJob.externalizeJobValues(jobDataMap,
-                    AgentInventoryStatusUpdateJob.SERVERS_COMMA_LIST, servers);
+                AgentInventoryStatusUpdateJob.SERVERS_COMMA_LIST, servers);
 
             trigger.setJobName(DEFAULT_JOB_NAME);
             trigger.setJobGroup(DEFAULT_JOB_GROUP);
@@ -333,7 +332,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 scheduler.scheduleJob(trigger);
             } else {
                 JobDetail jobDetail = new JobDetail(DEFAULT_JOB_NAME, DEFAULT_JOB_GROUP,
-                        AgentInventoryStatusUpdateJob.class);
+                    AgentInventoryStatusUpdateJob.class);
                 scheduler.scheduleJob(jobDetail, trigger);
             }
         } catch (SchedulerException e) {
@@ -357,10 +356,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
                 agentClient.getDiscoveryAgentService().synchronizeInventory(
-                        entityManager.find(ResourceSyncInfo.class, platform.getId()));
+                    entityManager.find(ResourceSyncInfo.class, platform.getId()));
             } catch (Exception e) {
                 log.warn("Could not perform commit synchronization with agent for platform [" + platform.getName()
-                        + "]", e);
+                    + "]", e);
             }
         }
         for (Resource server : servers) {
@@ -369,10 +368,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 AgentClient agentClient = agentManager.getAgentClient(server.getAgent());
                 try {
                     agentClient.getDiscoveryAgentService().synchronizeInventory(
-                            entityManager.find(ResourceSyncInfo.class, server.getId()));
+                        entityManager.find(ResourceSyncInfo.class, server.getId()));
                 } catch (Exception e) {
                     log.warn("Could not perform commit synchronization with agent for server [" + server.getName()
-                            + "]", e);
+                        + "]", e);
                 }
             }
         }
@@ -511,6 +510,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
     }
 
+    @SuppressWarnings("deprecation")
     public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> result = new HashSet<ResourceUpgradeResponse>();
 
@@ -588,8 +588,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest,
         boolean allowGenericPropertiesUpgrade) {
         if (upgradeRequest.getUpgradeErrorMessage() != null) {
-            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, upgradeRequest
-                .getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(), upgradeRequest.getTimestamp());
+            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
+                upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(),
+                upgradeRequest.getTimestamp());
             resourceManager.addResourceError(error);
             return null;
         }
@@ -767,8 +768,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                         continue;
                     }
                 }
-                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent, resource
-                    .getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent,
+                    resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }
 
             if (existingResource != null) {
@@ -871,6 +872,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (existingResource.getInventoryStatus() == InventoryStatus.DELETED) {
             existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
             existingResource.setPluginConfiguration(updatedResource.getPluginConfiguration());
+            existingResource.setAgentSynchronizationNeeded();
         }
 
         for (Resource childResource : updatedResource.getChildResources()) {
@@ -1021,14 +1023,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
         // than 1000 items.
-        List<Resource> resources = new ArrayList(resourceIds.length);
+        List<Resource> resources = new ArrayList<Resource>(resourceIds.length);
         fromIndex = 0;
         while (fromIndex < resourceIds.length) {
             int toIndex = (resourceIds.length < (fromIndex + 1000)) ? resourceIds.length : (fromIndex + 1000);
 
             int[] resourceIdSubArray = Arrays.copyOfRange(resourceIds, fromIndex, toIndex);
             PageList<Resource> batchResources = resourceManager.findResourceByIds(subject, resourceIdSubArray, false,
-                    PageControl.getUnlimitedInstance());
+                PageControl.getUnlimitedInstance());
             resources.addAll(batchResources);
 
             fromIndex = toIndex;

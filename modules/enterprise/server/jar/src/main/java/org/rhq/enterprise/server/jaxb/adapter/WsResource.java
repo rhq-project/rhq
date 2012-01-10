@@ -116,7 +116,7 @@ class WsResource extends Resource {
         destination.setProductVersion(source.getProductVersion());
         destination.setResourceConfiguration(source.getResourceConfiguration());
         destination.setResourceConfigurationUpdates(source.getResourceConfigurationUpdates());
-        destination.setSchendules(source.getSchedules());
+        destination.setSchedules(source.getSchedules());
         destination.setUuid(source.getUuid());
         //handle the problematic references that would cause cycles if used by storing only ids.
         if (source.getParentResource() != null) {

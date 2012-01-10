@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
@@ -50,7 +46,6 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
-
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
@@ -63,6 +58,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -220,7 +219,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                 }
                 selectionChangedHandlerDisabled = true;
 
-                final TreeNode selectedNode = (TreeNode) selectionEvent.getRecord();
+                final TreeNode selectedNode = treeGrid.getTree().findById(selectionEvent.getRecord().getAttribute("id"));
                 TreeNode parentNode = treeGrid.getTree().getParent(selectedNode);
                 boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
                 boolean isCheckboxMarked = treeGrid.isSelected(selectedNode);
@@ -409,7 +408,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         boolean unignoreOk = false;
 
         for (ListGridRecord listGridRecord : treeGrid.getSelection()) {
-            TreeNode node = (TreeNode) listGridRecord;
+            TreeNode node = treeGrid.getTree().findById(listGridRecord.getAttribute("id"));
             String status = node.getAttributeAsString("status");
             TreeNode parentNode = treeGrid.getTree().getParent(node);
             boolean isPlatform = treeGrid.getTree().isRoot(parentNode);

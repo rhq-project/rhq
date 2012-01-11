@@ -110,7 +110,7 @@ public class BaseServerComponent extends BaseComponent {
         }
         processExecution.setWorkingDirectory(baseDir);
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(2000L); // 2 seconds // TODO: Should we wait longer than two seconds?
+        processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
         processExecution.setKillOnTimeout(false);
 
 

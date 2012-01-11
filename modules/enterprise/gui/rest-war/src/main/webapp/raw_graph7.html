@@ -36,7 +36,7 @@ path {
     stroke-width: 2;
     fill: none;
 }
- 
+
 line {
     stroke: black;
 }
@@ -70,8 +70,8 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
         var schId = json2[0].scheduleId;
         $("#header").text("Schedule " + schId + " (" + json2[0].scheduleName + "), base unit: " + json2[0].unit);
 
-
-//                '/rest/1/metric/data/' + schId + '/raw.json?duration=604800',
+        var now = new Date().getTime();
+        var startTime = now - (7 * 86400*1000);
         d3.json(
                 '/rest/1/metric/data/' + schId + '/raw.json?duration=604800',
                 function (jsondata) {
@@ -81,14 +81,14 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
                     var w = 960,
                             h = 600;
                     // compute min/max values for x and y a
-			var minVal = d3.min(jsondata,function(d) { return d.value;});
-			var maxVal = d3.max(jsondata,function(d) { return d.value;});
-			var minTsD = 0;
-			var maxTsD = 86400*1000;
+                    var minVal = d3.min(jsondata,function(d) { return d.value;});
+                    var maxVal = d3.max(jsondata,function(d) { return d.value;});
+                    var minTsD = 0;
+                    var maxTsD = 86400*1000;
 
-                       var minTimestamp = d3.min(jsondata,function(d) { return d.timeStamp;});
+                    var minTimestamp = d3.min(jsondata,function(d) { return d.timeStamp;});
 
-		 var avg = d3.sum(jsondata,function(d) { return d.value;}) / jsondata.length;
+                    var avg = d3.sum(jsondata,function(d) { return d.value;}) / jsondata.length;
 
 
 
@@ -119,12 +119,12 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
                             .tickFormat(d3.format("0e"))
                             .tickSubdivide(true); // display ticks between text labels
 
-// create the SVG
+                    // create the SVG
                     var svg = d3.select("body").append("svg:svg")
                             .attr("width", w)
                             .attr("height", h);
 
-// Create axes
+                    // Create axes
                     svg.append("svg:g")
                             .attr("class","x axis")
                             .call(xAxis);
@@ -134,51 +134,51 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
                             .attr("transform", "translate(" + (MARGINS.left) + ",0)")
                             .call(yAxis);
 
-		    svg.append("svg:line")
-			.attr("x1","50")
-			.attr("x2","950")
-			.attr("y1",y(avg))
-			.attr("y2",y(avg))
-			.style("stroke","red")
-			.attr("style","stroke-dasharray:2 2; stroke:red")
-				;
+                    svg.append("svg:line")
+                            .attr("x1","50")
+                            .attr("x2","950")
+                            .attr("y1",y(avg))
+                            .attr("y2",y(avg))
+                            .style("stroke","red")
+                            .attr("style","stroke-dasharray:2 2; stroke:red")
+                    ;
 
-// split the data into 7 data sets (1 per day)
-
-//var dat = d3.split(jsondata,function(d) { return (d.timeStamp-minTimestamp % 86400*1000) < 3*60*0000; });
-
-var colors = ["black","blue","green","cyan","red","orange","yellow"];
-var dat = putToBuckets(jsondata,7);
-
-for (day = 0 ; day < 7 ; day ++ ) {
-   var daydat = dat[day];
-                    // Now lets "loop" over the data and show the dots
-                    var lines = svg.append("svg:g").attr("class","linechart")
-			.attr("opacity","0");
-;
-  var dayMinTs = d3.min(daydat,function(d) { return d.timeStamp;});
-
-var line = d3.svg.line()
-    .x(function(d,i) { return x(d.timeStamp-dayMinTs); })
-    .y(function(d) { return  y(d.value); })
-
-lines.append("svg:path").attr("d", line(daydat)).style("stroke",colors[day]);
+                    var colors = ["black","blue","green","cyan","red","orange","yellow"];
 
 
-                    var dot = svg.append("svg:g").attr("class","dotschart")
-                            .selectAll("dot").data(jsondata)
+                    // split the data into 7 data sets (1 per day)
+                    var dat = putToBuckets(jsondata,7,now);
 
-                    dot.enter().append("svg:circle")
-                            .attr("cx", function (d) {
-                                return x(d.timeStamp-dayMinTs);
-                            })
-                            .attr("cy", function (d) {
-                                return y(d.value);
-                            })
-                            .style("stroke", colors[day])
-                            .attr("r", 1)
+                    // loop over the buckets and create the graph
+                    for (day = 0 ; day < 7 ; day ++ ) {
+                        var daydat = dat[day];
+                        // Now lets "loop" over the data of a bucket and show the lines and dots
+                        var lines = svg.append("svg:g").attr("class","linechart")
+                                .attr("opacity","1");
 
-}
+                        var dayMinTs = startTime + day * (86400*1000);
+
+                        var line = d3.svg.line()
+                                .x(function(d,i) { return x(d.timeStamp-dayMinTs); })
+                                .y(function(d) { return  y(d.value); })
+                        lines.append("svg:path").attr("d", line(daydat)).style("stroke",colors[day]);
+
+
+                        var dot = svg.append("svg:g").attr("class","dotschart")
+                                .selectAll("dot").data(jsondata)
+
+                        dot.enter().append("svg:circle")
+                                .attr("cx", function (d) {
+                                    return x(d.timeStamp-dayMinTs);
+                                })
+                                .attr("cy", function (d) {
+                                    return y(d.value);
+                                })
+                                .style("stroke", colors[day])
+                                .attr("r", 1)
+                                .attr("opacity","0")
+
+                    }
                 });
     })
 })
@@ -198,29 +198,25 @@ function transitionBoth() {
 }
 
 // put the data in d into n buckets
-function putToBuckets(data,n) {
+function putToBuckets(data,n,now) {
 
-	var band = d3.extent(data,function(d){ return d.timeStamp;});
-	var bs = band[1] - band[0];
-//        var bs = bs / n;
-        var bs = 86400*1000;
+    var band = d3.extent(data,function(d){ return d.timeStamp;});
+    var bs = 86400*1000;
+    var start = now - n * bs;
 
-console.log("bs : " + bs );
-console.log("min ts  : " + band[0]);
+    var dat = new Array(n);
+    for (i = 0; i < n ; i++ ) {
+        dat[i]=new Array();
+    }
 
-var dat = new Array(n);
-for (i = 0; i < n ; i++ ) {
-   dat[i]=new Array();
-}
+    data.forEach(function (d) {
+        var diff = d.timeStamp-start;
+        var bucket = parseInt(diff / bs);
+//        console.log(d.timeStamp + ", " + diff  + " buck  : " + bucket);
+        dat[bucket].push(d);
+    });
 
-data.forEach(function (d) {
-   var diff = d.timeStamp-band[0];
-   var bucket = parseInt(diff / bs);
-console.log(d.timeStamp + ", " + diff  + " buck  : " + bucket);
-   dat[bucket].push(d);
-});
-
-return dat;
+    return dat;
 }
 
     </script>

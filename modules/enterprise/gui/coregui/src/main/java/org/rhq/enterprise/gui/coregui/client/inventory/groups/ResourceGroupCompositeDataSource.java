@@ -18,6 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_CHILDREN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_DESCENDANTS;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
+
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -43,12 +51,12 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.*;
-
 /**
  * @author Joseph Marques
  */
 public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGroupComposite, ResourceGroupCriteria> {
+
+    public static final String FILTER_GROUP_IDS = "resourceGroupIds";
 
     ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
@@ -80,8 +88,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
-            .title());
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(),
+            DESCRIPTION.title());
         descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
@@ -125,12 +133,14 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.setPageControl(getPageControl(request));
 
+        criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterGroupCategory(getFilter(request, CATEGORY.propertyName(), GroupCategory.class));
         criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
+        criteria.addFilterIds(getArrayFilter(request, FILTER_GROUP_IDS, Integer.class));
 
         return criteria;
     }
@@ -202,14 +212,15 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         StringBuilder results = new StringBuilder();
         results.append("<table width=\"120px\"><tr>");
         if (up == 0 && down == 0) {
-            results.append(getColumn(false, "<img src=\""
-                + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
+            results.append(getColumn(false,
+                "<img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(null)) + "\" /> 0"));
             results.append(getColumn(true));
             results.append(getColumn(false));
         } else {
             if (up > 0) {
-                results.append(getColumn(false, " <img src=\""
-                    + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.TRUE)) + "\" />", up));
+                results.append(getColumn(false,
+                    " <img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.TRUE))
+                        + "\" />", up));
             }
 
             if (up > 0 && down > 0) {
@@ -217,8 +228,9 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
             }
 
             if (down > 0) {
-                results.append(getColumn(false, " <img src=\""
-                    + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.FALSE)) + "\" />", down));
+                results.append(getColumn(false,
+                    " <img src=\"" + ImageManager.getFullImagePath(ImageManager.getAvailabilityIcon(Boolean.FALSE))
+                        + "\" />", down));
             } else {
                 results.append(getColumn(false,
                     "&nbsp;&nbsp;<img src=\"/images/blank.png\" width=\"16px\" height=\"16px\" />"));

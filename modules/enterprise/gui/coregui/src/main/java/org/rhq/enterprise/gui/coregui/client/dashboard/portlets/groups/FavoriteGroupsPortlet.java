@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource;
+package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 
 import java.util.Set;
 
@@ -42,18 +42,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupCompositeDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 
-/**
- * @author Greg Hinkle
- */
-public class FavoriteResourcesPortlet extends ResourceSearchView implements AutoRefreshPortlet {
+public class FavoriteGroupsPortlet extends ResourceGroupListView implements AutoRefreshPortlet {
 
     // A non-displayed, persisted identifier for the portlet
-    public static final String KEY = "FavoriteResources";
+    public static final String KEY = "FavoriteGroups";
     // A default displayed, persisted name for the portlet    
-    public static final String NAME = MSG.view_portlet_defaultName_favoriteResources();
+    public static final String NAME = MSG.favorites_groups();
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 
@@ -62,8 +59,8 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
     private Timer refreshTimer;
 
-    public FavoriteResourcesPortlet(String locatorId) {
-        super(locatorId, createInitialCriteria());
+    public FavoriteGroupsPortlet(String locatorId) {
+        super(locatorId, createInitialCriteria(), NAME);
         setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
@@ -71,7 +68,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
     }
 
     private static Criteria createInitialCriteria() {
-        Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
+        Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResourceGroups();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
 
@@ -79,7 +76,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
         if (favoriteIds.isEmpty()) {
             criteria.addCriteria("id", -1);
         } else {
-            criteria.addCriteria(ResourceDatasource.FILTER_RESOURCE_IDS, favArray);
+            criteria.addCriteria(ResourceGroupCompositeDataSource.FILTER_GROUP_IDS, favArray);
         }
 
         return criteria;
@@ -125,7 +122,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
 
         public final Portlet getInstance(String locatorId, EntityContext context) {
 
-            return new FavoriteResourcesPortlet(locatorId);
+            return new FavoriteGroupsPortlet(locatorId);
         }
     }
 

@@ -51,6 +51,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, ResourceGroupCriteria> {
 
+    public static final String FILTER_GROUP_IDS = "resourceGroupIds";
+
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
     private static ResourceGroupsDataSource INSTANCE;
@@ -79,8 +81,8 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, Resou
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
         fields.add(nameDataField);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
-            .title());
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(),
+            DESCRIPTION.title());
         fields.add(descriptionDataField);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
@@ -117,12 +119,14 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, Resou
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.setPageControl(getPageControl(request));
 
+        criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterGroupCategory(getFilter(request, CATEGORY.propertyName(), GroupCategory.class));
         criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
+        criteria.addFilterIds(getArrayFilter(request, FILTER_GROUP_IDS, Integer.class));
 
         return criteria;
     }

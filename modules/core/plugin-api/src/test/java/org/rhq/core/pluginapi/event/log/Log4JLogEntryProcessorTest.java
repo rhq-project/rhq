@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pluginapi.event.log;
 
 import java.io.BufferedReader;
@@ -89,4 +89,71 @@ public class Log4JLogEntryProcessorTest {
         assert events != null && events.size() == 0;
         System.out.println("SUCCESS!");
     }
+
+    public void testProcessLineBracketDelimitedSeverity() throws Exception {
+        String eventType = "logEntry";
+        File logFile = new File("C:/test.log");
+        Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, logFile);
+
+        String logEntry = "2007-12-09 15:32:49,909 [DEBUG] [com.example.FooBar] test message";
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(logEntry));
+        Set<Event> events = processor.processLines(bufferedReader);
+        assert events != null && events.size() == 1;
+        Iterator<Event> eventIterator = events.iterator();
+        Event event1 = eventIterator.next();
+        assert eventType.equals(event1.getType());
+        assert new File(event1.getSourceLocation()).equals(logFile);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2007, 11, 9, 15, 32, 49);
+        calendar.set(Calendar.MILLISECOND, 909);
+        long expectedTimestamp = calendar.getTimeInMillis();
+        assert event1.getTimestamp() == expectedTimestamp;
+        assert event1.getSeverity().equals(EventSeverity.DEBUG);
+        assert event1.getDetail().equals("[com.example.FooBar] test message");
+    }
+
+    public void testProcessLineParenDelimitedSeverity() throws Exception {
+        String eventType = "logEntry";
+        File logFile = new File("C:/test.log");
+        Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, logFile);
+
+        String logEntry = "2007-12-09 15:32:49,909 (DEBUG) [com.example.FooBar] test message";
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(logEntry));
+        Set<Event> events = processor.processLines(bufferedReader);
+        assert events != null && events.size() == 1;
+        Iterator<Event> eventIterator = events.iterator();
+        Event event1 = eventIterator.next();
+        assert eventType.equals(event1.getType());
+        assert new File(event1.getSourceLocation()).equals(logFile);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2007, 11, 9, 15, 32, 49);
+        calendar.set(Calendar.MILLISECOND, 909);
+        long expectedTimestamp = calendar.getTimeInMillis();
+        assert event1.getTimestamp() == expectedTimestamp;
+        assert event1.getSeverity().equals(EventSeverity.DEBUG);
+        assert event1.getDetail().equals("[com.example.FooBar] test message");
+    }
+
+    public void testProcessLineSpacedDelimitedSeverity() throws Exception {
+        String eventType = "logEntry";
+        File logFile = new File("C:/test.log");
+        Log4JLogEntryProcessor processor = new Log4JLogEntryProcessor(eventType, logFile);
+
+        String logEntry = "2007-12-09 15:32:49,909 [ DEBUG ) [com.example.FooBar] test message";
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(logEntry));
+        Set<Event> events = processor.processLines(bufferedReader);
+        assert events != null && events.size() == 1;
+        Iterator<Event> eventIterator = events.iterator();
+        Event event1 = eventIterator.next();
+        assert eventType.equals(event1.getType());
+        assert new File(event1.getSourceLocation()).equals(logFile);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2007, 11, 9, 15, 32, 49);
+        calendar.set(Calendar.MILLISECOND, 909);
+        long expectedTimestamp = calendar.getTimeInMillis();
+        assert event1.getTimestamp() == expectedTimestamp;
+        assert event1.getSeverity().equals(EventSeverity.DEBUG);
+        assert event1.getDetail().equals("[com.example.FooBar] test message");
+    }
+
 }

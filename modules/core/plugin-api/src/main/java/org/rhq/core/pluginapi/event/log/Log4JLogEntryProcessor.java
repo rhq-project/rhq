@@ -35,15 +35,23 @@ import org.rhq.core.domain.event.EventSeverity;
 
 /**
  * A {@link org.rhq.core.pluginapi.event.log.LogEntryProcessor} for Log4J log files.
- *
+ * <pre>
+ * By default we support log entries of the format: date [delimiter]severity[delimiter]  message
+ * Where:
+ * - the optional delimiters are either square brackets ort parens, with or without spaces
+ * - the date format is one of the built-ins below, or a user-specified date format for the logfile source
+ * - the message portion may contain multiple lines.    
+ * For example:
+ * 2007-12-21 15:32:49,514 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000
+ * 2007/12/21 15:32:49,514 (DEBUG) [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000    
+ * 2007-Dec-21 15:32:49 [ DEBUG ] [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000    
+ * </pre>
  * @author Ian Springer
  */
 public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
-    // For now, we only support the default pattern: date priority '['category']' message
-    // e.g.: 2007-12-09 15:32:49,514 DEBUG [com.example.FooBar] run: IdleRemover notifying pools, interval: 450000
-    // NOTE: The message portion may contain multiple lines.
-    private static final String REGEX = "(.*?) (TRACE|DEBUG|INFO|WARN|ERROR|FATAL) (.*)";
-    private static final Pattern PATTERN = Pattern.compile(REGEX);
+
+    private static final String REGEX;
+    private static final Pattern PATTERN;
 
     private static final String ISO8601_DATE_PATTERN = "yyyy-MM-dd kk:mm:ss,SSS";
     private static final DateFormat ISO8601_DATE_FORMAT = new SimpleDateFormat(ISO8601_DATE_PATTERN);
@@ -55,6 +63,12 @@ public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
     private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new LinkedHashMap<Priority, EventSeverity>();
 
     static {
+        // just in case there is something unanticipated that our default pattern doesn't like, allow
+        // a backdoor prop to set the REGEX pattern.
+        String regex = System.getProperty("rhq.agent.event.log4j.regex");
+        REGEX = (null != regex) ? regex : "(.*?) [\\[\\(]??\\s*(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)\\s*[\\]\\)]?? (.*)";
+        PATTERN = Pattern.compile(REGEX);
+
         PRIORITY_TO_SEVERITY_MAP.put(Priority.TRACE, EventSeverity.DEBUG);
         PRIORITY_TO_SEVERITY_MAP.put(Priority.DEBUG, EventSeverity.DEBUG);
         PRIORITY_TO_SEVERITY_MAP.put(Priority.INFO, EventSeverity.INFO);

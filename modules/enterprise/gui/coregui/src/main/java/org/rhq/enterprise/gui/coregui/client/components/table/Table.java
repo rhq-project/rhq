@@ -18,16 +18,35 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.smartgwt.client.data.*;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.ResultSet;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.*;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -52,6 +71,7 @@ import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
@@ -60,9 +80,15 @@ import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
-
-import java.util.*;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -76,7 +102,7 @@ import java.util.*;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("rawtypes")
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView, InitializableView {
 
     private static final int DATA_PAGE_SIZE = 50;
@@ -137,7 +163,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
-        this(locatorId, tableTitle, null, sortSpecifiers, null, false);
+        this(locatorId, tableTitle, null, sortSpecifiers, null, true);
     }
 
     protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
@@ -304,9 +330,16 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         try {
             super.onDraw();
 
+            // I'm not sure this is necessary as I'm not sure it's the case that draw()/onDraw() will get called
+            // multiple times. But if it did/does, this protects us by removing the current members before they
+            // get set below.  Note that by having this here we *can non* add members in onInit, because they will
+            // immediately get removed. -jshaughn
             for (Canvas child : contents.getMembers()) {
                 contents.removeChild(child);
             }
+
+            // add the listGrid defined in onInit
+            contents.addMember(listGrid);
 
             // Title
             this.titleCanvas = new HTMLFlow();
@@ -323,11 +356,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 contents.addMember(filterForm);
             }
 
-            contents.addMember(listGrid);
-
             // Footer
 
-            // A se cond toolstrip that optionally appears before the main footer - it will contain extra widgets.
+            // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
             // This is hidden from view unless extra widgets are actually added to the table above the main footer.
             this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
             footerExtraWidgets.setPadding(5);
@@ -406,7 +437,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             String contents;
             if (lengthIsKnown) {
                 int totalRows = this.listGrid.getTotalRows();
-                int selectedRows = this.listGrid.getSelection().length;
+                int selectedRows = this.listGrid.getSelectedRecords().length;
                 contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
             } else {
                 contents = MSG.view_table_totalRowsUnknown();
@@ -464,20 +495,20 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     public void onClick(ClickEvent clickEvent) {
                         disableAllFooterControls();
                         if (tableAction.confirmMessage != null) {
-                            String message = tableAction.confirmMessage.replaceAll("\\#", String.valueOf(listGrid
-                                .getSelection().length));
+                            String message = tableAction.confirmMessage.replaceAll("\\#",
+                                String.valueOf(listGrid.getSelectedRecords().length));
 
                             SC.ask(message, new BooleanCallback() {
                                 public void execute(Boolean confirmed) {
                                     if (confirmed) {
-                                        tableAction.action.executeAction(listGrid.getSelection(), null);
+                                        tableAction.action.executeAction(listGrid.getSelectedRecords(), null);
                                     } else {
                                         refreshTableInfo();
                                     }
                                 }
                             });
                         } else {
-                            tableAction.action.executeAction(listGrid.getSelection(), null);
+                            tableAction.action.executeAction(listGrid.getSelectedRecords(), null);
                         }
                     }
                 });
@@ -494,7 +525,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                         public void onClick(MenuItemClickEvent event) {
                             disableAllFooterControls();
-                            tableAction.getAction().executeAction(listGrid.getSelection(), menuEntries.get(key));
+                            tableAction.getAction().executeAction(listGrid.getSelectedRecords(), menuEntries.get(key));
                         }
                     });
                     menu.addItem(item);
@@ -969,7 +1000,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             for (TableActionInfo tableAction : this.tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
-                        .getSelection()));
+                        .getSelectedRecords()));
                     tableAction.actionCanvas.setDisabled(!enabled);
                 }
             }
@@ -998,7 +1029,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     protected void deleteSelectedRecords(DSRequest requestProperties) {
         ListGrid listGrid = getListGrid();
-        final int selectedRecordCount = listGrid.getSelection().length;
+        final int selectedRecordCount = listGrid.getSelectedRecords().length;
         final List<String> deletedRecordNames = new ArrayList<String>(selectedRecordCount);
         listGrid.removeSelectedData(new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
@@ -1010,8 +1041,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     }
                     if (deletedRecordNames.size() == selectedRecordCount) {
                         // all selected schedules were successfully deleted.
-                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
-                            .valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
+                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(
+                            String.valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
                             .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
                                 getDataTypeNamePlural(), deletedRecordNames.toString()));
                         CoreGUI.getMessageCenter().notify(message);

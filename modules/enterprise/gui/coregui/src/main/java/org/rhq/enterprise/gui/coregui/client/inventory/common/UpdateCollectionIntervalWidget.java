@@ -60,11 +60,11 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
         VALUE_MAP.put(UNITS_HOURS, MSG.common_unit_hours());
     }
 
-    private AbstractMeasurementScheduleListView schedulesView;
+    private AbstractSchedulesView schedulesView;
     private DynamicForm form;
     private LocatableButton setButton;
 
-    public UpdateCollectionIntervalWidget(String locatorId, AbstractMeasurementScheduleListView schedulesView) {
+    public UpdateCollectionIntervalWidget(String locatorId, AbstractSchedulesView schedulesView) {
         super(locatorId);
         this.schedulesView = schedulesView;
     }
@@ -110,7 +110,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
             }
         });
 
-        if (!schedulesView.hasManageMeasurementsPermission()) {
+        if (!schedulesView.hasWriteAccess()) {
             intervalItem.setDisabled(true);
             unitsItem.setDisabled(true);
         }
@@ -124,8 +124,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
             public void onClick(ClickEvent clickEvent) {
                 if (form.validate()) {
                     UpdateCollectionIntervalWidget.this.schedulesView.disableAllFooterControls();
-                    UpdateCollectionIntervalWidget.this.schedulesView.getDataSource().updateSchedules(
-                        UpdateCollectionIntervalWidget.this.schedulesView, getInterval());
+                    UpdateCollectionIntervalWidget.this.schedulesView.updateSchedules(getInterval());
                 }
             }
         });
@@ -138,7 +137,7 @@ public class UpdateCollectionIntervalWidget extends LocatableHLayout implements 
     public void refresh(ListGrid listGrid) {
         if (isDrawn()) {
             boolean isValid = this.form.validate();
-            int count = listGrid.getSelection().length;
+            int count = listGrid.getSelectedRecords().length;
             Long interval = getInterval();
             this.setButton.setDisabled(!isValid || count == 0 || interval == null);
         } else {

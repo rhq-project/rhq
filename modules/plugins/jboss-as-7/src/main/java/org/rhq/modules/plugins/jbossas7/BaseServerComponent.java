@@ -113,6 +113,10 @@ public class BaseServerComponent extends BaseComponent {
         processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
         processExecution.setKillOnTimeout(false);
 
+        String javaHomeDir = pluginConfiguration.getSimpleValue("javaHomePath",null);
+        if (javaHomeDir!=null) {
+            processExecution.getEnvironmentVariables().put("JAVA_HOME", javaHomeDir);
+        }
 
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
@@ -121,6 +125,8 @@ public class BaseServerComponent extends BaseComponent {
         logExecutionResults(results);
         if (results.getError()!=null) {
             operationResult.setErrorMessage(results.getError().getMessage());
+        } else if (results.getExitCode()!=null) {
+            operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n" + results.getCapturedOutput());
         } else {
             operationResult.setSimpleResult("Success");
         }

@@ -40,6 +40,9 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
 /**
+ * <b>DO NOT USE THIS CLASS DIRECTLY!!!!</b> Use {@link org.rhq.bindings.ScriptEngineFactory#getSecuredScriptEngine(String, org.rhq.bindings.util.PackageFinder, StandardBindings, PermissionCollection)}
+ * method instead for a reliably secured script engine.
+ * <p>
  * This is a decorator class for any other {@link ScriptEngine} implementation
  * that runs any of the eval methods with the defined set of {@link Permission}s. 
  * <p>

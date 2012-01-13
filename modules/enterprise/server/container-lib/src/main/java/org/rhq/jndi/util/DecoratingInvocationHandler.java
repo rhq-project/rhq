@@ -20,6 +20,7 @@
 package org.rhq.jndi.util;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -41,6 +42,14 @@ public class DecoratingInvocationHandler<Type, Decorator extends Type> implement
             target = picker.decorate(target, methodClass);
         }
         
-        return method.invoke(target, args);
+        try {
+            return method.invoke(target, args);
+        } catch (InvocationTargetException e) {
+            if (e.getCause() != null) {
+                throw e.getCause();
+            } else {
+                throw e;
+            }
+        }
     }
 }

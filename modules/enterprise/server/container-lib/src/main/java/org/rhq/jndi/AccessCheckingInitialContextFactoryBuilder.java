@@ -147,14 +147,17 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
      * @throws NamingException If an error occurs loading the factory class.
      */
     public InitialContextFactory createInitialContextFactory(Hashtable<?, ?> environment) throws NamingException {
-        final String factoryClassName = (String) environment.get(Context.INITIAL_CONTEXT_FACTORY);
+        final String factoryClassName = (String) environment.get(Context.INITIAL_CONTEXT_FACTORY);        
         if (factoryClassName == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No " + Context.INITIAL_CONTEXT_FACTORY + " set. Using the default factory.");
+            }
             return DEFAULT_FACTORY;
         }
         final ClassLoader classLoader = getContextClassLoader();
         try {
             final Class<?> factoryClass = Class.forName(factoryClassName, true, classLoader);
-            InitialContextFactory configuredFactory = (InitialContextFactory) factoryClass.newInstance();
+            InitialContextFactory configuredFactory = (InitialContextFactory) factoryClass.newInstance();            
             return createSecureWrapper(configuredFactory, environment);
         } catch (Exception e) {
             throw new NamingException("Failed instantiate InitialContextFactory " + factoryClassName
@@ -175,6 +178,9 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
         String providerUrl = (String) environment.get(Context.PROVIDER_URL);
 
         if (providerUrl == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Wrapping " + factory + " of class " + factory.getClass() + " in an access checking wrapper. No provider URL detected.");
+            }
             return getAccessCheckingFactory(factory);
         } else {
             try {
@@ -184,16 +190,32 @@ public class AccessCheckingInitialContextFactoryBuilder implements InitialContex
                 //check if we are accessing the RHQ server through some remoting
                 //interface.
                 if (uri.getPort() == JNP_PORT && SERVER_BIND_IPS.contains(providerHost)) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Wrapping " + factory + " of class " + factory.getClass() + " in an access checking wrapper. The provider URL points to this server.");
+                    }
                     return getAccessCheckingFactory(factory);
                 } else {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Wrapping " + factory + " of class " + factory.getClass() + " in an URL preferring wrapper to enable remote connections.");
+                    }
                     return getURLPreferringFactory(factory);
                 }
             } catch (URISyntaxException e) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("The " + Context.PROVIDER_URL
+                        + " is not a valid URI. Falling back to using the access checking wrapper for the factory "
+                        + factory + " of class " + factory.getClass() + ".", e);
+                }
                 return getAccessCheckingFactory(factory);
             } catch (UnknownHostException e) {
                 //let the factory deal with the unknown host...
                 //this most probably shouldn't be secured because localhost addresses
                 //should be resolvable.
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("The " + Context.PROVIDER_URL
+                        + " is not resolvable. Falling back to using the URL preferring wrapper for the factory "
+                        + factory + " of class " + factory.getClass() + ".", e);
+                }
                 return getURLPreferringFactory(factory);
             }
         }

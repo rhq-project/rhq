@@ -96,5 +96,15 @@ public class DecoratingInitialContextFactory implements InitialContextFactory {
         if (cls.getSuperclass() != null) {
             getAllImplementedInterfaces(cls.getSuperclass(), output);
         }
-    }    
+    }  
+    
+    @Override
+    public int hashCode() {
+        return factory.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        return factory.equals(o);
+    }
 }

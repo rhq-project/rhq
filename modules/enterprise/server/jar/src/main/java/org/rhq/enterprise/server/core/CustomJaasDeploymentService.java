@@ -165,7 +165,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(RHQConstants.LDAPFactory));
         configOptions.put(Context.PROVIDER_URL, conf.getProperty(RHQConstants.LDAPUrl));
         String value = conf.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
-        boolean ldapSsl = Boolean.TRUE.toString().equals(value);
+        boolean ldapSsl = "ssl".equalsIgnoreCase(value);
         configOptions.put(Context.SECURITY_PROTOCOL, (ldapSsl) ? "ssl" : null);
         configOptions.put("LoginProperty", conf.getProperty(RHQConstants.LDAPLoginProperty));
         configOptions.put("Filter", conf.getProperty(RHQConstants.LDAPFilter));

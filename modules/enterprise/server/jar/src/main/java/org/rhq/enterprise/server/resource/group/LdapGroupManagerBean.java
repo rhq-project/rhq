@@ -443,7 +443,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
         // Setup SSL if requested
         String value = env.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
-        boolean ldapSsl = Boolean.TRUE.toString().equals(value);
+        boolean ldapSsl = "ssl".equalsIgnoreCase(value);
         if (ldapSsl) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {

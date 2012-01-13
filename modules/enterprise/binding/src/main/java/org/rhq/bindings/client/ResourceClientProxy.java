@@ -538,7 +538,7 @@ public class ResourceClientProxy {
                         oldPackage.getPackageVersion().getArchitecture().getId(),
                         fileContents);
 
-            remoteClient.getContentManager().deployPackages(
+            remoteClient.getContentManager().deployPackagesWithNote(
                     remoteClient.getSubject(),
                     new int[] { resourceClientProxy.getId()},
                     new int[] {pv.getId()},

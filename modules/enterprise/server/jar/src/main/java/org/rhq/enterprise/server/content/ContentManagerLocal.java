@@ -363,9 +363,9 @@ public interface ContentManagerLocal {
     public void deletePackageVersion(Subject subject, int packageVersionId);
 
     /**
-     * @see {@link ContentManagerRemote#deployPackages(Subject, int[], int[], String)}
+     * @see {@link ContentManagerRemote#deployPackagesWithNote(Subject, int[], int[], String)}
      */
-    void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes);
+    void deployPackagesWithNote(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes);
 
     /**
      * @see {@link ContentManagerRemote#findArchitectures(Subject)}

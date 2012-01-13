@@ -94,7 +94,7 @@ public class DeployPackagesUIBean extends PagedDataTableUIBean {
 
         try {
             ContentManagerLocal contentManager = LookupUtil.getContentManager();
-            contentManager.deployPackages(subject, new int[] { resource.getId() }, packagesVersionsIdsToDeploy, notes);
+            contentManager.deployPackagesWithNote(subject, new int[] { resource.getId() }, packagesVersionsIdsToDeploy, notes);
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not send deploy request to agent", e);
         }

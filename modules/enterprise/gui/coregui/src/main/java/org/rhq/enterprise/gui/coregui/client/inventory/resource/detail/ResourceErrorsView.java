@@ -121,7 +121,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length > 0) {
                     String details = selectedRows[0].getAttribute(Field.DETAIL);
                     popupDetails(details);

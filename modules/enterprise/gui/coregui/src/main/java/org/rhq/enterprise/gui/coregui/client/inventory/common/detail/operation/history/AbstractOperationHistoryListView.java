@@ -271,7 +271,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
 
     @Override
     protected void deleteSelectedRecords(DSRequest requestProperties) {
-        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelection();
+        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
         Boolean forceValue = (requestProperties != null &&
                 requestProperties.getAttributeAsBoolean(AbstractOperationHistoryDataSource.RequestAttribute.FORCE));

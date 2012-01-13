@@ -300,7 +300,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length == 1) {
                         String groupUrl = LinkManager.getResourceGroupLink(selectedRows[0].getAttributeAsInt("id"));
                         CoreGUI.goToView(groupUrl);

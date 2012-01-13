@@ -180,7 +180,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     protected void deleteSelectedRecords(DSRequest requestProperties) {
-        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelection();
+        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
         Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
         boolean force = ((forceValue != null) && forceValue);

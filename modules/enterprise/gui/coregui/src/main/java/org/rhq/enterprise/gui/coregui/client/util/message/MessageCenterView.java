@@ -196,7 +196,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             public void onDoubleClick(DoubleClickEvent event) {
                 try {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length > 0) {
                         Message message = (Message) selectedRows[0].getAttributeAsObject(FIELD_OBJECT); // show the first selected
                         showDetails(message);

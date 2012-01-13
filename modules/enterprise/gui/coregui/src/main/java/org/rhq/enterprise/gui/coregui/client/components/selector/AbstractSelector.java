@@ -537,7 +537,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
 
     private void notifyAssignedItemsChangedHandlers() {
         for (AssignedItemsChangedHandler handler : this.assignedItemsChangedHandlers) {
-            handler.onSelectionChanged(new AssignedItemsChangedEvent(this.assignedGrid.getSelection()));
+            handler.onSelectionChanged(new AssignedItemsChangedEvent(this.assignedGrid.getSelectedRecords()));
         }
     }
 

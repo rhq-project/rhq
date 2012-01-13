@@ -166,7 +166,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length == 1) {
                         showDetails(selectedRows[0]);
                     }

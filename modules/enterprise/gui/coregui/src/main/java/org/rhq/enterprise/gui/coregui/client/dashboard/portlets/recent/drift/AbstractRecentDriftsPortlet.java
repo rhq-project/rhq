@@ -296,7 +296,7 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
     public void refreshTableInfo() {
         super.refreshTableInfo();
         if (getTableInfo() != null) {
-            int count = getListGrid().getSelection().length;
+            int count = getListGrid().getSelectedRecords().length;
             getTableInfo().setContents(
                 MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
         }

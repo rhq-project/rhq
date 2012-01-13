@@ -262,7 +262,7 @@ public class NotificationsAlertDefinitionForm extends LocatableVLayout implement
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length == 1) {
                         AlertNotification notif = (getDataSource()).copyValues(selectedRows[0]);
                         popupNotificationEditor(notif);

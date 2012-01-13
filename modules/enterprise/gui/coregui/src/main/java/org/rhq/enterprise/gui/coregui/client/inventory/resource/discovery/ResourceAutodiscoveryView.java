@@ -389,7 +389,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
     private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton, IButton importButton,
         IButton ignoreButton, IButton unignoreButton) {
-        if (treeGrid.getSelection().length == 0) {
+        if (treeGrid.getSelectedRecords().length == 0) {
             selectAllButton.setDisabled(false);
             deselectAllButton.setDisabled(true);
             importButton.setDisabled(true);
@@ -399,7 +399,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
             return;
         }
 
-        boolean allSelected = (treeGrid.getSelection().length == treeGrid.getRecords().length);
+        boolean allSelected = (treeGrid.getSelectedRecords().length == treeGrid.getRecords().length);
         selectAllButton.setDisabled(allSelected);
         deselectAllButton.setDisabled(false);
 
@@ -407,7 +407,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         boolean ignoreOk = false;
         boolean unignoreOk = false;
 
-        for (ListGridRecord listGridRecord : treeGrid.getSelection()) {
+        for (ListGridRecord listGridRecord : treeGrid.getSelectedRecords()) {
             TreeNode node = treeGrid.getTree().findById(listGridRecord.getAttribute("id"));
             String status = node.getAttributeAsString("status");
             TreeNode parentNode = treeGrid.getTree().getParent(node);
@@ -438,7 +438,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
     private int[] getSelectedIds() {
         List<Integer> selected = new ArrayList<Integer>();
-        for (ListGridRecord node : treeGrid.getSelection()) {
+        for (ListGridRecord node : treeGrid.getSelectedRecords()) {
             if (!InventoryStatus.COMMITTED.name().equals(node.getAttributeAsString("status"))) {
                 selected.add(Integer.parseInt(node.getAttributeAsString("id")));
             }

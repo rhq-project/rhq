@@ -996,7 +996,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            //int selectionCount = this.listGrid.getSelection().length;
+            //int selectionCount = this.listGrid.getSelectedRecords().length;
             for (TableActionInfo tableAction : this.tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid

@@ -171,7 +171,7 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String typeString = selectedRows[0].getAttribute(DataSource.Field.TYPE);
                     ChildHistoryDetails detailsView = null;

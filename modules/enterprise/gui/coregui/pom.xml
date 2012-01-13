@@ -59,6 +59,10 @@
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
 
+        <!-- Change this to "false" via the mvn command line or your ~/.m2/settings.xml to speed
+             up gwt compilation and reduce memory consumption by avoiding report generation. -->
+        <gwt.soyc>true</gwt.soyc>
+
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
              src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
@@ -274,6 +278,7 @@
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
                     <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
                     <draftCompile>${gwt.draftCompile}</draftCompile>
+                    <soyc>${gwt.soyc}</soyc>                    
                     <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
                     <hostedWebapp>target/hostedWar</hostedWebapp>
                     <debugSuspend>false</debugSuspend>

@@ -110,7 +110,24 @@ public interface ContentManagerRemote {
      * @param packageVersionIds packageVersions we want to install
      */
     @WebMethod
+    @Deprecated
     void deployPackages(
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceIds") int[] resourceIds, //
+        @WebParam(name = "packageVersionIds") int[] packageVersionIds);
+
+    /**
+     * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
+     * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
+     * take care of populating the rest of the values in each installed package object.
+     *
+     * @param subject           The logged in subject
+     * @param resourceIds       identifies the resources against which the package will be deployed
+     * @param packageVersionIds packageVersions we want to install
+     * @param requestNotes      request notes
+     */
+    @WebMethod
+    void deployPackagesWithNote(
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds, //
         @WebParam(name = "packageVersionIds") int[] packageVersionIds,

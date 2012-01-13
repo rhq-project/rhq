@@ -522,8 +522,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
         contentManager.deletePackageVersion(subject, packageVersionId);
     }
 
-    public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
-        contentManager.deployPackages(subject, resourceIds, packageVersionIds, requestNotes);
+    public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds) {
+        contentManager.deployPackagesWithNote(subject, resourceIds, packageVersionIds, null);
+    }
+
+    public void deployPackagesWithNote(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
+        contentManager.deployPackagesWithNote(subject, resourceIds, packageVersionIds, requestNotes);
     }
 
     public List<Architecture> findArchitectures(Subject subject) {
@@ -1239,5 +1243,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
+
 
 }

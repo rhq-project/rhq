@@ -343,7 +343,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             + (System.currentTimeMillis() - start) + "ms");
     }
 
-    public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
+    public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds) {
+        this.deployPackagesWithNote(user, resourceIds, packageVersionIds, null);
+    }
+
+    public void deployPackagesWithNote(Subject user, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
         for (int resourceId : resourceIds) {
             Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
             for (int packageVersionId : packageVersionIds) {

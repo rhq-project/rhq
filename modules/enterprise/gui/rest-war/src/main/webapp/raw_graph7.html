@@ -160,12 +160,14 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
 
                         var line = d3.svg.line()
                                 .x(function(d,i) { return x(d.timeStamp-dayMinTs); })
-                                .y(function(d) { return  y(d.value); })
-                        lines.append("svg:path").attr("d", line(daydat)).style("stroke",colors[day]);
+                                .y(function(d) { return  y(d.value); });
+                        lines.append("svg:path")
+                                .attr("d", line(daydat))
+                                .style("stroke",colors[day]);
 
 
                         var dot = svg.append("svg:g").attr("class","dotschart")
-                                .selectAll("dot").data(jsondata)
+                                .selectAll("dot").data(jsondata);
 
                         dot.enter().append("svg:circle")
                                 .attr("cx", function (d) {
@@ -175,8 +177,7 @@ $.getJSON('/rest/1/resource/platforms.json', function (json) {
                                     return y(d.value);
                                 })
                                 .style("stroke", colors[day])
-                                .attr("r", 1)
-                                .attr("opacity","0")
+                                .attr("r", 1);
 
                     }
                 });

@@ -36,6 +36,8 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -62,6 +64,7 @@ import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -70,6 +73,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
@@ -93,6 +97,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     MeasurementScheduleManagerLocal scheduleManager;
     @EJB
     ResourceManagerLocal resMgr;
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    EntityManager em;
 
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
@@ -114,7 +120,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             startTime = endTime - EIGHT_HOURS;
         }
 
-        MeasurementSchedule schedule = obtainSchedule(scheduleId);
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false);
 
         MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
         MetricAggregate res = new MetricAggregate(scheduleId, aggr.getMin(),aggr.getAvg(),aggr.getMax());
@@ -149,13 +155,16 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
     /**
      * Get the schedule for the passed schedule id
+     *
      * @param scheduleId id to look up
+     * @param force
      * @return schedule
      * @throws StuffNotFoundException if there is no schedule with the passed id
      */
-    private MeasurementSchedule obtainSchedule(int scheduleId) {
-        MeasurementSchedule schedule;
-        schedule = getFromCache(scheduleId,MeasurementSchedule.class);
+    private MeasurementSchedule obtainSchedule(int scheduleId, boolean force) {
+        MeasurementSchedule schedule=null;
+        if(!force)
+            schedule = getFromCache(scheduleId,MeasurementSchedule.class);
         if (schedule==null) {
             schedule = scheduleManager.getScheduleById(caller,scheduleId);
             if (schedule==null) {
@@ -419,7 +428,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             throw new IllegalArgumentException("Start time is older than 7 days");
 
         // Check if the schedule exists
-        obtainSchedule(scheduleId);
+        obtainSchedule(scheduleId, false);
 
         RawNumericStreamingOutput so = new RawNumericStreamingOutput();
         so.scheduleId = scheduleId;
@@ -441,7 +450,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                    NumericDataPoint point, @Context HttpHeaders headers, UriInfo uriInfo) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        MeasurementSchedule schedule = obtainSchedule(scheduleId);
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false);
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
         data.add(new MeasurementDataNumeric(point.getTimeStamp(),scheduleId,point.getValue()));
@@ -473,6 +482,50 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         dataManager.addNumericData(data);
 
         return Response.noContent().type(mediaType).build();
+
+    }
+
+    @Override
+    @GET
+    @Path("data/{scheduleId}/baseline")
+    public Baseline getBaseline(@PathParam("scheduleId") int scheduleId, @Context HttpHeaders headers,
+                                @Context UriInfo uriInfo) {
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, true);
+        MeasurementBaseline mBase = schedule.getBaseline();
+
+        Baseline b;
+        if (mBase==null)
+            throw new StuffNotFoundException("Baseline for schedule [" + scheduleId +"]");
+        else
+            b = new Baseline(mBase.getMin(),mBase.getMax(),mBase.getMean(),mBase.getComputeTime().getTime());
+        return b;
+
+    }
+
+    @Override
+    @PUT
+    @Path("data/{scheduleId}/baseline")
+    public void setBaseline(@PathParam("scheduleId") int scheduleId,
+                                Baseline baseline, HttpHeaders headers, @Context UriInfo uriInfo) {
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false);
+
+        // little bit of sanity checking
+        if (baseline.getMin()>baseline.getMean() || baseline.getMean()>baseline.getMax() || baseline.getMin()>baseline.getMax())
+            throw new IllegalArgumentException("Baseline not correct. it should be min<=mean<=max");
+
+        MeasurementBaseline mBase = schedule.getBaseline();
+        if (mBase == null) {
+            mBase = new MeasurementBaseline();
+            mBase.setSchedule(schedule);
+            schedule.setBaseline(mBase);
+            em.persist(mBase);
+        }
+        mBase.setMax(baseline.getMax());
+        mBase.setMin(baseline.getMin());
+        mBase.setMean(baseline.getMean());
+        mBase.setUserEntered(true);
+
+        scheduleManager.updateSchedule(caller,schedule);
 
     }
 

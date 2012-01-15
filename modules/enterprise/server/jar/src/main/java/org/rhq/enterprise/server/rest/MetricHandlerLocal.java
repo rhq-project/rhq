@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
@@ -155,4 +156,19 @@ public interface MetricHandlerLocal {
     @Path("data/raw")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     Response postMetricValues(Collection<NumericDataPoint> points, @Context HttpHeaders headers);
+
+    @GET
+    @Path("data/{scheduleId}/baseline")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    Baseline getBaseline(@PathParam("scheduleId") int scheduleId,
+                         @Context HttpHeaders headers,
+                         @Context UriInfo uriInfo);
+
+    @PUT
+    @Path("data/{scheduleId}/baseline")
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    void setBaseline(@PathParam("scheduleId") int scheduleId,
+                     Baseline baseline,
+                     @Context HttpHeaders headers,
+                     @Context UriInfo uriInfo);
 }

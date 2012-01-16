@@ -38,6 +38,7 @@ import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -215,8 +216,8 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         // create the plot
         SimplePlot plot = new SimplePlot(model, plotOptions);
-        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
-            - titleHLayout.getHeight() - 50));
+        plot.setSize(String.valueOf(getInnerContentWidth()),
+            String.valueOf(getInnerContentHeight() - titleHLayout.getHeight() - 50));
         //                "80%","80%");
 
         // add hover listener
@@ -267,8 +268,8 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
         addMember(new LocatableWidgetCanvas(extendLocatorId("Plot"), plot));
 
-        plot.setSize(String.valueOf(getInnerContentWidth()), String.valueOf(getInnerContentHeight()
-            - titleHLayout.getHeight() - 50));
+        plot.setSize(String.valueOf(getInnerContentWidth()),
+            String.valueOf(getInnerContentHeight() - titleHLayout.getHeight() - 50));
 
     }
 
@@ -294,7 +295,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
 
     protected String getHover(PlotItem item) {
         if (definition != null) {
-            com.google.gwt.i18n.client.DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
+            com.google.gwt.i18n.client.DateTimeFormat df = DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
             return definition.getDisplayName() + ": "
                 + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true) + "<br/>"
                 + df.format(new Date((long) item.getDataPoint().getX()));
@@ -310,8 +311,8 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
             handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
         }
 
-        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70).setTickFormatter(
-            new TickFormatter() {
+        plotOptions.setYAxisOptions(new AxisOptions().setTicks(5).setLabelWidth(70)
+            .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double v, Axis axis) {
                     return MeasurementConverterClient.format(v, definition.getUnits(), true);
                 }
@@ -325,7 +326,8 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
         plotOptions.setXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max)
             .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double tickValue, Axis axis) {
-                    com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat.getShortDateTimeFormat();
+                    com.google.gwt.i18n.client.DateTimeFormat dateFormat = DateTimeFormat
+                        .getFormat(PredefinedFormat.DATE_TIME_SHORT);
                     return dateFormat.format(new Date((long) tickValue));
                     //                return String.valueOf(new Date((long) tickValue));
                     //                return MONTH_NAMES[(int) (tickValue - 1)];

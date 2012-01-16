@@ -85,13 +85,13 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
         fields.add(expressionField);
 
         // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field
-        DataSourceTextField lastCalculationTimeIntervalField = new DataSourceTextField("lastCalculationTime", MSG
-            .view_dynagroup_lastCalculationTime());
+        DataSourceTextField lastCalculationTimeIntervalField = new DataSourceTextField("lastCalculationTime",
+            MSG.view_dynagroup_lastCalculationTime());
         fields.add(lastCalculationTimeIntervalField);
 
         // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field
-        DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime", MSG
-            .view_dynagroup_nextCalculationTime());
+        DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime",
+            MSG.view_dynagroup_nextCalculationTime());
         fields.add(nextCalculationTimeField);
 
         return fields;
@@ -108,8 +108,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
             }
 
             public void onSuccess(PageList<GroupDefinition> result) {
-                populateSuccessResponse(result, response);
-                processResponse(request.getRequestId(), response);
+                sendSuccessResponse(request, response, result);
             }
         });
     }

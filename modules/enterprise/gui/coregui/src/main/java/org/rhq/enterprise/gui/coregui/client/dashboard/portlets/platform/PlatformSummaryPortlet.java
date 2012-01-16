@@ -98,8 +98,8 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     protected void onDraw() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(5);
 
-        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
-            .common_title_name());
+        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(),
+            MSG.common_title_name());
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
@@ -108,8 +108,8 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         });
         fields.add(nameField);
 
-        ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(), MSG
-            .common_title_version());
+        ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(),
+            MSG.common_title_version());
         fields.add(versionField);
 
         ListGridField cpuField = new ListGridField("cpu", MSG.dataSource_platforms_field_cpu());

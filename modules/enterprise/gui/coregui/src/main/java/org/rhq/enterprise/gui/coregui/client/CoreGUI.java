@@ -344,7 +344,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
+        currentView = URL.decodeQueryString(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
 
         currentViewPath = new ViewPath(currentView);

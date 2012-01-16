@@ -188,7 +188,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
             } else {//return full list .. as no filtering done.
                 locatedGroupMaps = cachedLdapGroupsAvailable;
             }
-            @SuppressWarnings( { "UnnecessaryLocalVariable" })
+
             PageList<LdapGroup> ldapGroups = convertToPageList(locatedGroupMaps);
             return ldapGroups;
         }

@@ -92,4 +92,9 @@ public class GroupMembersHealthView extends MembersView {
             }
         });
     }
+
+    public boolean isCanModifyMembers() {
+        return canModifyMembers;
+    }
+
 }

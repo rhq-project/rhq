@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -28,7 +33,12 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
-import org.rhq.core.domain.configuration.*;
+
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -38,11 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -227,15 +232,9 @@ public class ConfigurationComparisonView extends VLayout {
 
     private static class ComparisonTreeNode extends TreeNode {
 
-        PropertyDefinitionSimple definition;
-        List<PropertySimple> properties;
-
         private ComparisonTreeNode(PropertyDefinitionSimple definition, List<PropertySimple> properties,
             List<String> titles) {
             super(definition.getDisplayName());
-
-            this.definition = definition;
-            this.properties = properties;
 
             setAttribute("type", definition.getType().name());
 

@@ -109,7 +109,6 @@ public class GwtMeasurementConverter {
             targetUnits = fittedUnits;
         }
 
-        @SuppressWarnings("unused")
         Set<String> existingStrings; // technically this *is* unused because
         int precisionDigits = 1;
         boolean scaleWithMorePrecision = true;
@@ -341,8 +340,8 @@ public class GwtMeasurementConverter {
         }
 
         if (wasNegative) {
-            return new MeasurementNumericValueAndUnits(-currentValueAndUnits.getValue(), currentValueAndUnits
-                .getUnits());
+            return new MeasurementNumericValueAndUnits(-currentValueAndUnits.getValue(),
+                currentValueAndUnits.getUnits());
         }
 
         return currentValueAndUnits;

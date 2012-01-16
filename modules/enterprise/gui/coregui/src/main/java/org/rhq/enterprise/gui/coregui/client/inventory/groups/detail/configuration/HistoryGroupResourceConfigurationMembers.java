@@ -70,6 +70,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
     private final ResourceGroup group;
+    @SuppressWarnings("unused")
     private final ResourcePermission groupPerms;
     private final int groupUpdateId;
 
@@ -82,7 +83,8 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(EntityContext.forGroup(this.group), null);
+        String backPath = LinkManager.getGroupResourceConfigurationUpdateHistoryLink(
+            EntityContext.forGroup(this.group), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -107,8 +109,7 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
             ListGridField fieldResource = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             fieldResource.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
@@ -121,11 +122,11 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
             });
 
             ListGridField fieldAncestry = AncestryUtil.setupAncestryListGridField();
-            ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED, MSG
-                .common_title_dateCreated());
+            ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED,
+                MSG.common_title_dateCreated());
             TimestampCellFormatter.prepareDateField(fieldDateCreated);
-            ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG
-                .common_title_lastUpdated());
+            ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED,
+                MSG.common_title_lastUpdated());
             TimestampCellFormatter.prepareDateField(fieldLastUpdated);
             ListGridField fieldStatus = new ListGridField(DataSource.Field.STATUS, MSG.common_title_status());
             ListGridField fieldUser = new ListGridField(DataSource.Field.USER, MSG.common_title_user());
@@ -142,14 +143,14 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
 
             fieldStatus.setType(ListGridFieldType.ICON);
             HashMap<String, String> statusIcons = new HashMap<String, String>(4);
-            statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(), ImageManager
-                .getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
-            statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(), ImageManager
-                .getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
-            statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(), ImageManager
-                .getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
-            statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(), ImageManager
-                .getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
+            statusIcons.put(ConfigurationUpdateStatus.SUCCESS.name(),
+                ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.SUCCESS));
+            statusIcons.put(ConfigurationUpdateStatus.FAILURE.name(),
+                ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.FAILURE));
+            statusIcons.put(ConfigurationUpdateStatus.INPROGRESS.name(),
+                ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.INPROGRESS));
+            statusIcons.put(ConfigurationUpdateStatus.NOCHANGE.name(),
+                ImageManager.getResourceConfigurationIcon(ConfigurationUpdateStatus.NOCHANGE));
             fieldStatus.setValueIcons(statusIcons);
             fieldStatus.addRecordClickHandler(new RecordClickHandler() {
                 @Override
@@ -280,8 +281,8 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
                                             record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                                             // Build the decoded ancestry Strings now for display
-                                            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil
-                                                .getAncestryValue(record));
+                                            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE,
+                                                AncestryUtil.getAncestryValue(record));
                                         }
                                         response.setData(records);
                                         response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set

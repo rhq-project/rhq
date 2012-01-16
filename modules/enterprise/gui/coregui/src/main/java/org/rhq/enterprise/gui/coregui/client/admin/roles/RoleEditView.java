@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implements BookmarkableView {
-    
+
     private static final String HEADER_ICON = "global/Role_24.png";
 
     private LocatableTab permissionsTab;
@@ -95,7 +95,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             public void onPermissionsLoaded(Set<Permission> perms) {
                 if (perms == null) {
                     // TODO: i18n
-                    CoreGUI.getErrorHandler().handleError("Failed to load global permissions for current user. Perhaps the Server is down.");
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to load global permissions for current user. Perhaps the Server is down.");
                     return;
                 }
                 RoleEditView.this.hasManageSecurityPermission = perms.contains(Permission.MANAGE_SECURITY);
@@ -210,7 +211,6 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     @Override
     protected Record createNewRecord() {
         Role role = new Role();
-        @SuppressWarnings( { "UnnecessaryLocalVariable" })
         Record roleRecord = RolesDataSource.getInstance().copyValues(role);
         return roleRecord;
     }
@@ -234,15 +234,14 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         if (this.hasManageSecurityPermission || isMemberOfRole) {
             // Create the permission editor and selectors and add them to the corresponding tabs.
 
-            this.permissionsEditor = new PermissionsEditor(this, !hasManageSecurityPermission ||
-                this.isSystemRole);
+            this.permissionsEditor = new PermissionsEditor(this, !hasManageSecurityPermission || this.isSystemRole);
             updateTab(this.permissionsTab, this.permissionsEditor);
 
             if (!this.isSystemRole) {
                 Record[] groupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.RESOURCE_GROUPS);
                 ListGridRecord[] groupListGridRecords = toListGridRecordArray(groupRecords);
-                this.resourceGroupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"), groupListGridRecords,
-                    !this.hasManageSecurityPermission);
+                this.resourceGroupSelector = new RoleResourceGroupSelector(this.extendLocatorId("Groups"),
+                    groupListGridRecords, !this.hasManageSecurityPermission);
                 this.resourceGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                     public void onSelectionChanged(AssignedItemsChangedEvent event) {
                         onItemChanged();
@@ -265,7 +264,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                         filteredSubjectRecords.add(subjectListGridRecord);
                     }
                 }
-                subjectListGridRecords = filteredSubjectRecords.toArray(new ListGridRecord[filteredSubjectRecords.size()]);
+                subjectListGridRecords = filteredSubjectRecords.toArray(new ListGridRecord[filteredSubjectRecords
+                    .size()]);
             }
             this.subjectSelector = new RoleSubjectSelector(this.extendLocatorId("Subjects"), subjectListGridRecords,
                 !this.hasManageSecurityPermission);
@@ -279,7 +279,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             if (this.isLdapConfigured) {
                 Record[] ldapGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.LDAP_GROUPS);
                 ListGridRecord[] ldapGroupListGridRecords = toListGridRecordArray(ldapGroupRecords);
-                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"), 
+                this.ldapGroupSelector = new RoleLdapGroupSelector(this.extendLocatorId("LdapGroups"),
                     ldapGroupListGridRecords, !this.hasManageSecurityPermission);
                 this.ldapGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                     public void onSelectionChanged(AssignedItemsChangedEvent event) {
@@ -293,8 +293,8 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                 Label label = new Label("<b>"
                     + MSG.common_msg_emphasizedNotePrefix()
                     + "</b> "
-                    + MSG.view_adminRoles_noLdap("href='#Administration/Configuration/SystemSettings'", MSG
-                        .view_adminConfig_systemSettings()));
+                    + MSG.view_adminRoles_noLdap("href='#Administration/Configuration/SystemSettings'",
+                        MSG.view_adminConfig_systemSettings()));
                 label.setWidth100();
                 label.setHeight(20);
                 label.setPadding(10);

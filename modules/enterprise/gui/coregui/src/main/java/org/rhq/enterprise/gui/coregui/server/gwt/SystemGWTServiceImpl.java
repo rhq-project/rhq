@@ -135,11 +135,11 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             File downloadsDir = getCliAlertScriptDownloadsDir();
             List<File> files = getFiles(downloadsDir);
             if (files == null) {
-                return new HashMap<String, String>(0);                
+                return new HashMap<String, String>(0);
             } else {
                 HashMap<String, String> ret = new HashMap<String, String>(files.size());
-                
-                for(File file : files) {
+
+                for (File file : files) {
                     ret.put(file.getName(), "/downloads/cli-alert-scripts/" + file.getName());
                 }
                 return ret;
@@ -148,7 +148,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             throw getExceptionToThrowToClient(t);
         }
     }
-    
+
     @Override
     public HashMap<String, String> getClientVersionProperties() throws RuntimeException {
         File versionFile = new File(getClientDownloadDir(), "rhq-client-version.properties");
@@ -210,7 +210,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         }
         return downloadDir;
     }
-    
+
     private File getClientDownloadDir() {
         File serverHomeDir = getServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");
@@ -249,6 +249,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     // GWT does not support java.util.Properties - we have to convert to/from Properties <-> HashMap
+    @SuppressWarnings("unused")
     private Properties convertToProperties(HashMap<String, String> map) {
         Properties props = new Properties();
         if (map != null) {

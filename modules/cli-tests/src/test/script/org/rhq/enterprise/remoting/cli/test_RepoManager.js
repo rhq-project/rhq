@@ -242,7 +242,7 @@ function testDeploy() {
    // Get the parent
    criteria = new ResourceCriteria();
    criteria.strict = true;
-   criteria.addFilterName( "Tomcat VHost (localhost)" );
+   criteria.addFilterResourceTypeName( "Tomcat Virtual Host" );
    criteria.addFilterCurrentAvailability( AvailabilityType.UP );
    var vhosts = ResourceManager.findResourcesByCriteria( criteria );
    Assert.assertNotNull( vhosts, "Test requires Tomcat VHost (localhost) in inventory.");
@@ -286,7 +286,7 @@ function testDeploy() {
    // no required plugin config for this resource type
    // no required resource config for this resource type
    // resource name defaults to war file name / context root
-   ResourceFactoryManager.createPackageBackedResource( vhost.getId(), warType.getId(), null, null, file.getName(), "1.0", null, deployConfig, fileBytes);
+   ResourceFactoryManager.createPackageBackedResource( vhost.getId(), warType.getId(), null, null, file.getName(), "1.0", null, deployConfig, fileBytes, null);
 
    criteria = new ResourceCriteria();
    criteria.strict = false;
@@ -494,8 +494,7 @@ function testDeploy() {
    Assert.assertNotNull( newBackingPackage, "backing package should exist after update." );
    print( "\n After Update: BackingPackage=" + newBackingPackage.getId() );
 
-   // TODO: This test may fail due to RHQ-2387, uncomment when fixed
-   // Assert.assertTrue( ( backingPackage,getId() != newBackingPackage.getId() ), "Backing ackage should differ after update" );
+   Assert.assertTrue( ( backingPackage.getId() != newBackingPackage.getId() ), "Backing ackage should differ after update" );
 
    // delete any existing test repos in the db
    repos = RepoManager.findRepos(PageControl.getUnlimitedInstance());

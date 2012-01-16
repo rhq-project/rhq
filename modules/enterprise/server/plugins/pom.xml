@@ -56,7 +56,6 @@
     <module>disk</module>
     <module>yum</module>
     <module>url</module>
-    <module>rhnhosted</module>
     <module>jboss-software</module>
     <module>perspectives/core</module>
     <module>alert-email</module>

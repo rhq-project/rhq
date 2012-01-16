@@ -139,38 +139,40 @@ public class ResourceSearchView extends Table {
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
-            .view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(ResourceSearchView.this,
-            TableActionEnablement.ANY, Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+        addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(),
+            MSG.view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(
+                ResourceSearchView.this, TableActionEnablement.ANY, Permission.DELETE_RESOURCE,
+                new RecordExtractor<Integer>() {
 
-                public Collection<Integer> extract(Record[] records) {
-                    List<Integer> result = new ArrayList<Integer>(records.length);
-                    for (Record record : records) {
-                        result.add(record.getAttributeAsInt("id"));
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("id"));
+                        }
+
+                        return result;
                     }
+                }) {
 
-                    return result;
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int[] resourceIds = TableUtility.getIds(selection);
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+
+                    resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(),
+                                caught);
+                        }
+
+                        public void onSuccess(List<Integer> result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
+
+                            onUninventorySuccess();
+                        }
+                    });
                 }
-            }) {
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                int[] resourceIds = TableUtility.getIds(selection);
-                ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
-
-                resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(), caught);
-                    }
-
-                    public void onSuccess(List<Integer> result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
-
-                        onUninventorySuccess();
-                    }
-                });
-            }
-        });
+            });
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
@@ -226,6 +228,7 @@ public class ResourceSearchView extends Table {
         fields.add(nameField);
 
         ListGridField keyField = new ListGridField(KEY.propertyName(), KEY.title(), 170);
+        keyField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(keyField);
 
         ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();

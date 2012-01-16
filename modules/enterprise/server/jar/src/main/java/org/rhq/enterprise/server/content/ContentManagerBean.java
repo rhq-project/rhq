@@ -1237,8 +1237,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
     }
 
-    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version, String displayVersion,
+    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
         Integer architectureId, byte[] packageBytes) {
+        return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, null,
+            architectureId, packageBytes);
+    }
+
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version, String displayVersion, Integer architectureId, byte[] packageBytes) {
 
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
@@ -1246,13 +1252,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to create package versions");
         }
 
-        return createPackageVersion(subject, packageName, packageTypeId, version, displayVersion, (null == architectureId) ? getNoArchitecture()
+        return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, displayVersion,
+            (null == architectureId) ? getNoArchitecture()
                 .getId() : architectureId, new ByteArrayInputStream(packageBytes));
     }
 
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String version, String displayVersion, int architectureId, InputStream packageBitStream) {
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version, String displayVersion, int architectureId, InputStream packageBitStream) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
         packageVersionQuery.setParameter("name", packageName);

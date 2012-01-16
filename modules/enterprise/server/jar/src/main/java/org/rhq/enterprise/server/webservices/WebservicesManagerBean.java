@@ -507,11 +507,16 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //CONTENTMANAGER: BEGIN ----------------------------------
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        String displayVersion,
         Integer architectureId, byte[] packageBytes) {
-        return contentManager.createPackageVersion(subject, packageName, packageTypeId, version, displayVersion,
-            architectureId,
-            packageBytes);
+        return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
+            null, architectureId, packageBytes);
+    }
+
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version,
+        String displayVersion, Integer architectureId, byte[] packageBytes) {
+        return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
+            displayVersion, architectureId, packageBytes);
     }
 
     public void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes) {

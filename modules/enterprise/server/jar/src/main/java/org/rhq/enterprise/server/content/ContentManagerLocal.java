@@ -234,13 +234,14 @@ public interface ContentManagerLocal {
      * @param  packageName    parent package name; uniquely identifies the package under which this version goes
      * @param  packageTypeId  identifies the type of package in case the general package needs to be created
      * @param  version        identifies the version to be create
+     * @param displayVersion  package display version
      * @param  architectureId architecture of the newly created package version
      *
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
      */
-    PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        String displayVersion, int architectureId, InputStream packageBitStream);
+    PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
+        String version, String displayVersion, int architectureId, InputStream packageBitStream);
 
     /**
      * This method is essentially the same as {@link #createPackageVersion(Subject, String, int, String, int, InputStream)}
@@ -350,7 +351,13 @@ public interface ContentManagerLocal {
      * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
      */
     PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        String displayVersion, Integer architectureId, byte[] packageBytes);
+        Integer architectureId, byte[] packageBytes);
+
+    /**
+     * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
+     */
+    PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
+        String version, String displayVersion, Integer architectureId, byte[] packageBytes);
 
     /**
      * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}

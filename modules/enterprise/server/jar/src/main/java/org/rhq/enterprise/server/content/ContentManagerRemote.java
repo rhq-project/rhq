@@ -69,6 +69,29 @@ public interface ContentManagerRemote {
         @WebParam(name = "packageName") String packageName, //
         @WebParam(name = "packageTypeId") int packageTypeId, //
         @WebParam(name = "version") String version, //
+        @WebParam(name = "architectureId") Integer architectureId, //
+        @WebParam(name = "packageBytes") byte[] packageBytes);
+
+    /**
+     * Creates a new package version in the system. If the parent package (identified by the packageName parameter) does
+     * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
+     * created and the existing package version instance will be returned.
+     *
+     * @param subject        The logged in subject
+     * @param packageName    parent package name; uniquely identifies the package under which this version goes
+     * @param packageTypeId  identifies the type of package in case the general package needs to be created
+     * @param version        identifies the version to be create
+     * @param architectureId architecture of the newly created package version. If null then no architecture restriction.
+     *
+     * @return newly created package version if one did not exist; existing package version that matches these data if
+     *         one was found
+     */
+    @WebMethod
+    PackageVersion createPackageVersionWithDisplayVersion( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "packageName") String packageName, //
+        @WebParam(name = "packageTypeId") int packageTypeId, //
+        @WebParam(name = "version") String version, //
         @WebParam(name = "displayVersion") String displayVersion, //
         @WebParam(name = "architectureId") Integer architectureId, //
         @WebParam(name = "packageBytes") byte[] packageBytes);

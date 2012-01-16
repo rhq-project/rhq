@@ -505,7 +505,11 @@ public class ResourceClientProxy {
             return remoteClient.getContentManager().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
         }
 
-        public void updateBackingContent(String filename, String contentVersion) {
+        public void updateBackingContent(String filename) {
+            this.updateBackingContent(filename, null);
+        }
+
+        public void updateBackingContent(String filename, String displayVersion) {
             File file = new File(filename);
             if (!file.exists()) {
                 throw new IllegalArgumentException("File not found: " + file.getAbsolutePath());
@@ -529,12 +533,12 @@ public class ResourceClientProxy {
             InstalledPackage oldPackage = getBackingContent();
 
             PackageVersion pv =
-                    remoteClient.getContentManager().createPackageVersion(
+                    remoteClient.getContentManager().createPackageVersionWithDisplayVersion(
                         remoteClient.getSubject(),
                         oldPackage.getPackageVersion().getGeneralPackage().getName(),
                         oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
                         packageVersion,
-                        contentVersion,
+                displayVersion,
                         oldPackage.getPackageVersion().getArchitecture().getId(),
                         fileContents);
 
@@ -644,9 +648,9 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent();
 
+        public void updateBackingContent(String fileName, String displayVersion);
 
-        public void updateBackingContent(String fileName, String contentVersion);
-
+        public void updateBackingContent(String fileName);
 
         public void retrieveBackingContent(String fileName) throws IOException;
 

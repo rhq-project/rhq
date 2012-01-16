@@ -79,7 +79,7 @@ public class XmlIndexParserTest {
         assert "Mazzpackage-type-name".equals(cspd.getPackageTypeName()) : cspd.getPackageTypeName();
         assert "Mazzsha256".equals(cspd.getSHA256()) : cspd.getSHA256();
         assert "Mazzshort-description".equals(cspd.getShortDescription()) : cspd.getShortDescription();
-        assert "Mazzversion".equals(cspd.getVersion()) : cspd.getVersion();
+        assert ("[sha256=" + cspd.getSHA256() + "]").equals(cspd.getVersion()) : cspd.getVersion();
         assert cspd.getResourceVersions().contains("Mazzresource-version1") : cspd.getResourceVersions();
         assert cspd.getResourceVersions().contains("Mazzresource-version2") : cspd.getResourceVersions();
 
@@ -168,7 +168,7 @@ public class XmlIndexParserTest {
         assert "WOTGORILLApackage-type-name".equals(cspd.getPackageTypeName()) : cspd.getPackageTypeName();
         assert null == cspd.getSHA256() : cspd.getSHA256();
         assert null == cspd.getShortDescription() : cspd.getShortDescription();
-        assert "WOTGORILLAversion".equals(cspd.getVersion()) : cspd.getVersion();
+        assert "[sha256=null]".equals(cspd.getVersion()) : cspd.getVersion();
         assert 0 == cspd.getResourceVersions().size() : cspd.getResourceVersions();
     }
 }

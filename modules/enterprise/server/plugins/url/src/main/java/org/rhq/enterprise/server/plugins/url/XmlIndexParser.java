@@ -136,6 +136,7 @@ public class XmlIndexParser implements IndexParser {
             details.setFileSize(pkg.getFileSize());
             details.setFileCreatedDate(pkg.getFileCreatedDate());
             details.setSHA256(pkg.getSha256());
+            details.setMD5(pkg.getMd5());
             details.setLicenseName(pkg.getLicenseName());
             details.setLicenseVersion(pkg.getLicenseVersion());
             if (pkg.getMetadata() != null) {

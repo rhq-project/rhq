@@ -203,8 +203,30 @@
                 </c:list-property>
             </c:group>
 -->
+            <c:group name="children:system-property:name+" displayName="System-properties">
+                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                        <c:simple-property name="value" displayName="Value"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
 
-            <c:group name="children:extension" displayName="Installed extensions" hiddenByDefault="true">
+            <c:group name="children:path:name+" displayName="Path">
+                <c:list-property name="*3" displayName="Path" required="false"
+                                 description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
+                    <c:map-property name="*" displayName="Entry">
+                       <c:simple-property name="name" required="true" type="string" readOnly="false"
+                                          description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
+                       <c:simple-property name="path" required="true" type="string" readOnly="false"
+                                          description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
+                       <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
+                                          description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+
+            <c:group name="children:extension:module" displayName="Installed extensions" hiddenByDefault="true">
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
                     <c:map-property name="*" displayName="Name" readOnly="true">
                         <c:simple-property name="module" displayName="Module name" readOnly="true"/>
@@ -277,6 +299,31 @@
                     <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
                 </results>
             </operation>
+
+            <resource-configuration>
+                <c:group name="children:system-property:name+" displayName="System-properties">
+                                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                                        <c:simple-property name="value" displayName="Value"/>
+                                    </c:map-property>
+                                </c:list-property>
+                            </c:group>
+                <c:group name="children:path:name+" displayName="Path">
+                                <c:list-property name="*3" displayName="Path" required="false"
+                                                 description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
+                                    <c:map-property name="*" displayName="Entry">
+                                       <c:simple-property name="name" required="true" type="string" readOnly="false"
+                                                          description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
+                                       <c:simple-property name="path" required="true" type="string" readOnly="false"
+                                                          description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
+                                       <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
+                                                          description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+                                    </c:map-property>
+                                </c:list-property>
+                            </c:group>
+
+            </resource-configuration>
         </server>
 
         <service name="DomainDeployment"
@@ -338,12 +385,6 @@
                                description="The absolute path to a JRE or JDK installation directory containing
                                                         the JVM that should be used to start and shutdown the JBossAS instance;
                                                         defaults to the home directory of the RHQ agent JRE."/>
-            <c:list-property name="system-properties">
-                <c:map-property name="system-property">
-                    <c:simple-property name="key" readOnly="true"/>
-                    <c:simple-property name="value" readOnly="true"/>
-                </c:map-property>
-            </c:list-property>
             &logSources;
 
          <c:group name="event" displayName="Events">
@@ -435,19 +476,32 @@
 
         <resource-configuration>
 
-<!--
-            <c:group name="attribute:schema-locations" displayName="Schema locations">
-
-                <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
-                    <c:map-property name="*">
-                        <c:simple-property name="*" readOnly="true" displayName="Schema name"/>
+            <c:group name="children:system-property:name+" displayName="System-properties">
+                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                        <c:simple-property name="value" displayName="Value"/>
                     </c:map-property>
                 </c:list-property>
             </c:group>
--->
 
-            <c:group name="children:extension" displayName="Installed extensions" hiddenByDefault="true">
-                <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
+            <c:group name="children:path:name+" displayName="Path">
+                <c:list-property name="*3" displayName="Path" required="false"
+                                 description="The standard paths provided by the system include: jboss.home - the root directory of the JBoss AS distribution; user.home - user's home directory; user.dir - user's current working directory; java.home - java installation directory; jboss.server.base.dir - root directory for an individual server instance; jboss.server.data.dir - directory the server will use for persistent data file storage; jboss.server.log.dir - directory the server will use for log file storage; jboss.server.tmp.dir - directory the server will use for temporary file storage; jboss.domain.servers.dir - directory under which a host controller will create the working area for individual server instances">
+                    <c:map-property name="*" displayName="Entry">
+                       <c:simple-property name="name" required="true" type="string" readOnly="false"
+                                          description="The name of the path. Cannot be one of the standard fixed paths provided by the system"/>
+                       <c:simple-property name="path" required="true" type="string" readOnly="false"
+                                          description="The actual filesystem path. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
+                       <c:simple-property name="relative-to" required="false" type="string" readOnly="false"
+                                          description="The name of another previously named path, or of one of the standard paths provided by the system. If 'relative-to' is provided, the value of the 'path' attribute is treated as relative to the path specified by this attribute."/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+
+            <c:group name="children:extension:module" displayName="Installed extensions" hiddenByDefault="true">
+
+                <c:list-property name="*1" displayName="Installed extensions" readOnly="true" required="false">
                     <c:map-property name="*" displayName="Name" readOnly="true">
                         <c:simple-property name="module" displayName="Module name" readOnly="true"/>
                     </c:map-property>
@@ -529,10 +583,8 @@
             </results>
         </operation>
 
-        <metric property="server-state" dataType="trait" displayName="Server state" description="Detailed server state"
+        <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                 displayType="summary"/>
-        <metric property="release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
-        <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
 
          <event name="logEntry" description="an entry in a log file"/>
 

@@ -104,6 +104,19 @@
         </resource-configuration>
     </server>
 
+    <server class="foo" discovery="foo" name="test10">
+        <resource-configuration>
+            <c:group name="children:system-property:name+" displayName="System-properties">
+                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                        <c:simple-property name="value" displayName="Value"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="simple1">
 
         <resource-configuration>

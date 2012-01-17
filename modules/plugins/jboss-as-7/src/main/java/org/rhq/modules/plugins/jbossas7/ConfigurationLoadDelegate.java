@@ -165,8 +165,11 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
              * We may have a mismatch for groups where the <c:group name="children:*"> child is a list of maps
              * but the result is actually the contained map
              */
-            if (propDef instanceof PropertyDefinitionList && (propDef.getName().equals("*"))) {
+            String propertyName = propDef.getName();
+            if (propDef instanceof PropertyDefinitionList && (propertyName.startsWith("*"))) {
                 propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
+
+                String innerPropdefName = propDef.getName();
 
                 if (!(propDef instanceof PropertyDefinitionMap)) {
                     log.error("Embedded child is not a map");
@@ -174,12 +177,13 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                 }
                 // Now we are at map level which matches the operations results
 
-                PropertyList list = new PropertyList("*");
+                PropertyList list = new PropertyList(propertyName);
 
                 for (Map.Entry<String,Object> entry : results.entrySet()) {
                     Object val = entry.getValue();
+                    String key = entry.getKey();
 
-                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val);
+                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val, key);
 
                     if (propertyMap!=null)
                         list.add(propertyMap);
@@ -188,7 +192,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                 config.put(list);
 
             } else { // standard case
-                String propertyName = propDef.getName();
 
 
                 Object valueObject = results.get(propertyName);
@@ -207,7 +210,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                         config.put(propertyList);
                 }
                 else if (propDef instanceof PropertyDefinitionMap) {
-                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject);
+                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject, null);
 
                     if (propertyMap!=null)
                         config.put(propertyMap);
@@ -239,20 +242,35 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
     /**
      * Handle a Map of ...
+     *
      * @param propDef Definition of the map
      * @param valueObject the objects to put into the map
+     * @param optionalEntryName
      * @return the populated map
      */
-    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
+    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject, String optionalEntryName) {
         if (valueObject==null)
             return null;
 
-        PropertyMap propertyMap = new PropertyMap(propDef.getName());
+        String propDefName = propDef.getName();
+        PropertyMap propertyMap = new PropertyMap(propDefName);
+        String specialNameProp = null;
+        if (propDefName.startsWith("*:")) {
+            specialNameProp = propDefName.substring(2);
+            PropertySimple additionalNameProperty = new PropertySimple(specialNameProp,optionalEntryName);
+            propertyMap.put(additionalNameProperty);
+        }
 
         Map<String, PropertyDefinition> memberDefMap = propDef.getPropertyDefinitions();
+
+
+
         Map<String,Object> objects = (Map<String, Object>) valueObject;
         for (Map.Entry<String, PropertyDefinition> maEntry : memberDefMap.entrySet()) {
             String key = maEntry.getKey();
+            if (key.equals(specialNameProp)) // Skip over specialName prop, as we have processed that already.
+                continue;
+
             // special case: if the key is "*", we just pick the first element
             Object o ;
             if (key.equals("*"))
@@ -266,9 +284,9 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             else if (value instanceof PropertyDefinitionList)
                 property = loadHandlePropertyList((PropertyDefinitionList) value, o);
             else if (value instanceof PropertyDefinitionMap)
-                property = loadHandlePropertyMap((PropertyDefinitionMap) value, o);
+                property = loadHandlePropertyMap((PropertyDefinitionMap) value, o,null);
             else
-                throw new IllegalArgumentException("Unknown property type in map property [" + propDef.getName() +"]");
+                throw new IllegalArgumentException("Unknown property type in map property [" + propDefName +"]");
 
             if (property!=null)
                 propertyMap.put(property);
@@ -320,7 +338,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                 Map<String,Object>  map = (Map<String, Object>) obj;
 
                 PropertyMap propertyMap = loadHandlePropertyMap(
-                        (PropertyDefinitionMap) propDef.getMemberDefinition(), map);
+                        (PropertyDefinitionMap) propDef.getMemberDefinition(), map, null);
                 if (propertyMap!=null)
                     propertyList.add(propertyMap);
             }

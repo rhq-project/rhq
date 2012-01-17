@@ -94,9 +94,6 @@ public class CoreServerServiceImpl implements CoreServerService {
         // If not, no point in continuing - the server won't be able to talk to the agent anyway.
         pingEndpoint(request.getRemoteEndpoint());
 
-        // TODO (ghinkle): Check platform limit - do we still care about this?
-        //getPlatformManager().enforceLicenseLimit(args.getCpuCount());
-
         Agent agentByName = getAgentManager().getAgentByName(request.getName());
 
         /*
@@ -125,6 +122,38 @@ public class CoreServerServiceImpl implements CoreServerService {
                     String msg = "The agent asking for registration is already registered with the name ["
                         + agentByToken.getName() + "], it cannot change its name to [" + request.getName() + "]";
                     throw new AgentRegistrationException(msg);
+                } else {
+                    Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
+                        request.getPort());
+                    if (agentByAddressPort != null) {
+                        // the agent request provided information about an authentic agent but it is trying to 
+                        // steal another agent's host/port. Thus, we will abort this request.
+                        String msg = "The agent asking for registration [" + request.getName()
+                            + "] is trying to register the same address/port [" + request.getAddress() + ":"
+                            + request.getPort() + "] that is already registered under a different name ["
+                            + agentByAddressPort.getName() + "]";
+                        throw new AgentRegistrationException(msg);
+                    }
+                }
+            } else {
+                if (agentByName != null) {
+                    // the agent request provided a name that already is in use by an agent. However, the request
+                    // provided a security token that was not assigned to any agent! How can this be? Something is fishy.
+                    String msg = "The agent asking for registration under the name [" + request.getName()
+                        + "] provided an invalid security token. This request will fail.";
+                    throw new AgentRegistrationException(msg);
+                }
+                Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
+                    request.getPort());
+                if (agentByAddressPort != null) {
+                    // the agent request provided a security token but it is an unknown/unused/bogus token.
+                    // However, the IP/port it wants to use is already in-use. This sounds fishy. If we let this
+                    // go through, this agent with an unknown/bogus token will essentially hijack this IP/port
+                    // belonging to an existing agent. If the agent wants to reuse an IP/port already in existence, it should
+                    // already know its security token associated with that IP/port. Thus, we will abort this request.
+                    String msg = "The agent asking for registration under the name [" + request.getName()
+                        + "] is attempting to authenticate using an unknown security token. This request will fail.";
+                    throw new AgentRegistrationException(msg);
                 }
             }
         } else {
@@ -139,6 +168,22 @@ public class CoreServerServiceImpl implements CoreServerService {
                         + "] that is already registered under a different name ["
                         + agentByAddressPort.getName()
                         + "]; if this new agent is actually the same as the original, then re-register with the same name";
+                    throw new AgentRegistrationException(msg);
+                }
+            } else {
+                if (agentByName != null) {
+                    // the name being registered already exists, however, the agent request is trying to set it
+                    // to some unknown IP/port combination and there is no security token to authenticate this request!
+                    // Therefore, because this agent name is already registered and because this current request
+                    // cannot authenticate itself with the proper security token, we fail.
+                    String msg = "An agent is trying to register with an existing agent name ["
+                        + request.getName()
+                        + "]. The registration request is attempting to assign the agent an unknown address/port ["
+                        + request.getAddress()
+                        + ":"
+                        + request.getPort()
+                        + "] without providing a valid security token. If you are attempting to re-register this agent, "
+                        + "make sure you register with its prior address/port.";
                     throw new AgentRegistrationException(msg);
                 }
             }
@@ -196,8 +241,8 @@ public class CoreServerServiceImpl implements CoreServerService {
 
             // the agent does not yet exist, we need to create it
             try {
-                agentByName = new Agent(request.getName(), request.getAddress(), request.getPort(), request
-                    .getRemoteEndpoint(), generateAgentToken());
+                agentByName = new Agent(request.getName(), request.getAddress(), request.getPort(),
+                    request.getRemoteEndpoint(), generateAgentToken());
 
                 agentByName.setServer(registeringServer);
                 agentManager.createAgent(agentByName);

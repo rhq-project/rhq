@@ -505,6 +505,7 @@ public class ResourceClientProxy {
             return remoteClient.getContentManager().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
         }
 
+        @Deprecated
         public void updateBackingContent(String filename) {
             this.updateBackingContent(filename, null);
         }
@@ -648,9 +649,10 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent();
 
-        public void updateBackingContent(String fileName, String displayVersion);
-
+        @Deprecated
         public void updateBackingContent(String fileName);
+
+        public void updateBackingContent(String fileName, String displayVersion);
 
         public void retrieveBackingContent(String fileName) throws IOException;
 

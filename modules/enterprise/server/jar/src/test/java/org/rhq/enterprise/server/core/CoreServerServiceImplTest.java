@@ -119,6 +119,15 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         assert agent.getAddress().equals("hostZdoubleprime");
         assert agent.getPort() == 55552;
 
+        // now don't change Z's host/port but re-register everything the same with its token
+        request = createRequest(zName, "hostZdoubleprime", 55552, results.getAgentToken());
+        results = service.registerAgent(request);
+        assert results != null;
+        agent = LookupUtil.getAgentManager().getAgentByAgentToken(results.getAgentToken());
+        assert agent.getName().equals(zName);
+        assert agent.getAddress().equals("hostZdoubleprime");
+        assert agent.getPort() == 55552;
+
         // now don't change Z's host/port but re-register everything the same, but with no token
         request = createRequest(zName, "hostZdoubleprime", 55552, null);
         results = service.registerAgent(request);
@@ -342,6 +351,8 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         // shutdown our mock mbean server
         MBeanServer mbs = getJBossMBeanServer();
         mbs.unregisterMBean(CoreServerMBean.OBJECT_NAME);
+
+        unprepareForTestAgents();
 
         // in case this was set before our tests, put it back the way it was
         if (oldServerNamePropertyValue != null) {

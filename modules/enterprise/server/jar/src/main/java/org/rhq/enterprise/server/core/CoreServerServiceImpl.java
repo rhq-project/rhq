@@ -125,7 +125,7 @@ public class CoreServerServiceImpl implements CoreServerService {
                 } else {
                     Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
                         request.getPort());
-                    if (agentByAddressPort != null) {
+                    if (agentByAddressPort != null && !agentByAddressPort.getName().equals(request.getName())) {
                         // the agent request provided information about an authentic agent but it is trying to 
                         // steal another agent's host/port. Thus, we will abort this request.
                         String msg = "The agent asking for registration [" + request.getName()

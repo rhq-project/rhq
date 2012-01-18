@@ -22,30 +22,54 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import java.util.ArrayList;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.ExpansionMode;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftComplianceStatus;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftAddDefinitionWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A list view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftDefinitionTemplate}s. It 
  * offers various options on the list like filtering (maybe) and sorting, add new/delete. Double-click drills
- * down to the detail view of the underlying Config. This view fully respects the user's authorization, and will not
- * allow actions on the templates  unless the user is either the inventory manager or has MANAGE_DRIFT permission.
+ * down to the detail view of the underlying Config. Rows expand to reveal the drift definitions derived from
+ * the template.  This view fully respects the user's authorization, and will not allow actions on the templates
+ * unless the user is either the inventory manager or has MANAGE_DRIFT permission.
  *
  * @author Jay Shaughnessy
  */
@@ -92,6 +116,11 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             this.dataSource = new DriftDefinitionTemplateDataSource(type.getId());
         }
         return this.dataSource;
+    }
+
+    @Override
+    protected LocatableListGrid createListGrid(String locatorId) {
+        return new DriftDefinitionTemplatesListGrid(locatorId);
     }
 
     public static String getTitle(ResourceType type) {
@@ -189,8 +218,8 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             this.useSnapshotDetailsView = !viewPath.isNextEnd() && "Snapshot".equals(viewPath.getNext().getPath());
             snapshotDriftDetailsId = null;
             if (viewPath.viewsLeft() > 1) {
-                snapshotDriftDetailsId = viewPath.getViewForIndex(viewPath.getCurrentIndex() + 2).getPath().substring(
-                    "0id_".length());
+                snapshotDriftDetailsId = viewPath.getViewForIndex(viewPath.getCurrentIndex() + 2).getPath()
+                    .substring("0id_".length());
             }
         }
 
@@ -208,4 +237,244 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
 
         return new DriftDefinitionTemplateEditView(extendLocatorId("TemplateEdit"), driftTemplateId, hasWriteAccess);
     }
+
+    /**
+     * The expandable list grid     
+     */
+    private class DriftDefinitionTemplatesListGrid extends LocatableListGrid {
+
+        public DriftDefinitionTemplatesListGrid(String locatorId) {
+            super(locatorId);
+
+            setCanExpandRecords(true);
+            setCanExpandMultipleRecords(true);
+            setExpansionMode(ExpansionMode.RELATED);
+        }
+
+        @Override
+        protected Canvas getExpansionComponent(ListGridRecord record) {
+
+            int templateId = record.getAttributeAsInt(DriftDefinitionTemplateDataSource.ATTR_ID);
+            String templateName = record.getAttribute(DriftDefinitionTemplateDataSource.ATTR_NAME);
+
+            return new TemplateDefinitionsView(extendLocatorId(templateName), templateId);
+        }
+    }
+
+    /**
+     * The expanded row table view of definitions derived from the template
+     */
+    public class TemplateDefinitionsView extends Table<TemplateDefinitionsView.TemplateDefinitionsDataSource> {
+
+        private int templateId;
+        private TemplateDefinitionsDataSource dataSource;
+
+        public TemplateDefinitionsView(String locatorId, int templateId) {
+            super(locatorId, null, true);
+
+            this.templateId = templateId;
+
+            setShowFilterForm(false);
+            setShowHeader(false);
+            setShowFooter(false);
+
+            setWidth100();
+            setAutoHeight();
+            setOverflow(Overflow.VISIBLE);
+
+            setDataSource(getDataSource());
+        }
+
+        @Override
+        public TemplateDefinitionsDataSource getDataSource() {
+
+            if (null == dataSource) {
+                dataSource = new TemplateDefinitionsDataSource();
+            }
+
+            return dataSource;
+        }
+
+        @Override
+        protected LocatableListGrid createListGrid(String locatorId) {
+            return new TemplateDefinitionsListGrid(locatorId);
+        }
+
+        @Override
+        protected void configureTable() {
+            ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+            getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
+
+            super.configureTable();
+        }
+
+        /**
+         * The definitions list grid     
+         */
+        private class TemplateDefinitionsListGrid extends LocatableListGrid {
+
+            public TemplateDefinitionsListGrid(String locatorId) {
+                super(locatorId);
+
+                setDefaultHeight(10);
+                setAutoFitData(Autofit.VERTICAL);
+            }
+        }
+
+        public class TemplateDefinitionsDataSource extends RPCDataSource<DriftDefinition, DriftDefinitionCriteria> {
+
+            public TemplateDefinitionsDataSource() {
+                addDataSourceFields();
+            }
+
+            public ArrayList<ListGridField> getListGridFields() {
+                ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+
+                ListGridField nameField = new ListGridField(DriftDefinitionDataSource.ATTR_NAME,
+                    MSG.common_title_name());
+                nameField.setCellFormatter(new CellFormatter() {
+                    public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                        Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                        Integer driftDefId = listGridRecord.getAttributeAsInt("id");
+                        String url = LinkManager.getDriftDefinitionCarouselLink(resourceId, driftDefId);
+                        return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    }
+                });
+                fields.add(nameField);
+
+                ListGridField descriptionField = new ListGridField(DriftDefinitionDataSource.ATTR_DESCRIPTION,
+                    MSG.common_title_description());
+                fields.add(descriptionField);
+
+                ListGridField attachedField = new ListGridField(DriftDefinitionDataSource.ATTR_ATTACHED,
+                    MSG.view_drift_table_attached());
+                fields.add(attachedField);
+
+                ListGridField enabledField = new ListGridField(DriftDefinitionDataSource.ATTR_IS_ENABLED_ICON,
+                    MSG.common_title_enabled());
+                enabledField.setType(ListGridFieldType.IMAGE);
+                enabledField.setAlign(Alignment.CENTER);
+                fields.add(enabledField);
+
+                ListGridField inComplianceField = new ListGridField(DriftDefinitionDataSource.ATTR_COMPLIANCE_ICON,
+                    MSG.common_title_in_compliance());
+                inComplianceField.setType(ListGridFieldType.IMAGE);
+                inComplianceField.setAlign(Alignment.CENTER);
+                inComplianceField.setShowHover(true);
+                inComplianceField.setHoverCustomizer(new HoverCustomizer() {
+                    @Override
+                    public String hoverHTML(Object o, ListGridRecord record, int row, int column) {
+                        int complianceCode = record.getAttributeAsInt(DriftDefinitionDataSource.ATTR_COMPLIANCE);
+                        DriftComplianceStatus complianceStatus = DriftComplianceStatus.fromCode(complianceCode);
+                        switch (complianceStatus) {
+                        case OUT_OF_COMPLIANCE_NO_BASEDIR:
+                            return MSG.view_drift_table_hover_outOfCompliance_noBaseDir();
+                        case OUT_OF_COMPLIANCE_DRIFT:
+                            return MSG.view_drift_table_hover_outOfCompliance_drift();
+                        default:
+                            return "";
+                        }
+                    }
+                });
+                fields.add(inComplianceField);
+
+                ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME,
+                    MSG.common_title_resource());
+                resourceNameField.setCellFormatter(new CellFormatter() {
+                    public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                        Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                        String url = LinkManager.getResourceLink(resourceId);
+                        return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    }
+                });
+                resourceNameField.setShowHover(true);
+                resourceNameField.setHoverCustomizer(new HoverCustomizer() {
+                    public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                        return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                    }
+                });
+                fields.add(resourceNameField);
+
+                ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+                fields.add(ancestryField);
+
+                nameField.setWidth("15%");
+                descriptionField.setWidth("25%");
+                attachedField.setWidth(70);
+                enabledField.setWidth(60);
+                inComplianceField.setWidth(100);
+                resourceNameField.setWidth("20%");
+                ancestryField.setWidth("*");
+
+                return fields;
+            }
+
+            @Override
+            protected void executeFetch(final DSRequest request, final DSResponse response,
+                DriftDefinitionCriteria criteria) {
+
+                GWTServiceLookup.getDriftService().findDriftDefinitionsByCriteria(criteria,
+                    new AsyncCallback<PageList<DriftDefinition>>() {
+
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                            response.setStatus(RPCResponse.STATUS_FAILURE);
+                            processResponse(request.getRequestId(), response);
+                        }
+
+                        public void onSuccess(final PageList<DriftDefinition> result) {
+                            response.setData(buildRecords(result));
+                            response.setTotalRows(result.getTotalSize());
+                            processResponse(request.getRequestId(), response);
+                        }
+                    });
+            }
+
+            @Override
+            protected DriftDefinitionCriteria getFetchCriteria(DSRequest request) {
+
+                DriftDefinitionCriteria criteria = new DriftDefinitionCriteria();
+                criteria.addFilterTemplateId(templateId);
+                criteria.fetchResource(true);
+
+                return criteria;
+            }
+
+            @Override
+            public DriftDefinition copyValues(Record from) {
+                return null;
+            }
+
+            @Override
+            public ListGridRecord copyValues(DriftDefinition from) {
+                ListGridRecord record = new ListGridRecord();
+
+                record.setAttribute(DriftDefinitionDataSource.ATTR_ID, from.getId());
+
+                record.setAttribute(DriftDefinitionDataSource.ATTR_NAME, from.getName());
+                record.setAttribute(DriftDefinitionDataSource.ATTR_DESCRIPTION, from.getDescription());
+
+                record.setAttribute(DriftDefinitionDataSource.ATTR_IS_ENABLED, String.valueOf(from.isEnabled()));
+                record.setAttribute(DriftDefinitionDataSource.ATTR_IS_ENABLED_ICON,
+                    ImageManager.getAvailabilityIcon(from.isEnabled()));
+                record.setAttribute(DriftDefinitionDataSource.ATTR_COMPLIANCE, from.getComplianceStatus().ordinal());
+                record
+                    .setAttribute(DriftDefinitionDataSource.ATTR_COMPLIANCE_ICON, ImageManager.getAvailabilityIcon(from
+                        .getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
+
+                record.setAttribute(DriftDefinitionDataSource.ATTR_ATTACHED, from.isAttached() ? MSG.common_val_yes()
+                    : MSG.common_val_no());
+
+                // for ancestry handling
+                Resource resource = from.getResource();
+                record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+                record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+                record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+                record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+
+                return record;
+            }
+        }
+    }
+
 }

@@ -43,10 +43,10 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComplianceStatus;
-import org.rhq.core.domain.drift.DriftDefinition;
-import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -70,6 +70,7 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
     public static final String ATTR_ENTITY = "object";
     public static final String ATTR_ID = "id";
     public static final String ATTR_NAME = "name";
+    public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_INTERVAL = "interval";
     public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
@@ -418,12 +419,12 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_IS_ENABLED, String.valueOf(def.isEnabled()));
         record.setAttribute(ATTR_IS_ENABLED_ICON, ImageManager.getAvailabilityIcon(def.isEnabled()));
         record.setAttribute(ATTR_COMPLIANCE, def.getComplianceStatus().ordinal());
-        record.setAttribute(ATTR_COMPLIANCE_ICON, ImageManager
-            .getAvailabilityIcon(def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
+        record.setAttribute(ATTR_COMPLIANCE_ICON,
+            ImageManager.getAvailabilityIcon(def.getComplianceStatus() == DriftComplianceStatus.IN_COMPLIANCE));
         // fixed value, just the edit icon
         record.setAttribute(ATTR_EDIT, ImageManager.getEditIcon());
-        record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
-            .getUnpinnedIcon());
+        record.setAttribute(ATTR_IS_PINNED,
+            def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager.getUnpinnedIcon());
         record.setAttribute(ATTR_ATTACHED, def.isAttached() ? MSG.common_val_yes() : MSG.common_val_no());
         if (def.getTemplate() != null) {
             record.setAttribute(ATTR_TEMPLATE, def.getTemplate().getName());
@@ -431,8 +432,8 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
             record.setAttribute(ATTR_TEMPLATE, MSG.common_val_none());
         }
 
-        record.setAttribute(ATTR_CHANGE_SET_VERSION, (null != changeSet) ? String.valueOf(changeSet.getVersion()) : MSG
-            .common_label_none());
+        record.setAttribute(ATTR_CHANGE_SET_VERSION,
+            (null != changeSet) ? String.valueOf(changeSet.getVersion()) : MSG.common_label_none());
         record.setAttribute(ATTR_CHANGE_SET_CTIME, (null != changeSet) ? new Date(changeSet.getCtime()) : null);
 
         return record;

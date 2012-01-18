@@ -41,12 +41,57 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * This tests the core server service. This includes agent registration.
+ *
  * @author John Mazzitelli
  */
+
+// These are the agent registration unit test cases.
+// (allowed) means the registration should succeed.
+// (REJECT) means the server should reject that agent registration request.
+// ---
+// A. testNewAgentRegistrationWithOldToken
+//   1) register a new agent with a non-null, unknown security token (allowed)
+// B. testChangeAddressPort
+//   1) register a new agent Z with null security token (allowed)
+//   2) re-register agent Z with its token but change its host (allowed)
+//   3) re-register agent Z with its token but change its port (allowed)
+//   4) re-register agent Z with its token but change its host and port (allowed)
+//   5) re-register agent Z with its token but change nothing (allowed)
+//   6) re-register agent Z with NO token but change its host (REJECT)
+//   7) re-register agent Z with NO token but change its port (REJECT)
+//   8) re-register agent Z with NO token but change its host and port (REJECT)
+//   9) re-register agent Z with NO token but change nothing (REJECT)
+// C. testNormalAgentRegistration
+//   1) register a new agent A with a null security token (allowed, same as B.1)
+// D. testHijackExistingAgentAddressPort
+//   1) register a new agent B with null security token but using A's host/port (REJECT)
+// E. testHijackExistingAgentName
+//   1) register an agent using an already-existing agent name A, and using A's host but a different port with a null token (REJECT - missing the  token)
+//   2) register an agent using an already-existing agent name A, and using A's port but a different host with a null token (REJECT - missing the  token)
+//   3) register an agent using an already-existing agent name A, and using a different port and host with a null token (REJECT - missing the  token)
+// F. testHijackExistingAgentAddressPortWithBogusToken
+//   1) register a new agent B with A's host and port but with a bogus token (REJECT)
+// G. testHijackExistingAgentNameWithBogusToken
+//   1) re-register agent A with its original host and port but with a bogus token (REJECT)
+//   2) re-register agent A with its original host, different port but with bogus token (REJECT)
+//   3) re-register agent A with different host, original port but with bogus token (REJECT)
+//   4) re-register agent A with different host and port but with bogus token (REJECT)
+// H. testHijackExistingAgentNameWithAnotherAgentToken
+//   1) re-register agent A with its original host and port but with Z's security token (REJECT - you cannot authenticate using another agent's token)
+//   2) re-register agent A with different host and original port but with Z's security token (REJECT - you cannot authenticate using another agent's token)
+//   3) re-register agent A with original host and different port but with Z's security token (REJECT - you cannot authenticate using another agent's token)
+//   4) re-register agent A with different host and port but with Z's security token (REJECT - you cannot  authenticate using another agent's token)
+// I. testAgentHijackingAnotherAgentAddressPort
+//   1) re-register agent A using A's correct security token but with Z's host and Z's port  (REJECT - one agent cannot steal another agent's host/port endpoint) NOTE: this is not D.1 because in D.1, the request doesn't have a token. This I.1 test has a token and it really authenticates the agent A making the request. This also isn't F.1 because F.1, while it has a token, it is not a valid token, thus its agent is not authentic.
+// J. testAttemptToChangeAgentName
+//   1) register agent "newName" but with Z's host/port/token. In effect, this is trying to change the agent's name. (REJECT - you are not allowed to rename agents)
+
 @Test
 public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String TEST_AGENT_NAME_PREFIX = "CoreServerServiceImplTest.Agent";
@@ -67,7 +112,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     public void testNewAgentRegistrationWithOldToken() throws Exception {
         // this tests the case where someone purged an agent from the DB, but then
         // changed their mind and want to re-run that agent and re-register it again.
-        // In this case, the agent (if not using --cleanconfig) would still have the old token.
+        // In this case, the agent (if not using --cleanallconfig) would still have the old token.
         // The agent should still be allowed to register again.
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request = createRequest(prefixName("old"), "hostOld", 12345, "oldtoken");
@@ -128,18 +173,40 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         assert agent.getAddress().equals("hostZdoubleprime");
         assert agent.getPort() == 55552;
 
-        // now don't change Z's host/port but re-register everything the same, but with no token
-        request = createRequest(zName, "hostZdoubleprime", 55552, null);
-        results = service.registerAgent(request);
-        assert results != null;
-        agent = LookupUtil.getAgentManager().getAgentByAgentToken(results.getAgentToken());
-        assert agent.getName().equals(zName);
-        assert agent.getAddress().equals("hostZdoubleprime");
-        assert agent.getPort() == 55552;
-
         // remember this agent so our later tests can use it
         zReq = request;
         zResults = results;
+
+        // Try to re-register changes to host and/or port but do not send any token.
+        // Because there is no token, these should fail.
+        request = createRequest(zName, B_HOST, zReq.getPort(), null);
+        try {
+            service.registerAgent(request);
+            assert false : "(1) Should not have been able to register without a token";
+        } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
+        }
+        request = createRequest(zName, zReq.getAddress(), B_PORT, null);
+        try {
+            service.registerAgent(request);
+            assert false : "(2) Should not have been able to register without a token";
+        } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
+        }
+        request = createRequest(zName, B_HOST, B_PORT, null);
+        try {
+            service.registerAgent(request);
+            assert false : "(3) Should not have been able to register without a token";
+        } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
+        }
+        request = createRequest(zName, zReq.getAddress(), zReq.getPort(), null);
+        try {
+            service.registerAgent(request);
+            assert false : "(4) Should not have been able to register without a token";
+        } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
+        }
     }
 
     @Test(dependsOnMethods = "testChangeAddressPort")
@@ -159,6 +226,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used host/port with new agent name";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -171,18 +239,21 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name without a token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), B_HOST, aReq.getPort(), null);
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name without a token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), B_HOST, B_PORT, null);
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name without a token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -195,6 +266,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used host/port with new agent name and invalid token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -207,24 +279,28 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name with an invalid token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), aReq.getAddress(), B_PORT, "badtoken");
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name with an invalid token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), B_HOST, aReq.getPort(), "badtoken");
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name with an invalid token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), B_HOST, B_PORT, "badtoken");
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack a used agent name with an invalid token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -237,24 +313,28 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack agent A using Z's token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), B_HOST, aReq.getPort(), zResults.getAgentToken());
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack agent A using Z's token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), aReq.getAddress(), B_PORT, zResults.getAgentToken());
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack agent A using Z's token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
         request = createRequest(aReq.getName(), B_HOST, B_PORT, zResults.getAgentToken());
         try {
             service.registerAgent(request);
             assert false : "Should not have been able to hijack agent A using Z's token";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -267,6 +347,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "An agent should not have been able to hijack another agent's host/port";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -279,6 +360,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
             service.registerAgent(request);
             assert false : "An agent should not be able to change its name";
         } catch (AgentRegistrationException ok) {
+            debugPrintThrowable(ok);
         }
     }
 
@@ -289,6 +371,12 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
 
     private String prefixName(String name) {
         return TEST_AGENT_NAME_PREFIX + name;
+    }
+
+    private void debugPrintThrowable(Throwable t) {
+        if (true) {
+            System.out.println(ThrowableUtil.getAllMessages(t));
+        }
     }
 
     @BeforeClass

@@ -751,8 +751,8 @@ public class AgentMain {
                 try {
                     shutdownPluginContainer();
                 } catch (Throwable ignore) {
-                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Plugin Container", ThrowableUtil
-                        .getAllMessages(ignore));
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Plugin Container",
+                        ThrowableUtil.getAllMessages(ignore));
                 }
 
                 ///////
@@ -984,8 +984,8 @@ public class AgentMain {
                 LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_LOADED, failoverListFile, list.size());
             } catch (Exception e) {
                 list = new FailoverListComposite(new ArrayList<ServerEntry>());
-                LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_LOADED, failoverListFile, ThrowableUtil
-                    .getAllMessages(e));
+                LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_LOADED, failoverListFile,
+                    ThrowableUtil.getAllMessages(e));
             }
         }
 
@@ -1191,8 +1191,10 @@ public class AgentMain {
         // store is the default value.
         // But first we need to backup these original preferences in case the config file fails to load -
         // we'll restore the original values in that case.
-
+        // Note that we squirrel away any security token we already have - we need to preserve this when we can
+        // because otherwise the agent will not be able to re-register with any previous name is was registered with.
         Preferences preferencesNode = getPreferencesNode();
+        String securityToken = preferencesNode.get(AgentConfigurationConstants.AGENT_SECURITY_TOKEN, null);
         ByteArrayOutputStream backup = new ByteArrayOutputStream();
         preferencesNode.exportSubtree(backup);
         preferencesNode.clear();
@@ -1213,10 +1215,26 @@ public class AgentMain {
             ByteArrayInputStream new_config_input_stream = new ByteArrayInputStream(new_config.getBytes());
             Preferences.importPreferences(new_config_input_stream);
 
-            if (new AgentConfiguration(preferencesNode).getAgentConfigurationVersion() == 0) {
+            AgentConfiguration newAgentConfig = new AgentConfiguration(preferencesNode);
+            if (newAgentConfig.getAgentConfigurationVersion() == 0) {
                 throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_NODE_NAME_IN_CONFIG_FILE,
                     file_name, m_agentPreferencesNodeName));
             }
+
+            // If we had a security token, restore it so we can maintain our known registration with the server.
+            // Note that if the configuration file already had a security token defined, it will be used and the old
+            // token we had will be thrown away.
+            if (securityToken != null) {
+                if (newAgentConfig.getAgentSecurityToken() == null) {
+                    LOG.debug(AgentI18NResourceKeys.RESTORING_SECURITY_TOKEN);
+                    newAgentConfig.setAgentSecurityToken(securityToken);
+                } else {
+                    LOG.info(AgentI18NResourceKeys.NOT_RESTORING_SECURITY_TOKEN);
+                }
+            }
+
+            preferencesNode.flush();
+
         } catch (Exception e) {
             // a problem occurred importing the config file; let's restore our original values
             try {
@@ -2297,8 +2315,8 @@ public class AgentMain {
      */
     private void prepareAutoDiscoveryListener() throws Exception {
         if (m_configuration.isServerAutoDetectionEnabled()) {
-            ServiceContainerConfiguration comm_config = new ServiceContainerConfiguration(m_configuration
-                .getPreferences());
+            ServiceContainerConfiguration comm_config = new ServiceContainerConfiguration(
+                m_configuration.getPreferences());
             if (comm_config.isMulticastDetectorEnabled()) {
                 m_autoDiscoveryListener = new AgentAutoDiscoveryListener(this, createServerRemoteCommunicator(null,
                     false, false));
@@ -2469,8 +2487,8 @@ public class AgentMain {
             if (wait > 0) {
                 long now = System.currentTimeMillis();
                 if ((started + wait) < now) {
-                    throw new RuntimeException(MSG
-                        .getMsg(AgentI18NResourceKeys.CANNOT_WAIT_TO_BE_REGISTERED_ANY_LONGER));
+                    throw new RuntimeException(
+                        MSG.getMsg(AgentI18NResourceKeys.CANNOT_WAIT_TO_BE_REGISTERED_ANY_LONGER));
                 }
             }
 
@@ -2570,27 +2588,27 @@ public class AgentMain {
         Map<String, String> config = new HashMap<String, String>();
 
         if (SecurityUtil.isTransportSecure(uri)) {
-            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, m_configuration
-                .getClientSenderSecurityKeystoreFile());
-            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, m_configuration
-                .getClientSenderSecurityKeystoreAlgorithm());
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH,
+                m_configuration.getClientSenderSecurityKeystoreFile());
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM,
+                m_configuration.getClientSenderSecurityKeystoreAlgorithm());
             config.put(SSLSocketBuilder.REMOTING_KEY_STORE_TYPE, m_configuration.getClientSenderSecurityKeystoreType());
-            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD, m_configuration
-                .getClientSenderSecurityKeystorePassword());
-            config.put(SSLSocketBuilder.REMOTING_KEY_PASSWORD, m_configuration
-                .getClientSenderSecurityKeystoreKeyPassword());
-            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_FILE_PATH, m_configuration
-                .getClientSenderSecurityTruststoreFile());
-            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_ALGORITHM, m_configuration
-                .getClientSenderSecurityTruststoreAlgorithm());
-            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE, m_configuration
-                .getClientSenderSecurityTruststoreType());
-            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD, m_configuration
-                .getClientSenderSecurityTruststorePassword());
+            config.put(SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD,
+                m_configuration.getClientSenderSecurityKeystorePassword());
+            config.put(SSLSocketBuilder.REMOTING_KEY_PASSWORD,
+                m_configuration.getClientSenderSecurityKeystoreKeyPassword());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_FILE_PATH,
+                m_configuration.getClientSenderSecurityTruststoreFile());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_ALGORITHM,
+                m_configuration.getClientSenderSecurityTruststoreAlgorithm());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_TYPE,
+                m_configuration.getClientSenderSecurityTruststoreType());
+            config.put(SSLSocketBuilder.REMOTING_TRUST_STORE_PASSWORD,
+                m_configuration.getClientSenderSecurityTruststorePassword());
             config.put(SSLSocketBuilder.REMOTING_SSL_PROTOCOL, m_configuration.getClientSenderSecuritySocketProtocol());
             config.put(SSLSocketBuilder.REMOTING_KEY_ALIAS, m_configuration.getClientSenderSecurityKeystoreAlias());
-            config.put(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE, Boolean.toString(m_configuration
-                .isClientSenderSecurityServerAuthMode()));
+            config.put(SSLSocketBuilder.REMOTING_SERVER_AUTH_MODE,
+                Boolean.toString(m_configuration.isClientSenderSecurityServerAuthMode()));
             config.put(SSLSocketBuilder.REMOTING_SOCKET_USE_CLIENT_MODE, "true");
 
             // since we do not know the server's client-auth mode, assume we need a keystore and let's make sure we have one
@@ -2600,10 +2618,10 @@ public class AgentMain {
                 dummy_sslbuilder.setKeyStoreURL(m_configuration.getClientSenderSecurityKeystoreFile());
             } catch (Exception e) {
                 // this probably is due to the fact that the keystore doesn't exist yet - let's prepare one now
-                SecurityUtil.createKeyStore(m_configuration.getClientSenderSecurityKeystoreFile(), m_configuration
-                    .getClientSenderSecurityKeystoreAlias(), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", m_configuration
-                    .getClientSenderSecurityKeystorePassword(), m_configuration
-                    .getClientSenderSecurityKeystoreKeyPassword(), "DSA", 36500);
+                SecurityUtil.createKeyStore(m_configuration.getClientSenderSecurityKeystoreFile(),
+                    m_configuration.getClientSenderSecurityKeystoreAlias(), "CN=RHQ, OU=RedHat, O=redhat.com, C=US",
+                    m_configuration.getClientSenderSecurityKeystorePassword(),
+                    m_configuration.getClientSenderSecurityKeystoreKeyPassword(), "DSA", 36500);
 
                 // now try to set it again, if an exception is still thrown, it's an unrecoverable error
                 dummy_sslbuilder.setKeyStoreURL(m_configuration.getClientSenderSecurityKeystoreFile());
@@ -2702,8 +2720,8 @@ public class AgentMain {
                 StreamUtil.copy(byteStream, fileStream, true);
                 LOG.debug(AgentI18NResourceKeys.FAILOVER_LIST_PERSISTED, failoverListFile);
             } catch (Exception e) {
-                LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_PERSISTED, failoverListFile, ThrowableUtil
-                    .getAllMessages(e));
+                LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_PERSISTED, failoverListFile,
+                    ThrowableUtil.getAllMessages(e));
             }
 
             // let's be kind to the user - if any server address is "localhost" or "127.0.0.#"
@@ -2773,8 +2791,8 @@ public class AgentMain {
                             break;
                         }
                     } catch (Throwable t) {
-                        m_output.println(MSG.getMsg(AgentI18NResourceKeys.COMMAND_FAILURE, cmd, ThrowableUtil
-                            .getAllMessages(t)));
+                        m_output.println(MSG.getMsg(AgentI18NResourceKeys.COMMAND_FAILURE, cmd,
+                            ThrowableUtil.getAllMessages(t)));
                         LOG.debug(t, AgentI18NResourceKeys.COMMAND_FAILURE_STACK_TRACE);
                     }
                 }
@@ -2890,7 +2908,7 @@ public class AgentMain {
      * @throws HelpException            if help was requested and the agent should not be created
      */
     private void processArguments(String[] args) throws Exception {
-        String sopts = "-:hdlasntguD:i:o:c:p:e:";
+        String sopts = "-:hdlLasntguD:i:o:c:p:e:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("input", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
             new LongOpt("output", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
@@ -2899,6 +2917,7 @@ public class AgentMain {
             new LongOpt("console", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
             new LongOpt("daemon", LongOpt.NO_ARGUMENT, null, 'd'),
             new LongOpt("cleanconfig", LongOpt.NO_ARGUMENT, null, 'l'),
+            new LongOpt("cleanallconfig", LongOpt.NO_ARGUMENT, null, 'L'),
             new LongOpt("advanced", LongOpt.NO_ARGUMENT, null, 'a'),
             new LongOpt("setup", LongOpt.NO_ARGUMENT, null, 's'),
             new LongOpt("nostart", LongOpt.NO_ARGUMENT, null, 'n'),
@@ -2908,6 +2927,7 @@ public class AgentMain {
 
         String config_file_name = null;
         boolean clean_config = false;
+        boolean clean_token = false; // only used if clean_config = true
         boolean purge_data = false;
         boolean purge_plugins = false;
         AgentInputReaderFactory.ConsoleType console_type = null;
@@ -2964,6 +2984,13 @@ public class AgentMain {
             case 'l': {
                 clean_config = true;
                 purge_data = true;
+                break;
+            }
+
+            case 'L': {
+                clean_config = true;
+                purge_data = true;
+                clean_token = true;
                 break;
             }
 
@@ -3051,7 +3078,21 @@ public class AgentMain {
 
         // now that all the arguments were processed, let's load in our config (this allows the -p to come after -c)
         if (clean_config) {
-            getPreferencesNode().removeNode();
+            Preferences prefsNode = getPreferencesNode();
+            if (clean_token) {
+                prefsNode.removeNode();
+            } else {
+                // remove everything EXCEPT the security token
+                String[] prefKeys = prefsNode.keys();
+                if (prefKeys != null && prefKeys.length > 0) {
+                    for (String prefKey : prefKeys) {
+                        if (!prefKey.equals(AgentConfigurationConstants.AGENT_SECURITY_TOKEN)) {
+                            prefsNode.remove(prefKey);
+                        }
+                    }
+                }
+            }
+            prefsNode.flush();
         }
 
         if (config_file_name != null) {
@@ -3259,6 +3300,8 @@ public class AgentMain {
             String data_dir = agent_configuration.getDataDirectory().toString();
             preferencesNode.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, data_dir);
         }
+
+        prefs.flush();
 
         LOG.debug(AgentI18NResourceKeys.CONFIGURATION, agent_configuration);
 

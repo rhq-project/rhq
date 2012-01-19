@@ -27,6 +27,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -73,7 +74,9 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        String query = this.context.getPluginConfiguration().getSimpleValue("metricQuery", null);
+
+        Configuration conf = this.context.getPluginConfiguration();
+        String query = conf.getSimpleValue("metricQuery", null);
 
         if (query == null) {
             ResourceType type = this.context.getResourceType();
@@ -88,10 +91,10 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
             return;
         }
 
-        query = CustomTableRowDiscoveryComponent.formatMessage(query, this.context.getPluginConfiguration()
-            .getSimpleValue("key", null));
+        query = CustomTableRowDiscoveryComponent.formatMessage(query, conf.getSimpleValue("key", null));
 
-        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValues(this, query);
+        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValueMap(this, query);
+
         for (MeasurementScheduleRequest request : metrics) {
             Double value = values.get(request.getName());
             if (value != null) {

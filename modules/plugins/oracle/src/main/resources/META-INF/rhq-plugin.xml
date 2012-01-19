@@ -46,7 +46,7 @@
       <metric property="session stored procedure space"/>
       <metric property="CPU used when call started" displayType="summary"/>
       <metric property="CPU used by this session"/>
-      <metric property="DB time"/>
+      <metric property="DB time" measurementType="trendsup"/>
       <metric property="cluster wait time"/>
       <metric property="concurrency wait time"/>
       <metric property="application wait time" />
@@ -385,12 +385,12 @@
       <service name="Oracle Detailed Statistics"
                discovery="org.rhq.plugins.database.CustomTableDiscoveryComponent"
                class="org.rhq.plugins.database.CustomTableComponent">
-         
+
          <plugin-configuration>
             <c:simple-property name="table" default="V$SYSMETRIC"/>
             <c:simple-property name="metricQuery" default="SELECT metric_name, value from V$SYSMETRIC"/>
-            <c:simple-property name="name" default="Oracle 10g Advanced Statistics"/>
-            <c:simple-property name="description" default="Detailed Oracle 10g Statistics"/>
+            <c:simple-property name="name" default="Oracle Advanced Statistics"/>
+            <c:simple-property name="description" default="Detailed Oracle Statistics"/>
          </plugin-configuration>
 
          <metric property="Buffer Cache Hit Ratio" units="percentage"/>
@@ -578,13 +578,14 @@
 
          <plugin-configuration>
             <c:simple-property name="table" default="DBA_USERS"/>
-            <c:simple-property name="metricQuery" default="SELECT * FROM DBA_USERS"/>
+            <c:simple-property name="metricQuery" default="SELECT {key} FROM DBA_USERS"/>
             <c:simple-property name="keyColumn" default="username"/>
             <c:simple-property name="name" default="{key}"/>
             <c:simple-property name="description" default="Oracle User"/>
          </plugin-configuration>
 
-          <metric property="activeConnections" displayName="Active Connections" displayType="summary"/>
+          <metric property="connections" displayName="Total Connections" displayType="summary"/>
+          <metric property="active" displayName="Active Connections" displayType="summary"/>
 
       </service>
 

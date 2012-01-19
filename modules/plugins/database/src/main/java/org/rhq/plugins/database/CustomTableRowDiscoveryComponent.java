@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -43,17 +45,21 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  * @author Greg Hinkle
  */
 public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryComponent<DatabaseComponent<?>> {
+
+    private final Log log = LogFactory.getLog(getClass());
+
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
         Statement statement = null;
         ResultSet resultSet = null;
+
+        Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
+        String table = config.getSimpleValue("table", null);
+        String keyColumn = config.getSimpleValue("keyColumn", null);
         try {
             Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
 
-            Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
-            String table = config.getSimpleValue("table", null);
-            String keyColumn = config.getSimpleValue("keyColumn", null);
             String resourceName = config.getSimpleValue("name", null);
             String resourceDescription = config.getSimpleValue("description", "");
 
@@ -82,7 +88,7 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
 
             return found;
         } catch (SQLException e) {
-            // table not found, don't inventory
+            log.debug("table " + table + " column " + keyColumn, e);
         } finally {
             JDBCUtil.safeClose(resultSet);
             JDBCUtil.safeClose(statement);
@@ -95,10 +101,13 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
      * Format a message with {<key>} formatted replacement keys.
      *
      * @param  message the message to format
+     * @param  key to replace; if null returns the message as-is
      *
      * @return the formatted text with variables replaced
      */
     public static String formatMessage(String message, String key) {
+        if (key == null)
+            return message;
         key = Matcher.quoteReplacement(key);
         message = message.replaceAll("\\{key\\}", key);
         return message;

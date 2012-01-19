@@ -104,14 +104,10 @@ public class CoreServerServiceImpl implements CoreServerService {
          * something else".
          *
          * If there is no original token with the request, this is either a brand new agent never before registered, or it
-         * is an agent that has been registered before but for some reason lost its token. In this case, we will look at
-         * this registration's host/port of this new agent.  If it matches the host/port of another agent but the
-         * existing name and the new agent's name don't match, the server will abort and tell the agent, "You don't know
-         * who you are, but I know there is already an agent with the host and port you are trying to register with
-         * under a different name - so I'm going to trust this original agent and not allow you to register that name
-         * under a different host/port. If you are that original agent, then you need to register with that original
-         * name". When the agent registers again, this time with the correct name, the agent will be given its token.
-         * This usually will occur if you reinstall the agent and try to register it under a different name.
+         * is an agent that has been registered before but for some reason lost its token.
+         * In this case, if there is no agent with the name being requested, we register this as a new agent.
+         * If, however, the agent name is already in use, we abort the request. An agent cannot register with an
+         * existing agent without sending that agent's security token.
          */
 
         if (request.getOriginalToken() != null) {
@@ -140,19 +136,24 @@ public class CoreServerServiceImpl implements CoreServerService {
                     // the agent request provided a name that already is in use by an agent. However, the request
                     // provided a security token that was not assigned to any agent! How can this be? Something is fishy.
                     String msg = "The agent asking for registration under the name [" + request.getName()
-                        + "] provided an invalid security token. This request will fail.";
+                        + "] provided an invalid security token. This request will fail. "
+                        + "Please consult an administrator to reconfigure this agent with its proper security token.";
                     throw new AgentRegistrationException(msg);
                 }
                 Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
                     request.getPort());
                 if (agentByAddressPort != null) {
-                    // the agent request provided a security token but it is an unknown/unused/bogus token.
+                    // The agent is requesting to register an unused agent name - so this is considered a new agent.
+                    // It provided a security token but it is an unknown/obsolete/bogus token (usually due to the
+                    // fact that someone purged the platform/agent from the server database but the old agent is
+                    // still around with its old token).
                     // However, the IP/port it wants to use is already in-use. This sounds fishy. If we let this
                     // go through, this agent with an unknown/bogus token will essentially hijack this IP/port
                     // belonging to an existing agent. If the agent wants to reuse an IP/port already in existence, it should
                     // already know its security token associated with that IP/port. Thus, we will abort this request.
                     String msg = "The agent asking for registration under the name [" + request.getName()
-                        + "] is attempting to authenticate using an unknown security token. This request will fail.";
+                        + "] is attempting to take another agent's address/port [" + request.getAddress() + ":"
+                        + request.getPort() + "] with an unknown security token. This request will fail.";
                     throw new AgentRegistrationException(msg);
                 }
             }
@@ -167,23 +168,25 @@ public class CoreServerServiceImpl implements CoreServerService {
                         + request.getPort()
                         + "] that is already registered under a different name ["
                         + agentByAddressPort.getName()
-                        + "]; if this new agent is actually the same as the original, then re-register with the same name";
+                        + "]; if this new agent is actually the same as the original, then re-register with the same name"
+                        + " and same security token.";
                     throw new AgentRegistrationException(msg);
+                } else {
+                    String msg = "The agent [" + request.getName()
+                        + "] is attempting to re-register without a security token. "
+                        + "Please consult an administrator to reconfigure this agent with its proper security token.";
+                    throw new AgentRegistrationException(msg);
+
                 }
             } else {
                 if (agentByName != null) {
-                    // the name being registered already exists, however, the agent request is trying to set it
-                    // to some unknown IP/port combination and there is no security token to authenticate this request!
+                    // the name being registered already exists - but there is no security token to authenticate this request!
                     // Therefore, because this agent name is already registered and because this current request
                     // cannot authenticate itself with the proper security token, we fail.
                     String msg = "An agent is trying to register with an existing agent name ["
                         + request.getName()
-                        + "]. The registration request is attempting to assign the agent an unknown address/port ["
-                        + request.getAddress()
-                        + ":"
-                        + request.getPort()
                         + "] without providing a valid security token. If you are attempting to re-register this agent, "
-                        + "make sure you register with its prior address/port.";
+                        + "please consult an administrator to reconfigure this agent with its proper security token.";
                     throw new AgentRegistrationException(msg);
                 }
             }

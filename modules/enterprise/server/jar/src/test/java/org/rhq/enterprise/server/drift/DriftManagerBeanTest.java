@@ -54,6 +54,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinition.BaseDirectory;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Agent;
@@ -76,14 +77,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * !!! configured drift server plugin.  To enhance this to do that then you may need to model this
  * !!! mode like BundleManagerBeanTest
  */
-// Tests in this class **must** be run after the drift-template group. More specifically,
-// tests in this class need to be run after DriftTemplateManagerBeanTest. If test methods
-// in this class run first, for reasons I have yet to understand, DriftTemplateManagerBeanTest.initDB
-// will fail with a ClassNotFoundException for an anonymous inner class that is created in
-// the initDB method.
-//
-// - jsanda
-@Test(dependsOnGroups = "drift")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;
@@ -345,7 +338,13 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             try {
                 ResourceType resourceType = new ResourceType("plat" + System.currentTimeMillis(), "test",
                     ResourceCategory.PLATFORM, null);
-
+                DriftDefinitionTemplate template = new DriftDefinitionTemplate();
+                template.setName("test-template");
+                DriftDefinition templateDef = new DriftDefinition(new Configuration());
+                templateDef.setName("test-template-def");
+                template.setTemplateDefinition(templateDef);
+                template.setUserDefined(true);
+                resourceType.addDriftDefinitionTemplate(template);
                 em.persist(resourceType);
 
                 Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");

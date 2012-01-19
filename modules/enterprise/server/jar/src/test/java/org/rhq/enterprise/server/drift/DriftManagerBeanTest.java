@@ -46,7 +46,6 @@ import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -109,19 +108,18 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
         driftServerService = new DriftServerServiceImpl();
-
-        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.driftService = new TestDefService();
     }
 
-    @AfterClass
+    @AfterClass(alwaysRun = true)
     public void afterClass() {
         driftServerService = null;
-        unprepareForTestAgents();
     }
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
+        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.driftService = new TestDefService();
+
         prepareScheduler();
 
         deleteDriftFiles();
@@ -134,6 +132,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         try {
             deleteNewResource(newResource);
         } finally {
+            unprepareForTestAgents();
             unprepareScheduler();
         }
     }

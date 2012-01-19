@@ -72,6 +72,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     private static EJB3StandaloneDeployer deployer;
     private static Statistics stats;
+    @SuppressWarnings("unused")
     private static long start; // see endTest() if you want to output this
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
@@ -257,6 +258,13 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         return dummyJBossMBeanServer;
     }
 
+    public void releaseJBossMBeanServer() {
+        if (dummyJBossMBeanServer != null) {
+            MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
+            dummyJBossMBeanServer = null;
+        }
+    }
+
     /**
      * If you need to test round trips from server to agent and back, you first must install the server communications
      * service that houses all the agent clients. Call this method and add your test agent services to the public fields
@@ -285,10 +293,18 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      * {@link #prepareForTestAgents()}.
      */
     public void unprepareForTestAgents() {
+        unprepareForTestAgents(false);
+    }
+
+    public void unprepareForTestAgents(boolean beanOnly) {
         try {
-            MBeanServer mbs = getJBossMBeanServer();
-            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
-                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+            if (beanOnly) {
+                MBeanServer mbs = getJBossMBeanServer();
+                if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                    mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+                }
+            } else {
+                releaseJBossMBeanServer();
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -317,10 +333,25 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     }
 
     public void unprepareServerPluginService() throws Exception {
+        unprepareServerPluginService(false);
+    }
+
+    public void unprepareServerPluginService(boolean beanOnly) throws Exception {
         if (serverPluginService != null) {
             serverPluginService.stopMasterPluginContainer();
             serverPluginService.stop();
-            getJBossMBeanServer().unregisterMBean(ServerPluginService.OBJECT_NAME);
+            if (beanOnly) {
+                MBeanServer mbs = getJBossMBeanServer();
+                if (mbs.isRegistered(ServerPluginService.OBJECT_NAME)) {
+                    getJBossMBeanServer().unregisterMBean(ServerPluginService.OBJECT_NAME);
+                }
+                if (mbs.isRegistered(ServerPluginServiceManagement.OBJECT_NAME)) {
+                    getJBossMBeanServer().unregisterMBean(ServerPluginServiceManagement.OBJECT_NAME);
+                }
+
+            } else {
+                releaseJBossMBeanServer();
+            }
             serverPluginService = null;
         }
     }
@@ -351,9 +382,21 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     }
 
     public void unprepareScheduler() throws Exception {
+        unprepareScheduler(false);
+    }
+
+    public void unprepareScheduler(boolean beanOnly) throws Exception {
         if (schedulerService != null) {
             schedulerService.stop();
-            getJBossMBeanServer().unregisterMBean(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
+            if (beanOnly) {
+                MBeanServer mbs = getJBossMBeanServer();
+                if (mbs.isRegistered(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME)) {
+                    getJBossMBeanServer().unregisterMBean(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
+                }
+            } else {
+                releaseJBossMBeanServer();
+            }
+
             schedulerService = null;
         }
     }

@@ -37,9 +37,7 @@ import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.LazyInitializationException;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -94,7 +92,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  * @author Jay Shaughnessy
  */
-@SuppressWarnings( { "unused" })
+@SuppressWarnings({ "unused" })
 @Test
 public class BundleManagerBeanTest extends AbstractEJB3Test {
 
@@ -115,19 +113,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private Subject overlord;
     TestServerCommunicationsService agentServiceContainer;
 
-    @BeforeClass
-    public void beforeClass() {
-        agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
-    }
-
-    @AfterClass
-    public void afterClass() throws Exception {
-        unprepareForTestAgents();
-    }
-
     @BeforeMethod
     public void beforeMethod() throws Exception {
+        agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
+
         this.ps = new TestBundleServerPluginService();
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
@@ -141,9 +131,14 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
-        cleanupDatabase();
-        unprepareServerPluginService();
-        this.ps = null;
+        unprepareForTestAgents();
+
+        try {
+            this.ps = null;
+            cleanupDatabase();
+        } finally {
+            unprepareServerPluginService();
+        }
     }
 
     private void cleanupDatabase() {
@@ -189,8 +184,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
                 + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em
-                    .getReference(BundleResourceDeployment.class, ((BundleResourceDeployment) removeMe).getId()));
+                em.remove(em.getReference(BundleResourceDeployment.class, ((BundleResourceDeployment) removeMe).getId()));
             }
             // remove any orphaned bds
             q = em.createQuery("SELECT bd FROM BundleDeployment bd WHERE bd.description LIKE '" + TEST_PREFIX + "%'");

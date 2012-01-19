@@ -167,76 +167,79 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
 
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
+        try {
 
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
-        EntityManager entityManager = getEntityManager();
+            TransactionManager tx = getTransactionManager();
+            tx.begin();
+            EntityManager entityManager = getEntityManager();
 
-        Query query;
+            Query query;
 
-        ContentSourceManagerLocal contentSourceManagerLocal = LookupUtil.getContentSourceManager();
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        DistributionManagerLocal distroManager = LookupUtil.getDistributionManagerLocal();
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        Subject overlord = subjectManager.getOverlord();
+            ContentSourceManagerLocal contentSourceManagerLocal = LookupUtil.getContentSourceManager();
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            DistributionManagerLocal distroManager = LookupUtil.getDistributionManagerLocal();
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            Subject overlord = subjectManager.getOverlord();
 
-        // Delete all distributions
-        distroManager.deleteDistributionMappingsForRepo(overlord, repoToSync.getId());
+            // Delete all distributions
+            distroManager.deleteDistributionMappingsForRepo(overlord, repoToSync.getId());
 
-        for (String distroLabel : TestContentProvider.DISTRIBUTIONS.keySet()) {
-            Distribution distro = distroManager.getDistributionByLabel(distroLabel);
-            if (distro != null) {
-                // Delete the files
-                query = entityManager.createNamedQuery(DistributionFile.DELETE_BY_DIST_ID);
-                query.setParameter("distId", distro.getId());
-                query.executeUpdate();
+            for (String distroLabel : TestContentProvider.DISTRIBUTIONS.keySet()) {
+                Distribution distro = distroManager.getDistributionByLabel(distroLabel);
+                if (distro != null) {
+                    // Delete the files
+                    query = entityManager.createNamedQuery(DistributionFile.DELETE_BY_DIST_ID);
+                    query.setParameter("distId", distro.getId());
+                    query.executeUpdate();
 
-                // Delete the actual distro
-                distroManager.deleteDistributionByDistId(overlord, distro.getId());
+                    // Delete the actual distro
+                    distroManager.deleteDistributionByDistId(overlord, distro.getId());
+                }
             }
+
+            // Delete all package version <-> content source mappings
+            for (ContentSource source : repoContentSources) {
+                contentSourceManagerLocal.deleteContentSource(overlord, source.getId());
+            }
+            repoContentSources.clear();
+
+            // Delete the repo
+            repoManager.deleteRepo(overlord, repoToSync.getId());
+
+            // Delete any packages that were created
+            for (ContentProviderPackageDetails details : TestContentProvider.PACKAGES.values()) {
+                String packageName = details.getContentProviderPackageDetailsKey().getName();
+
+                query = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
+                query.setParameter("name", packageName);
+                query.setParameter("packageTypeId", packageType.getId());
+
+                Package p = (Package) query.getSingleResult();
+                entityManager.remove(p);
+            }
+
+            // Delete the package type
+            packageType = entityManager.find(PackageType.class, packageType.getId());
+            entityManager.remove(packageType);
+
+            resourceType = entityManager.find(ResourceType.class, resourceType.getId());
+            entityManager.remove(resourceType);
+
+            // Delete the content source type
+            contentSourceType = entityManager.find(ContentSourceType.class, contentSourceType.getId());
+            entityManager.remove(contentSourceType);
+
+            tx.commit();
+
+            // Cleanup providers between tests
+            contentProvider1.reset();
+            contentProvider2.reset();
+
+        } finally {
+            // Plugin service teardown
+            unprepareServerPluginService();
+            unprepareScheduler();
         }
-
-        // Delete all package version <-> content source mappings
-        for (ContentSource source : repoContentSources) {
-            contentSourceManagerLocal.deleteContentSource(overlord, source.getId());
-        }
-        repoContentSources.clear();
-
-        // Delete the repo
-        repoManager.deleteRepo(overlord, repoToSync.getId());
-
-        // Delete any packages that were created
-        for (ContentProviderPackageDetails details : TestContentProvider.PACKAGES.values()) {
-            String packageName = details.getContentProviderPackageDetailsKey().getName();
-
-            query = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
-            query.setParameter("name", packageName);
-            query.setParameter("packageTypeId", packageType.getId());
-
-            Package p = (Package) query.getSingleResult();
-            entityManager.remove(p);
-        }
-
-        // Delete the package type
-        packageType = entityManager.find(PackageType.class, packageType.getId());
-        entityManager.remove(packageType);
-
-        resourceType = entityManager.find(ResourceType.class, resourceType.getId());
-        entityManager.remove(resourceType);
-
-        // Delete the content source type
-        contentSourceType = entityManager.find(ContentSourceType.class, contentSourceType.getId());
-        entityManager.remove(contentSourceType);
-
-        tx.commit();
-
-        // Cleanup providers between tests
-        contentProvider1.reset();
-        contentProvider2.reset();
-
-        // Plugin service teardown
-        unprepareServerPluginService();
-        unprepareScheduler();
     }
 
     @Test(enabled = TESTS_ENABLED)

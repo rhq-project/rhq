@@ -29,8 +29,9 @@ import java.util.Properties;
 import javax.management.MBeanServer;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterGroups;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.core.AgentRegistrationException;
@@ -92,7 +93,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 // J. testAttemptToChangeAgentName
 //   1) register agent "newName" but with Z's host/port/token. In effect, this is trying to change the agent's name. (REJECT - you are not allowed to rename agents)
 
-@Test
+@Test(groups = { "core.agent-registration" })
 public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String TEST_AGENT_NAME_PREFIX = "CoreServerServiceImplTest.Agent";
     private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
@@ -109,6 +110,80 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final int B_PORT = 22222;
     private static final String B_HOST = "hostB";
 
+    @AfterGroups(groups = { "core.agent-registration" })
+    public void afterGroup() throws Exception {
+        // clean up any agents we might have created
+        Query q = getEntityManager().createQuery(
+            "select a from Agent a where name like '" + TEST_AGENT_NAME_PREFIX + "%'");
+        List<Agent> doomed = (List<Agent>) q.getResultList();
+        for (Agent deleteMe : doomed) {
+            LookupUtil.getAgentManager().deleteAgent(deleteMe);
+        }
+    }
+
+    @BeforeMethod
+    public void prepare() throws Exception {
+        // mock the name of our server via the sysprop (in production, this is normally set in rhq-server.properties)
+        oldServerNamePropertyValue = System.getProperty(RHQ_SERVER_NAME_PROPERTY);
+        String newServerNamePropertyValue = "CoreServerServiceImplTest.Server";
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, newServerNamePropertyValue);
+
+        // mock up our core server MBean that provides information about where the jboss home dir is
+        MBeanServer mbs = getJBossMBeanServer();
+        DummyCoreServer mbean = new DummyCoreServer();
+        mbs.registerMBean(mbean, CoreServerMBean.OBJECT_NAME);
+
+        // in order to register, we need to mock out the agent version file used by the server
+        // to determine the agent version it supports.
+        agentVersion = new AgentVersion("1.2.3", "12345");
+        File agentVersionFile = new File(mbean.getJBossServerHomeDir(),
+            "deploy/rhq.ear/rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
+        agentVersionFile.getParentFile().mkdirs();
+        agentVersionFile.delete();
+        Properties agentVersionProps = new Properties();
+        agentVersionProps.put("rhq-agent.latest.version", agentVersion.getVersion());
+        agentVersionProps.put("rhq-agent.latest.build-number", agentVersion.getBuild());
+        FileOutputStream fos = new FileOutputStream(agentVersionFile);
+        try {
+            agentVersionProps.store(fos, "This file was created by " + CoreServerServiceImplTest.class.getName());
+        } finally {
+            fos.close();
+        }
+
+        // this mocks out the endpoint ping - the server will think the agent that is registering is up and pingable
+        prepareForTestAgents();
+
+        // mock our server
+        server = new Server();
+        server.setName(newServerNamePropertyValue);
+        server.setAddress("CoreServerServiceImplTest.localhost");
+        server.setPort(12345);
+        server.setSecurePort(12346);
+        server.setOperationMode(OperationMode.NORMAL);
+        int serverId = LookupUtil.getServerManager().create(server);
+        server.setId(serverId);
+    }
+
+    @AfterMethod
+    public void unprepare() throws Exception {
+
+        // cleanup our test server
+        LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
+        LookupUtil.getCloudManager().deleteServer(server.getId());
+
+        // shutdown our mock mbean server
+        MBeanServer mbs = getJBossMBeanServer();
+        mbs.unregisterMBean(CoreServerMBean.OBJECT_NAME);
+
+        unprepareForTestAgents();
+
+        // in case this was set before our tests, put it back the way it was
+        if (oldServerNamePropertyValue != null) {
+            System.setProperty(RHQ_SERVER_NAME_PROPERTY, oldServerNamePropertyValue);
+        }
+    }
+
+    @Test
     public void testNewAgentRegistrationWithOldToken() throws Exception {
         // this tests the case where someone purged an agent from the DB, but then
         // changed their mind and want to re-run that agent and re-register it again.
@@ -125,6 +200,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         LookupUtil.getAgentManager().deleteAgent(agent);
     }
 
+    @Test
     public void testChangeAddressPort() throws Exception {
         CoreServerServiceImpl service = new CoreServerServiceImpl();
         AgentRegistrationRequest request;
@@ -376,75 +452,6 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private void debugPrintThrowable(Throwable t) {
         if (true) {
             System.out.println(ThrowableUtil.getAllMessages(t));
-        }
-    }
-
-    @BeforeClass
-    public void prepare() throws Exception {
-        // mock the name of our server via the sysprop (in production, this is normally set in rhq-server.properties)
-        oldServerNamePropertyValue = System.getProperty(RHQ_SERVER_NAME_PROPERTY);
-        String newServerNamePropertyValue = "CoreServerServiceImplTest.Server";
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, newServerNamePropertyValue);
-
-        // mock up our core server MBean that provides information about where the jboss home dir is
-        MBeanServer mbs = getJBossMBeanServer();
-        DummyCoreServer mbean = new DummyCoreServer();
-        mbs.registerMBean(mbean, CoreServerMBean.OBJECT_NAME);
-
-        // in order to register, we need to mock out the agent version file used by the server
-        // to determine the agent version it supports.
-        agentVersion = new AgentVersion("1.2.3", "12345");
-        File agentVersionFile = new File(mbean.getJBossServerHomeDir(),
-            "deploy/rhq.ear/rhq-downloads/rhq-agent/rhq-server-agent-versions.properties");
-        agentVersionFile.getParentFile().mkdirs();
-        agentVersionFile.delete();
-        Properties agentVersionProps = new Properties();
-        agentVersionProps.put("rhq-agent.latest.version", agentVersion.getVersion());
-        agentVersionProps.put("rhq-agent.latest.build-number", agentVersion.getBuild());
-        FileOutputStream fos = new FileOutputStream(agentVersionFile);
-        try {
-            agentVersionProps.store(fos, "This file was created by " + CoreServerServiceImplTest.class.getName());
-        } finally {
-            fos.close();
-        }
-
-        // this mocks out the endpoint ping - the server will think the agent that is registering is up and pingable
-        prepareForTestAgents();
-
-        // mock our server
-        server = new Server();
-        server.setName(newServerNamePropertyValue);
-        server.setAddress("CoreServerServiceImplTest.localhost");
-        server.setPort(12345);
-        server.setSecurePort(12346);
-        server.setOperationMode(OperationMode.NORMAL);
-        int serverId = LookupUtil.getServerManager().create(server);
-        server.setId(serverId);
-    }
-
-    @AfterClass
-    public void unprepare() throws Exception {
-        // clean up any agents we might have created
-        Query q = getEntityManager().createQuery(
-            "select a from Agent a where name like '" + TEST_AGENT_NAME_PREFIX + "%'");
-        List<Agent> doomed = (List<Agent>) q.getResultList();
-        for (Agent deleteMe : doomed) {
-            LookupUtil.getAgentManager().deleteAgent(deleteMe);
-        }
-
-        // cleanup our test server
-        LookupUtil.getCloudManager().updateServerMode(new Integer[] { server.getId() }, OperationMode.DOWN);
-        LookupUtil.getCloudManager().deleteServer(server.getId());
-
-        // shutdown our mock mbean server
-        MBeanServer mbs = getJBossMBeanServer();
-        mbs.unregisterMBean(CoreServerMBean.OBJECT_NAME);
-
-        unprepareForTestAgents();
-
-        // in case this was set before our tests, put it back the way it was
-        if (oldServerNamePropertyValue != null) {
-            System.setProperty(RHQ_SERVER_NAME_PROPERTY, oldServerNamePropertyValue);
         }
     }
 

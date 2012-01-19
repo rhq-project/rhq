@@ -27,7 +27,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -86,13 +85,6 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         servers = new ArrayList<Server>();
         agents = new ArrayList<Agent>();
         newAgents = new ArrayList<Agent>();
-
-        prepareForTestAgents();
-    }
-
-    @AfterClass
-    public void afterClass() throws Exception {
-        this.unprepareForTestAgents();
     }
 
     @BeforeMethod
@@ -100,9 +92,11 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
         servers.clear();
         agents.clear();
         newAgents.clear();
+
+        prepareForTestAgents();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
         try {
             getTransactionManager().begin();
@@ -151,6 +145,8 @@ public class FailoverListManagerBeanTest extends AbstractEJB3Test {
             }
 
             throw e;
+        } finally {
+            this.unprepareForTestAgents();
         }
     }
 

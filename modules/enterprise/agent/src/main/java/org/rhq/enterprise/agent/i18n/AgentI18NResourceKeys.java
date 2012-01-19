@@ -595,7 +595,8 @@ public interface AgentI18NResourceKeys {
         + "\\   -g, --purgeplugins            Deletes all plugins, forcing the agent to re-download all of them\\n\\\n"
         + "\\   -h, --help                    Shows this help message (default)\\n\\\n"
         + "\\   -i, --input=<filename>        Specifies a script file to be used for input\\n\\\n"
-        + "\\   -l, --cleanconfig             Clears out any existing configuration and data files so the agent starts with a totally clean slate\\n\\\n"
+        + "\\   -l, --cleanconfig             Clears out existing configuration and data files, except for the security token.\\n\\\n"
+        + "\\   -L, --cleanallconfig          Clears out all existing configuration and data files so the agent starts with a totally clean slate\\n\\\n"
         + "\\   -n, --nostart                 If specified, the agent will not be automatically started\\n\\\n"
         + "\\   -o, --output=<filename>       Specifies a file to write all output (excluding log messages)\\n\\\n"
         + "\\   -p, --pref=<preferences name> Specifies the agent preferences name used to identify what configuration to use\\n\\\n"
@@ -2009,4 +2010,13 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Done.")
     String AVAILABILITY_REPORT_SENT = "PromptCommand.availability.sent";
+
+    @I18NMessage("Restarting the plugin container due to previous failure to merge the upgrade results with the server.")
+    String RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE = "AgentMain.pc-conditional-restart";
+
+    @I18NMessage("Restoring the original security token.")
+    String RESTORING_SECURITY_TOKEN = "AgentMain.restoring-security-token";
+
+    @I18NMessage("The config file already has a security token defined. The original security token will be thrown away.")
+    String NOT_RESTORING_SECURITY_TOKEN = "AgentMain.not-restoring-security-token";
 }

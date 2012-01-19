@@ -36,9 +36,7 @@ import javax.transaction.SystemException;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -94,27 +92,19 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class DataPurgeJobTest extends AbstractEJB3Test {
     private Resource newResource;
 
+    @SuppressWarnings("unused")
     private int agentId;
     private int resourceTypeId;
     private TestServerPluginService testServerPluginService;
-    
-    @BeforeClass
-    public void setup() {
-        //we need this because the drift plugins are referenced from the system settings that we use in our tests
-        testServerPluginService = new TestServerPluginService();
-        prepareCustomServerPluginService(testServerPluginService);
-        testServerPluginService.startMasterPluginContainer();
-    }
 
-    @AfterClass
-    public void tearDown() throws Exception {
-        unprepareServerPluginService();
-        testServerPluginService.stopMasterPluginContainer();
-    }
-    
     @BeforeMethod
     public void beforeMethod() throws Throwable {
         try {
+            //we need this because the drift plugins are referenced from the system settings that we use in our tests
+            testServerPluginService = new TestServerPluginService();
+            prepareCustomServerPluginService(testServerPluginService);
+            testServerPluginService.startMasterPluginContainer();
+
             prepareScheduler();
             TestServerCommunicationsService agentContainer = prepareForTestAgents();
             newResource = createNewResource();
@@ -125,12 +115,13 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Throwable {
         try {
             deleteNewResource(newResource);
             unprepareForTestAgents();
             unprepareScheduler();
+            unprepareServerPluginService();
         } catch (Throwable t) {
             System.err.println("Cannot unprepare test: " + t);
             t.printStackTrace();
@@ -369,8 +360,8 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         }
         mgr.addTraitData(dataset);
 
-        List<MeasurementDataTrait> persistedTraits = mgr.findTraits(LookupUtil.getSubjectManager().getOverlord(), res
-            .getId(), traitSchedule.getDefinition().getId());
+        List<MeasurementDataTrait> persistedTraits = mgr.findTraits(LookupUtil.getSubjectManager().getOverlord(),
+            res.getId(), traitSchedule.getDefinition().getId());
         assert persistedTraits.size() == count : "did not persist trait data:" + persistedTraits.size() + ":"
             + persistedTraits;
     }
@@ -424,9 +415,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         mgr.addEventData(eventMap);
 
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        PageList<EventComposite> persistedEvents = mgr.findEventComposites(overlord, EntityContext.forResource(res
-            .getId()), timestamp - 1L, timestamp + count + 1L, new EventSeverity[] { EventSeverity.DEBUG }, null, null,
-            new PageControl());
+        PageList<EventComposite> persistedEvents = mgr.findEventComposites(overlord,
+            EntityContext.forResource(res.getId()), timestamp - 1L, timestamp + count + 1L,
+            new EventSeverity[] { EventSeverity.DEBUG }, null, null, new PageControl());
         assert persistedEvents.getTotalSize() == count : "did not persist all events, only persisted: "
             + persistedEvents.getTotalSize();
 

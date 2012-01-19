@@ -37,7 +37,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
@@ -77,8 +77,18 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
+    @AfterClass
+    public void afterClass() throws Exception {
+        cleanupTest();
+    }
+
     @BeforeMethod
     protected void init() {
+        agentServiceContainer = prepareForTestAgents();
+        prepareMockAgentServiceContainer();
+
+        prepareScheduler();
+
         try {
             pluginMgr = LookupUtil.getPluginManager();
             resourceTypeManager = LookupUtil.getResourceTypeManager();
@@ -91,23 +101,14 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         }
     }
 
-    @BeforeClass
-    public void beforeClass() {
-        agentServiceContainer = prepareForTestAgents();
-        prepareMockAgentServiceContainer();
-
-        prepareScheduler();
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod() throws Exception {
+        unprepareForTestAgents();
+        unprepareScheduler();
     }
 
     protected void prepareMockAgentServiceContainer() {
         agentServiceContainer.measurementService = new MockMeasurementAgentService();
-    }
-
-    @AfterClass
-    public void afterClass() throws Exception {
-        unprepareForTestAgents();
-        unprepareScheduler();
-        cleanupTest();
     }
 
     protected ResourceType getResourceType(String typeName) {
@@ -225,8 +226,8 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected int getPluginId(EntityManager entityManager) throws NoResultException {
         Plugin existingPlugin;
         try {
-            existingPlugin = (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name",
-                PLUGIN_NAME).getSingleResult();
+            existingPlugin = (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME)
+                .setParameter("name", PLUGIN_NAME).getSingleResult();
             int plugin1Id = existingPlugin.getId();
             return plugin1Id;
         } catch (NoResultException nre) {
@@ -247,8 +248,8 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected Agent getAgent(EntityManager entityManager) throws NoResultException {
         Agent existingAgent;
         try {
-            existingAgent = (Agent) entityManager.createNamedQuery(Agent.QUERY_FIND_BY_NAME).setParameter("name",
-                AGENT_NAME).getSingleResult();
+            existingAgent = (Agent) entityManager.createNamedQuery(Agent.QUERY_FIND_BY_NAME)
+                .setParameter("name", AGENT_NAME).getSingleResult();
             return existingAgent;
         } catch (NoResultException nre) {
             throw nre;

@@ -27,11 +27,11 @@ import java.util.Collections;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 public class ObjectNameQueryUtilityTest {
     @Test

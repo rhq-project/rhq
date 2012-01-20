@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,12 @@ package org.rhq.core.pc.util;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -282,7 +283,17 @@ public class InventoryPrinter {
             }
 
             if (recurseChildren) {
-                Set<Resource> children = new HashSet(resource.getChildResources()); // wrap in new HashSet to avoid CCMEs
+                Set<Resource> children = new TreeSet<Resource>(new Comparator<Resource>() {
+                    public int compare(Resource o1, Resource o2) {
+                        int result = o1.getResourceType().compareTo(o2.getResourceType());
+                        if (result == 0) {
+                            // The types are the same - let the Resource.compareTo() break the tie.
+                            result = o1.compareTo(o2);
+                        }
+                        return result;
+                    }
+                }); // wrap in new TreeSet to avoid CCMEs and to sort by type
+                children.addAll(resource.getChildResources());
                 for (Resource child : children) {
                     ResourceContainer childContainer;
 

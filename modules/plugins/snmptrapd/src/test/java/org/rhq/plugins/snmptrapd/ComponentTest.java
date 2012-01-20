@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -95,11 +96,12 @@ public abstract class ComponentTest {
         EventContext eventContext = new EventContextImpl(resource);
         OperationContext operationContext = new OperationContextImpl(0);
         ContentContext contentContext = new ContentContextImpl(0);
+        ScheduledExecutorService availCollectorThreadPool = Executors.newScheduledThreadPool(1);
         PluginContainerDeployment pluginContainerDeployment = null;
-        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, availCollectorThreadPool);
         ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
             resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-            eventContext, operationContext, contentContext, availContext, pluginContainerDeployment);
+            eventContext, operationContext, contentContext, availContext, availCollectorThreadPool, pluginContainerDeployment);
         Assert.assertNotNull(context.getEventContext());
         component.start(context);
     }

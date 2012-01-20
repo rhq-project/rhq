@@ -125,15 +125,40 @@ public class MeasurementReport implements Serializable {
         return this.measurementNumericData.size() + this.measurementTraitData.size() + this.callTimeData.size();
     }
 
-    public long getCollectionTime() {
+    public synchronized long getCollectionTime() {
         return collectionTime;
     }
 
-    public void setCollectionTime(long collectionTime) {
+    public synchronized void setCollectionTime(long collectionTime) {
         this.collectionTime = collectionTime;
     }
 
-    public void incrementCollectionTime(long collectionTime) {
+    public synchronized void incrementCollectionTime(long collectionTime) {
         this.collectionTime += collectionTime;
     }
+
+    /**
+     * Adds measurement data from the given report and updates the collection time.
+     * The assumption is the given report is newer than this instance.
+     *
+     * @param report measurements to add
+     */
+    public synchronized void add(MeasurementReport report) {
+        measurementNumericData.addAll(report.measurementNumericData);
+        measurementTraitData.addAll(report.measurementTraitData);
+        callTimeData.addAll(report.callTimeData);
+        setCollectionTime(report.collectionTime);
+    }
+
+    /**
+     * Returns a debug string.
+     */
+    @Override
+    public String toString() {
+        return "MeasurementReport [measurementNumericData="
+                + measurementNumericData + ", measurementTraitData="
+                + measurementTraitData + ", callTimeData=" + callTimeData
+                + ", collectionTime=" + collectionTime + "]";
+    }
+
 }

@@ -24,6 +24,7 @@ package org.rhq.core.pluginapi.upgrade;
 
 import java.io.File;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
@@ -39,7 +40,7 @@ import org.rhq.core.system.SystemInfo;
 
 /**
  * Represents a resource during the resource upgrade phase of discovery.
- * 
+ *
  * @see ResourceUpgradeFacet
  *
  * @since 3.0
@@ -60,11 +61,12 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
         T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
         File temporaryDirectory, File dataDirectory, String pluginContainerName, EventContext eventContext,
         OperationContext operationContext, ContentContext contentContext, AvailabilityContext availabilityContext,
+        ScheduledExecutorService collectorThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
 
         super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
             temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
-            availabilityContext, pluginContainerDeployment);
+            availabilityContext, collectorThreadPool, pluginContainerDeployment);
 
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();

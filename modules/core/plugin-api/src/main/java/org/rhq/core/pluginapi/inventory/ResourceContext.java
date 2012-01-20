@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,6 +43,8 @@ import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.measurement.MeasurementCollectorRunnable;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
@@ -83,6 +86,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final OperationContext operationContext;
     private final ContentContext contentContext;
     private final AvailabilityContext availabilityContext;
+    private final ScheduledExecutorService collectionThreadPool;
     private final PluginContainerDeployment pluginContainerDeployment;
     private final ResourceTypeProcesses trackedProcesses;
 
@@ -147,12 +151,16 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *                                   manager
      * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
      *                                   plugin container inventory manager
+     * @param collectionThreadPool       a thread pool that can be used by the plugin component should it wish
+     *                                   or need to perform asynchronous checking or measurements. See the javadoc on
+     *                                   {@link AvailabilityCollectorRunnable} for more information on this.
      * @param pluginContainerDeployment  indicates where the plugin container is running
      */
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
         ContentContext contentContext, AvailabilityContext availabilityContext,
+        ScheduledExecutorService collectionThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
 
         this.resourceKey = resource.getResourceKey();
@@ -177,6 +185,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.operationContext = operationContext;
         this.contentContext = contentContext;
         this.availabilityContext = availabilityContext;
+        this.collectionThreadPool = collectionThreadPool;
 
         String parentResourceUuid = "";
         if (resource.getParentResource() != null) {
@@ -444,7 +453,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * The name of the plugin container in which the resource component is running. Components
      * can be assured this name is unique across <b>all</b> plugin containers/agents running
      * in the RHQ environment.
-     * 
+     *
      * @return the name of the plugin container
      */
     public String getPluginContainerName() {
@@ -454,7 +463,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     /**
      * Indicates where the plugin container (and therefore where the plugins) are deployed and running.
      * See {@link PluginContainerDeployment} for more information on what the return value means.
-     * 
+     *
      * @return indicator of where the plugin container is deployed and running
      *
      * @since 1.3
@@ -509,8 +518,16 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      */
     public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(AvailabilityFacet availChecker,
         long interval) {
-
         return getAvailabilityContext().createAvailabilityCollectorRunnable(availChecker, interval);
+    }
+
+    /**
+     * Under certain circumstances, a resource component may want to perform asynchronous measurement reporting.
+     *
+     * @see #createAvailabilityCollectorRunnable(AvailabilityFacet, long)
+     */
+    public MeasurementCollectorRunnable createMeasurementCollectorRunnable(MeasurementFacet facet, long interval) {
+        return new MeasurementCollectorRunnable(facet, interval, Thread.currentThread().getContextClassLoader(), this.collectionThreadPool);
     }
 
     /**

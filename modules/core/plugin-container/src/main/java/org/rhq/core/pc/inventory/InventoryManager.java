@@ -39,8 +39,8 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,13 +79,13 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
+import org.rhq.core.pc.CollectorThreadPool;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
-import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
@@ -193,7 +193,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Used by resource components that want to perform asynchronous availability checking.
      */
-    private AvailabilityCollectorThreadPool availabilityCollectors;
+    private CollectorThreadPool collectors;
 
     /**
      * Handles the resource upgrade during the initialization of the inventory manager.
@@ -220,8 +220,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             //make sure the avail collectors are available before we instantiate any
             //resource context - either from disk or from anywhere else.
-            availabilityCollectors = new AvailabilityCollectorThreadPool();
-            availabilityCollectors.initialize();
+            collectors = new CollectorThreadPool();
 
             if (configuration.isInsideAgent()) {
                 loadFromDisk();
@@ -282,7 +281,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             this.persistToDisk();
         }
         this.discoveryComponentProxyFactory.shutdown();
-        this.availabilityCollectors.shutdown();
+        this.collectors.shutdown();
         this.inventoryEventListeners.clear();
         this.resourceContainers.clear();
     }
@@ -1783,7 +1782,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
+            getAvailabilityContext(resource, this.collectors.getExecutor()), // for components that want to perform async avail checking
+            this.collectors.getExecutor(), // for components that want to perform async avail checking
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -1802,7 +1802,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
+            getAvailabilityContext(resource, this.collectors.getExecutor()), // for components that want avail manager access
+            this.collectors.getExecutor(), // for components that want to perform async avail checking
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -2635,7 +2636,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
     //        };
     //    }
 
-    private AvailabilityContext getAvailabilityContext(Resource resource, Executor availCollectionThreadPool) {
+    private AvailabilityContext getAvailabilityContext(Resource resource,
+        ScheduledExecutorService availCollectionThreadPool) {
         if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
             log.error("RESOURCE UUID IS NOT SET! Availability features may not work!");
         }

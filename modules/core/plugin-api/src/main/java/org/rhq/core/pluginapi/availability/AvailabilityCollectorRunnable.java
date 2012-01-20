@@ -22,14 +22,17 @@
  */
 package org.rhq.core.pluginapi.availability;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -63,7 +66,12 @@ public class AvailabilityCollectorRunnable implements Runnable {
     /**
      * The thread pool to give this runnable a thread to run in when it needs to check availability.
      */
-    private final Executor threadPool;
+    private final ScheduledExecutorService threadPool;
+
+    /**
+     * Data collection future.
+     */
+    private Future<?> task = new FutureTask<Void>(this, null);
 
     /**
      * If <code>true</code>, this collector runnable should be actively polling the resource for availability status.
@@ -97,7 +105,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
     private final String facetId;
 
     /**
-     * Creates a collector instance that will perform availability checking for a particular managed resource.
+     * Constructs a collector instance that will perform availability checking for a particular managed resource.
      *
      * The interval is the time, in milliseconds, this collector will wait between availability checks.
      * This is the amount of time this collector will sleep after each time an availability
@@ -112,7 +120,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
      * @param threadPool the thread pool to be used to submit this runnable when it needs to start
      */
     public AvailabilityCollectorRunnable(AvailabilityFacet availabilityChecker, long interval,
-        ClassLoader contextClassloader, Executor threadPool) {
+        ClassLoader contextClassloader, ScheduledExecutorService threadPool) {
 
         if (availabilityChecker == null) {
             throw new IllegalArgumentException("availabilityChecker is null");
@@ -161,7 +169,8 @@ public class AvailabilityCollectorRunnable implements Runnable {
         if (isStarted) {
             log.debug("Availability collector runnable [" + this.facetId + "] is already started");
         } else {
-            this.threadPool.execute(this);
+            task.cancel(true);
+            task = threadPool.scheduleWithFixedDelay(this, 0, interval, TimeUnit.MILLISECONDS);
             log.debug("Availability collector runnable [" + this.facetId + "] submitted to thread pool");
         }
     }
@@ -173,6 +182,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
      */
     public void stop() {
         this.started.set(false);
+        task.cancel(true);
         log.debug("Availability collector runnable [" + this.facetId + "] was told to stop");
     }
 
@@ -182,36 +192,17 @@ public class AvailabilityCollectorRunnable implements Runnable {
      * You should not be calling this method directly - use {@link #start()} instead.
      */
     public void run() {
-        log.debug("Availability collector runnable [" + this.facetId + "] started");
-
         ClassLoader originalClassloader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(this.contextClassloader);
-
         try {
-            // while we are still running, we need to sleep then get the new availability
-            do {
-                try {
-                    AvailabilityType availability = this.availabilityChecker.getAvailability();
-                    this.lastKnownAvailability.set(availability);
-                } catch (Throwable t) {
-                    log.warn("Availability collector [" + this.facetId
-                        + "] failed to get availability - keeping the last known availability of ["
-                        + this.lastKnownAvailability.get() + "]. Cause: " + ThrowableUtil.getAllMessages(t));
-                }
-
-                try {
-                    Thread.sleep(this.interval);
-                } catch (InterruptedException e) {
-                    // we got interrupted, we assume we need to shutdown
-                    this.started.set(false);
-                    log.debug("Availability collector [" + this.facetId + "] interrupted");
-                }
-            } while (this.started.get());
+            AvailabilityType availability = this.availabilityChecker.getAvailability();
+            this.lastKnownAvailability.set(availability);
+        } catch (Throwable t) {
+            log.warn("Availability collector [" + this.facetId
+                    + "] failed to get availability - keeping the last known availability of ["
+                    + this.lastKnownAvailability.get() + "]. Cause: " + ThrowableUtil.getAllMessages(t));
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassloader);
         }
-
-        log.debug("Availability collector runnable [" + this.facetId + "] stopped");
-        return;
     }
 }

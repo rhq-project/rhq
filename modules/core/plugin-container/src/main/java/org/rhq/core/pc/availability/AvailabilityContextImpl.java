@@ -20,7 +20,7 @@
 
 package org.rhq.core.pc.availability;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -36,9 +36,9 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 public class AvailabilityContextImpl implements AvailabilityContext {
 
     private final Resource resource;
-    private final Executor availCollectionThreadPool;
+    private final ScheduledExecutorService availCollectionThreadPool;
 
-    public AvailabilityContextImpl(Resource resource, Executor availCollectionThreadPool) {
+    public AvailabilityContextImpl(Resource resource, ScheduledExecutorService availCollectionThreadPool) {
         super();
         this.resource = resource;
         this.availCollectionThreadPool = availCollectionThreadPool;

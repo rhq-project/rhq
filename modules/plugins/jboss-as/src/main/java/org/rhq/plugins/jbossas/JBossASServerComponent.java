@@ -114,7 +114,7 @@ import org.rhq.plugins.jbossas.util.JarContentDelegate;
 import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
 * Resource component for managing JBoss AS 3.2.3 through 4.2.x, and JBoss EAP and SOA-P 4.x.

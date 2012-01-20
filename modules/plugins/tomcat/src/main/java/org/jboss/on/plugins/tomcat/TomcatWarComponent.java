@@ -74,7 +74,7 @@ import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
  * A resource component for managing a web application (WAR) deployed to a Tomcat server.

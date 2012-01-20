@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.jmx;
+package org.rhq.plugins.jmx.util;
 
 import org.rhq.core.domain.configuration.Configuration;
 
@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  * to.
  *
  * <p/>We can then find beans with the query and apply their objectName properties to the object and use those found
- * values to rewrite strings or setup configuration properities. For example, we've got a detected object name for the
+ * values to rewrite strings or setup configuration properties. For example, we've got a detected object name for the
  * above template "foo:name=bar,type=myType". We set its detected keys against this utility and we now have a variable
  * defined as the key "myName" and the value of "bar". Then I can call formatMessage with "A foo called {myName}" which
  * will be translated into "A foo called bar". This can be useful for naming resources and descriptions using parts of a

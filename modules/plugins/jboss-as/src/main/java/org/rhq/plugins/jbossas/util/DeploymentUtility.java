@@ -48,9 +48,9 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
-/**
+ /**
  * Accesses the MainDeployer mbean to find the deployment files behind services.
  *
  * @author Greg Hinkle

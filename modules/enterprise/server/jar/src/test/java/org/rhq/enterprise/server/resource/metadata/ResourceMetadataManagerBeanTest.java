@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -22,7 +24,6 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
@@ -48,8 +49,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import static java.util.Arrays.asList;
 
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
@@ -118,7 +117,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         }
     }
 
-    @Test(groups = { "plugin.metadata", "NewPlugin" })
+    @Test(dependsOnMethods = { "registerPluginWithDuplicateDriftDefinitions" }, groups = { "plugin.metadata",
+        "NewPlugin" })
     public void registerPlugin() throws Exception {
         createPlugin("test-plugin.jar", "1.0", "plugin_v1.xml");
     }
@@ -146,8 +146,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
     public void persistEventDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions", asList("logAEntry",
-            "logBEntry"));
+        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions",
+            asList("logAEntry", "logBEntry"));
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
@@ -246,8 +246,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
     public void persistPackageTypes() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes", asList("ServerA.Content.1",
-            "ServerA.Content.2"));
+        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes",
+            asList("ServerA.Content.1", "ServerA.Content.2"));
     }
 
     @Test(groups = { "plugin.metadata", "UpgradePlugin" }, dependsOnGroups = { "NewPlugin" })
@@ -257,8 +257,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
     public void upgradeOperationDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "operationDefinitions", asList("start",
-            "shutdown", "restart"));
+        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "operationDefinitions",
+            asList("start", "shutdown", "restart"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
@@ -273,8 +273,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
     public void upgradeEventDefinitions() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions", asList("logAEntry",
-            "logCEntry"));
+        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "eventDefinitions",
+            asList("logAEntry", "logCEntry"));
     }
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
@@ -349,8 +349,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePlugin" }, groups = { "plugin.metadata", "UpgradePlugin" })
     public void upgradePackageTypes() throws Exception {
-        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes", asList("ServerA.Content.1",
-            "ServerA.Content.3"));
+        assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "packageTypes",
+            asList("ServerA.Content.1", "ServerA.Content.3"));
     }
 
     @Test(groups = { "RemoveTypes" }, dependsOnGroups = { "UpgradePlugin" })
@@ -375,17 +375,17 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         criteria.addFilterResourceTypeName("ServerC");
         criteria.addFilterName("run");
 
-        List<OperationDefinition> operationDefs = operationMgr.findOperationDefinitionsByCriteria(subjectMgr
-            .getOverlord(), criteria);
+        List<OperationDefinition> operationDefs = operationMgr.findOperationDefinitionsByCriteria(
+            subjectMgr.getOverlord(), criteria);
 
         assertEquals("The operation definition should have been deleted", 0, operationDefs.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteEventDefsForRemovedType() throws Exception {
-        List<?> results = getEntityManager().createQuery(
-            "from EventDefinition e where e.name = :ename and e.resourceType.name = :rname").setParameter("ename",
-            "serverCEvent").setParameter("rname", "ServerC").getResultList();
+        List<?> results = getEntityManager()
+            .createQuery("from EventDefinition e where e.name = :ename and e.resourceType.name = :rname")
+            .setParameter("ename", "serverCEvent").setParameter("rname", "ServerC").getResultList();
 
         assertEquals("The event definition(s) should have been deleted", 0, results.size());
     }
@@ -425,29 +425,30 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteTypeAndAllItsDescedantTypes() throws Exception {
-        List<?> typesNotRemoved = getEntityManager().createQuery(
-            "from ResourceType t where t.plugin = :plugin and t.name in (:resourceTypes)").setParameter("plugin",
-            "RemoveTypesPlugin").setParameter("resourceTypes",
-            asList("ServerE", "ServerE1", "ServerE2", "ServerE3", "ServerE4")).getResultList();
+        List<?> typesNotRemoved = getEntityManager()
+            .createQuery("from ResourceType t where t.plugin = :plugin and t.name in (:resourceTypes)")
+            .setParameter("plugin", "RemoveTypesPlugin")
+            .setParameter("resourceTypes", asList("ServerE", "ServerE1", "ServerE2", "ServerE3", "ServerE4"))
+            .getResultList();
 
         assertEquals("Failed to delete resource type or one or more of its descendant types", 0, typesNotRemoved.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteProcessScans() {
-        List<?> processScans = getEntityManager().createQuery(
-            "from ProcessScan p where p.name = :name1 or p.name = :name2").setParameter("name1", "scan1").setParameter(
-            "name2", "scan2").getResultList();
+        List<?> processScans = getEntityManager()
+            .createQuery("from ProcessScan p where p.name = :name1 or p.name = :name2").setParameter("name1", "scan1")
+            .setParameter("name2", "scan2").getResultList();
 
         assertEquals("The process scans should have been deleted", 0, processScans.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteSubcategories() {
-        List<?> subcategories = getEntityManager().createQuery(
-            "from ResourceSubCategory r where r.name = :name1 or r.name = :name2 or r.name = :name3").setParameter(
-            "name1", "ServerC.Category1").setParameter("name2", "ServerC.Category2").setParameter("name3",
-            "ServerC.NestedCategory1").getResultList();
+        List<?> subcategories = getEntityManager()
+            .createQuery("from ResourceSubCategory r where r.name = :name1 or r.name = :name2 or r.name = :name3")
+            .setParameter("name1", "ServerC.Category1").setParameter("name2", "ServerC.Category2")
+            .setParameter("name3", "ServerC.NestedCategory1").getResultList();
         assertEquals("The subcategories should have been deleted", 0, subcategories.size());
     }
 
@@ -462,8 +463,8 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
         List<Resource> resources = resourceMgr.findResourcesByCriteria(subjectMgr.getOverlord(), criteria);
 
-        assertTrue("Did not expect to find any more that three resources. Database might need to be reset", resources
-            .size() < 4);
+        assertTrue("Did not expect to find any more that three resources. Database might need to be reset",
+            resources.size() < 4);
 
         // We won't do anything more rigorous that making sure the resources were marked uninventoried.
         // Resource deletion is an expensive, time-consuming process; consequently, it is carried out
@@ -471,57 +472,57 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         // quickly as it is basically just updates the the inventory status to UNINVENTORIED for the
         // resources to be deleted.
         for (Resource resource : resources) {
-            assertEquals("The resource should have been marked for deletion", InventoryStatus.UNINVENTORIED == resource
-                .getInventoryStatus());
+            assertEquals("The resource should have been marked for deletion",
+                InventoryStatus.UNINVENTORIED == resource.getInventoryStatus());
         }
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteBundles() {
-        List<?> bundles = getEntityManager().createQuery("from Bundle b where b.bundleType.name = :name").setParameter(
-            "name", "Test Bundle").getResultList();
+        List<?> bundles = getEntityManager().createQuery("from Bundle b where b.bundleType.name = :name")
+            .setParameter("name", "Test Bundle").getResultList();
 
         assertEquals("Failed to delete the bundles", 0, bundles.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteBundleTypes() {
-        List<?> bundleTypes = getEntityManager().createQuery("from BundleType b where b.name = :name").setParameter(
-            "name", "Test Bundle").getResultList();
+        List<?> bundleTypes = getEntityManager().createQuery("from BundleType b where b.name = :name")
+            .setParameter("name", "Test Bundle").getResultList();
 
         assertEquals("The bundle type should have been deleted", 0, bundleTypes.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deletePackages() {
-        List<?> packages = getEntityManager().createQuery("from Package p where p.name = :name").setParameter("name",
-            "ServerC::test-package").getResultList();
+        List<?> packages = getEntityManager().createQuery("from Package p where p.name = :name")
+            .setParameter("name", "ServerC::test-package").getResultList();
 
         assertEquals("All packages should have been deleted", 0, packages.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deletePackageTypes() {
-        List<?> packageTypes = getEntityManager().createQuery("from PackageType p where p.name = :name").setParameter(
-            "name", "ServerC.Content").getResultList();
+        List<?> packageTypes = getEntityManager().createQuery("from PackageType p where p.name = :name")
+            .setParameter("name", "ServerC.Content").getResultList();
 
         assertEquals("All package types should have been deleted", 0, packageTypes.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteResourceGroups() {
-        List<?> groups = getEntityManager().createQuery(
-            "from ResourceGroup g where g.name = :name and g.resourceType.name = :typeName").setParameter("name",
-            "ServerC Group").setParameter("typeName", "ServerC").getResultList();
+        List<?> groups = getEntityManager()
+            .createQuery("from ResourceGroup g where g.name = :name and g.resourceType.name = :typeName")
+            .setParameter("name", "ServerC Group").setParameter("typeName", "ServerC").getResultList();
 
         assertEquals("All resource groups should have been deleted", 0, groups.size());
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.metadata", "RemoveTypes" })
     public void deleteAlertTemplates() {
-        List<?> templates = getEntityManager().createQuery(
-            "from AlertDefinition a where a.name = :name and a.resourceType.name = :typeName").setParameter("name",
-            "ServerC Alert Template").setParameter("typeName", "ServerC").getResultList();
+        List<?> templates = getEntityManager()
+            .createQuery("from AlertDefinition a where a.name = :name and a.resourceType.name = :typeName")
+            .setParameter("name", "ServerC Alert Template").setParameter("typeName", "ServerC").getResultList();
 
         assertEquals("Alert templates should have been deleted.", 0, templates.size());
     }
@@ -576,9 +577,9 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
         List<Resource> resources = new ArrayList<Resource>();
         for (int i = 0; i < count; ++i) {
-            resources.add(new ResourceBuilder().createServer().withResourceType(resourceType).withName(
-                resourceType.getName() + "--" + i).withUuid(resourceType.getName()).withRandomResourceKey(
-                resourceType.getName() + "--" + i).build());
+            resources.add(new ResourceBuilder().createServer().withResourceType(resourceType)
+                .withName(resourceType.getName() + "--" + i).withUuid(resourceType.getName())
+                .withRandomResourceKey(resourceType.getName() + "--" + i).build());
         }
 
         getTransactionManager().begin();

@@ -24,13 +24,14 @@ import org.dbunit.dataset.datatype.IDataTypeFactory;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterGroups;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.BeforeMethod;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
@@ -38,12 +39,14 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
+import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class MetadataBeanTest extends AbstractEJB3Test {
 
-    private static List<String> plugins = new ArrayList<String>();
+    private List<Integer> pluginIds = new ArrayList<Integer>();
 
     @Override
     protected boolean isDBResetNeeded() {
@@ -60,12 +63,14 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
      */
-    @AfterGroups(alwaysRun = true, groups = { "plugin.metadata" })
-    void afterGroups() throws Exception {
-        getTransactionManager().begin();
-        getEntityManager().createQuery("delete from Plugin p where p.name in (:plugins)")
-            .setParameter("plugins", plugins).executeUpdate();
-        getTransactionManager().commit();
+    @AfterClass(alwaysRun = true, groups = { "plugin.metadata" })
+    void afterClass() throws Exception {
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        pluginMgr.deletePlugins(overlord, pluginIds);
+        pluginMgr.markPluginsForPurge(overlord, pluginIds);
+        new PurgePluginsJob().executeJobCode(null);
+        new PurgeResourceTypesJob().executeJobCode(null);
     }
 
     @BeforeMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
@@ -94,7 +99,9 @@ public class MetadataBeanTest extends AbstractEJB3Test {
             connection = getConnection();
             DatabaseConnection dbunitConnection = new DatabaseConnection(connection);
             setDbType(dbunitConnection);
-            DatabaseOperation.CLEAN_INSERT.execute(dbunitConnection, getDataSet());
+            // note - this info should already be in the db as part of dbsetup, but just in case
+            // perform the refresh. Do not DELETE this data set as it may be assumed in other tests.
+            DatabaseOperation.REFRESH.execute(dbunitConnection, getDataSet());
         } finally {
             if (connection != null) {
                 connection.close();
@@ -151,7 +158,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
         pluginMgr.registerPlugin(subjectMgr.getOverlord(), plugin, pluginDescriptor, null, true);
 
-        plugins.add(plugin.getName());
+        pluginIds.add(plugin.getId());
     }
 
     private URL getDescriptorURL(String descriptor) {

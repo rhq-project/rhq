@@ -2917,7 +2917,7 @@ public class AgentMain {
             new LongOpt("console", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
             new LongOpt("daemon", LongOpt.NO_ARGUMENT, null, 'd'),
             new LongOpt("cleanconfig", LongOpt.NO_ARGUMENT, null, 'l'),
-            new LongOpt("cleanallconfig", LongOpt.NO_ARGUMENT, null, 'L'),
+            new LongOpt("fullcleanconfig", LongOpt.NO_ARGUMENT, null, 'L'),
             new LongOpt("advanced", LongOpt.NO_ARGUMENT, null, 'a'),
             new LongOpt("setup", LongOpt.NO_ARGUMENT, null, 's'),
             new LongOpt("nostart", LongOpt.NO_ARGUMENT, null, 'n'),

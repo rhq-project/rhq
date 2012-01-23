@@ -135,9 +135,11 @@ public class CoreServerServiceImpl implements CoreServerService {
                 if (agentByName != null) {
                     // the agent request provided a name that already is in use by an agent. However, the request
                     // provided a security token that was not assigned to any agent! How can this be? Something is fishy.
-                    String msg = "The agent asking for registration under the name [" + request.getName()
+                    String msg = "The agent asking for registration under the name ["
+                        + request.getName()
                         + "] provided an invalid security token. This request will fail. "
-                        + "Please consult an administrator to reconfigure this agent with its proper security token.";
+                        + "Please consult an administrator to obtain the agent's proper security token "
+                        + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\"";
                     throw new AgentRegistrationException(msg);
                 }
                 Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
@@ -172,9 +174,11 @@ public class CoreServerServiceImpl implements CoreServerService {
                         + " and same security token.";
                     throw new AgentRegistrationException(msg);
                 } else {
-                    String msg = "The agent [" + request.getName()
+                    String msg = "The agent ["
+                        + request.getName()
                         + "] is attempting to re-register without a security token. "
-                        + "Please consult an administrator to reconfigure this agent with its proper security token.";
+                        + "Please consult an administrator to obtain the agent's proper security token "
+                        + "and restart the agent with the option \"-Drhq.agent.security-token=<the valid security token>\"";
                     throw new AgentRegistrationException(msg);
 
                 }

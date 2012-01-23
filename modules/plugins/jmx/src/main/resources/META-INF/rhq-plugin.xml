@@ -6,7 +6,6 @@
         description="Supports management of JMX MBean Servers via various remoting systems."
         pluginLifecycleListener="JMXPluginLifecycleListener"
         ampsVersion="2.0"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -40,11 +39,12 @@
             </c:property-options>
          </c:simple-property>
 
-         <c:simple-property name="connectorAddress" required="true" type="string" description="The connection url in the form of a JMXServiceURL"/>
-         <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)."/>
+         <c:simple-property name="connectorAddress" required="false" type="string" description="The connection url in the form of a JMXServiceURL - this should only be set if the JVM has JMX Remoting enabled"/>
+         <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)"/>
          <c:simple-property name="principal" required="false" description="The login principal/username"/>
          <c:simple-property name="credentials" required="false" type="password" description="The login credentials/password"/>
          <c:simple-property name="additionalClassPathEntries" required="false" type="string" description="Comma-separated list of directories and filenames that contain resources and classes needed to communicate with the JMX Server and its MBeans. If you specify 'some/directory/*.jar', all jars found in the given directory will be added."/>
+         <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
 
          <c:template name="JDK 5" description="Connect to JDK 5">
             <c:simple-property name="type" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"/>
@@ -79,7 +79,7 @@
          In order to do this, you must pass in some system properties when starting your application's Java virtual 
          machine.</p>
          
-         <p> To run a JVM with JMX remoting enabled without authentication, you must pass in the following system 
+         <p>To run a JVM with JMX remoting enabled without authentication, you must pass in the following system
          properties:</p>
          
          <ul>

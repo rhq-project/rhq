@@ -151,6 +151,13 @@ for _JAR in $_JAR_FILES ; do
    fi
    debug_msg "CLASSPATH entry: $_JAR"
 done
+for _TOOLS_JAR in "${RHQ_AGENT_JAVA_HOME}/lib/tools.jar" "${RHQ_AGENT_JAVA_HOME}/../lib/tools.jar"; do
+   if [ -f "${_TOOLS_JAR}" ]; then
+      debug_msg "CLASSPATH entry: ${_TOOLS_JAR}"
+      CLASSPATH="${CLASSPATH}:${_TOOLS_JAR}"
+      break
+   fi
+done
 
 # ----------------------------------------------------------------------
 # Prepare the VM command line options to be passed in
@@ -236,7 +243,7 @@ if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
    fi
 fi
 
-# if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so its got its own debug var
+# if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so it has its own debug var
 if [ "x$RHQ_AGENT_SIGAR_DEBUG" != "x" ]; then
    if [ "$RHQ_AGENT_SIGAR_DEBUG" != "false" ]; then
       _LOG_CONFIG="$_LOG_CONFIG -Dsigar.nativeLogging=true"

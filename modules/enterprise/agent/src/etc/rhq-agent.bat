@@ -102,6 +102,14 @@ for /R "%RHQ_AGENT_HOME%\lib" %%G in ("*.jar") do (
    call :append_classpath "%%G"
    if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: %%G
 )
+for %%G in ("%RHQ_AGENT_JAVA_HOME%\lib\tools.jar" "%RHQ_AGENT_JAVA_HOME%\..\lib\tools.jar") do (
+   if exist "%%G" (
+      call :append_classpath "%%G"
+      if defined RHQ_AGENT_DEBUG echo CLASSPATH entry: %%G
+      goto end_classpath
+   )
+)
+:end_classpath
 
 rem ----------------------------------------------------------------------
 rem Prepare the VM command line options to be passed in
@@ -152,7 +160,7 @@ if defined RHQ_AGENT_DEBUG (
    set _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 )
 
-rem if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so its got its own debug var
+rem if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so it has its own debug var
 if defined RHQ_AGENT_SIGAR_DEBUG (
    set _LOG_CONFIG=%_LOG_CONFIG% -Dsigar.nativeLogging=true
 )

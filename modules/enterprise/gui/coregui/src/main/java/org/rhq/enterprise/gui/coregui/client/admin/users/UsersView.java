@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
@@ -32,8 +31,6 @@ import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -61,9 +58,8 @@ public class UsersView extends TableSection<UsersDataSource> {
     private static final String HEADER_ICON = "global/User_24.png";
 
     private boolean hasManageSecurity;
-    private boolean initialized;
 
-    public UsersView(String locatorId) {
+    public UsersView(String locatorId, boolean hasManageSecurity) {
         super(locatorId, MSG.common_title_users());
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
@@ -71,8 +67,8 @@ public class UsersView extends TableSection<UsersDataSource> {
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
         setEscapeHtmlInDetailsLinkColumn(true);
-
-        fetchManageSecurityPermissionAsync();
+       
+        this.hasManageSecurity = hasManageSecurity;
     }
 
     @Override
@@ -101,28 +97,12 @@ public class UsersView extends TableSection<UsersDataSource> {
         updateSelectionStyle();
     }
 
-    private void fetchManageSecurityPermissionAsync() {
-        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> permissions) {
-                if (permissions != null) {
-                    hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
-                    refreshTableInfo();
-                } else {
-                    hasManageSecurity = false;
-                }
-                initialized = true;
-            }
-        });
-    }
-
     private void updateSelectionStyle() {
-        if (initialized) {
-            if (!hasManageSecurity) {
-                getListGrid().deselectAllRecords();
-            }
-            SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
-            getListGrid().setSelectionType(selectionStyle);
+        if (!hasManageSecurity) {
+            getListGrid().deselectAllRecords();
         }
+        SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
+        getListGrid().setSelectionType(selectionStyle);
     }
 
     private List<ListGridField> createFields() {

@@ -37,6 +37,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.jmx.util.ParentDefinedJMXServerNamingUtility;
 
 /**
  * This discovery component can be used to include JVM information under a parent Process oriented server that supports

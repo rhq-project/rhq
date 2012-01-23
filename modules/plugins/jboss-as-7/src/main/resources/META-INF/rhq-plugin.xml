@@ -189,6 +189,8 @@
                 displayType="summary"/>
         <metric property="release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
+        <metric property="product-name" dataType="trait" displayName="Name of the product"/>
+        <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -471,6 +473,8 @@
                 displayType="summary"/>
         <metric property="release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
+        <metric property="product-name" dataType="trait" displayName="Name of the product"/>
+        <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 

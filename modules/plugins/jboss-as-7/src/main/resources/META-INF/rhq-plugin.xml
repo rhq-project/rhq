@@ -141,7 +141,7 @@
         <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
-                    <c:option-source target="resource" expression="type=JBossAS7 Managed Server"/>
+                    <c:option-source target="resource" expression="type=Managed Server"/>
                 </c:simple-property>
                 <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
                     <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
@@ -563,7 +563,7 @@
             description="Information about the underlying JVM"
             singleton="true">
         <runs-inside>
-            <parent-resource-type name="JBossAS7 Managed Server"  plugin="jboss-as-7"/>
+            <parent-resource-type name="Managed Server"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
@@ -2126,7 +2126,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     </service>
 
     <service name="Deployment"
-             class="BaseComponent"
+             class="DeploymentComponent"
              discovery="SubsystemDiscovery"
              createDeletePolicy="both"
              creationDataType="content">
@@ -2135,10 +2135,22 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <runs-inside>
             <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+            <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
         </runs-inside>
         <plugin-configuration>
             <c:simple-property name="path" default="deployment" readOnly="true"/>
         </plugin-configuration>
+
+        <operation name="enable">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="disable">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
 
         <content name="file" category="deployable" isCreationType="true" description="Deployments on this server group">
             <configuration>

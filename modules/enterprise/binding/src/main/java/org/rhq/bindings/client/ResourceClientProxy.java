@@ -505,6 +505,11 @@ public class ResourceClientProxy {
             return remoteClient.getContentManager().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
         }
 
+        /**
+         * @deprecated Superseded by ({@link #updateBackingContent(String, String)}
+         *
+         * @param fileName file name
+         */
         @Deprecated
         public void updateBackingContent(String filename) {
             this.updateBackingContent(filename, null);
@@ -649,6 +654,11 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent();
 
+        /**
+         * @deprecated Superseded by ({@link #updateBackingContent(String, String)}
+         *
+         * @param fileName file name
+         */
         @Deprecated
         public void updateBackingContent(String fileName);
 

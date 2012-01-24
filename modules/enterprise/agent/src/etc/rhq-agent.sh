@@ -141,6 +141,10 @@ fi
 # ----------------------------------------------------------------------
 
 CLASSPATH="${RHQ_AGENT_HOME}/conf"
+if [ ! -d "${RHQ_AGENT_HOME}/lib" ]; then
+   echo "lib subdirectory does not exist under RHQ_AGENT_HOME directory: ${RHQ_AGENT_HOME}"
+   exit 1
+fi
 _JAR_FILES=`cd "${RHQ_AGENT_HOME}/lib";ls -1 *.jar`
 for _JAR in $_JAR_FILES ; do
    _JAR="${RHQ_AGENT_HOME}/lib/${_JAR}"
@@ -151,7 +155,7 @@ for _JAR in $_JAR_FILES ; do
    fi
    debug_msg "CLASSPATH entry: $_JAR"
 done
-for _TOOLS_JAR in "${RHQ_AGENT_JAVA_HOME}/lib/tools.jar" "${RHQ_AGENT_JAVA_HOME}/../lib/tools.jar"; do
+for _TOOLS_JAR in "${RHQ_AGENT_JAVA_HOME}/lib/tools.jar" "${RHQ_AGENT_JAVA_HOME}/../lib/tools.jar" "${RHQ_AGENT_JAVA_HOME}/Classes/classes.jar" "${RHQ_AGENT_JAVA_HOME}/../Classes/classes.jar"; do
    if [ -f "${_TOOLS_JAR}" ]; then
       debug_msg "CLASSPATH entry: ${_TOOLS_JAR}"
       CLASSPATH="${CLASSPATH}:${_TOOLS_JAR}"

@@ -79,61 +79,63 @@ public class JarContentDelegate extends FileContentDelegate {
     public Set<ResourcePackageDetails> discoverDeployedPackages() {
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
-        File[] files = this.directory.listFiles(new FileFilter() {
-            public boolean accept(File pathname) {
-                return pathname.getName().endsWith(getFileEnding()) && pathname.isFile();
-            }
-        });
-
-        for (File file : files) {
-            String manifestVersion = null;
-            JarFile jf = null;
-            try {
-                Configuration config = new Configuration();
-                jf = new JarFile(file);
-                Manifest manifest = jf.getManifest();
-
-                if (manifest != null) {
-                    Attributes attributes = manifest.getMainAttributes();
-
-                    manifestVersion = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-
-                    config.put(new PropertySimple("version", manifestVersion));
-                    config.put(new PropertySimple("title", attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE)));
-                    config.put(new PropertySimple("url", attributes.getValue(Attributes.Name.IMPLEMENTATION_URL)));
-                    config
-                        .put(new PropertySimple("vendor", attributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR)));
-
-                    config.put(new PropertySimple("classpath", attributes.getValue(Attributes.Name.CLASS_PATH)));
-                    config.put(new PropertySimple("sealed", attributes.getValue(Attributes.Name.SEALED)));
+        if (this.directory != null && this.directory.exists() && this.directory.isDirectory()) {
+            File[] files = this.directory.listFiles(new FileFilter() {
+                public boolean accept(File pathname) {
+                    return pathname.getName().endsWith(getFileEnding()) && pathname.isFile();
                 }
-                String sha256 = null;
+            });
+    
+            for (File file : files) {
+                String manifestVersion = null;
+                JarFile jf = null;
                 try {
-                    sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
-                } catch (Exception e) {
-                    // leave as null
-                }
-
-                ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(file.getName(),
-                    getVersion(sha256), getPackageTypeName(), "noarch"));
-
-                packages.add(details);
-                details.setFileCreatedDate(file.lastModified()); // Why don't we have a last modified time?
-                details.setFileName(file.getName());
-                details.setFileSize(file.length());
-                details.setClassification(MIME_TYPE_JAR);
-                details.setSHA256(sha256);
-                details.setDisplayVersion(getDisplayVersion(file));
-
-                details.setExtraProperties(config);
-            } catch (IOException e) {
-                // If we can't open it, don't worry about it, we just won't know the version
-            } finally {
-                try {
-                    if (jf != null)
-                        jf.close();
-                } catch (Exception e) {
-                    // Nothing we can do here ...
+                    Configuration config = new Configuration();
+                    jf = new JarFile(file);
+                    Manifest manifest = jf.getManifest();
+    
+                    if (manifest != null) {
+                        Attributes attributes = manifest.getMainAttributes();
+    
+                        manifestVersion = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+    
+                        config.put(new PropertySimple("version", manifestVersion));
+                        config.put(new PropertySimple("title", attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE)));
+                        config.put(new PropertySimple("url", attributes.getValue(Attributes.Name.IMPLEMENTATION_URL)));
+                        config
+                            .put(new PropertySimple("vendor", attributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR)));
+    
+                        config.put(new PropertySimple("classpath", attributes.getValue(Attributes.Name.CLASS_PATH)));
+                        config.put(new PropertySimple("sealed", attributes.getValue(Attributes.Name.SEALED)));
+                    }
+                    String sha256 = null;
+                    try {
+                        sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
+                    } catch (Exception e) {
+                        // leave as null
+                    }
+    
+                    ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(file.getName(),
+                        getVersion(sha256), getPackageTypeName(), "noarch"));
+    
+                    packages.add(details);
+                    details.setFileCreatedDate(file.lastModified()); // Why don't we have a last modified time?
+                    details.setFileName(file.getName());
+                    details.setFileSize(file.length());
+                    details.setClassification(MIME_TYPE_JAR);
+                    details.setSHA256(sha256);
+                    details.setDisplayVersion(getDisplayVersion(file));
+    
+                    details.setExtraProperties(config);
+                } catch (IOException e) {
+                    // If we can't open it, don't worry about it, we just won't know the version
+                } finally {
+                    try {
+                        if (jf != null)
+                            jf.close();
+                    } catch (Exception e) {
+                        // Nothing we can do here ...
+                    }
                 }
             }
         }

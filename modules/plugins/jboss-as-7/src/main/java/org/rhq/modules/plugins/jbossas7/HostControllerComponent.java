@@ -39,6 +39,10 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
 
     private final Log log = LogFactory.getLog(HostControllerComponent.class);
 
+    public Configuration getHCConfig() {
+        return pluginConfiguration;
+    }
+
     @Override
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws InterruptedException, Exception {

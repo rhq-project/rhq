@@ -328,6 +328,45 @@
             </resource-configuration>
         </server>
 
+        <server name="Managed Server"
+                discovery="ManagedASDiscovery"
+                class="ManagedASComponent"
+                >
+            <plugin-configuration>
+                <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
+                <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
+                <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
+                <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
+                <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="false"/>
+                <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
+                <c:simple-property name="path" readOnly="true" />
+
+                &logSources;
+            </plugin-configuration>
+
+            <operation name="server:start" description="Start this server instance." displayName="Start">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+            <operation name="server:stop" description="Stop this server instance." displayName="Stop">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+            <operation name="server:restart" description="Restart this server instance." displayName="Restart">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
+                    displayType="summary"/>
+
+            <event name="logEntry" description="an entry in a log file"/>
+
+        </server>
+
         <service name="DomainDeployment"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
@@ -514,83 +553,6 @@
         </resource-configuration>
 
 
-
-    </server>
-
-    <server name="JBossAS7 Managed Server"
-            discovery="ManagedASDiscovery"
-            class="ManagedASComponent"
-            >
-        <plugin-configuration>
-            <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
-            <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
-            <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
-            <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
-            <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use"/>
-            <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
-            <c:simple-property name="path" readOnly="true" />
-
-            &logSources;
-         <c:group name="event" displayName="Events">
-             <c:list-property name="logEventSources">
-                 <c:map-property name="logEventSource">
-                     <c:simple-property name="logFilePath" type="file" summary="true"
-                                        description="The absolute path to the source log file."/>
-                     <c:simple-property name="enabled" type="boolean" summary="true"
-                                        description="A flag indicating whether of not this log Event source is currently
-                                                     enabled (i.e. whether the associated log file should be tailed for
-                                                     new entries)."/>
-                     <c:simple-property name="dateFormat" required="false"
-                                        description="The date format to use when parsing the dates in log entries. The
-                                                     format must be in the syntax defined by the Java SimpleDateFormat
-                                                     class. If not specified, the three date formats that are predefined
-                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
-                     <c:simple-property name="includesPattern" required="false"
-                                        description="A regular expression against which a log entry's detail is matched
-                                                     to determine if an Event should be fired for that entry. If not
-                                                     specified, no filtering of log entries will be done based on their
-                                                     detail."/>
-                     <c:simple-property name="minimumSeverity" required="false" default="error"
-                                        description="The minimum severity of Events that should be collected for this
-                                                     source. If not specified, there is no minimum severity (i.e. all
-                                                     events will be collected).">
-                         <c:property-options>
-                            <c:option name="debug" value="debug"/>
-                            <c:option name="info"  value="info"/>
-                            <c:option name="warn"  value="warn"/>
-                            <c:option name="error" value="error"/>
-                            <c:option name="fatal" value="fatal"/>
-                         </c:property-options>
-                     </c:simple-property>
-                 </c:map-property>
-             </c:list-property>
-         </c:group>
-        </plugin-configuration>
-
-        <!-- Scan for host controller is intentional -->
-        <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
-        <process-scan name="ManagedAS" query="process|basename|match=^java.*,arg|org.jboss.as.server|match=.*"/>
-
-        <operation name="server:start" description="Start this server instance." displayName="Start">
-            <results>
-                <c:simple-property name="operationResult"/>
-            </results>
-        </operation>
-        <operation name="server:stop" description="Stop this server instance." displayName="Stop">
-            <results>
-                <c:simple-property name="operationResult"/>
-            </results>
-        </operation>
-        <operation name="server:restart" description="Restart this server instance." displayName="Restart">
-            <results>
-                <c:simple-property name="operationResult"/>
-            </results>
-        </operation>
-
-        <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
-                displayType="summary"/>
-
-         <event name="logEntry" description="an entry in a log file"/>
 
     </server>
 

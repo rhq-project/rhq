@@ -47,8 +47,9 @@ public class DBInstallationTest {
     private final String USERNAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
     private final String PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
     private final String SERVER = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
-    private final String DB_URL = System.getProperty("rhq.db.installation.test.connection-url",
-            "jdbc:postgresql://" + SERVER + ":5432/" + DB_NAME);
+    private final String PORT = System.getProperty("rhq.test.ds.port", "5432");
+    private final String DB_URL = System.getProperty("rhq.test.ds.connection-url", "jdbc:postgresql://" + SERVER
+        + ":" + PORT + "/" + DB_NAME);
     private final String ADMIN_USERNAME = System.getProperty("rhq.db.admin.username", "postgres");
     private final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
     private static final String DB_TYPE_MAPPING = System.getProperty("rhq.test.ds.type-mapping", "PostgreSQL");

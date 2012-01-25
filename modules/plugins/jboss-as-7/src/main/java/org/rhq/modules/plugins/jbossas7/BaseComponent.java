@@ -168,14 +168,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     continue;
                 }
 
-                String val = (String) res.getResult();
+                Object val = res.getResult();
                 if (val==null) // One of the AS7 ways of telling "This is not implemented" See also AS7-1454
                     continue;
 
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this
                         try {
-                            Double d = Double.parseDouble(val);
+                            Double d = Double.parseDouble((String)val);
                             MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
                             report.addData(data);
                         } catch (NumberFormatException e) {
@@ -183,7 +183,14 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                         }
                     }
                 } else if (req.getDataType()== DataType.TRAIT) {
-                    MeasurementDataTrait data = new MeasurementDataTrait(req,val);
+
+                    String realVal;
+                    if (val instanceof String)
+                        realVal = (String)val;
+                    else
+                        realVal = String.valueOf(val);
+
+                    MeasurementDataTrait data = new MeasurementDataTrait(req,realVal);
                     report.addData(data);
                 }
             }

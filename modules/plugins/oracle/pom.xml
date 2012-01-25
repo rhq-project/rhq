@@ -26,24 +26,11 @@
 
    </dependencies>
 
-   <profiles>
-      <profile>
-          <id>default</id>
-          <activation>
-              <activeByDefault>true</activeByDefault>
-          </activation>
-          <build>
-              <plugins>
-                  <plugin>
-                      <artifactId>maven-surefire-plugin</artifactId>
-                      <configuration>
-                          <skipTests>true</skipTests>
-                      </configuration>
-                  </plugin>
-              </plugins>
-          </build>
-      </profile>
+   <properties>
+      <skipTests>true</skipTests>
+   </properties>
 
+   <profiles>
 
       <profile>
          <id>ojdbc-driver</id>
@@ -53,7 +40,7 @@
             </property>
          </activation>
 
-          <!-- Make sure the Oracle JDBC jar gets included in the plugin jar's lib dir. -->
+         <!-- Make sure the Oracle JDBC jar gets included in the plugin jar's lib dir. -->
 
          <build>
             <plugins>
@@ -166,6 +153,11 @@
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
+
+         <properties>
+            <skipTests>false</skipTests>
+         </properties>
+
          <dependencies>
             <dependency>
                <groupId>com.oracle</groupId>
@@ -181,15 +173,15 @@
                      <systemProperties>
                         <property>
                            <name>oracle.url</name>
-                           <value>${oracle.url}</value>
+                           <value>${rhq.test.ds.connection-url}</value>
                         </property>
                         <property>
-                           <name>oracle.userid</name>
-                           <value>${oracle.userid}</value>
+                           <name>oracle.username</name>
+                           <value>${rhq.test.ds.user-name}</value>
                         </property>
                         <property>
                            <name>oracle.password</name>
-                           <value>${oracle.password}</value>
+                           <value>${rhq.test.ds.password}</value>
                         </property>
                      </systemProperties>
                   <!-- The below is required for tests to run against Oracle.
@@ -209,6 +201,7 @@
          <activation>
             <activeByDefault>false</activeByDefault>
          </activation>
+
          <build>
             <plugins>
                <plugin>

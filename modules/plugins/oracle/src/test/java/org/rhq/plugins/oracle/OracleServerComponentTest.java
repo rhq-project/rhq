@@ -49,7 +49,7 @@ public class OracleServerComponentTest extends ComponentTest {
     protected void setConfiguration(Configuration configuration, ResourceType resourceType) {
         if (resourceType.getName().equals(ORACLE_SERVER)) {
             log.info(configuration.getProperties());
-            Pattern p = Pattern.compile("jdbc:.*:@(.*):(\\d+)/(\\w++)");
+            Pattern p = Pattern.compile("jdbc:.*:@(.*):(\\d+):(\\w++)");
             String url = System.getProperty("oracle.url");
             if (url == null)
                 throw new IllegalStateException("oracle.url system property not set");

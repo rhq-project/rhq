@@ -230,12 +230,13 @@ public class DeployerTest {
         final String file999 = "dir1" + fileSeparator + "file999";
 
         try {
-            if (ignore) {
-                // create a file that will be retained because we will be ignoring it
-                File ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
-                fileToIgnore = new File(ignoreDir, "some-log.log");
-                StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
-            }
+            // this is a file that will be removed because our initial deployment is managing the root deploy dir
+            // later we will recreate it to see that we ignore it during the upgrade.
+            // note that during the initial deployment, we will still back it up.
+            File ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
+            fileToIgnore = new File(ignoreDir, "some-log.log");
+            StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
+            String fileToIgnorePath = ignoreDir.getName() + "/" + fileToIgnore.getName(); // yes, use /, even if we are on windows 
 
             File testZipFile1 = new File("target/test-classes/updater-test1.zip");
             File testZipFile2 = new File("target/test-classes/updater-test2.zip");
@@ -267,15 +268,25 @@ public class DeployerTest {
 
             deployer.deploy(diff);
 
-            if (ignore) {
-                assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
-                assert diff.getIgnoredFiles().size() == 0 : "this was an initial deploy - nothing to ignore (ignore is only for updates)";
-            }
+            // our initial deploy should have deleted this because we are managing the root dir
+            assert !fileToIgnore.exists() : "should have removed this file since we are managing the root dir";
+            assert !fileToIgnore.getParentFile().exists() : "should have removed this file since we are managing the root dir";
+            assert diff.getIgnoredFiles().size() == 0 : "this was an initial deploy - nothing to ignore (ignore is only for updates)";
             assert diff.getAddedFiles().size() == 6 : diff;
-            assert diff.getDeletedFiles().size() == 0 : diff;
+            assert diff.getDeletedFiles().size() == 1 : diff;
+            assert diff.getDeletedFiles().contains(fileToIgnorePath) : "should have deleted this unknown file" + diff;
             assert diff.getChangedFiles().size() == 0 : diff;
             assert diff.getRealizedFiles().size() == 0 : "No fileA to realize in this deployment: " + diff;
-            assert diff.getBackedUpFiles().size() == 0 : "No fileA to realize in this deployment: " + diff;
+            assert diff.getBackedUpFiles().size() == 1 : diff;
+            assert diff.getBackedUpFiles().get(fileToIgnorePath) != null : "should have backed up this file" + diff;
+
+            if (ignore) {
+                // let's create this again to make sure we really do ignore it
+                ignoreDir = FileUtil.createTempDirectory("ignoreme", ".dir", tmpDir);
+                fileToIgnore = new File(ignoreDir, "some-log.log");
+                StreamUtil.copy(new ByteArrayInputStream("boo".getBytes()), new FileOutputStream(fileToIgnore));
+                fileToIgnorePath = ignoreDir.getName() + "/" + fileToIgnore.getName(); // yes, use /, even if we are on windows 
+            }
 
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(new File(tmpDir, file1)));
             StreamUtil.copy(new ByteArrayInputStream("X".getBytes()), new FileOutputStream(updaterAabsolute));
@@ -295,7 +306,7 @@ public class DeployerTest {
                 templateEngine, ignoreRegex, true, null);
             deployer = new Deployer(dd);
             diff = new DeployDifferences();
-            deployer.deploy(diff);
+            deployer.deploy(diff); // this is an upgrade
 
             if (ignore) {
                 assert "boo".equals(new String(StreamUtil.slurp(new FileInputStream(fileToIgnore))));
@@ -396,11 +407,11 @@ public class DeployerTest {
             assert diff.getChangedFiles().contains(fileB) : diff;
             assert diff.getBackedUpFiles().size() == 4 : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterAabsolute.getAbsolutePath())) : diff;
-            assert diff.getBackedUpFiles().get(diff.convertPath(updaterAabsolute.getAbsolutePath())).equals(
-                diff.convertPath(updaterAabsoluteBackupTo2)) : diff;
+            assert diff.getBackedUpFiles().get(diff.convertPath(updaterAabsolute.getAbsolutePath()))
+                .equals(diff.convertPath(updaterAabsoluteBackupTo2)) : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
-            assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
-                diff.convertPath(updaterBabsoluteBackupTo2)) : diff;
+            assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath()))
+                .equals(diff.convertPath(updaterBabsoluteBackupTo2)) : diff;
             assert diff.getBackedUpFiles().containsKey(fileB) : diff;
             assert diff.getBackedUpFiles().get(fileB).equals(diff.convertPath(fileBbackupTo2.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().containsKey(file999) : diff;
@@ -442,8 +453,8 @@ public class DeployerTest {
             assert diff.getChangedFiles().contains(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
             assert diff.getBackedUpFiles().size() == 1 : diff;
             assert diff.getBackedUpFiles().containsKey(diff.convertPath(updaterBabsolute.getAbsolutePath())) : diff;
-            assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath())).equals(
-                diff.convertPath(updaterBabsoluteBackupTo3)) : diff;
+            assert diff.getBackedUpFiles().get(diff.convertPath(updaterBabsolute.getAbsolutePath()))
+                .equals(diff.convertPath(updaterBabsoluteBackupTo3)) : diff;
             if (realize) {
                 assert diff.getRealizedFiles().size() == 1 : diff;
                 assert diff.getRealizedFiles().containsKey(fileA) : diff;

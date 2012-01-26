@@ -27,6 +27,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.Properties;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -65,6 +66,12 @@ public class DBInstallationTest {
 
         installer = new ServerInformation();
         installer.setLogDirectory(new File(LOG_DIRECTORY));
+    }
+
+    @AfterMethod
+    public void afterInstallation() throws Exception {
+        recreateTestDatabase();
+        installer.createNewDatabaseSchema(getInstallProperties());
     }
 
     @Test

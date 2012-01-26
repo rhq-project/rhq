@@ -66,8 +66,15 @@ public class ASUploadConnection {
     public ASUploadConnection(String dcHost, int port, String user, String password) {
         this.host = dcHost;
         this.port = port;
-        passwordAuthenticator = new AS7Authenticator(user,password);
-        Authenticator.setDefault(passwordAuthenticator);
+        if (user!=null) {
+            passwordAuthenticator = new AS7Authenticator(user,password);
+            Authenticator.setDefault(passwordAuthenticator);
+        }
+    }
+
+    public ASUploadConnection(ASConnection asConnection) {
+        this.host=asConnection.getHost();
+        this.port=asConnection.getPort();
     }
 
     public OutputStream getOutputStream(String fileName) {

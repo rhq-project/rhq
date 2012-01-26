@@ -51,6 +51,8 @@ public class ASConnection {
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
     Authenticator passwordAuthenticator ;
+    private String host;
+    private int port;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -61,6 +63,8 @@ public class ASConnection {
      * @param password password needed for authentication
      */
     public ASConnection(String host, int port, String user, String password) {
+        this.host = host;
+        this.port = port;
 
         try {
             url = new URL("http", host, port, MANAGEMENT);
@@ -258,5 +262,11 @@ public class ASConnection {
         }
     }
 
+    public String getHost() {
+        return host;
+    }
 
+    public int getPort() {
+        return port;
+    }
 }

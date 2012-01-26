@@ -70,7 +70,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
+public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet,
+        DeleteResourceFacet,
         CreateChildResourceFacet, OperationFacet
 {
     private static final String INTERNAL = "_internal:";
@@ -341,13 +342,18 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         if (fileName.startsWith("C:\\fakepath\\")) {   // TODO this is a hack as the server adds the fake path somehow
             fileName=fileName.substring("C:\\fakepath\\".length());
         }
-
-        String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
+        String runtimeName = fileName;
+        PropertySimple rtNameProp = report.getPackageDetails().getDeploymentTimeConfiguration().getSimple("runtimeName");
+        if (rtNameProp != null) {
+            String rtn = rtNameProp.getStringValue();
+            if (rtn!=null && !rtn.isEmpty())
+                runtimeName = rtn;
+        }
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
-        return runDeploymentMagicOnServer(report, fileName, tmpName, hash);
+        return runDeploymentMagicOnServer(report, runtimeName, fileName, hash);
     }
 
     /**
@@ -367,7 +373,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 
         ASConnection connection = getASConnection();
 
-        Operation step1 = new Operation("add","deployment",deploymentName);
+        Operation step1 = new Operation("add","deployment",runtimeName);
 //        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -429,6 +435,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             report.setStatus(CreateResourceStatus.SUCCESS);
             report.setResourceName(runtimeName);
             report.setResourceKey(resourceKey);
+            report.getPackageDetails().setSHA256(hash);
+            report.getPackageDetails().setInstallationTimestamp(System.currentTimeMillis());
             log.info(" ... with success and key [" + resourceKey + "]" );
         }
 

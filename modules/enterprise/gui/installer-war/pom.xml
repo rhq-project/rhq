@@ -145,13 +145,14 @@
           <systemPropertyVariables>
             <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
             <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
-            <rhq.test.ds.port>${rhq.test.ds.port}</rhq.test.ds.port>
-            <rhq.db.installation.test.db-name>${rhq.db.installation.test.db-name}</rhq.db.installation.test.db-name>
+            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
             <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
             <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
             <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
             <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
             <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+            <rhq.db.installation.test.db-name>${rhq.db.installation.test.db-name}</rhq.db.installation.test.db-name>
+            <rhq.db.installation.test.connection-url>jdbc:postgresql://${rhq.test.ds.server-name}:5432/${rhq.db.installation.test.db-name}</rhq.db.installation.test.connection-url>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -340,8 +341,8 @@
          <id>oracle</id>
          <activation>
            <property>
-             <name>rhq.test.ds.type-mapping</name>             
-             <value>Oracle10g</value>
+             <name>rhq.test.db.type</name>
+             <value>oracle</value>
            </property>
          </activation>
          <build>

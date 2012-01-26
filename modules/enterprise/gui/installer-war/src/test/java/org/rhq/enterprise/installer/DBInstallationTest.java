@@ -23,14 +23,17 @@
 
 package org.rhq.enterprise.installer;
 
-import org.rhq.core.db.reset.DBReset;
-import org.rhq.core.db.setup.DBSetup;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import java.io.File;
 import java.net.URL;
 import java.util.Properties;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import org.rhq.core.db.reset.DBReset;
+import org.rhq.core.db.setup.DBSetup;
+import org.rhq.enterprise.installer.ServerInformation;
+import org.rhq.enterprise.installer.ServerProperties;
 
 /**
  * The tests in this class exercise the dbsetup/dbupgrade code that is run in the installer. The tests currently only
@@ -43,12 +46,12 @@ import java.util.Properties;
 public class DBInstallationTest {
 
     private final String LOG_DIRECTORY = System.getProperty("java.io.tmpdir", "rhq/installer-test");
-    private final String DB_NAME = System.getProperty("rhq.db.installation.test.db-name", "rhq_installer_test_db");
+    private final String DB_NAME = System.getProperty("rhq.test.ds.db-name", "rhq_installer_test_db");
     private final String USERNAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
     private final String PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
     private final String SERVER = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
-    private final String DB_URL = System.getProperty("rhq.db.installation.test.connection-url",
-            "jdbc:postgresql://" + SERVER + ":5432/" + DB_NAME);
+    private final String DB_URL = System.getProperty("rhq.test.ds.connection-url", "jdbc:postgresql://" + SERVER
+        + ":5432/" + DB_NAME);
     private final String ADMIN_USERNAME = System.getProperty("rhq.db.admin.username", "postgres");
     private final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
     private static final String DB_TYPE_MAPPING = System.getProperty("rhq.test.ds.type-mapping", "PostgreSQL");

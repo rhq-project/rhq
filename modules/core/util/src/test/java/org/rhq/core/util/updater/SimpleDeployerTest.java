@@ -205,7 +205,15 @@ public class SimpleDeployerTest {
         baseNoNewWithCurrentDifferentThanOriginal(true);
     }
 
-    public void testWithSubdirectories() throws Exception {
+    public void testWithSubdirectoriesManageRootDir() throws Exception {
+        testWithSubdirectories(true);
+    }
+
+    public void testWithSubdirectoriesNoManageRootDir() throws Exception {
+        testWithSubdirectories(false);
+    }
+
+    private void testWithSubdirectories(boolean manageRootDir) throws Exception {
         // this test is different than all the rest, start with clean tmp/dest dirs with no beforeMethod buildup
         FileUtil.purge(this.tmpDir, false);
         FileUtil.purge(this.deployDir, false);
@@ -227,14 +235,40 @@ public class SimpleDeployerTest {
         this.originalZipFiles.add(originalZipFile);
         this.originalDeployProps = new DeploymentProperties(1, "simple", "1.0", "original test deployment");
         DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, tmpDir, deployDir, null,
-            null, null, null, true, null);
+            null, null, null, manageRootDir, null);
+        this.diff = new DeployDifferences();
         Deployer deployer = new Deployer(dd);
-        this.originalFileHashcodeMap = deployer.deploy(null);
+        this.originalFileHashcodeMap = deployer.deploy(this.diff);
         assert new File(this.deployDir, origFileName1).exists();
         assert new File(this.deployDir, origFileName2).exists();
-        assert unrelated1.exists() : "the deployment removed unrelated file1";
-        assert unrelated2.getParentFile().isDirectory() : "the deployment removed an unrelated dir";
-        assert unrelated2.exists() : "the deployment removed unrelated file2";
+        if (manageRootDir) {
+            assert !unrelated1.exists() : "the deployment should have removed unrelated file1";
+            assert !unrelated2.getParentFile().isDirectory() : "the deployment should have removed an unrelated dir";
+            assert !unrelated2.exists() : "the deployment should have removed unrelated file2";
+
+            assert this.diff.getBackedUpFiles().size() == 2 : this.diff;
+            assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName1)).exists() : this.diff;
+            assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName2)).exists() : this.diff;
+            assert this.diff.getDeletedFiles().size() == 2 : this.diff;
+            assert this.diff.getDeletedFiles().contains(unrelatedFileName1) : this.diff;
+            assert this.diff.getDeletedFiles().contains(unrelatedFileName2) : this.diff;
+        } else {
+            assert this.diff.getBackedUpFiles().size() == 0 : this.diff;
+            assert this.diff.getDeletedFiles().size() == 0 : this.diff;
+            assert unrelated1.exists() : "the deployment removed unrelated file1";
+            assert unrelated2.getParentFile().isDirectory() : "the deployment removed an unrelated dir";
+            assert unrelated2.exists() : "the deployment removed unrelated file2";
+        }
+
+        assert this.diff.getAddedFiles().size() == 2 : this.diff;
+        assert this.diff.getAddedFiles().contains(origFileName1) : this.diff;
+        assert this.diff.getAddedFiles().contains(origFileName2) : this.diff;
+        assert this.diff.getChangedFiles().isEmpty() : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert !this.diff.wasCleaned() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
 
         // deploy new content
         this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment");
@@ -246,19 +280,36 @@ public class SimpleDeployerTest {
             new String[] { newFileName1, newFileName2 });
         HashSet<File> newZipFiles = new HashSet<File>(1);
         newZipFiles.add(newZipFile);
-        dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null, null, true,
-            null);
+        dd = new DeploymentData(newDeployProps, newZipFiles, null, tmpDir, deployDir, null, null, null, null,
+            manageRootDir, null);
         deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap = deployer.deploy(this.diff);
+        assert newFileHashcodeMap != null;
         assert new File(this.deployDir, newFileName1).exists();
         assert new File(this.deployDir, newFileName2).exists();
         assert !new File(this.deployDir, origFileName1).exists();
         assert !new File(this.deployDir, origFileName2).exists();
-        assert !unrelated1.exists() : "the deployment did not remove unrelated file1";
-        assert !unrelated2.exists() : "the deployment did not remove unrelated file1";
-        assert this.diff.getBackedUpFiles().size() == 2 : this.diff;
-        assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName1)).exists() : this.diff;
-        assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName2)).exists() : this.diff;
+        if (manageRootDir) {
+            assert !unrelated1.exists() : "the deployment did not remove unrelated file1";
+            assert !unrelated2.exists() : "the deployment did not remove unrelated file1";
+        } else {
+            assert unrelated1.exists() : "the deployment removed unrelated file1 but we aren't managing the root dir";
+            assert unrelated2.exists() : "the deployment removed unrelated file1 but we aren't managing the root dir";
+        }
+
+        assert this.diff.getAddedFiles().size() == 2 : this.diff;
+        assert this.diff.getAddedFiles().contains(newFileName1) : this.diff;
+        assert this.diff.getAddedFiles().contains(newFileName2) : this.diff;
+        assert this.diff.getDeletedFiles().size() == 2 : this.diff;
+        assert this.diff.getDeletedFiles().contains(origFileName1) : this.diff;
+        assert this.diff.getDeletedFiles().contains(origFileName2) : this.diff;
+        assert this.diff.getChangedFiles().isEmpty() : this.diff;
+        assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getRestoredFiles().isEmpty() : this.diff;
+        assert !this.diff.wasCleaned() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
     }
 
     private void baseX_X_X(boolean dryRun) throws Exception {

@@ -103,6 +103,7 @@ public class LoginView extends LocatableCanvas {
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "ldap.sessionid";
     static final String PASSWORD = "ldap.password";
+    private ProductInfo productInfo;
 
     public void showLoginDialog(String message) {
         showLoginDialog();
@@ -206,195 +207,232 @@ public class LoginView extends LocatableCanvas {
         if (!loginShowing) {
             loginShowing = true;
 
-            ProductInfo productInfo = CoreGUI.get().getProductInfo();
+            //BZ:784873. To fix issue with users logging in by LDAP integration with clean browser cache.
+            if (CoreGUI.get().getProductInfo() == null) {
+                //We need to explicitly retrieve product info here as can't count on CoreGui to load it
+                //during LDAP registration. After registration CoreGui is loaded as usual.
+                GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
+                        productInfo = null;
+                        Log.trace("ProductInfo could not be retrieved for some reason. Proceeding anyway.");
+                        buildRegistrationWindow(user, sessionId, password, callback);
+                    }
 
-            int fieldWidth = 120;
+                    public void onSuccess(ProductInfo result) {
+                        productInfo = result;
+                        Log.trace("ProductInfo has been retrieved for LDAP registration.");
+                        buildRegistrationWindow(user, sessionId, password, callback);
+                    }
+                });
+            } else {//if productInfo has already been loaded, save a gwt call.
+                productInfo = CoreGUI.get().getProductInfo();
+                buildRegistrationWindow(user, sessionId, password, callback);
+            }
+        }
+    }
 
-            LocatableVLayout column = new LocatableVLayout(extendLocatorId("NewLdapRegistration"));
-            column.setMargin(25);
-            HeaderItem header = new HeaderItem();
+    /** Duplicate modal Login mechanism to now show last registration screen before launching 
+     *  core gui.
+     * 
+     * @param user prepopulate username field for LDAP registration
+     * @param sessionId pass in valid session id for LDAP registration steps.
+     * @param callback pass in callback reference to indicate success and launch of coreGUI
+     */
+    private void buildRegistrationWindow(final String user, final String sessionId, final String password,
+        final AsyncCallback<Subject> callback) {
+        int fieldWidth = 120;
+
+        //Build registration window.
+        LocatableVLayout column = new LocatableVLayout(extendLocatorId("NewLdapRegistration"));
+        column.setMargin(25);
+        HeaderItem header = new HeaderItem();
+        //Locate product info for registration screen.
+        if (productInfo != null) {
             header.setValue(MSG.view_login_welcomeMsg(productInfo.getName()));
-            header.setWidth("100%");
-            //build ui elements for registration screen
-            first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
-            {
-                first.setRequired(true);
-                first.setWrapTitle(false);
-                first.setWidth(fieldWidth);
-            }
-            last = new TextItem(LAST, MSG.dataSource_users_field_lastName());
-            {
-                last.setWrapTitle(false);
-                last.setWidth(fieldWidth);
-                last.setRequired(true);
-            }
-            final TextItem username = new TextItem(USERNAME, MSG.dataSource_users_field_name());
-            {
-                username.setValue(user);
-                username.setDisabled(true);
-                username.setWidth(fieldWidth);
-            }
-            email = new TextItem(EMAIL, MSG.dataSource_users_field_emailAddress());
-            email.setRequired(true);
-            email.setWidth(fieldWidth);
-            email.setWrapTitle(false);
-            phone = new TextItem(PHONE, MSG.dataSource_users_field_phoneNumber());
-            phone.setWidth(fieldWidth);
-            phone.setWrapTitle(false);
-            department = new TextItem(DEPARTMENT, MSG.dataSource_users_field_department());
-            department.setWidth(fieldWidth);
-            SpacerItem space = new SpacerItem();
-            space.setColSpan(1);
+        } else {//if not available, let registration continue. Errors already logged and no functionality lost.
+            header.setValue(MSG.view_login_welcomeMsg(""));
+        }
+        header.setWidth("100%");
+        //build ui elements for registration screen
+        first = new TextItem(FIRST, MSG.dataSource_users_field_firstName());
+        {
+            first.setRequired(true);
+            first.setWrapTitle(false);
+            first.setWidth(fieldWidth);
+        }
+        last = new TextItem(LAST, MSG.dataSource_users_field_lastName());
+        {
+            last.setWrapTitle(false);
+            last.setWidth(fieldWidth);
+            last.setRequired(true);
+        }
+        final TextItem username = new TextItem(USERNAME, MSG.dataSource_users_field_name());
+        {
+            username.setValue(user);
+            username.setDisabled(true);
+            username.setWidth(fieldWidth);
+        }
+        email = new TextItem(EMAIL, MSG.dataSource_users_field_emailAddress());
+        email.setRequired(true);
+        email.setWidth(fieldWidth);
+        email.setWrapTitle(false);
+        phone = new TextItem(PHONE, MSG.dataSource_users_field_phoneNumber());
+        phone.setWidth(fieldWidth);
+        phone.setWrapTitle(false);
+        department = new TextItem(DEPARTMENT, MSG.dataSource_users_field_department());
+        department.setWidth(fieldWidth);
+        SpacerItem space = new SpacerItem();
+        space.setColSpan(1);
 
-            inputForm = new LocatableDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
-            inputForm.setAutoFocus(true);
-            inputForm.setErrorOrientation(FormErrorOrientation.LEFT);
-            inputForm.setNumCols(4);
-            //moving header to it's own container for proper display. Didn't display right in production mode
-            inputForm.setFields(username, first, last, email, phone, department);
-            loadValidators(inputForm);
-            inputForm.setValidateOnExit(true);
-            DynamicForm headerWrapper = new DynamicForm();
-            headerWrapper.setFields(header);
-            column.addMember(headerWrapper);
-            column.addMember(inputForm);
+        inputForm = new LocatableDynamicForm(extendLocatorId("LdapUserRegistrationInput"));
+        inputForm.setAutoFocus(true);
+        inputForm.setErrorOrientation(FormErrorOrientation.LEFT);
+        inputForm.setNumCols(4);
+        //moving header to it's own container for proper display. Didn't display right in production mode
+        inputForm.setFields(username, first, last, email, phone, department);
+        loadValidators(inputForm);
+        inputForm.setValidateOnExit(true);
+        DynamicForm headerWrapper = new DynamicForm();
+        headerWrapper.setFields(header);
+        column.addMember(headerWrapper);
+        column.addMember(inputForm);
 
-            HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
-            hr.setWidth(620);
-            hr.setAlign(Alignment.CENTER);
-            column.addMember(hr);
+        HTMLFlow hr = new HTMLFlow("<br/><hr/><br/><br/>");
+        hr.setWidth(620);
+        hr.setAlign(Alignment.CENTER);
+        column.addMember(hr);
 
-            HStack row = new HStack();
-            row.setMembersMargin(5);
-            row.setAlign(VerticalAlignment.CENTER);
-            IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
-            okButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent event) {
+        HStack row = new HStack();
+        row.setMembersMargin(5);
+        row.setAlign(VerticalAlignment.CENTER);
+        IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
+        okButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
 
-                    //F5 refresh check? If they've reloaded the form for some reason then bail.
-                    boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
-                        .trim().isEmpty()));
-                    //check for session timeout
-                    if (UserSessionManager.isLoggedOut() || (credentialsEmpty)) {
-                        resetLogin(LoginView.this.extendLocatorId("Register"));
-                        return;
-                    }
-
-                    //validation
-                    if (inputForm.validate()) {
-                        Log.trace("Successfully validated all data for user registration.");
-                        //populate form
-                        if (first.getValue() != null)
-                            inputForm.setValue(FIRST, String.valueOf(first.getValue()));
-                        if (last.getValue() != null)
-                            inputForm.setValue(LAST, String.valueOf(last.getValue()));
-                        inputForm.setValue(USERNAME, String.valueOf(username.getValue()));
-                        if (email.getValue() != null)
-                            inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
-                        if (phone.getValue() != null)
-                            inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
-                        if (department.getValue() != null)
-                            inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
-                        inputForm.setValue(SESSIONID, sessionId);
-                        inputForm.setValue(PASSWORD, password);
-                        registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);
-                    }
+                //F5 refresh check? If they've reloaded the form for some reason then bail.
+                boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
+                    .trim().isEmpty()));
+                //check for session timeout
+                if (UserSessionManager.isLoggedOut() || (credentialsEmpty)) {
+                    resetLogin(LoginView.this.extendLocatorId("Register"));
+                    return;
                 }
 
-            });
-            row.addMember(okButton);
-            //send request to LDAP server to grab user details for this user. Already sure ldap user exists
-            GWTServiceLookup.getLdapService().getLdapDetailsFor(user, new AsyncCallback<Map<String, String>>() {
-                public void onSuccess(final Map<String, String> ldapUserDetails) {
-                    //now prepopulate UI fields if they exist
-                    for (String key : ldapUserDetails.keySet()) {
-                        String value;
-                        if (key.equalsIgnoreCase("givenName")) {//aka first name
-                            value = ldapUserDetails.get(key);
-                            first.setValue(value);
-                        } else if (key.equalsIgnoreCase("sn")) {//aka Surname
-                            value = ldapUserDetails.get(key);
-                            if ((value != null) && (!value.isEmpty())) {
-                                last.setValue(value);
-                            }
-                        } else if (key.equalsIgnoreCase("telephoneNumber")) {
-                            value = ldapUserDetails.get(key);
-                            if ((value != null) && (!value.isEmpty())) {
-                                phone.setValue(value);
-                            }
-                        } else if (key.equalsIgnoreCase("mail")) {
-                            value = ldapUserDetails.get(key);
-                            if ((value != null) && (!value.isEmpty())) {
-                                email.setValue(value);
-                            }
+                //validation
+                if (inputForm.validate()) {
+                    Log.trace("Successfully validated all data for user registration.");
+                    //populate form
+                    if (first.getValue() != null)
+                        inputForm.setValue(FIRST, String.valueOf(first.getValue()));
+                    if (last.getValue() != null)
+                        inputForm.setValue(LAST, String.valueOf(last.getValue()));
+                    inputForm.setValue(USERNAME, String.valueOf(username.getValue()));
+                    if (email.getValue() != null)
+                        inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
+                    if (phone.getValue() != null)
+                        inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
+                    if (department.getValue() != null)
+                        inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
+                    inputForm.setValue(SESSIONID, sessionId);
+                    inputForm.setValue(PASSWORD, password);
+                    registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);
+                }
+            }
+
+        });
+        row.addMember(okButton);
+        //send request to LDAP server to grab user details for this user. Already sure ldap user exists
+        GWTServiceLookup.getLdapService().getLdapDetailsFor(user, new AsyncCallback<Map<String, String>>() {
+            public void onSuccess(final Map<String, String> ldapUserDetails) {
+                //now prepopulate UI fields if they exist
+                for (String key : ldapUserDetails.keySet()) {
+                    String value;
+                    if (key.equalsIgnoreCase("givenName")) {//aka first name
+                        value = ldapUserDetails.get(key);
+                        first.setValue(value);
+                    } else if (key.equalsIgnoreCase("sn")) {//aka Surname
+                        value = ldapUserDetails.get(key);
+                        if ((value != null) && (!value.isEmpty())) {
+                            last.setValue(value);
+                        }
+                    } else if (key.equalsIgnoreCase("telephoneNumber")) {
+                        value = ldapUserDetails.get(key);
+                        if ((value != null) && (!value.isEmpty())) {
+                            phone.setValue(value);
+                        }
+                    } else if (key.equalsIgnoreCase("mail")) {
+                        value = ldapUserDetails.get(key);
+                        if ((value != null) && (!value.isEmpty())) {
+                            email.setValue(value);
                         }
                     }
                 }
+            }
 
-                public void onFailure(Throwable caught) {
-                    inputForm.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
-                    Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
-                }
-            });
+            public void onFailure(Throwable caught) {
+                inputForm.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
+                Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
+            }
+        });
 
-            IButton resetButton = new LocatableIButton(inputForm.extendLocatorId("Reset"), MSG.common_button_reset());
-            resetButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent event) {
-                    //F5 refresh check? If they've reloaded the form for some reason then bail.
-                    boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
-                        .trim().isEmpty()));
-                    if (UserSessionManager.isLoggedOut() || credentialsEmpty) {
-                        resetLogin(LoginView.this.extendLocatorId("Reset"));
-                        return;
-                    }
-
-                    //clear out all validation messages.
-                    {
-                        String empty = "                  ";
-                        first.setValue(empty);
-                        last.setValue(empty);
-                        email.setValue("test@test.com");
-                        inputForm.validate();
-                    }
-                    first.clearValue();
-                    last.clearValue();
-                    email.clearValue();
-                    phone.clearValue();
-                    department.clearValue();
-                }
-            });
-            row.addMember(resetButton);
-
-            IButton cancelButton = new LocatableIButton(inputForm.extendLocatorId("Cancel"), MSG.common_button_cancel());
-            cancelButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent event) {
-                    UserSessionManager.logout();
+        IButton resetButton = new LocatableIButton(inputForm.extendLocatorId("Reset"), MSG.common_button_reset());
+        resetButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                //F5 refresh check? If they've reloaded the form for some reason then bail.
+                boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
+                    .trim().isEmpty()));
+                if (UserSessionManager.isLoggedOut() || credentialsEmpty) {
                     resetLogin(LoginView.this.extendLocatorId("Reset"));
+                    return;
                 }
-            });
-            row.addMember(cancelButton);
-            Label logoutLabel = new Label(MSG.view_login_registerLater());
-            logoutLabel.setWrap(false);
-            row.addMember(logoutLabel);
-            column.addMember(row);
 
-            window = new LocatableWindow(extendLocatorId("RegistrationWindow"));
-            window.setWidth(670);
-            window.setHeight(330);
-            window.setTitle(MSG.view_login_registerUser());
+                //clear out all validation messages.
+                {
+                    String empty = "                  ";
+                    first.setValue(empty);
+                    last.setValue(empty);
+                    email.setValue("test@test.com");
+                    inputForm.validate();
+                }
+                first.clearValue();
+                last.clearValue();
+                email.clearValue();
+                phone.clearValue();
+                department.clearValue();
+            }
+        });
+        row.addMember(resetButton);
 
-            // forced focused, static size, can't close / dismiss
-            window.setIsModal(true);
-            window.setShowModalMask(true);
-            window.setCanDragResize(false);
-            window.setCanDragReposition(false);
-            window.setShowCloseButton(false);
-            window.setShowMinimizeButton(false);
-            window.setAutoCenter(true);
+        IButton cancelButton = new LocatableIButton(inputForm.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        cancelButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                UserSessionManager.logout();
+                resetLogin(LoginView.this.extendLocatorId("Reset"));
+            }
+        });
+        row.addMember(cancelButton);
+        Label logoutLabel = new Label(MSG.view_login_registerLater());
+        logoutLabel.setWrap(false);
+        row.addMember(logoutLabel);
+        column.addMember(row);
 
-            window.addItem(column);
-            window.show();
-        }
+        window = new LocatableWindow(extendLocatorId("RegistrationWindow"));
+        window.setWidth(670);
+        window.setHeight(330);
+        window.setTitle(MSG.view_login_registerUser());
+
+        // forced focused, static size, can't close / dismiss
+        window.setIsModal(true);
+        window.setShowModalMask(true);
+        window.setCanDragResize(false);
+        window.setCanDragReposition(false);
+        window.setShowCloseButton(false);
+        window.setShowMinimizeButton(false);
+        window.setAutoCenter(true);
+
+        window.addItem(column);
+        window.show();
     }
 
     /** Go through steps of invalidating this login and piping them back to CoreGUI Login.

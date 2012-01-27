@@ -422,9 +422,11 @@ public class Deployer {
                 // that a file is different from the deployment distribution.
                 // If the new is different from the original and if the new is different than the current, we need to backup the
                 // current because we will be overwriting the current file with the new.
+                // Note that if we were told to "clean", we never leave files alone (since everything must be cleaned) but
+                // we will backup the touched file that is being removed
                 String changedFileHashcode = changed.getValue();
                 String originalFileHashcode = original.get(changedFilePath);
-                if (newHashcode.equals(originalFileHashcode)) {
+                if (newHashcode.equals(originalFileHashcode) && !clean) {
                     currentFilesToLeaveAlone.put(changedFilePath, originalFileHashcode);
                 } else if (!newHashcode.equals(changedFileHashcode)) {
                     currentFilesToBackup.add(changedFilePath);

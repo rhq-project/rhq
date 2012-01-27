@@ -15,6 +15,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
@@ -89,11 +90,13 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
                                                  ContentServices contentServices) {
 
+        log.info("Starting deployment..");
         DeployPackagesResponse response = new DeployPackagesResponse();
 
         if (packages.size()!=1) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
             response.setOverallRequestErrorMessage("Can only deploy one package at a time");
+            log.warn("deployPackages can only deploy one package at a time");
         }
 
         ResourcePackageDetails detail = packages.iterator().next();
@@ -102,7 +105,7 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
         OutputStream out = uploadConnection.getOutputStream(detail.getFileName());
         ResourceType resourceType = context.getResourceType();
 
-        log.info("trying " + resourceType.getName() + ", " + detail.getKey() );
+        log.info("trying deployment of" + resourceType.getName() + ", key=" + detail.getKey() );
 
         contentServices.downloadPackageBits(context.getContentContext(),
                 detail.getKey(), out, true);
@@ -128,11 +131,15 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
         try {
             redeployOnServer(detail.getKey().getName(), hash);
             response.setOverallRequestResult(ContentResponseResult.SUCCESS);
+            DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(detail.getKey(), ContentResponseResult.SUCCESS);
+                    response.addPackageResponse(packageResponse);
+
         }
         catch (Exception e) {
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
         }
 
+        log.info(".. result is " + response);
 
         return response;
     }
@@ -172,8 +179,9 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
         Map<String,Object> deployments = cres.getResult();
         for (String key : deployments.keySet()) {
             Map<String,Object> deployment = (Map<String, Object>) deployments.get(key);
+            log.info("Discover package [" + key + "] for type [" + type + "]");
 
-            List<Map> contentList = (List<Map>) deployment.get("content");
+            List<Map> contentList = (List<Map>) deployment.get("content"); // deployments on SG or ManagedServer level have no hash
             Map<String,Map> hashMap = contentList.get(0);
             Map<String,String> bvMap = hashMap.get("hash");
             String content = bvMap.get("BYTES_VALUE");

@@ -284,7 +284,9 @@
             <operation name="server:add" displayName="Create server" description="Add a new server to this host.">
                 <parameters>
                     <c:simple-property name="name" description="Name of this new server" required="true"/>
-                    <c:simple-property name="group" displayName="Server Group" description="Server group to put this sever in" default="" required="false"/>
+                    <c:simple-property name="group" displayName="Server Group" description="Server group to put this sever in" default="" required="true">
+                        <c:option-source target="resource" expression="type=ServerGroup"/>
+                    </c:simple-property>
                     <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="true"/>
                 </parameters>
                 <results>
@@ -293,7 +295,7 @@
             </operation>
             <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
                 <parameters>
-                    <c:simple-property name="name" description="Name of this new server" required="true"/>
+                    <c:simple-property name="name" description="Name of the server to be removed" required="true"/>
                 </parameters>
                 <results>
                     <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
@@ -366,7 +368,7 @@
         </server>
 
         <service name="DomainDeployment"
-                 class="BaseComponent"
+                 class="DomainDeploymentComponent"
                  discovery="SubsystemDiscovery"
                  createDeletePolicy="both"
                  creationDataType="content">
@@ -2125,11 +2127,10 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              createDeletePolicy="both"
              creationDataType="content">
 
-
         <runs-inside>
-            <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/>
+            <parent-resource-type name="ServerGroup" plugin="jboss-as-7"/> <!-- TODO -->
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
-            <parent-resource-type name="Managed Server" plugin="jboss-as-7"/>
+            <parent-resource-type name="Managed Server" plugin="jboss-as-7"/> <!-- TODO -->
         </runs-inside>
         <plugin-configuration>
             <c:simple-property name="path" default="deployment" readOnly="true"/>

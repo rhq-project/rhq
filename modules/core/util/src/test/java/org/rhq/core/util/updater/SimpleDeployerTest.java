@@ -145,6 +145,14 @@ public class SimpleDeployerTest {
         baseNoOriginalWithCurrentWithNew(false);
     }
 
+    public void testNoOriginalWithCurrentNoNew() throws Exception {
+        baseNoOriginalWithCurrentNoNew(false, false);
+    }
+
+    public void testNoOriginalWithCurrentNoNew_Clean() throws Exception {
+        baseNoOriginalWithCurrentNoNew(false, true);
+    }
+
     public void testNoCurrent() throws Exception {
         baseNoCurrent(false);
     }
@@ -191,6 +199,14 @@ public class SimpleDeployerTest {
 
     public void testNoOriginalWithCurrentWithNew_DryRun() throws Exception {
         baseNoOriginalWithCurrentWithNew(true);
+    }
+
+    public void testNoOriginalWithCurrentNoNew_DryRun() throws Exception {
+        baseNoOriginalWithCurrentNoNew(true, false);
+    }
+
+    public void testNoOriginalWithCurrentNoNew_DryRun_Clean() throws Exception {
+        baseNoOriginalWithCurrentNoNew(true, true);
     }
 
     public void testNoCurrent_DryRun() throws Exception {
@@ -676,6 +692,54 @@ public class SimpleDeployerTest {
 
         // verify the backup copy
         File backupFile = new File(this.diff.getBackedUpFiles().get(newFileName));
+        if (dryRun) {
+            assert !backupFile.exists() : "dry run should not create backup";
+        } else {
+            assert readFile(backupFile).equals(inTheWayContent) : "did not backup the correct file?";
+        }
+    }
+
+    /**
+     * This tests when there was no file in the bundle but some unknown file was added to the
+     * destination directory. When redeploying the same bundle, there is no original file,
+     * there is no new file, but there is a current file (which is unknown to the bundle).
+     * It should be removed and backed up.
+     */
+    private void baseNoOriginalWithCurrentNoNew(boolean dryRun, boolean clean) throws Exception {
+        String inTheWayFileName = "unknown.txt";
+        File inTheWayFile = new File(this.deployDir, inTheWayFileName);
+        String inTheWayContent = "this is a new file but shouldn't be here - its not part of the bundle";
+        writeFile(inTheWayContent, inTheWayFile);
+
+        DeploymentData dd = new DeploymentData(originalDeployProps, originalZipFiles, null, tmpDir, deployDir, null,
+            null, null, null, true, null);
+        Deployer deployer = new Deployer(dd);
+        FileHashcodeMap newFileHashcodeMap;
+        newFileHashcodeMap = deployer.deploy(this.diff, clean, dryRun);
+
+        assert newFileHashcodeMap.equals(this.originalFileHashcodeMap);
+        assert newFileHashcodeMap.size() == 1;
+        assert newFileHashcodeMap.get(originalFileName).equals(originalHashcode);
+        String[] contentHash = getOriginalFilenameContentHashcode();
+        assert contentHash[0].equals(originalContent);
+        assert contentHash[1].equals(originalHashcode);
+
+        assert this.diff.getAddedFiles().isEmpty() : this.diff;
+        assert this.diff.getDeletedFiles().size() == 1 : this.diff;
+        assert this.diff.getDeletedFiles().contains(inTheWayFileName) : this.diff;
+        assert this.diff.getChangedFiles().isEmpty() : this.diff;
+        assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+        assert this.diff.getBackedUpFiles().containsKey(inTheWayFileName) : this.diff;
+        assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
+        assert this.diff.getRealizedFiles().isEmpty() : this.diff;
+        assert this.diff.getErrors().isEmpty() : this.diff;
+        assert this.diff.wasCleaned() == clean : this.diff;
+
+        assert this.metadata.getCurrentDeploymentProperties().equals(originalDeployProps);
+        assert this.metadata.getCurrentDeploymentFileHashcodes().equals(originalFileHashcodeMap);
+
+        // verify the backup copy
+        File backupFile = new File(this.diff.getBackedUpFiles().get(inTheWayFileName));
         if (dryRun) {
             assert !backupFile.exists() : "dry run should not create backup";
         } else {

@@ -108,12 +108,13 @@ public class AntLauncherTest {
 
     public void testInstall() throws Exception {
 
-        if (skipNonRHLinux("testInstall")) return;
+        if (skipNonRHLinux("testInstall"))
+            return;
 
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
-        // but we do want to add an unrelated file to see that it remains untouched - the install just "goes around" it
+        // but we do want to add an unrelated file to see that it goes away - since we have manageRootDir=true
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
 
         AntLauncher ant = new AntLauncher();
@@ -157,7 +158,7 @@ public class AntLauncherTest {
         assert new File(DEPLOY_DIR, "subdir/test.properties").exists() : "missing file";
         assert new File(DEPLOY_DIR, "archived-bundle-file.txt").exists() : "missing archived bundle file";
         assert new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties").exists() : "missing subdir archive file";
-        assert unrelatedFile.exists() : "unrelated file was removed during the install";
+        assert !unrelatedFile.exists() : "unrelated file was not removed during the install";
         assert readPropsFile(new File(DEPLOY_DIR, "subdir/test.properties")).getProperty("junk.listener.port").equals(
             "10000");
         assert readPropsFile(new File(DEPLOY_DIR, "archived-subdir/archived-file-in-subdir.properties")).getProperty(
@@ -165,7 +166,7 @@ public class AntLauncherTest {
     }
 
     private boolean skipNonRHLinux(String meth) {
-        if (!System.getProperty("os.name").equals("Linux") ||  !REDHAT_RELEASE_FILE.exists()) {
+        if (!System.getProperty("os.name").equals("Linux") || !REDHAT_RELEASE_FILE.exists()) {
             System.out.println("Skipping " + meth + "() as this only works on Red Hat Linux flavors");
             return true;
         }
@@ -175,10 +176,10 @@ public class AntLauncherTest {
     @Test(dependsOnMethods = "testInstall")
     public void testUpgrade() throws Exception {
 
-        if (skipNonRHLinux("testUpgrade")) return;
+        if (skipNonRHLinux("testUpgrade"))
+            return;
 
-        // We want to test an upgrade, so do *not* wipe out the deploy dir - our test method @dependsOnMethods testInstall
-        // but we do want to add an unrelated file to see that it gets deleted as part of the upgrade
+        // add an unrelated file to see that it gets deleted as part of the upgrade
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
 
         AntLauncher ant = new AntLauncher();
@@ -231,14 +232,15 @@ public class AntLauncherTest {
 
     public void testUpgradeNoManageRootDir() throws Exception {
 
-        if (skipNonRHLinux("testInstall")) return;
+        if (skipNonRHLinux("testInstall"))
+            return;
 
         // We want to test an upgrade, so do *not* wipe out the deploy dir - let's re-invoke testInstall
         // to get us to an initial state of the v1 bundle installed
         testInstall();
 
         // we still want the unrelated file - we want to see that manageRootDir=false works (unrelated files should not be deleted)
-        File unrelatedFile = new File(DEPLOY_DIR, "unrelated-file.txt");
+        File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
         assert unrelatedFile.exists() : "our initial install test method should have prepared an unmanaged file";
 
         AntLauncher ant = new AntLauncher();

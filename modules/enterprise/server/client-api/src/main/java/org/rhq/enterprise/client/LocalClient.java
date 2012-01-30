@@ -432,10 +432,19 @@ public class LocalClient implements RhqFacade {
     private <T> T getProxy(Object slsb, Class<T> iface) {
         RhqManagers manager = RhqManagers.forInterface(iface);
 
-        Class<?> simplified = InterfaceSimplifier.simplify(iface);
+        Class<?> simplified = null;
 
-        Object proxy = Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified },
-            new LocalClientProxy(slsb, this, manager));
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(iface.getClassLoader());
+            simplified = InterfaceSimplifier.simplify(iface);
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
+        }
+
+        Object proxy =
+            Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified }, new LocalClientProxy(slsb,
+                this, manager));
 
         return iface.cast(proxy);
     }

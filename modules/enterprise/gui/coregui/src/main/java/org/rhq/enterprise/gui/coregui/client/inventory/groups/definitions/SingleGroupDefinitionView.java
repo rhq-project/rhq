@@ -24,9 +24,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -84,6 +82,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import com.allen_sauer.gwt.log.client.Log;
 
 /**
  * @author Joseph Marques
@@ -192,11 +192,31 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             form.saveData(new DSCallback() {
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
+                    boolean hasDuplicateNameError = false;
                     if (form.isNewRecord()) {
                         Record[] results = response.getData();
                         if (results.length != 1) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
+
+                            // handle the special case for name already exists error
+                            for (Object entryObject : response.getErrors().entrySet()) {
+                                Map.Entry thisEntry = (Map.Entry) entryObject;
+                                String fieldKey = (String) thisEntry.getKey();
+                                // the duplicate name error will be keyed by 'name' in the errorMap
+                                Log.debug("there were errors");
+                                if (fieldKey.equals("name")) {
+                                    Log.debug("found name error key");
+                                    String errorValue = (String) thisEntry.getValue();
+                                    CoreGUI.getErrorHandler().handleError(errorValue);
+                                    hasDuplicateNameError = true;
+                                }
+                            }
+
+                            if(!hasDuplicateNameError){
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
+                            }
+
+
                         } else {
                             Record newRecord = results[0];
                             GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance().copyValues(

@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 
 import org.apache.commons.logging.Log;
@@ -108,12 +109,17 @@ public class ASConnection {
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept","application/json");
+            conn.setConnectTimeout(10 * 1000); // 10s
+            conn.setReadTimeout(10 * 1000); // 10s
+
+            if (conn.getReadTimeout()!=10*1000)
+                log.warn("JRE uses a broken timeout mechanism - nothing we can do");
 
             OutputStream out = conn.getOutputStream();
 
-            String result = mapper.writeValueAsString(operation);
+            String json_to_send = mapper.writeValueAsString(operation);
             if (verbose) {
-                log.info("Json to send: " + result);
+                log.info("Json to send: " + json_to_send);
             }
             mapper.writeValue(out, operation);
 
@@ -158,6 +164,19 @@ public class ASConnection {
             } else {
                 log.error("IS was null and code was " + responseCode);
             }
+        } catch (IllegalArgumentException iae) {
+            log.error("Illegal argument " + iae);
+            log.error("  for input " + operation);
+        } catch (SocketTimeoutException ste) {
+            log.error("Request to AS timed out " + ste.getMessage());
+            conn.disconnect();
+            Result failure = new Result();
+            failure.setFailureDescription(ste.getMessage());
+            failure.setOutcome("failure");
+//            failure.setThrowable(ste); TODO
+
+            JsonNode ret = mapper.valueToTree(failure);
+            return ret;
 
         } catch (IOException e) {
             log.error("Failed to get data: " + e.getMessage());
@@ -182,7 +201,7 @@ public class ASConnection {
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
             failure.setOutcome("failure");
-            failure.setThrowable(e);
+//            failure.setThrowable(e); TODO
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;

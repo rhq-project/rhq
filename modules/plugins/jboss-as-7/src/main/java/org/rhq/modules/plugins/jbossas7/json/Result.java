@@ -43,7 +43,7 @@ public class Result {
 
     /** Record throwsables during low level processing */
     @JsonIgnore
-    private Throwable throwable;
+    private Map<String,Object> throwable;
 
     public Object getResponseHeaders() {
         return responseHeaders;
@@ -98,11 +98,11 @@ public class Result {
         this.rolledBack = rolledBack;
     }
 
-    public Throwable getThrowable() {
+    public Map<String, Object> getThrowable() {
         return throwable;
     }
 
-    public void setThrowable(Throwable throwable) {
+    public void setThrowable(Map<String,Object> throwable) {
         this.throwable = throwable;
     }
 

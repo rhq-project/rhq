@@ -69,7 +69,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             addRequiredToOp(op,parameters,"jndi-name");
             addOptionalToOp(op,parameters,"user-name");
             addOptionalToOp(op,parameters,"password");
-            addRequiredToOp(op,parameters,"xa-data-source-class");
+            addRequiredToOp(op,parameters,"xa-datasource-class");
 
             Map<String,Object> props = new HashMap<String, Object>(); // TODO
             op.addAdditionalProperty("xa-data-source-properties",props);

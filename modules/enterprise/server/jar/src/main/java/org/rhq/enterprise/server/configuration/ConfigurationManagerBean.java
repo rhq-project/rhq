@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -2511,6 +2513,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             PropertyOptionsSource pos = pds.getOptionsSource();
             PropertyOptionsSource.TargetType tt = pos.getTargetType();
             String expression = pos.getExpression();
+            String filter = pos.getFilter();
+            Pattern filterPattern = null;
+            if (filter!=null)
+                filterPattern = Pattern.compile(filter);
+
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                 ResourceCriteria criteria = new ResourceCriteria();
 
@@ -2533,10 +2540,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                     if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
 
-                        PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource()
-                            .getName(), "" + composite.getResource().getName());
-                        // TODO filter -- or leave up to search expression??
-                        pds.getEnumeratedValues().add(pde);
+                        String name = composite.getResource().getName();
+                        // filter if the user provided a filter
+
+                        if (filterPattern !=null ) {
+                            Matcher m = filterPattern.matcher(name);
+                            if (m.matches()) {
+                                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                                pds.getEnumeratedValues().add(pde);
+                            }
+                        } else { // Filter is null -> none provided -> do not filter
+                            PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                            pds.getEnumeratedValues().add(pde);
+
+                        }
+
                     } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                         //  for configuration we need to drill down into the resource configuration
                         if (!handleConfigurationTarget(pds, expression, composite.getResource()))

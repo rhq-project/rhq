@@ -1017,7 +1017,7 @@
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=^Deployment$" filter="sameHierarchy"/>
+                    <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
                 </c:simple-property>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
@@ -1033,11 +1033,10 @@
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=^Deployment$"/>
+                    <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
                 </c:simple-property>
-                <c:simple-property name="xa-data-source-class" required="true" description="xa-data-source-class"/>
+                <c:simple-property name="xa-datasource-class" required="true" description="xa-datasource-class"/>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
-                <!--<c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>-->
                 <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
                 <c:simple-property name="password" description="Password" type="password" required="false"/>
                 <c:list-property name="xa-properties" displayName="XA Properties" description="Additional XA Properties" required="false">
@@ -1128,8 +1127,6 @@
                          description="Defines the JDBC driver the datasource should use with this format: driver-name>#major-version.minor-version where driver-name is the fully qualifed name of the JDBC driver class"/>
                 <c:simple-property name="new-connection-sql" type="string" readOnly="true" required="false"
                          description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
-                <c:simple-property name="pool-name" type="string" readOnly="true"
-                         description="Specifies the pool name for the datasource used for management"/>
                 <c:simple-property name="url-delimiter" type="string" readOnly="true"
                          description="Specifies the delimeter for URLs in connection-url for HA datasources" required="false"/>
                 <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true"
@@ -1273,11 +1270,10 @@
             <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
 
             <resource-configuration>
-                <c:simple-property name="xa-data-source-class" required="true" type="string" readOnly="true" description="The fully qualifed name of the javax.sql.XADataSource implementation"/>
+                <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualifed name of the javax.sql.XADataSource implementation"/>
                 <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
                 <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
                 <c:simple-property name="new-connection-sql" required="false" type="string" readOnly="true" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
-                <c:simple-property name="pool-name" required="false" type="string" readOnly="true" description="Specifies the pool name for the datasource used for management"/>
                 <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
                 <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
                 <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
@@ -1286,7 +1282,7 @@
                 <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
                 <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
                 <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" description="Define if the min-pool-size should be considered a strictly."/>
-                <c:simple-property name="interliving" required="false" type="boolean" readOnly="true" description="An element to enable interleaving for XA connection factories"/>
+                <c:simple-property name="interleaving" required="false" type="boolean" readOnly="true" description="An element to enable interleaving for XA connection factories"/>
                 <c:simple-property name="no-tx-separate-pool" required="false" type="boolean" readOnly="true" description="Oracle does not like XA connections getting used both inside and outside a JTA transaction. To workaround the problem you can create separate sub-pools for the different context"/>
                 <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="true" description="Should the Xid be padded"/>
                 <c:simple-property name="same-rm-override" required="false" type="boolean" readOnly="true" description="The is-same-rm-override element allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false"/>

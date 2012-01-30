@@ -176,8 +176,10 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
         groupDefinition.setExpression(from.getAttributeAsString("expression"));
         groupDefinition.setRecursive(from.getAttributeAsBoolean("recursive"));
         String recalcInt = from.getAttributeAsString("recalculationInterval");
-        groupDefinition.setRecalculationInterval((recalcInt != null) ? Long.parseLong(recalcInt) : 0L);
-        // modifiedTime, createdTime, and lastCalculationTime are updated by GroupDefinitionManagerBean only 
+        //groupDefinition.setRecalculationInterval((recalcInt != null) ? Long.parseLong(recalcInt) : 0L);
+        // convert the recalculation interval from minutes to millis for db storage
+        groupDefinition.setRecalculationInterval((recalcInt != null) ? Long.parseLong(recalcInt) * 60 * 1000 : 0L);
+        // modifiedTime, createdTime, and lastCalculationTime are updated by GroupDefinitionManagerBean only
         // nextCalculationTime is a non-persistent, derived field
 
         return groupDefinition;
@@ -191,7 +193,10 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
         record.setAttribute("description", from.getDescription());
         record.setAttribute("expression", from.getExpression());
         record.setAttribute("recursive", from.isRecursive());
-        record.setAttribute("recalculationInterval", convertLongToString(from.getRecalculationInterval()));
+
+        // convert millis to minutes for display
+        long recalcIntervalLong =  from.getRecalculationInterval()/(60 * 1000);
+        record.setAttribute("recalculationInterval", convertLongToString(recalcIntervalLong));
         record.setAttribute("modifiedTime", from.getModifiedTime());
         record.setAttribute("createdTime", from.getCreatedTime());
         record.setAttribute("lastCalculationTime", convertLongToString(from.getLastCalculationTime()));

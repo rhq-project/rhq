@@ -438,7 +438,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.setDescription(MSG.view_admin_systemSettings_BaselineDataSet_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_BaselineDataSet_name());
                 pd.setPropertyGroupDefinition(baselineGroup);
-                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our raw tables don't hold more
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), Long.valueOf(14))); // can't do more than 14 days since our 1h table doesn't hold more
                 pd.setDefaultValue("7");
                 break;
 

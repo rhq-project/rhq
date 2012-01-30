@@ -83,7 +83,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-import com.allen_sauer.gwt.log.client.Log;
 
 /**
  * @author Joseph Marques
@@ -202,9 +201,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                                 Map.Entry thisEntry = (Map.Entry) entryObject;
                                 String fieldKey = (String) thisEntry.getKey();
                                 // the duplicate name error will be keyed by 'name' in the errorMap
-                                Log.debug("there were errors");
                                 if (fieldKey.equals("name")) {
-                                    Log.debug("found name error key");
                                     String errorValue = (String) thisEntry.getValue();
                                     CoreGUI.getErrorHandler().handleError(errorValue);
                                     hasDuplicateNameError = true;

@@ -40,6 +40,8 @@ public class Result {
     private boolean success = false;
     @JsonProperty("rolled-back")
     private boolean rolledBack = false;
+    @JsonIgnore
+    private Throwable rhqThrowable;
 
     /** Record throwsables during low level processing */
     @JsonIgnore
@@ -106,6 +108,13 @@ public class Result {
         this.throwable = throwable;
     }
 
+    public Throwable getRhqThrowable() {
+        return rhqThrowable;
+    }
+
+    public void setRhqThrowable(Throwable rhqThrowable) {
+        this.rhqThrowable = rhqThrowable;
+    }
 
     @Override
     public String toString() {

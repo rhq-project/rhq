@@ -173,6 +173,9 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
         Operation op = new ReadChildrenResources(address1,"deployment");
         ComplexResult cres = getASConnection().executeComplex(op);
 
+        if (cres==null)
+            return details;
+
         if (!cres.isSuccess())
             return details;
 
@@ -181,19 +184,22 @@ public class DeploymentComponent extends BaseComponent implements OperationFacet
             Map<String,Object> deployment = (Map<String, Object>) deployments.get(key);
             log.info("Discover package [" + key + "] for type [" + type + "]");
 
-            List<Map> contentList = (List<Map>) deployment.get("content"); // deployments on SG or ManagedServer level have no hash
-            Map<String,Map> hashMap = contentList.get(0);
-            Map<String,String> bvMap = hashMap.get("hash");
-            String content = bvMap.get("BYTES_VALUE");
-            PackageDetailsKey pdKey = new PackageDetailsKey(key,
-                    content, // no way to obtain the user defined version from the server
-                    type.getName(),
-                    "noarch"
-            );
-            ResourcePackageDetails detail = new ResourcePackageDetails(pdKey);
-            detail.setSHA256(content);
+            List<Map> contentList = (List<Map>) deployment.get("content"); // TODO deployments on SG or ManagedServer level have no hash
+            if (contentList!=null) {
 
-            details.add(detail);
+                Map<String,Map> hashMap = contentList.get(0);
+                Map<String,String> bvMap = hashMap.get("hash");
+                String content = bvMap.get("BYTES_VALUE");
+                PackageDetailsKey pdKey = new PackageDetailsKey(key,
+                        content, // no way to obtain the user defined version from the server
+                        type.getName(),
+                        "noarch"
+                );
+                ResourcePackageDetails detail = new ResourcePackageDetails(pdKey);
+                detail.setSHA256(content);
+
+                details.add(detail);
+            }
         }
 
         return details;

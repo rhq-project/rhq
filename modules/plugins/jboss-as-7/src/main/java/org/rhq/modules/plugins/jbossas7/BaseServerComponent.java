@@ -162,7 +162,7 @@ public class BaseServerComponent extends BaseComponent {
              * reading, this is a good sign.
              */
             if (!res.isSuccess()) {
-                if (res.getThrowable()!=null && (res.getThrowable() instanceof ConnectException || res.getThrowable().getMessage().equals("Connection refused"))) {
+                if (res.getRhqThrowable()!=null && (res.getRhqThrowable() instanceof ConnectException || res.getRhqThrowable().getMessage().equals("Connection refused"))) {
                     operationResult.setSimpleResult("Success");
                     log.debug("Got a ConnectionRefused for operation " + name + " this is considered ok, as the remote server sometimes closes the communications channel before sending a reply");
                 }

@@ -173,7 +173,7 @@ public class ASConnection {
             Result failure = new Result();
             failure.setFailureDescription(ste.getMessage());
             failure.setOutcome("failure");
-//            failure.setThrowable(ste); TODO
+            failure.setRhqThrowable(ste);
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
@@ -201,7 +201,7 @@ public class ASConnection {
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
             failure.setOutcome("failure");
-//            failure.setThrowable(e); TODO
+            failure.setRhqThrowable(e);
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;

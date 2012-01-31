@@ -160,7 +160,7 @@ public class PermissionsEditor extends LocatableVStack {
         descriptionField.setWrap(true);
 
         final ListGridField authorizedField = createAuthorizedField("authorized",
-            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid);
+            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid, false);
 
         grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
 
@@ -203,9 +203,9 @@ public class PermissionsEditor extends LocatableVStack {
         descriptionField.setWrap(true);
 
         ListGridField readField = createAuthorizedField("readAuthorized", MSG.view_adminRoles_permissions_isRead(),
-            "readName", grid);
+            "readName", grid, true);
         ListGridField writeField = createAuthorizedField("writeAuthorized", MSG.view_adminRoles_permissions_isWrite(),
-            "writeName", grid);
+            "writeName", grid, false);
 
         grid.setFields(iconField, displayNameField, readField, writeField, descriptionField);
 
@@ -298,24 +298,30 @@ public class PermissionsEditor extends LocatableVStack {
         return grid;
     }
 
-    private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid) {
+    private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid, boolean  readOnlyColumn) {
         final ListGridField authorizedField = new ListGridField(name, title, 65);
 
         // Show images rather than true/false.
         authorizedField.setType(ListGridFieldType.IMAGE);
         authorizedField.setImageSize(11);
+
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
-        valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
-        valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        // set the proper images different for read-only column
+        if(readOnlyColumn){
+            valueMap.put(Boolean.TRUE.toString(), "global/permission_checked_disabled_11.png");
+            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        }else {
+            valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
+            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        }
+        authorizedField.setValueMap(valueMap);
+        authorizedField.setCanEdit(true);
 
         CheckboxItem editor = new CheckboxItem();
         authorizedField.setEditorType(editor);
 
         if (!this.isReadOnly) {
             Log.debug("Non-Readonly field " +name);
-            authorizedField.setCanEdit(true);
-            valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
-            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
             grid.setEditEvent(ListGridEditEvent.CLICK);
             final Record[] recordBeingEdited = { null };
             authorizedField.addRecordClickHandler(new RecordClickHandler() {
@@ -358,14 +364,7 @@ public class PermissionsEditor extends LocatableVStack {
                     }
                 }
             });
-        } else {
-            Log.debug("Readonly field " +name);
-            authorizedField.setCanEdit(false);
-            // used different image for read-only
-            valueMap.put(Boolean.TRUE.toString(), "global/permission_checked_disabled_11.png");
-            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
         }
-        authorizedField.setValueMap(valueMap);
 
         return authorizedField;
     }

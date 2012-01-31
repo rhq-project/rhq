@@ -1,6 +1,6 @@
- /*
+/*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2012 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -55,13 +55,17 @@ public class LogFileEventPoller implements EventPoller {
     private LogEntryProcessor entryProcessor;
 
     public LogFileEventPoller(EventContext eventContext, String eventType, File logFile, LogEntryProcessor entryProcessor) {
+        SigarProxy sigar = eventContext.getSigar();
         this.eventType = eventType;
         this.logFile = logFile;
-        SigarProxy sigar = eventContext.getSigar();
-        try {
-            this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
-        } catch (SigarException e) {
-            throw new RuntimeException(e);
+        if (sigar != null) {
+            try {
+                this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
+            } catch (SigarException e) {
+                throw new RuntimeException("Failed to obtain file info for log file [" + this.logFile + "].", e);
+            }
+        } else {
+            log.warn("SIGAR is unavailable - cannot poll log file [" + this.logFile + "] for events.");
         }
         this.entryProcessor = entryProcessor;
     }
@@ -78,12 +82,15 @@ public class LogFileEventPoller implements EventPoller {
 
     @Nullable
     public Set<Event> poll() {
+        if (this.logFileInfo == null) {
+            return null;
+        }
         if (!this.logFile.exists()) {
-            log.warn("Log file [" + this.logFile + "' being polled does not exist.");
+            log.warn("Log file [" + this.logFile + "] being polled does not exist.");
             return null;
         }
         if (this.logFile.isDirectory()) {
-            log.error("Log file [" + this.logFile + "' being polled is a directory, not a regular file.");
+            log.error("Log file [" + this.logFile + "] being polled is a directory, not a regular file.");
             return null;
         }
         try {

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
@@ -41,6 +42,18 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
  */
 @Local
 public interface AgentManagerLocal {
+
+    /** 
+     * Call this method to set the agent down and mark it 'backfilled'. Also, sets all of its monitored resources
+     * to an UNKNOWN avail state since the agent is no longer reporting availability.
+     * 
+     * @param subject
+     * @param agentName
+     * @param agentId
+     */
+    // This method should not be remoted.
+    void backfillAgent(Subject subject, String agentName, int agentId);
+
     /**
      * Persists a new agent.
      *
@@ -288,4 +301,11 @@ public interface AgentManagerLocal {
      */
     Boolean pingAgentByResourceId(Subject subject, int resourceId);
 
+    /**
+     * Process a ping request from an agent, performing any requested actions and returning any requested data.
+     *  
+     * @param request
+     * @return The updated request object.
+     */
+    public PingRequest handlePingRequest(PingRequest request);
 }

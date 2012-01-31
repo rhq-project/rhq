@@ -105,4 +105,12 @@ public interface CoreServerService {
      * @throws IllegalArgumentException if the agentName does not match a registered agent.
      */
     FailoverListComposite getFailoverList(String agentName);
+
+    /**
+     * Ping the server.
+     * 
+     * @param request Any optional action or data requests.
+     * @return Any response data for the requested data or actions.
+     */
+    PingRequest ping(PingRequest request);
 }

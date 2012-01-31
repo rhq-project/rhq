@@ -108,7 +108,7 @@
 
         <!-- How long an agent is allowed to be quiet before we consider it down and backfill it -->
         <data ID="52" PROPERTY_KEY="AGENT_MAX_QUIET_TIME_ALLOWED" PROPERTY_VALUE="900000"
-              DEFAULT_PROPERTY_VALUE="900000" FREAD_ONLY="FALSE"/>
+              DEFAULT_PROPERTY_VALUE="300000" FREAD_ONLY="FALSE"/>
 
         <!-- Will our server-cloud support agents auto-updating themselves? -->
         <data ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="true"

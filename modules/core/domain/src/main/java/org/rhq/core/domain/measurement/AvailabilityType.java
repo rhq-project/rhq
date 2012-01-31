@@ -34,7 +34,9 @@ public enum AvailabilityType {
     /** Resource is down for sure */
     DOWN,
     /** Resource is up */
-    UP;
+    UP,
+    /** Resource avail can't be determined. Typically meaning the agent is down */
+    UNKNOWN;
 
     /**
      * A Java bean style getter to allow us to access the enum name from JSPs or Facelets (e.g.

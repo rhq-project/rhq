@@ -2287,23 +2287,28 @@ public class AgentMain {
         // initialize and start the server-side services so we can process incoming commands
         m_commServices.start(m_configuration.getPreferences(), m_configuration.getClientCommandSenderConfiguration());
 
+        // TODO: I think this can removed altogether. We don't want to do polling at the comm layer
+        // for server detection because we are now pinging the server at a higher level.  If that ping (or any
+        // server service fails) the sender status will be set to down.  The higher level ping is now used
+        // for agent avail, clock sync, and server status checking.
+
         // prime the sender so it can be prepared to start sending messages.
         // if auto-discovery is enabled, then the auto-discovery listener will tell the sender when its OK to start sending.
         // if polling is enabled, then we start polling now - the poller will tell the sender when its OK to start sending.
         // if both auto-discovery and polling is enabled, at least one of them will tell the sender when its OK to start sending.
         // if neither is enabled, we have to blindly tell the sender that its OK to start sending now.
-        if (m_configuration.getClientSenderServerPollingInterval() <= 0) {
-            if (m_autoDiscoveryListener == null) {
-                LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
-                m_clientSender.startSending();
-            }
-        } else {
-            m_clientSender.startServerPolling();
-
-            // must do this after we start polling, otherwise, the listener is never really added
-            ClockCheckPollingListener clockCheckPollingListener = new ClockCheckPollingListener();
-            m_clientSender.addPollingListener(clockCheckPollingListener);
-        }
+        //if (m_configuration.getClientSenderServerPollingInterval() <= 0) {
+        //    if (m_autoDiscoveryListener == null) {
+        //        LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
+        //        m_clientSender.startSending();
+        //    }
+        //} else {
+        //    m_clientSender.startServerPolling();
+        //  
+        //    // must do this after we start polling, otherwise, the listener is never really added
+        //    ClockCheckPollingListener clockCheckPollingListener = new ClockCheckPollingListener();
+        //    m_clientSender.addPollingListener(clockCheckPollingListener);
+        //}
 
         return;
     }

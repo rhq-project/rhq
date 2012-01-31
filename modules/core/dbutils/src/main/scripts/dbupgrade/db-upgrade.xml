@@ -3828,6 +3828,8 @@
                 </schema-directSQL>
             </schemaSpec>
             
+<!-- JON 3.0.1 RELEASE uses DB Schema 2.118 -->
+            
         </dbupgrade>
     </target>
 </project>

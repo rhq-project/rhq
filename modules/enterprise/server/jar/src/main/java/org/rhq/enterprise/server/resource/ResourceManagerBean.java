@@ -238,8 +238,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         persistedResource.setLocation(resource.getLocation());
         persistedResource.setDescription(resource.getDescription());
 
-        // NOTE: Updating the mtime will tell the Agent it needs to sync this Resource.
-        persistedResource.setMtime(System.currentTimeMillis());
+        persistedResource.setAgentSynchronizationNeeded();
         persistedResource.setModifiedBy(user.getName());
 
         return entityManager.merge(persistedResource);
@@ -614,7 +613,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     private void updateInventoryStatus(Resource resource, InventoryStatus newStatus, long now) {
         resource.setInventoryStatus(newStatus);
         resource.setItime(now);
-        resource.setMtime(now);
+        resource.setAgentSynchronizationNeeded();
     }
 
     @SuppressWarnings("unchecked")
@@ -757,8 +756,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         // Build up a list of composite Resources for the ancestry that includes which ancestors, if any, should be
         // locked from view.
         boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
-        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(rawResourceLineage
-            .size());
+        List<ResourceLineageComposite> resourceLineage = new ArrayList<ResourceLineageComposite>(
+            rawResourceLineage.size());
         for (Resource resource : rawResourceLineage) {
             boolean isLocked = !(isInventoryManager || authorizationManager.canViewResource(subject, resource.getId()));
             ResourceLineageComposite composite = new ResourceLineageComposite(resource, isLocked);
@@ -776,8 +775,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // If the ancestor is not locked, include viewable children.
             if (!ancestor.isLocked() || ancestor.getResource() == parent) {
                 // Get all viewable committed children.
-                PageList<Resource> children = findChildResourcesByCategoryAndInventoryStatus(subject, ancestor
-                    .getResource(), null, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
+                PageList<Resource> children = findChildResourcesByCategoryAndInventoryStatus(subject,
+                    ancestor.getResource(), null, InventoryStatus.COMMITTED, PageControl.getUnlimitedInstance());
                 // Remove any that are in the lineage to avoid repeated handling.
                 children.removeAll(rawResourceLineage);
                 for (Resource child : children) {
@@ -1384,7 +1383,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public List<AutoGroupComposite> findResourcesAutoGroups(Subject subject, int[] resourceIds) {
         List<AutoGroupComposite> results = new ArrayList<AutoGroupComposite>();
         List<Integer> ids = ArrayUtils.wrapInList(resourceIds);
@@ -1484,6 +1483,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 
             List<Object[]> objs = query.getResultList();
+            @SuppressWarnings("rawtypes")
             List results = new ArrayList<ResourceWithAvailability>(objs.size());
             for (Object[] ob : objs) {
                 Resource r = (Resource) ob[0];
@@ -1814,7 +1814,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<Resource> resources = query.getResultList();
 
-        return new PageList(resources, (int) count, pageControl);
+        return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
     @SuppressWarnings("unchecked")
@@ -1847,7 +1847,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<Resource> resources = query.getResultList();
 
-        return new PageList(resources, (int) count, pageControl);
+        return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
     @SuppressWarnings("unchecked")
@@ -1890,7 +1890,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<Resource> resources = query.getResultList();
 
-        return new PageList(resources, (int) count, pageControl);
+        return new PageList<Resource>(resources, (int) count, pageControl);
     }
 
     @SuppressWarnings("unchecked")
@@ -2396,7 +2396,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
 
         boolean isInventoryManager = authorizationManager.isInventoryManager(subject);
@@ -2440,8 +2439,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceComposite> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager, false); // don't auto-init bags, we're returning composites not entities
+        CriteriaQueryRunner<ResourceComposite> queryRunner = new CriteriaQueryRunner<ResourceComposite>(criteria,
+            generator, entityManager, false); // don't auto-init bags, we're returning composites not entities
         PageList<ResourceComposite> results = queryRunner.execute();
 
         for (ResourceComposite nextComposite : results) {
@@ -2456,7 +2455,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
@@ -2470,7 +2468,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 subject.getId());
         }
 
-        CriteriaQueryRunner<Resource> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Resource> queryRunner = new CriteriaQueryRunner<Resource>(criteria, generator,
+            entityManager);
         PageList<Resource> results = queryRunner.execute();
         return results;
     }
@@ -2521,8 +2520,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> extractor,
         DisambiguationUpdateStrategy updateStrategy) {
-        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager, typeManager
-            .getDuplicateTypeNames());
+        return Disambiguator.disambiguate(results, updateStrategy, extractor, entityManager,
+            typeManager.getDuplicateTypeNames());
     }
 
     public void updateAncestry(Subject subject, int resourceId) {
@@ -2545,13 +2544,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @SuppressWarnings("unchecked")
     public List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds) {
-        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS).setParameter("resourceTypeIds",
-            resourceTypeIds).getResultList();
+        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
+            .setParameter("resourceTypeIds", resourceTypeIds).getResultList();
     }
 
     @Override
     public Integer getResourceCount(List<Integer> resourceTypeIds) {
-        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES).setParameter(
-            "resourceTypeIds", resourceTypeIds).getSingleResult();
+        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES)
+            .setParameter("resourceTypeIds", resourceTypeIds).getSingleResult();
     }
 }

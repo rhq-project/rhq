@@ -44,6 +44,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -671,7 +672,8 @@ public class TabularWriter {
         } else if (object instanceof ResourceType) {
             return ((ResourceType) object).getName();
         } else if (object instanceof ResourceAvailability) {
-            return ((ResourceAvailability) object).getAvailabilityType().getName();
+            AvailabilityType availType = ((ResourceAvailability) object).getAvailabilityType();
+            return (availType == null) ? "?" : availType.getName();
         } else if (object != null && object.getClass().isArray()) {
             return Arrays.toString((Object[]) object);
         } else {

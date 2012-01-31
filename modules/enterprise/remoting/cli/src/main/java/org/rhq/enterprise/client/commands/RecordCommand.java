@@ -20,10 +20,8 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.client.commands;
 
-import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.NoOpRecorder;
 import org.rhq.enterprise.client.Recorder;
@@ -132,7 +130,7 @@ public class RecordCommand implements ClientCommand {
     public String getHelp() {
         return "Records user input commands to a specified file. Use the --start option to begin recording. Use the " +
             "--end option to stop recording. Use --append to append output to the end of an existing file; otherwise, " +
-            "recording will start at the begining of the file.";
+            "recording will start at the beginning of the file.";
     }
 
     public String getDetailedHelp() {

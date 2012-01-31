@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.core.RefDataClass;
 import com.smartgwt.client.data.Record;
@@ -33,6 +34,7 @@ import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -305,13 +307,16 @@ public class PermissionsEditor extends LocatableVStack {
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
         valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
         valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
-        authorizedField.setValueMap(valueMap);
+
+        CheckboxItem editor = new CheckboxItem();
+        authorizedField.setEditorType(editor);
 
         if (!this.isReadOnly) {
+            Log.debug("Non-Readonly field " +name);
             authorizedField.setCanEdit(true);
+            valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
+            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
             grid.setEditEvent(ListGridEditEvent.CLICK);
-            CheckboxItem editor = new CheckboxItem();
-            authorizedField.setEditorType(editor);
             final Record[] recordBeingEdited = { null };
             authorizedField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(RecordClickEvent event) {
@@ -353,7 +358,14 @@ public class PermissionsEditor extends LocatableVStack {
                     }
                 }
             });
+        } else {
+            Log.debug("Readonly field " +name);
+            authorizedField.setCanEdit(false);
+            // used different image for read-only
+            valueMap.put(Boolean.TRUE.toString(), "global/permission_checked_disabled_11.png");
+            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
         }
+        authorizedField.setValueMap(valueMap);
 
         return authorizedField;
     }

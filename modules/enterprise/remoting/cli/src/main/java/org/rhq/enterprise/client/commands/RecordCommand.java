@@ -128,7 +128,7 @@ public class RecordCommand implements ClientCommand {
     }
 
     public String getHelp() {
-        return "Records user input commands to a specified file. Use the --start option to begin recording. Use the " +
+        return "Record user input commands to a specified file. Use the --start option to begin recording. Use the " +
             "--end option to stop recording. Use --append to append output to the end of an existing file; otherwise, " +
             "recording will start at the beginning of the file.";
     }

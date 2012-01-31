@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -96,8 +96,12 @@ public class RecordCommand implements ClientCommand {
             code = getopt.getopt();
         }
 
+        if (recordArgs.file == null) {
+            throw new CommandLineParseException("The file option must be specified.");
+        }
+
         if (recordArgs.recordState == null) {
-            throw new CommandLineParseException("Either the start or stop option must be specified");
+            throw new CommandLineParseException("Either the start or stop option must be specified.");
         }
 
         return recordArgs;

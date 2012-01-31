@@ -296,7 +296,7 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_SERVER" column="OPERATION_MODE" nullable="FALSE" />
 
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_SERVER unique constraint on NAME">
                         CREATE UNIQUE INDEX rhq_server_name_unique ON rhq_server (name)
                     </statement>
@@ -853,7 +853,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.24">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_MEASUREMENT_BLINE index on SCHEDULE_ID">
                         CREATE INDEX rhq_meas_baseline_sid_idx ON rhq_measurement_bline (schedule_id)
                     </statement>
@@ -1078,7 +1078,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.36">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Deleting unique constraint on RHQ_MEASUREMENT_DEF">
                         DROP INDEX RHQ_METRIC_DEF_KEY_IDX
                     </statement>
@@ -1093,7 +1093,7 @@
                         WHERE NUMERIC_TYPE = 0
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating unique index on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
                         CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)
                     </statement>
@@ -1193,49 +1193,77 @@
 
             <!-- RHQ 1448 -->
             <schemaSpec version="2.44">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R00 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R00_SID_IDX ON RHQ_MEAS_DATA_NUM_R00 (schedule_id)
-                     </statement>
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R01 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R01_SID_IDX ON RHQ_MEAS_DATA_NUM_R01 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R02 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R02_SID_IDX ON RHQ_MEAS_DATA_NUM_R02 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R03 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R03_SID_IDX ON RHQ_MEAS_DATA_NUM_R03 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R04 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R04_SID_IDX ON RHQ_MEAS_DATA_NUM_R04 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R05 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R05_SID_IDX ON RHQ_MEAS_DATA_NUM_R05 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R06 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R06_SID_IDX ON RHQ_MEAS_DATA_NUM_R06 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R07 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R07_SID_IDX ON RHQ_MEAS_DATA_NUM_R07 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R08 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R08_SID_IDX ON RHQ_MEAS_DATA_NUM_R08 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R09 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R09_SID_IDX ON RHQ_MEAS_DATA_NUM_R09 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R10 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R10_SID_IDX ON RHQ_MEAS_DATA_NUM_R10 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R11 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R11_SID_IDX ON RHQ_MEAS_DATA_NUM_R11 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R12 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R12_SID_IDX ON RHQ_MEAS_DATA_NUM_R12 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R13 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R13_SID_IDX ON RHQ_MEAS_DATA_NUM_R13 (schedule_id)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R14 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R14_SID_IDX ON RHQ_MEAS_DATA_NUM_R14 (schedule_id)
                     </statement>
@@ -1300,7 +1328,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.50">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_RESOURCE_ERROR.RESOURCE_ID">
                         CREATE INDEX RHQ_RES_ERROR_IDX_RES_ID ON RHQ_RESOURCE_ERROR (RESOURCE_ID)
                     </statement>
@@ -1313,12 +1341,12 @@
             </schemaSpec>
 
             <schemaSpec version="2.52">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
                         DROP INDEX RHQ_RES_GROUP_NAME
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Deleting unique name constraint on RHQ_RESOURCE_GROUP">
                         CREATE INDEX RHQ_RES_GROUP_NAME ON RHQ_RESOURCE_GROUP (name)
                     </statement>
@@ -1348,57 +1376,87 @@
             </schemaSpec>
 
             <schemaSpec version="2.55">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on TIME_STAMP column of RHQ_MEASUREMENT_DATA_NUM_1H">
                         CREATE INDEX RHQ_MEAS_DATA_1H_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_1H(TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on TIME_STAMP column of RHQ_MEASUREMENT_DATA_NUM_6H">
                         CREATE INDEX RHQ_MEAS_DATA_6H_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_6H(TIME_STAMP)
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R00 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R00_TS_IDX ON RHQ_MEAS_DATA_NUM_R00 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R01 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R01_TS_IDX ON RHQ_MEAS_DATA_NUM_R01 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R02 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R02_TS_IDX ON RHQ_MEAS_DATA_NUM_R02 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R03 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R03_TS_IDX ON RHQ_MEAS_DATA_NUM_R03 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R04 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R04_TS_IDX ON RHQ_MEAS_DATA_NUM_R04 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R05 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R05_TS_IDX ON RHQ_MEAS_DATA_NUM_R05 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R06 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R06_TS_IDX ON RHQ_MEAS_DATA_NUM_R06 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R07 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R07_TS_IDX ON RHQ_MEAS_DATA_NUM_R07 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R08 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R08_TS_IDX ON RHQ_MEAS_DATA_NUM_R08 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>                
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R09 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R09_TS_IDX ON RHQ_MEAS_DATA_NUM_R09 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R10 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R10_TS_IDX ON RHQ_MEAS_DATA_NUM_R10 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R11 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R11_TS_IDX ON RHQ_MEAS_DATA_NUM_R11 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R12 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R12_TS_IDX ON RHQ_MEAS_DATA_NUM_R12 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R13 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R13_TS_IDX ON RHQ_MEAS_DATA_NUM_R13 (TIME_STAMP)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R14 (TIME_STAMP)">
                         CREATE INDEX RHQ_MEAS_DATA_R14_TS_IDX ON RHQ_MEAS_DATA_NUM_R14 (TIME_STAMP)
                     </statement>
@@ -1406,49 +1464,77 @@
             </schemaSpec>
 
             <schemaSpec version="2.56">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R00_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R00_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R01_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R01_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R02_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R02_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R03_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R03_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R04_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R04_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                  
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R05_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R05_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                   
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R06_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R06_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R07_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R07_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R08_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R08_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R09_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R09_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                  
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R10_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R10_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R11_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R11_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R12_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R12_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R13_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R13_SID_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping index on RHQ_MEAS_DATA_R14_SID_IDX">
                         DROP INDEX RHQ_MEAS_DATA_R14_SID_IDX
                     </statement>
@@ -1456,7 +1542,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.57">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Create index on RHQ_CONFIG_PROPERTY(PARENT_LIST_ID)">
                         CREATE INDEX RHQ_CONFIG_PROP_idx_list_key ON RHQ_CONFIG_PROPERTY(PARENT_LIST_ID)
                     </statement>
@@ -1683,6 +1769,8 @@
                         FOREIGN KEY ( REPO_GROUP_TYPE_ID )
                         REFERENCES RHQ_REPO_GROUP_TYPE ( ID )
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_REPO_GROUP_IDX
                         ON RHQ_REPO_GROUP ( NAME, REPO_GROUP_TYPE_ID )
@@ -1842,7 +1930,7 @@
                 <schema-alterColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" nullable="false" />
                 <schema-addColumn   table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" nullable="false" />
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_DISTRIBUTION_IDX ON RHQ_DISTRIBUTION ( LABEL, BASE_PATH )
                     </statement>
@@ -1947,6 +2035,8 @@
                         FOREIGN KEY (DISTRIBUTION_ID)
                         REFERENCES RHQ_DISTRIBUTION ( ID )
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement>
                         CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
                         ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
@@ -2019,7 +2109,7 @@
                 </schema-directSQL>
 
                 <!-- Fix bug:538157 -->
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE INDEX RHQ_REPO_PKG_VER_MAP_IDX
                         ON RHQ_REPO_PKG_VERSION_MAP ( PACKAGE_VERSION_ID )
@@ -2040,10 +2130,12 @@
 
             <schemaSpec version="2.69.2">
                 <!-- plugin names must be unique only if they are deployed on the same side (agent vs. server) -->
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping unique index on RHQ_PLUGIN (NAME)">
                         DROP INDEX RHQ_PLUGIN_NAME_IDX
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating unique index on RHQ_PLUGIN (NAME, DEPLOYMENT) so server plugin names need not be unique with agent plugins">
                         CREATE UNIQUE INDEX RHQ_PLUGIN_NAME_DEPLOY_IDX ON RHQ_PLUGIN (NAME, DEPLOYMENT)
                     </statement>
@@ -2086,7 +2178,7 @@
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
             <schemaSpec version="2.70.3">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Dropping unique index RHQ_ALERT_IDX_ALERT">
                         DROP INDEX RHQ_ALERT_IDX_ALERT
                     </statement>
@@ -2127,7 +2219,7 @@
                 <schema-deleteColumn table="RHQ_ALERT"           column="triggered_operation" />
             </schemaSpec>
             <schemaSpec version="2.70.7">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Recreating RHQ_ALERT_IDX_ALERT as non-unique index">
                         CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
                     </statement>
@@ -2168,13 +2260,17 @@
                 <schema-addColumn   table="RHQ_ADVISORY" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY" column="LAST_MODIFIED" nullable="false" />
 
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ADVISORY_NAME_UQ ON RHQ_ADVISORY ( ADVISORY_NAME )
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ADVISORY_UQ ON RHQ_ADVISORY ( ADVISORY )
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE INDEX RHQ_ADVISORY_UDATE_IDX ON RHQ_ADVISORY (UPDATE_DATE )
                     </statement>
@@ -2193,7 +2289,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="PACKAGE_VERSION_ID" nullable="false" />
                 <schema-addColumn   table="RHQ_ADVISORY_PACKAGE" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="LAST_MODIFIED" nullable="false" />
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ADVISORY_PACKAGE_IDX ON RHQ_ADVISORY_PACKAGE ( ADVISORY_ID, PACKAGE_VERSION_ID )
                     </statement>
@@ -2234,7 +2330,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="CVE_ID" nullable="false" />
                 <schema-addColumn   table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ADVISORY_CVE_IDX ON RHQ_ADVISORY_CVE ( ADVISORY_ID, CVE_ID )
                     </statement>
@@ -2266,7 +2362,7 @@
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="BUG_ID" nullable="false" />
                 <schema-addColumn   table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" columnType="LONG" />
                 <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" nullable="false" />
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                        CREATE UNIQUE INDEX RHQ_ADVISORY_BUG_IDX ON RHQ_ADVISORY_BUGLIST ( ADVISORY_ID, BUG_ID )
                    </statement>
@@ -2365,6 +2461,8 @@
                         FOREIGN KEY (RESOURCE_TYPE_ID)
                         REFERENCES RHQ_RESOURCE_TYPE (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_BUNDLE_TYPE unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_TYPE_UNIQUE ON RHQ_BUNDLE_TYPE (name)
                     </statement>
@@ -2406,6 +2504,8 @@
                         FOREIGN KEY (PACKAGE_TYPE_ID)
                         REFERENCES RHQ_PACKAGE_TYPE (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_BUNDLE unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_UNIQUE ON RHQ_BUNDLE (bundle_type_id, name)
                     </statement>
@@ -2444,6 +2544,8 @@
                         FOREIGN KEY (CONFIG_DEF_ID)
                         REFERENCES RHQ_CONFIG_DEF (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_BUNDLE_VERSION unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_VERSION_UNIQUE ON RHQ_BUNDLE_VERSION (bundle_id, name, version)
                     </statement>
@@ -2539,6 +2641,8 @@
                         FOREIGN KEY (GROUP_ID)
                         REFERENCES RHQ_RESOURCE_GROUP (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_BUNDLE_DESTINATION unique constraint">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_DESTINATION_UNIQUE
                         ON RHQ_BUNDLE_DESTINATION (bundle_id, group_id, deploy_dir)
@@ -2630,6 +2734,8 @@
                         FOREIGN KEY (RESOURCE_ID)
                         REFERENCES RHQ_RESOURCE (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_BUNDLE_RES_DEPLOY unique constraint on dep-resource mapping">
                         CREATE UNIQUE INDEX RHQ_BUNDLE_RES_DEPLOY_IDX
                         ON RHQ_BUNDLE_RES_DEPLOY (BUNDLE_DEPLOYMENT_ID, RESOURCE_ID)
@@ -2788,6 +2894,8 @@
                         FOREIGN KEY ( ROLE_ID )
                         REFERENCES RHQ_ROLE (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement>
                         CREATE UNIQUE INDEX RHQ_ROLE_LDAP_GROUP_IDX
                         ON RHQ_ROLE_LDAP_GROUP ( ROLE_ID, LDAP_GROUP_NAME )
@@ -2996,10 +3104,12 @@
             </schemaSpec>
 
             <schemaSpec version="2.87">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Drop non-unique RHQ_RES_TYPE_IDX_PLG_NAME index">
                         DROP INDEX RHQ_RES_TYPE_IDX_PLG_NAME
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Recreate RHQ_RES_TYPE_IDX_PLG_NAME index as unique">
                         CREATE UNIQUE INDEX RHQ_RES_TYPE_IDX_PLG_NAME ON RHQ_RESOURCE_TYPE (name, plugin)
                     </statement>
@@ -3007,10 +3117,12 @@
             </schemaSpec>
 
             <schemaSpec version="2.88">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Add end time index on call time data to speed up purges">
                         CREATE INDEX RHQ_CT_DA_VA_END_TIM_IDX ON RHQ_CALLTIME_DATA_VALUE (end_time)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Add index on measurement definition numeric type">
                         CREATE INDEX RHQ_METRIC_DEF_NT_IDX ON RHQ_MEASUREMENT_DEF (numeric_type)
                     </statement>
@@ -3131,7 +3243,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.92.4">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Add index on measurement data 1d table timestamp">
                         CREATE INDEX RHQ_MEAS_DATA_1D_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_1D (time_stamp)
                     </statement>
@@ -3294,6 +3406,8 @@
                     <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step2/3...">
                         ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">                    
                     <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step3/3...">
                         CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP)
                     </statement>
@@ -3607,10 +3721,12 @@
             </schemaSpec>
 
             <schemaSpec version="2.113">
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_ALERT_CONDITION_LOG index on CONDITION_ID">
                         CREATE INDEX RHQ_ALERT_COND_LOG_COND_IDX ON RHQ_ALERT_CONDITION_LOG (CONDITION_ID)
                     </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating RHQ_MEASUREMENT_SCHED index on RESOURCE_ID">
                         CREATE INDEX RHQ_MEAS_SCHED_RESID_IDX ON RHQ_MEASUREMENT_SCHED (RESOURCE_ID)
                     </statement>
@@ -3669,7 +3785,7 @@
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL>
+                <schema-directSQL ignoreError="true">
                     <statement desc="Creating unique index on RESOURCE_TYPE_ID and NAME columns">
                         CREATE UNIQUE INDEX RHQ_TYPE_DEF_NAME ON RHQ_DRIFT_DEF_TEMPLATE ( RESOURCE_TYPE_ID, NAME )
                     </statement>

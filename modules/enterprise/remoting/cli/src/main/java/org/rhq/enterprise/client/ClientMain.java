@@ -65,8 +65,6 @@ public class ClientMain {
      */
     private Thread inputLoopThread;
 
-    private BufferedReader inputReader;
-
     // JLine console reader
     private ConsoleReader consoleReader;
 
@@ -114,7 +112,7 @@ public class ClientMain {
 
     private static void initCommands() {
         for (Class<ClientCommand> commandClass : ClientCommand.COMMANDS) {
-            ClientCommand command = null;
+            ClientCommand command;
             try {
                 command = commandClass.newInstance();
                 commands.put(command.getPromptCommandString(), command);
@@ -136,8 +134,7 @@ public class ClientMain {
             this.serviceCompletor.setServices(remoteClient.getManagers());
         }
     }
-    
-    //
+
     public ClientMain() throws Exception {
 
         // this.inputReader = new BufferedReader(new
@@ -167,24 +164,15 @@ public class ClientMain {
         consoleReader.setUsePagination(true);                
     }
 
-    // ?? what is this again? Might be able to remove this.
-    public void start() {
-        outputWriter = new PrintWriter(System.out);
-        // inputReader = new BufferedReader(new InputStreamReader(System.in));
-
-    }
-
     public String getUserInput(String prompt) {
 
         String input_string = "";
-        boolean use_default_prompt = (prompt == null);
 
         while ((input_string != null) && (input_string.trim().length() == 0)) {
             if (prompt == null) {
                 if (!loggedIn()) {
                     prompt = "unconnected$ ";
                 } else {
-                    // prompt = host + ":" + port + "> ";
                     // Modify the prompt to display host:port(logged-in-user)
                     String loggedInUser = "";
                     if ((getSubject() != null) && (getSubject().getName() != null)) {
@@ -197,12 +185,10 @@ public class ClientMain {
                     }
                 }
             }
-            // outputWriter.print(prompt);
 
             try {
                 outputWriter.flush();
                 input_string = consoleReader.readLine(prompt);
-                // inputReader.readLine();
             } catch (Exception e) {
                 input_string = null;
             }
@@ -212,12 +198,6 @@ public class ClientMain {
             // if we are processing a script, show the input that was just read
             if (!stdinInput) {
                 outputWriter.println(input_string);
-            }
-        } else if (!stdinInput) {
-            // if we are processing a script, we hit the EOF, so close the inputstream
-            try {
-                inputReader.close();
-            } catch (IOException e1) {
             }
         }
 
@@ -602,7 +582,7 @@ public class ClientMain {
 
     /**
      * This method allows ClientCommands to insert a small note to be displayed after the command has been executed. A
-     * note can be an indicaiton of a problem that was handled or a note about some option that should be changed.
+     * note can be an indication of a problem that was handled or a note about some option that should be changed.
      *
      * These notes are meant to be terse, and pasted/purged at the end of every command execution.
      *

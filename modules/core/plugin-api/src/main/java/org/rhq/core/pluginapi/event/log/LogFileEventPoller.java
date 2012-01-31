@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,7 @@ public class LogFileEventPoller implements EventPoller {
     private FileInfo logFileInfo;
     private LogEntryProcessor entryProcessor;
     private EventContext eventContext;
+    private boolean initialized;
 
     public LogFileEventPoller(EventContext eventContext, String eventType, File logFile,
         LogEntryProcessor entryProcessor) {
@@ -73,45 +74,54 @@ public class LogFileEventPoller implements EventPoller {
         return this.logFile.getPath();
     }
 
-    // we can't get the FileInfo in the constructor because pollers are constructed during pc initialization, and
-    // at that time the eventManager is not available (and so we can't get sigar). 
-    private FileInfo getFileInfo() {
-        if (null == this.logFileInfo) {
-            try {
-                SigarProxy sigar = eventContext.getSigar();
-                this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
-                // once we have the file info we can let go of the event context, just in case that's useful
-                this.eventContext = null;
-
-            } catch (SigarException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return this.logFileInfo;
-    }
-
     @Nullable
     public Set<Event> poll() {
-
+        if (!this.initialized) {
+            init();
+        }
+        if (this.logFileInfo == null) {
+            // This means SIGAR, which we require, is unavailable, so just return null. 
+            return null;
+        }
+        
         if (!this.logFile.exists()) {
-            log.warn("Log file [" + this.logFile + "' being polled does not exist.");
+            log.warn("Log file [" + this.logFile + "] being polled does not exist.");
             return null;
         }
         if (this.logFile.isDirectory()) {
-            log.error("Log file [" + this.logFile + "' being polled is a directory, not a regular file.");
+            log.error("Log file [" + this.logFile + "] being polled is a directory, not a regular file.");
             return null;
         }
-        FileInfo fileInfo;
-        try {
-            fileInfo = getFileInfo();
-            if (!fileInfo.changed()) {
+        
+        try {            
+            if (!this.logFileInfo.changed()) {
                 return null;
             }
         } catch (SigarException e) {
             throw new RuntimeException(e);
         }
-        return processNewLines(fileInfo);
+        return processNewLines(this.logFileInfo);
+    }
+
+    /**
+     * This performs any initialization that requires using the EventContext. It must *not* be called from our
+     * constructor, because pollers are constructed during PC initialization, and at that time the PC EventManager,
+     * which the EventContext relies on, is not yet available. Instead it is called from {@link #poll()} on the first
+     * invocation of that method, at which point the PC will be initialized.
+     */
+    protected void init() {
+        SigarProxy sigar = this.eventContext.getSigar();
+        if (sigar != null) {
+            try {
+                this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
+            } catch (SigarException e) {
+                throw new RuntimeException("Failed to obtain file info for log file [" + this.logFile + "].", e);
+            }
+        } else {
+            log.warn("SIGAR is unavailable - cannot poll log file [" + this.logFile + "] for events.");
+        }
+
+        this.initialized = true;
     }
 
     private Set<Event> processNewLines(FileInfo fileInfo) {

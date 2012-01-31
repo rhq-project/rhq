@@ -22,6 +22,7 @@
  */
 package org.rhq.core.pluginapi.event;
 
+import com.sun.istack.Nullable;
 import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,10 +91,10 @@ public interface EventContext {
 
     /**
      * Gets an instance of Sigar. Plugins that need to use Sigar, should use this method to get an instance, rather than
-     * instantiating Sigar themselves.
+     * instantiating Sigar themselves. Returns null if the native layer is unavailable or has been disabled.
      *
-     * @return an instance of Sigar
+     * @return an instance of Sigar, or null if the native layer is unavailable or has been disabled
      */
-    @NotNull
+    @Nullable
     SigarProxy getSigar();
 }

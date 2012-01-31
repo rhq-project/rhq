@@ -21,7 +21,6 @@ package org.rhq.enterprise.client.security.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.SerializablePermission;
 import java.security.PermissionCollection;
 import java.util.Collections;
 
@@ -31,7 +30,6 @@ import javax.script.ScriptException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.bindings.SandboxedScriptEngine;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.StandardScriptPermissions;
@@ -179,6 +177,21 @@ public class JndiAccessTest extends AbstractEJB3Test {
         }           
     }
     
+    @Test
+    public void testProxyFactoryWorksWithSecuredScriptEngine() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
+        
+        ScriptEngine engine = getEngine(overlord);
+        
+        try {
+            engine.eval("var resource = ProxyFactory.getResource(10001);");            
+        } catch (ScriptException e) {
+            //if the script fails (there is no resource with ID 10001)
+            //it should not be because of an access control exception
+            checkIsNotASecurityException(e);
+        }
+    }
+        
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
         
@@ -192,5 +205,12 @@ public class JndiAccessTest extends AbstractEJB3Test {
         String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
         
         Assert.assertTrue(message.contains(permissionTrace), "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. " + message);
+    }
+
+    private static void checkIsNotASecurityException(ScriptException e) {
+        String message = e.getMessage();
+        String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
+        
+        Assert.assertFalse(message.contains(permissionTrace), "The script exception does seem to be caused by the AllowRhqServerInternalsAccessPermission security exception although it shouldn't. " + message);
     }
 }

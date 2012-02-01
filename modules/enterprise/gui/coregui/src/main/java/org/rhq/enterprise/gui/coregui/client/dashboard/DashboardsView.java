@@ -247,7 +247,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             public void onCloseClick(final TabCloseClickEvent tabCloseClickEvent) {
                 tabCloseClickEvent.cancel();
                 final DashboardView dashboardView = (DashboardView) tabCloseClickEvent.getTab().getPane();
-                SC.ask(MSG.view_dashboards_confirm1() + " [" + tabCloseClickEvent.getTab().getTitle() + "]?",
+
+                SC.ask(MSG.view_dashboards_confirm1() + " [" + dashboardView.getStoredDashboard().getName()+ "]?",
                     new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {

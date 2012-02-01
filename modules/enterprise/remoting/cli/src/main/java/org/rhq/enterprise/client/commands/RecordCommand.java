@@ -64,7 +64,8 @@ public class RecordCommand implements ClientCommand {
                 new LongOpt("start", LongOpt.OPTIONAL_ARGUMENT, null, 'b'),
                 new LongOpt("end", LongOpt.OPTIONAL_ARGUMENT, null, 'e')
         };
-        Getopt getopt = new Getopt("exec", args, shortOpts, longOpts);
+        Getopt getopt = new Getopt(getPromptCommandString(), args, shortOpts, longOpts);
+        getopt.setOpterr(false);
 
         RecordArgs recordArgs = new RecordArgs();
 
@@ -73,7 +74,7 @@ public class RecordCommand implements ClientCommand {
             switch (code) {
                 case ':':
                 case '?':
-                   throw new IllegalArgumentException("Invalid options");
+                   throw new CommandLineParseException("Invalid option");
                 case 1:
                     break;
                 case 'f':
@@ -128,7 +129,7 @@ public class RecordCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "record [[-b | --start] | [-e | --end]] [-a | --append] -f <file>";
+        return getPromptCommandString() + " [[-b | --start] | [-e | --end]] [-a | --append] -f <file>";
     }
 
     public String getHelp() {

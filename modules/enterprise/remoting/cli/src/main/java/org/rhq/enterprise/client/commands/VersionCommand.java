@@ -25,6 +25,7 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.Version;
+import org.rhq.enterprise.client.script.CommandLineParseException;
 
 /**
  * Command to show the user the version information of the CLI.
@@ -68,7 +69,8 @@ public class VersionCommand implements ClientCommand {
         LongOpt[] longOpts = {
             new LongOpt("verbose", LongOpt.OPTIONAL_ARGUMENT, null, 'v')
         };
-        Getopt getopt = new Getopt("exec", args, shortOpts, longOpts);
+        Getopt getopt = new Getopt(getPromptCommandString(), args, shortOpts, longOpts);
+        getopt.setOpterr(false);
 
         VersionArgs versionArgs = new VersionArgs();
 
@@ -76,7 +78,7 @@ public class VersionCommand implements ClientCommand {
         while (code != -1) {
             switch (code) {
                 case ':':
-                    throw new IllegalArgumentException("Illegal option.");
+                    throw new CommandLineParseException("Invalid option");
                 case 'v':
                     versionArgs.verbose = true;
                     break;

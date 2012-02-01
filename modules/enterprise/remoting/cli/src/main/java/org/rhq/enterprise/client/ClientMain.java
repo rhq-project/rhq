@@ -45,6 +45,7 @@ import mazz.i18n.Msg;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.clientapi.RemoteClient;
 
 /**
@@ -273,14 +274,8 @@ public class ClientMain {
             ClientCommand command = commands.get(cmd);
 
             if (shouldDisplayHelp(args)) {
-                outputWriter.println("syntax: " + command.getSyntax());
-                outputWriter.println("description: " + command.getHelp() + "\n");
-                return true;
-            }
-
-            if (shouldDisplayDetailedHelp(args)) {
-                outputWriter.println("syntax: " + command.getSyntax());
-                outputWriter.println("description: " + command.getDetailedHelp() + "\n");
+                outputWriter.println("Usage: " + command.getSyntax());
+                outputWriter.println(command.getDetailedHelp());
                 return true;
             }
 
@@ -289,9 +284,12 @@ public class ClientMain {
                 processNotes(outputWriter);
                 outputWriter.println("");
                 return response;
+            } catch (CommandLineParseException e) {
+                outputWriter.println(command.getPromptCommandString() + ": " + e.getMessage());
+                outputWriter.println("Usage: " + command.getSyntax());
             } catch (ArrayIndexOutOfBoundsException e) {
-                outputWriter.println("An incorrect number of arguments was specified.");
-                outputWriter.println("Expected syntax: " + command.getSyntax());
+                outputWriter.println(command.getPromptCommandString() + ": An incorrect number of arguments was specified.");
+                outputWriter.println("Usage: " + command.getSyntax());
             }
         } else {
             boolean result = commands.get("exec").execute(this, args);
@@ -309,15 +307,7 @@ public class ClientMain {
             return false;
         }
 
-        return args[1].equals("-h");
-    }
-
-    private boolean shouldDisplayDetailedHelp(String[] args) {
-        if (args.length < 2) {
-            return false;
-        }
-
-        return args[1].equals("--help");
+        return args[1].equals("-h") || args[1].equals("--help");
     }
 
     /**
@@ -585,8 +575,8 @@ public class ClientMain {
      *
      * These notes are meant to be terse, and pasted/purged at the end of every command execution.
      *
-     * @param note
-     *            String. Ex."There were errors retrieving some data from the server objects. See System Admin."
+     * @param note the note to be displayed, e.g. "There were errors retrieving some data from the server objects. See
+     *             System Admin."
      */
     public void addMenuNote(String note) {
         if ((note != null) && (note.trim().length() > 0)) {

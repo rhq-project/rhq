@@ -55,9 +55,10 @@ public class HelpCommand implements ClientCommand {
                 data[i][0] = name;
                 data[i++][1] = command.getHelp();
             }
+
             TabularWriter tw = new TabularWriter(client.getPrintWriter(), "Command", "Description");
             tw.setWidth(client.getConsoleWidth());
-
+            tw.setHideRowCount(true);
             tw.print(data);
         } else if ("api".equals(args[1])) {
             Map<String, Object> services = client.getRemoteClient().getManagers();
@@ -131,18 +132,18 @@ public class HelpCommand implements ClientCommand {
                     tw.print(data);
                 } else {
                     client.getPrintWriter().println(
-                            "Unknown service [" + args[2] + "] try 'help api' for a listing of services");
+                            "Unknown service [" + args[2] + "] - try 'help api' for a listing of services");
                 }
 
             }
         } else {
-            ClientCommand cmd = commands.get(args[1]);
-            if (cmd == null) {
-                client.getPrintWriter().println("Uknown command [" + args[1] + "]");
+            String commandName = args[1];
+            ClientCommand command = commands.get(commandName);
+            if (command == null) {
+                client.getPrintWriter().println(getPromptCommandString() + ": Unknown command: " + commandName);
             } else {
-                client.getPrintWriter().println("Help [" + args[1] + "]");
-                client.getPrintWriter().println("Syntax [" + cmd.getSyntax() + "]");
-                client.getPrintWriter().println(cmd.getDetailedHelp());
+                client.getPrintWriter().println("Usage: " + command.getSyntax());
+                client.getPrintWriter().println(command.getDetailedHelp());
             }
         }
 
@@ -150,16 +151,16 @@ public class HelpCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "help [command] | [api [service]]";
+        return getPromptCommandString() + " [command] | [api [service]]";
     }
 
     public String getHelp() {
-        return "Help on the client and its commands";
+        return "Display help on CLI commands or services";
     }
 
     public String getDetailedHelp() {
-        return "Use help [command] to get detailed help\n"
-                + "help api will return the list of service apis available for script execs\n"
-                + "help api [service] will display the methods and signatures of a specific api";
+        return "Use \"help [command]\" to get detailed help for a command\n"
+                + "\"help api\" will return the list of service APIs available for script execs\n"
+                + "\"help api [service]\" will list the methods provided by the specified service API";
     }
 }

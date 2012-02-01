@@ -64,6 +64,7 @@ public class TabularWriter {
     private CSVWriter csvWriter;
     private SummaryFilter summaryFilter = new SummaryFilter();
     boolean exportMode;
+    boolean hideRowCount;
 
     static Set<String> IGNORED_PROPS = new HashSet<String>();
 
@@ -113,6 +114,10 @@ public class TabularWriter {
         if (CSV.equals(format)) {
             csvWriter = new CSVWriter(out);
         }
+    }
+
+    public void setHideRowCount(boolean hideRowCount) {
+        this.hideRowCount = hideRowCount;
     }
 
     public void print(Object object) {
@@ -305,15 +310,18 @@ public class TabularWriter {
 
     public void print(Collection list) {
         // List of arbitrary objects
-        if (list == null || list.size() == 0)
-            out.println("no data");
-        else if (list.size() == 1 && !CSV.equals(format)) {
-            out.println("one row");
+        if (list == null || list.size() == 0) {
+            if (!hideRowCount) {
+                out.println("0 rows");
+            }
+        } else if (list.size() == 1 && !CSV.equals(format)) {
+            if (!hideRowCount) {
+                out.println("one row");
+            }
 
             print(list.iterator().next());
         } else {
-
-            String[][] data = null;
+            String[][] data;
 
             if (!allOneType(list)) {
                 printStrings(list);
@@ -550,7 +558,9 @@ public class TabularWriter {
 
     public void print(Object[] data) {
         if (data == null || data.length == 0) {
-            out.println("0 rows");
+            if (!hideRowCount) {
+                out.println("0 rows");
+            }
             return;
         }
         out.println("Array of " + (data.getClass().getComponentType().getName()));
@@ -592,7 +602,9 @@ public class TabularWriter {
     public void print(String[][] data) {
 
         if (data == null || data.length == 0) {
-            out.println("0 rows");
+            if (!hideRowCount) {
+                out.println("0 rows");
+            }
             return;
         }
 
@@ -661,7 +673,9 @@ public class TabularWriter {
             }
         }
 
-        out.print(data.length + " rows\n");
+        if (!hideRowCount) {
+            out.print(data.length + " rows\n");
+        }
     }
 
     private void printSpaced(PrintWriter out, String data, int length) {

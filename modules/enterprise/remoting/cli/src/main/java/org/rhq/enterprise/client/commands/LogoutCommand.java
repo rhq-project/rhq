@@ -48,11 +48,11 @@ public class LogoutCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "logout";
+        return getPromptCommandString();
     }
 
     public String getHelp() {
-        return "Logout and disconnect from the server but does not exit the CLI interpreter";
+        return "Logout and disconnect from the server but do not exit the CLI";
     }
 
     public String getDetailedHelp() {

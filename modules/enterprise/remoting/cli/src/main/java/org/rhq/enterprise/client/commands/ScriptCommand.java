@@ -274,7 +274,7 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "exec <statement> | [-s<indexed|named>] -f <file> [args]";
+        return getPromptCommandString() + " <statement> | [-s<indexed|named>] -f <file> [args]";
     }
 
     public String getHelp() {
@@ -282,8 +282,8 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return "Execute a statement or a script. The following services managers are available: "
-            + RhqManagers.values();
+        return "Execute a statement or a script. The following service managers are available: "
+            + Arrays.toString(RhqManagers.values());
     }
 
     public ScriptContext getContext() {

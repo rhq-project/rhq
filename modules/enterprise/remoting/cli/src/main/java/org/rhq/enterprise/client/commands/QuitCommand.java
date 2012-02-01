@@ -19,7 +19,6 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle

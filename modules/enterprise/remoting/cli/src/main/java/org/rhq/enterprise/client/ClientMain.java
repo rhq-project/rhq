@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,7 @@ public class ClientMain {
     private String user;
     private String pass;
     private ArrayList<String> notes = new ArrayList<String>();
+    private boolean showDetailedVersion;    
 
     // reference to the webservice reference factory
     private RemoteClient remoteClient;
@@ -403,7 +404,7 @@ public class ClientMain {
     }
 
     private void displayUsage() {
-        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-f file]|[-c command]");
+        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-v] [-f file]|[-c command]");
     }
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
@@ -478,10 +479,10 @@ public class ClientMain {
                     setHost(getopt.getOptarg());
                     break;
                 }
-            case 'r': {
-                setTransport(getopt.getOptarg());
-                break;
-            }
+                case 'r': {
+                    setTransport(getopt.getOptarg());
+                    break;
+                }
                 case 't': {
                     String portArg = getopt.getOptarg();
                     try {
@@ -492,15 +493,20 @@ public class ClientMain {
                     break;
                 }
                 case 'v': {
-                    String versionString = Version.getProductNameAndVersionBuildInfo();
-                    outputWriter.println(versionString);
+                    showDetailedVersion = true;
                     break;
                 }
             }
         }
 
         if (interactiveMode) {
-            outputWriter.println(Version.getProductNameAndVersion());
+            String version = (showDetailedVersion) ? Version.getProductNameAndVersionBuildInfo() :
+                Version.getProductNameAndVersion();
+            outputWriter.println(version);
+            if (showDetailedVersion && args.length == 1) {
+                // If -v was the only option specified, exit after printing the version.
+                System.exit(0);
+            }
         }
 
         if (user != null && pass != null) {
@@ -516,7 +522,7 @@ public class ClientMain {
         }
 
         if (!interactiveMode) {
-            commands.get("exec").execute(this, execCmdLine.toArray(new String[] {}));
+            commands.get("exec").execute(this, execCmdLine.toArray(new String[execCmdLine.size()]));
         }
     }
 

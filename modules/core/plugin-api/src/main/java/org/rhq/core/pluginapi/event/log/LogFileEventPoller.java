@@ -1,6 +1,6 @@
- /*
+/*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2012 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -46,24 +46,21 @@ import org.rhq.core.pluginapi.event.EventPoller;
  *
  * @author Ian Springer
  */
-public class LogFileEventPoller implements EventPoller {    
+public class LogFileEventPoller implements EventPoller {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private String eventType;
     private File logFile;
     private FileInfo logFileInfo;
     private LogEntryProcessor entryProcessor;
+    private EventContext eventContext;
 
-    public LogFileEventPoller(EventContext eventContext, String eventType, File logFile, LogEntryProcessor entryProcessor) {
+    public LogFileEventPoller(EventContext eventContext, String eventType, File logFile,
+        LogEntryProcessor entryProcessor) {
         this.eventType = eventType;
         this.logFile = logFile;
-        SigarProxy sigar = eventContext.getSigar();
-        try {
-            this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
-        } catch (SigarException e) {
-            throw new RuntimeException(e);
-        }
         this.entryProcessor = entryProcessor;
+        this.eventContext = eventContext;
     }
 
     @NotNull
@@ -76,33 +73,53 @@ public class LogFileEventPoller implements EventPoller {
         return this.logFile.getPath();
     }
 
+    // we can't get the FileInfo in the constructor because pollers are constructed during pc initialization, and
+    // at that time the eventManager is not available (and so we can't get sigar). 
+    private FileInfo getFileInfo() {
+        if (null == this.logFileInfo) {
+            try {
+                SigarProxy sigar = eventContext.getSigar();
+                this.logFileInfo = new LogFileInfo(sigar.getFileInfo(logFile.getPath()));
+                // once we have the file info we can let go of the event context, just in case that's useful
+                this.eventContext = null;
+
+            } catch (SigarException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return this.logFileInfo;
+    }
+
     @Nullable
     public Set<Event> poll() {
         if (!this.logFile.exists()) {
-            log.warn("Log file [" + this.logFile + "' being polled does not exist.");
+            log.warn("Log file [" + this.logFile + "] being polled does not exist.");
             return null;
         }
         if (this.logFile.isDirectory()) {
-            log.error("Log file [" + this.logFile + "' being polled is a directory, not a regular file.");
+            log.error("Log file [" + this.logFile + "] being polled is a directory, not a regular file.");
             return null;
         }
+        FileInfo fileInfo;
         try {
-            if (!this.logFileInfo.changed()) {
+            fileInfo = getFileInfo();
+            if (!fileInfo.changed()) {
                 return null;
             }
         } catch (SigarException e) {
             throw new RuntimeException(e);
         }
-        return processNewLines();
+        return processNewLines(fileInfo);
     }
 
-    private Set<Event> processNewLines() {
+    private Set<Event> processNewLines(FileInfo fileInfo) {
         Set<Event> events = null;
         Reader reader = null;
         try {
             reader = new FileReader(this.logFile);
 
-            long offset = getOffset();
+            long offset = getOffset(fileInfo);
 
             if (offset > 0) {
                 reader.skip(offset);
@@ -123,24 +140,24 @@ public class LogFileEventPoller implements EventPoller {
         return events;
     }
 
-    private long getOffset() {
-        FileInfo previousFileInfo = this.logFileInfo.getPreviousInfo();
+    private long getOffset(FileInfo fileInfo) {
+        FileInfo previousFileInfo = fileInfo.getPreviousInfo();
 
         if (previousFileInfo == null) {
             if (log.isDebugEnabled()) {
                 log.debug(this.logFile + ": first stat");
             }
-            return this.logFileInfo.getSize();
+            return fileInfo.getSize();
         }
 
-        if (this.logFileInfo.getInode() != previousFileInfo.getInode()) {
+        if (fileInfo.getInode() != previousFileInfo.getInode()) {
             if (log.isDebugEnabled()) {
                 log.debug(this.logFile + ": file inode changed");
             }
             return -1;
         }
 
-        if (this.logFileInfo.getSize() < previousFileInfo.getSize()) {
+        if (fileInfo.getSize() < previousFileInfo.getSize()) {
             if (log.isDebugEnabled()) {
                 log.debug(this.logFile + ": file truncated");
             }
@@ -148,7 +165,7 @@ public class LogFileEventPoller implements EventPoller {
         }
 
         if (log.isDebugEnabled()) {
-            long diff = this.logFileInfo.getSize() - previousFileInfo.getSize();
+            long diff = fileInfo.getSize() - previousFileInfo.getSize();
             log.debug(this.logFile + ": " + diff + " new bytes");
         }
 

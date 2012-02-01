@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
@@ -29,10 +28,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -46,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class RolesView extends TableSection<RolesDataSource> implements BookmarkableView {
+public class RolesView extends TableSection<RolesDataSource> {
 
     public static final ViewName VIEW_ID = new ViewName("Roles", MSG.common_title_roles());
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
@@ -55,22 +51,18 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     private static final String HEADER_ICON = "global/Role_24.png";
 
     private boolean hasManageSecurity;
-    private boolean initialized;
 
-    public RolesView(String locatorId) {
+    public RolesView(String locatorId, boolean hasManageSecurity) {
         super(locatorId, MSG.common_title_roles());
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
         setEscapeHtmlInDetailsLinkColumn(true);
+        
+        this.hasManageSecurity = hasManageSecurity;
     }
-
-    @Override
-    protected void onDraw() {
-        fetchManageSecurityPermissionAsync();
-    }
-
+    
     @Override
     protected void configureTable() {
         updateSelectionStyle();
@@ -156,31 +148,12 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         };
     }
 
-    private void fetchManageSecurityPermissionAsync() {
-        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> permissions) {
-                if (permissions != null) {
-                    hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
-                    refreshTableInfo();
-                } else {
-                    hasManageSecurity = false;
-                }
-                if (!initialized) {
-                    RolesView.super.onDraw();
-                }
-                initialized = true;
-            }
-        });
-    }
-
     private void updateSelectionStyle() {
-        if (initialized) {
-            if (!hasManageSecurity) {
-                getListGrid().deselectAllRecords();
-            }
-            SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
-            getListGrid().setSelectionType(selectionStyle);
+        if (!hasManageSecurity) {
+            getListGrid().deselectAllRecords();
         }
+        SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
+        getListGrid().setSelectionType(selectionStyle);
     }
 
     @Override

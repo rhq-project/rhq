@@ -14,14 +14,8 @@
     <name>RHQ Database Utilities</name>
     <description>Database schema setup, upgrade and other utilities</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/dbutils</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/dbutils</developerConnection>
-    </scm>
-
     <properties>
-        <scm.module.path>modules/core/dbutils/</scm.module.path>
-        <db.schema.version>2.116</db.schema.version>
+        <db.schema.version>2.118</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>

@@ -93,7 +93,10 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleVersion_24.png"), version.getName() + ": "
             + version.getVersion()));
 
-        addMember(createTagEditor());
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            addMember(createTagEditor());
+        }
 
         addMember(createSummaryForm());
 
@@ -268,16 +271,17 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
         criteria.fetchConfigurationDefinition(true);
         criteria.fetchTags(true);
 
-        bundleManager.findBundleVersionsByCriteriaWithDestinationFilter(criteria, new AsyncCallback<PageList<BundleVersion>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
-            }
+        bundleManager.findBundleVersionsByCriteriaWithDestinationFilter(criteria,
+            new AsyncCallback<PageList<BundleVersion>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
+                }
 
-            public void onSuccess(PageList<BundleVersion> result) {
-                BundleVersion version = result.get(0);
-                ViewId nextPath = viewPath.next().getCurrent();
-                viewBundleVersion(version, nextPath);
-            }
-        });
+                public void onSuccess(PageList<BundleVersion> result) {
+                    BundleVersion version = result.get(0);
+                    ViewId nextPath = viewPath.next().getCurrent();
+                    viewBundleVersion(version, nextPath);
+                }
+            });
     }
 }

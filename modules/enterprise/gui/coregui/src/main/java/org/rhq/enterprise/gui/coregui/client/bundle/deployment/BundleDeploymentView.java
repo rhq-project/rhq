@@ -124,7 +124,11 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             + deployment.getDestination().getName(), LinkManager.getBundleDestinationLink(version.getBundle().getId(),
             deployment.getDestination().getId())));
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
-        addMember(createTagEditor());
+
+        //conditionally add tags. Defaults to true, not available in JON builds.
+        if (CoreGUI.isTagsEnabledForUI()) {
+            addMember(createTagEditor());
+        }
         addMember(createSummaryForm());
         addMemberDeploymentsTable();
 
@@ -219,8 +223,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         // deployment represents content on the remote machines, showing purge only for live
         // deployments makes sense).
         if (deployment.isLive()) {
-            IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG
-                .view_bundle_revert());
+            IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"),
+                MSG.view_bundle_revert());
             revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
             revertButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
@@ -252,8 +256,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                                             new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
                                                 Message.Severity.Info));
                                         // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
-                                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(bundle.getId(), deployment
-                                            .getId()), true);
+                                        CoreGUI.goToView(
+                                            LinkManager.getBundleDeploymentLink(bundle.getId(), deployment.getId()),
+                                            true);
                                     }
                                 });
                             }

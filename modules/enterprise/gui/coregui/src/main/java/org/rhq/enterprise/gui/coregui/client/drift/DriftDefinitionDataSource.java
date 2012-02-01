@@ -198,6 +198,9 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         templateField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 DriftDefinition def = (DriftDefinition) listGridRecord.getAttributeAsObject(ATTR_ENTITY);
+                if (null == def.getTemplate()) {
+                    return MSG.common_val_none();
+                }
                 if (null != globalPermissions && globalPermissions.contains(Permission.MANAGE_SETTINGS)) {
                     int typeId = def.getResource().getResourceType().getId();
                     int templateId = def.getTemplate().getId();
@@ -422,7 +425,11 @@ public class DriftDefinitionDataSource extends RPCDataSource<DriftDefinitionComp
         record.setAttribute(ATTR_IS_PINNED, def.isPinned() ? ImageManager.getPinnedIcon() : ImageManager
             .getUnpinnedIcon());
         record.setAttribute(ATTR_ATTACHED, def.isAttached() ? MSG.common_val_yes() : MSG.common_val_no());
-        record.setAttribute(ATTR_TEMPLATE, def.getTemplate().getName());
+        if (def.getTemplate() != null) {
+            record.setAttribute(ATTR_TEMPLATE, def.getTemplate().getName());
+        } else {
+            record.setAttribute(ATTR_TEMPLATE, MSG.common_val_none());
+        }
 
         record.setAttribute(ATTR_CHANGE_SET_VERSION, (null != changeSet) ? String.valueOf(changeSet.getVersion()) : MSG
             .common_label_none());

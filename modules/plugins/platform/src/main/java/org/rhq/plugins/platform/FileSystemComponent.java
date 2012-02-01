@@ -1,6 +1,6 @@
- /*
+/*
   * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2011 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -39,12 +38,15 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ObjectUtil;
 import org.rhq.core.system.FileSystemInfo;
+import org.rhq.core.system.SystemInfo;
 
-/**
+ /**
  * @author Greg Hinkle
  */
 public class FileSystemComponent implements ResourceComponent<PlatformComponent>, MeasurementFacet {
+
     private static final Log LOG = LogFactory.getLog(FileSystemComponent.class);
+
     private ResourceContext<PlatformComponent> resourceContext;
 
     public void start(ResourceContext<PlatformComponent> resourceContext) throws InvalidPluginConfigurationException,
@@ -65,26 +67,32 @@ public class FileSystemComponent implements ResourceComponent<PlatformComponent>
         }
     }
 
-    private FileSystemInfo getFileSystemInfo() {
-        return resourceContext.getSystemInformation().getFileSystem(resourceContext.getResourceKey());
-    }
-
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         FileSystemInfo fileSystemInfo = getFileSystemInfo();
-        fileSystemInfo.refresh();
-        for (MeasurementScheduleRequest request : metrics) {
+        for (MeasurementScheduleRequest request : requests) {
             try {
-                if (request.getDataType() == DataType.TRAIT) {
-                    Object value = ObjectUtil.lookupDeepAttributeProperty(fileSystemInfo, request.getName());
-                    report.addData(new MeasurementDataTrait(request, String.valueOf(value)));
-                } else if (request.getDataType() == DataType.MEASUREMENT) {
-                    report.addData(new MeasurementDataNumeric(request, ObjectUtil.lookupDeepNumericAttributeProperty(
-                        fileSystemInfo, request.getName())));
+                switch (request.getDataType()) {
+                    case TRAIT:
+                        Object object = ObjectUtil.lookupDeepAttributeProperty(fileSystemInfo, request.getName());
+                        report.addData(new MeasurementDataTrait(request, String.valueOf(object)));
+                        break;
+                    case MEASUREMENT:
+                        Double value = ObjectUtil.lookupDeepNumericAttributeProperty(fileSystemInfo, request.getName());
+                        report.addData(new MeasurementDataNumeric(request, value));
+                        break;
+                    default:
+                        throw new IllegalStateException("Unsupported metric type: " + request.getDataType());
                 }
             } catch (Exception e) {
-                LOG.info("Unable to collection file system metric [" + request.getName() + "] on resource "
-                    + this.resourceContext.getResourceKey(), e);
+                LOG.info("Unable to collect metric [" + request.getName() + "] on filesystem resource ["
+                    + this.resourceContext.getResourceKey() + "].", e);
             }
         }
     }
+
+    private FileSystemInfo getFileSystemInfo() {
+        SystemInfo systemInfo = resourceContext.getSystemInformation();
+        return systemInfo.getFileSystem(resourceContext.getResourceKey());
+    }
+
 }

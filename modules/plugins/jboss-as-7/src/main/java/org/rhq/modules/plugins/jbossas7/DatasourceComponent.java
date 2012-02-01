@@ -10,6 +10,8 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -21,7 +23,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Handle JDBC-driver related stuff
  * @author Heiko W. Rupp
  */
-public class DatasourceComponent extends BaseComponent implements OperationFacet {
+public class DatasourceComponent extends BaseComponent implements OperationFacet, ConfigurationFacet {
 
     private static final String NOTSET = "-notset-";
     private final Log log = LogFactory.getLog(DatasourceComponent.class);
@@ -142,5 +144,23 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
 
     void addOptionalToOp(Operation op, Configuration parameters, String property) {
         addAdditionalToOp(op,parameters,property,true);
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+
+        Operation op = new Operation("disable",getAddress());
+        Result res = getASConnection().execute(op);
+        if (!res.isSuccess()) {
+            report.setErrorMessage("Was not able to disable the datasource for config changes");
+            return;
+        }
+
+
+        super.updateResourceConfiguration(report);    // TODO: Customise this generated block
+
+        op = new Operation("enable",getAddress());
+        res = getASConnection().execute(op);
+
     }
 }

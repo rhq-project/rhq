@@ -26,8 +26,6 @@ import java.util.Map;
 
 import javax.persistence.EntityManager;
 
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -48,6 +46,7 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -70,6 +69,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
  * Tests the configuration manager.
  */
 @Test
+@SuppressWarnings("all")
 public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     private static final boolean ENABLE_TESTS = true;
 
@@ -97,21 +97,16 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configurationManager = LookupUtil.getConfigurationManager();
         resourceManager = LookupUtil.getResourceManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
-
-        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
-        TestServices testServices = new TestServices();
-        agentServiceContainer.configurationService = testServices;
-        agentServiceContainer.discoveryService = testServices;
-    }
-
-    @AfterClass
-    public void afterClass() throws Exception {
-        unprepareForTestAgents();
     }
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
         prepareScheduler();
+
+        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
+        TestServices testServices = new TestServices();
+        agentServiceContainer.configurationService = testServices;
+        agentServiceContainer.discoveryService = testServices;
 
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -119,10 +114,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             compatibleGroup = SessionTestHelper.createNewCompatibleGroupForRole(em, null, // no role necessary here
                 "compat");
 
-            newResource1 = SessionTestHelper.createNewResourceForGroup(em, compatibleGroup, "res"
-                + System.currentTimeMillis());
-            newResource2 = SessionTestHelper.createNewResourceForGroup(em, compatibleGroup, "res"
-                + System.currentTimeMillis());
+            newResource1 = SessionTestHelper.createNewResourceForGroup(em, compatibleGroup,
+                "res" + System.currentTimeMillis());
+            newResource2 = SessionTestHelper.createNewResourceForGroup(em, compatibleGroup,
+                "res" + System.currentTimeMillis());
 
             // set one resource as the child of another, so that they don't both look like platforms under the agent
             newResource1.addChildResource(newResource2);
@@ -145,7 +140,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void afterMethod() throws Exception {
         try {
             // perform in-band and out-of-band work in quick succession
@@ -202,6 +197,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         } finally {
             unprepareScheduler();
+            unprepareForTestAgents();
         }
     }
 
@@ -425,18 +421,18 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             configuration2.put(new PropertySimple("fail", "false"));
 
             /* begin simple checks */
-            PluginConfigurationUpdate update1 = configurationManager.updatePluginConfiguration(overlord, resource1
-                .getId(), configuration1);
+            PluginConfigurationUpdate update1 = configurationManager.updatePluginConfiguration(overlord,
+                resource1.getId(), configuration1);
             assert update1.getErrorMessage() == null : "We weren't expecting a failure here";
 
-            PluginConfigurationUpdate update2 = configurationManager.updatePluginConfiguration(overlord, resource2
-                .getId(), configuration2);
+            PluginConfigurationUpdate update2 = configurationManager.updatePluginConfiguration(overlord,
+                resource2.getId(), configuration2);
             assert update2.getErrorMessage() == null : "We weren't expecting a failure here";
 
-            Configuration updatedConfiguration1 = configurationManager.getPluginConfiguration(overlord, resource1
-                .getId());
-            Configuration updatedConfiguration2 = configurationManager.getPluginConfiguration(overlord, resource2
-                .getId());
+            Configuration updatedConfiguration1 = configurationManager.getPluginConfiguration(overlord,
+                resource1.getId());
+            Configuration updatedConfiguration2 = configurationManager.getPluginConfiguration(overlord,
+                resource2.getId());
 
             assert updatedConfiguration1.equals(configuration1) : "configuration1 was: " + updatedConfiguration1 + ", "
                 + "expected was: " + configuration1;
@@ -487,8 +483,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             Map<Integer, Configuration> memberConfigs = new HashMap<Integer, Configuration>();
             memberConfigs.put(resource1.getId(), configuration1);
             memberConfigs.put(resource2.getId(), configuration2);
-            int groupUpdateId = configurationManager.scheduleGroupPluginConfigurationUpdate(overlord, compatibleGroup
-                .getId(), memberConfigs);
+            int groupUpdateId = configurationManager.scheduleGroupPluginConfigurationUpdate(overlord,
+                compatibleGroup.getId(), memberConfigs);
 
             // instead of sleeping, let's directly execute what would normally be scheduled
             //configurationManager.completeGroupPluginConfigurationUpdate(groupUpdateId);
@@ -713,8 +709,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         criteria.addFilterResourceIds(resource.getId());
         criteria.fetchConfiguration(true);
         criteria.addSortCreatedTime(PageOrdering.ASC);
-        List<ResourceConfigurationUpdate> history =
-                configurationManager.findResourceConfigurationUpdatesByCriteria(overlord, criteria);
+        List<ResourceConfigurationUpdate> history = configurationManager.findResourceConfigurationUpdatesByCriteria(
+            overlord, criteria);
         assert history != null;
         assert history.size() == 3;
 
@@ -1011,8 +1007,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                         } else {
                             mybool.setErrorMessage(ThrowableUtil.getStackAsString(new IllegalArgumentException(
                                 "Not a valid boolean")));
-                            response = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(), request
-                                .getConfiguration(), new NullPointerException("This simulates a failed update"));
+                            response = new ConfigurationUpdateResponse(request.getConfigurationUpdateId(),
+                                request.getConfiguration(), new NullPointerException("This simulates a failed update"));
                         }
 
                         LookupUtil.getConfigurationManager().completeResourceConfigurationUpdate(response);

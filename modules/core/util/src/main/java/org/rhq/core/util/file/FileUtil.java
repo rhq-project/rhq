@@ -33,6 +33,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -100,6 +101,77 @@ public class FileUtil {
         BufferedInputStream is = new BufferedInputStream(new FileInputStream(inFile));
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(outFile));
         StreamUtil.copy(is, os);
+    }
+
+    public static void copyDirectory(File inDir, File outDir) throws IOException {
+        if (inDir.exists()) {
+            if (!inDir.isDirectory()) {
+                throw new IOException("Source directory [" + inDir + "] is not a directory");
+            }
+        } else {
+            throw new FileNotFoundException("Source directory [" + inDir + "] does not exist");
+        }
+
+        if (!outDir.mkdirs()) {
+            throw new IOException("Destination directory [" + outDir + "] failed to be created");
+        }
+
+        if (!canWrite(outDir)) {
+            throw new IOException("Cannot write to destination directory [" + outDir + "]");
+        }
+
+        // TODO do we care to restore the last mod time on the destination dir?
+        //outDir.setLastModified(inDir.lastModified());
+
+        File[] files = inDir.listFiles();
+        if (files == null) {
+            throw new IOException("Failed to get the list of files in source directory [" + inDir + "]");
+        }
+        for (File file : files) {
+            File copiedFile = new File(outDir, file.getName());
+            if (file.isDirectory()) {
+                copyDirectory(file, copiedFile);
+            } else {
+                copyFile(file, copiedFile);
+            }
+        }
+
+        files = null; // help GC
+        return;
+    }
+
+    /**
+     * Obtains the list of all files in the given directory and, recursively, all its subdirectories.
+     * Note that the returns list is only regular files - directory names are NOT in the list. Also,
+     * the names in the list are relative to the given directory.
+     * @param directory the directory whose files are to be returned
+     * @return list of files in the directory, not sorted in any particular order
+     * @throws IOException if directory does not exist or is not a directory 
+     */
+    public static List<File> getDirectoryFiles(File directory) throws IOException {
+        ArrayList<File> files = new ArrayList<File>();
+        if (!directory.isDirectory()) {
+            throw new IOException("[" + directory + "] is not an existing directory");
+        }
+        getDirectoryFilesRecursive(directory, files, null);
+        return files;
+    }
+
+    private static void getDirectoryFilesRecursive(File directory, List<File> files, String relativeTo)
+        throws IOException {
+        File[] children = directory.listFiles();
+        if (children == null) {
+            throw new IOException("Cannot obtain files from directory [" + directory + "]");
+        }
+        for (File child : children) {
+            if (child.isDirectory()) {
+                getDirectoryFilesRecursive(child, files, ((relativeTo == null) ? "" : relativeTo) + child.getName()
+                    + File.separatorChar);
+            } else {
+                files.add(new File(relativeTo, child.getName()));
+            }
+        }
+        return;
     }
 
     /**

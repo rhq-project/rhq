@@ -312,10 +312,10 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
         categories.put(DriftCategory.FILE_REMOVED.name(), MSG.view_drift_category_fileRemoved());
         LinkedHashMap<String, String> categoryIcons = new LinkedHashMap<String, String>(3);
         categoryIcons.put(DriftCategory.FILE_ADDED.name(), ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED));
-        categoryIcons.put(DriftCategory.FILE_CHANGED.name(), ImageManager
-            .getDriftCategoryIcon(DriftCategory.FILE_CHANGED));
-        categoryIcons.put(DriftCategory.FILE_REMOVED.name(), ImageManager
-            .getDriftCategoryIcon(DriftCategory.FILE_REMOVED));
+        categoryIcons.put(DriftCategory.FILE_CHANGED.name(),
+            ImageManager.getDriftCategoryIcon(DriftCategory.FILE_CHANGED));
+        categoryIcons.put(DriftCategory.FILE_REMOVED.name(),
+            ImageManager.getDriftCategoryIcon(DriftCategory.FILE_REMOVED));
 
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
@@ -354,10 +354,12 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
     @Override
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isEnd() && !viewPath.isNextEnd()) {
-            this.useDriftDetailsView = !viewPath.isNextEnd() && "Drift".equals(viewPath.getNext().getPath());
+            String detail = viewPath.getNext().getPath();
+            if ("Drift".equals(detail) || "Snapshot".equals(detail)) {
+                this.useDriftDetailsView = !viewPath.isNextEnd() && "Drift".equals(viewPath.getNext().getPath());
+                super.renderView(viewPath);
+            }
         }
-
-        super.renderView(viewPath);
     }
 
     @Override
@@ -366,7 +368,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
             return new DriftDetailsView(extendLocatorId("Drift"), id);
         }
 
-        return new DriftSnapshotView(extendLocatorId("Snapshot"), null, context.getResourceId(), driftDefId, Integer
-            .valueOf(id), hasWriteAccess);
+        return new DriftSnapshotView(extendLocatorId("Snapshot"), null, context.getResourceId(), driftDefId,
+            Integer.valueOf(id), hasWriteAccess);
     }
 }

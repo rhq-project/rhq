@@ -36,6 +36,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     private static final long serialVersionUID = 1L;
 
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+    private Object subjectLock = new Object(); // used to lock out concurrent subject updates
 
     public void createPrincipal(String username, String password) throws RuntimeException {
         try {
@@ -57,7 +58,7 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
     public Subject createSubject(Subject subjectToCreate, String password) throws RuntimeException {
         try {
             return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate, password),
-                "SubjectManager.createSubject");
+                "SubjectManager.createSubjectPW");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -89,8 +90,12 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     public Subject updateSubject(Subject subjectToModify) throws RuntimeException {
         try {
-            Subject subject = SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
-                    "SubjectManager.updateSubject");
+            Subject sessionSubject = getSessionSubject();
+            Subject modifiedSubject;
+            synchronized (subjectLock) {
+                modifiedSubject = subjectManager.updateSubject(sessionSubject, subjectToModify);
+            }
+            Subject subject = SerialUtility.prepare(modifiedSubject, "SubjectManager.updateSubject");
             // Clear the prefs for this subject from the user prefs cache that portal-war uses, in case we just
             // changed any prefs; otherwise the cache would contain stale prefs.
             SubjectPreferencesCache.getInstance().clearConfiguration(subject.getId());
@@ -102,8 +107,16 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     public Subject updateSubject(Subject subjectToModify, String newPassword) throws RuntimeException {
         try {
-            return SerialUtility.prepare(subjectManager
-                .updateSubject(getSessionSubject(), subjectToModify, newPassword), "SubjectManager.updateSubject");
+            Subject sessionSubject = getSessionSubject();
+            Subject modifiedSubject;
+            synchronized (subjectLock) {
+                modifiedSubject = subjectManager.updateSubject(sessionSubject, subjectToModify, newPassword);
+            }
+            Subject subject = SerialUtility.prepare(modifiedSubject, "SubjectManager.updateSubjectPW");
+            // Clear the prefs for this subject from the user prefs cache that portal-war uses, in case we just
+            // changed any prefs; otherwise the cache would contain stale prefs.
+            SubjectPreferencesCache.getInstance().clearConfiguration(subject.getId());
+            return subject;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

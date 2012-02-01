@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
@@ -121,58 +120,60 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
 
-        // Transactional stuff
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
-        EntityManager entityManager = getEntityManager();
+        try {
+            // Transactional stuff
+            TransactionManager tx = getTransactionManager();
+            tx.begin();
+            EntityManager entityManager = getEntityManager();
 
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        Subject overlord = subjectManager.getOverlord();
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            Subject overlord = subjectManager.getOverlord();
 
-        // Delete the repo relationships
-        entityManager.createNamedQuery(RepoRepoRelationship.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
-            .executeUpdate();
+            // Delete the repo relationships
+            entityManager.createNamedQuery(RepoRepoRelationship.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
+                .executeUpdate();
 
-        entityManager.createNamedQuery(RepoRelationship.DELETE_BY_RELATED_REPO_ID).setParameter("relatedRepoId",
-            relatedRepoId).executeUpdate();
+            entityManager.createNamedQuery(RepoRelationship.DELETE_BY_RELATED_REPO_ID)
+                .setParameter("relatedRepoId", relatedRepoId).executeUpdate();
 
-        // Delete any repos that were created in this test
-        for (Integer repoId : reposToDelete) {
-            repoManager.deleteRepo(overlord, repoId);
+            // Delete any repos that were created in this test
+            for (Integer repoId : reposToDelete) {
+                repoManager.deleteRepo(overlord, repoId);
+            }
+            reposToDelete.clear();
+
+            // Delete any repo groups that were created in this test
+            for (Integer repoGroupId : repoGroupsToDelete) {
+                repoManager.deleteRepoGroup(overlord, repoGroupId);
+            }
+            repoGroupsToDelete.clear();
+
+            // First disassociate packages from the content source
+            entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID)
+                .setParameter("contentSourceId", syncSource.getId()).executeUpdate();
+
+            // Delete the existing repos
+            nonCandidateOnOtherSource = entityManager.find(Repo.class, nonCandidateOnOtherSource.getId());
+            entityManager.remove(nonCandidateOnOtherSource);
+
+            // Delete the source that was created
+            syncSource = entityManager.find(ContentSource.class, syncSource.getId());
+            entityManager.remove(syncSource);
+
+            nonSyncSource = entityManager.find(ContentSource.class, nonSyncSource.getId());
+            entityManager.remove(nonSyncSource);
+
+            // Delete the fake source type
+            testSourceType = entityManager.find(ContentSourceType.class, testSourceType.getId());
+            entityManager.remove(testSourceType);
+
+            tx.commit();
+        } finally {
+            // Plugin service teardown
+            unprepareServerPluginService();
+            unprepareScheduler();
         }
-        reposToDelete.clear();
-
-        // Delete any repo groups that were created in this test
-        for (Integer repoGroupId : repoGroupsToDelete) {
-            repoManager.deleteRepoGroup(overlord, repoGroupId);
-        }
-        repoGroupsToDelete.clear();
-
-        // First disassociate packages from the content source
-        entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
-            "contentSourceId", syncSource.getId()).executeUpdate();
-
-        // Delete the existing repos
-        nonCandidateOnOtherSource = entityManager.find(Repo.class, nonCandidateOnOtherSource.getId());
-        entityManager.remove(nonCandidateOnOtherSource);
-
-        // Delete the source that was created
-        syncSource = entityManager.find(ContentSource.class, syncSource.getId());
-        entityManager.remove(syncSource);
-
-        nonSyncSource = entityManager.find(ContentSource.class, nonSyncSource.getId());
-        entityManager.remove(nonSyncSource);
-
-        // Delete the fake source type
-        testSourceType = entityManager.find(ContentSourceType.class, testSourceType.getId());
-        entityManager.remove(testSourceType);
-
-        tx.commit();
-
-        // Plugin service teardown
-        unprepareServerPluginService();
-        unprepareScheduler();
     }
 
     @Test
@@ -210,12 +211,13 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
             previousRepo.addContentSource(syncSource);
             repoManager.createRepo(overlord, previousRepo);
 
-        // Test
-        // --------------------------------------------
-        // TestContentProviderManager providerManager = new TestContentProviderManager();
+            // Test
+            // --------------------------------------------
+            // TestContentProviderManager providerManager = new TestContentProviderManager();
             pluginService.getContentProviderManager().testConnection(syncSource.getId());
 
-            boolean completed = pluginService.getContentProviderManager().synchronizeContentProvider(syncSource.getId());
+            boolean completed = pluginService.getContentProviderManager()
+                .synchronizeContentProvider(syncSource.getId());
             assert completed;
 
             // Verify RepoGroups
@@ -303,7 +305,7 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
             assert retrievedRepos.size() == 0;
 
             getTransactionManager().commit();
-        } catch(Throwable t) {
+        } catch (Throwable t) {
             getTransactionManager().rollback();
         }
     }

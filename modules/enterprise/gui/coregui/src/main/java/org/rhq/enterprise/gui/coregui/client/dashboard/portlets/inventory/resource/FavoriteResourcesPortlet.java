@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 
 /**
@@ -78,7 +79,7 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
         if (favoriteIds.isEmpty()) {
             criteria.addCriteria("id", -1);
         } else {
-            criteria.addCriteria("resourceIds", favArray);
+            criteria.addCriteria(ResourceDatasource.FILTER_RESOURCE_IDS, favArray);
         }
 
         return criteria;

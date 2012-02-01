@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -109,6 +111,95 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
     }
+
+
+    public void testResourceLineage() throws Exception {
+       // given a resource id for the leaf resource in a resource hierachy
+       int leafResourceId = givenASampleResourceHierarchy();
+
+    	// when
+    	List<Resource> resourceLineage = resourceManager.getResourceLineage(leafResourceId);
+
+    	// then
+    	StringBuilder stringBuilder = new StringBuilder();
+    	for (Resource resource : resourceLineage) {
+			stringBuilder.append(resource.getName());
+			if (resourceLineage.indexOf(resource) != resourceLineage.size() - 1) {
+				stringBuilder.append("::");
+			}
+		}
+    	System.err.println(stringBuilder.toString());
+
+    }
+
+	private int givenASampleResourceHierarchy() throws NotSupportedException,
+			SystemException {
+		getTransactionManager().begin();
+    	EntityManager em = getEntityManager();
+    	int leafResoureId = 0;
+    	try {
+			ResourceType platformType = createResourceType(em, "platform"
+					+ System.currentTimeMillis(), "test", null,
+					ResourceCategory.PLATFORM);
+			ResourceType appserverType = createResourceType(em, "jboss AS 5"
+					+ System.currentTimeMillis(), "jbossas5", platformType,
+					ResourceCategory.SERVER);
+			ResourceType jvmType = createResourceType(em,
+					"JVM" + System.currentTimeMillis(), "jbossas5",
+					appserverType, ResourceCategory.SERVICE);
+			ResourceType memType = createResourceType(em, "Memory Subsystem"
+					+ System.currentTimeMillis(), "jbossas5", jvmType,
+					ResourceCategory.SERVICE);
+			Agent agent = new Agent("hamza007", "hamzahost", 1, "", "hamzatoken");
+			em.persist(agent);
+			em.flush();
+
+			Resource platform = createResource(em, platformType, agent,
+					"platformKey" + System.currentTimeMillis(),
+					"host.dev.corp", null);
+			Resource appserver = createResource(em, appserverType, agent,
+					"JEAP" + System.currentTimeMillis(), "JBOSS EAP 5.1.1",
+					platform);
+			Resource jvm = createResource(em, memType, agent, "jvm"
+					+ System.currentTimeMillis(), "JBoss AS JVM", appserver);
+			Resource memSubystem = createResource(em, appserverType, agent,
+					"mem" + System.currentTimeMillis(), "Memory Subsystem", jvm);
+			leafResoureId = memSubystem.getId();
+			getTransactionManager().commit();
+		} catch (Exception e) {
+			try {
+                System.out.println("CANNOT Prepare TEST: Cause: " + e);
+                getTransactionManager().rollback();
+            } catch (Exception ignore) {
+            }
+		} finally {
+			em.close();
+		}
+		return leafResoureId;
+	}
+
+	private Resource createResource(EntityManager em, ResourceType platformType,
+			Agent agent, String resourceKey, String resourceName,
+			Resource parent) {
+		Resource resource = new Resource(resourceKey, resourceName, platformType);
+        resource.setUuid("" + new Random().nextInt());
+        resource.setAgent(agent);
+        resource.setParentResource(parent);
+        em.persist(resource);
+        return resource;
+	}
+
+
+	private ResourceType createResourceType(EntityManager em, String name,
+			String pluginName, ResourceType parentResourceType,
+			ResourceCategory resourceCategory) {
+		ResourceType platformType = new ResourceType(name, pluginName,
+    			resourceCategory, parentResourceType);
+    	ResourceType resourceType = platformType;
+    	em.persist(resourceType);
+		return resourceType;
+	}
+
 
     private Resource createNewResourceWithNewType() throws Exception {
         getTransactionManager().begin();

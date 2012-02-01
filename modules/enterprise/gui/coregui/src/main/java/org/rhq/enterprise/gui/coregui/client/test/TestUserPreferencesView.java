@@ -96,6 +96,8 @@ public class TestUserPreferencesView extends Table {
 
                     new MessageWindow(extendLocatorId("csv"), "Export To CSV", "<pre>" + csv.toString() + "</pre>")
                         .show();
+
+                    refreshTableInfo();
                 }
             });
     }
@@ -109,6 +111,7 @@ public class TestUserPreferencesView extends Table {
     public void refresh() {
         super.refresh();
         getListGrid().setRecords(transform(this.prefs.getConfiguration()));
+        refreshTableInfo();
     }
 
     private ListGridRecord[] transform(Configuration configuration) {

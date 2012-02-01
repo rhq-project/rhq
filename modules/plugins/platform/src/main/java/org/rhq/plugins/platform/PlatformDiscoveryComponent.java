@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -51,7 +51,7 @@ public abstract class PlatformDiscoveryComponent implements ResourceDiscoveryCom
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         if (!isPlatformSupported(context)) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
 
         SystemInfo systemInfo = context.getSystemInformation();

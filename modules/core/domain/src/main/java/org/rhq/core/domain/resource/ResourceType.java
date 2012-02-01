@@ -844,7 +844,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing ResourceTypes, or
     //       TreeMaps with ResourceTypes as keys, will not work reliably. See the Javadoc for Comparable for a precise
-    //       definition of consistent with equals().
+    //       definition of "consistent with equals()".
     @Override
     public int compareTo(ResourceType that) {
         if (this.name == null) {

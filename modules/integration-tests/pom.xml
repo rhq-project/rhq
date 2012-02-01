@@ -62,6 +62,7 @@
             <id>integration-tests</id>
             <modules>
                 <module>apache-plugin-test</module>
+                <module>jndi-access</module>
                 <!--<module>mod_cluster-plugin-test</module>-->
             </modules>
         </profile>

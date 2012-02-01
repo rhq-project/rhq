@@ -56,6 +56,13 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
+         <artifactId>rhq-container-lib</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
          <version>${project.version}</version>
          <scope>test</scope>
@@ -77,6 +84,32 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-script-bindings</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-enterprise-server</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-server-client-api</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+         <exclusions>
+            <exclusion>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-enterprise-server</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+      
       <dependency>
         <groupId>org.rhq.helpers</groupId>
         <artifactId>perftest-support</artifactId>
@@ -226,6 +259,7 @@
         <artifactId>resteasy-jaxrs</artifactId>
         <version>${resteasy.version}</version>
      </dependency>
+  
   </dependencies>
 
   <build>
@@ -263,6 +297,23 @@
                   </goals>
                </execution>
             </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+                <!-- Everything but the web service tests, this is the standard test execution -->
+               <configuration>
+                   <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                   <groups>${rhq.testng.includedGroups}</groups>
+                   <systemPropertyVariables>
+                      <embeddedDeployment>true</embeddedDeployment>
+                      <deploymentDirectory>target/test-classes</deploymentDirectory>
+                   </systemPropertyVariables>
+                   <argLine>-Djava.security.manager -Djava.security.policy==${basedir}/target/test-classes/security.policy</argLine>
+                   <additionalClasspathElements>
+                      <!-- The below is required for tests to run against Oracle. -->
+                      <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                   </additionalClasspathElements>
+                </configuration>
          </plugin>
     </plugins>
   </build>

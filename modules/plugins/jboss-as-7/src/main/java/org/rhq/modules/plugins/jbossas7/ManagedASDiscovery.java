@@ -20,13 +20,10 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -35,22 +32,26 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Discovery class for managed AS 7 instances.
  *
  * @author Heiko W. Rupp
  */
-public class ManagedASDiscovery extends AbstractBaseDiscovery
+public class ManagedASDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
 
 {
+
+    private HostControllerComponent parentComponent;
 
     /**
      * Run the auto-discovery
@@ -58,177 +59,131 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
-        List<ProcessScanResult> scans = discoveryContext.getAutoDiscoveredProcesses();
+        parentComponent = (HostControllerComponent) discoveryContext.getParentResourceComponent();
+        Configuration hcConfig = parentComponent.getHCConfig();
+        String hostName = hcConfig.getSimpleValue("domainHost", "master"); // TODO good default?
 
-        for (ProcessScanResult psr : scans) {
+        HostInfo hostInfo = getHostInfo(hostName);
+        if (hostInfo==null)
+            return discoveredResources;
 
-            try {
-                // get the HostController, as this is an indicator for managed AS
-                String psName = psr.getProcessScan().getName();
-                if (!psName.equals("HostController"))
-                    continue;
 
-                // Now we have the host controller, lets get the host.xml file
-                // and obtain the servers from there.
-                ProcessInfo processInfo = psr.getProcessInfo();
-                readStandaloneOrHostXml(processInfo, true);
-                String hostName = findHostName();
-                HostPort managementHostPort = getManagementPortFromHostXml(processInfo.getCommandLine());
+        try {
+            // get the HostController, as this is an indicator for managed AS
 
-                List<ServerInfo> serverNames = getServersFromHostXml();
-                for (ServerInfo serverInfo : serverNames) {
+            // Now we have the host controller, lets get the host.xml file
+            // and obtain the servers from there.
 
-                    Configuration config = discoveryContext.getDefaultPluginConfiguration();
-                    config.put(new PropertySimple("domainHost", hostName));
-                    config.put(new PropertySimple("group", serverInfo.group));
-                    config.put(new PropertySimple("port", managementHostPort.port));
-                    config.put(new PropertySimple("hostname", managementHostPort.host));
-                    if (serverInfo.bindingGroup != null) {
-                        config.put(new PropertySimple("socket-binding-group", serverInfo.bindingGroup));
-                        config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
-                    } else {
-                        HostPort dcHP = getDomainControllerFromHostXml();
-                        if (dcHP.port == 9999)
-                            dcHP.port = 9990; // TODO Hack until JBAS-9306 is solved
+            List<ServerInfo> serverNames;
+            serverNames = getManagedServers(hostName);
+            for (ServerInfo serverInfo : serverNames) {
 
-                        ServerInfo dcInfo = getBindingsFromDC(dcHP, serverInfo.group);
-                        config.put(new PropertySimple("socket-binding-group", dcInfo.bindingGroup));
-                        config.put(new PropertySimple("socket-binding-port-offset", dcInfo.portOffset));
-                    }
-                    config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
+                Configuration config = discoveryContext.getDefaultPluginConfiguration();
+                config.put(new PropertySimple("domainHost", hostName));
+                config.put(new PropertySimple("group", serverInfo.group));
+                if (serverInfo.bindingGroup != null) {
+                    config.put(new PropertySimple("socket-binding-group", serverInfo.bindingGroup));
+                } else {
+                    String group = resolveSocketBindingGroup(serverInfo.group);
+                    config.put(new PropertySimple("socket-binding-group",group));
 
-                    String path = "host=" + hostName + ",server-config=" + serverInfo.name;
-                    config.put(new PropertySimple("path", path));
+                }
+                config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
 
-                    // TODO this fails for the downed servers.
-                    // get from the domain or other place as soon as the domain provides it.
-                    String homeDir = getHomeDirFromCommandLine(processInfo.getCommandLine());
-                    initLogFile(scans, serverInfo.name, config, homeDir);
+                String path = "host=" + hostName + ",server-config=" + serverInfo.name;
+                config.put(new PropertySimple("path", path));
 
-                    String version = determineServerVersionFromHomeDir(homeDir);
-                    String resourceDescription;
+                // get from the domain or other place as soon as the domain provides it.
+                String serverLog = hcConfig.getSimpleValue("baseDir","/tmp")+File.separator+"domain/servers/"+serverInfo.name+"/log/server.log";
+                initLogEventSourcesConfigProp(serverLog,config);
 
-                    String resourceName = serverInfo.name;
+                String version;
+                String resourceDescription;
 
-                    if (homeDir.contains("eap")) {
-                        version = "EAP " + version;
-                        resourceDescription = "Managed JBoss Enterprise Application Platform 6 server";
-                        resourceName = "EAP " + resourceName;
-                    }
-                    else {
-                        resourceDescription = "Managed AS7 server";
-                    }
+                String resourceName = serverInfo.name;
 
-                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
+                if (hostInfo.productName.equalsIgnoreCase("eap")) {
+                    version = "EAP " + hostInfo.productVersion;
+                    resourceDescription = "Managed JBoss Enterprise Application Platform 6 server";
+                    resourceName = "EAP " + resourceName;
+                }
+                else if (hostInfo.productName.equalsIgnoreCase("EDG")) {
+                    version = "EDG " + hostInfo.productVersion;
+                    resourceDescription = "Managed JBoss Enterprise Data Grid 6 server";
+                }
+                else {
+                    resourceDescription = "Managed AS7 server";
+                    version = hostInfo.releaseVersion;
+                }
+
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                         hostName + "/" + serverInfo.name, // key
                         resourceName, // Name
                         version, // TODO  get from Domain as soon as it is provided
-                            resourceDescription, // Description
+                        resourceDescription, // Description
                         config, null);
 
-                    // Add to return values
-                    discoveredResources.add(detail);
-                    log.info("Discovered new ...  " + discoveryContext.getResourceType() + ", " + serverInfo);
-                }
-            } catch (Exception e) {
-                log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + psr + " :" + e.getMessage());
+                // Add to return values
+                discoveredResources.add(detail);
+                log.info("Discovered new ...  " + discoveryContext.getResourceType() + ", " + serverInfo);
             }
+        } catch (Exception e) {
+            log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process "  + " :" + e.getMessage());
         }
         return discoveredResources;
     }
 
-    private ServerInfo getBindingsFromDC(HostPort domainController, String serverGroup) {
-        ASConnection dcConnection = new ASConnection(domainController.host, domainController.port);
-        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
-        Address theAddress = new Address("server-group", serverGroup);
-        Operation op = new ReadResource(theAddress);
-        ComplexResult res = (ComplexResult) dcConnection.execute(op, true);
-        if (res.isSuccess()) {
-            if (res.getResult().containsKey("socket-binding-group")) {
-                String sbg = (String) res.getResult().get("socket-binding-group");
-
-                ServerInfo serverInfo = new ServerInfo();
-                serverInfo.bindingGroup = sbg;
-                return serverInfo;
-            }
-        }
-
-        return new ServerInfo();
+    private String resolveSocketBindingGroup(String serverGroup) {
+        Address address = new Address("server-group",serverGroup);
+        Operation operation = new ReadAttribute(address,"socket-binding-group");
+        Result result = parentComponent.getASConnection().execute(operation);
+        return (String) result.getResult();
     }
 
-    /**
-     * Loop through the Process scans for ManagedAS and if found extract the logfile path.
-     * @param scans process scan results
-     * @param name server name to look for
-     * @param config config to put the info in
-     * @param basePath
-     */
-    private void initLogFile(List<ProcessScanResult> scans, String name, Configuration config, String basePath) {
-
-        for (ProcessScanResult psr : scans) {
-            if (!psr.getProcessScan().getName().equals("ManagedAS"))
-                continue;
-
-            String[] commandLine = psr.getProcessInfo().getCommandLine();
-
-            //preload server.log file for event log monitoring
-            String bootLogFile = getLogFileFromCommandLine(commandLine);
-            String logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
-
-            if (logFile.contains(name))
-                initLogEventSourcesConfigProp(logFile, config);
-        }
-    }
-
-    private List<ServerInfo> getServersFromHostXml() {
-
-        Element host = hostXml.getDocumentElement();
-        NodeList serversElement = host.getElementsByTagName("servers");
-        if (serversElement == null || serversElement.getLength() == 0) {
-            log.warn("No <servers> found in host.xml");
-            return Collections.emptyList();
-        }
-        NodeList servers = serversElement.item(0).getChildNodes();
-        if (servers == null || servers.getLength() == 0) {
-            log.warn("No <server> found in host.xml");
-            return Collections.emptyList();
-        }
-        List<ServerInfo> result = new ArrayList<ServerInfo>();
-        for (int i = 0; i < servers.getLength(); i++) {
-            if (!(servers.item(i) instanceof Element))
-                continue;
-
+    private List<ServerInfo> getManagedServers(String domainHost) {
+        Address address = new Address("host",domainHost);
+        Operation operation = new ReadChildrenNames(address,"server-config");
+        ASConnection connection = parentComponent.getASConnection();
+        Result res = connection.execute(operation);
+        List<String> servers = (List<String>) res.getResult();
+        List<ServerInfo> ret = new ArrayList<ServerInfo>(servers.size());
+        for (String server : servers) {
             ServerInfo info = new ServerInfo();
-            Element server = (Element) servers.item(i);
-            info.name = server.getAttribute("name");
-            info.group = server.getAttribute("group");
-            String autoStart = server.getAttribute("autoStart");
-            if (autoStart == null || autoStart.isEmpty())
-                autoStart = "false";
-            info.autoStart = Boolean.getBoolean(autoStart);
+            info.name = server;
+            ret.add(info);
 
-            // Look for  <socket-binding-group ref="standard-sockets" port-offset="250"/>
-            NodeList sbgs = server.getChildNodes();
-            if (sbgs != null) {
-                for (int j = 0; j < sbgs.getLength(); j++) {
-                    if (!(sbgs.item(j) instanceof Element))
-                        continue;
-
-                    Element sbg = (Element) sbgs.item(j);
-                    if (!sbg.getNodeName().equals("socket-binding-group"))
-                        continue;
-
-                    info.bindingGroup = sbg.getAttribute("ref");
-                    String portOffset = sbg.getAttribute("port-offset");
-                    if (portOffset != null && !portOffset.isEmpty())
-                        info.portOffset = Integer.parseInt(portOffset);
-
-                }
-            }
-            result.add(info);
+            address= new Address("host",domainHost);
+            address.add("server-config",server);
+            operation = new ReadResource(address);
+            ComplexResult cres = connection.executeComplex(operation);
+            Map<String,Object> map = cres.getResult();
+            info.group = (String) map.get("group");
+            info.autoStart =  (Boolean)map.get("auto-start");
+            Integer offset = (Integer) map.get("socket-binding-port-offset");
+            if (offset!=null)
+                info.portOffset = offset;
+            info.bindingGroup = (String) map.get("socket-binding-group");
         }
 
-        return result;
+        return ret;
+    }
+
+    private HostInfo getHostInfo(String domainHost) {
+        Address address = new Address("host",domainHost);
+        Operation operation = new ReadResource(address);
+        HostInfo info = new HostInfo();
+
+        ComplexResult cres = parentComponent.getASConnection().executeComplex(operation);
+        if (!cres.isSuccess())
+            return null;
+
+        Map<String,Object> map = cres.getResult();
+        info.releaseCodeName = (String) map.get("release-codename");
+        info.releaseVersion =  (String)map.get("release-version");
+        info.productName = (String) map.get("product-name");
+        info.productVersion =  (String)map.get("product-version");
+
+        return info;
     }
 
     private void initLogEventSourcesConfigProp(String fileName, Configuration pluginConfiguration) {
@@ -264,4 +219,11 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
         }
     }
 
+    private static class HostInfo {
+        String name;
+        String productVersion;
+        String releaseVersion;
+        String productName;
+        String releaseCodeName;
+    }
 }

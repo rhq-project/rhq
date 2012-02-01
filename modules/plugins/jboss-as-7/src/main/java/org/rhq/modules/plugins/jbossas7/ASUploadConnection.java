@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -55,15 +56,25 @@ public class ASUploadConnection {
 
     private static final Log log = LogFactory.getLog(ASUploadConnection.class);
 
+    Authenticator passwordAuthenticator ;
     BufferedOutputStream os = null;
     InputStream is = null;
     private HttpURLConnection connection;
     private String host;
     private int port;
 
-    public ASUploadConnection(String dcHost, int port) {
+    public ASUploadConnection(String dcHost, int port, String user, String password) {
         this.host = dcHost;
         this.port = port;
+        if (user!=null) {
+            passwordAuthenticator = new AS7Authenticator(user,password);
+            Authenticator.setDefault(passwordAuthenticator);
+        }
+    }
+
+    public ASUploadConnection(ASConnection asConnection) {
+        this.host=asConnection.getHost();
+        this.port=asConnection.getPort();
     }
 
     public OutputStream getOutputStream(String fileName) {
@@ -71,6 +82,8 @@ public class ASUploadConnection {
             // Create the HTTP connection to the upload URL
             String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
             connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(10 * 1000); // 10s
+            connection.setReadTimeout(60 * 1000);    // 60s
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(POST_REQUEST_METHOD);

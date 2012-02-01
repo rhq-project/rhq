@@ -60,4 +60,31 @@ public class PathHandlingTest {
         assert a.size()==3 : "Size was not 3, but "+ a.size();
         assert !a.isEmpty();
     }
+
+    public void getParent1() throws Exception {
+        String path = "subsystem=jms,profile=default,queue=foo";
+        Address a = new Address(path);
+        Address b = a.getParent();
+        assert b!=null;
+        assert b.size()==2;
+        assert b.get(0).equals("subsystem=jms");
+        assert b.get(1).equals("profile=default");
+    }
+
+    public void getParent2() throws Exception {
+        Address a = new Address();
+        Address b = a.getParent();
+        assert b!=null;
+        assert b.isEmpty();
+        assert b.size()==0;
+    }
+
+    public void getParent3() throws Exception {
+        Address a = new Address("foo=bar");
+        Address b = a.getParent();
+        assert b!=null;
+        assert b.isEmpty();
+        assert b.size()==0;
+    }
+
 }

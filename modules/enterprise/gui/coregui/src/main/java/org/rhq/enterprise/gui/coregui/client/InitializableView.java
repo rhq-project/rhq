@@ -33,7 +33,12 @@ public interface InitializableView {
 
     /**
      * Return true if this widget's {@link BaseWidget#init() initialization} has completed, or false otherwise.
-     *
+     * <p>
+     * Don't expect this to work automagically if the result of this method is dependent on some asynchronous call.
+     * The consumers of this method need in that case loop and check this method periodically. If you cannot guarantee
+     * all the callers of this method on your instance actually do that, you can't assume that the results of 
+     * the asynchronous call will be taken into account correctly.
+     * 
      * @return true if this widget's {@link BaseWidget#init() initialization} has completed, or false otherwise
      */
     boolean isInitialized();

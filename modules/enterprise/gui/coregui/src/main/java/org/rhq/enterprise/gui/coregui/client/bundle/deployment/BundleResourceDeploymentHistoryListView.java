@@ -38,8 +38,10 @@ import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.AutoFitTextAreaItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -172,9 +174,17 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         StaticTextItem message = new StaticTextItem("message", MSG.common_title_message());
         message.setTitleVAlign(VerticalAlignment.TOP);
 
-        AutoFitTextAreaItem detail = new AutoFitTextAreaItem("attachment", MSG.common_title_details());
+        TextAreaItem detail = new TextAreaItem("attachment", MSG.common_title_details());
         detail.setTitleVAlign(VerticalAlignment.TOP);
+        detail.setMinHeight(100);
+        detail.setHeight("100%");
         detail.setWidth("100%");
+        detail.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent event) {
+                event.cancel(); // we want the user to interact with the text to copy it, but not to edit it
+            }
+        });
 
         form.setItems(timestamp, action, category, user, status, info, message, detail);
         form.editRecord(record);

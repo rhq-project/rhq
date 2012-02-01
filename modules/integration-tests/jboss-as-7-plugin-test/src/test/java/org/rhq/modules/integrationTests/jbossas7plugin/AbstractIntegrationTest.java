@@ -57,9 +57,11 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 public abstract class AbstractIntegrationTest {
     protected static final String DC_HOST = "localhost";
     protected static final int DC_HTTP_PORT = 9990;
+    protected static final String DC_USER = "rhqadmin";
+    protected static final String DC_PASS = "rhqadmin";
 
     String uploadToAs(String deploymentName) throws IOException {
-        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT);
+        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
         OutputStream os = conn.getOutputStream(deploymentName);
 
 
@@ -92,7 +94,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     ASConnection getASConnection() {
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
         return connection;
     }
 

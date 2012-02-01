@@ -23,20 +23,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Date;
 import java.util.UUID;
-
-import org.quartz.Trigger;
-import org.quartz.Scheduler;
-import org.quartz.JobDetail;
-import org.quartz.JobDataMap;
-import org.quartz.SimpleTrigger;
-import org.quartz.SchedulerException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -51,6 +45,12 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SimpleTrigger;
+import org.quartz.Trigger;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -317,13 +317,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllDefaultCollections(Subject subject) {
         entityManager.createNamedQuery(MeasurementDefinition.DISABLE_ALL).executeUpdate();
     }
 
-    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllSchedules(Subject subject) {
         entityManager.createNamedQuery(MeasurementSchedule.DISABLE_ALL).executeUpdate();
@@ -331,11 +331,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     }
 
     public void createSchedulesForExistingResources(ResourceType type, MeasurementDefinition newDefinition) {
-        long now = System.currentTimeMillis();
         List<Resource> resources = type.getResources();
         if (resources != null) {
             for (Resource res : resources) {
-                res.setMtime(now); // changing MTime tells the agent this resource needs to be synced
+                res.setAgentSynchronizationNeeded();
                 MeasurementSchedule sched = new MeasurementSchedule(newDefinition, res);
                 sched.setInterval(newDefinition.getDefaultInterval());
                 entityManager.persist(sched);
@@ -648,16 +647,10 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             final String randomSuffix = UUID.randomUUID().toString();
 
             final String jobName = DEFAULT_AGENT_JOB + " - " + randomSuffix;
-            JobDetail jobDetail = new JobDetail(
-                jobName,
-                DEFAULT_AGENT_GROUP,
-                NotifyAgentsOfScheduleUpdatesJob.class);
+            JobDetail jobDetail = new JobDetail(jobName, DEFAULT_AGENT_GROUP, NotifyAgentsOfScheduleUpdatesJob.class);
 
             final String triggerName = DEFAULT_AGENT_TRIGGER + " - " + randomSuffix;
-            SimpleTrigger simpleTrigger = new SimpleTrigger(
-                triggerName,
-                DEFAULT_AGENT_GROUP,
-                new Date());
+            SimpleTrigger simpleTrigger = new SimpleTrigger(triggerName, DEFAULT_AGENT_GROUP, new Date());
 
             JobDataMap jobDataMap = simpleTrigger.getJobDataMap();
             jobDataMap.put(TRIGGER_NAME, triggerName);
@@ -1008,7 +1001,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 }
             }
         } catch (Throwable t) {
-            log.warn("problem creating schedules for resourceIds [" + resourceIds + "]", t);
+            log.warn("problem creating schedules for resourceIds [" + Arrays.toString(resourceIds) + "]", t);
         }
 
         return;
@@ -1235,8 +1228,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         // first get all the resources, which is needed to get the agent mappings
         Subject overlord = subjectManager.getOverlord();
-        PageList<Resource> resources = resourceManager.findResourceByIds(overlord, resourceIds, false, PageControl
-            .getUnlimitedInstance());
+        PageList<Resource> resources = resourceManager.findResourceByIds(overlord, resourceIds, false,
+            PageControl.getUnlimitedInstance());
 
         // then get all the requests
         Set<ResourceMeasurementScheduleRequest> requests = findSchedulesForResourceAndItsDescendants(resourceIds, false);
@@ -1482,8 +1475,8 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         ;
         if (authorizationManager.isInventoryManager(subject) == false) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
-                .getId());
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                subject.getId());
         }
 
         CriteriaQueryRunner<MeasurementSchedule> queryRunner = new CriteriaQueryRunner(criteria, generator,
@@ -1522,4 +1515,3 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
     //    }
 
 }
-

@@ -59,6 +59,11 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
         this.rawNumericType = request.getRawNumericType();
     }
 
+    public MeasurementDataNumeric(long collectionTime, int scheduleId,Double value) {
+        super(collectionTime,scheduleId);
+        this.value = value;
+    }
+
     @Deprecated
     // Have to make this protected so that people only use the constructor taking a request (so the name can be set for live values)
     public MeasurementDataNumeric(MeasurementDataPK md, Double value) {

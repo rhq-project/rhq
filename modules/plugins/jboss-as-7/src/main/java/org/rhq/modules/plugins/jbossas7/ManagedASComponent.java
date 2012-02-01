@@ -18,13 +18,10 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
@@ -44,13 +41,13 @@ public class ManagedASComponent extends BaseComponent {
     @Override
     public AvailabilityType getAvailability() {
 
-        if (context.getResourceType().getName().equals("JBossAS7 Managed Server")) {
+        if (context.getResourceType().getName().equals("Managed Server")) {
             Address theAddress = new Address();
             String host = pluginConfiguration.getSimpleValue("domainHost","local");
             theAddress.add("host",host);
             theAddress.add("server-config", myServerName);
             Operation getStatus = new ReadAttribute(theAddress,"status");
-            Result result = null;
+            Result result;
             try {
                 result = connection.execute(getStatus);
             } catch (Exception e) {

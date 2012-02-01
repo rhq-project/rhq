@@ -92,6 +92,7 @@
     <twitter4j.version>2.2.4</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
     <!-- NOTE (ips, 10/04/11): Upgrading testng to 6.2.x causes 10 server-jar tests to fail for an unknown reason. -->
+    <!-- NOTE (jshaughn, 01/20/12): With the latest work, the sserver-jar tests passed using testng to 6.3.1, so perhaps an upgrade is possible -->
     <testng.version>6.1.1</testng.version>
     <cobertura.version>1.9.4.1</cobertura.version>
     <augeas.version>0.9.0</augeas.version>
@@ -100,7 +101,7 @@
     <augeas.zip.location>${settings.localRepository}/net/augeas/augeas-native/${augeas.version}</augeas.zip.location>
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
-    <resteasy.version>2.2.3.GA</resteasy.version>
+    <resteasy.version>2.3.1.GA</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
@@ -887,11 +888,11 @@
                   <phase>generate-sources</phase>
                   <configuration>
                       <tasks>
-                          <mkdir dir="target" />                          
+                          <mkdir dir="target" />
 
                           <tstamp>
                               <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
-                          </tstamp>                          
+                          </tstamp>
                           <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
 
                           <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
@@ -917,7 +918,7 @@
                       </tasks>
                   </configuration>
               </execution>
-              
+
               <execution>
                 <id>javadoc-dist</id>
                 <phase>site</phase>
@@ -948,7 +949,7 @@
                   </goals>
                   <configuration>
                       <files>
-                          <file>${project.build.directory}/build.properties</file>                                  
+                          <file>${project.build.directory}/build.properties</file>
                       </files>
                       <quiet>true</quiet>
                   </configuration>

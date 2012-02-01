@@ -82,6 +82,10 @@ public abstract class MeasurementData implements Serializable {
         this.setName(request.getName());
     }
 
+    protected MeasurementData(long timestamp, int scheduleId) {
+        this(new MeasurementDataPK(timestamp,scheduleId));
+    }
+
     public int getScheduleId() {
         return id.scheduleId;
     }

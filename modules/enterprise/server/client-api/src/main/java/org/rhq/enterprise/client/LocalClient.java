@@ -21,6 +21,9 @@ package org.rhq.enterprise.client;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,141 +82,335 @@ public class LocalClient implements RhqFacade {
         this.subject = subject;
     }
 
+    @Override
     public Subject getSubject() {
         return subject;
     }
 
+    @Override
     public Subject login(String user, String password) throws Exception {
         return subject;
     }
 
+    @Override
     public void logout() {
     }
 
+    @Override
     public boolean isLoggedIn() {
         return true;
     }
 
+    @Override
     public AlertManagerRemote getAlertManager() {
-        return getProxy(LookupUtil.getAlertManager(), AlertManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<AlertManagerRemote>() {
+            @Override
+            public AlertManagerRemote run() {
+                return AccessController.doPrivileged(new PrivilegedAction<AlertManagerRemote>() {
+                    @Override
+                    public AlertManagerRemote run() {
+                        return getProxy(LookupUtil.getAlertManager(), AlertManagerRemote.class);
+                    }
+                });
+            }
+        });
     }
 
+    @Override
     public AlertDefinitionManagerRemote getAlertDefinitionManager() {
-        return getProxy(LookupUtil.getAlertDefinitionManager(), AlertDefinitionManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<AlertDefinitionManagerRemote>() {
+            @Override
+            public AlertDefinitionManagerRemote run() {
+                return getProxy(LookupUtil.getAlertDefinitionManager(), AlertDefinitionManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public AvailabilityManagerRemote getAvailabilityManager() {
-        return getProxy(LookupUtil.getAvailabilityManager(), AvailabilityManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<AvailabilityManagerRemote>() {
+            @Override
+            public AvailabilityManagerRemote run() {
+                return getProxy(LookupUtil.getAvailabilityManager(), AvailabilityManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public BundleManagerRemote getBundleManager() {
-        return getProxy(LookupUtil.getBundleManager(), BundleManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<BundleManagerRemote>() {
+            @Override
+            public BundleManagerRemote run() {
+                return AccessController.doPrivileged(new PrivilegedAction<BundleManagerRemote>() {
+                    @Override
+                    public BundleManagerRemote run() {
+                        return getProxy(LookupUtil.getBundleManager(), BundleManagerRemote.class);
+                    }
+                });
+            }
+        });
     }
 
+    @Override
     public CallTimeDataManagerRemote getCallTimeDataManager() {
-        return getProxy(LookupUtil.getCallTimeDataManager(), CallTimeDataManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<CallTimeDataManagerRemote>() {
+            @Override
+            public CallTimeDataManagerRemote run() {
+                return getProxy(LookupUtil.getCallTimeDataManager(), CallTimeDataManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public RepoManagerRemote getRepoManager() {
-        return getProxy(LookupUtil.getRepoManagerLocal(), RepoManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<RepoManagerRemote>() {
+            @Override
+            public RepoManagerRemote run() {
+                return getProxy(LookupUtil.getRepoManagerLocal(), RepoManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public ConfigurationManagerRemote getConfigurationManager() {
-        return getProxy(LookupUtil.getConfigurationManager(), ConfigurationManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<ConfigurationManagerRemote>() {
+            @Override
+            public ConfigurationManagerRemote run() {
+                return getProxy(LookupUtil.getConfigurationManager(), ConfigurationManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public ContentManagerRemote getContentManager() {
-        return getProxy(LookupUtil.getContentManager(), ContentManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<ContentManagerRemote>() {
+            @Override
+            public ContentManagerRemote run() {
+                return getProxy(LookupUtil.getContentManager(), ContentManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public DataAccessManagerRemote getDataAccessManager() {
-        return getProxy(LookupUtil.getDataAccessManager(), DataAccessManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<DataAccessManagerRemote>() {
+            @Override
+            public DataAccessManagerRemote run() {
+                return getProxy(LookupUtil.getDataAccessManager(), DataAccessManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public DiscoveryBossRemote getDiscoveryBoss() {
-        return getProxy(LookupUtil.getDiscoveryBoss(), DiscoveryBossRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<DiscoveryBossRemote>() {
+            @Override
+            public DiscoveryBossRemote run() {
+                return getProxy(LookupUtil.getDiscoveryBoss(), DiscoveryBossRemote.class);
+            }
+        });
     }
 
+    @Override
     public DriftManagerRemote getDriftManager() {
-        return getProxy(LookupUtil.getDriftManager(), DriftManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<DriftManagerRemote>() {
+            @Override
+            public DriftManagerRemote run() {
+                return getProxy(LookupUtil.getDriftManager(), DriftManagerRemote.class);
+            }
+        });
     }
 
     public DriftTemplateManagerRemote getDriftTemplateManager() {
-        return getProxy(LookupUtil.getDriftTemplateManager(), DriftTemplateManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<DriftTemplateManagerRemote>() {
+            @Override
+            public DriftTemplateManagerRemote run() {
+                return getProxy(LookupUtil.getDriftTemplateManager(), DriftTemplateManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public EventManagerRemote getEventManager() {
-        return getProxy(LookupUtil.getEventManager(), EventManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<EventManagerRemote>() {
+            @Override
+            public EventManagerRemote run() {
+                return getProxy(LookupUtil.getEventManager(), EventManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public MeasurementBaselineManagerRemote getMeasurementBaselineManager() {
-        return getProxy(LookupUtil.getMeasurementBaselineManager(), MeasurementBaselineManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<MeasurementBaselineManagerRemote>() {
+            @Override
+            public MeasurementBaselineManagerRemote run() {
+                return getProxy(LookupUtil.getMeasurementBaselineManager(), MeasurementBaselineManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public MeasurementDataManagerRemote getMeasurementDataManager() {
-        return getProxy(LookupUtil.getMeasurementDataManager(), MeasurementDataManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<MeasurementDataManagerRemote>() {
+            @Override
+            public MeasurementDataManagerRemote run() {
+                return getProxy(LookupUtil.getMeasurementDataManager(), MeasurementDataManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public MeasurementDefinitionManagerRemote getMeasurementDefinitionManager() {
-        return getProxy(LookupUtil.getMeasurementDefinitionManager(), MeasurementDefinitionManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<MeasurementDefinitionManagerRemote>() {
+            @Override
+            public MeasurementDefinitionManagerRemote run() {
+                return getProxy(LookupUtil.getMeasurementDefinitionManager(), MeasurementDefinitionManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public MeasurementScheduleManagerRemote getMeasurementScheduleManager() {
-        return getProxy(LookupUtil.getMeasurementScheduleManager(), MeasurementScheduleManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<MeasurementScheduleManagerRemote>() {
+            @Override
+            public MeasurementScheduleManagerRemote run() {
+                return getProxy(LookupUtil.getMeasurementScheduleManager(), MeasurementScheduleManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public OperationManagerRemote getOperationManager() {
-        return getProxy(LookupUtil.getOperationManager(), OperationManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<OperationManagerRemote>() {
+            @Override
+            public OperationManagerRemote run() {
+                return getProxy(LookupUtil.getOperationManager(), OperationManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public ResourceManagerRemote getResourceManager() {
-        return getProxy(LookupUtil.getResourceManager(), ResourceManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<ResourceManagerRemote>() {
+            @Override
+            public ResourceManagerRemote run() {
+                return getProxy(LookupUtil.getResourceManager(), ResourceManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public ResourceFactoryManagerRemote getResourceFactoryManager() {
-        return getProxy(LookupUtil.getResourceFactoryManager(), ResourceFactoryManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<ResourceFactoryManagerRemote>() {
+            @Override
+            public ResourceFactoryManagerRemote run() {
+                return getProxy(LookupUtil.getResourceFactoryManager(), ResourceFactoryManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public ResourceGroupManagerRemote getResourceGroupManager() {
-        return getProxy(LookupUtil.getResourceGroupManager(), ResourceGroupManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<ResourceGroupManagerRemote>() {
+            @Override
+            public ResourceGroupManagerRemote run() {
+                return getProxy(LookupUtil.getResourceGroupManager(), ResourceGroupManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public ResourceTypeManagerRemote getResourceTypeManager() {
-        return getProxy(LookupUtil.getResourceTypeManager(), ResourceTypeManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<ResourceTypeManagerRemote>() {
+            @Override
+            public ResourceTypeManagerRemote run() {
+                return getProxy(LookupUtil.getResourceTypeManager(), ResourceTypeManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public RoleManagerRemote getRoleManager() {
-        return getProxy(LookupUtil.getRoleManager(), RoleManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<RoleManagerRemote>() {
+            @Override
+            public RoleManagerRemote run() {
+                return getProxy(LookupUtil.getRoleManager(), RoleManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public SavedSearchManagerRemote getSavedSearchManager() {
-        return getProxy(LookupUtil.getSavedSearchManager(), SavedSearchManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<SavedSearchManagerRemote>() {
+            @Override
+            public SavedSearchManagerRemote run() {
+                return getProxy(LookupUtil.getSavedSearchManager(), SavedSearchManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public SubjectManagerRemote getSubjectManager() {
-        return getProxy(LookupUtil.getSubjectManager(), SubjectManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<SubjectManagerRemote>() {
+            @Override
+            public SubjectManagerRemote run() {
+                return getProxy(LookupUtil.getSubjectManager(), SubjectManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public SupportManagerRemote getSupportManager() {
-        return getProxy(LookupUtil.getSupportManager(), SupportManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<SupportManagerRemote>() {
+            @Override
+            public SupportManagerRemote run() {
+                return getProxy(LookupUtil.getSupportManager(), SupportManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public SystemManagerRemote getSystemManager() {
-        return getProxy(LookupUtil.getSystemManager(), SystemManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<SystemManagerRemote>() {
+            @Override
+            public SystemManagerRemote run() {
+                return getProxy(LookupUtil.getSystemManager(), SystemManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public RemoteInstallManagerRemote getRemoteInstallManager() {
-        return getProxy(LookupUtil.getRemoteInstallManager(), RemoteInstallManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<RemoteInstallManagerRemote>() {
+            @Override
+            public RemoteInstallManagerRemote run() {
+                return getProxy(LookupUtil.getRemoteInstallManager(), RemoteInstallManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public TagManagerRemote getTagManager() {
-        return getProxy(LookupUtil.getTagManager(), TagManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<TagManagerRemote>() {
+            @Override
+            public TagManagerRemote run() {
+                return getProxy(LookupUtil.getTagManager(), TagManagerRemote.class);
+            }
+        });
     }
 
+    @Override
     public SynchronizationManagerRemote getSynchronizationManager() {
-        return getProxy(LookupUtil.getSynchronizationManager(), SynchronizationManagerRemote.class);
+        return AccessController.doPrivileged(new PrivilegedAction<SynchronizationManagerRemote>() {
+            @Override
+            public SynchronizationManagerRemote run() {
+                return getProxy(LookupUtil.getSynchronizationManager(), SynchronizationManagerRemote.class);
+            }
+        });
     }
-    
+
+    @Override
     public Map<String, Object> getManagers() {
         if (managers == null) {
 
@@ -235,10 +432,19 @@ public class LocalClient implements RhqFacade {
     private <T> T getProxy(Object slsb, Class<T> iface) {
         RhqManagers manager = RhqManagers.forInterface(iface);
 
-        Class<?> simplified = InterfaceSimplifier.simplify(iface);
+        Class<?> simplified = null;
 
-        Object proxy = Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified },
-            new LocalClientProxy(slsb, this, manager));
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(iface.getClassLoader());
+            simplified = InterfaceSimplifier.simplify(iface);
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
+        }
+
+        Object proxy =
+            Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified }, new LocalClientProxy(slsb,
+                this, manager));
 
         return iface.cast(proxy);
     }

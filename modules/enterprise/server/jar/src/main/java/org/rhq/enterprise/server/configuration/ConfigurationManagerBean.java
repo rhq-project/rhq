@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -136,7 +138,6 @@ import org.rhq.enterprise.server.util.QuartzUtil;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-@SuppressWarnings({ "UnnecessaryLocalVariable", "UnnecessaryReturnStatement" })
 @Stateless
 @XmlType(namespace = ServerVersion.namespace)
 public class ConfigurationManagerBean implements ConfigurationManagerLocal, ConfigurationManagerRemote {
@@ -220,6 +221,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Resource resource = update.getResource();
 
         // link to the newer, persisted configuration object -- regardless of errors
+        resource.setAgentSynchronizationNeeded();
         resource.setPluginConfiguration(update.getConfiguration());
 
         if (response.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
@@ -1242,17 +1244,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return configService.validate(configuration, resourceId, isStructured);
     }
 
-    private boolean isRawSupported(int resourceId) {
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
-        if (configDef == null) {
-            return false;
-        }
-
-        return (ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat() || (ConfigurationFormat.RAW == configDef
-            .getConfigurationFormat()));
-    }
-
     private boolean isStructuredAndRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
@@ -1691,7 +1682,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration getConfiguration(Subject subject, int configurationId) {
-        @SuppressWarnings({ "UnnecessaryLocalVariable" })
         Configuration configuration = getConfigurationById(configurationId);
         return configuration;
     }
@@ -2337,7 +2327,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return out;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(Subject subject,
         ResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2346,8 +2335,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 "resource", subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<ResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner<ResourceConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<ResourceConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2371,7 +2360,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(Subject subject,
         PluginConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2380,8 +2368,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 "resource", subject.getId());
         }
 
-        CriteriaQueryRunner<PluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<PluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner<PluginConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<PluginConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2405,7 +2393,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(Subject subject,
         GroupResourceConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2414,8 +2401,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 subject.getId());
         }
 
-        CriteriaQueryRunner<GroupResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria,
-            generator, entityManager);
+        CriteriaQueryRunner<GroupResourceConfigurationUpdate> queryRunner = new CriteriaQueryRunner<GroupResourceConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<GroupResourceConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2438,7 +2425,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2447,8 +2433,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 subject.getId());
         }
 
-        CriteriaQueryRunner<GroupPluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<GroupPluginConfigurationUpdate> queryRunner = new CriteriaQueryRunner<GroupPluginConfigurationUpdate>(
+            criteria, generator, entityManager);
 
         PageList<GroupPluginConfigurationUpdate> updates = queryRunner.execute();
 
@@ -2527,6 +2513,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             PropertyOptionsSource pos = pds.getOptionsSource();
             PropertyOptionsSource.TargetType tt = pos.getTargetType();
             String expression = pos.getExpression();
+            String filter = pos.getFilter();
+            Pattern filterPattern = null;
+            if (filter!=null)
+                filterPattern = Pattern.compile(filter);
+
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                 ResourceCriteria criteria = new ResourceCriteria();
 
@@ -2549,10 +2540,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                     if (tt == PropertyOptionsSource.TargetType.RESOURCE) {
 
-                        PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource()
-                            .getName(), "" + composite.getResource().getName());
-                        // TODO filter -- or leave up to search expression??
-                        pds.getEnumeratedValues().add(pde);
+                        String name = composite.getResource().getName();
+                        // filter if the user provided a filter
+
+                        if (filterPattern !=null ) {
+                            Matcher m = filterPattern.matcher(name);
+                            if (m.matches()) {
+                                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                                pds.getEnumeratedValues().add(pde);
+                            }
+                        } else { // Filter is null -> none provided -> do not filter
+                            PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);
+                            pds.getEnumeratedValues().add(pde);
+
+                        }
+
                     } else if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                         //  for configuration we need to drill down into the resource configuration
                         if (!handleConfigurationTarget(pds, expression, composite.getResource()))

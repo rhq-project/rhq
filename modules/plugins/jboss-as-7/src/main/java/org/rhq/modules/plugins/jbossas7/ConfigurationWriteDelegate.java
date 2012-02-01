@@ -43,6 +43,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
@@ -50,11 +51,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     final Log log = LogFactory.getLog(this.getClass());
 
-    private Address address;
+    private Address _address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
     private String namePropLocator;
     private String type;
+    private boolean addNewChildren;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -65,7 +67,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     public ConfigurationWriteDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address) {
         this.configurationDefinition = configDef;
         this.connection = connection;
-        this.address = address;
+        this._address = address;
     }
 
     /**
@@ -89,7 +91,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
         Configuration conf = report.getConfiguration();
 
-        CompositeOperation cop = updateGenerateOperationFromProperties(conf);
+        CompositeOperation cop = updateGenerateOperationFromProperties(conf, _address);
 
         Result result = connection.execute(cop);
         if (!result.isSuccess()) {
@@ -103,21 +105,28 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     }
 
-    protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf) {
+    protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf, Address address) {
 
         CompositeOperation cop = new CompositeOperation();
 
         for (PropertyDefinition propDef : configurationDefinition.getNonGroupedProperties()) {
 
-            updateProperty(conf, cop, propDef);
+            updateProperty(conf, cop, propDef, address);
         }
         for (PropertyGroupDefinition pgd: configurationDefinition.getGroupDefinitions()) {
             String groupName = pgd.getName();
             namePropLocator = null;
-            if (groupName.startsWith("children:")) {
+            if (groupName.startsWith("children:")) { // children, where the key in key=value from the path is known
                 type = groupName.substring("children:".length());
                 if (type.contains(":")) {
                     namePropLocator = type.substring(type.indexOf(":") + 1);
+                    if (namePropLocator.endsWith("+")) { // ending in +  -> we need to :add new entries
+                        namePropLocator=namePropLocator.substring(0,namePropLocator.length()-1);
+                        addNewChildren = true;
+                    }
+                    else {
+                        addNewChildren = false;
+                    }
                     type = type.substring(0, type.indexOf(":"));
                 }
                 else {
@@ -126,8 +135,21 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 }
                 List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
                 for (PropertyDefinition def : definitions) {
-                    updateProperty(conf,cop,def);
+                    updateProperty(conf,cop,def, address);
                 }
+            } if (groupName.startsWith("child:")) { // one named child resource
+                String subPath = groupName.substring("child:".length());
+                if (!subPath.contains("="))
+                    throw new IllegalArgumentException("subPath of 'child:' expression has no =");
+
+                Address address1 = new Address(address);
+                address1.addSegment(subPath);
+
+                List<PropertyDefinition> definitions = configurationDefinition.getPropertiesInGroup(groupName);
+                for (PropertyDefinition def : definitions) {
+                    updateProperty(conf,cop,def, address1);
+                }
+
 
             } // TODO handle attribute: case
         }
@@ -135,58 +157,117 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         return cop;
     }
 
-    private void updateProperty(Configuration conf, CompositeOperation cop, PropertyDefinition propDef) {
+    private void updateProperty(Configuration conf, CompositeOperation cop, PropertyDefinition propDef,
+                                Address baseAddress) {
 
         // Skip over read-only properties, the AS can not use them anyway
         if (propDef.isReadOnly())
             return;
 
         // Handle the special case
-        if (propDef instanceof PropertyDefinitionList && propDef.getName().equals("*")) {
+        String propDefName = propDef.getName();
+        if (propDef instanceof PropertyDefinitionList && propDefName.startsWith("*")) {
             propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
-            PropertyList pl = (PropertyList) conf.get("*");  // TODO loop over the list content
+            PropertyList pl = (PropertyList) conf.get(propDefName);
 
-            for (Property prop2 : pl.getList()) {
-                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef);
+            // check if we need to see if that property exists - get the current state of affairs from the AS
+            List<String> existingPropnames = new ArrayList<String>();
+            if (addNewChildren) {
+                Operation op = new ReadChildrenResources(baseAddress,type);
+                Result tmp = connection.execute(op);
+                if (tmp.isSuccess()) {
+                    Map<String,Object> tmpResMap = (Map<String, Object>) tmp.getResult();
+                    existingPropnames.addAll(tmpResMap.keySet());
+                }
             }
+
+            // Loop over the list - i.e. the individual rows that come from the server
+            for (Property prop2 : pl.getList()) {
+                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef, baseAddress,
+                        existingPropnames);
+            }
+            // now check about removed properties
+            for (String existingName : existingPropnames ) {
+                boolean found=false;
+                for (Property prop2 : pl.getList()) {
+                    PropertyMap propMap2 = (PropertyMap) prop2;
+                    String itemName = propMap2.getSimple(namePropLocator).getStringValue();
+                    if (itemName==null) {
+                        throw new IllegalArgumentException("Map contains no entry with name '" + namePropLocator + "'");
+                    }
+                    if (itemName.equals(existingName)) {
+                        found=true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Address tmpAddr = new Address(baseAddress);
+                    tmpAddr.add(type, existingName);
+                    Operation operation = new Operation("remove",tmpAddr);
+                    cop.addStep(operation);
+                }
+            }
+
         }
         else {
             // Normal cases
-            Property prop = conf.get(propDef.getName());
+            Property prop = conf.get(propDefName);
 
             if (prop instanceof PropertySimple) {
-                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
+                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef, baseAddress);
             }
             else if (prop instanceof PropertyList) {
-                updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef);
+                updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef, baseAddress);
             }
             else {
-                updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef);
+                updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef, baseAddress);
             }
         }
     }
 
-    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef) {
-        Map<String,Object> results = updateHandleMap(prop,propDef);
+    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
+                                         Address address) {
+        Map<String,Object> results = updateHandleMap(prop,propDef, address);
         Operation writeAttribute = new WriteAttribute(address,prop.getName(),results);
         cop.addStep(writeAttribute);
     }
 
-    private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef) {
-        Map<String,Object> results = updateHandleMap(prop,propDef);
+    private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
+                                                Address address, List<String> existingPropNames) {
+        Map<String,Object> results = updateHandleMap(prop,propDef, address);
         if (prop.get(namePropLocator)==null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
         }
         String addrVal= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
+
+
+        // determine key from map as propDefName
+        String key = prop.getSimpleValue(namePropLocator, null);
+        if (key==null) {
+            throw new IllegalArgumentException("Map contains no entry with name '" + namePropLocator + "'");
+        }
+
         Address addr = new Address(address);
         addr.add(type,addrVal);
         for (Map.Entry<String,Object> entry : results.entrySet()) {
-            Operation writeAttribute = new WriteAttribute(addr,entry.getKey(),entry.getValue());
-            cop.addStep(writeAttribute);
+            Operation operation;
+            if (!addNewChildren || existingPropNames.contains(key))
+                operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
+            else {
+                Address tmpAddr = new Address(address);
+                tmpAddr.add(type, key);
+                operation = new Operation("add",tmpAddr);
+                operation.addAdditionalProperty("name",key);
+                operation.addAdditionalProperty("value",entry.getValue());
+            }
+            cop.addStep(operation);
         }
+
     }
 
-    private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef) {
+    private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef,
+                                          Address address) {
         PropertyDefinition memberDef = propDef.getMemberDefinition();
 
         // We need to collect the list members, create an array and attach this to the cop
@@ -201,7 +282,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
             }
             if (memberDef instanceof PropertyDefinitionMap) {
-                Map<String,Object> mapResult = updateHandleMap((PropertyMap) inner,(PropertyDefinitionMap)memberDef);
+                Map<String,Object> mapResult = updateHandleMap((PropertyMap) inner,(PropertyDefinitionMap)memberDef,
+                        address);
                 values.add(mapResult);
             }
         }
@@ -210,7 +292,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     }
 
 
-    private void updateHandlePropertySimple(CompositeOperation cop, PropertySimple propertySimple, PropertyDefinitionSimple propDef) {
+    private void updateHandlePropertySimple(CompositeOperation cop, PropertySimple propertySimple,
+                                            PropertyDefinitionSimple propDef, Address address) {
 
         // If the property value is null and the property is optional, skip too
         if (propertySimple.getStringValue()==null && !propDef.isRequired())
@@ -221,7 +304,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         cop.addStep(writeAttribute);
     }
 
-    private Map<String, Object> updateHandleMap(PropertyMap map, PropertyDefinitionMap mapDef) {
+    private Map<String, Object> updateHandleMap(PropertyMap map, PropertyDefinitionMap mapDef, Address address) {
         Map<String,PropertyDefinition> memberDefinitions = mapDef.getPropertyDefinitions();
 
         Map<String,Object> results = new HashMap<String,Object>();

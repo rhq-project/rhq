@@ -89,6 +89,34 @@
 
     </server>
 
+    <server class="foo" discovery="foo" name="test9">
+        <resource-configuration>
+            <c:simple-property name="default-virtual-server" type="string" readOnly="true"/>
+            <c:simple-property name="test-prop" type="string" required="true" defaultValue="Hello"/>
+            <c:group name="child:configuration=jsp-configuration">
+                <c:simple-property name="check-interval" type="integer" units="seconds" readOnly="false" default="1"/>
+                <c:simple-property name="disabled" type="boolean" default="false"/>
+            </c:group>
+            <c:group name="child:configuration=static-resources">
+                <c:simple-property name="listings" default="true" type="boolean"/>
+                <c:simple-property name="max-depth" default="9" type="integer" />
+            </c:group>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test10">
+        <resource-configuration>
+            <c:group name="children:system-property:name+" displayName="System-properties">
+                <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                    <c:map-property name="*:name" displayName="Name" readOnly="true">
+                        <c:simple-property name="name" displayName="Property-Name" readOnly="true"/>
+                        <c:simple-property name="value" displayName="Value"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="simple1">
 
         <resource-configuration>

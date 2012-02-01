@@ -55,7 +55,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             op = new Operation("add",theAddress);
             addRequiredToOp(op,parameters,"driver-name");
             addRequiredToOp(op,parameters,"jndi-name");
-            addRequiredToOp(op, parameters, "pool-name");
             addRequiredToOp(op, parameters, "connection-url");
             addOptionalToOp(op, parameters, "user-name");
             addOptionalToOp(op,parameters,"password");
@@ -68,14 +67,11 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             op = new Operation("add",theAddress);
             addRequiredToOp(op,parameters,"driver-name");
             addRequiredToOp(op,parameters,"jndi-name");
-            addRequiredToOp(op,parameters,"pool-name");
-            addRequiredToOp(op,parameters,"connection-url");
             addOptionalToOp(op,parameters,"user-name");
             addOptionalToOp(op,parameters,"password");
-            addRequiredToOp(op,parameters,"xa-data-source-class");
+            addRequiredToOp(op,parameters,"xa-datasource-class");
 
             Map<String,Object> props = new HashMap<String, Object>(); // TODO
-            props.put("_foo","_bar"); // TODO AS7-1209
             op.addAdditionalProperty("xa-data-source-properties",props);
 
         }

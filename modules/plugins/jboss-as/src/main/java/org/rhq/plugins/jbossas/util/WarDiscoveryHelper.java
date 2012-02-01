@@ -42,6 +42,8 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -53,7 +55,6 @@ import org.rhq.plugins.jbossas.JBossASServerComponent;
 import org.rhq.plugins.jbossas.WarComponent;
 import org.rhq.plugins.jbossas.WarDiscoveryComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
  * Provides helper methods that are used by both {@link WarDiscoveryComponent} and {@link EmbeddedWarDiscoveryComponent}

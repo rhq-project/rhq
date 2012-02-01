@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
 
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.event.EventSource;
@@ -44,6 +45,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.system.SigarAccess;
+import org.rhq.core.system.SystemInfoException;
 
 /**
  * Manager for the Plugin Container's Event subsystem.
@@ -113,9 +115,12 @@ public class EventManager implements ContainerService {
         }
     }
 
+    @Nullable
     SigarProxy getSigar() {
         if (this.sigar == null) {
-            this.sigar = SigarAccess.getSigar();
+            if (SigarAccess.isSigarAvailable()) {
+                this.sigar = SigarAccess.getSigar();
+            }
         }
         return this.sigar;
     }

@@ -74,7 +74,7 @@ public class DriftTemplateMapDatabaseUpgradeTask implements DatabaseUpgradeTask 
             + "       from RHQ_DRIFT_DEF_TEMPLATE dt" //
             + "       join RHQ_RESOURCE_TYPE rt on dt.RESOURCE_TYPE_ID = rt.ID" //
             + "       join RHQ_RESOURCE res     on rt.ID = res.RESOURCE_TYPE_ID" //
-            + "        and dd.RESOURCE_ID = res.ID" //
+            + "      where dd.RESOURCE_ID = res.ID" //
             + " )" //
             + " where dd.DRIFT_DEF_TEMPLATE_ID is null";
 

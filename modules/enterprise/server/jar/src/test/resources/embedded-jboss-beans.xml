@@ -4,6 +4,14 @@
             xsi:schemaLocation="urn:jboss:bean-deployer:2.0 bean-deployer_2_0.xsd"
             xmlns="urn:jboss:bean-deployer:2.0">
 
+   <!-- This installs a custom initial context factory builder into the JVM
+        that will ensure that all the default InitialContexts are going to check
+        for the permission to access the RHQ internals. -->
+   <bean class="org.rhq.jndi.mbean.AccessCheckingInitialContextFactoryBuilderInstaller"
+      name="AccessCheckingInitialContextFactoryBuilderInstaller">     
+   </bean>
+   
+   
    <bean name="Naming" class="org.jnp.server.SingletonNamingServer"/>
 
    <bean name="InitialContextProperties" class="java.util.Hashtable">
@@ -20,7 +28,7 @@
                </entry>
             </map>
          </parameter>
-      </constructor>
+      </constructor>      
    </bean>
 
    <bean name="java:comp/Initializer" class="org.jboss.ejb3.embedded.JavaCompInitializer">

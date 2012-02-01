@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,30 +22,17 @@
  */
 package org.rhq.plugins.jmx;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mc4j.ems.connection.ConnectionFactory;
+
 import org.mc4j.ems.connection.EmsConnection;
-import org.mc4j.ems.connection.local.LocalVMFinder;
-import org.mc4j.ems.connection.local.LocalVirtualMachine;
-import org.mc4j.ems.connection.settings.ConnectionSettings;
 import org.mc4j.ems.connection.support.ConnectionProvider;
-import org.mc4j.ems.connection.support.metadata.ConnectionTypeDescriptor;
-import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
-import org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.jmx.util.ConnectionProviderFactory;
 
 /**
  * The generic JMX server component used to create and cache a connection to a local or
@@ -61,124 +48,50 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * @author John Mazzitelli
  */
 public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXComponent<T> {
+
     private static Log log = LogFactory.getLog(JMXServerComponent.class);
 
     private EmsConnection connection;
     private ConnectionProvider connectionProvider;
 
     /**
-     * Access to this is deprecated, use #getResourceContext() instead.
+     * The context of a component that is started. Note, other classes should use #getResourceContext(), rather than
+     * this field.
      */
     ResourceContext context;
 
     public void start(ResourceContext context) throws Exception {
         this.context = context;
-        log.info("Starting connection to JMX Server " + context.getResourceKey());
+        log.debug("Starting connection to " + context.getResourceType() + "[" + context.getResourceKey() + "]...");
 
+        // If connecting to the EMS fails, log a warning but still succeed in starting. getAvailablity() will keep
+        // trying to connect each time it is called.
         try {
             internalStart();
         } catch (Exception e) {
-            log.warn("JMX Plugin connection failure", e);
-            // The new model is to always succeed in starting, but warn about the errors (we only do this the first request)
-            /*throw new Exception("Unable to connect to Java VM ["
-                + configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue()
-                + "]", e);*/
+            log.warn("Failed to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "].", e);
+
         }
 
         if (connection == null) {
-            log.warn("Unable to connect to JMX Server " + context.getResourceKey());
+            log.warn("Unable to connect to " + context.getResourceType() + "[" + context.getResourceKey() + "].");
         }
     }
 
     protected void internalStart() throws Exception {
-        Configuration configuration = context.getPluginConfiguration();
-
-        String connectionTypeDescriptorClass = configuration.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
+        Configuration pluginConfig = context.getPluginConfiguration();
+        String connectionTypeDescriptorClassName = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
             .getStringValue();
-
-        if (LocalVMTypeDescriptor.class.getName().equals(connectionTypeDescriptorClass)) {
-            String commandLine = configuration.getSimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY)
-                .getStringValue();
-
-            Map<Integer, LocalVirtualMachine> vms = LocalVMFinder.getManageableVirtualMachines();
-            if (vms != null) {
-                for (LocalVirtualMachine vm : vms.values()) {
-                    if (vm.getCommandLine().equals(commandLine)) {
-                        connectLocal(vm.getVmid());
-                    }
-                }
-            }
-        } else if (JMXDiscoveryComponent.PARENT_TYPE.equals(connectionTypeDescriptorClass)) {
-            // We're embedded in another jmx server component without jmxremoting set so just use the parent's connection
+        if (JMXDiscoveryComponent.PARENT_TYPE.equals(connectionTypeDescriptorClassName)) {
+            // Our parent is itself a JMX component, so just reuse its connection.
             this.connection = ((JMXComponent) context.getParentResourceComponent()).getEmsConnection();
             this.connectionProvider = this.connection.getConnectionProvider();
-        } else if (J2SE5ConnectionTypeDescriptor.class.getName().equals(connectionTypeDescriptorClass)) {
-            // We're embedded in a J2SE VM with jmxremote defined (e.g. for jconsole usage)
-            String principal = null;
-            String credentials = null;
-            PropertySimple o = configuration.getSimple(JMXComponent.PRINCIPAL_CONFIG_PROP);
-            if (o != null) {
-                principal = o.getStringValue();
-            }
-            o = configuration.getSimple(JMXComponent.CREDENTIALS_CONFIG_PROP);
-            if (o != null) {
-                credentials = o.getStringValue();
-            }
-
-            ConnectionSettings settings = new ConnectionSettings();
-            J2SE5ConnectionTypeDescriptor desc = new J2SE5ConnectionTypeDescriptor();
-            settings.setConnectionType(desc);
-            settings.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
-                .getStringValue());
-            if (principal != null) {
-                settings.setPrincipal(principal);
-            }
-            if (credentials != null) {
-                settings.setCredentials(credentials);
-            }
-
-            prepareConnection(settings);
-
         } else {
-            // This can handle internal connections (within the same vm as the plugin container) as well as
-            // any remote connections
-            ConnectionSettings settings = new ConnectionSettings();
-
-            String principal = null;
-            String credentials = null;
-            PropertySimple o = configuration.getSimple(JMXComponent.PRINCIPAL_CONFIG_PROP);
-            if (o != null) {
-                principal = o.getStringValue();
-            }
-            o = configuration.getSimple(JMXComponent.CREDENTIALS_CONFIG_PROP);
-            if (o != null) {
-                credentials = o.getStringValue();
-            }
-
-            settings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass)
-                .newInstance());
-
-            settings.setConnectionType((ConnectionTypeDescriptor) Class.forName(connectionTypeDescriptorClass)
-                .newInstance());
-            settings.setServerUrl(configuration.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)
-                .getStringValue());
-
-            String installPath = configuration.getSimpleValue(JMXDiscoveryComponent.INSTALL_URI, null);
-            if (installPath != null) {
-                settings.setLibraryURI(configuration.getSimple(JMXDiscoveryComponent.INSTALL_URI).getStringValue());
-            }
-
-            if (principal != null) {
-                settings.setPrincipal(principal);
-            }
-            if (credentials != null) {
-                settings.setCredentials(credentials);
-            }
-            prepareConnection(settings);
+            this.connectionProvider = ConnectionProviderFactory.createConnectionProvider(pluginConfig,
+                this.context.getNativeProcess(), this.context.getTemporaryDirectory());
+            this.connection = this.connectionProvider.connect();
+            this.connection.loadSynchronous(false);
         }
-
-        this.connection.loadSynchronous(false);
-
     }
 
     public void stop() {
@@ -192,28 +105,6 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
         }
     }
 
-    protected void connectLocal(int vmid) {
-        // TODO GH: Refactor ems to also accept the vm itself
-        ConnectionSettings settings = new ConnectionSettings();
-        settings.setConnectionType(new LocalVMTypeDescriptor());
-        settings.setServerUrl(String.valueOf(vmid));
-        prepareConnection(settings);
-    }
-
-    protected void prepareConnection(ConnectionSettings settings) {
-        settings.getControlProperties().setProperty(ConnectionFactory.COPY_JARS_TO_TEMP, String.valueOf(Boolean.TRUE));
-        settings.getControlProperties().setProperty(ConnectionFactory.JAR_TEMP_DIR,
-            this.context.getTemporaryDirectory().getAbsolutePath());
-
-        addAdditionalJarsToConnectionSettings(settings);
-
-        ConnectionFactory cf = new ConnectionFactory();
-        cf.discoverServerClasses(settings);
-
-        this.connectionProvider = cf.getConnectionProvider(settings);
-        this.connection = this.connectionProvider.connect();
-    }
-
     public EmsConnection getEmsConnection() {
         return this.connection;
     }
@@ -223,8 +114,8 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
             try {
                 internalStart();
             } catch (Exception e) {
-                log.debug("Still unable to reconnect resource: " + context.getResourceKey() + " due to error: "
-                    + e.getMessage());
+                log.debug("Still unable to reconnect to " + context.getResourceType() + "[" + context.getResourceKey()
+                    + "] due to error: " + e);
             }
         }
 
@@ -236,32 +127,4 @@ public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXCo
         return this.context;
     }
 
-    public List<Resource> discoverServices(ResourceType type, Configuration defaultPluginConfiguration) {
-        defaultPluginConfiguration.getSimple("objectName").getStringValue();
-
-        return null;
-    }
-
-    private void addAdditionalJarsToConnectionSettings(ConnectionSettings settings) {
-        // get the additional jars from the config
-        Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        List<File> additionalEntries = JMXDiscoveryComponent.getAdditionalJarsFromConfig(pluginConfiguration);
-        if (additionalEntries == null || additionalEntries.size() == 0) {
-            return; // nothing to do, there are no additional entries to add
-        }
-
-        // get the setting's current list of classpath entries - we are going to add to these
-        List<File> settingsEntries = settings.getClassPathEntries();
-        if (settingsEntries == null) {
-            settingsEntries = new ArrayList<File>();
-        }
-
-        // append the additional entries to the end of the setting's current entries
-        settingsEntries.addAll(additionalEntries);
-
-        // now that we've appended our additional jars, tell the connection settings about the new list
-        settings.setClassPathEntries(settingsEntries);
-
-        return;
-    }
 }

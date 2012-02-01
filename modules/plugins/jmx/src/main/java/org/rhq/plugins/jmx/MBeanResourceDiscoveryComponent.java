@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
  * This is meant to be a generic discovery component for MBeans. In order to use it you configure your resource
@@ -87,8 +88,9 @@ public class MBeanResourceDiscoveryComponent<T extends JMXComponent<?>> implemen
     // Public  --------------------------------------------
 
     /**
-     * Same as {@link discoverResources(ResourceDiscoveryContext<T>)} with additional param.
-     * @param skipUnknownProps         Should we skip over MBeans that have unknown properties in their ObjectName
+     * Same as {@link #discoverResources(ResourceDiscoveryContext<T>)} with additional param.
+     *
+     * @param skipUnknownProps         if true, skip over MBeans that have unknown properties in their ObjectName
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context,
         boolean skipUnknownProps) {

@@ -110,6 +110,128 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     //   | 1.0-feb-2  |          |            |         | one of the files gets deleted
     // --------------------------------------------------------------------------
 
+    @BeforeClass
+    public void beforeClass() throws Exception {
+        Calendar cal = Calendar.getInstance();
+        cal.set(2009, Calendar.FEBRUARY, 1, 1, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date febDate = cal.getTime();
+        cal.set(2009, Calendar.JUNE, 1, 1, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date juneDate = cal.getTime();
+        testTimestamps.put(TESTPLUGIN_1_0_FEB, febDate);
+        testTimestamps.put(TESTPLUGIN_1_0_JUN, juneDate);
+        testTimestamps.put(TESTPLUGIN_1_1_FEB, febDate);
+        testTimestamps.put(TESTPLUGIN_1_1_JUN, juneDate);
+        testTimestamps.put(TESTPLUGIN_1_0_FEB2, febDate);
+
+        pluginMgr = LookupUtil.getPluginManager();
+        subjectManager = LookupUtil.getSubjectManager();
+
+        File deployDir = new File(DEPLOY_LOCATION);
+        deployDir.mkdirs();
+        assert deployDir.isDirectory();
+
+        File jarsDir = new File(JARS_LOCATION);
+        jarsDir.mkdirs();
+        assert jarsDir.isDirectory();
+
+        testPluginFiles.put(TESTPLUGIN_1_0_FEB, new File(jarsDir, TESTPLUGIN_1_0_FEB + ".jar"));
+        testPluginFiles.put(TESTPLUGIN_1_0_JUN, new File(jarsDir, TESTPLUGIN_1_0_JUN + ".jar"));
+        testPluginFiles.put(TESTPLUGIN_1_1_FEB, new File(jarsDir, TESTPLUGIN_1_1_FEB + ".jar"));
+        testPluginFiles.put(TESTPLUGIN_1_1_JUN, new File(jarsDir, TESTPLUGIN_1_1_JUN + ".jar"));
+        testPluginFiles.put(TESTPLUGIN_1_0_FEB2, new File(jarsDir, TESTPLUGIN_1_0_FEB2 + ".jar"));
+
+        for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
+            File descriptorFile = new File(DESCRIPTORS_LOCATION, entry.getKey() + ".xml");
+            File file = entry.getValue();
+            buildPluginJar(descriptorFile, file);
+            assert file.exists();
+
+            PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+            testPluginDescriptors.put(entry.getKey(), descriptor);
+
+            Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());
+            pluginPojo.setVersion(descriptor.getVersion());
+            pluginPojo.setMd5(MessageDigestGenerator.getDigestString(file));
+            pluginPojo.setMtime(testTimestamps.get(entry.getKey()).getTime());
+            testPlugins.put(entry.getKey(), pluginPojo);
+        }
+
+        return;
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void afterClass() throws Exception {
+        for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
+            File doomed = entry.getValue();
+            doomed.delete();
+        }
+        File jarsDir = new File(JARS_LOCATION);
+        jarsDir.delete();
+
+        File deployDir = new File(DEPLOY_LOCATION);
+        emptyDirectory(deployDir);
+        deployDir.delete();
+
+        return;
+    }
+
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
+        afterMethod(); // we clean up before and after, just to be sure we're clean
+
+        File deployDir = new File(DEPLOY_LOCATION);
+        deployDir.mkdirs();
+        assert deployDir.isDirectory();
+
+        File jarsDir = new File(JARS_LOCATION);
+        jarsDir.mkdirs();
+        assert jarsDir.isDirectory();
+
+        for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
+            File descriptorFile = new File(DESCRIPTORS_LOCATION, entry.getKey() + ".xml");
+            File file = entry.getValue();
+            buildPluginJar(descriptorFile, file);
+            assert file.exists();
+
+            PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+            testPluginDescriptors.put(entry.getKey(), descriptor);
+
+            Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());
+            pluginPojo.setVersion(descriptor.getVersion());
+            pluginPojo.setMd5(MessageDigestGenerator.getDigestString(file));
+            pluginPojo.setMtime(testTimestamps.get(entry.getKey()).getTime());
+            testPlugins.put(entry.getKey(), pluginPojo);
+        }
+
+    }
+
+    @AfterMethod(alwaysRun = true)
+    @SuppressWarnings("unchecked")
+    public void afterMethod() throws Exception {
+
+        emptyDirectory(new File(DEPLOY_LOCATION));
+
+        TransactionManager tm = getTransactionManager();
+        tm.begin();
+        EntityManager em = getEntityManager();
+        try {
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+            q.setParameter("name", PLUGIN_NAME);
+            List<Plugin> doomedPlugins = q.getResultList();
+            for (Plugin doomedPlugin : doomedPlugins) {
+                em.remove(em.find(Plugin.class, doomedPlugin.getId()));
+            }
+        } catch (NoResultException ignore) {
+        } finally {
+            tm.commit();
+            em.close();
+        }
+
+        return;
+    }
+
     public void test0() throws Exception {
         Plugin plugin10feb = deployPluginJarToFilesystem(TESTPLUGIN_1_0_FEB);
         deployPluginJarToDatabase(TESTPLUGIN_1_0_FEB);
@@ -327,102 +449,6 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         return;
     }
 
-    @BeforeClass
-    public void beforeClass() throws Exception {
-        Calendar cal = Calendar.getInstance();
-        cal.set(2009, Calendar.FEBRUARY, 1, 1, 0, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        Date febDate = cal.getTime();
-        cal.set(2009, Calendar.JUNE, 1, 1, 0, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        Date juneDate = cal.getTime();
-        testTimestamps.put(TESTPLUGIN_1_0_FEB, febDate);
-        testTimestamps.put(TESTPLUGIN_1_0_JUN, juneDate);
-        testTimestamps.put(TESTPLUGIN_1_1_FEB, febDate);
-        testTimestamps.put(TESTPLUGIN_1_1_JUN, juneDate);
-        testTimestamps.put(TESTPLUGIN_1_0_FEB2, febDate);
-
-        pluginMgr = LookupUtil.getPluginManager();
-        subjectManager = LookupUtil.getSubjectManager();
-
-        File deployDir = new File(DEPLOY_LOCATION);
-        deployDir.mkdirs();
-        assert deployDir.isDirectory();
-
-        File jarsDir = new File(JARS_LOCATION);
-        jarsDir.mkdirs();
-        assert jarsDir.isDirectory();
-
-        testPluginFiles.put(TESTPLUGIN_1_0_FEB, new File(jarsDir, TESTPLUGIN_1_0_FEB + ".jar"));
-        testPluginFiles.put(TESTPLUGIN_1_0_JUN, new File(jarsDir, TESTPLUGIN_1_0_JUN + ".jar"));
-        testPluginFiles.put(TESTPLUGIN_1_1_FEB, new File(jarsDir, TESTPLUGIN_1_1_FEB + ".jar"));
-        testPluginFiles.put(TESTPLUGIN_1_1_JUN, new File(jarsDir, TESTPLUGIN_1_1_JUN + ".jar"));
-        testPluginFiles.put(TESTPLUGIN_1_0_FEB2, new File(jarsDir, TESTPLUGIN_1_0_FEB2 + ".jar"));
-
-        for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
-            File descriptorFile = new File(DESCRIPTORS_LOCATION, entry.getKey() + ".xml");
-            File file = entry.getValue();
-            buildPluginJar(descriptorFile, file);
-            assert file.exists();
-
-            PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
-            testPluginDescriptors.put(entry.getKey(), descriptor);
-
-            Plugin pluginPojo = new Plugin(PLUGIN_NAME, file.getName());
-            pluginPojo.setVersion(descriptor.getVersion());
-            pluginPojo.setMd5(MessageDigestGenerator.getDigestString(file));
-            pluginPojo.setMtime(testTimestamps.get(entry.getKey()).getTime());
-            testPlugins.put(entry.getKey(), pluginPojo);
-        }
-
-        return;
-    }
-
-    @AfterClass
-    public void afterClass() throws Exception {
-        for (Map.Entry<String, File> entry : testPluginFiles.entrySet()) {
-            File doomed = entry.getValue();
-            doomed.delete();
-        }
-        File jarsDir = new File(JARS_LOCATION);
-        jarsDir.delete();
-
-        File deployDir = new File(DEPLOY_LOCATION);
-        emptyDirectory(deployDir);
-        deployDir.delete();
-
-        return;
-    }
-
-    @BeforeMethod
-    public void beforeMethod() throws Exception {
-        afterMethod(); // we clean up before and after, just to be sure we're clean
-    }
-
-    @AfterMethod
-    @SuppressWarnings("unchecked")
-    public void afterMethod() throws Exception {
-        emptyDirectory(new File(DEPLOY_LOCATION));
-
-        TransactionManager tm = getTransactionManager();
-        tm.begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query q = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
-            q.setParameter("name", PLUGIN_NAME);
-            List<Plugin> doomedPlugins = q.getResultList();
-            for (Plugin doomedPlugin : doomedPlugins) {
-                em.remove(em.find(Plugin.class, doomedPlugin.getId()));
-            }
-        } catch (NoResultException ignore) {
-        } finally {
-            tm.commit();
-            em.close();
-        }
-
-        return;
-    }
-
     private void assertSamePlugin(Plugin p1, Plugin p2) throws Exception {
         assert p1.getName().equals(p2.getName()) : "NAME: " + p1 + "!=" + p2;
         assert p1.getMd5().equals(p2.getMd5()) : "MD5: " + p1 + "!=" + p2;
@@ -568,6 +594,9 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     }
 
     private void emptyDirectory(File dirToEmpty) {
+        if (!dirToEmpty.isDirectory()) {
+            return;
+        }
         File[] doomedFiles = dirToEmpty.listFiles();
         for (File doomedFile : doomedFiles) {
             doomedFile.delete();

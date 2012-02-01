@@ -25,8 +25,9 @@ import java.util.Properties;
 
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.common.SystemConfiguration;
@@ -65,6 +66,7 @@ import org.rhq.test.TransactionCallback;
  * @author loleary
  *
  */
+@SuppressWarnings("deprecation")
 public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
 
     /**
@@ -95,7 +97,7 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     private LdapGroupManagerLocal ldapGroupManager = null;
     private SystemManagerLocal systemManager = null;
     private TestServerPluginService testServerPluginService = null;
-    
+
     //    private Subject overlord = null;
 
     @BeforeClass
@@ -104,12 +106,15 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
         //        overlord = LookupUtil.getSubjectManager().getOverlord();
         systemManager = LookupUtil.getSystemManager();
         ldapGroupManager = LookupUtil.getLdapGroupManager();
+    }
 
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
         testServerPluginService = new TestServerPluginService();
         prepareCustomServerPluginService(testServerPluginService);
         testServerPluginService.startMasterPluginContainer();
-        
+
         // get our Maven properties for LDAP testing
         java.net.URL url = LdapGroupManagerBeanTest.class.getClassLoader().getResource("test-ldap.properties");
         Properties mvnProps = new Properties();
@@ -146,12 +151,11 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
         this.setLdapGroupMemberAttribute("member");
     }
 
-    @AfterClass
-    public void tearDown() throws Exception {
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod() throws Exception {
         unprepareServerPluginService();
-        testServerPluginService.stopMasterPluginContainer();
     }
-    
+
     /**
      * Test {@link LdapGroupManagerBean#findAvailableGroupsFor(String)} method 
      * using a user who does not exist in the test LDAP instance.
@@ -485,21 +489,21 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
     private void setLdapCtxFactory(final String name) throws Exception {
         //this is a readonly system property that we are trying to override, so we
         //need to be a little bit more persuasive...
-        executeInTransaction(new TransactionCallback() {            
+        executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
                 Query q = getEntityManager().createNamedQuery(SystemConfiguration.FIND_PROPERTY_BY_KEY);
                 q.setParameter("key", SystemSetting.LDAP_NAMING_FACTORY.getInternalName());
-                               
+
                 SystemConfiguration config = (SystemConfiguration) q.getSingleResult();
                 config.setPropertyValue(name);
-                
+
                 getEntityManager().merge(config);
-                
+
                 getEntityManager().flush();
             }
         });
-        
+
         //reload the system settings cache so that the new value is reflected there immediately
         systemManager.loadSystemConfigurationCache();
     }

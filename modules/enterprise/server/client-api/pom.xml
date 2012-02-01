@@ -15,47 +15,39 @@
     <name>RHQ Enterprise Server Client API</name>
     <description>The implementation of the client API when accessing the server locally</description>
 
-    <properties>
-        <persistence-api.version>1.0</persistence-api.version>
-    </properties>
+  <dependencies>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-container-lib</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>
+      </dependency>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-script-bindings</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>${persistence-api.version}</version>
-            <scope>provided</scope>
-        </dependency>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-script-bindings</artifactId>
+         <version>${project.version}</version>
+      </dependency> 
+      
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope>
+      </dependency>     
 
-        <dependency>
-            <groupId>hibernate-annotations</groupId>
-            <artifactId>hibernate-annotations</artifactId>
-            <!-- NOTE: The version is defined in the root POM's dependencyManagement 
-                section. -->
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                    <!-- <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE 
-                        -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
-                </configuration>
-            </plugin>
-
-        </plugins>
-    </build>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>            
+  </dependencies>
 
     <profiles>
 

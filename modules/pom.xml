@@ -156,9 +156,19 @@
                <module>core</module>
                <module>common</module>
                <module>plugins</module>
+
                <!-- these two are needed by the rhq-agent plugin -->
                <module>enterprise/agent</module>
                <module>enterprise/comm</module>
+               
+               <!-- These 6 are needed for the JNDI intergration tests -->
+               <module>enterprise/server/container-lib</module>
+               <module>enterprise/server/xml-schemas</module>
+               <module>enterprise/server/safe-invoker</module>
+               <module>enterprise/server/jar</module>
+               <module>enterprise/binding</module>
+               <module>enterprise/server/client-api</module>
+               
                <module>integration-tests</module>
            </modules>
        </profile>

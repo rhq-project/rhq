@@ -18,6 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.List;
 
@@ -28,7 +31,8 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.testng.annotations.BeforeSuite;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
@@ -36,6 +40,7 @@ import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 
 /**
@@ -87,6 +92,22 @@ public class AbstractConfigurationHandlingTest {
         return null;
     }
 
+    protected String loadJsonFromFile(String fileName) throws Exception {
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(fileName);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try {
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+            return builder.toString();
+        }
+        finally {
+            reader.close();
+        }
+    }
+
     /**
      * Provide a fake connection, that will return the
      * content we provide via #setContent
@@ -97,7 +118,7 @@ public class AbstractConfigurationHandlingTest {
         JsonNode content;
 
         public FakeConnection() {
-            super("localhost", 1234);
+            super("localhost", 1234, "fake", "fake");
         }
 
         public void setContent(JsonNode content) {
@@ -108,6 +129,30 @@ public class AbstractConfigurationHandlingTest {
         public JsonNode executeRaw(Operation operation) {
             if (content==null)
                 throw new IllegalStateException("Content not yet set");
+
+            Address address = operation.getAddress();
+            if (address!=null && !address.isEmpty()) {
+                // we need to clone the content and then for the result find the right sub-content to put into result and
+                // return this one.
+
+                // find the sub-content we want
+                String[] parts = address.getPath().split("=");
+                String key = parts[0];
+                String val = parts[1];
+                JsonNode result  = content.get("result");
+                JsonNode keyNode = result.get(key);
+                JsonNode valNode = keyNode.get(val);
+
+                // clone the original content
+                ObjectMapper tmpMapper = new ObjectMapper();
+                JsonNode tmp = tmpMapper.createObjectNode();
+                ((ObjectNode)tmp).putAll(((ObjectNode)content));
+
+                // replace the result with the sub-content
+                ((ObjectNode)tmp).put("result",valNode);
+
+                return tmp;
+            }
             return content;
         }
     }

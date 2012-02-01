@@ -20,6 +20,8 @@
 package org.rhq.enterprise.client;
 
 import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
@@ -54,11 +56,21 @@ public class LocalClientProxy extends AbstractRhqFacadeProxy<LocalClient> {
         }
     }
     
-    protected Object doInvoke(Object proxy, Method originalMethod, java.lang.Class<?>[] argTypes, Object[] args) throws Throwable {
+    protected Object doInvoke(Object proxy, Method originalMethod, java.lang.Class<?>[] argTypes, final Object[] args) throws Throwable {
         try {
-            Method realMethod = localSLSB.getClass().getMethod(originalMethod.getName(), argTypes);
-            
-            return realMethod.invoke(localSLSB, args);
+            final Method realMethod = localSLSB.getClass().getMethod(originalMethod.getName(), argTypes);
+
+            //run this through the privileged block to elevate the privs of the script
+            //the scripts don't have the AllowEjbAccessPermission but this code has
+            //all perms (or at least all perms assigned to it by the current context,
+            //which at the time of writing is defined by the rhq-server.policy file
+            //which gives all code all permissions).
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                @Override
+                public Object run() throws Exception {
+                    return realMethod.invoke(localSLSB, args);
+                }
+            });
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("Method [" + originalMethod + "] does not have a desimplified counterpart with arguments " + Arrays.asList(argTypes) + ".", e);
         }

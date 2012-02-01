@@ -17,7 +17,8 @@ import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
@@ -29,48 +30,49 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class InventoryManagerBeanTest extends AbstractEJB3Test {
 
-    @BeforeClass
-    public void deleteResourceTypes() throws Exception {
+    private static List<Integer> deletedTypeIds = asList(1, 2, 3, 4, 5);
+
+    @BeforeMethod
+    public void beforeMethod() throws Exception {
         initDB();
 
         getTransactionManager().begin();
-        List<Integer> resourceTypeIds = asList(1, 2, 3, 4, 5);
-        
+
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
-        inventoryMgr.markTypesDeleted(resourceTypeIds);
+        inventoryMgr.markTypesDeleted(deletedTypeIds);
         getTransactionManager().commit();
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod() throws Exception {
+        cleanDB();
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void markTypesAndTheirChildTypesForDeletion() {
-        List<ResourceType> resourceTypes = getEntityManager().createQuery(
-                "from ResourceType t where t.id in (:resourceTypeIds)")
-                .setParameter("resourceTypeIds", asList(1, 2, 3, 4, 5))
-                .getResultList();
+        List<ResourceType> resourceTypes = getEntityManager()
+            .createQuery("from ResourceType t where t.id in (:resourceTypeIds)")
+            .setParameter("resourceTypeIds", deletedTypeIds).getResultList();
 
         assertEquals("Failed to retrieve all resource types", 5, resourceTypes.size());
 
         List<Integer> typesNotDeleted = new ArrayList<Integer>();
         for (ResourceType type : resourceTypes) {
-           if (!type.isDeleted()) {
-               typesNotDeleted.add(type.getId());
-           }
+            if (!type.isDeleted()) {
+                typesNotDeleted.add(type.getId());
+            }
         }
 
-        assertEquals(
-                "Failed to mark for deletion resource types with the following ids: " + typesNotDeleted + ".",
-                0,
-                typesNotDeleted.size()
-        );
+        assertEquals("Failed to mark for deletion resource types with the following ids: " + typesNotDeleted + ".", 0,
+            typesNotDeleted.size());
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void uninventoryResourcesOfTypesMarkedForDeletion() {
         List<Resource> resources = getEntityManager().createQuery("from Resource r where r.id in (:resourceIds)")
-                .setParameter("resourceIds", asList(1, 2))
-                .getResultList();
+            .setParameter("resourceIds", asList(1, 2)).getResultList();
 
         assertEquals("Failed to retrieve all resources", 2, resources.size());
 
@@ -82,11 +84,8 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         }
 
         assertEquals(
-                "Resources of types marked for deletion should be uninventoried. Resources with the following ids " +
-                        "should have been uninventoried: " + resourcesNotDeleted + ".",
-                0,
-                resourcesNotDeleted.size()
-        );
+            "Resources of types marked for deletion should be uninventoried. Resources with the following ids "
+                + "should have been uninventoried: " + resourcesNotDeleted + ".", 0, resourcesNotDeleted.size());
     }
 
     @Test
@@ -94,7 +93,16 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
         List<ResourceType> deletedTypes = inventoryMgr.getDeletedTypes();
 
-        assertEquals("Expected to get back five deleted resource types", 5, deletedTypes.size());
+        // protect against other db detritus, just look for the ones we expect
+        int resultSize = deletedTypes.size();
+        assertTrue("Expected at least five deleted types", resultSize >= 5);
+        List<Integer> resultIds = new ArrayList(resultSize);
+        for (ResourceType rt : deletedTypes) {
+            resultIds.add(rt.getId());
+        }
+        for (Integer id : deletedTypeIds) {
+            assert (resultIds.contains(id));
+        }
     }
 
     @Test
@@ -111,7 +119,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         ResourceType resourceType = getEntityManager().find(ResourceType.class, 6);
 
         assertFalse(resourceType + " is not ready for removal because it is not deleted.",
-                inventoryMgr.isReadyForPermanentRemoval(resourceType));
+            inventoryMgr.isReadyForPermanentRemoval(resourceType));
     }
 
     public void initDB() throws Exception {
@@ -121,7 +129,22 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
             connection = getConnection();
             IDatabaseConnection conn = new DatabaseConnection(connection);
             setDbType(conn);
-            DatabaseOperation.CLEAN_INSERT.execute(conn, getDataSet());
+            DatabaseOperation.REFRESH.execute(conn, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+    }
+
+    public void cleanDB() throws Exception {
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            IDatabaseConnection conn = new DatabaseConnection(connection);
+            setDbType(conn);
+            DatabaseOperation.DELETE.execute(conn, getDataSet());
         } finally {
             if (connection != null) {
                 connection.close();
@@ -146,13 +169,13 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
         }
 
         if (type != null) {
-            dbConfig.setProperty("http://www.dbunit.org/properties/datatypeFactory",type);
+            dbConfig.setProperty("http://www.dbunit.org/properties/datatypeFactory", type);
         }
     }
 
     IDataSet getDataSet() throws Exception {
         FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass().getResourceAsStream(
-                getDataSetFile())));
+            getDataSetFile())));
         xmlProducer.setColumnSensing(true);
         return new FlatXmlDataSet(xmlProducer);
     }

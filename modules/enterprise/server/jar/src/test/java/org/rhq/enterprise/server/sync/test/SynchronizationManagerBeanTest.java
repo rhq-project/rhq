@@ -132,12 +132,12 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
         public static boolean importerConfigured;
         public static boolean importValidatorsObtainedAfterConfiguration;
-        
+
         public static void reset() {
             importerConfigured = false;
             importValidatorsObtainedAfterConfiguration = false;
         }
-        
+
         @Override
         public void initialize(Subject subject, EntityManager entityManager) {
         }
@@ -150,13 +150,13 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                 public ExportingIterator<String> getExportingIterator() {
                     return new ExportingIterator<String>() {
                         boolean ran = false;
-                        
+
                         @Override
                         public boolean hasNext() {
                             if (ran) {
                                 return false;
                             }
-                            
+
                             ran = true;
                             return true;
                         }
@@ -181,7 +181,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                         public String getNotes() {
                             return null;
                         }
-                        
+
                     };
                 }
 
@@ -189,7 +189,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                 public String getNotes() {
                     return null;
                 }
-                
+
             };
         }
 
@@ -215,20 +215,20 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                 @Override
                 public Set<EntityValidator<String>> getEntityValidators() {
                     EntityValidator<String> v = new EntityValidator<String>() {
-                        
+
                         @Override
                         public void validateExportedEntity(String entity) throws ValidationException {
                         }
-                        
+
                         @Override
                         public void initialize(Subject subject, EntityManager entityManager) {
                         }
                     };
-                    
+
                     if (importerConfigured) {
                         importValidatorsObtainedAfterConfiguration = true;
                     }
-                    
+
                     return Collections.singleton(v);
                 }
 
@@ -245,7 +245,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                 public String finishImport() throws Exception {
                     return null;
                 }
-                
+
             };
         }
 
@@ -253,9 +253,9 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         public Set<ConsistencyValidator> getRequiredValidators() {
             return Collections.emptySet();
         }
-        
+
     }
-    
+
     private TestData testData;
 
     //I just don't get why this can't be a @BeforeTest
@@ -270,9 +270,8 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             //add our new metric template that we are going to perform the tests with
             testData.fakeType = new ResourceType(RESOURCE_TYPE_NAME, PLUGIN_NAME, ResourceCategory.PLATFORM, null);
 
-            MeasurementDefinition mdef =
-                new MeasurementDefinition(METRIC_NAME, MeasurementCategory.PERFORMANCE, MeasurementUnits.NONE,
-                    DataType.MEASUREMENT, true, 600000, DisplayType.SUMMARY);
+            MeasurementDefinition mdef = new MeasurementDefinition(METRIC_NAME, MeasurementCategory.PERFORMANCE,
+                MeasurementUnits.NONE, DataType.MEASUREMENT, true, 600000, DisplayType.SUMMARY);
             testData.fakeType.addMetricDefinition(mdef);
 
             em.persist(testData.fakeType);
@@ -310,43 +309,46 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         systemManager.loadSystemConfigurationCache();
 
         testData.systemSettings = systemManager.getSystemConfiguration(freshUser());
-        
+
         if (createExport) {
             export = synchronizationManager.exportAllSubsystems(freshUser());
         }
     }
 
     private void tearDown() throws Exception {
-        getTransactionManager().begin();
         try {
-            LookupUtil.getSystemManager().setSystemConfiguration(freshUser(), testData.systemSettings, true);
+            getTransactionManager().begin();
+            try {
+                LookupUtil.getSystemManager().setSystemConfiguration(freshUser(), testData.systemSettings, true);
 
-            EntityManager em = getEntityManager();
+                EntityManager em = getEntityManager();
 
-            MeasurementSchedule sched =
-                em.find(MeasurementSchedule.class, testData.fakePlatform.getSchedules().iterator().next().getId());
-            em.remove(sched);
+                MeasurementSchedule sched = em.find(MeasurementSchedule.class, testData.fakePlatform.getSchedules()
+                    .iterator().next().getId());
+                em.remove(sched);
 
-            Resource attachedPlatform = em.find(Resource.class, testData.fakePlatform.getId());
-            em.remove(attachedPlatform);
+                Resource attachedPlatform = em.find(Resource.class, testData.fakePlatform.getId());
+                em.remove(attachedPlatform);
 
-            ResourceType attachedType = em.find(ResourceType.class, testData.fakeType.getId());
-            em.remove(attachedType);
+                ResourceType attachedType = em.find(ResourceType.class, testData.fakeType.getId());
+                em.remove(attachedType);
 
-            em.flush();
+                em.flush();
 
-            getTransactionManager().commit();
-        } catch (Exception e) {
-            getTransactionManager().rollback();
-            throw e;
+                getTransactionManager().commit();
+            } catch (Exception e) {
+                getTransactionManager().rollback();
+                throw e;
+            }
+        } finally {
+            unprepareServerPluginService();
+            //unnecessary, done by above method
+            //testData.testServerPluginService.stopMasterPluginContainer();
+
+            export = null;
+            testData = null;
+            synchronizationManager = null;
         }
-
-        unprepareServerPluginService();
-        testData.testServerPluginService.stopMasterPluginContainer();
-
-        export = null;
-        testData = null;
-        synchronizationManager = null;
     }
 
     public void testExport() throws Exception {
@@ -364,16 +366,16 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
         try {
             SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-            MeasurementDefinitionManagerLocal measurementDefinitionManager =
-                LookupUtil.getMeasurementDefinitionManager();
+            MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
+                .getMeasurementDefinitionManager();
 
             Properties beforeSystemSettings = systemManager.getSystemConfiguration(freshUser());
             MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
             criteria.setPageControl(PageControl.getUnlimitedInstance());
             criteria.fetchResourceType(true);
 
-            List<MeasurementDefinition> beforeMeasurementDefinitions =
-                measurementDefinitionManager.findMeasurementDefinitionsByCriteria(freshUser(), criteria);
+            List<MeasurementDefinition> beforeMeasurementDefinitions = measurementDefinitionManager
+                .findMeasurementDefinitionsByCriteria(freshUser(), criteria);
 
             synchronizationManager.importAllSubsystems(freshUser(), export.getExportFile(), null);
 
@@ -381,16 +383,16 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             systemManager.loadSystemConfigurationCache();
 
             Properties afterSystemSettings = systemManager.getSystemConfiguration(freshUser());
-            List<MeasurementDefinition> afterMeasurementDefinitions =
-                measurementDefinitionManager.findMeasurementDefinitionsByCriteria(freshUser(), criteria);
+            List<MeasurementDefinition> afterMeasurementDefinitions = measurementDefinitionManager
+                .findMeasurementDefinitionsByCriteria(freshUser(), criteria);
 
             assertEquals("System settings unexpectedly differ", beforeSystemSettings, afterSystemSettings);
 
             //make sure we don't fail on simple order differences, which are not important here..
-            Set<MeasurementDefinition> beforeDefsToCheck =
-                new HashSet<MeasurementDefinition>(beforeMeasurementDefinitions);
-            Set<MeasurementDefinition> afterDefsToCheck =
-                new HashSet<MeasurementDefinition>(afterMeasurementDefinitions);
+            Set<MeasurementDefinition> beforeDefsToCheck = new HashSet<MeasurementDefinition>(
+                beforeMeasurementDefinitions);
+            Set<MeasurementDefinition> afterDefsToCheck = new HashSet<MeasurementDefinition>(
+                afterMeasurementDefinitions);
             assertEquals("Measurement definitions unexpectedly differ", beforeDefsToCheck, afterDefsToCheck);
         } finally {
             tearDown();
@@ -420,13 +422,13 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
             assertEquals(settings.getProperty("CAM_BASE_URL"), "http://testing.domain:7080");
 
-            MeasurementDefinitionManagerLocal measurementDefinitionManager =
-                LookupUtil.getMeasurementDefinitionManager();
+            MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
+                .getMeasurementDefinitionManager();
             MeasurementDefinitionCriteria crit = new MeasurementDefinitionCriteria();
             crit.addFilterResourceTypeName(RESOURCE_TYPE_NAME);
             crit.addFilterName(METRIC_NAME);
-            MeasurementDefinition mdef =
-                measurementDefinitionManager.findMeasurementDefinitionsByCriteria(freshUser(), crit).get(0);
+            MeasurementDefinition mdef = measurementDefinitionManager.findMeasurementDefinitionsByCriteria(freshUser(),
+                crit).get(0);
 
             assertEquals("The " + METRIC_NAME + " metric should have been updated with default interval of 30s",
                 Long.valueOf(30000), new Long(mdef.getDefaultInterval()));
@@ -445,9 +447,8 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
             //now find the schedule for the measurement
             MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
-            List<MeasurementSchedule> schedules =
-                measurementScheduleManager.findSchedulesByResourceIdAndDefinitionIds(freshUser(), platformResourceId,
-                    new int[] { mdef.getId() });
+            List<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByResourceIdAndDefinitionIds(
+                freshUser(), platformResourceId, new int[] { mdef.getId() });
 
             assertEquals("Unexpected number of '" + METRIC_NAME + "' schedules found.", 1, schedules.size());
 
@@ -469,13 +470,13 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
             String originalBaseUrl = settings.getProperty("CAM_BASE_URL");
 
-            MeasurementDefinitionManagerLocal measurementDefinitionManager =
-                LookupUtil.getMeasurementDefinitionManager();
+            MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
+                .getMeasurementDefinitionManager();
             MeasurementDefinitionCriteria crit = new MeasurementDefinitionCriteria();
             crit.addFilterResourceTypeName(RESOURCE_TYPE_NAME);
             crit.addFilterName(METRIC_NAME);
-            MeasurementDefinition distroNameDef =
-                measurementDefinitionManager.findMeasurementDefinitionsByCriteria(freshUser(), crit).get(0);
+            MeasurementDefinition distroNameDef = measurementDefinitionManager.findMeasurementDefinitionsByCriteria(
+                freshUser(), crit).get(0);
 
             long originalInterval = distroNameDef.getDefaultInterval();
 
@@ -489,12 +490,12 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
             //let's just use the default configs so that we don't apply the changes suggested in
             //the changed default configs created above
-            ImportConfiguration systemSettingsConfiguration =
-                new ImportConfiguration(SystemSettingsSynchronizer.class.getName(), new SystemSettingsSynchronizer()
-                    .getImporter().getImportConfigurationDefinition().getDefaultTemplate().createConfiguration());
-            ImportConfiguration metricTemplatesConfiguration =
-                new ImportConfiguration(MetricTemplateSynchronizer.class.getName(), new MetricTemplateSynchronizer()
-                    .getImporter().getImportConfigurationDefinition().getDefaultTemplate().createConfiguration());
+            ImportConfiguration systemSettingsConfiguration = new ImportConfiguration(
+                SystemSettingsSynchronizer.class.getName(), new SystemSettingsSynchronizer().getImporter()
+                    .getImportConfigurationDefinition().getDefaultTemplate().createConfiguration());
+            ImportConfiguration metricTemplatesConfiguration = new ImportConfiguration(
+                MetricTemplateSynchronizer.class.getName(), new MetricTemplateSynchronizer().getImporter()
+                    .getImportConfigurationDefinition().getDefaultTemplate().createConfiguration());
 
             try {
                 synchronizationManager.importAllSubsystems(freshUser(), exportData,
@@ -529,9 +530,8 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
             //now find the schedule for the measurement
             MeasurementScheduleManagerLocal measurementScheduleManager = LookupUtil.getMeasurementScheduleManager();
-            List<MeasurementSchedule> schedules =
-                measurementScheduleManager.findSchedulesByResourceIdAndDefinitionIds(freshUser(), platformResourceId,
-                    new int[] { distroNameDef.getId() });
+            List<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByResourceIdAndDefinitionIds(
+                freshUser(), platformResourceId, new int[] { distroNameDef.getId() });
 
             assertEquals("Unexpected number of '" + METRIC_NAME + "' schedules found.", 1, schedules.size());
 
@@ -549,43 +549,42 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         try {
             String export = getExportData();
 
-            Document xml =
-                DocumentBuilderFactory.newInstance().newDocumentBuilder()
-                    .parse(new InputSource(new StringReader(export)));
-            
+            Document xml = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                .parse(new InputSource(new StringReader(export)));
+
             Element unknownValidator = xml.createElement("validator");
             unknownValidator.setAttribute(SynchronizationConstants.CLASS_ATTRIBUTE, "org.nothing.UnknownValidator");
-            
+
             xml.getDocumentElement().insertBefore(unknownValidator, xml.getDocumentElement().getFirstChild());
-            
+
             export = documentToString(xml);
-            
+
             InputStream exportStream = createCompressedStream(export);
-            
+
             synchronizationManager.importAllSubsystems(freshUser(), exportStream, null);
         } finally {
             tearDown();
         }
     }
 
-    public void testImporterConfiguredBeforeValidatorsObtained() throws Exception {        
+    public void testImporterConfiguredBeforeValidatorsObtained() throws Exception {
         setup(false);
-        
+
         try {
             ImportConfigurationCheckingSynchronizer.reset();
-            
+
             synchronizationManager.setSynchronizerFactory(new SynchronizerFactory() {
                 @Override
                 public Set<Synchronizer<?, ?>> getAllSynchronizers() {
-                    return Collections.<Synchronizer<?, ?>>singleton(new ImportConfigurationCheckingSynchronizer());
+                    return Collections.<Synchronizer<?, ?>> singleton(new ImportConfigurationCheckingSynchronizer());
                 }
             });
-            
+
             export = synchronizationManager.exportAllSubsystems(freshUser());
-            
+
             //and import it back again, so that we actually invoke the import validation
             synchronizationManager.importAllSubsystems(freshUser(), export.getExportFile(), null);
-            
+
             assertTrue(ImportConfigurationCheckingSynchronizer.importerConfigured);
             assertTrue(ImportConfigurationCheckingSynchronizer.importValidatorsObtainedAfterConfiguration);
         } finally {
@@ -596,8 +595,8 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
     }
 
     private String getExportData() throws IOException {
-        InputStreamReader str =
-            new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(export.getExportFile())), "UTF-8");
+        InputStreamReader str = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(
+            export.getExportFile())), "UTF-8");
         try {
             char[] buf = new char[32768];
             StringBuilder bld = new StringBuilder();
@@ -634,17 +633,14 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         XPath xpath = XPathFactory.newInstance().newXPath();
         xpath.setNamespaceContext(SynchronizationConstants.createConfigurationExportNamespaceContext());
 
-        XPathExpression systemSettingsConfigurationPath =
-            xpath
-                .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.SystemSettingsSynchronizer']/:default-configuration/ci:simple-property[@name='propertiesToImport']");
+        XPathExpression systemSettingsConfigurationPath = xpath
+            .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.SystemSettingsSynchronizer']/:default-configuration/ci:simple-property[@name='propertiesToImport']");
 
-        XPathExpression baseUrlSettingPath =
-            xpath
-                .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.SystemSettingsSynchronizer']/:entity/:data/systemSettings/entry[@key='CAM_BASE_URL']");
+        XPathExpression baseUrlSettingPath = xpath
+            .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.SystemSettingsSynchronizer']/:entity/:data/systemSettings/entry[@key='CAM_BASE_URL']");
 
-        Element systemSettingsConfiguration =
-            (Element) systemSettingsConfigurationPath.evaluate(new InputSource(new StringReader(exportXML)),
-                XPathConstants.NODE);
+        Element systemSettingsConfiguration = (Element) systemSettingsConfigurationPath.evaluate(new InputSource(
+            new StringReader(exportXML)), XPathConstants.NODE);
         String propsToImport = systemSettingsConfiguration.getAttribute("value");
 
         propsToImport += ", CAM_BASE_URL";
@@ -653,8 +649,8 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
 
         exportXML = documentToString(systemSettingsConfiguration.getOwnerDocument());
 
-        Element baseUrlSetting =
-            (Element) baseUrlSettingPath.evaluate(new InputSource(new StringReader(exportXML)), XPathConstants.NODE);
+        Element baseUrlSetting = (Element) baseUrlSettingPath.evaluate(new InputSource(new StringReader(exportXML)),
+            XPathConstants.NODE);
 
         baseUrlSetting.setTextContent("http://testing.domain:7080");
 
@@ -665,12 +661,11 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         XPath xpath = XPathFactory.newInstance().newXPath();
         xpath.setNamespaceContext(SynchronizationConstants.createConfigurationExportNamespaceContext());
 
-        XPathExpression overridesPath =
-            xpath
-                .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.MetricTemplateSynchronizer']/:default-configuration/ci:list-property[@name='metricUpdateOverrides']");
+        XPathExpression overridesPath = xpath
+            .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.MetricTemplateSynchronizer']/:default-configuration/ci:list-property[@name='metricUpdateOverrides']");
 
-        Element overrides =
-            (Element) overridesPath.evaluate(new InputSource(new StringReader(exportXML)), XPathConstants.NODE);
+        Element overrides = (Element) overridesPath.evaluate(new InputSource(new StringReader(exportXML)),
+            XPathConstants.NODE);
 
         Document doc = overrides.getOwnerDocument();
 
@@ -691,13 +686,12 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         exportXML = documentToString(doc);
 
         //now redefine the collection interval of the above metric so that we can see the change after the import
-        XPathExpression distroNameMetricPath =
-            xpath
-                .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.MetricTemplateSynchronizer']/:entity/:data/metricTemplate[@metricName='"
-                    + METRIC_NAME + "']");
+        XPathExpression distroNameMetricPath = xpath
+            .compile("/:configuration-export/:entities[@id='org.rhq.enterprise.server.sync.MetricTemplateSynchronizer']/:entity/:data/metricTemplate[@metricName='"
+                + METRIC_NAME + "']");
 
-        Element metric =
-            (Element) distroNameMetricPath.evaluate(new InputSource(new StringReader(exportXML)), XPathConstants.NODE);
+        Element metric = (Element) distroNameMetricPath.evaluate(new InputSource(new StringReader(exportXML)),
+            XPathConstants.NODE);
 
         doc = metric.getOwnerDocument();
 
@@ -730,7 +724,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
         user = subjectManager.getOverlord();
         return user;
     }
-    
+
     private InputStream createCompressedStream(String exportData) throws UnsupportedEncodingException, IOException {
         ByteArrayOutputStream compressed = new ByteArrayOutputStream();
         OutputStreamWriter wrt = new OutputStreamWriter(new GZIPOutputStream(compressed), "UTF-8");
@@ -740,6 +734,6 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
             wrt.close();
         }
 
-        return new ByteArrayInputStream(compressed.toByteArray());            
+        return new ByteArrayInputStream(compressed.toByteArray());
     }
 }

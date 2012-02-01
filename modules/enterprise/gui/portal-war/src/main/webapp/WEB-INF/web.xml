@@ -457,12 +457,17 @@
       <url-pattern>/client/download</url-pattern>
    </servlet-mapping>
 
+    <!-- provides startup progress information (mainly for the installer) -->
+    <servlet-mapping>
+      <servlet-name>initializer</servlet-name>
+      <url-pattern>/startupstatus</url-pattern>
+   </servlet-mapping>
+
+    <!-- TODO what is this for? -->
     <servlet-mapping>
       <servlet-name>sessionAccess</servlet-name>
       <url-pattern>/sessionAccess</url-pattern>
    </servlet-mapping>
-
-
 
    <!-- The download servlet; this URI /downloads will effectively look like its pointing to rhq-downloads -->
    <servlet-mapping>

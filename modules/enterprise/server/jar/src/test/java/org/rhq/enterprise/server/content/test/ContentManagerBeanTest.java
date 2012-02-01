@@ -28,7 +28,6 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -146,15 +145,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         contentManager = LookupUtil.getContentManager();
         subjectManager = LookupUtil.getSubjectManager();
 
-        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.contentService = contentAgentService;
-
         populateResponseSteps();
-    }
-
-    @AfterClass
-    public void teardownAfterClass() throws Exception {
-        unprepareForTestAgents();
     }
 
     @BeforeMethod
@@ -162,7 +153,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         setupTestEnvironment();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void tearDownAfterMethod() throws Exception {
         tearDownTestEnvironment();
     }
@@ -316,8 +307,8 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
         report.addDeployedPackage(package3);
 
         // Package where entire package does not exist
-        PackageDetailsKey key4 = new PackageDetailsKey("PackageX", "1.0.0", packageType4.getName(), architecture1
-            .getName());
+        PackageDetailsKey key4 = new PackageDetailsKey("PackageX", "1.0.0", packageType4.getName(),
+            architecture1.getName());
         ResourcePackageDetails package4 = new ResourcePackageDetails(key4);
 
         //   Fully populate this version to make sure the translation from details -> domain model works
@@ -1385,6 +1376,9 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
     // Private  --------------------------------------------
 
     private void setupTestEnvironment() throws Exception {
+        TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
+        agentServiceContainer.contentService = contentAgentService;
+
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
 
@@ -1567,6 +1561,7 @@ public class ContentManagerBeanTest extends AbstractEJB3Test {
             }
         } finally {
             em.close();
+            unprepareForTestAgents();
         }
     }
 

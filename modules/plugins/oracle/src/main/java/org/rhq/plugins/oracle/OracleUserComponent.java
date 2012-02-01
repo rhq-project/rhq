@@ -21,8 +21,12 @@ package org.rhq.plugins.oracle;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -36,18 +40,27 @@ import org.rhq.plugins.database.DatabaseQueryUtility;
  * @author Greg Hinkle
  */
 public class OracleUserComponent extends AbstractDatabaseComponent implements MeasurementFacet {
+
+    private static final String SQL_USER = "SELECT COUNT(*) FROM DBA_USERS WHERE username = ?";
+    private static final String SESSIONS =
+        "SELECT SUM(DECODE(Status, 'ACTIVE', 1, 0)) active, COUNT(1) connections " +
+        "FROM V$SESSION where username = ?";
+
+
+    private static Log log = LogFactory.getLog(OracleUserComponent.class);
+
     public AvailabilityType getAvailability() {
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         try {
-            statement = getConnection().prepareStatement("SELECT COUNT(*) FROM DBA_USERS WHERE username = ?");
+            statement = getConnection().prepareStatement(SQL_USER);
             statement.setString(1, this.resourceContext.getResourceKey());
             resultSet = statement.executeQuery();
             if (resultSet.next() && (resultSet.getInt(1) == 1)) {
                 return AvailabilityType.UP;
             }
         } catch (SQLException e) {
-            // Problems ? Mark the resource as down
+            log.debug("unable to query", e);
         } finally {
             JDBCUtil.safeClose(statement, resultSet);
         }
@@ -56,15 +69,12 @@ public class OracleUserComponent extends AbstractDatabaseComponent implements Me
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValues(this, SESSIONS,
+                this.resourceContext.getResourceKey());
         for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().equals("sessions")) {
-                Map<String, Double> values = DatabaseQueryUtility
-                    .getNumericQueryValues(this, "SELECT COUNT(*) as activeConnections FROM V$SESSION WHERE username = ?",
-                        this.resourceContext.getResourceKey());
-                Double sessions = values.get("count");
-                if (sessions != null) {
-                    report.addData(new MeasurementDataNumeric(request, sessions));
-                }
+            Double d = values.get(request.getName().toUpperCase(Locale.US));
+            if (d != null) {
+                report.addData(new MeasurementDataNumeric(request, d));
             }
         }
     }

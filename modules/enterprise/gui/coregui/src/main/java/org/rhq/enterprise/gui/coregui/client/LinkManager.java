@@ -514,6 +514,11 @@ public class LinkManager {
         return "#Resource/" + resourceId + "/Drift/Definitions";
     }
 
+    public static String getDriftDefinitionCarouselLink(int resourceId, int driftDefId) {
+        return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/"
+            + DriftDefinitionsView.DetailView.Carousel.name();
+    }
+
     public static String getDriftDefinitionEditLink(int resourceId, int driftDefId) {
         return "#Resource/" + resourceId + "/Drift/Definitions/" + driftDefId + "/"
             + DriftDefinitionsView.DetailView.Edit.name();

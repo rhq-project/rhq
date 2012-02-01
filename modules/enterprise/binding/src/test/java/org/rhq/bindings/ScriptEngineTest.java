@@ -40,6 +40,7 @@ import org.rhq.bindings.util.PackageFinder;
  *
  * @author Lukas Krejci
  */
+@Test
 public class ScriptEngineTest {
 
     private static StandardBindings EMPTY_BINDINGS = new StandardBindings(new PrintWriter(System.out), new FakeRhqFacade());
@@ -52,9 +53,7 @@ public class ScriptEngineTest {
     
     @Test
     public void testSandbox() throws ScriptException, IOException {
-        ScriptEngine engine = getScriptEngine();
-        
-        SandboxedScriptEngine sandbox = new SandboxedScriptEngine(engine, new StandardScriptPermissions());
+        ScriptEngine sandbox = getSecuredScriptEngine();
         
         try {
             sandbox.eval("java.lang.System.exit(1);");
@@ -88,6 +87,10 @@ public class ScriptEngineTest {
     
     private ScriptEngine getScriptEngine() throws ScriptException, IOException {
         return ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), EMPTY_BINDINGS);
+    }
+    
+    private ScriptEngine getSecuredScriptEngine() throws ScriptException, IOException {
+        return ScriptEngineFactory.getSecuredScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), EMPTY_BINDINGS, new StandardScriptPermissions());
     }
     
     private void assertSecurityExceptionPresent(Throwable t) {

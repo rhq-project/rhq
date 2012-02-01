@@ -37,10 +37,14 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.resource.ResourceType;
@@ -53,6 +57,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  * @author Greg Hinkle
  */
 public class ConfigurationComparisonView extends VLayout {
+    private static final String ATTRIB_ALL_SAME = "consistent";
+
     private static final Messages MSG = CoreGUI.getMessages();
 
     private ConfigurationDefinition definition;
@@ -83,7 +89,7 @@ public class ConfigurationComparisonView extends VLayout {
         nameField.setFrozen(true);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                if (listGridRecord == null || listGridRecord.getAttributeAsBoolean("consistent")) {
+                if (listGridRecord == null || listGridRecord.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
                     return String.valueOf(o);
                 } else {
                     return "<span style=\"color: red;\">" + String.valueOf(o) + "</span>";
@@ -103,7 +109,7 @@ public class ConfigurationComparisonView extends VLayout {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                     if (!(listGridRecord instanceof ComparisonTreeNode)) {
                         return "";
-                    } else if (listGridRecord.getAttributeAsBoolean("consistent")) {
+                    } else if (listGridRecord.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
                         return String.valueOf(o);
                     } else {
                         return "<span style=\"color: red;\">" + String.valueOf(o) + "</span>";
@@ -135,9 +141,7 @@ public class ConfigurationComparisonView extends VLayout {
         }
 
         for (PropertyGroupDefinition group : definition.getGroupDefinitions()) {
-
             TreeNode groupNode = new TreeNode(group.getDisplayName());
-
             buildNode(groupNode, definition.getPropertiesInGroup(group.getName()), configs);
             children.add(groupNode);
         }
@@ -152,23 +156,79 @@ public class ConfigurationComparisonView extends VLayout {
         List<? extends AbstractPropertyMap> maps) {
         ArrayList<TreeNode> children = new ArrayList<TreeNode>();
 
-        parent.setAttribute("consistent", true);
+        parent.setAttribute(ATTRIB_ALL_SAME, true);
         for (PropertyDefinition definition : definitions) {
             if (definition instanceof PropertyDefinitionSimple) {
-
                 ArrayList<PropertySimple> properties = new ArrayList<PropertySimple>();
                 for (AbstractPropertyMap map : maps) {
                     properties.add(map.getSimple(definition.getName()));
                 }
                 ComparisonTreeNode node = new ComparisonTreeNode((PropertyDefinitionSimple) definition, properties,
                     titles);
-                if (!node.getAttributeAsBoolean("consistent")) {
-                    parent.setAttribute("consistent", false);
+                if (!node.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
+                    parent.setAttribute(ATTRIB_ALL_SAME, false);
                 }
                 children.add(node);
-            }
+            } else if (definition instanceof PropertyDefinitionMap) {
+                PropertyDefinitionMap defMap = (PropertyDefinitionMap) definition;
+                TreeNode mapNode = new TreeNode(defMap.getDisplayName());
+                ArrayList<PropertyMap> properties = new ArrayList<PropertyMap>();
+                for (AbstractPropertyMap map : maps) {
+                    properties.add((PropertyMap) map);
+                }
+                buildNode(mapNode, defMap.getPropertyDefinitions().values(), properties);
+                if (!mapNode.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
+                    parent.setAttribute(ATTRIB_ALL_SAME, false);
+                }
+                children.add(mapNode);
+            } else if (definition instanceof PropertyDefinitionList) {
+                PropertyDefinitionList defList = (PropertyDefinitionList) definition;
+                TreeNode listNode = new TreeNode(defList.getDisplayName());
+                listNode.setAttribute(ATTRIB_ALL_SAME, true);
+                if (defList.getMemberDefinition() instanceof PropertyDefinitionMap) { // support list-o-maps only
+                    PropertyDefinition memberDef = defList.getMemberDefinition();
+                    Collection<PropertyDefinition> memberDefColl = new ArrayList<PropertyDefinition>(1);
+                    memberDefColl.add(memberDef);
 
-            // TODO Add support for maps and lists of maps
+                    int max = 0; // will be the largest size of any of our lists that are being compared
+                    for (AbstractPropertyMap map : maps) {
+                        try {
+                            int size = map.getList(defList.getName()).getList().size();
+                            if (size > max) {
+                                max = size;
+                            }
+                        } catch (Throwable t) {
+                            // paranoia - just skip so we don't kill entire compare window if our config doesn't have proper list-o-map
+                        }
+                    }
+                    ArrayList<TreeNode> innerChildren = new ArrayList<TreeNode>();
+                    for (int i = 0; i < max; i++) {
+                        TreeNode listItemNode = new TreeNode(String.valueOf(i));
+                        ArrayList<PropertyMap> properties = new ArrayList<PropertyMap>();
+                        for (AbstractPropertyMap map : maps) {
+                            try {
+                                List<Property> list = map.getList(defList.getName()).getList();
+                                if (list.size() < (i + 1)) {
+                                    properties.add(new PropertyMap()); // this list didn't have an i-th item, just use an empty map
+                                } else {
+                                    properties.add((PropertyMap) list.get(i));
+                                }
+                            } catch (Throwable t) {
+                                // paranoia - just skip so we don't kill entire compare window if our config doesn't have proper list-o-map
+                                properties.add(new PropertyMap());
+                            }
+                        }
+                        buildNode(listItemNode, memberDefColl, properties);
+                        if (!listItemNode.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
+                            parent.setAttribute(ATTRIB_ALL_SAME, false);
+                            listNode.setAttribute(ATTRIB_ALL_SAME, false); // any diffs always causes this to indicate the diff
+                        }
+                        innerChildren.add(listItemNode);
+                    }
+                    listNode.setChildren(innerChildren.toArray(new TreeNode[innerChildren.size()]));
+                }
+                children.add(listNode);
+            }
         }
         parent.setChildren(children.toArray(new TreeNode[children.size()]));
     }
@@ -235,16 +295,12 @@ public class ConfigurationComparisonView extends VLayout {
         private ComparisonTreeNode(PropertyDefinitionSimple definition, List<PropertySimple> properties,
             List<String> titles) {
             super(definition.getDisplayName());
-
             setAttribute("type", definition.getType().name());
-
             int i = 0;
             boolean allTheSame = true;
             String commonValue = null;
             for (PropertySimple prop : properties) {
-
                 String value = prop != null ? prop.getStringValue() : null;
-
                 if (i == 0) {
                     commonValue = value;
                 } else if (allTheSame && commonValue == null && value != null
@@ -252,8 +308,7 @@ public class ConfigurationComparisonView extends VLayout {
                     allTheSame = false;
                 }
                 setAttribute(titles.get(i++), value);
-
-                setAttribute("consistent", allTheSame);
+                setAttribute(ATTRIB_ALL_SAME, allTheSame);
             }
         }
     }

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.clientapi.RemoteClient;
 
 /**
  * @author Greg Hinkle
@@ -40,7 +41,11 @@ public class LogoutCommand implements ClientCommand {
         client.setTransport(null);
         client.setHost(null);
         client.setPort(0);
-        client.getRemoteClient().logout();
+        RemoteClient remoteClient = client.getRemoteClient();
+        if (null != remoteClient) {
+            remoteClient.logout();
+        }
+        // this call has the side effect of setting bindings for the new remote client and its subject        
         client.setRemoteClient(null);
         client.setSubject(null);
         client.setUser(null);

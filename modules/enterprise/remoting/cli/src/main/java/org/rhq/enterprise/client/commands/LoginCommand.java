@@ -112,21 +112,14 @@ public class LoginCommand implements ClientCommand {
         Subject subject = remoteClient.login(username, password);
 
         ProductInfo info = remoteClient.getSystemManager().getProductInfo(subject);
-        String version = info.getVersion()
-            + " (" + info.getBuildNumber() + ")";
+        String version = info.getVersion() + " (" + info.getBuildNumber() + ")";
         client.getPrintWriter().println("Remote server version is: " + version);
 
+        // this call has the side effect of setting bindings for the new remote client and its subject
         client.setRemoteClient(remoteClient);
         client.setSubject(subject);
 
-        bindSubject(client, subject);
-
         return subject;
-    }
-
-    private void bindSubject(ClientMain client, Subject subject) {
-        ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
-        cmd.initBindings(client);
     }
 
     private String usage() {

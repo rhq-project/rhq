@@ -97,9 +97,25 @@ public class StandardBindings extends HashMap<String, Object> {
         put(PRETTY, new TabularWriter(output));
         put(ASSERT, new ScriptAssert());
 
+        setFacade(output, rhqFacade);
+    }
+
+    /**
+     * If you want to preserve non-client-dependent bindings when the facade changes, call this as opposed to
+     * constructing new StandardBindings. 
+     */
+    public void setFacade(PrintWriter output, RhqFacade rhqFacade) {
+        // remove any existing managers    
+        if (null != managers) {
+            for (String manager : managers.keySet()) {
+                remove(manager);
+            }
+            managers.clear();
+        }
+
         //script utils can handle a null facade
         put(SCRIPT_UTIL, new ScriptUtil(rhqFacade));
-        
+
         if (rhqFacade != null) {
             managers = rhqFacade.getManagers();
 
@@ -112,15 +128,6 @@ public class StandardBindings extends HashMap<String, Object> {
         }
 
         putAll(managers);
-
-        //I don't think these should belong in the standard bindings
-        //because all the controller does is "login/logout" as methods
-        //of the "rhq" object. ConfigurationEditor is interactive and
-        //thus unusable outside of console bound CLI.
-        
-        //(the below were originally defined in the ScriptCommand)
-        //bindObjectAndGlobalFuctions(new Controller(client), "rhq");
-        //bindObjectAndGlobalFuctions(new ConfigurationEditor(client), "configurationEditor");
     }
 
     public void preInject(ScriptEngine scriptEngine) {
@@ -128,11 +135,11 @@ public class StandardBindings extends HashMap<String, Object> {
         ((ScriptAssert) get(ASSERT)).init(scriptEngine);
     }
 
-    public void postInject(ScriptEngine scriptEngine) {        
+    public void postInject(ScriptEngine scriptEngine) {
         ScriptEngineFactory.bindIndirectionMethods(scriptEngine, SCRIPT_UTIL);
         ScriptEngineFactory.bindIndirectionMethods(scriptEngine, ASSERT);
     }
-    
+
     public Map.Entry<String, PageControl> getUnlimitedPC() {
         return castEntry(UNLIMITED_PC, PageControl.class);
     }
@@ -162,8 +169,8 @@ public class StandardBindings extends HashMap<String, Object> {
     }
 
     public Map<String, Object> getManagers() {
-        //XXX ideally this should be a projection into our map        
-        return managers;
+        //XXX ideally this should be a projection into our map          
+        return (null == managers) ? managers = Collections.emptyMap() : managers;
     }
 
     private Map.Entry<String, Object> getEntry(String key) {

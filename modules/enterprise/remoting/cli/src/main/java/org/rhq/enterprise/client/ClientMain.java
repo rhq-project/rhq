@@ -80,7 +80,7 @@ public class ClientMain {
     private String user;
     private String pass;
     private ArrayList<String> notes = new ArrayList<String>();
-    private boolean showDetailedVersion;    
+    private boolean showDetailedVersion;
 
     // reference to the webservice reference factory
     private RemoteClient remoteClient;
@@ -96,7 +96,7 @@ public class ClientMain {
 
     // Entrance to main.
     public static void main(String[] args) throws Exception {
-        initCommands();        
+        initCommands();
 
         // instantiate
         ClientMain main = new ClientMain();
@@ -126,10 +126,10 @@ public class ClientMain {
 
     private void initScriptCommandAndServiceCompletor() {
         ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        sc.initBindings(this);
-        
+        sc.initClient(this);
+
         this.serviceCompletor.setContext(sc.getContext());
-        
+
         if (remoteClient != null) {
             this.serviceCompletor.setServices(remoteClient.getManagers());
         }
@@ -156,12 +156,12 @@ public class ClientMain {
         this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
         consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
             commandCompletor }));
-        
+
         //ScriptCommand is super special because it handles executing all the code for us
         initScriptCommandAndServiceCompletor();
 
         // enable pagination
-        consoleReader.setUsePagination(true);                
+        consoleReader.setUsePagination(true);
     }
 
     public String getUserInput(String prompt) {
@@ -288,7 +288,8 @@ public class ClientMain {
                 outputWriter.println(command.getPromptCommandString() + ": " + e.getMessage());
                 outputWriter.println("Usage: " + command.getSyntax());
             } catch (ArrayIndexOutOfBoundsException e) {
-                outputWriter.println(command.getPromptCommandString() + ": An incorrect number of arguments was specified.");
+                outputWriter.println(command.getPromptCommandString()
+                    + ": An incorrect number of arguments was specified.");
                 outputWriter.println("Usage: " + command.getSyntax());
             }
         } else {
@@ -373,7 +374,8 @@ public class ClientMain {
     }
 
     private void displayUsage() {
-        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-v] [-f file]|[-c command]");
+        outputWriter
+            .println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-v] [-f file]|[-c command]");
     }
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
@@ -398,79 +400,80 @@ public class ClientMain {
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
-                case ':':
-                case '?': {
-                    // for now both of these should exit
-                    displayUsage();
-                    throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
-                }
+            case ':':
+            case '?': {
+                // for now both of these should exit
+                displayUsage();
+                throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
+            }
 
-                case 1: {
-                    // this catches non-option arguments which can be passed when running a script in non-interactive mode
-                    // with -f or running a single command in non-interactive mode with -c.
-                    execCmdLine.add(getopt.getOptarg());
-                    break;
-                }
+            case 1: {
+                // this catches non-option arguments which can be passed when running a script in non-interactive mode
+                // with -f or running a single command in non-interactive mode with -c.
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
 
-                case 'h': {
-                    displayUsage();
-                    break;
-                }
+            case 'h': {
+                displayUsage();
+                break;
+            }
 
-                case 'u': {
-                    this.user = getopt.getOptarg();
-                    break;
+            case 'u': {
+                this.user = getopt.getOptarg();
+                break;
+            }
+            case 'p': {
+                this.pass = getopt.getOptarg();
+                break;
+            }
+            case 'P': {
+                this.pass = this.consoleReader.readLine("password: ", (char) 0);
+                break;
+            }
+            case 'c': {
+                interactiveMode = false;
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
+            case 'f': {
+                interactiveMode = false;
+                execCmdLine.add("-f");
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
+            case -2: {
+                execCmdLine.add("--args-style=" + getopt.getOptarg());
+                break;
+            }
+            case 's': {
+                setHost(getopt.getOptarg());
+                break;
+            }
+            case 'r': {
+                setTransport(getopt.getOptarg());
+                break;
+            }
+            case 't': {
+                String portArg = getopt.getOptarg();
+                try {
+                    setPort(Integer.parseInt(portArg));
+                } catch (Exception e) {
+                    outputWriter.println("Invalid port [" + portArg + "]");
                 }
-                case 'p': {
-                    this.pass = getopt.getOptarg();
-                    break;
-                }
-                case 'P': {
-                    this.pass = this.consoleReader.readLine("password: ", (char) 0);
-                    break;
-                }
-                case 'c': {
-                    interactiveMode = false;
-                    execCmdLine.add(getopt.getOptarg());
-                    break;
-                }
-                case 'f': {
-                    interactiveMode = false;
-                    execCmdLine.add("-f");
-                    execCmdLine.add(getopt.getOptarg());
-                    break;
-                }
-                case -2: {
-                    execCmdLine.add("--args-style=" + getopt.getOptarg());
-                    break;
-                }
-                case 's': {
-                    setHost(getopt.getOptarg());
-                    break;
-                }
-                case 'r': {
-                    setTransport(getopt.getOptarg());
-                    break;
-                }
-                case 't': {
-                    String portArg = getopt.getOptarg();
-                    try {
-                        setPort(Integer.parseInt(portArg));
-                    } catch (Exception e) {
-                        outputWriter.println("Invalid port [" + portArg + "]");
-                    }
-                    break;
-                }
-                case 'v': {
-                    showDetailedVersion = true;
-                    break;
-                }
+                break;
+            }
+            case 'v': {
+                String versionString = Version.getProductNameAndVersionBuildInfo();
+                outputWriter.println(versionString);
+                break;
+            }
             }
         }
 
         if (interactiveMode) {
-            String version = (showDetailedVersion) ? Version.getProductNameAndVersionBuildInfo() :
-                Version.getProductNameAndVersion();
+            String version = (showDetailedVersion) ? Version.getProductNameAndVersionBuildInfo() : Version
+                .getProductNameAndVersion();
             outputWriter.println(version);
             if (showDetailedVersion && args.length == 1) {
                 // If -v was the only option specified, exit after printing the version.
@@ -501,10 +504,10 @@ public class ClientMain {
 
     public void setRemoteClient(RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
-        
+
         initScriptCommandAndServiceCompletor();
     }
-    
+
     public Subject getSubject() {
         return subject;
     }

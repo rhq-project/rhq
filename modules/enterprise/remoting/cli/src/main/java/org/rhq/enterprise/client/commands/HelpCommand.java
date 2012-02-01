@@ -19,11 +19,7 @@
 package org.rhq.enterprise.client.commands;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.WildcardType;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +30,6 @@ import java.util.Map;
 
 import org.rhq.bindings.output.TabularWriter;
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.utility.ReflectionUtility;
 
 import javax.jws.WebParam;
@@ -153,8 +148,6 @@ public class HelpCommand implements ClientCommand {
 
         return true;
     }
-
-
 
     public String getSyntax() {
         return "help [command] | [api [service]]";

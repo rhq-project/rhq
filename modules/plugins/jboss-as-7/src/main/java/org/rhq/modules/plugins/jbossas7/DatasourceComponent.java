@@ -1,19 +1,20 @@
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -64,16 +65,41 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
 
             Address theAddress = new Address(address);
             theAddress.add("xa-data-source",name);
-            op = new Operation("add",theAddress);
-            addRequiredToOp(op,parameters,"driver-name");
-            addRequiredToOp(op,parameters,"jndi-name");
-            addOptionalToOp(op,parameters,"user-name");
-            addOptionalToOp(op,parameters,"password");
-            addRequiredToOp(op,parameters,"xa-datasource-class");
+            op = new CompositeOperation();
+            Operation step1 = new Operation("add",theAddress);
+            addRequiredToOp(step1,parameters,"driver-name");
+            addRequiredToOp(step1,parameters,"jndi-name");
+            addOptionalToOp(step1,parameters,"user-name");
+            addOptionalToOp(step1,parameters,"password");
+            addRequiredToOp(step1,parameters,"xa-datasource-class");
 
-            Map<String,Object> props = new HashMap<String, Object>(); // TODO
-            op.addAdditionalProperty("xa-data-source-properties",props);
+            ((CompositeOperation)op).addStep(step1);
 
+            // handling of xa-properties -- this is now a subresource in AS7 and at least needs a connection url
+            String connectionUrl = parameters.getSimpleValue("connection-url",null);
+            if (connectionUrl==null || connectionUrl.isEmpty())
+                throw new IllegalArgumentException("Connection-url must not be empty");
+            Address cuAddress = new Address(theAddress);
+            cuAddress.add("xa-datasource-properties","connection-url");
+            Operation step2 = new Operation("add",cuAddress);
+            step2.addAdditionalProperty("value",connectionUrl);
+            ((CompositeOperation)op).addStep(step2);
+
+
+            PropertyList xaPropList = parameters.getList("xa-properties");
+            if (xaPropList != null) {
+                List<Property> xaProps = xaPropList.getList();
+                for (Property prop : xaProps) {
+                    PropertyMap pMap = (PropertyMap) prop;
+                    PropertySimple keyProp = pMap.getSimple("key");
+                    PropertySimple valProp = pMap.getSimple("value");
+                    Address propAddress = new Address(theAddress);
+                    propAddress.add("xa-datasource-properties",keyProp.getStringValue());
+                    Operation step = new Operation("add",propAddress);
+                    step.addAdditionalProperty("value",valProp.getStringValue()); // TODO ??
+                    ((CompositeOperation)op).addStep(step);
+                }
+            }
         }
         else {
             /*

@@ -21,11 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.util.rpc;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.smartgwt.client.widgets.Img;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.core.RefDataClass;
 import com.smartgwt.client.data.Record;
@@ -321,7 +321,6 @@ public class PermissionsEditor extends LocatableVStack {
         authorizedField.setEditorType(editor);
 
         if (!this.isReadOnly) {
-            Log.debug("Non-Readonly field " +name);
             grid.setEditEvent(ListGridEditEvent.CLICK);
             final Record[] recordBeingEdited = { null };
             authorizedField.addRecordClickHandler(new RecordClickHandler() {

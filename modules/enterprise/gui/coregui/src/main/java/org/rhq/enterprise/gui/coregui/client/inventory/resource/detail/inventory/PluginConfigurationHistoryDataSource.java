@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventor
 import java.util.HashSet;
 import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.AbstractConfigurationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * A data source that loads information about all the plugin configuration changes that happened

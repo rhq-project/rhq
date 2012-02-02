@@ -5,6 +5,7 @@
 
     <inherits name='com.google.gwt.user.User'/>
     <inherits name='com.google.gwt.i18n.I18N'/>
+    <inherits name="com.google.gwt.logging.Logging"/>
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
@@ -30,33 +31,19 @@
      <inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>
     -->
 
-    <!-- ============================ gwt-log ============================= -->
+    <!-- ============================ gwt logging ============================= -->
+    <set-property name="gwt.logging.enabled" value="TRUE"/>
+    <!-- FINE ~= DEBUG in gwt-log -->
+    <set-property name="gwt.logging.logLevel" value="FINE"/>
+    <set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+    <set-property name="gwt.logging.developmentModeHandler" value="ENABLED" />
+    <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+    <set-property name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
+    <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+    <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+    <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
-    <!-- For development, a default of 'DEBUG' is recommended. -->
-    <!-- <inherits name="com.allen_sauer.gwt.log.gwt-log-DEBUG" />-->
-    <inherits name="com.allen_sauer.gwt.log.gwt-log-TRACE" />
 
-    <!-- For production, most teams prefer to set the default log level to 'OFF'. -->
-    <!--<inherits name="com.allen_sauer.gwt.log.gwt-log-OFF" />-->
-
-    <!--
-    Enable experimental WindowLogger, which logs messages to a separate
-    popup window. There are currently a couple of restrictions:
-
-    1. When Firefox is configured to open new Windows as new tabs,
-       WindowLogger does not work
-    2. In hosted mode, the windows are not automatically closed,
-       although you can easily close them manually in the usual way
-    -->
-    <!-- When enabled FireFox is hard to use due to excessive popup window generation
-
-    <set-property name="log_WindowLogger" value="ENABLED" />
-    -->
-
-    <!--
-    You probably will want to disable the default `DivLogger` as well:
-    -->
-    <set-property name="log_DivLogger" value="DISABLED" />
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>

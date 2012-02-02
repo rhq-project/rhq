@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.util;
 
 import java.util.ArrayList;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;

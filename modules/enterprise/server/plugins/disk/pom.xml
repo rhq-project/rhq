@@ -12,6 +12,10 @@
     <artifactId>rhq-serverplugin-disk</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <powermock.version>1.4.11</powermock.version>
+    </properties>
+
     <name>RHQ Enterprise Server Disk Content Source Plugin</name>
     <description>JBoss Operations Network Enterprise Server Disk Content Source Plugin</description>
 
@@ -23,6 +27,20 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
 
     </dependencies>
 

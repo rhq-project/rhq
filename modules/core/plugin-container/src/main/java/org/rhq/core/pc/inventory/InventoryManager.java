@@ -1463,6 +1463,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // state is a transient field, so reinitialize it just in case this is invoked just after loadFromDisk()
         if (state == null) {
             container.setResourceComponentState(ResourceComponentState.STOPPED);
+            state = ResourceComponentState.STOPPED;
         }
 
         // if the component exists and is not stopped then we may not have to do anything
@@ -1589,11 +1590,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (prepareResourceForActivation(resource, container, updatedPluginConfig)) {
             container.setResourceComponentState(ResourceComponentState.STARTING);
 
-            ResourceContext context = container.getResourceContext();
+            ResourceContext context;
+            ResourceComponent component;
 
-            // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
-            ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                FacetLockType.READ, COMPONENT_START_TIMEOUT, true, false);
+            try {
+                context = container.getResourceContext();
+
+                // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
+                component = container.createResourceComponentProxy(ResourceComponent.class, FacetLockType.READ,
+                    COMPONENT_START_TIMEOUT, true, false);
+            } catch (Throwable t) {
+                container.setResourceComponentState(ResourceComponentState.STOPPED);
+                throw new PluginContainerException("Failed getting proxy for resource " + resource + ".", t);
+            }
 
             try {
                 component.start(context);

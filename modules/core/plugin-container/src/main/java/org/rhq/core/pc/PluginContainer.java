@@ -75,8 +75,8 @@ import org.rhq.core.pluginapi.util.FileUtils;
  * {@link #setConfiguration(PluginContainerConfiguration)}. If this is not done, a default configuration will be
  * created.</p>
  *
- * @author Greg Hinkle
  * @author John Mazzitelli
+ * @author Greg Hinkle
  */
 public class PluginContainer implements ContainerService {
     private static final PluginContainer INSTANCE = new PluginContainer();
@@ -661,6 +661,7 @@ public class PluginContainer implements ContainerService {
     /**
      * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
      * the PC is already initialized, then <code>listener</code> will be invoked immediately.
+     * 
      * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
      * will be replaced with the newly supplied listner. 
@@ -676,8 +677,10 @@ public class PluginContainer implements ContainerService {
     }
 
     /**
-     * Add the callback listener to notify when the plugin container is shutdown. If this method is invoked and
-     * the PC is already shutdown, then <code>listener</code> will be invoked immediately.
+     * Add the callback listener to notify when the plugin container is shutdown. Unlike 
+     * {@link #addInitializationListener(String, InitializationListener)} the <code>listener</code> will 
+     * not be invoked immediately if the PC is already shutdown.  It will only be invoked on future shutdowns.
+     * 
      * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
      * will be replaced with the newly supplied listner. 
@@ -685,10 +688,6 @@ public class PluginContainer implements ContainerService {
     public void addShutdownListener(String name, ShutdownListener listener) {
         synchronized (shutdownListenersLock) {
             shutdownListeners.put(name, listener);
-
-            if (!started) {
-                listener.shutdown();
-            }
         }
     }
 

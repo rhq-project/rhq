@@ -20,24 +20,29 @@
 
 package org.rhq.core.clientapi.server.core;
 
+import java.io.Serializable;
+
 /**
  * A simple POJO for requesting actions or data from the ping.
  * 
  * @author Jay Shaughnessy
  */
-public class PingRequest {
-    private int agentId;
+public class PingRequest implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private String agentName;
     private boolean requestUpdateAvailability;
     private boolean requestServerTimestamp;
 
     private boolean replyUpdateAvailability;
     private Long replyServerTimestamp;
 
-    public PingRequest(int agentId) {
-        this(agentId, true, true);
+    public PingRequest(String agentName) {
+        this(agentName, true, true);
     }
 
-    public PingRequest(int agentId, boolean requestUpdateAvailability, boolean requestServerTimestamp) {
+    public PingRequest(String agentName, boolean requestUpdateAvailability, boolean requestServerTimestamp) {
+        this.agentName = agentName;
         this.requestUpdateAvailability = requestUpdateAvailability;
         this.requestServerTimestamp = requestServerTimestamp;
     }
@@ -54,8 +59,8 @@ public class PingRequest {
         return replyUpdateAvailability;
     }
 
-    public int getAgentId() {
-        return agentId;
+    public String getAgentName() {
+        return agentName;
     }
 
     public void setReplyUpdateAvailability(boolean replyUpdateAvailability) {

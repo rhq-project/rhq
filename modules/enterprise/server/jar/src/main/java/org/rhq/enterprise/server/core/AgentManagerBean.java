@@ -561,7 +561,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         long now = System.currentTimeMillis();
 
         if (request.isRequestUpdateAvailability()) {
-            updateLastAvailabilityPing(request.getAgentId(), now);
+            updateLastAvailabilityPing(request.getAgentName(), now);
             request.setReplyUpdateAvailability(true);
         }
 
@@ -572,7 +572,7 @@ public class AgentManagerBean implements AgentManagerLocal {
         return request;
     }
 
-    private void updateLastAvailabilityPing(int agentId, long now) {
+    private void updateLastAvailabilityPing(String agentName, long now) {
         /*
          * since we already know we have to update the agent row with the last avail ping time, might as well 
          * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
@@ -580,11 +580,11 @@ public class AgentManagerBean implements AgentManagerLocal {
         String updateStatement = "" //
             + "UPDATE Agent " //
             + "   SET lastAvailabilityPing = :now, backFilled = FALSE " //
-            + " WHERE id = :agentId ";
+            + " WHERE name = :agentName ";
 
         Query query = entityManager.createQuery(updateStatement);
         query.setParameter("now", now);
-        query.setParameter("agentId", agentId);
+        query.setParameter("agentName", agentName);
 
         query.executeUpdate();
     }

@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -81,6 +82,7 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
@@ -95,6 +97,7 @@ import org.rhq.core.pc.RebootRequestListener;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -150,11 +153,7 @@ import org.rhq.enterprise.communications.command.client.ClientRemotePojoFactory;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
 import org.rhq.enterprise.communications.command.client.JBossRemotingRemoteCommunicator;
 import org.rhq.enterprise.communications.command.client.OutgoingCommandTrace;
-import org.rhq.enterprise.communications.command.client.PollingListener;
 import org.rhq.enterprise.communications.command.client.RemoteCommunicator;
-import org.rhq.enterprise.communications.command.impl.identify.Identification;
-import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommand;
-import org.rhq.enterprise.communications.command.impl.identify.IdentifyCommandResponse;
 import org.rhq.enterprise.communications.command.impl.remotepojo.RemotePojoInvocationCommand;
 import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
@@ -189,6 +188,11 @@ public class AgentMain {
      * This Java Logging config file - lives inside the agent jar.
      */
     private static final String JAVA_UTIL_LOGGING_PROPERTIES_RESOURCE_PATH = "java.util.logging.properties";
+
+    // Ensure only one instance of the ping job runs by using a pool size of 1
+    private static final String PING_THREAD_POOL_NAME = "RHQ Agent Ping Thread";
+    private static final int PING_THREAD_POOL_CORE_POOL_SIZE = 1;
+    private static final long PING_INTERVAL_MINIMUM = 60000L;
 
     static final String PROMPT_INPUT_THREAD_NAME = "RHQ Agent Prompt Input Thread";
 
@@ -373,9 +377,14 @@ public class AgentMain {
     private boolean m_disableNativeSystem;
 
     /**
+     * Thread used to repeatedly ping the server for connectivity, agent avail update, and clock sync   
+     */
+    private ScheduledThreadPoolExecutor m_pingThreadPoolExecutor;
+
+    /**
      * Tracks whether we already logged a warning to let the user know SIGAR support isn't available.
      */
-    private boolean loggedNativeSystemInfoUnavailableWarning;
+    private boolean m_loggedNativeSystemInfoUnavailableWarning;
 
     /**
      * The main method that starts the whole thing.
@@ -488,6 +497,7 @@ public class AgentMain {
         m_serverFailoverList = null;
         m_primaryServerSwitchoverThread = null;
         m_vmHealthCheckThread = null;
+        m_pingThreadPoolExecutor = null;
 
         if (args == null) {
             args = new String[0];
@@ -656,6 +666,15 @@ public class AgentMain {
                     // now that our plugin container has been initialized, it can begin to receive incoming commands
                     latch.allowAllCommands(m_commServices);
 
+                    // Now that we are allowing commands to be passed back and forth with the server and
+                    // the PC is likely up, start our Ping service
+                    m_pingThreadPoolExecutor = new ScheduledThreadPoolExecutor(PING_THREAD_POOL_CORE_POOL_SIZE,
+                        new LoggingThreadFactory(PING_THREAD_POOL_NAME, true));
+                    long pingInterval = m_configuration.getClientSenderServerPollingInterval();
+                    pingInterval = (pingInterval < PING_INTERVAL_MINIMUM) ? PING_INTERVAL_MINIMUM : pingInterval;
+                    m_pingThreadPoolExecutor.scheduleWithFixedDelay(new PingExecutor(), 0L, pingInterval,
+                        TimeUnit.MILLISECONDS);
+
                     // prepare our shutdown hook
                     m_shutdownHook = new AgentShutdownHook(this);
                     Runtime.getRuntime().addShutdownHook(m_shutdownHook);
@@ -708,6 +727,18 @@ public class AgentMain {
 
                 // Notice that for every component we shutdown, we wrap in a try-catch to ignore exceptions.
                 // We want to keep going to ensure we attempt to try to shutdown everything.
+
+                ///////
+                // stop the thread that pings the server
+                try {
+                    if (null != m_pingThreadPoolExecutor) {
+                        m_pingThreadPoolExecutor.shutdownNow();
+                        m_pingThreadPoolExecutor = null;
+                    }
+                } catch (Throwable ignore) {
+                    LOG.warn(AgentI18NResourceKeys.FAILED_TO_SHUTDOWN_COMPONENT, "Server Ping Thread",
+                        ThrowableUtil.getAllMessages(ignore));
+                }
 
                 ///////
                 // stop the thread that checks the VM health
@@ -2233,20 +2264,20 @@ public class AgentMain {
                 SystemInfoFactory.disableNativeSystemInfo();
                 LOG.info(AgentI18NResourceKeys.NATIVE_SYSTEM_DISABLED);
             }
-            this.loggedNativeSystemInfoUnavailableWarning = false;
+            this.m_loggedNativeSystemInfoUnavailableWarning = false;
         } else {
             if (!SystemInfoFactory.isNativeSystemInfoAvailable()) {
-                if (!this.loggedNativeSystemInfoUnavailableWarning) {
+                if (!this.m_loggedNativeSystemInfoUnavailableWarning) {
                     Throwable t = SystemInfoFactory.getNativeLibraryLoadThrowable();
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE_DEBUG, t);
                     } else {
                         LOG.warn(AgentI18NResourceKeys.NATIVE_SYSINFO_UNAVAILABLE);
                     }
-                    this.loggedNativeSystemInfoUnavailableWarning = true;
+                    this.m_loggedNativeSystemInfoUnavailableWarning = true;
                 }
             } else {
-                this.loggedNativeSystemInfoUnavailableWarning = false;
+                this.m_loggedNativeSystemInfoUnavailableWarning = false;
             }
         }
 
@@ -2287,30 +2318,19 @@ public class AgentMain {
         // initialize and start the server-side services so we can process incoming commands
         m_commServices.start(m_configuration.getPreferences(), m_configuration.getClientCommandSenderConfiguration());
 
-        // TODO: I think this can removed altogether. We don't want to do polling at the comm layer
-        // for server detection because we are now pinging the server at a higher level.  If that ping (or any
-        // server service fails) the sender status will be set to down.  The higher level ping is now used
-        // for agent avail, clock sync, and server status checking.
-
         // prime the sender so it can be prepared to start sending messages.
-        // if auto-discovery is enabled, then the auto-discovery listener will tell the sender when its OK to start sending.
-        // if polling is enabled, then we start polling now - the poller will tell the sender when its OK to start sending.
-        // if both auto-discovery and polling is enabled, at least one of them will tell the sender when its OK to start sending.
-        // if neither is enabled, we have to blindly tell the sender that its OK to start sending now.
-        //if (m_configuration.getClientSenderServerPollingInterval() <= 0) {
-        //    if (m_autoDiscoveryListener == null) {
-        //        LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
-        //        m_clientSender.startSending();
-        //    }
-        //} else {
-        //    m_clientSender.startServerPolling();
-        //  
-        //    // must do this after we start polling, otherwise, the listener is never really added
-        //    ClockCheckPollingListener clockCheckPollingListener = new ClockCheckPollingListener();
-        //    m_clientSender.addPollingListener(clockCheckPollingListener);
-        //}
+        // if auto-discovery is enabled, then the auto-discovery listener will tell the sender when its OK to start 
+        // sending.  Otherwise start polling and let the poller tell the sender when it is ok to start sending.
+        if (!isAutoDiscoveryEnabled()) {
+            LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
+            m_clientSender.startServerPolling();
+        }
 
         return;
+    }
+
+    private boolean isAutoDiscoveryEnabled() {
+        return m_autoDiscoveryListener != null;
     }
 
     /**
@@ -3418,24 +3438,6 @@ public class AgentMain {
     }
 
     /**
-     * Listener that is told about the results of all server polls (if polling is enabled).
-     * Because we know the poll thread uses the {@link IdentifyCommand}, this listener will
-     * simply use the results of that command to track our synchronicity with the server clock.
-     */
-    private class ClockCheckPollingListener implements PollingListener {
-        public void pollResponse(CommandResponse response) {
-            if (response instanceof IdentifyCommandResponse && response.isSuccessful()) {
-                IdentifyCommandResponse id_response = (IdentifyCommandResponse) response;
-                Identification id = id_response.getIdentification();
-                if (id != null) {
-                    AgentMain.this.serverClockNotification(id.getTimestamp());
-                }
-            }
-            return;
-        }
-    }
-
-    /**
      * Listener that will register the agent as soon as the sender has started (which means we should be able to connect
      * to the RHQ Server and send the register command).
      */
@@ -3642,6 +3644,52 @@ public class AgentMain {
         @Override
         public String toString() {
             return this.serverEndpoint + "@" + new Date(this.timestamp);
+        }
+    }
+
+    private class PingExecutor implements Runnable {
+
+        @Override
+        public void run() {
+            try {
+                // if we can't send to the server ignore the ping
+                if (!m_clientSender.isSending()) {
+                    // An unlikely state, but if we're not sending, not polling and not performing autoDiscovery 
+                    // (multicast), then start polling to we eventually get out of this state.
+                    if (!(m_clientSender.isServerPolling() || isAutoDiscoveryEnabled())) {
+                        LOG.info("Starting polling to determine sender status");
+                        m_clientSender.startServerPolling();
+                    }
+
+                    return;
+                }
+
+                // we are in sending mode, so make sure the poller is off 
+                if (m_clientSender.isServerPolling()) {
+                    LOG.info("Stopping polling and resuming pinging");
+                    m_clientSender.stopServerPolling();
+                }
+
+                boolean updateAvail = PluginContainer.getInstance().isStarted();
+                PingRequest request = new PingRequest(getConfiguration().getAgentName(), updateAvail, true);
+
+                ClientRemotePojoFactory factory = m_clientSender.getClientRemotePojoFactory();
+                CoreServerService server = factory.getRemotePojo(CoreServerService.class);
+                request = server.ping(request);
+
+                // take this opportunity to check the agent-server clock sync
+                serverClockNotification(request.getReplyServerTimestamp());
+
+            } catch (Throwable t) {
+                // If the ping fails, typically do to a CannotConnectException, and we're not using autodiscovery,
+                // then start the poller to have sending mode re-established when the connection resumes.
+                if (!(m_clientSender.isServerPolling() || isAutoDiscoveryEnabled())) {
+                    LOG.info("Starting polling to determine sender status", t);
+                    m_clientSender.startServerPolling();
+                } else {
+                    LOG.warn("Server Ping failed", t);
+                }
+            }
         }
     }
 }

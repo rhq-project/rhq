@@ -53,7 +53,7 @@
          Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
          value below.
         -->
-        <gwt.userAgent>ie6,ie8,gecko1_8,safari,opera</gwt.userAgent>
+        <gwt.userAgent>ie6,ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed
              up gwt compilation. -->

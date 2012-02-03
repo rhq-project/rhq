@@ -103,11 +103,14 @@ rem                             passed through to the RHQ Agent.
 rem                             If you want to have command line arguments
 rem                             added to the arguments specified here, append
 rem                             '%*' to the end of this option. For example,
-rem                             "--daemon %*". In this case, both the command
+rem                             "--nonative %*". In this case, both the command
 rem                             line options and the ones specified here will
-rem                             be passed to the agent.
+rem                             be passed to the Agent. Note, the --daemon option
+rem                             should generally not be included here, since it
+rem                             would cause the Agent to always start in daemon
+rem                             mode, even when started via rhq-agent.bat.
 rem
-rem set RHQ_AGENT_CMDLINE_OPTS=--nonative
+rem set RHQ_AGENT_CMDLINE_OPTS=--nonative %*
 
 rem ===========================================================================
 rem THE FOLLOWING ARE USED SOLELY FOR THE rhq-agent-wrapper.bat SCRIPT

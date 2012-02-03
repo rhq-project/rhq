@@ -181,6 +181,9 @@ public interface InstallerI18NResourceKeys {
     @I18NMessage(locale = "en", value = "${product.name} will be installed!")
     String ALREADY_INSTALLED = "alreadyInstalled";
 
+    @I18NMessage(locale = "en", value = "Note: Remember to install the plugin packs for the ${product.name} server to begin properly monitoring you environment.")
+    String ALREADY_INSTALLED_REMINDER = "alreadyInstalledReminder";
+
     @I18NMessage(locale = "en", value = "Done! Click here to get started!")
     String ALREADY_INSTALLED_STARTED_LINK = "alreadyInstalledStartedLink";
 

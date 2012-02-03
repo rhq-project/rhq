@@ -98,14 +98,16 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     /**
      * Returns the availability report that should be sent to the Server.
      *
-     * <p>This will return <code>null</code> if there is no committed inventory and thus no availability reports should
-     * be sent. This will rarely happen - only if this is a brand new agent whose inventory hasn't been committed yet or
-     * if the platform and all its children have been deleted (in which case the agent should be uninstalled, or the user
-     * will want to re-import the platform). In either case, it will be in rare, corner cases that this will ever return
-     * null, and the condition that caused the null should eventually go away.</p>
+     * <p>This will return <code>null</code> if there is nothing committed to inventory. Having no committed inventory 
+     * is rare.  There will be no committed inventory if this is a brand new agent whose inventory hasn't been committed 
+     * yet or if the platform and all its children have been deleted (in which case the agent should be uninstalled, or 
+     * the user will want to re-import the platform).
+     * 
+     * The report can be empty if there is nothing to report. This can happen for a changes-only report when there
+     * are no changes.</p>
      *
      * @return the report containing all the availabilities that need to be sent to the Server, or <code>null</code> if
-     *         there is no committed inventory and thus no availability reports should be sent
+     *         there is no inventory or nothing to report. The report can be empty
      *
      * @throws Exception if failed to create and prepare the report
      */
@@ -127,27 +129,23 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             checkInventory(inventoryManager.getPlatform(), availabilityReport,
                 availabilityReport.isChangesOnlyReport(), true, false);
 
-            // In enterprise mode, the server will need at least one resource so it can derive what agent
-            // is sending this report.  If the report is empty (meaning, nothing has changed since the last
-            // availability check), let's add the platform record to the report
-            if (availabilityReport.getResourceAvailability().isEmpty()) {
-                checkInventory(inventoryManager.getPlatform(), availabilityReport, false, false, false);
-            }
+            // If the report is empty (meaning, nothing has changed since the last availability check), don't
+            // send any report. In the past we needed to send a report as it doubled as an Agent heartbeat, but
+            // that is now handled but the Ping job.
+            if (!availabilityReport.getResourceAvailability().isEmpty()) {
 
-            // if we have non-platform resources in the report, the agent has had
-            // resources imported. So next time, only send changed only reports.
-            if (availabilityReport.getResourceAvailability().size() > 1) {
+                // Whenever sending a report the next report should be changes only
                 sendChangedOnlyReportNextTime();
-            }
 
-            long end = System.currentTimeMillis();
+                long end = System.currentTimeMillis();
 
-            if (log.isDebugEnabled()) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-                oos.writeObject(availabilityReport);
-                log.debug("Built availability report for [" + availabilityReport.getResourceAvailability().size()
-                    + "] resources with a size of [" + baos.size() + "] bytes in [" + (end - start) + "]ms");
+                if (log.isDebugEnabled()) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
+                    ObjectOutputStream oos = new ObjectOutputStream(baos);
+                    oos.writeObject(availabilityReport);
+                    log.debug("Built availability report for [" + availabilityReport.getResourceAvailability().size()
+                        + "] resources with a size of [" + baos.size() + "] bytes in [" + (end - start) + "]ms");
+                }
             }
         }
 
@@ -205,8 +203,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     }
                 }
             } catch (Throwable t) {
-                ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK, t
-                    .getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
+                ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK,
+                    t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                 this.inventoryManager.sendResourceErrorToServer(resourceError);
                 // TODO GH: Put errors in report, rather than sending them to the Server separately.
                 if (log.isDebugEnabled()) {

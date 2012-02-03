@@ -67,7 +67,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * @author John Mazzitelli
  * @author Ian Springer
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class ResourceContainer implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -76,7 +76,7 @@ public class ResourceContainer implements Serializable {
     }
 
     public enum ResourceComponentState {
-        STARTED, STOPPED
+        STARTED, STOPPED, STARTING
     }
 
     // thread pools used to invoke methods on container's components

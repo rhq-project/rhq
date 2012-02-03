@@ -3851,6 +3851,15 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <!-- Drop agent quiet time (i.e. suspect agent time) from 15 to 5 minutes -->
+            <schema-directSQL>
+                <statement desc="Changing AGENT_MAX_QUIET_TIME_ALLOWED to 5 minutes from 15 minutes">
+                    UPDATE RHQ_SYSTEM_CONFIG 
+                       SET PROPERTY_VALUE = '300000', DEFAULT_PROPERTY_VALUE = '300000' 
+                     WHERE PROPERTY_KEY = 'AGENT_MAX_QUIET_TIME_ALLOWED'
+                </statement>
+            </schema-directSQL>
+            
         </dbupgrade>
     </target>
 </project>

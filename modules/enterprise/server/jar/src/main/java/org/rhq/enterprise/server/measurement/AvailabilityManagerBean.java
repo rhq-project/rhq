@@ -129,8 +129,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             Resource resource = resourceManager.getResourceById(subject, resourceId);
             List<Availability> availList = resource.getAvailability();
             if ((availList != null) && (availList.size() > 0)) {
-                log
-                    .warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
+                log.warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
                 retAvailability = availList.get(availList.size() - 1);
             } else {
                 retAvailability = new Availability(resource, new Date(), null);
@@ -508,10 +507,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         } else {
             log.error("Could not figure out which agent sent availability report. "
                 + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
-                + agentName
-                + "] was recently removed. In any other case this is a bug."
-                + report);
-      }
+                + agentName + "] was recently removed. In any other case this is a bug." + report);
+        }
 
         return true; // everything is OK and things look to be in sync
     }
@@ -549,16 +546,29 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setAllAgentResourceAvailabilities(int agentId, AvailabilityType availabilityType) {
-        String typeString = (availabilityType != null) ? availabilityType.toString() : "unknown";
+    public void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailType,
+        AvailabilityType childAvailType) {
 
-        // get all resources that are not already of the given availability type (since these are the ones we need to change)
-        Query query = entityManager.createNamedQuery(Availability.FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE);
+        platformAvailType = (null == platformAvailType) ? AvailabilityType.UNKNOWN : platformAvailType;
+        childAvailType = (null == childAvailType) ? AvailabilityType.UNKNOWN : childAvailType;
+
+        // get the platform resource as well as all child resources not already at childAvailType (since these are the
+        // ones we need to change)
+        Query query = entityManager
+            .createNamedQuery(Availability.FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
         query.setParameter("agentId", agentId);
-        query.setParameter("availabilityType", availabilityType);
+        query.setParameter("availabilityType", platformAvailType);
+        // should be 0 or 1 entry
+        List<ResourceIdWithAvailabilityComposite> platformResourcesWithStatus = query.getResultList();
+
+        // get the platform resource as well as all child resources not already at childAvailType (since these are the
+        // ones we need to change)
+        query = entityManager.createNamedQuery(Availability.FIND_CHILD_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
+        query.setParameter("agentId", agentId);
+        query.setParameter("availabilityType", childAvailType);
         List<ResourceIdWithAvailabilityComposite> resourcesWithStatus = query.getResultList();
 
-        // The above query only returns resources if they have at least one row in Availability.
+        // The above queries only return resources if they have at least one row in Availability.
         // This may be a problem in the future, and may need to be fixed.
         // If a resource has 0 rows of availability, then it is by definition "unknown". If,
         // availabilityType is null, we don't have to do anything since the unknown state hasn't changed.
@@ -570,27 +580,44 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // (since the agent sends avail reports every 60 seconds or so by default).  So this problem might not
         // be as bad as first thought.
 
-        log.debug("Agent #[" + agentId + "] is going to have [" + resourcesWithStatus.size()
-            + "] resources backfilled with [" + typeString + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Agent #[" + agentId + "] is going to have [" + resourcesWithStatus.size()
+                + "] resources backfilled with [" + childAvailType.getName() + "]");
+        }
 
         Date now = new Date();
 
-        // for those resources that have a current availability status that is different, change them
-        List<Availability> newAvailabilities = new ArrayList<Availability>(resourcesWithStatus.size());
+        int newAvailsSize = platformResourcesWithStatus.size() + resourcesWithStatus.size();
+        List<Availability> newAvailabilities = new ArrayList<Availability>(newAvailsSize);
+
+        // if the platform is being set to a new status handle it now
+        if (!platformResourcesWithStatus.isEmpty()) {
+            Availability newAvailabilityInterval = getNewInterval(platformResourcesWithStatus.get(0), now,
+                platformAvailType);
+            if (newAvailabilityInterval != null) {
+                newAvailabilities.add(newAvailabilityInterval);
+            }
+
+            resourceAvailabilityManager.updateAgentResourcesLatestAvailability(agentId, platformAvailType, true);
+        }
+
+        // for those resources that have a current availability status that is different, change them       
         for (ResourceIdWithAvailabilityComposite record : resourcesWithStatus) {
-            Availability newAvailabilityInterval = getNewInterval(record, now, availabilityType);
+            Availability newAvailabilityInterval = getNewInterval(record, now, childAvailType);
             if (newAvailabilityInterval != null) {
                 newAvailabilities.add(newAvailabilityInterval);
             }
         }
 
-        resourceAvailabilityManager.updateAllResourcesAvailabilitiesForAgent(agentId, availabilityType);
+        resourceAvailabilityManager.updateAgentResourcesLatestAvailability(agentId, childAvailType, false);
 
         // To handle backfilling process, which will mark them down
-        notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities", newAvailabilities
-            .toArray(new Availability[newAvailabilities.size()]));
+        notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities",
+            newAvailabilities.toArray(new Availability[newAvailabilities.size()]));
 
-        log.debug("Resources for agent #[" + agentId + "] have been fully backfilled with [" + typeString + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Resources for agent #[" + agentId + "] have been fully backfilled.");
+        }
 
         return;
     }

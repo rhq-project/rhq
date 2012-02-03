@@ -278,7 +278,7 @@ public interface AgentManagerLocal {
      */
     File getAgentDownloadDir() throws Exception;
 
-    public void setAgentBackfilled(int agentId, boolean backfilled);
+    void setAgentBackfilled(int agentId, boolean backfilled);
 
     /**
      * Returns <code>true</code> if the agent is "suspect" and has been backfilled. A "suspect agent" means one that the

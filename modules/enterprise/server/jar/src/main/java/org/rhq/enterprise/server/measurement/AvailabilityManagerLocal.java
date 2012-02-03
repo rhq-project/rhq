@@ -136,13 +136,16 @@ public interface AvailabilityManagerLocal {
     void updateLastAvailabilityReport(int agentId);
 
     /**
-     * Sets all availabilities for all resources managed by the given agent to the given availability type (which may be
-     * <code>null</code> to indicate unknown).
+     * Update availabilities for all resources managed by the given agent to the given availability type (which may be
+     * <code>null</code> to indicate unknown).  NOTE: This does not include the top-level platform resource for
+     * the agent. To update a single resource avail see {@link #updateResourceAvailability(Subject, Availability)}.
      *
-     * @param agentId          all resources managed by this agent will have their availabilities changed
-     * @param availabilityType the type that all of the agent's resources will have
+     * @param agentId all resources managed by this agent will have their availabilities changed
+     * @param platformAvailabilityType the type that the agent's top level platform resource will have 
+     * @param childAvailabilityType the type that the agent's child resources will have
      */
-    void setAllAgentResourceAvailabilities(int agentId, AvailabilityType availabilityType);
+    void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailabilityType,
+        AvailabilityType childAvailabilityType);
 
     List<Availability> findAvailabilityWithinInterval(int resourceId, Date startDate, Date endDate);
 

@@ -24,8 +24,8 @@ import javax.ejb.Local;
 import javax.persistence.EntityManager;
 import javax.persistence.PostPersist;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -76,9 +76,12 @@ public interface ResourceAvailabilityManagerLocal {
     ResourceAvailability getLatestAvailability(int resourceId);
 
     /**
-     * Marks all resources managed by the specified agent as down
-     * 
+     * Update latest availabilities for all resources managed by the given agent to the given availability type.
+     * NOTE: This does not include the top-level platform resource for the agent.
+     *
      * @param agentId the id of the agent
+     * @param availabilityType the type that all of the agent's resources will have     * 
+     * @param isPlatform if true, updates only the agent's top level platform, if false only the children
      */
-    void updateAllResourcesAvailabilitiesForAgent(int agentId, AvailabilityType availabilityType);
+    void updateAgentResourcesLatestAvailability(int agentId, AvailabilityType availabilityType, boolean isPlatform);
 }

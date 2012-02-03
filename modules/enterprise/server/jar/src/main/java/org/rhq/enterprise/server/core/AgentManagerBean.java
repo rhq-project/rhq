@@ -218,7 +218,7 @@ public class AgentManagerBean implements AgentManagerLocal {
     public void checkForSuspectAgents() {
         log.debug("Checking to see if there are agents that we suspect are down...");
 
-        long maximumQuietTimeAllowed = 900000L;
+        long maximumQuietTimeAllowed = 300000L;
         try {
             String prop = systemManager.getSystemSettings(subjectManager.getOverlord()).get(
                 SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED);
@@ -280,12 +280,33 @@ public class AgentManagerBean implements AgentManagerLocal {
         // problems
         AvailabilityReportSerializer.getSingleton().lock(agentName);
         try {
+            // This marks the Agent as backfilled=true
             agentManager.setAgentBackfilled(agentId, true);
-            availabilityManager.setAllAgentResourceAvailabilities(agentId, AvailabilityType.UNKNOWN);
+
+            // This marks the top-level platform DOWN since we have not heard from it and all
+            // child resources UNKNOWN since they are not reporting and may very well be up            
+            availabilityManager.updateAgentResourceAvailabilities(agentId, AvailabilityType.DOWN,
+                AvailabilityType.UNKNOWN);
 
         } finally {
             AvailabilityReportSerializer.getSingleton().unlock(agentName);
         }
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void setAgentBackfilled(int agentId, boolean backfilled) {
+        Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        query.setParameter("backfilled", backfilled);
+        query.executeUpdate();
+    }
+
+    public boolean isAgentBackfilled(int agentId) {
+        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
+        Query query = entityManager.createNamedQuery(Agent.QUERY_IS_AGENT_BACKFILLED);
+        query.setParameter("agentId", agentId);
+        Long backfilledCount = (Long) query.getSingleResult();
+        return backfilledCount != 0L;
     }
 
     @SuppressWarnings("unchecked")
@@ -587,22 +608,6 @@ public class AgentManagerBean implements AgentManagerLocal {
         query.setParameter("agentName", agentName);
 
         query.executeUpdate();
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setAgentBackfilled(int agentId, boolean backfilled) {
-        Query query = entityManager.createNamedQuery(Agent.QUERY_SET_AGENT_BACKFILLED);
-        query.setParameter("agentId", agentId);
-        query.setParameter("backfilled", backfilled);
-        query.executeUpdate();
-    }
-
-    public boolean isAgentBackfilled(int agentId) {
-        // query returns 0 if the agent's platform is DOWN (or does not exist), 1 if not
-        Query query = entityManager.createNamedQuery(Agent.QUERY_IS_AGENT_BACKFILLED);
-        query.setParameter("agentId", agentId);
-        Long backfilledCount = (Long) query.getSingleResult();
-        return backfilledCount != 0L;
     }
 
     @ExcludeDefaultInterceptors

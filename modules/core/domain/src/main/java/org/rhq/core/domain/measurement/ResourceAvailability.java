@@ -51,12 +51,20 @@ import org.rhq.core.domain.resource.Resource;
 @NamedQueries( //
 { @NamedQuery(name = ResourceAvailability.QUERY_FIND_BY_RESOURCE_ID, query = "" //
     + "  SELECT ra FROM ResourceAvailability ra WHERE ra.resourceId = :resourceId "),
-    @NamedQuery(name = ResourceAvailability.UPDATE_BY_AGENT_ID, query = "" //
+    @NamedQuery(name = ResourceAvailability.UPDATE_PLATFORM_BY_AGENT_ID, query = "" //
         + "  UPDATE ResourceAvailability " //
         + "     SET availabilityType = :availabilityType " //
         + "   WHERE resourceId IN ( SELECT res.id " //
         + "                           FROM Resource res " //
-        + "                          WHERE res.agent.id = :agentId ) "),
+        + "                          WHERE res.agent.id = :agentId " //
+        + "                            AND res.parentResource IS NULL )"),
+    @NamedQuery(name = ResourceAvailability.UPDATE_CHILD_BY_AGENT_ID, query = "" //
+        + "  UPDATE ResourceAvailability " //
+        + "     SET availabilityType = :availabilityType " //
+        + "   WHERE resourceId IN ( SELECT res.id " //
+        + "                           FROM Resource res " //
+        + "                          WHERE res.agent.id = :agentId " //
+        + "                            AND res.parentResource IS NOT NULL )"),
     @NamedQuery(name = ResourceAvailability.INSERT_BY_RESOURCE_IDS, query = "" //
         + "  INSERT INTO ResourceAvailability ( resourceId ) " //
         + "       SELECT res.id " //
@@ -86,7 +94,8 @@ public class ResourceAvailability implements Serializable {
     public static final String TABLE_NAME = "RHQ_RESOURCE_AVAIL";
 
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
-    public static final String UPDATE_BY_AGENT_ID = "ResourceAvailability.updateByAgentId";
+    public static final String UPDATE_CHILD_BY_AGENT_ID = "ResourceAvailability.updateChildByAgentId";
+    public static final String UPDATE_PLATFORM_BY_AGENT_ID = "ResourceAvailability.updatePlatformByAgentId";
     public static final String INSERT_BY_RESOURCE_IDS = "ResourceAvailability.insertByResourceIds";
     public static final String QUERY_IS_AGENT_BACKFILLED = "ResourceAvailability.isAgentBackfilled";
 

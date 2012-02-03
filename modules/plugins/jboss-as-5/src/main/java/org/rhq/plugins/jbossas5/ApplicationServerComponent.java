@@ -371,6 +371,7 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
             this.connection = connectionProvider.connect();
         } catch (RuntimeException e) {
             Throwable rootCause = ExceptionUtils.getRootCause(e);
+            rootCause = rootCause == null ? e : rootCause;
             if (rootCause instanceof SecurityException) {
                 if (log.isDebugEnabled()) {
                     log.debug("Failed to connect to Profile Service.", e);

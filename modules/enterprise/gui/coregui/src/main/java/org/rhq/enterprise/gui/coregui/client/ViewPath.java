@@ -83,7 +83,7 @@ public class ViewPath {
         return getPathToIndex(this.index);
     }
 
-    private String getPathToIndex(int endIndex) {
+    public String getPathToIndex(int endIndex) {
         String path = "";
         for (int i = 0; i < endIndex; i++) {
             if (i > 0) {

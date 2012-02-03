@@ -217,8 +217,10 @@ public class ResourceUpgradeDelegate {
                             inventoryManager.activateResource(resource, container, true);
                         } catch (InvalidPluginConfigurationException e) {
                             log.debug("Resource [" + resource + "] failed to start up after upgrade.", e);
+                            inventoryManager.handleInvalidPluginConfigurationResourceError(resource, e);
                         } catch (Throwable t) {
                             log.error("Failed to activate the resource [" + resource + "] after upgrade.", t);
+                            inventoryManager.handleInvalidPluginConfigurationResourceError(resource, t);
                         }
                     }
                 }

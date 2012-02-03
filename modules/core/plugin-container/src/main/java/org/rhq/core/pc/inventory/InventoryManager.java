@@ -797,6 +797,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             performServiceScan(resource.getId());
 
             if (null != startError) {
+                handleInvalidPluginConfigurationResourceError(resource, startError);
                 throw new PluginContainerException("The resource [" + resource
                     + "] has been added but could not be started. Verify the supplied configuration values: ",
                     startError);
@@ -1684,7 +1685,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param t        the exception that indicates the problem with the plugin configuration
      * @return         true if the error was sent successfully, or false otherwise
      */
-    private boolean handleInvalidPluginConfigurationResourceError(Resource resource, Throwable t) {
+    public boolean handleInvalidPluginConfigurationResourceError(Resource resource, Throwable t) {
         resource.setConnected(false); // invalid plugin configuration infers the resource component is disconnected
         // Give the server-side an error message describing the connection failure that can be
         // displayed on the resource's Inventory page.

@@ -2831,8 +2831,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             } catch (InvalidPluginConfigurationException e) {
                 log.debug("Failed to activate resource [" + resource + "] due to invalid plugin configuration.", e);
+                handleInvalidPluginConfigurationResourceError(resource, e);
             } catch (Throwable t) {
                 log.error("Exception thrown while activating [" + resource + "].", t);
+                handleInvalidPluginConfigurationResourceError(resource, t);
             }
         }
     }

@@ -199,7 +199,7 @@ public class DriftFilesSenderTest extends DriftTest {
         sender.setHeaders(headers);
         sender.run();
 
-        assertEquals(driftClient.getSendChangeSetContentInvocationCount(), 0,
+        assertEquals(driftClient.getSendChangeSetInvocationCount(), 0,
                 "Do not call DriftClient to send content to server when there is no content to send.");
         assertContentFileExists(changeSetDir(driftDefName));
     }

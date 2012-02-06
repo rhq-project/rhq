@@ -31,8 +31,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
@@ -45,7 +43,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -142,13 +142,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     @Override
     public ResourceWithChildren getHierarchy(int baseResourceId) {
         // TODO optimize to do less recursion
-        Resource start;
-        start = getFromCache(baseResourceId,Resource.class);
-        if (start==null) {
-            start = resMgr.getResource(caller,baseResourceId);
-            if (start!=null)
-                putToCache(start.getId(),Resource.class,start);
-        }
+        Resource start = obtainResource(baseResourceId);
         ResourceWithChildren rwc = getHierarchy(start);
         /*new ResourceWithChildren(""+start.getId(),start.getName());
 
@@ -187,10 +181,32 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     public AvailabilityRest getAvailability(int resourceId) {
 
         Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
-        AvailabilityRest availabilityRest = new AvailabilityRest(avail.getAvailabilityType(),avail.getStartTime().getTime(),
+        AvailabilityRest availabilityRest;
+        if (avail.getAvailabilityType()!=null)
+            availabilityRest = new AvailabilityRest(avail.getAvailabilityType(),avail.getStartTime().getTime(),
                 avail.getResource().getId());
+        else
+            availabilityRest = new AvailabilityRest(avail.getStartTime().getTime(),resourceId);
         return availabilityRest;
     }
+
+    @Override
+    public void reportAvailability(int resourceId, AvailabilityRest avail) {
+        if (avail.getResourceId()!=resourceId)
+            throw new IllegalArgumentException("Resource Ids do not match");
+
+        Resource resource = obtainResource(resourceId);
+
+        AvailabilityType at;
+            at = AvailabilityType.valueOf(avail.getType());
+
+        AvailabilityReport report = new AvailabilityReport(true,resource.getAgent().getName());
+        Availability availability = new Availability(resource, new Date(avail.getSince()),at);
+        report.addAvailability(availability);
+
+        availMgr.mergeAvailabilityReport(report);
+    }
+
 
     public Response getSchedules(int resourceId,
                                              String scheduleType,
@@ -285,6 +301,16 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
         return builder.build();
 
+    }
+
+    private Resource obtainResource(int resourceId) {
+        Resource resource = getFromCache(resourceId,Resource.class);
+        if (resource==null) {
+            resource = resMgr.getResource(caller,resourceId);
+            if (resource!=null)
+                putToCache(resourceId,Resource.class,resource);
+        }
+        return resource;
     }
 
 

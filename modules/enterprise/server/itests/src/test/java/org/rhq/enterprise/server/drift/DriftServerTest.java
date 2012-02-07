@@ -109,7 +109,8 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     private void shutDownDriftServer() throws Exception {
         unprepareServerPluginService();
-        driftServerPluginService.stopMasterPluginContainer();
+        //already done by the above call
+        //driftServerPluginService.stopMasterPluginContainer();
     }
 
     private void shutDownAgentServices() {
@@ -178,10 +179,9 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     protected void deleteEntity(Class<?> clazz, String name, EntityManager em) {
         try {
-            Object entity = em.createQuery(
-                "select entity from " + clazz.getSimpleName() + " entity where entity.name = :name")
-                .setParameter("name", name)
-                .getSingleResult();
+            Object entity = em
+                .createQuery("select entity from " + clazz.getSimpleName() + " entity where entity.name = :name")
+                .setParameter("name", name).getSingleResult();
             em.remove(entity);
         } catch (NoResultException e) {
             // we can ignore no results because this code will run when the db
@@ -208,13 +208,8 @@ public class DriftServerTest extends AbstractEJB3Test {
     }
 
     protected void initResource() {
-        resource = new ResourceBuilder().createResource()
-            .withId(0)
-            .withName(RESOURCE_NAME)
-            .withResourceKey(RESOURCE_NAME)
-            .withRandomUuid()
-            .withResourceType(resourceType)
-            .build();
+        resource = new ResourceBuilder().createResource().withId(0).withName(RESOURCE_NAME)
+            .withResourceKey(RESOURCE_NAME).withRandomUuid().withResourceType(resourceType).build();
     }
 
     protected Subject getOverlord() {

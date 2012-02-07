@@ -28,6 +28,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -301,9 +303,9 @@ public class Deployer {
             return;
         }
 
-        debug("Estimated disk usage for this deployment is [", usage.getDiskUsage(), "] bytes (file count=[", usage
-            .getFileCount(), "]). The maximum disk space currently usable is estimated to be [", usage
-            .getMaxDiskUsable(), "] bytes.");
+        debug("Estimated disk usage for this deployment is [", usage.getDiskUsage(), "] bytes (file count=[",
+            usage.getFileCount(), "]). The maximum disk space currently usable is estimated to be [",
+            usage.getMaxDiskUsable(), "] bytes.");
 
         if (usage.getDiskUsage() > usage.getMaxDiskUsable()) {
             throw new Exception(
@@ -316,6 +318,31 @@ public class Deployer {
     }
 
     private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
+        // If we are to fully manage the deployment dir, then we need to delete everything we find here.
+        // Any old files do not belong here - only our bundle files should live here now.
+        if (this.deploymentData.isManageRootDir()) {
+            File destDir = this.deploymentData.getDestinationDir();
+            log.info(buildLogMessage("Will be managing the deploy dir[", destDir,
+                "]; backing up and purging any obsolete content existing in there"));
+            if (destDir.isDirectory()) {
+                int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
+                backupFiles(diff, deploymentId, destDir, dryRun, null, true);
+                if (!dryRun) {
+                    // we want to purge everything that is originally in here, but we backed up the files in here
+                    // so make sure we don't delete our metadata directory, which is where the backed up files are
+                    File[] doomedFiles = destDir.listFiles(new FilenameFilter() {
+                        @Override
+                        public boolean accept(File dir, String name) {
+                            return !DeploymentsMetadata.METADATA_DIR.equals(name);
+                        }
+                    });
+                    for (File doomedFile : doomedFiles) {
+                        FileUtil.purge(doomedFile, true);
+                    }
+                }
+            }
+        }
+
         FileHashcodeMap newFileHashcodeMap = extractZipAndRawFiles(new HashMap<String, String>(0), diff, dryRun);
 
         // this is an initial deployment, so we know every file is new - tell our diff about them all
@@ -340,8 +367,8 @@ public class Deployer {
         //       * if a current file is backed up
 
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
-        ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(), this.deploymentData
-            .getIgnoreRegex(), this.deploymentData.isManageRootDir());
+        ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(),
+            this.deploymentData.getIgnoreRegex(), this.deploymentData.isManageRootDir());
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
 
         if (current.getUnknownContent() != null) {
@@ -457,7 +484,8 @@ public class Deployer {
             int backupDeploymentId = props.getDeploymentId();
             debug("Backing up files as part of update deployment. dryRun=", dryRun);
             for (String fileToBackupPath : currentFilesToBackup) {
-                backupFile(diff, backupDeploymentId, fileToBackupPath, dryRun);
+                boolean toBeDeleted = currentFilesToDelete.remove(fileToBackupPath);
+                backupFile(diff, backupDeploymentId, fileToBackupPath, dryRun, toBeDeleted);
             }
         }
 
@@ -503,8 +531,8 @@ public class Deployer {
         return newFileHashCodeMap;
     }
 
-    private void backupFile(DeployDifferences diff, int deploymentId, final String fileToBackupPath, boolean dryRun)
-        throws Exception {
+    private void backupFile(DeployDifferences diff, int deploymentId, final String fileToBackupPath, boolean dryRun,
+        boolean removeFileToBackup) throws Exception {
 
         File bakFile;
 
@@ -536,8 +564,8 @@ public class Deployer {
                 String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
                 if (destDirDriveLetter == null || driveLetter.equals(destDirDriveLetter)) {
                     bakFile = new File(backupDir, fileToBackupPath);
-                    fileToBackup = new File(this.deploymentData.getDestinationDir(), fileToBackupPathNoDriveLetter
-                        .toString());
+                    fileToBackup = new File(this.deploymentData.getDestinationDir(),
+                        fileToBackupPathNoDriveLetter.toString());
                 } else {
                     throw new Exception("Cannot backup relative path [" + fileToBackupPath
                         + "] whose drive letter is different than the destination directory ["
@@ -549,18 +577,75 @@ public class Deployer {
             }
         }
 
+        boolean deleted = false; // will be true if we were told to delete the file and we actually did delete it
+
         if (!dryRun) {
             bakFile.getParentFile().mkdirs();
-            FileUtil.copyFile(fileToBackup, bakFile);
+            // try to do a rename first if we are to remove the file, since this is more likely
+            // much faster and more efficient.
+            // if it fails (perhaps because we are crossing file systems), try a true copy
+            if (removeFileToBackup) {
+                boolean movedSuccessfully = fileToBackup.renameTo(bakFile);
+                if (movedSuccessfully) {
+                    deleted = true;
+                } else {
+                    FileUtil.copyFile(fileToBackup, bakFile);
+                    deleted = fileToBackup.delete();
+                    if (deleted == false) {
+                        // TODO: what should we do? is it a major failure if we can't remove files here?                
+                        debug("Failed to delete file [", fileToBackup, "] but it is backed up");
+                        if (diff != null) {
+                            diff.addError(fileToBackupPath, "File [" + fileToBackup.getAbsolutePath()
+                                + "] did not delete");
+                        }
+                    }
+                }
+            } else {
+                FileUtil.copyFile(fileToBackup, bakFile);
+            }
+        } else {
+            deleted = removeFileToBackup; // this is a dry run, pretend we deleted it if we were asked to
         }
 
         debug("Backed up file [", fileToBackup, "] to [", bakFile, "]. dryRun=", dryRun);
+        if (deleted) {
+            debug("Deleted file [", fileToBackup, "] after backing it up. dryRun=", dryRun);
+        }
 
         if (diff != null) {
             diff.addBackedUpFile(fileToBackupPath, bakFile.getAbsolutePath());
+            if (deleted) {
+                diff.addDeletedFile(fileToBackupPath);
+            }
         }
 
         return;
+    }
+
+    private void backupFiles(DeployDifferences diff, int deploymentId, File dirToBackup, boolean dryRun,
+        String relativeTo, boolean removeSourceFiles) throws Exception {
+        File[] files = dirToBackup.listFiles();
+        if (files == null) {
+            throw new IOException("Failed to get the list of files in source directory [" + dirToBackup + "]");
+        }
+        if (files.length > 0) {
+            this.deploymentsMetadata.getMetadataDirectory().mkdirs(); // make sure we create this, might not be there yet
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    if (file.getName().equals(DeploymentsMetadata.METADATA_DIR)) {
+                        continue; // skip the RHQ metadata directory, its where we are putting our backups!
+                    }
+                    backupFiles(diff, deploymentId, file, dryRun,
+                        ((relativeTo == null) ? "" : relativeTo) + file.getName() + File.separatorChar,
+                        removeSourceFiles);
+                } else {
+                    backupFile(diff, deploymentId, ((relativeTo == null) ? "" : relativeTo) + file.getName(), dryRun,
+                        removeSourceFiles);
+                }
+            }
+
+            files = null; // help GC
+        }
     }
 
     private FileHashcodeMap extractZipAndRawFiles(Map<String, String> currentFilesToLeaveAlone, DeployDifferences diff,
@@ -615,8 +700,8 @@ public class Deployer {
                     ZipUtil.walkZipFile(zipFile, visitor);
                     // we have to compress the file again - our new compressed file will have the new realized files in them
                     if (!dryRun) {
-                        createZipFile(compressedFile, this.deploymentData.getDestinationDir(), visitor
-                            .getFileHashcodeMap());
+                        createZipFile(compressedFile, this.deploymentData.getDestinationDir(),
+                            visitor.getFileHashcodeMap());
                     }
                 }
 
@@ -1040,16 +1125,20 @@ public class Deployer {
 
     private void debug(Object... objs) {
         if (log.isDebugEnabled()) {
-            String bundleName = this.deploymentData.getDeploymentProps().getBundleName();
-            String bundleVersion = this.deploymentData.getDeploymentProps().getBundleVersion();
-            int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
-            StringBuilder str = new StringBuilder();
-            str.append("Bundle [").append(bundleName).append(" v").append(bundleVersion).append(']');
-            str.append("; Deployment [").append(deploymentId).append("]: ");
-            for (Object o : objs) {
-                str.append(o);
-            }
-            log.debug(str.toString());
+            log.debug(buildLogMessage(objs));
         }
+    }
+
+    private String buildLogMessage(Object... objs) {
+        String bundleName = this.deploymentData.getDeploymentProps().getBundleName();
+        String bundleVersion = this.deploymentData.getDeploymentProps().getBundleVersion();
+        int deploymentId = this.deploymentData.getDeploymentProps().getDeploymentId();
+        StringBuilder str = new StringBuilder();
+        str.append("Bundle [").append(bundleName).append(" v").append(bundleVersion).append(']');
+        str.append("; Deployment [").append(deploymentId).append("]: ");
+        for (Object o : objs) {
+            str.append(o);
+        }
+        return str.toString();
     }
 }

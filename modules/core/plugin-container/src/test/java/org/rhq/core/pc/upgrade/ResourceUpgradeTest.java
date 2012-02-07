@@ -35,7 +35,9 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
 
@@ -298,6 +300,14 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
         assertEquals(discoveredResource.getName(), "resource-name-v1");
         assertEquals(discoveredResource.getDescription(), "resource-description-v1");
+
+        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+        ResourceContainer container = im.getResourceContainer(discoveredResource.getId());
+        if (discoveredResource.getInventoryStatus() == InventoryStatus.COMMITTED) {
+            assert container.getResourceComponentState() == ResourceComponentState.STARTED;
+        } else {
+            assert container.getResourceComponentState() == ResourceComponentState.STOPPED;
+        }
 
         return inv;
     }

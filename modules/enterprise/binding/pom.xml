@@ -208,6 +208,8 @@
                     <!-- <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE 
                         -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
                     <argLine>-Djava.security.manager -Djava.security.policy==${project.build.testOutputDirectory}/allow-all.policy</argLine>    
+                    <!-- This is important, because some of the tests try to exit the JVM. -->
+                    <failIfNoTests>true</failIfNoTests>
                 </configuration>
             </plugin>
 

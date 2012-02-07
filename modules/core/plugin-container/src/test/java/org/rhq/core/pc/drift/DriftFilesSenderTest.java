@@ -19,18 +19,24 @@
 
 package org.rhq.core.pc.drift;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.JPADriftFile;
+import org.rhq.core.util.ZipUtil;
+import org.rhq.test.AssertUtils;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
@@ -39,7 +45,7 @@ import static org.testng.Assert.assertTrue;
 
 public class DriftFilesSenderTest extends DriftTest {
 
-    DriftClient driftClient;
+    DriftClientTestStub driftClient;
 
     DriftFilesSender sender;
 
@@ -51,6 +57,27 @@ public class DriftFilesSenderTest extends DriftTest {
         sender.setDriftClient(driftClient);
         sender.setChangeSetManager(changeSetMgr);
         sender.setResourceId(resourceId());
+    }
+
+    @Test
+    public void sendOneFile() throws Exception {
+        String driftDefName = "send-one-file-test";
+        File serverConf = createRandomFile(resourceDir, "server.conf");
+        String serverConfHash = sha256(serverConf);
+
+        File changeSetDir = changeSetDir(driftDefName);
+        Headers headers = createHeaders(driftDefName, COVERAGE);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.write(addedFileEntry("server.conf", serverConfHash));
+        writer.close();
+
+        sender.setDriftFiles(driftFiles(serverConfHash));
+        sender.setHeaders(headers);
+        sender.run();
+
+        assertContentFileExists(changeSetDir);
+        assertContentFileMatches(changeSetDir, serverConfHash);
     }
 
     @Test
@@ -74,14 +101,11 @@ public class DriftFilesSenderTest extends DriftTest {
         writer.close();
 
         sender.setDriftFiles(driftFiles(server1ConfHash, server2ConfHash));
-        sender.setHeaders(createHeaders(driftDefName, COVERAGE));
+        sender.setHeaders(headers);
         sender.run();
 
-        File contentDir = mkdir(changeSetDir, "content");
-
-        assertEquals(contentDir.list().length, 2, "Expected to find two files in " + contentDir.getAbsolutePath());
-        assertFileCopiedToContentDir(contentDir, server1ConfHash);
-        assertFileCopiedToContentDir(contentDir, server2ConfHash);
+        assertContentFileExists(changeSetDir);
+        assertContentFileMatches(changeSetDir, server1ConfHash, server2ConfHash);
     }
 
     @Test
@@ -114,16 +138,11 @@ public class DriftFilesSenderTest extends DriftTest {
         // Note that the order of the drift files is random. When the server sends a request
         // for files we cannot assume that the files will be in any particular order.
         sender.setDriftFiles(driftFiles(server1JarHash, server2ConfHash, server2JarHash, server1ConfHash));
-        sender.setHeaders(createHeaders(driftDefName, COVERAGE));
+        sender.setHeaders(headers);
         sender.run();
 
-        File contentDir = mkdir(changeSetDir, "content");
-
-        assertEquals(contentDir.list().length, 4, "Expected to find four files in " + contentDir.getAbsolutePath());
-        assertFileCopiedToContentDir(contentDir, server1ConfHash);
-        assertFileCopiedToContentDir(contentDir, server2ConfHash);
-        assertFileCopiedToContentDir(contentDir, server1JarHash);
-        assertFileCopiedToContentDir(contentDir, server2JarHash);
+        assertContentFileExists(changeSetDir);
+        assertContentFileMatches(changeSetDir, server1ConfHash, server2ConfHash, server1JarHash, server2JarHash);
     }
 
     @Test
@@ -155,10 +174,64 @@ public class DriftFilesSenderTest extends DriftTest {
         sender.setHeaders(headers);
         sender.run();
 
-        File contentDir = mkdir(changeSetDir, "content");
+        assertContentFileExists(changeSetDir);
+        assertContentFileMatches(changeSetDir, server2ConfHash);
+    }
 
-        assertEquals(contentDir.list().length, 1, "Expected to find one file in " + contentDir.getAbsolutePath());
-        assertFileCopiedToContentDir(contentDir, server2ConfHash);
+    @Test
+     public void doNotSendEmptyZipFileToServer() throws Exception {
+        String driftDefName = "empty_content_test";
+
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+
+        String serverConfHash = sha256(serverConf);
+
+        Headers headers = createHeaders(driftDefName, COVERAGE);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.write(addedFileEntry("conf/server.conf", serverConfHash));
+        writer.close();
+
+        serverConf.delete();
+
+        sender.setDriftFiles(driftFiles(serverConfHash));
+        sender.setHeaders(headers);
+        sender.run();
+
+        assertEquals(driftClient.getSendChangeSetInvocationCount(), 0,
+                "Do not call DriftClient to send content to server when there is no content to send.");
+        assertContentFileExists(changeSetDir(driftDefName));
+    }
+
+    void assertContentFileExists(File changeSetDir) {
+        File[] files = getContentFiles(changeSetDir);
+        assertEquals(files.length, 1, "Expected to find a single content zip file but found " + Arrays.toString(files));
+    }
+
+    void assertContentFileMatches(File changeSetDir, String... expectedFileNames) throws Exception {
+        File contentFile = getContentFiles(changeSetDir)[0];
+        final List<String> actualFileNames = new LinkedList<String>();
+
+        ZipUtil.walkZipFile(contentFile, new ZipUtil.ZipEntryVisitor() {
+            @Override
+            public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
+                actualFileNames.add(entry.getName());
+                return true;
+            }
+        });
+
+        AssertUtils.assertCollectionEqualsNoOrder(Arrays.asList(expectedFileNames), actualFileNames,
+                "The content file " + contentFile.getPath() + " does not contain the correct entries");
+    }
+
+    private File[] getContentFiles(File changeSetDir) {
+        return changeSetDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith("content_") && name.endsWith(".zip");
+            }
+        });
     }
 
     /**

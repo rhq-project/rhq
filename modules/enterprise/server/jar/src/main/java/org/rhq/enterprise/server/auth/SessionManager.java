@@ -26,29 +26,41 @@ import java.util.Random;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.jndi.AllowRhqServerInternalsAccessPermission;
 
 /**
  * This is the JON Server's own session ID generator. It is outside any container-provided session mechanism. Its sole
  * purpose is to provide session IDs to logged in {@link Subject}s. It will timeout those sessions regardless of any
  * container-provided session-timeout mechanism.
- *
+ * <p>
+ * Because this is a very security-sensitive class, any public method requires the caller to 
+ * have the {@link AllowEjbAccessPermission} as any other calls to the EJB layer. This is so that the
+ * malicious users can't trick the EJB layer into thinking that some users are logged in or log out other
+ * users.
+ * <p>
+ * Also, for security reasons, this class is final so that malicious code can't subclass it and modify its
+ * behavior.
+ * 
  * <p>This object is a {@link #getInstance() singleton}.</p>
  */
-public class SessionManager {
+public final class SessionManager {
+    
+    private static final AllowRhqServerInternalsAccessPermission ACCESS_PERMISSION = new AllowRhqServerInternalsAccessPermission();
+    
     /**
      * Our source for random session IDs.
      */
-    private static Random _random = new Random();
+    private static final Random _random = new Random();
 
     /**
      * Our session cache that is keyed on the session ID.
      */
-    private static Map<Integer, AuthSession> _cache = new HashMap<Integer, AuthSession>();
+    private static final Map<Integer, AuthSession> _cache = new HashMap<Integer, AuthSession>();
 
     /**
      * The singleton instance
      */
-    private static SessionManager _manager = new SessionManager();
+    private static final SessionManager _manager = new SessionManager();
 
     /**
      * The timeout for all user sessions.
@@ -78,7 +90,7 @@ public class SessionManager {
 
     /**
      * Return the singleton object.
-     *
+     * 
      * @return the {@link SessionManager}
      */
     public static SessionManager getInstance() {
@@ -95,6 +107,7 @@ public class SessionManager {
      * sessionId will be assigned.
      */
     public Subject put(Subject subject) {
+        checkPermission();
         return put(subject, DEFAULT_TIMEOUT);
     }
 
@@ -108,6 +121,7 @@ public class SessionManager {
      * that Subject is overlord). The sessionId will be assigned.
      */
     public synchronized Subject put(Subject subject, long timeout) {
+        checkPermission();
         Integer key;
 
         do {
@@ -141,6 +155,7 @@ public class SessionManager {
      * @throws SessionTimeoutException
      */
     public synchronized Subject getSubject(int sessionId) throws SessionNotFoundException, SessionTimeoutException {
+        checkPermission();
         Integer id = new Integer(sessionId);
         AuthSession session = _cache.get(id);
 
@@ -162,6 +177,7 @@ public class SessionManager {
      * @param sessionId session id to invalidate
      */
     public synchronized void invalidate(int sessionId) {
+        checkPermission();
         _cache.remove(new Integer(sessionId));
 
         // while we are here, let's go through the entire session cache and remove expired sessions
@@ -187,6 +203,7 @@ public class SessionManager {
      * @param username username for the sessions to be invalidated
      */
     public synchronized void invalidate(String username) {
+        checkPermission();
         List<Integer> doomedSessionIds = new ArrayList<Integer>(_cache.size());
         for (AuthSession s : _cache.values()) {
             if (username.equals(s.getSubject(false).getName())) {
@@ -201,6 +218,7 @@ public class SessionManager {
     }
 
     public long getlastAccess(int sessionId) {
+        checkPermission();
         AuthSession session = _cache.get(sessionId);
         if (session == null) {
             return -1;
@@ -209,6 +227,7 @@ public class SessionManager {
     }
 
     public Subject getOverlord() {
+        checkPermission();
         if (overlordSubject == null) {
             overlordSubject = LookupUtil.getSubjectManager().getSubjectById(OVERLORD_SUBJECT_ID);
 
@@ -255,5 +274,10 @@ public class SessionManager {
         copy.setUserConfiguration(subject.getUserConfiguration());
 
         return copy;
+    }
+    
+    private static void checkPermission() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) sm.checkPermission(ACCESS_PERMISSION);
     }
 }

@@ -25,6 +25,15 @@ import java.beans.Introspector;
 import java.beans.MethodDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -79,7 +88,7 @@ public class ScriptEngineFactory {
     public static ScriptEngine getScriptEngine(String language, PackageFinder packageFinder, StandardBindings bindings)
         throws ScriptException, IOException {
         ScriptEngineInitializer initializer = getInitializer(language);
-
+        
         if (initializer == null) {
             return null;
         }
@@ -91,6 +100,55 @@ public class ScriptEngineFactory {
         }
 
         return engine;
+    }
+    
+    /**
+     * This method is similar to the {@link #getScriptEngine(String, PackageFinder, StandardBindings)} method
+     * but additionally applies a security wrapper on the returned script engine so that the scripts execute
+     * with the provided java permissions.
+     * 
+     * @see #getScriptEngine(String, PackageFinder, StandardBindings)
+     */
+    public static ScriptEngine getSecuredScriptEngine(final String language, final PackageFinder packageFinder, final StandardBindings bindings, final PermissionCollection permissions) throws ScriptException, IOException {
+        CodeSource src = new CodeSource(new URL("http://rhq-project.org/scripting"), (Certificate[]) null);
+        ProtectionDomain scriptDomain = new ProtectionDomain(src, permissions); 
+        AccessControlContext ctx = new AccessControlContext(new ProtectionDomain[] { scriptDomain });
+        try {
+            return AccessController.doPrivileged(new PrivilegedExceptionAction<ScriptEngine>() {
+                @Override
+                public ScriptEngine run() throws Exception {
+                    //This might seem a bit excessive but is necessary due to the 
+                    //change in security handling in the rhino script engine
+                    //that occured in Java6u27 (due to a CVE desribed here:
+                    //https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2011-3544)
+                    
+                    //In Java 6u26 and earlier, it was enough to wrap a script engine
+                    //in the sandbox and everything would work.
+                    
+                    //Java 6u27 introduced new behavior where the rhino script engine
+                    //remembers the access control context with which it has been 
+                    //constructed and combines that with the callers protection domain
+                    //when a script is executed. Because this class has all perms and
+                    //all the code in RHQ that called ScriptEngine.eval* also
+                    //had all perms, the scripts would never be sandboxed even if the call
+                    //was pushed through the SandboxedScriptEngine.
+                    
+                    //This means that the below wrapping is necessary for the security
+                    //to work in java6 pre u27 while the surrounding privileged block 
+                    //is necessary for the security to be applied in java6 u27 and later.
+                    return new SandboxedScriptEngine(getScriptEngine(language, packageFinder, bindings), permissions);
+                }
+            }, ctx);
+        } catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            } else if (cause instanceof ScriptException) {
+                throw (ScriptException) cause;
+            } else {
+                throw new ScriptException(e);
+            }
+        }
     }
 
     /**

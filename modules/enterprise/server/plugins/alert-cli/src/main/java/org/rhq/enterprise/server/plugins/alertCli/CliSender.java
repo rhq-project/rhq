@@ -127,8 +127,6 @@ public class CliSender extends AlertSender<CliComponent> {
 
             engine = getScriptEngine(alert, scriptOut, config);
 
-            final SandboxedScriptEngine sandbox = new SandboxedScriptEngine(engine, new StandardScriptPermissions());
-
             InputStream packageBits = getPackageBits(config.packageId, config.repoId);
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
@@ -137,10 +135,11 @@ public class CliSender extends AlertSender<CliComponent> {
 
             final ExceptionHolder exceptionHolder = new ExceptionHolder();
 
+            final ScriptEngine e = engine;            
             Thread scriptRunner = new Thread(new Runnable() {
                 public void run() {
                     try {
-                        sandbox.eval(rdr);
+                        e.eval(rdr);
                     } catch (ScriptException e) {
                         exceptionHolder.scriptException = e;
                     }
@@ -414,8 +413,8 @@ public class CliSender extends AlertSender<CliComponent> {
             ScriptEngine engine = SCRIPT_ENGINES.poll();
 
             if (engine == null) {
-                engine = ScriptEngineFactory.getScriptEngine(ENGINE_NAME, new PackageFinder(Collections
-                    .<File> emptyList()), bindings);
+                engine = ScriptEngineFactory.getSecuredScriptEngine(ENGINE_NAME, new PackageFinder(Collections
+                    .<File> emptyList()), bindings, new StandardScriptPermissions());
             } else {
                 ScriptEngineFactory.injectStandardBindings(engine, bindings, true);
             }

@@ -39,7 +39,7 @@ import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -74,26 +74,26 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     @BeforeClass
     public void beforeClass() throws Exception {
         discoveryBoss = LookupUtil.getDiscoveryBoss();
-
-        dummyJBossMBeanServer = MBeanServerFactory.createMBeanServer("jboss");
-        MBeanServerLocator.setJBoss(dummyJBossMBeanServer);
-        dummyJBossMBeanServer.registerMBean(new ServerCommunicationsService(),
-                ServerCommunicationsServiceMBean.OBJECT_NAME);
-    }
-
-    @AfterClass
-    public void afterClass() {
-        MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
     }
 
     @BeforeMethod
     public void setupTestData() throws Exception {
+        dummyJBossMBeanServer = MBeanServerFactory.createMBeanServer("jboss");
+        MBeanServerLocator.setJBoss(dummyJBossMBeanServer);
+        dummyJBossMBeanServer.registerMBean(new ServerCommunicationsService(),
+            ServerCommunicationsServiceMBean.OBJECT_NAME);
+
         initDB();
         platformType = getEntityManager().find(ResourceType.class, 1);
         serverType = getEntityManager().find(ResourceType.class, 2);
         serviceType1 = getEntityManager().find(ResourceType.class, 3);
         serviceType2 = getEntityManager().find(ResourceType.class, 4);
         agent = getEntityManager().find(Agent.class, 1);
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod() throws Exception {
+        MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
     }
 
     @Test(groups = "integration.ejb3")
@@ -211,7 +211,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     IDataSet getDataSet() throws Exception {
         FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass().getResourceAsStream(
-                getDataSetFile())));
+            getDataSetFile())));
         xmlProducer.setColumnSensing(true);
         return new FlatXmlDataSet(xmlProducer);
     }

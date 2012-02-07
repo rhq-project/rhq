@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
+
 import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
@@ -23,7 +25,9 @@ import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
 import org.testng.annotations.AfterGroups;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeGroups;
+import org.testng.annotations.BeforeMethod;
 import org.xml.sax.InputSource;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -37,8 +41,6 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
-
 public class MetadataBeanTest extends AbstractEJB3Test {
 
     private static List<String> plugins = new ArrayList<String>();
@@ -49,9 +51,25 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     @BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
-    public void startMBeanServer() throws Exception {
+    public void beforeGroups() throws Exception {
         setupDB();
+    }
 
+    /**
+     * Need to delete rows from RHQ_PLUGINS because subsequent tests in server/jar would otherwise fail. Some tests look
+     * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
+     * however removes the generated plugin files during each test run.
+     */
+    @AfterGroups(alwaysRun = true, groups = { "plugin.metadata" })
+    void afterGroups() throws Exception {
+        getTransactionManager().begin();
+        getEntityManager().createQuery("delete from Plugin p where p.name in (:plugins)")
+            .setParameter("plugins", plugins).executeUpdate();
+        getTransactionManager().commit();
+    }
+
+    @BeforeMethod(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
+    public void beforeMethod() throws Exception {
         TestBundleServerPluginService bundleService = new TestBundleServerPluginService();
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
@@ -63,14 +81,10 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
      */
-    @AfterGroups(groups = { "plugin.metadata" })
-    void removePluginsFromDB() throws Exception {
+    @AfterMethod(alwaysRun = true, groups = { "plugin.metadata" })
+    void afterMethod() throws Exception {
+        unprepareServerPluginService();
         unprepareScheduler();
-
-        getTransactionManager().begin();
-        getEntityManager().createQuery("delete from Plugin p where p.name in (:plugins)").setParameter("plugins",
-            plugins).executeUpdate();
-        getTransactionManager().commit();
     }
 
     protected void setupDB() throws Exception {
@@ -145,6 +159,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         return getClass().getResource(dir + "/" + descriptor);
     }
 
+    @SuppressWarnings("unused")
     private String getPluginWorkDir() throws Exception {
         return getCurrentWorkingDir() + "/work";
     }

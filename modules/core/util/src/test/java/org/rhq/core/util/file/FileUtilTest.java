@@ -22,21 +22,92 @@
  */
 package org.rhq.core.util.file;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.testng.annotations.Test;
-
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FileUtils.toFile;
 import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.util.stream.StreamUtil;
+
 @Test
 public class FileUtilTest {
+    public void testCopyDirectory() throws Exception {
+        try {
+            FileUtil.copyDirectory(new File("this.does.not.exist"), new File("dummy"));
+            assert false : "the source directory did not exist, this should have failed because of that";
+        } catch (Exception ok) {
+        }
+
+        // create a source directory and a destination directory. Make sure we start off
+        // with a non-existent destination directory - we want the copyDirectory to create it for us.
+        File outDir = FileUtil.createTempDirectory("fileUtilTestCopyDir", ".dest", null);
+        assert outDir.delete() : "failed to start out with a non-existent dest directory";
+        assert !outDir.exists() : "dest directory should not exist"; // yes, I am paranoid
+
+        File inDir = FileUtil.createTempDirectory("fileUtilTestCopyDir", ".src", null);
+        try {
+            // create some test files in our source directory
+            String testFilename0 = "file0.txt";
+            String testFilename1 = "subdir" + File.separatorChar + "subfile1.txt";
+            String testFilename2 = "subdir" + File.separatorChar + "subfile2.txt";
+
+            File testFile = new File(inDir, testFilename0);
+            StreamUtil.copy(new ByteArrayInputStream("0".getBytes()), new FileOutputStream(testFile));
+            assert "0".equals(new String(StreamUtil.slurp(new FileInputStream(testFile)))); // sanity check, make sure its there
+
+            testFile = new File(inDir, testFilename1);
+            testFile.getParentFile().mkdirs();
+            StreamUtil.copy(new ByteArrayInputStream("1".getBytes()), new FileOutputStream(testFile));
+            assert "1".equals(new String(StreamUtil.slurp(new FileInputStream(testFile)))); // sanity check, make sure its there
+            testFile = new File(inDir, testFilename2);
+            testFile.getParentFile().mkdirs();
+            StreamUtil.copy(new ByteArrayInputStream("2".getBytes()), new FileOutputStream(testFile));
+            assert "2".equals(new String(StreamUtil.slurp(new FileInputStream(testFile)))); // sanity check, make sure its there
+
+            // copy our source directory and confirm the copies are correct
+            FileUtil.copyDirectory(inDir, outDir);
+
+            testFile = new File(outDir, testFilename0);
+            assert testFile.exists() : "file did not get created: " + testFile;
+            assert "0".equals(new String(StreamUtil.slurp(new FileInputStream(testFile))));
+            testFile = new File(outDir, testFilename1);
+            assert testFile.exists() : "file did not get created: " + testFile;
+            assert "1".equals(new String(StreamUtil.slurp(new FileInputStream(testFile))));
+            testFile = new File(outDir, testFilename2);
+            assert testFile.exists() : "file did not get created: " + testFile;
+            assert "2".equals(new String(StreamUtil.slurp(new FileInputStream(testFile))));
+
+            // let's test getDirectoryFiles while we are here
+            List<File> outFiles = FileUtil.getDirectoryFiles(outDir);
+            assert outFiles != null : outFiles;
+            assert outFiles.size() == 3 : outFiles;
+            assert outFiles.contains(new File(testFilename0)) : outFiles;
+            assert outFiles.contains(new File(testFilename1)) : outFiles;
+            assert outFiles.contains(new File(testFilename2)) : outFiles;
+        } finally {
+            // clean up our test
+            try {
+                FileUtil.purge(inDir, true);
+            } catch (Exception ignore) {
+            }
+            try {
+                FileUtil.purge(outDir, true);
+            } catch (Exception ignore) {
+            }
+        }
+    }
+
     public void testStripDriveLetter() {
         StringBuilder str;
 
@@ -142,8 +213,7 @@ public class FileUtilTest {
             }
         });
 
-        assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
-            "Expected to visit all files in directory");
+        assertCollectionEqualsNoOrder(expectedFiles, actualFiles, "Expected to visit all files in directory");
     }
 
     @Test
@@ -176,8 +246,7 @@ public class FileUtilTest {
             }
         });
 
-        assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
-            "Expected to visit files in sub directories");
+        assertCollectionEqualsNoOrder(expectedFiles, actualFiles, "Expected to visit files in sub directories");
     }
 
     @Test
@@ -210,8 +279,7 @@ public class FileUtilTest {
             }
         });
 
-        assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
-            "Expected to visit files in nested sub directories");
+        assertCollectionEqualsNoOrder(expectedFiles, actualFiles, "Expected to visit files in nested sub directories");
     }
 
     public void testGetPattern() {
@@ -222,8 +290,8 @@ public class FileUtilTest {
         assert regex.matcher("/basedir/test1.txt").matches();
         assert !regex.matcher("/basedir/test2.txt").matches();
 
-        regex = assertPatternsRegex("(/basedir/easy\\.txt)|(/basedir/test\\.txt)",
-            new PathFilter("/basedir/easy.txt", null), new PathFilter("/basedir/test.txt", null));
+        regex = assertPatternsRegex("(/basedir/easy\\.txt)|(/basedir/test\\.txt)", new PathFilter("/basedir/easy.txt",
+            null), new PathFilter("/basedir/test.txt", null));
 
         assert regex.matcher("/basedir/easy.txt").matches();
         assert regex.matcher("/basedir/test.txt").matches();
@@ -244,8 +312,8 @@ public class FileUtilTest {
         assert !regex.matcher("/basedir/subdir/foo.txt").matches();
         assert !regex.matcher("/basedir/foo.txt.swp").matches();
 
-        regex = assertPatternsRegex("(/var/lib/([^/]*\\.war))|(/var/lib/([^/]*\\.ear))",
-            new PathFilter("/var/lib", "*.war"), new PathFilter("/var/lib", "*.ear"));
+        regex = assertPatternsRegex("(/var/lib/([^/]*\\.war))|(/var/lib/([^/]*\\.ear))", new PathFilter("/var/lib",
+            "*.war"), new PathFilter("/var/lib", "*.ear"));
 
         assert regex.matcher("/var/lib/myapp.war").matches();
         assert regex.matcher("/var/lib/myapp.ear").matches();

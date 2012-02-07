@@ -231,11 +231,17 @@ public class AntBundlePluginComponentTest {
         upgrade(true);
     }
 
-    /**
-     * Test deployment of an RHQ bundle recipe with archive file and raw file
-     */
     @Test(enabled = true)
     public void testAntBundleInitialInstall() throws Exception {
+        doAntBundleInitialInstall(true);
+    }
+
+    /**
+     * Test deployment of an RHQ bundle recipe with archive file and raw file
+     * @param startClean if true, the destination directory will be non-existent and thus clean
+     *                   if false, this will put some junk files in the dest directory
+     */
+    private void doAntBundleInitialInstall(boolean startClean) throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle2Type", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle2BType", resourceType);
         Repo repo = new Repo("test-bundle-two");
@@ -272,6 +278,25 @@ public class AntBundlePluginComponentTest {
         FileOutputStream outputStream = new FileOutputStream(file1);
         props.store(outputStream, "test.properties comment");
         outputStream.close();
+
+        // if we are not to start clean, create some junk files that will need to be backed up and moved away
+        if (startClean == false) {
+            this.destDir.mkdirs();
+            File junk1 = new File(this.destDir, "junk1.properties");
+            Properties junkProps = new Properties();
+            junkProps.setProperty("junk1", "wot gorilla?");
+            FileOutputStream os = new FileOutputStream(junk1);
+            junkProps.store(os, "junk1.properties comment");
+            os.close();
+
+            File junk2 = new File(this.destDir, "junksubdir" + File.separatorChar + "junk2.properties");
+            junk2.getParentFile().mkdirs();
+            junkProps = new Properties();
+            junkProps.setProperty("junk2", "more junk");
+            os = new FileOutputStream(junk2);
+            junkProps.store(os, "junk2.properties comment");
+            os.close();
+        }
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
@@ -501,8 +526,129 @@ public class AntBundlePluginComponentTest {
         assert "2".equals(props.getProperty("external2")) : "bundle purge removed our unmanaged file 2";
     }
 
+    /**
+     * Test deployment of an RHQ bundle recipe where the deploy directory is to be fully managed.
+     * This is the typical use-case and the default behavior.
+     */
+    @Test(enabled = true)
+    public void testAntBundleManageRootDir() throws Exception {
+        ResourceType resourceType = new ResourceType("testManageRootDirBundle", "plugin", ResourceCategory.SERVER, null);
+        BundleType bundleType = new BundleType("testManageRootDirBundle", resourceType);
+        Repo repo = new Repo("testManageRootDirBundle");
+        PackageType packageType = new PackageType("testManageRootDirBundle", resourceType);
+        Bundle bundle = new Bundle("testManageRootDirBundle", bundleType, repo, packageType);
+        BundleVersion bundleVersion = new BundleVersion("testManageRootDirBundle", "1.0", bundle,
+            getRecipeFromFile("test-bundle-manage-root-dir.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testManageRootDirBundle", new ResourceGroup(
+            "testManageRootDirBundle"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
+        Configuration config = new Configuration();
+
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
+        deployment.setDestination(destination);
+
+        // create bundle test files
+        File file0 = new File(this.bundleFilesDir, "zero.properties");
+        Properties props = new Properties();
+        props.setProperty("zero", "0");
+        FileOutputStream outputStream = new FileOutputStream(file0);
+        props.store(outputStream, "zero file");
+        outputStream.close();
+
+        File file1 = new File(this.bundleFilesDir, "one.properties");
+        props.clear();
+        props.setProperty("one", "1");
+        outputStream = new FileOutputStream(file1);
+        props.store(outputStream, "one file");
+        outputStream.close();
+
+        File file2 = new File(this.bundleFilesDir, "two.properties");
+        props.clear();
+        props.setProperty("two", "2");
+        outputStream = new FileOutputStream(file2);
+        props.store(outputStream, "two file");
+        outputStream.close();
+
+        // create some external test files that don't belong to the bundle but are in the dest dir (which is to be managed by the bundle)
+        this.destDir.mkdirs();
+        File external1 = new File(this.destDir, "external1.properties");
+        props.clear();
+        props.setProperty("external1", "1");
+        outputStream = new FileOutputStream(external1);
+        props.store(outputStream, "external1 file");
+        outputStream.close();
+
+        File external2 = new File(this.destDir, "extdir/external2.properties");
+        external2.getParentFile().mkdirs();
+        props.clear();
+        props.setProperty("external2", "2");
+        outputStream = new FileOutputStream(external2);
+        props.store(outputStream, "external2 file");
+        outputStream.close();
+
+        // deploy the bundle
+        BundleDeployRequest request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
+
+        BundleDeployResult results = plugin.deployBundle(request);
+
+        assertResultsSuccess(results);
+
+        // test that files were deployed in the proper place
+        props.clear();
+        loadProperties(props, new FileInputStream(new File(this.destDir, "zero.properties")));
+        assert "0".equals(props.getProperty("zero")) : "did not deploy bundle correctly 0";
+        loadProperties(props, new FileInputStream(new File(this.destDir, "subdir1/one.properties")));
+        assert "1".equals(props.getProperty("one")) : "did not deploy bundle correctly 1";
+        loadProperties(props, new FileInputStream(new File(this.destDir, "subdir2/two.properties")));
+        assert "2".equals(props.getProperty("two")) : "did not deploy bundle correctly 2";
+
+        DeploymentsMetadata metadata = new DeploymentsMetadata(this.destDir);
+        assert metadata.isManaged() == true : "missing metadata directory";
+        assert metadata.getCurrentDeploymentProperties().getManageRootDir() == true : "should be managing root dir";
+
+        // make sure our external files/directories were removed because
+        // they aren't part of the bundle and we are fully managing the dest dir
+        props.clear();
+        try {
+            loadProperties(props, new FileInputStream(new File(this.destDir, "external1.properties")));
+            assert false : "bundle deployment did not remove our managed file 1";
+        } catch (Exception ok) {
+        }
+        try {
+            loadProperties(props, new FileInputStream(new File(this.destDir, "extdir/external2.properties")));
+            assert false : "bundle deployment did not remove our managed file 2";
+        } catch (Exception ok) {
+        }
+
+        // now purge the bundle - this should purge everything in the deploy dir because we are fully managing it
+        BundlePurgeRequest purgeRequest = new BundlePurgeRequest();
+        purgeRequest.setLiveResourceDeployment(new BundleResourceDeployment(deployment, null));
+        purgeRequest.setBundleManagerProvider(new MockBundleManagerProvider());
+        purgeRequest.setAbsoluteDestinationDirectory(this.destDir);
+
+        BundlePurgeResult purgeResults = plugin.purgeBundle(purgeRequest);
+        assertResultsSuccess(purgeResults);
+
+        // make sure our bundle files have been completely purged; the metadata directory should have been purged too
+        assert new File(this.destDir, "zero.properties").exists() == false;
+        assert new File(this.destDir, "subdir1/one.properties").exists() == false;
+        assert new File(this.destDir, "subdir2/two.properties").exists() == false;
+        assert new File(this.destDir, "subdir1").exists() == false;
+        assert new File(this.destDir, "subdir2").exists() == false;
+        assert this.destDir.exists() == false : "deploy dir should not exist, we were told to fully manage it";
+
+        metadata = new DeploymentsMetadata(this.destDir);
+        assert metadata.getMetadataDirectory().exists() == false : "metadata directory should not exist";
+    }
+
     private void upgrade(boolean clean) throws Exception {
-        testAntBundleInitialInstall(); // install a bundle first
+        doAntBundleInitialInstall(clean); // install a bundle first
         cleanPluginDirs(); // clean everything but the dest dir - we want to upgrade the destination
         prepareBeforeTestMethod(); // prepare for our new test
 

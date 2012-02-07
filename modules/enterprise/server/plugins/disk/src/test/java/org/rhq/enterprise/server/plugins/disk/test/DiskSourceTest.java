@@ -67,8 +67,8 @@ public class DiskSourceTest{
         PackageSyncReport mockPackageSyncReport = mock(PackageSyncReport.class);
         Collection<ContentProviderPackageDetails> mockCollection = mock(Collection.class);
 
-        //tell the method story as it happens: mock dependencies and make them
-        //behave in a way to get the method under test to completion.
+        //tell the method story as it happens: mock dependencies and configure
+        //those dependencies to get the method under test to completion.
         Configuration mockConfiguration = mock(Configuration.class);
         PropertySimple mockProperty = mock(PropertySimple.class);
         when(mockConfiguration.get("packageSourceEnabled")).thenReturn(mockProperty);
@@ -99,7 +99,7 @@ public class DiskSourceTest{
         //create object to test and inject required dependencies
         DiskSource objectUnderTest = new DiskSource();
 
-        //run the code to be tested
+        //run methods under test
         objectUnderTest.initialize(mockConfiguration);
         objectUnderTest.synchronizePackages(repoName, mockPackageSyncReport, mockCollection);
 
@@ -119,8 +119,8 @@ public class DiskSourceTest{
         PackageSyncReport mockPackageSyncReport = mock(PackageSyncReport.class);
         Collection<ContentProviderPackageDetails> mockCollection = mock(Collection.class);
 
-        //tell the method story as it happens: mock dependencies and make them
-        //behave in a way to get the method under test to completion.
+        //tell the method story as it happens: mock dependencies and configure
+        //those dependencies to get the method under test to completion.
         Configuration mockConfiguration = mock(Configuration.class);
         PropertySimple mockProperty = mock(PropertySimple.class);
         when(mockConfiguration.get("packageSourceEnabled")).thenReturn(mockProperty);
@@ -167,7 +167,7 @@ public class DiskSourceTest{
         //create object to test and inject required dependencies
         DiskSource objectUnderTest = new DiskSource();
 
-        //run the code to be tested
+        //run methods under test
         objectUnderTest.initialize(mockConfiguration);
         objectUnderTest.synchronizePackages(repoName, mockPackageSyncReport, mockCollection);
 
@@ -192,8 +192,8 @@ public class DiskSourceTest{
         PackageSyncReport mockPackageSyncReport = mock(PackageSyncReport.class);
         Collection<ContentProviderPackageDetails> mockCollection = mock(Collection.class);
 
-        //tell the method story as it happens: mock dependencies and make them
-        //behave in a way to get the method under test to completion.
+        //tell the method story as it happens: mock dependencies and configure
+        //those dependencies to get the method under test to completion.
         Configuration mockConfiguration = mock(Configuration.class);
         PropertySimple mockProperty = mock(PropertySimple.class);
         when(mockConfiguration.get("packageSourceEnabled")).thenReturn(mockProperty);
@@ -242,7 +242,7 @@ public class DiskSourceTest{
         //create object to test and inject required dependencies
         DiskSource objectUnderTest = new DiskSource();
 
-        //run the code to be tested
+        //run methods under test
         objectUnderTest.initialize(mockConfiguration);
         objectUnderTest.synchronizePackages(repoName, mockPackageSyncReport, mockCollection);
 

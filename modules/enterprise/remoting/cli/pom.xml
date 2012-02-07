@@ -185,6 +185,11 @@
          <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <configuration>
+               <archiverConfig>
+                <!-- permissions for archiver configuration are in decimal (not octal) -->
+                <!-- 493 (decimal) = 755 (octal)-->
+                <defaultDirectoryMode>493</defaultDirectoryMode>
+               </archiverConfig>
                <descriptors>
                   <descriptor>src/main/scripts/rhq-client.assembly.xml</descriptor>
                </descriptors>

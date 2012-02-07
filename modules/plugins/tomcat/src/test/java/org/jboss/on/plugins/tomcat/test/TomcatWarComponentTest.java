@@ -49,22 +49,22 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 
 public class TomcatWarComponentTest {
-    
+
     @Test
     public void testDiscoverZippedDeployment() throws Exception {
         //create the object under test as a partial mock because only one 
         //public method will be tested, while the rest will be mocked.
         TomcatWarComponent objectUnderTest = mock(TomcatWarComponent.class);
-        
+
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
         File fileUsedInTest = new File(this.getClass().getResource("/sampleWithManifest.war").getFile());
-        
+
         @SuppressWarnings("unchecked")
         ResourceContext<TomcatVHostComponent> mockResourceContext = mock(ResourceContext.class);
         when(objectUnderTest.getResourceContext()).thenReturn(mockResourceContext);
         Configuration mockConfiguration = mock(Configuration.class);
-        when(mockResourceContext.getPluginConfiguration()).thenReturn(mockConfiguration);        
+        when(mockResourceContext.getPluginConfiguration()).thenReturn(mockConfiguration);
         when(mockConfiguration.getSimpleValue(eq("filename"), isNull(String.class))).thenReturn(
             fileUsedInTest.getAbsolutePath());
 
@@ -85,10 +85,10 @@ public class TomcatWarComponentTest {
         if (actualResourcePackageDetails.getInstallationTimestamp() > System.currentTimeMillis()) {
             Assert.fail("Timestamp is not in the past.");
         }
-        
+
         MessageDigestGenerator digest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
         String expectedSha256 = digest.calcDigestString(fileUsedInTest);
-        
+
         Assert.assertEquals(actualResourcePackageDetails.getSHA256(), expectedSha256);
         Assert.assertEquals(actualResourcePackageDetails.getDisplayVersion(), null);
 
@@ -105,14 +105,14 @@ public class TomcatWarComponentTest {
         String[] testArchiveFiles = new String[] { "/sampleWithManifest.war", "/sampleWithoutManifest.war",
             "/sampleWithImplementation.war", "/sampleWithSpecification.war",
             "/sampleWithSpecificationImplementation.war" };
-        
+
         Map<String, String> expectedSha256 = new HashMap<String, String>();
-        expectedSha256.put(testArchiveFiles[0], "342b0c96b83cc1b36184cb7e67a7df986ef305a5891041ea1c36afd9c04afd4d");
-        expectedSha256.put(testArchiveFiles[1], "f2fa6712d19d25b47639f2ad7bd9dd1cb5af8d5551120f9f4a775edee7c5bb20");
-        expectedSha256.put(testArchiveFiles[2], "c72750a8952fcd50ee3e9dce8766a75aecdc57f4b654eca5787d3fa12dc78a55");
-        expectedSha256.put(testArchiveFiles[3], "968382bcd2f7550c2785a622c24671feaed4cca033bd9fe17665d9d66d8d3646");
-        expectedSha256.put(testArchiveFiles[4], "a96d9a054ead08575c11a79ec51ac0174da5ab02d213c008d248b6a59da6dc53");
-        
+        expectedSha256.put(testArchiveFiles[0], "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
+        expectedSha256.put(testArchiveFiles[1], "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
+        expectedSha256.put(testArchiveFiles[2], "eebb2c1c171af85fff62ae290206bb792c3d4c5becf58fa677b156f808cf3fe5");
+        expectedSha256.put(testArchiveFiles[3], "3b2bf1cc3981413454ab4c62b9cad58e81609c3271d39aacbbfd8814585f9d65");
+        expectedSha256.put(testArchiveFiles[4], "98c945496e198f75f2653ccf2b9fd9d12c20cd26e2ad13146dcb53f8b8a567fc");
+
         Map<String, String> expectedDisplayVersion = new HashMap<String, String>();
         expectedDisplayVersion.put(testArchiveFiles[0], null);
         expectedDisplayVersion.put(testArchiveFiles[1], null);
@@ -183,7 +183,7 @@ public class TomcatWarComponentTest {
             deleteRecursive(deploymentFolderUsedInTest);
         }
     }
-        
+
     @Test
     public void testDiscoverNoFileOnDisk() throws Exception {
         //create the object under test as a partial mock because only one 

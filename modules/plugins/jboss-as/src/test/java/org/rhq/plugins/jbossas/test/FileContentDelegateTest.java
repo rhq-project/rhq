@@ -107,8 +107,8 @@ public class FileContentDelegateTest {
         String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
         manifestStream.close();
 
-        Assert.assertEquals(actualSha256Attribute, "342b0c96b83cc1b36184cb7e67a7df986ef305a5891041ea1c36afd9c04afd4d");
-        Assert.assertEquals(actualShaReturned, "342b0c96b83cc1b36184cb7e67a7df986ef305a5891041ea1c36afd9c04afd4d");
+        Assert.assertEquals(actualSha256Attribute, "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
+        Assert.assertEquals(actualShaReturned, "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
 
         deleteRecursive(deploymentDirectory);
     }
@@ -181,8 +181,8 @@ public class FileContentDelegateTest {
         String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
         manifestStream.close();
 
-        Assert.assertEquals(actualSha256Attribute, "f2fa6712d19d25b47639f2ad7bd9dd1cb5af8d5551120f9f4a775edee7c5bb20");
-        Assert.assertEquals(actualShaReturned, "f2fa6712d19d25b47639f2ad7bd9dd1cb5af8d5551120f9f4a775edee7c5bb20");
+        Assert.assertEquals(actualSha256Attribute, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
+        Assert.assertEquals(actualShaReturned, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
 
         //cleanup resources created for this test
         deleteRecursive(deploymentDirectory);
@@ -217,7 +217,6 @@ public class FileContentDelegateTest {
         Assert.assertTrue(deploymentDirectory.exists(), "Deployment did not happen.");
         Assert.assertTrue(deploymentDirectory.isDirectory(), "Deployment directory is no longer a directory!!");
         Assert.assertFalse(deploymentFile.isDirectory(), "Deployment was exploded when it should not have been.");
-
 
         MessageDigestGenerator digest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
         String expectedSHA256 = digest.calcDigestString(sampleWithoutManifestWar);

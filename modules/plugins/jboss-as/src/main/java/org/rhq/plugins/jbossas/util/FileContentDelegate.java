@@ -29,6 +29,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.Stack;
 import java.util.jar.Attributes;
@@ -249,7 +251,20 @@ public class FileContentDelegate {
                 Stack<File> unvisitedFolders = new Stack<File>();
                 unvisitedFolders.add(deploymentDirectory);
                 while (!unvisitedFolders.empty()) {
-                    for (File file : unvisitedFolders.pop().listFiles()) {
+                    File[] files = unvisitedFolders.pop().listFiles();
+                    Arrays.sort(files, new Comparator<File>() {
+                        public int compare(File f1, File f2) {
+                            try {
+                                return f1.getCanonicalPath().compareTo(f2.getCanonicalPath());
+                            } catch (IOException e) {
+                                //do nothing if the sort fails at this point
+                            }
+
+                            return 0;
+                        }
+                    });
+
+                    for (File file : files) {
                         if (file.isDirectory()) {
                             unvisitedFolders.add(file);
                         } else {

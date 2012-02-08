@@ -99,7 +99,6 @@ import org.rhq.core.pluginapi.support.SnapshotReportRequest;
 import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
 import org.rhq.plugins.jbossas.util.ConnectionFactoryConfigurationEditor;

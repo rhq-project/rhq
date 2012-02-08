@@ -202,9 +202,6 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/yum/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/packagetype-cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/cobbler/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/test/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/target/classes/generated-source"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jmx/src/main/java"/>

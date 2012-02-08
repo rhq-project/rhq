@@ -591,6 +591,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         if (operation!=null) {
             Result result = connection.execute(operation);
 
+            if (result==null) {
+                operationResult.setErrorMessage("Connection was null - is the server running?");
+                return operationResult;
+            }
+
             if (!result.isSuccess()) {
                 operationResult.setErrorMessage(result.getFailureDescription());
             }

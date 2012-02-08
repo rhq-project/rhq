@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
@@ -191,6 +192,13 @@ public class BaseServerComponent extends BaseComponent {
         String password = parameters.getSimpleValue("password","");
 
         OperationResult result = new OperationResult();
+
+        PropertySimple remoteProp = pluginConfig.getSimple("manuallyAdded");
+        if (remoteProp!=null && remoteProp.getBooleanValue()!= null && remoteProp.getBooleanValue()) {
+            result.setErrorMessage("This is a manually added server. This operation can not be used to install a management used. Use the server's 'bin/add-user.sh'");
+            return result;
+        }
+
         if (user.isEmpty() || password.isEmpty()) {
             result.setErrorMessage("User and Password must not be empty");
             return result;

@@ -412,6 +412,7 @@
             discovery="BaseProcessDiscovery"
             class="StandaloneASComponent"
             description="Standalone AS7 server"
+            supportsManualAdd="true"
             >
 
         <plugin-configuration>

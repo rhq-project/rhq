@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.Stack;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -40,6 +41,7 @@ import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 
@@ -50,7 +52,9 @@ import org.rhq.core.util.file.FileUtil;
 * @author Jason Dobies
 */
 public class FileContentDelegate {
-    // Attributes  --------------------------------------------
+
+    private static final String RHQ_SHA_256 = "RHQ-Sha256";
+    private static final String MANIFEST_RELATIVE_PATH = "META-INF/MANIFEST.MF";
 
     private Log log = LogFactory.getLog(FileContentDelegate.class);
 
@@ -59,15 +63,11 @@ public class FileContentDelegate {
     private String fileEnding;
     private String packageTypeName;
 
-    // Constructors  --------------------------------------------
-
     public FileContentDelegate(File directory, String fileEnding, String packageTypeName) {
         this.directory = directory;
         this.fileEnding = fileEnding;
         this.packageTypeName = packageTypeName;
     }
-
-    // Public  --------------------------------------------
 
     public String getFileEnding() {
         return fileEnding;
@@ -92,41 +92,23 @@ public class FileContentDelegate {
      * @param createBackup If <code>true</code>, the original file will be backed up to file.bak
      * @param shaString the SHA-256 of the specified input stream
      */
-    public void createContent(PackageDetails details, InputStream content, boolean unzip, boolean createBackup,
-        String shaString) {
-        File contentFile = getPath(details);
+    public void createContent(PackageDetails details, File sourceContentFile, boolean unzip, boolean createBackup) {
+        File destinationContentFile = getPath(details);
         try {
             if (createBackup) {
-                moveToBackup(contentFile, ".bak");
+                moveToBackup(destinationContentFile, ".bak");
             }
             if (unzip) {
-                ZipUtil.unzipFile(content, contentFile);
-                File manifestFile = new File(contentFile, "META-INF/MANIFEST.MF");
-                Manifest manifest;
-                if (manifestFile.exists()) {
-                    FileInputStream inputStream = new FileInputStream(manifestFile);
-                    try {
-                        manifest = new Manifest(inputStream);
-                    } finally {
-                        inputStream.close();
-                    }
-                } else {
-                    manifest = new Manifest();
-                }
-                Attributes attribs = manifest.getMainAttributes();
-                attribs.putValue("RHQ-Sha256", shaString);
-                FileOutputStream outputStream = new FileOutputStream(manifestFile);
-                try {
-                    manifest.write(outputStream);
-                } finally {
-                    outputStream.close();
-                }
+                ZipUtil.unzipFile(sourceContentFile, destinationContentFile);
+                String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                    .calcDigestString(sourceContentFile);
+                writeSHAToManifest(destinationContentFile, shaString);
             } else {
-                FileUtil.writeFile(content, contentFile);
+                FileUtil.copyFile(sourceContentFile, destinationContentFile);
             }
-            details.setFileName(contentFile.getPath());
+            details.setFileName(destinationContentFile.getPath());
         } catch (IOException e) {
-            throw new RuntimeException("Error creating artifact from details: " + contentFile, e);
+            throw new RuntimeException("Error creating artifact from details: " + destinationContentFile, e);
         }
     }
 
@@ -210,5 +192,129 @@ public class FileContentDelegate {
          * discovery for artifacts of your particular content type
          */
         return null;
+    }
+
+    /**
+     * Retrieves the SHA256 for a deployed application.
+     * 1) If the app is exploded then return RHQ-Sha256 manifest attribute.
+     *   1.1) If RHQ-Sha256 is missing then compute it, save it and return the result.
+     * 2) If the app is an archive then compute SHA256 on fly and return it.
+     *
+     * @param deploymentFile deployment file
+     * @return
+     */
+    public String getSHA(File deploymentFile) {
+        String sha = null;
+        try {
+            if (deploymentFile.isDirectory()) {
+                File manifestFile = new File(deploymentFile.getAbsolutePath(), MANIFEST_RELATIVE_PATH);
+                if (manifestFile.exists()) {
+                    InputStream manifestStream = new FileInputStream(manifestFile);
+                    Manifest manifest = null;
+                    try {
+                        manifest = new Manifest(manifestStream);
+                        sha = manifest.getMainAttributes().getValue(RHQ_SHA_256);
+                    } finally {
+                        manifestStream.close();
+                    }
+                }
+
+                if (sha == null || sha.trim().isEmpty()) {
+                    sha = computeAndSaveSHA(deploymentFile);
+                }
+            } else {
+                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(deploymentFile);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("Problem calculating digest of package [" + deploymentFile.getPath() + "].", ex);
+        }
+
+        return sha;
+    }
+
+    /**
+     * Compute SHA256 for the content of an exploded war deployment. This method should be used to
+     * compute the SHA256 for content deployed outside RHQ or for the initial content delivered
+     * with the server.
+     *
+     * @param deploymentDirectory app deployment folder
+     * @return
+     */
+    private String computeAndSaveSHA(File deploymentDirectory) {
+        String sha = null;
+        try {
+            if (deploymentDirectory.isDirectory()) {
+                MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+
+                Stack<File> unvisitedFolders = new Stack<File>();
+                unvisitedFolders.add(deploymentDirectory);
+                while (!unvisitedFolders.empty()) {
+                    for (File file : unvisitedFolders.pop().listFiles()) {
+                        if (file.isDirectory()) {
+                            unvisitedFolders.add(file);
+                        } else {
+                            FileInputStream inputStream = null;
+                            try {
+                                inputStream = new FileInputStream(file);
+                                messageDigest.add(inputStream);
+                            } finally {
+                                if (inputStream != null) {
+                                    inputStream.close();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                sha = messageDigest.getDigestString();
+                writeSHAToManifest(deploymentDirectory, sha);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating artifact for contentFile: " + deploymentDirectory, e);
+        }
+
+        return sha;
+    }
+
+    /**
+     * Write the SHA256 to the manifest using the RHQ-Sha256 attribute tag.
+     *
+     * @param deploymentFolder app deployment folder
+     * @param sha SHA256
+     * @throws IOException
+     */
+    private void writeSHAToManifest(File deploymentFolder, String sha) throws IOException {
+        File manifestFile = new File(deploymentFolder, MANIFEST_RELATIVE_PATH);
+        Manifest manifest;
+        if (manifestFile.exists()) {
+            FileInputStream inputStream = new FileInputStream(manifestFile);
+            try {
+                manifest = new Manifest(inputStream);
+            } finally {
+                inputStream.close();
+            }
+        } else {
+            manifest = new Manifest();
+            manifestFile.getParentFile().mkdirs();
+            manifestFile.createNewFile();
+        }
+
+        Attributes attribs = manifest.getMainAttributes();
+
+        //The main section of the manifest file does not get saved if both of
+        //these two attributes are missing. Please see Attributes implementation.
+        if (!attribs.containsKey(Attributes.Name.MANIFEST_VERSION.toString())
+            && !attribs.containsKey(Attributes.Name.SIGNATURE_VERSION.toString())) {
+            attribs.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
+        }
+
+        attribs.putValue(RHQ_SHA_256, sha);
+
+        FileOutputStream outputStream = new FileOutputStream(manifestFile);
+        try {
+            manifest.write(outputStream);
+        } finally {
+            outputStream.close();
+        }
     }
 }

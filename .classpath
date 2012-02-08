@@ -291,6 +291,7 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/disk/src/test/java"/>
 	<classpathentry kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsprovide-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

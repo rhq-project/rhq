@@ -797,6 +797,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             performServiceScan(resource.getId());
 
             if (null != startError) {
+                handleInvalidPluginConfigurationResourceError(resource, startError);
                 throw new PluginContainerException("The resource [" + resource
                     + "] has been added but could not be started. Verify the supplied configuration values: ",
                     startError);
@@ -1463,6 +1464,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         // state is a transient field, so reinitialize it just in case this is invoked just after loadFromDisk()
         if (state == null) {
             container.setResourceComponentState(ResourceComponentState.STOPPED);
+            state = ResourceComponentState.STOPPED;
         }
 
         // if the component exists and is not stopped then we may not have to do anything
@@ -1589,11 +1591,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (prepareResourceForActivation(resource, container, updatedPluginConfig)) {
             container.setResourceComponentState(ResourceComponentState.STARTING);
 
-            ResourceContext context = container.getResourceContext();
+            ResourceContext context;
+            ResourceComponent component;
 
-            // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
-            ResourceComponent component = container.createResourceComponentProxy(ResourceComponent.class,
-                FacetLockType.READ, COMPONENT_START_TIMEOUT, true, false);
+            try {
+                context = container.getResourceContext();
+
+                // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
+                component = container.createResourceComponentProxy(ResourceComponent.class, FacetLockType.READ,
+                    COMPONENT_START_TIMEOUT, true, false);
+            } catch (Throwable t) {
+                container.setResourceComponentState(ResourceComponentState.STOPPED);
+                throw new PluginContainerException("Failed getting proxy for resource " + resource + ".", t);
+            }
 
             try {
                 component.start(context);
@@ -1675,7 +1685,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param t        the exception that indicates the problem with the plugin configuration
      * @return         true if the error was sent successfully, or false otherwise
      */
-    private boolean handleInvalidPluginConfigurationResourceError(Resource resource, Throwable t) {
+    public boolean handleInvalidPluginConfigurationResourceError(Resource resource, Throwable t) {
         resource.setConnected(false); // invalid plugin configuration infers the resource component is disconnected
         // Give the server-side an error message describing the connection failure that can be
         // displayed on the resource's Inventory page.
@@ -1851,7 +1861,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             ResourceContainer container = getResourceContainer(resource);
             if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
-                for (Resource child : resource.getChildResources()) {
+                // Copy child Resources to an array and iterate that, rather than iterating the Set, which could cause
+                // a ConcurrentModificationException if another thread tries to modify the Set while we're iterating it.
+                Resource[] childResources = resource.getChildResources().toArray(new Resource[resource.getChildResources().size()]);
+                for (Resource child : childResources) {
                     deactivateResource(child);
                 }
 
@@ -2848,9 +2861,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             } catch (InvalidPluginConfigurationException e) {
                 log.debug("Failed to activate resource [" + resource + "] due to invalid plugin configuration.", e);
-
+                handleInvalidPluginConfigurationResourceError(resource, e);
             } catch (Throwable t) {
                 log.error("Exception thrown while activating [" + resource + "].", t);
+                handleInvalidPluginConfigurationResourceError(resource, t);
             }
         }
     }

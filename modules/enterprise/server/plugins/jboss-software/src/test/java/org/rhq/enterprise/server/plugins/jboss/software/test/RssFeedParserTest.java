@@ -25,15 +25,16 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Set;
 
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.parser.RssParser;
+
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugins.jboss.software.RssFeedParser;
-
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.parser.RssParser;
 
 /**
  * @author Jason Dobies
@@ -98,6 +99,8 @@ public class RssFeedParserTest {
         int totalNumVersions = 0;
         for (ContentProviderPackageDetails pkg : newPackages) {
             totalNumVersions += pkg.getResourceVersions().size();
+
+            Assert.assertEquals("[sha256=" + pkg.getSHA256() + "]", pkg.getKey().getVersion());
         }
 
         assert totalNumVersions == 282 : "Incorrect number of total versions represented. Expected: 282, Found: "
@@ -126,6 +129,10 @@ public class RssFeedParserTest {
             + report.getDeletedPackages().size();
         assert report.getUpdatedPackages().size() == 0 : "Incorrect number of updated packages. Expected: 0, Found: "
             + report.getUpdatedPackages().size();
+
+        for (ContentProviderPackageDetails pkg : report.getNewPackages()) {
+            Assert.assertEquals("[sha256=" + pkg.getSHA256() + "]", pkg.getKey().getVersion());
+        }
     }
 
     @Test

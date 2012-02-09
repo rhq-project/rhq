@@ -23,6 +23,7 @@
       <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
 
       <clean.db>true</clean.db>
+      <powermock.version>1.4.11</powermock.version>
    </properties>
 
    <dependencies>
@@ -529,6 +530,20 @@
            <scope>provided</scope>
        </dependency>
 
+       <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
+
    </dependencies>
 
    <build>
@@ -663,7 +678,7 @@ Build-OS-Version=${os.version}
                </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->
-                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
                </additionalClasspathElements>
             </configuration>
          </plugin>

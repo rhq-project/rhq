@@ -136,7 +136,7 @@ public class CreateNewPackageUIBean {
         return response;
     }
 
-    public String createNewPackage(String packageName, String version, int architectureId, int packageTypeId) {
+    private String createNewPackage(String packageName, String displayVersion, int architectureId, int packageTypeId) {
 
         // Collect the necessary information
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -152,11 +152,6 @@ public class CreateNewPackageUIBean {
         // Validate
         if (packageName == null || packageName.trim().equals("")) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package name must be specified");
-            return null;
-        }
-
-        if (version == null || version.trim().equals("")) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Package version must be specified");
             return null;
         }
 
@@ -189,8 +184,8 @@ public class CreateNewPackageUIBean {
                     repoId = determineRepo(repoOption, subject, resource.getId());
                 } catch (ContentException ce) {
                     String errorMessages = ThrowableUtil.getAllMessages(ce);
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
-                        + errorMessages);
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                        "Failed to determine repository. Cause: " + errorMessages);
                     return "failure";
                 }
             } else {
@@ -199,7 +194,7 @@ public class CreateNewPackageUIBean {
                 repoId = FacesContextUtility.getRequiredRequestParameter("id");
             }
         }
-        
+
         try {
             PackageVersion packageVersion = null;
             try {
@@ -221,31 +216,38 @@ public class CreateNewPackageUIBean {
 
                         //store information about uploaded file for packageDetails as most of it is already available
                         Map<String, String> packageUploadDetails = new HashMap<String, String>();
-                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
-                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
-                            .currentTimeMillis()));
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE,
+                            String.valueOf(fileItem.getFileSize()));
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE,
+                            String.valueOf(System.currentTimeMillis()));
                         packageUploadDetails.put(ContentManagerLocal.UPLOAD_OWNER, subject.getName());
                         packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_NAME, fileItem.getFileName());
 
+                        String sha = null;
+                        String md5 = null;
                         try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
-                            packageUploadDetails.put(ContentManagerLocal.UPLOAD_MD5, new MessageDigestGenerator(
-                                MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
-                            packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, new MessageDigestGenerator(
-                                MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
+                            md5 = new MessageDigestGenerator(MessageDigestGenerator.MD5).calcDigestString(fileItem
+                                .getFile());
+                            sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileItem
+                                .getFile());
                         } catch (IOException e1) {
                             log.warn("Error calculating file digest(s)", e1);
                         }
 
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_MD5, md5);
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, sha);
+                        packageUploadDetails.put(ContentManagerLocal.UPLOAD_DISPLAY_VERSION, displayVersion);
+
                         Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
                         packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
-                            version, architectureId, packageStream, packageUploadDetails, iRepoId);
+                            formatVersion(sha), architectureId, packageStream, packageUploadDetails, iRepoId);
 
                     } catch (NoResultException nre) {
                         //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
                     } catch (Exception e) {
                         String errorMessages = ThrowableUtil.getAllMessages(e);
-                        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package [" + packageName
-                            + "] in repository. Cause: " + errorMessages);
+                        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to create package ["
+                            + packageName + "] in repository. Cause: " + errorMessages);
                         return "failure";
                     }
                 } finally {
@@ -257,7 +259,6 @@ public class CreateNewPackageUIBean {
                     "Failed to retrieve the input stream. Cause: " + errorMessages);
                 return "failure";
             }
-
 
             int[] packageVersionList = new int[] { packageVersion.getId() };
 
@@ -320,7 +321,7 @@ public class CreateNewPackageUIBean {
     public SelectItem[] getPackageTypesWithResourceTypeNames() {
         return getPackageTypes(true);
     }
-    
+
     private SelectItem[] getPackageTypes(boolean includeResourceTypeResolution) {
         Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
 
@@ -346,7 +347,7 @@ public class CreateNewPackageUIBean {
 
         return items;
     }
-    
+
     public SelectItem[] getSubscribedRepos() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
@@ -385,7 +386,7 @@ public class CreateNewPackageUIBean {
         if (!isResourcePackage()) {
             return true;
         }
-        
+
         boolean isPackageBacked = isResourcePackageBacked();
         boolean backingPackageExists = lookupBackingPackage() != null;
 
@@ -395,7 +396,7 @@ public class CreateNewPackageUIBean {
     public boolean isResourcePackage() {
         return EnterpriseFacesContextUtility.getResourceIfExists() != null;
     }
-    
+
     public boolean isResourcePackageBacked() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
         ResourceType resourceType = resource.getResourceType();
@@ -446,10 +447,10 @@ public class CreateNewPackageUIBean {
         if (packageName != null) {
             return packageName;
         }
-        
+
         UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
         UploadItem fileItem = uploadUIBean.getFileItem();
-        
+
         return fileItem == null ? null : fileItem.getFileName();
     }
 
@@ -539,5 +540,9 @@ public class CreateNewPackageUIBean {
         }
 
         return repoId;
+    }
+
+    private String formatVersion(String sha) {
+        return "[sha256=" + sha + "]";
     }
 }

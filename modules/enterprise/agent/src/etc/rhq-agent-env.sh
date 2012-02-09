@@ -99,11 +99,14 @@
 #                             If you want to have command line arguments
 #                             added to the arguments specified here, append
 #                             '$*' to the end of this option. For example,
-#                             "--daemon $*". In this case, both the command
+#                             "--nonative $*". In this case, both the command
 #                             line options and the ones specified here will
-#                             be passed to the agent.
+#                             be passed to the Agent. Note, the --daemon option
+#                             should generally not be included here, since it
+#                             would cause the Agent to always start in daemon
+#                             mode, even when started via rhq-agent.sh.
 # 
-#RHQ_AGENT_CMDLINE_OPTS="--daemon --nonative"
+#RHQ_AGENT_CMDLINE_OPTS="--nonative $*"
 
 #    RHQ_AGENT_IN_BACKGROUND - If this is defined, the RHQ Agent JVM will
 #                              be launched in the background (thus causing this

@@ -43,6 +43,7 @@ import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
+import org.rhq.enterprise.server.rest.domain.StringValue;
 
 /**
  * Deal with metrics
@@ -120,7 +121,7 @@ public interface MetricHandlerLocal {
      */
     @GET
     @Path("data/{scheduleId}/raw")
-    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,"text/csv",MediaType.TEXT_HTML})
     StreamingOutput getMetricDataRaw(@PathParam("scheduleId") int scheduleId,
                                      @QueryParam("startTime") long startTime,
                                      @QueryParam("endTime") long endTime,
@@ -150,7 +151,7 @@ public interface MetricHandlerLocal {
      * Submit a series of (numerical) metric values to the server
      * @param points Collection of NumericDataPoint entries
      * @param headers Injected HTTP headers
-     * @return
+     * @return response object
      */
     @POST
     @Path("data/raw")
@@ -171,4 +172,14 @@ public interface MetricHandlerLocal {
                      Baseline baseline,
                      @Context HttpHeaders headers,
                      @Context UriInfo uriInfo);
+
+    @PUT
+    @Path("data/{scheduleId}/trait")
+    @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    Response putTraitValue(@PathParam("scheduleId") int scheduleId, StringValue value);
+
+    @GET
+    @Path("data/{scheduleId}/trait")
+    @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
+    Response getTraitValue(@PathParam("scheduleId") int scheduleId);
 }

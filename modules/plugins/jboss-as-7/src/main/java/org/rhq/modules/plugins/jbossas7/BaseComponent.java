@@ -579,17 +579,17 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
-        } else if (what.equals("naming")) {
-            if (op.equals("jndi-view")) {
-                theAddress.add(address);
-                operation = new Operation("jndi-view",theAddress);
-            }
         }
 
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
             Result result = connection.execute(operation);
+
+            if (result==null) {
+                operationResult.setErrorMessage("Connection was null - is the server running?");
+                return operationResult;
+            }
 
             if (!result.isSuccess()) {
                 operationResult.setErrorMessage(result.getFailureDescription());

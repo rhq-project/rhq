@@ -172,14 +172,6 @@
                </includes>
                <archive>
                   <index>true</index>
-                  <manifestEntries>
-                     <Implementation-Title>${rhq.product.name} - ${project.name}</Implementation-Title>
-                     <Implementation-Version>${project.version}</Implementation-Version>
-                     <Specification-Vendor>org.jboss</Specification-Vendor>
-                     <Specification-Title>JBossWS</Specification-Title>
-                     <Specification-Version>${jbossws-native-dist.version}</Specification-Version>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
                </archive>
             </configuration>
          </plugin>

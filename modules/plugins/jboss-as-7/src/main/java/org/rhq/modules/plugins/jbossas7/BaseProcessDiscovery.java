@@ -41,15 +41,20 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Discovery class
  */
-public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
+public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent, ManualAddFacet
 
 {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
@@ -207,6 +212,71 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
         return discoveredResources;
 
+    }
+
+    /**
+     * Allow to manually add a (remote) AS7
+     * @param pluginConfiguration the plugin configuration that describes how to discover the Resource being manually
+     *                            added
+     * @param context
+     * @return
+     * @throws InvalidPluginConfigurationException
+     */
+    @Override
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+                                                      ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
+
+        String hostname = pluginConfiguration.getSimpleValue("hostname",null);
+        String portS = pluginConfiguration.getSimpleValue("port",null);
+        String user = pluginConfiguration.getSimpleValue("user",null);
+        String pass = pluginConfiguration.getSimpleValue("password",null);
+
+        if (hostname==null || portS==null) {
+            throw new InvalidPluginConfigurationException("Host and port must not be null");
+        }
+        int port = Integer.valueOf(portS);
+
+        ASConnection connection = new ASConnection(hostname,port, user,pass);
+        String productVersion = getServerAttribute(connection, "product-version");
+        String productName = getServerAttribute(connection,"product-name");
+        String releaseVersion = getServerAttribute(connection,"release-version");
+        if (productVersion == null)
+            productVersion = releaseVersion;
+        if (productName==null)
+            productName = "AS7";
+
+        String resourceKey = hostname + ":" + portS + ":" + productName;
+        String description;
+        if (productName.contains("EAP")) {
+            description = "Standalone JBoss Enterprise Application Platform server";
+        } else if (productName.contains("EDG")) {
+            description = "Standalone JBoss Enterprise DataGrid server";
+        }
+        else
+            description = context.getResourceType().getDescription();
+
+        pluginConfiguration.put(new PropertySimple("manuallyAdded",true));
+
+        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                context.getResourceType(),
+                resourceKey,
+                productName + " @ " + hostname + ":" + port,
+                productVersion,
+                description,
+                pluginConfiguration,
+                null
+        );
+
+        return detail;
+    }
+
+    private String getServerAttribute(ASConnection connection, String attributeName) {
+        Operation op = new ReadAttribute(null,attributeName);
+        Result res = connection.execute(op);
+        if (!res.isSuccess()) {
+            throw new InvalidPluginConfigurationException("Could not connect to remote server [" + res.getFailureDescription() + "]. Did you enable management?");
+        }
+        return (String) res.getResult();
     }
 
     private void fillUserPassFromFile(Configuration config, AS7Mode mode, String baseDir) {

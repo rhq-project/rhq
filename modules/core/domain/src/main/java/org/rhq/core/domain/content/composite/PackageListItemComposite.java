@@ -37,22 +37,17 @@ public class PackageListItemComposite implements Serializable {
     private final String packageName;
     private final String packageTypeName;
     private final String version;
+    private final String displayVersion;
     private final Long timestamp;
 
-    public PackageListItemComposite(int id, String packageName, String packageTypeName, String version) {
-        this.id = id;
-        this.packageName = packageName;
-        this.packageTypeName = packageTypeName;
-        this.version = version;
-        this.timestamp = null;
-    }
-
-    public PackageListItemComposite(int id, String packageName, String packageTypeName, String version, Long timestamp) {
+    public PackageListItemComposite(int id, String packageName, String packageTypeName, String version,
+        String displayVersion, Long timestamp) {
         this.id = id;
         this.packageName = packageName;
         this.packageTypeName = packageTypeName;
         this.version = version;
         this.timestamp = timestamp;
+        this.displayVersion = displayVersion;
     }
 
     public int getId() {
@@ -69,6 +64,10 @@ public class PackageListItemComposite implements Serializable {
 
     public String getVersion() {
         return version;
+    }
+
+    public String getDisplayVersion() {
+        return displayVersion;
     }
 
     public Long getTimestamp() {

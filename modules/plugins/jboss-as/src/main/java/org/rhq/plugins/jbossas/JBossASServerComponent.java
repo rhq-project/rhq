@@ -100,7 +100,6 @@ import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
 import org.rhq.plugins.jbossas.util.ConnectionFactoryConfigurationEditor;
@@ -896,9 +895,7 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             return;
         }
 
-        InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(tempFile);
-        deployer.createContent(details, isForTempDir, !zip, createBackup, shaString);
+        deployer.createContent(details, tempFile, !zip, createBackup);
 
         String vhost = null;
         if (resourceTypeName.equals(RESOURCE_TYPE_WAR)) {

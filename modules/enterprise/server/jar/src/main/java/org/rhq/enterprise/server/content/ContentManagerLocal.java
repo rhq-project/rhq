@@ -64,18 +64,20 @@ public interface ContentManagerLocal {
      * upon persist.
      */
     public static final String UPLOAD_FILE_SIZE = "fileSize";
-    
+
     public static final String UPLOAD_FILE_INSTALL_DATE = "fileInstallDate";
-    
+
     /**
      * This doesn't seem to serve any purpose.
      */
     public static final String UPLOAD_OWNER = "owner";
-    
+
     public static final String UPLOAD_FILE_NAME = "fileName";
-    
+
     public static final String UPLOAD_MD5 = "md5";
-    
+
+    public static final String UPLOAD_DISPLAY_VERSION = "displayVersion";
+
     /**
      * This is currently ignored as the SHA is computed upon
      * persist.
@@ -232,13 +234,14 @@ public interface ContentManagerLocal {
      * @param  packageName    parent package name; uniquely identifies the package under which this version goes
      * @param  packageTypeId  identifies the type of package in case the general package needs to be created
      * @param  version        identifies the version to be create
+     * @param displayVersion  package display version
      * @param  architectureId architecture of the newly created package version
      *
      * @return newly created package version if one did not exist; existing package version that matches these data if
      *         one was found
      */
-    PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        int architectureId, InputStream packageBitStream);
+    PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
+        String version, String displayVersion, int architectureId, InputStream packageBitStream);
 
     /**
      * This method is essentially the same as {@link #createPackageVersion(Subject, String, int, String, int, InputStream)}
@@ -338,7 +341,6 @@ public interface ContentManagerLocal {
      */
     PackageType getResourceCreationPackageType(int resourceTypeId);
 
-   
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -352,6 +354,12 @@ public interface ContentManagerLocal {
         Integer architectureId, byte[] packageBytes);
 
     /**
+     * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
+     */
+    PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
+        String version, String displayVersion, Integer architectureId, byte[] packageBytes);
+
+    /**
      * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}
      */
     void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes);
@@ -362,9 +370,9 @@ public interface ContentManagerLocal {
     public void deletePackageVersion(Subject subject, int packageVersionId);
 
     /**
-     * @see {@link ContentManagerRemote#deployPackages(Subject, int[], int[])}
+     * @see {@link ContentManagerRemote#deployPackagesWithNote(Subject, int[], int[], String)}
      */
-    void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds);
+    void deployPackagesWithNote(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes);
 
     /**
      * @see {@link ContentManagerRemote#findArchitectures(Subject)}
@@ -381,12 +389,12 @@ public interface ContentManagerLocal {
      * @see {@link ContentManagerRemote#findPackageType(Subject, Integer, String)}
      */
     PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName);
-    
+
     /**
      * @see {@link ContentManagerRemote#findPackageTypeWithVersionFormat(Subject, Integer, String)}
      */
     PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject, Integer resourceTypeId, String packageTypeName);
-    
+
     /**
      * @see {@link ContentManagerRemote#findInstalledPackagesByCriteria(Subject, InstalledPackageCriteria)}
      */
@@ -430,7 +438,7 @@ public interface ContentManagerLocal {
      * @throws IllegalArgumentException if the supplied package type has non-null resource type
      */
     PackageType persistServersidePackageType(PackageType packageType);
-    
+
     void writeBlobOutToStream(OutputStream stream, PackageBits bits, boolean closeStreams);
 
     void updateBlobStream(InputStream stream, PackageBits bits, Map<String, String> contentDetails);

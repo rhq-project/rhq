@@ -331,7 +331,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // remember we went backwards in time, but we want the returned data to be ascending, so reverse the order
         Collections.reverse(availabilityPoints);
 
-        /* 
+        /*
          * RHQ-1631, make the latest availability dot match the current availability IF desired by the user
          * note: this must occur AFTER reversing the collection so the last dot refers to the most recent time slice
          */
@@ -517,10 +517,14 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // update the last known availability data for this resource
         ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
             .getResource().getId());
-        if (currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
+        if (currentAvailability!=null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
             // but only update the record if necessary (if the AvailabilityType changed)
             currentAvailability.setAvailabilityType(reported.getAvailabilityType());
             entityManager.merge(currentAvailability);
+        }
+        else if (currentAvailability==null) {
+            currentAvailability = new ResourceAvailability(reported.getResource(),reported.getAvailabilityType());
+            entityManager.persist(currentAvailability);
         }
     }
 
@@ -529,7 +533,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // should we catch exceptions here, or allow them to bubble up and be caught?
 
         /*
-         * since we already know we have to update the agent row with the last avail report time, might as well 
+         * since we already know we have to update the agent row with the last avail report time, might as well
          * set the backfilled to false here (as opposed to called agentManager.setBackfilled(agentId, false)
          */
         String updateStatement = "" //

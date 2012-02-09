@@ -316,7 +316,7 @@
                     <additionalClasspathElements>
                         <!-- The below is required for tests to run against 
                             Oracle. -->
-                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
                     </additionalClasspathElements>
                 </configuration>
             </plugin>

@@ -166,7 +166,7 @@
                   <!-- dependency versions -->
                   <property name="rhq.version" value="${project.version}" />
                   <property name="jboss.version" value="${jboss.version}" />
-                  <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                  <property name="ojdbc6.version" value="${ojdbc6.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="h2.version" value="${h2.version}" />
                   <property name="jboss-javassist.version" value="${jboss-javassist.version}" />

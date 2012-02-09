@@ -69,15 +69,15 @@ public class ScriptCommand implements ClientCommand {
     public ScriptEngine getScriptEngine() {
         if (jsEngine == null) {
             try {
-                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Arrays
-                    .asList(getLibDir())), null);
+                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript",
+                    new PackageFinder(Arrays.asList(getLibDir())), null);
             } catch (ScriptException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        
+
         return jsEngine;
     }
 
@@ -86,7 +86,14 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public boolean execute(ClientMain client, String[] args) {
-        initBindings(client);
+        // for a command line session we don't want to reset the bindings for each executed command line, the
+        // state, e.g. exporter settings, should be maintained from line to line. Note that scriptFiles
+        // executed via 'exec -f' are treated like extensions of the command line session.  They inherit the
+        // current bindings and any modifications made by the script file will affect the command line session
+        // after the script file has completed.
+        if (null == bindings) {
+            initBindings(client);
+        }
 
         if (isScriptFileCommandLine(args)) {
             try {
@@ -177,27 +184,48 @@ public class ScriptCommand implements ClientCommand {
         return true;
     }
 
-    public void initBindings(ClientMain client) {
+    private void initBindings(ClientMain client) {
         bindings = new StandardBindings(client.getPrintWriter(), client.getRemoteClient());
-        bindings.getSubject().setValue(client.getSubject());
+        // init pretty width with console setting
         bindings.getPretty().getValue().setWidth(client.getConsoleWidth());
+        // replace ResourceClientFactory with Editable version or none at all
         if (client.getRemoteClient() != null) {
             bindings.getProxyFactory().setValue(new EditableResourceClientFactory(client));
         } else {
             bindings.getProxyFactory().setValue(null);
         }
 
-        //non-standard bindings        
+        //non-standard bindings for console
         bindings.put("configurationEditor", new ConfigurationEditor(client));
         bindings.put("rhq", new Controller(client));
 
         ScriptEngine engine = getScriptEngine();
-        
+
         ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
 
-        ScriptEngineFactory
-            .bindIndirectionMethods(engine, "configurationEditor");
+        ScriptEngineFactory.bindIndirectionMethods(engine, "configurationEditor");
         ScriptEngineFactory.bindIndirectionMethods(engine, "rhq");
+    }
+
+    public void initClient(ClientMain client) {
+        if (null == bindings) {
+            initBindings(client);
+
+        } else {
+            ScriptEngine engine = getScriptEngine();
+
+            // remove any current manager bindings from the engine, they may not be valid for the
+            // new client. The new standard bindings will include any new managers.
+            ScriptEngineFactory.removeBindings(engine, bindings.getManagers().keySet());
+
+            bindings.setFacade(client.getPrintWriter(), client.getRemoteClient());
+
+            // update the engine with the new client bindings. Keep the existing engine bindings as they
+            // may contain bindings outside this standard set (like any var created by the script or command line user)
+            ScriptEngineFactory.injectStandardBindings(engine, bindings, false);
+        }
+
+        return;
     }
 
     private void executeUtilScripts() {
@@ -274,7 +302,7 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "exec <statement> | [-s<indexed|named>] -f <file> [args]";
+        return getPromptCommandString() + " <statement> | [-s<indexed|named>] -f <file> [args]";
     }
 
     public String getHelp() {
@@ -282,8 +310,8 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return "Execute a statement or a script. The following services managers are available: "
-            + RhqManagers.values();
+        return "Execute a statement or a script. The following service managers are available: "
+            + Arrays.toString(RhqManagers.values());
     }
 
     public ScriptContext getContext() {

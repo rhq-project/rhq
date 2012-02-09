@@ -21,7 +21,6 @@ package org.rhq.enterprise.client.security.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.SerializablePermission;
 import java.security.PermissionCollection;
 import java.util.Collections;
 
@@ -31,7 +30,6 @@ import javax.script.ScriptException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.bindings.SandboxedScriptEngine;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.StandardScriptPermissions;
@@ -69,8 +67,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
         try {
             engine.eval(""
-                + "context = new javax.naming.InitialContext();\n"
-                + "subjectManager = context.lookup('SubjectManagerBean/local');\n"
+                + "var ctx = new javax.naming.InitialContext();\n"
+                + "var subjectManager = ctx.lookup('SubjectManagerBean/local');\n"
                 + "subjectManager.getOverlord();");
             
             Assert.fail("The script shouldn't have been able to call local SLSB method.");
@@ -86,8 +84,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
         try {
             engine.eval(""
-                + "context = new javax.naming.InitialContext();\n"
-                + "subjectManager = context.lookup('SubjectManagerBean/remote');\n"
+                + "var ctx = new javax.naming.InitialContext();\n"
+                + "var subjectManager = ctx.lookup('SubjectManagerBean/remote');\n"
                 + "subjectManager.getSubjectByName('rhqadmin');");
             
             Assert.fail("The script shouldn't have been able to call remote SLSB method directly.");
@@ -135,8 +133,8 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
         try {
             engine.eval(""
-                + "context = new javax.naming.InitialContext();\n"
-                + "datasource = context.lookup('java:/RHQDS');\n"
+                + "var ctx = new javax.naming.InitialContext();\n"
+                + "var datasource = ctx.lookup('java:/RHQDS');\n"
                 + "con = datasource.getConnection();");
             
             Assert.fail("The script shouldn't have been able to obtain the datasource from the JNDI.");
@@ -152,9 +150,9 @@ public class JndiAccessTest extends AbstractEJB3Test {
 
         try {
             engine.eval(""
-                + "context = new javax.naming.InitialContext();\n"
-                + "entityManagerFactory = context.lookup('java:/RHQEntityManagerFactory');\n"
-                + "entityManager = entityManagerFactory.createEntityManager();\n"
+                + "var ctx = new javax.naming.InitialContext();\n"
+                + "var entityManagerFactory = ctx.lookup('java:/RHQEntityManagerFactory');\n"
+                + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
             
             Assert.fail("The script shouldn't have been able to use the EntityManager.");
@@ -165,12 +163,12 @@ public class JndiAccessTest extends AbstractEJB3Test {
         //try harder with manually specifying the initial context factory
         try {
             engine.eval(""
-                + "env = new java.util.Hashtable();"
+                + "var env = new java.util.Hashtable();"
                 + "env.put('java.naming.factory.initial', 'org.jnp.interfaces.LocalOnlyContextFactory');"
                 + "env.put('java.naming.factory.url.pkgs', 'org.jboss.naming:org.jnp.interfaces');"
-                + "context = new javax.naming.InitialContext(env);\n"
-                + "entityManagerFactory = context.lookup('java:/RHQEntityManagerFactory');\n"
-                + "entityManager = entityManagerFactory.createEntityManager();\n"
+                + "var ctx = new javax.naming.InitialContext(env);\n"
+                + "var entityManagerFactory = ctx.lookup('java:/RHQEntityManagerFactory');\n"
+                + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
             
             Assert.fail("The script shouldn't have been able to use the EntityManager even using custom initial context factory.");
@@ -179,6 +177,21 @@ public class JndiAccessTest extends AbstractEJB3Test {
         }           
     }
     
+    @Test
+    public void testProxyFactoryWorksWithSecuredScriptEngine() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
+        
+        ScriptEngine engine = getEngine(overlord);
+        
+        try {
+            engine.eval("var resource = ProxyFactory.getResource(10001);");            
+        } catch (ScriptException e) {
+            //if the script fails (there is no resource with ID 10001)
+            //it should not be because of an access control exception
+            checkIsNotASecurityException(e);
+        }
+    }
+        
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
         
@@ -192,5 +205,12 @@ public class JndiAccessTest extends AbstractEJB3Test {
         String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
         
         Assert.assertTrue(message.contains(permissionTrace), "The script exception doesn't seem to be caused by the AllowRhqServerInternalsAccessPermission security exception. " + message);
+    }
+
+    private static void checkIsNotASecurityException(ScriptException e) {
+        String message = e.getMessage();
+        String permissionTrace = AllowRhqServerInternalsAccessPermission.class.getName();
+        
+        Assert.assertFalse(message.contains(permissionTrace), "The script exception does seem to be caused by the AllowRhqServerInternalsAccessPermission security exception although it shouldn't. " + message);
     }
 }

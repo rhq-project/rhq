@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,10 +20,8 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.client.commands;
 
-import org.rhq.enterprise.client.Controller;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.NoOpRecorder;
 import org.rhq.enterprise.client.Recorder;
@@ -66,7 +64,8 @@ public class RecordCommand implements ClientCommand {
                 new LongOpt("start", LongOpt.OPTIONAL_ARGUMENT, null, 'b'),
                 new LongOpt("end", LongOpt.OPTIONAL_ARGUMENT, null, 'e')
         };
-        Getopt getopt = new Getopt("exec", args, shortOpts, longOpts);
+        Getopt getopt = new Getopt(getPromptCommandString(), args, shortOpts, longOpts);
+        getopt.setOpterr(false);
 
         RecordArgs recordArgs = new RecordArgs();
 
@@ -75,7 +74,7 @@ public class RecordCommand implements ClientCommand {
             switch (code) {
                 case ':':
                 case '?':
-                   throw new IllegalArgumentException("Invalid options");
+                   throw new CommandLineParseException("Invalid option");
                 case 1:
                     break;
                 case 'f':
@@ -98,8 +97,12 @@ public class RecordCommand implements ClientCommand {
             code = getopt.getopt();
         }
 
+        if (recordArgs.file == null) {
+            throw new CommandLineParseException("The file option must be specified.");
+        }
+
         if (recordArgs.recordState == null) {
-            throw new CommandLineParseException("Either the start or stop option must be specified");
+            throw new CommandLineParseException("Either the start or stop option must be specified.");
         }
 
         return recordArgs;
@@ -126,13 +129,13 @@ public class RecordCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "record [[-b | --start] | [-e | --end]] [-a | --append] -f <file>";
+        return getPromptCommandString() + " [[-b | --start] | [-e | --end]] [-a | --append] -f <file>";
     }
 
     public String getHelp() {
-        return "Records user input commands to a specified file. Use the --start option to begin recording. Use the " +
+        return "Record user input commands to a specified file. Use the --start option to begin recording. Use the " +
             "--end option to stop recording. Use --append to append output to the end of an existing file; otherwise, " +
-            "recording will start at the begining of the file.";
+            "recording will start at the beginning of the file.";
     }
 
     public String getDetailedHelp() {

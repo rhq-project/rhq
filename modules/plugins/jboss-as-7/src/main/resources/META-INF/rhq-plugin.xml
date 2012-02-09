@@ -189,6 +189,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -362,6 +363,7 @@
 
             <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                     displayType="summary"/>
+            <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
             <event name="logEntry" description="an entry in a log file"/>
 
@@ -412,6 +414,7 @@
             discovery="BaseProcessDiscovery"
             class="StandaloneASComponent"
             description="Standalone AS7 server"
+            supportsManualAdd="true"
             >
 
         <plugin-configuration>
@@ -428,6 +431,7 @@
                                                         defaults to the home directory of the RHQ agent JRE."/>
             &logSources;
 
+<!--
          <c:group name="event" displayName="Events">
              <c:list-property name="logEventSources">
                  <c:map-property name="logEventSource">
@@ -462,6 +466,7 @@
                  </c:map-property>
              </c:list-property>
          </c:group>
+-->
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
@@ -514,6 +519,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -558,12 +564,13 @@
 
 
     <server name="JVM"
-            discovery="SubsystemDiscovery"
+            discovery="JVMDiscoveryComponent"
             class="BaseComponent"
             description="Information about the underlying JVM"
             singleton="true">
         <runs-inside>
             <parent-resource-type name="Managed Server"  plugin="jboss-as-7"/>
+            <parent-resource-type name="Host"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
 
@@ -619,9 +626,8 @@
             <resource-configuration>
                 <c:simple-property name="thread-contention-monitoring-enabled" required="false" type="boolean" readOnly="false" description="Whether thread contention monitoring is enabled."/>
                 <c:simple-property name="thread-cpu-time-enabled" required="false" type="boolean" readOnly="false" description="Whether thread CPU time measurement is enabled."/>
-                <c:list-property name="all-thread-ids" description="All live thread IDs. If a security manager is installed and the caller does not have ManagementPermission('monitor'), the result will be und
-                ." >
-                    <c:simple-property name="all-thread-ids" />
+                <c:list-property name="all-thread-ids" description="All live thread IDs. If a security manager is installed and the caller does not have ManagementPermission('monitor'), the result will be undefined." readOnly="true">
+                    <c:simple-property name="all-thread-ids" readOnly="true"/>
                 </c:list-property>
                 <c:simple-property name="thread-contention-monitoring-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine supports thread contention monitoring."/>
                 <c:simple-property name="thread-cpu-time-supported" required="false" type="boolean" readOnly="true" description="Whether the Java virtual machine implementation supports CPU time measurement for any thread."/>
@@ -1017,11 +1023,10 @@
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=^Deployment$" filter="sameHierarchy"/>
+                    <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
                 </c:simple-property>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
-                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
                 <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
                 <c:simple-property name="password" description="Password" type="password" required="false"/>
             </parameters>
@@ -1034,15 +1039,14 @@
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=^Deployment$"/>
+                    <c:option-source target="resource" expression="type=^Deployment$" filter=".*\.jar"/>
                 </c:simple-property>
-                <c:simple-property name="xa-data-source-class" required="true" description="xa-data-source-class"/>
+                <c:simple-property name="xa-datasource-class" required="true" description="xa-datasource-class"/>
+                <c:simple-property name="connection-url" required="true" description="Connection URL. Will be turned into an Xa-property)"/>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
-                <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
-                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
                 <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
                 <c:simple-property name="password" description="Password" type="password" required="false"/>
-                <c:list-property name="xa-properties" displayName="XA Properties" description="Additional XA Properties" required="false">
+                <c:list-property name="xa-properties" displayName="XA Properties" description="Additional XA Properties (connection url is set above)" required="false">
                     <c:map-property name="xa-properties">
                         <c:simple-property name="key" displayName="Key" description="Key of the property"/>
                         <c:simple-property name="value" displayName="Value" description="Value of the property"/>
@@ -1130,8 +1134,6 @@
                          description="Defines the JDBC driver the datasource should use with this format: driver-name>#major-version.minor-version where driver-name is the fully qualifed name of the JDBC driver class"/>
                 <c:simple-property name="new-connection-sql" type="string" readOnly="true" required="false"
                          description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
-                <c:simple-property name="pool-name" type="string" readOnly="true"
-                         description="Specifies the pool name for the datasource used for management"/>
                 <c:simple-property name="url-delimiter" type="string" readOnly="true"
                          description="Specifies the delimeter for URLs in connection-url for HA datasources" required="false"/>
                 <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true"
@@ -1275,11 +1277,10 @@
             <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
 
             <resource-configuration>
-                <c:simple-property name="xa-data-source-class" required="true" type="string" readOnly="true" description="The fully qualifed name of the javax.sql.XADataSource implementation"/>
+                <c:simple-property name="xa-datasource-class" required="true" type="string" readOnly="true" description="The fully qualifed name of the javax.sql.XADataSource implementation"/>
                 <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
                 <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
                 <c:simple-property name="new-connection-sql" required="false" type="string" readOnly="true" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
-                <c:simple-property name="pool-name" required="false" type="string" readOnly="true" description="Specifies the pool name for the datasource used for management"/>
                 <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
                 <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
                 <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
@@ -1288,7 +1289,7 @@
                 <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
                 <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
                 <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" description="Define if the min-pool-size should be considered a strictly."/>
-                <c:simple-property name="interliving" required="false" type="boolean" readOnly="true" description="An element to enable interleaving for XA connection factories"/>
+                <c:simple-property name="interleaving" required="false" type="boolean" readOnly="true" description="An element to enable interleaving for XA connection factories"/>
                 <c:simple-property name="no-tx-separate-pool" required="false" type="boolean" readOnly="true" description="Oracle does not like XA connections getting used both inside and outside a JTA transaction. To workaround the problem you can create separate sub-pools for the different context"/>
                 <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="true" description="Should the Xid be padded"/>
                 <c:simple-property name="same-rm-override" required="false" type="boolean" readOnly="true" description="The is-same-rm-override element allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false"/>
@@ -1355,6 +1356,16 @@
                 </c:map-property>
 -->
                 <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
+
+
+                <c:group name="children:xa-datasource-properties:key+" displayName="XA Datasource Properties">
+                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="true">
+                        <c:map-property name="*:key" displayName="Name" readOnly="true">
+                            <c:simple-property name="key" displayName="Property-Name" readOnly="true"/>
+                            <c:simple-property name="value" displayName="Value" readOnly="true"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:group>
             </resource-configuration>
         </service>
 
@@ -1992,7 +2003,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <server name="Naming"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="NamingComponent"
         singleton="true"
         >
 
@@ -2005,15 +2016,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
         </plugin-configuration>
 
-        <operation name="naming:jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
+        <operation name="jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
             <results>
-                <c:list-property name="operationResult">
-                    <c:list-property name="innerContext">
-                        <c:map-property name="innerContexts">
-                            <c:simple-property name="class-name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
+                <c:list-property name="java-contexts">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
+                </c:list-property>
+                <c:list-property name="applications">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
                 </c:list-property>
             </results>
         </operation>

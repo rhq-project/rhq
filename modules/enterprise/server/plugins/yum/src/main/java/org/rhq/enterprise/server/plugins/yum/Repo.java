@@ -219,7 +219,9 @@ public class Repo {
      */
     private ContentProviderPackageDetails getDetails(Element p) throws Exception {
         String name = p.getChildText("name", Repodata.yumns);
-        String version = encodeVersion(p);
+        String displayVersion = encodeVersion(p);
+        String sha256 = p.getChildText("checksum", Repodata.yumns);
+        String version = "[sha256=" + sha256 + "]";
         String arch = p.getChildText("arch", Repodata.yumns);
         ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
             "Linux", "Platforms");
@@ -233,6 +235,7 @@ public class Repo {
         pkg.setFileCreatedDate(filedate(p));
         pkg.setLicenseName(p.getChild("format", Repodata.yumns).getChildText("license", Repodata.rpmns));
         pkg.setSHA256(p.getChildText("checksum", Repodata.yumns));
+        pkg.setDisplayVersion(displayVersion);
         pkg.setLocation(location(p));
         pkg.setMetadata(gzip(p));
         return pkg;

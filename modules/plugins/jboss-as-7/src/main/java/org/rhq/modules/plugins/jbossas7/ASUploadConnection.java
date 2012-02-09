@@ -82,6 +82,8 @@ public class ASUploadConnection {
             // Create the HTTP connection to the upload URL
             String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
             connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(10 * 1000); // 10s
+            connection.setReadTimeout(60 * 1000);    // 60s
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(POST_REQUEST_METHOD);

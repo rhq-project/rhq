@@ -25,6 +25,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.rest.domain.RHQErrorWrapper;
@@ -38,6 +41,8 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
 
     @Context
     HttpHeaders httpHeaders;
+
+    Log log = LogFactory.getLog(getClass().getName());
 
     @Override
     public Response toResponse(Exception e) {
@@ -77,13 +82,21 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
     }
 
     /**
-     * Wrap the passed message according to the mediaType from the HttpHeader
-     * @param builder
-     * @param message
+     * Wrap the passed message according to the mediaType from the HttpHeader. If the
+     * type can not be determined, we use plain text
+     * @param builder ResponseBuilder to add the message to
+     * @param message The message to wrap
      */
     private void wrapMessage(Response.ResponseBuilder builder, String message) {
 
-        MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        MediaType mediaType;
+        try {
+            mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
+        } catch (Exception e) {
+            log.debug(e.getMessage());
+            mediaType = MediaType.TEXT_PLAIN_TYPE;
+        }
+
 
         if (mediaType.equals(MediaType.TEXT_PLAIN_TYPE)) {
             builder.entity(message);

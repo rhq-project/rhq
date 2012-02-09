@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.hyperic.sigar.SigarProxy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -102,7 +103,7 @@ public class EventContextImpl implements EventContext {
         unregisterEventPollerInternal(eventType, sourceLocation);
     }
 
-    @NotNull
+    @Nullable
     public SigarProxy getSigar() {
         return getEventManager().getSigar();
     }

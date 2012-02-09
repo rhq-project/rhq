@@ -32,8 +32,8 @@ public interface ClientCommand {
         LoginCommand.class,
         LogoutCommand.class,
         QuitCommand.class,
-        ScriptCommand.class,
         RecordCommand.class,
+        ScriptCommand.class,
         VersionCommand.class
     };
 

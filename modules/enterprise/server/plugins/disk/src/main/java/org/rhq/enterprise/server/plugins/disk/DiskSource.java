@@ -201,19 +201,22 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
                 if (file.getName().equals(repoName)) {
 
                     for (File filePackage : file.listFiles()) {
-                        ContentProviderPackageDetails details = createPackage(filePackage);
-                        if (details != null) {
-                            ContentProviderPackageDetails existing = findPackage(packages, details);
-                            if (existing == null) {
-                                report.addNewPackage(details);
-                            } else {
-                                packages.remove(existing); // it still exists, remove it from our list
-                                if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
-                                    report.addUpdatedPackage(details);
+                        if (!filePackage.isDirectory()) {
+                            ContentProviderPackageDetails details = createPackage(filePackage);
+                            if (details != null) {
+                                ContentProviderPackageDetails existing = findPackage(packages, details);
+                                if (existing == null) {
+                                    report.addNewPackage(details);
+                                } else {
+                                    packages.remove(existing); // it still exists, remove it from our list
+                                    if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
+                                        report.addUpdatedPackage(details);
+                                    }
                                 }
                             }
-                        } else {
-                            // file does not match any filter and is therefore an unknown type - ignore it
+                            else {
+                                // file does not match any filter and is therefore an unknown type - ignore it
+                            }
                         }
                     }
 
@@ -234,14 +237,15 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         }
 
         ContentFileInfo fileInfo = ContentFileInfoFactory.createContentFileInfo(file);
-        String md5;
+        String sha256;
         try {
-            md5 = MessageDigestGenerator.getDigestString(file);
+            sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(file);
         } catch (IOException e) {
             throw new SyncException("Error digesting file", e);
         }
         String name = file.getName();
-        String version = fileInfo.getVersion(md5);
+        String version = "[sha256=" + sha256 + "]";
+        String displayVersion = fileInfo.getVersion(null);
         String packageTypeName = supportedPackageType.packageTypeName;
         String architectureName = supportedPackageType.architectureName;
         String resourceTypeName = supportedPackageType.resourceTypeName;
@@ -255,7 +259,8 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         pkg.setFileName(name);
         pkg.setFileCreatedDate(file.lastModified());
         pkg.setFileSize(file.length());
-        pkg.setMD5(md5);
+        pkg.setSHA256(sha256);
+        pkg.setDisplayVersion(displayVersion);
         pkg.setLocation(getRelativePath(file));
         pkg.setShortDescription(fileInfo.getDescription(null));
 

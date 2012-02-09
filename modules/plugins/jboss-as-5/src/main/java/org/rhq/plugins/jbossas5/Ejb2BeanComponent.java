@@ -39,13 +39,15 @@ public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
     private static final ComponentType MDB_COMPONENT_TYPE = new ComponentType("EJB", "MDB");
 
     @Override
-    protected ManagedComponent getManagedComponent(boolean forceRefresh) {
+    protected ManagedComponent getManagedComponent() {
         if (MDB_COMPONENT_TYPE.equals(getComponentType())) {
             try {
                 //we need to reload the management view here, because the MDBs might have changed since
                 //the last call, because the @object-id is part of their names.
                 ManagementView mv = getConnection().getManagementView();
-                mv.load();
+                // TODO Review with ips to see if we need the following, commented out call
+                // jsanda
+                //mv.load();
 
                 Set<ManagedComponent> mdbs = mv.getComponentsForType(MDB_COMPONENT_TYPE);
 
@@ -59,7 +61,7 @@ public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
                 throw new IllegalStateException(e);
             }
         } else {
-            return super.getManagedComponent(forceRefresh);
+            return super.getManagedComponent();
         }
 
         return null;

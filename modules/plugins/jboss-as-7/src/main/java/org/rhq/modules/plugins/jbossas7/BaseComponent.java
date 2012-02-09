@@ -579,11 +579,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
-        } else if (what.equals("naming")) {
-            if (op.equals("jndi-view")) {
-                theAddress.add(address);
-                operation = new Operation("jndi-view",theAddress);
-            }
         }
 
 

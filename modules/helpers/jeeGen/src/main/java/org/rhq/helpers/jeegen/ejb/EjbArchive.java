@@ -53,33 +53,88 @@ import org.jboss.shrinkwrap.impl.base.path.BasicPath;
  */
 public class EjbArchive implements JavaArchive {
 
+    public static final String TEST_EJB_RESOURCE_PATH = "test/ejb";
+
     private JavaArchive delegate;
 
+    enum EjbVersionInfo {
+        v2_0("2.0", "<!DOCTYPE ejb-jar PUBLIC \"-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n<ejb-jar>"),
+        v2_1("2.1", "<ejb-jar version=\"2.1\"\n" +
+            " xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n" +
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/ejb-jar_2_1.xsd\">"),
+        v3_0("3.0", "<ejb-jar version=\"3.0\"\n" + "" +
+            " xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd\">"),
+        v3_1("3.1", "<ejb-jar version=\"3.1\"\n" +
+            " xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd\">");
+
+        private String version;
+        private String rootElement;
+
+        EjbVersionInfo(String version, String rootElement) {
+            this.version = version;
+            this.rootElement = rootElement;            
+        }
+        
+        private static final Map<String, EjbVersionInfo> VERSION_TO_VALUE_MAP  =
+            new HashMap<String, EjbVersionInfo>(values().length);
+        static {
+            for (EjbVersionInfo value : values()) {
+                VERSION_TO_VALUE_MAP.put(value.getVersion(), value);
+            }
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public String getRootElement() {
+            return rootElement;
+        }
+        
+        public static EjbVersionInfo forVersion(String version) {
+            if (!VERSION_TO_VALUE_MAP.containsKey(version)) {
+                throw new IllegalArgumentException("Unsupported version: \"" + version +
+                    "\". The following versions are supported: " + VERSION_TO_VALUE_MAP.keySet());
+            }
+            return VERSION_TO_VALUE_MAP.get(version);
+        }
+    }
+    
     /**
      * Create a new JavaArchive with any type storage engine as backing.
      *
      * @param delegate The storage backing.
      */
-    public EjbArchive(JavaArchive delegate, int statelessSessionBeanCount, int statefulSessionBeanCount) {
+    public EjbArchive(JavaArchive delegate, String ejbVersion, int entityBeanCount, int statelessSessionBeanCount,
+                      int statefulSessionBeanCount) {
+        EjbVersionInfo ejbVersionInfo = EjbVersionInfo.forVersion(ejbVersion);
+
         this.delegate = delegate;
 
-        Configuration cfg = new Configuration();
-        cfg.setClassForTemplateLoading(getClass(), "");
-        cfg.setObjectWrapper(new DefaultObjectWrapper());
+        Configuration config = new Configuration();
+        config.setClassForTemplateLoading(getClass(), "");
+        config.setObjectWrapper(new DefaultObjectWrapper());
 
         ByteArrayOutputStream byteArrayOutputStream;
         try {
-            Template temp = cfg.getTemplate("v2/ejb-jar.xml.ftl");
+            Template template = config.getTemplate("v2/ejb-jar.xml.ftl");
 
             Map dataModel = new HashMap();
             dataModel.put("name", "Test");
-            dataModel.put("package", "test.ejb.v2");
+            dataModel.put("rootElement", ejbVersionInfo.getRootElement());
+            dataModel.put("package", "test.ejb");
+            dataModel.put("entityBeanCount", statelessSessionBeanCount);
             dataModel.put("statelessSessionBeanCount", statelessSessionBeanCount);
             dataModel.put("statefulSessionBeanCount", statefulSessionBeanCount);
 
             byteArrayOutputStream = new ByteArrayOutputStream();
             Writer out = new OutputStreamWriter(byteArrayOutputStream);
-            temp.process(dataModel, out);
+            template.process(dataModel, out);
         } catch (Exception e) {
             throw new RuntimeException("Failed to add ejb-jar.xml to EJB-JAR.", e);
         }
@@ -89,15 +144,20 @@ public class EjbArchive implements JavaArchive {
         // add deployment descriptor
         addAsManifestResource(ejbJarXml, new BasicPath("ejb-jar.xml"));
 
+        // add entity bean classes
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/EntityEJBHome.class"), TEST_EJB_RESOURCE_PATH + "/EntityEJBHome.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/EntityEJBObject.class"),TEST_EJB_RESOURCE_PATH + "/EntityEJBObject.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/EntityBean.class"), TEST_EJB_RESOURCE_PATH + "/EntityBean.class");
+
         // add stateless session bean classes
-        addAsResource(new ClassLoaderAsset("test/ejb/v2/StatelessSessionEJBHome.class"), "test/ejb/v2/StatelessSessionEJBHome.class");
-        addAsResource(new ClassLoaderAsset("test/ejb/v2/StatelessSessionEJBObject.class"),"test/ejb/v2/StatelessSessionEJBObject.class");
-        addAsResource(new ClassLoaderAsset("test/ejb/v2/StatelessSessionBean.class"), "test/ejb/v2/StatelessSessionBean.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatelessSessionEJBHome.class"), TEST_EJB_RESOURCE_PATH + "/StatelessSessionEJBHome.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatelessSessionEJBObject.class"),TEST_EJB_RESOURCE_PATH + "/StatelessSessionEJBObject.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatelessSessionBean.class"), TEST_EJB_RESOURCE_PATH + "/StatelessSessionBean.class");
 
         // add stateful session bean classes
-        addAsResource(new ClassLoaderAsset("test/ejb/v2/StatefulSessionEJBHome.class"), "test/ejb/v2/StatefulSessionEJBHome.class");
-        addAsResource(new ClassLoaderAsset("test/ejb/v2/StatefulSessionEJBObject.class"),"test/ejb/v2/StatefulSessionEJBObject.class");
-        addAsResource(new ClassLoaderAsset("test/ejb/v2/StatefulSessionBean.class"), "test/ejb/v2/StatefulSessionBean.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBHome.class"), TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBHome.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBObject.class"),TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBObject.class");
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatefulSessionBean.class"), TEST_EJB_RESOURCE_PATH + "/StatefulSessionBean.class");
     }
 
     @Override

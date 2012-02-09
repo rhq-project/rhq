@@ -1,4 +1,4 @@
-package test.ejb.v2;
+package test.ejb;
 
 import javax.ejb.SessionBean;
 import javax.ejb.SessionContext;

@@ -33,7 +33,7 @@ import org.rhq.helpers.jeegen.ejb.EjbArchive;
 public class JeeGen {
 
     public static void main(String[] args) throws Exception {
-        EjbArchive ejbArchive = new EjbArchive(ShrinkWrap.create(JavaArchive.class), 100, 100);
+        EjbArchive ejbArchive = new EjbArchive(ShrinkWrap.create(JavaArchive.class), "2.1", 10, 10, 10);
         File ejbJarFile = new File("test-ejb.jar");
         ejbArchive.as(ZipExporter.class).exportTo(ejbJarFile, true);
     }

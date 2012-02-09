@@ -189,7 +189,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
-        <metric property="startTime" dataType="trait" displayName="Start time of the server"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -363,7 +363,7 @@
 
             <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                     displayType="summary"/>
-            <metric property="startTime" dataType="trait" displayName="Start time of the server"/>
+            <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
             <event name="logEntry" description="an entry in a log file"/>
 
@@ -519,7 +519,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
-        <metric property="startTime" dataType="trait" displayName="Start time of the server"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -2003,7 +2003,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <server name="Naming"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="NamingComponent"
         singleton="true"
         >
 
@@ -2016,15 +2016,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
         </plugin-configuration>
 
-        <operation name="naming:jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
+        <operation name="jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
             <results>
-                <c:list-property name="operationResult">
-                    <c:list-property name="innerContext">
-                        <c:map-property name="innerContexts">
-                            <c:simple-property name="class-name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
+                <c:list-property name="java-contexts">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
+                </c:list-property>
+                <c:list-property name="applications">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
                 </c:list-property>
             </results>
         </operation>

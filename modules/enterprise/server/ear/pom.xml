@@ -102,6 +102,16 @@
         <groupId>org.rhq</groupId>
         <artifactId>rhq-server-client-api</artifactId>
         <version>${project.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-container-lib</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-server</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!-- 3rd Party Deps -->

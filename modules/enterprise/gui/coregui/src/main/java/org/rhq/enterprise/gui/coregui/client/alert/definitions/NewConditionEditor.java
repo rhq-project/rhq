@@ -47,9 +47,9 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -75,6 +75,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD = "calltime-threshold";
 
     private static final String AVAILABILITY_ITEMNAME = "availability";
+    private static final String AVAILABILITY_DURATION_ITEMNAME = "availabilityDuration";
+    private static final String AVAILABILITY_DURATION_VAL_ITEMNAME = "availabilityDurationVal";
     private static final String THRESHOLD_METRIC_ITEMNAME = "thresholdMetric";
     private static final String THRESHOLD_COMPARATOR_ITEMNAME = "thresholdComparator";
     private static final String THRESHOLD_ABSVALUE_ITEMNAME = "metricAbsoluteValue";
@@ -170,46 +172,48 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         setMargin(20);
 
-        conditionTypeSelectItem = new SelectItem("conditionType", MSG
-            .view_alert_definition_condition_editor_option_label());
+        conditionTypeSelectItem = new SelectItem("conditionType",
+            MSG.view_alert_definition_condition_editor_option_label());
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
-        condTypes.put(AlertConditionCategory.AVAILABILITY.name(), MSG
-            .view_alert_definition_condition_editor_option_availability());
+        condTypes.put(AlertConditionCategory.AVAILABILITY.name(),
+            MSG.view_alert_definition_condition_editor_option_availability());
+        // TODO I18N
+        condTypes.put(AlertConditionCategory.AVAIL_DURATION.name(), "Availability Duration");
         if (supportsMetrics) {
-            condTypes.put(AlertConditionCategory.THRESHOLD.name(), MSG
-                .view_alert_definition_condition_editor_option_metric_threshold());
-            condTypes.put(AlertConditionCategory.BASELINE.name(), MSG
-                .view_alert_definition_condition_editor_option_metric_baseline());
-            condTypes.put(AlertConditionCategory.CHANGE.name(), MSG
-                .view_alert_definition_condition_editor_option_metric_change());
-            condTypes.put(AlertConditionCategory.RANGE.name(), MSG
-                .view_alert_definition_condition_editor_option_metric_range());
+            condTypes.put(AlertConditionCategory.THRESHOLD.name(),
+                MSG.view_alert_definition_condition_editor_option_metric_threshold());
+            condTypes.put(AlertConditionCategory.BASELINE.name(),
+                MSG.view_alert_definition_condition_editor_option_metric_baseline());
+            condTypes.put(AlertConditionCategory.CHANGE.name(),
+                MSG.view_alert_definition_condition_editor_option_metric_change());
+            condTypes.put(AlertConditionCategory.RANGE.name(),
+                MSG.view_alert_definition_condition_editor_option_metric_range());
         }
         if (supportsCalltimeMetrics) {
-            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD, MSG
-                .view_alert_definition_condition_editor_option_metric_calltime_threshold());
-            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE, MSG
-                .view_alert_definition_condition_editor_option_metric_calltime_change());
+            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD,
+                MSG.view_alert_definition_condition_editor_option_metric_calltime_threshold());
+            condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE,
+                MSG.view_alert_definition_condition_editor_option_metric_calltime_change());
         }
         if (supportsTraits) {
-            condTypes.put(AlertConditionCategory.TRAIT.name(), MSG
-                .view_alert_definition_condition_editor_option_metric_trait_change());
+            condTypes.put(AlertConditionCategory.TRAIT.name(),
+                MSG.view_alert_definition_condition_editor_option_metric_trait_change());
         }
         if (supportsOperations) {
-            condTypes.put(AlertConditionCategory.CONTROL.name(), MSG
-                .view_alert_definition_condition_editor_option_operation());
+            condTypes.put(AlertConditionCategory.CONTROL.name(),
+                MSG.view_alert_definition_condition_editor_option_operation());
         }
         if (supportsResourceConfig) {
-            condTypes.put(AlertConditionCategory.RESOURCE_CONFIG.name(), MSG
-                .view_alert_definition_condition_editor_option_resource_configuration());
+            condTypes.put(AlertConditionCategory.RESOURCE_CONFIG.name(),
+                MSG.view_alert_definition_condition_editor_option_resource_configuration());
         }
         if (supportsEvents) {
-            condTypes.put(AlertConditionCategory.EVENT.name(), MSG
-                .view_alert_definition_condition_editor_option_event());
+            condTypes.put(AlertConditionCategory.EVENT.name(),
+                MSG.view_alert_definition_condition_editor_option_event());
         }
         if (supportsDrift) {
-            condTypes.put(AlertConditionCategory.DRIFT.name(), MSG
-                .view_alert_definition_condition_editor_option_drift());
+            condTypes.put(AlertConditionCategory.DRIFT.name(),
+                MSG.view_alert_definition_condition_editor_option_drift());
         }
         conditionTypeSelectItem.setValueMap(condTypes);
         conditionTypeSelectItem.setDefaultValue(AlertConditionCategory.AVAILABILITY.name());
@@ -253,6 +257,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.add(conditionTypeSelectItem);
         formItems.add(spacer1);
         formItems.addAll(buildAvailabilityChangeFormItems());
+        formItems.addAll(buildAvailabilityDurationFormItems());
         if (supportsMetrics) {
             formItems.addAll(buildMetricThresholdFormItems());
             formItems.addAll(buildMetricRangeFormItems());
@@ -329,10 +334,19 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
             switch (category) {
             case AVAILABILITY: {
-                newCondition.setName(null);
+                newCondition.setName(getValueAsString(AVAILABILITY_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
-                newCondition.setOption(getValueAsString(AVAILABILITY_ITEMNAME));
+                newCondition.setOption(null);
+                newCondition.setMeasurementDefinition(null);
+                break;
+            }
+
+            case AVAIL_DURATION: {
+                newCondition.setName(getValueAsString(AVAILABILITY_DURATION_ITEMNAME));
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(getValueAsString(AVAILABILITY_DURATION_VAL_ITEMNAME));
                 newCondition.setMeasurementDefinition(null);
                 break;
             }
@@ -483,8 +497,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (metricDropDownMenu != null) {
             formItems.add(metricDropDownMenu);
             formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
-            TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME, MSG
-                .view_alert_definition_condition_editor_metric_threshold_value());
+            TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME,
+                MSG.view_alert_definition_condition_editor_metric_threshold_value());
             absoluteValue.setWrapTitle(false);
             absoluteValue.setRequired(true);
             absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_value_tooltip());
@@ -516,8 +530,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (metricDropDownMenu != null) {
             formItems.add(metricDropDownMenu);
             formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc));
-            TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME, MSG
-                .view_alert_definition_condition_editor_metric_range_lovalue());
+            TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME,
+                MSG.view_alert_definition_condition_editor_metric_range_lovalue());
             absoluteLowValue.setWrapTitle(false);
             absoluteLowValue.setRequired(true);
             absoluteLowValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_lovalue_tooltip());
@@ -528,8 +542,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             absoluteLowValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteLowValue);
 
-            TextItem absoluteHighValue = new TextItem(RANGE_HI_ABSVALUE_ITEMNAME, MSG
-                .view_alert_definition_condition_editor_metric_range_hivalue());
+            TextItem absoluteHighValue = new TextItem(RANGE_HI_ABSVALUE_ITEMNAME,
+                MSG.view_alert_definition_condition_editor_metric_range_hivalue());
             absoluteHighValue.setWrapTitle(false);
             absoluteHighValue.setRequired(true);
             absoluteHighValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_hivalue_tooltip());
@@ -563,8 +577,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             formItems.add(metricDropDownMenu);
             formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc));
 
-            TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME, MSG
-                .view_alert_definition_condition_editor_metric_baseline_percentage());
+            TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME,
+                MSG.view_alert_definition_condition_editor_metric_baseline_percentage());
             baselinePercentage.setWrapTitle(false);
             baselinePercentage.setRequired(true);
             baselinePercentage.setTooltip(MSG
@@ -575,8 +589,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             baselinePercentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
             formItems.add(baselinePercentage);
 
-            SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME, MSG
-                .view_alert_definition_condition_editor_metric_baseline_value());
+            SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME,
+                MSG.view_alert_definition_condition_editor_metric_baseline_value());
             LinkedHashMap<String, String> baselines = new LinkedHashMap<String, String>(3);
             baselines.put("min", MSG.view_alert_definition_condition_editor_common_min()); // TODO can we have the current value of the min baseline
             baselines.put("mean", MSG.view_alert_definition_condition_editor_common_avg()); // TODO can we have the current value of the avg baseline
@@ -630,8 +644,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         SelectItem metricDropDownMenu = buildCalltimeMetricDropDownMenu(CALLTIME_THRESHOLD_METRIC_ITEMNAME, ifFunc);
         formItems.add(metricDropDownMenu);
 
-        SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_calltime_common_limit());
+        SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_calltime_common_limit());
         LinkedHashMap<String, String> limits = new LinkedHashMap<String, String>(3);
         limits.put("MIN", MSG.view_alert_definition_condition_editor_common_min());
         limits.put("AVG", MSG.view_alert_definition_condition_editor_common_avg());
@@ -648,8 +662,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.add(minMaxAvgSelection);
 
         formItems.add(buildComparatorDropDownMenu(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
-        TextItem absoluteValue = new TextItem(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_calltime_threshold_value());
+        TextItem absoluteValue = new TextItem(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_calltime_threshold_value());
         absoluteValue.setWrapTitle(false);
         absoluteValue.setRequired(true);
         absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_threshold_value_tooltip());
@@ -660,8 +674,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             metricDropDownMenu));
         formItems.add(absoluteValue);
 
-        TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_calltime_common_regex());
+        TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_calltime_common_regex());
         regex.setRequired(false);
         regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
         regex.setHoverWidth(200);
@@ -683,8 +697,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         formItems.add(buildCalltimeMetricDropDownMenu(CALLTIME_CHANGE_METRIC_ITEMNAME, ifFunc));
 
-        SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_calltime_common_limit());
+        SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_calltime_common_limit());
         LinkedHashMap<String, String> limits = new LinkedHashMap<String, String>(3);
         limits.put("MIN", MSG.view_alert_definition_condition_editor_common_min());
         limits.put("AVG", MSG.view_alert_definition_condition_editor_common_avg());
@@ -702,8 +716,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         formItems.add(buildCalltimeComparatorDropDownMenu(CALLTIME_CHANGE_COMPARATOR_ITEMNAME, ifFunc));
 
-        TextItem percentage = new TextItem(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_calltime_change_percentage());
+        TextItem percentage = new TextItem(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_calltime_change_percentage());
         percentage.setWrapTitle(false);
         percentage.setRequired(true);
         percentage.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_change_percentage_tooltip());
@@ -713,8 +727,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         percentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
         formItems.add(percentage);
 
-        TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_calltime_common_regex());
+        TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_calltime_common_regex());
         regex.setRequired(false);
         regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
         regex.setHoverWidth(200);
@@ -741,8 +755,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             }
         }
 
-        SelectItem traitSelection = new SelectItem(TRAIT_METRIC_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_trait_change_value());
+        SelectItem traitSelection = new SelectItem(TRAIT_METRIC_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_metric_trait_change_value());
         traitSelection.setValueMap(traitsMap);
         traitSelection.setDefaultValue(traitsMap.keySet().iterator().next()); // just use the first one
         traitSelection.setWidth("*");
@@ -762,16 +776,58 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("availabilityHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem selection = new SelectItem(AVAILABILITY_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_avilability_value());
+        SelectItem selection = new SelectItem(AVAILABILITY_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_avilability_value());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
-        avails.put(AvailabilityType.UP.name(), MSG.view_alert_definition_condition_editor_avilability_option_up());
-        avails.put(AvailabilityType.DOWN.name(), MSG.view_alert_definition_condition_editor_avilability_option_down());
+        avails.put(AlertConditionOperator.AVAIL_GOES_DOWN.name(), AlertConditionOperator.AVAIL_GOES_DOWN.toString());
+        avails.put(AlertConditionOperator.AVAIL_GOES_DISABLED.name(),
+            AlertConditionOperator.AVAIL_GOES_DISABLED.toString());
+        avails.put(AlertConditionOperator.AVAIL_GOES_UNKNOWN.name(),
+            AlertConditionOperator.AVAIL_GOES_UNKNOWN.toString());
+        avails
+            .put(AlertConditionOperator.AVAIL_GOES_NOT_UP.name(), AlertConditionOperator.AVAIL_GOES_NOT_UP.toString());
+        avails.put(AlertConditionOperator.AVAIL_GOES_UP.name(), AlertConditionOperator.AVAIL_GOES_UP.toString());
         selection.setValueMap(avails);
-        selection.setDefaultValue(AvailabilityType.DOWN.name());
+        selection.setDefaultValue(AlertConditionOperator.AVAIL_GOES_DOWN.name());
         selection.setShowIfCondition(ifFunc);
 
         formItems.add(selection);
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildAvailabilityDurationFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.AVAIL_DURATION);
+
+        // TODO I18N 
+        //String helpStr = MSG.view_alert_definition_condition_editor_avilability_tooltip();
+        String helpStr = "Trigger alert if resource stays in specified avail state for specified duration. This should be no less than several minutes to give the agent a chance to detect and report the change in availability.";
+        StaticTextItem helpItem = buildHelpTextItem("availabilityHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        SelectItem selection = new SelectItem(AVAILABILITY_DURATION_ITEMNAME, "Availability Duration");
+        LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
+        avails.put(AlertConditionOperator.AVAIL_DURATION_DOWN.name(),
+            AlertConditionOperator.AVAIL_DURATION_DOWN.toString());
+        avails.put(AlertConditionOperator.AVAIL_DURATION_NOT_UP.name(),
+            AlertConditionOperator.AVAIL_DURATION_NOT_UP.toString());
+        selection.setValueMap(avails);
+        selection.setDefaultValue(AlertConditionOperator.AVAIL_DURATION_DOWN.name());
+        selection.setShowIfCondition(ifFunc);
+        formItems.add(selection);
+
+        TextItem durationValue = new TextItem(AVAILABILITY_DURATION_VAL_ITEMNAME, "Duration");
+        durationValue.setWrapTitle(false);
+        durationValue.setRequired(true);
+        durationValue
+            .setTooltip("The number of minutes the resource must be at the given availability before the condition is met.");
+        durationValue.setHoverWidth(200);
+        durationValue.setValidateOnChange(true);
+        durationValue.setValidators(new NumberWithUnitsValidator(MeasurementUnits.MINUTES));
+        durationValue.setShowIfCondition(ifFunc);
+        formItems.add(durationValue);
+
         return formItems;
     }
 
@@ -821,8 +877,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("eventHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem eventSeveritySelection = new SelectItem(EVENT_SEVERITY_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_event_severity());
+        SelectItem eventSeveritySelection = new SelectItem(EVENT_SEVERITY_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_event_severity());
         LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
         severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
         severities.put(EventSeverity.INFO.name(), MSG.common_severity_info());
@@ -835,8 +891,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         eventSeveritySelection.setShowIfCondition(ifFunc);
         formItems.add(eventSeveritySelection);
 
-        TextItem eventRegex = new TextItem(EVENT_REGEX_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_event_regex());
+        TextItem eventRegex = new TextItem(EVENT_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_event_regex());
         eventRegex.setRequired(false);
         eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regex_tooltip());
         eventRegex.setHoverWidth(200);
@@ -868,8 +924,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("driftHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        TextItem driftDefNameRegex = new TextItem(DRIFT_DEFNAME_REGEX_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_drift_configname_regex());
+        TextItem driftDefNameRegex = new TextItem(DRIFT_DEFNAME_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_drift_configname_regex());
         driftDefNameRegex.setRequired(false);
         driftDefNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
         driftDefNameRegex.setHoverWidth(200);
@@ -877,8 +933,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         driftDefNameRegex.setShowIfCondition(ifFunc);
         formItems.add(driftDefNameRegex);
 
-        TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_drift_pathname_regex());
+        TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_drift_pathname_regex());
         driftPathNameRegex.setRequired(false);
         driftPathNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_pathname_regex_tooltip());
         driftPathNameRegex.setHoverWidth(200);
@@ -927,8 +983,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             return null; // all metrics should be hidden
         }
 
-        SelectItem metricSelection = new SelectItem(itemName, MSG
-            .view_alert_definition_condition_editor_metric_threshold_name());
+        SelectItem metricSelection = new SelectItem(itemName,
+            MSG.view_alert_definition_condition_editor_metric_threshold_name());
         metricSelection.setValueMap(metricsMap);
         metricSelection.setDefaultValue(metricsMap.keySet().iterator().next()); // just use the first one
         metricSelection.setWidth("*");
@@ -946,8 +1002,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             }
         }
 
-        SelectItem metricSelection = new SelectItem(itemName, MSG
-            .view_alert_definition_condition_editor_metric_calltime_common_name());
+        SelectItem metricSelection = new SelectItem(itemName,
+            MSG.view_alert_definition_condition_editor_metric_calltime_common_name());
         metricSelection.setValueMap(metricsMap);
         metricSelection.setDefaultValue(metricsMap.keySet().iterator().next()); // just use the first one
         metricSelection.setWidth("*");
@@ -966,8 +1022,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparators.put(">", "> (" + MSG.view_alert_definition_condition_editor_metric_threshold_comparator_greater()
             + ")");
 
-        SelectItem comparatorSelection = new SelectItem(itemName, MSG
-            .view_alert_definition_condition_editor_metric_threshold_comparator());
+        SelectItem comparatorSelection = new SelectItem(itemName,
+            MSG.view_alert_definition_condition_editor_metric_threshold_comparator());
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("<");
         comparatorSelection
@@ -984,8 +1040,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparators.put("CH", MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator_changes());
         comparators.put("HI", MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator_grows());
 
-        SelectItem comparatorSelection = new SelectItem(itemName, MSG
-            .view_alert_definition_condition_editor_metric_calltime_common_comparator());
+        SelectItem comparatorSelection = new SelectItem(itemName,
+            MSG.view_alert_definition_condition_editor_metric_calltime_common_comparator());
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("CH");
         comparatorSelection.setTooltip(MSG
@@ -1003,8 +1059,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparators.put("<=", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_inclusive());
         comparators.put(">=", MSG.view_alert_definition_condition_editor_metric_range_comparator_outside_inclusive());
 
-        SelectItem comparatorSelection = new SelectItem(itemName, MSG
-            .view_alert_definition_condition_editor_metric_range_comparator());
+        SelectItem comparatorSelection = new SelectItem(itemName,
+            MSG.view_alert_definition_condition_editor_metric_range_comparator());
         comparatorSelection.setValueMap(comparators);
         comparatorSelection.setDefaultValue("<");
         comparatorSelection.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_comparator_tooltip());

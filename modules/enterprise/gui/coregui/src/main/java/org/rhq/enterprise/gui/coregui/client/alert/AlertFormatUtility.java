@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -50,14 +51,44 @@ public class AlertFormatUtility {
         AlertConditionCategory category = condition.getCategory();
         switch (category) {
         case AVAILABILITY: {
-            str.append(MSG.view_alert_common_tab_conditions_type_availability());
+            // TODO I18N
+            str.append("Availability Change To");
             str.append(" [");
-            if ("up".equalsIgnoreCase(condition.getOption())) {
-                str.append(MSG.view_alert_common_tab_conditions_type_availability_up());
-            } else {
-                str.append(MSG.view_alert_common_tab_conditions_type_availability_down());
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            switch (operator) {
+            case AVAIL_GOES_DISABLED:
+            case AVAIL_GOES_DOWN:
+            case AVAIL_GOES_UNKNOWN:
+            case AVAIL_GOES_UP:
+            case AVAIL_GOES_NOT_UP:
+                str.append(operator);
+                break;
+            default:
+                str.append("*ERROR*");
             }
             str.append("]");
+
+            break;
+        }
+        case AVAIL_DURATION: {
+            // TODO I18N            
+            str.append("Availability Duration [");
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            switch (operator) {
+            case AVAIL_DURATION_DOWN:
+            case AVAIL_DURATION_NOT_UP:
+                str.append(operator);
+                break;
+            default:
+                str.append("*ERROR*");
+            }
+            str.append(" For ");
+
+            String value = condition.getOption();
+            String formatted = MeasurementConverterClient.format(value, MeasurementUnits.MINUTES);
+            str.append(formatted);
+            str.append("]");
+
             break;
         }
         case THRESHOLD: {

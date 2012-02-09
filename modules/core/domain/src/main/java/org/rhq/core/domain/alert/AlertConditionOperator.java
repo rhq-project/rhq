@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,10 +16,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.alert.engine.model;
+package org.rhq.core.domain.alert;
 
 /**
  * @author Joseph Marques
+ * @author Jay Shaughnessy
  */
 
 public enum AlertConditionOperator {
@@ -38,7 +39,16 @@ public enum AlertConditionOperator {
      */
     CHANGES(Type.STATELESS), // state value changes in any way
     CHANGES_TO(Type.STATELESS), // becomes one specific state value
-    CHANGES_FROM(Type.STATELESS); // leaves one specific state value
+    CHANGES_FROM(Type.STATELESS), // leaves one specific state value
+
+    AVAIL_GOES_DOWN(Type.STATELESS), // avail becomes DOWN from anything else
+    AVAIL_GOES_DISABLED(Type.STATELESS), // avail becomes DISABLED from anything else
+    AVAIL_GOES_UNKNOWN(Type.STATELESS), // avail becomes UNKNOWN from anything else
+    AVAIL_GOES_NOT_UP(Type.STATELESS), // convenience for avail becomes DOWN | DISABLED | UNKNOWN from UP    
+    AVAIL_GOES_UP(Type.STATELESS), //  avail becomes UP from anything else
+
+    AVAIL_DURATION_DOWN(Type.STATELESS), //  avail DOWN for X minutes  
+    AVAIL_DURATION_NOT_UP(Type.STATELESS); //  convenience for avail DOWN | UNKNOWN | DISABLED for X minutes
 
     private Type defaultType;
 

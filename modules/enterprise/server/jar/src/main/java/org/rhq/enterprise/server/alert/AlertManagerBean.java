@@ -43,8 +43,8 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.hibernate.ejb.QueryImpl;
+
 import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
@@ -52,6 +52,7 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
@@ -60,6 +61,7 @@ import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -807,8 +809,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss z");
             else
                 dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
-            builder.append(AlertI18NFactory.getMessage(format, conditionCounter, prettyPrintAlertCondition(aLog
-                .getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
+            builder.append(AlertI18NFactory.getMessage(format, conditionCounter,
+                prettyPrintAlertCondition(aLog.getCondition(), shortVersion),
+                dateFormat.format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 
@@ -821,6 +824,26 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         AlertConditionCategory category = condition.getCategory();
         switch (category) {
         case AVAILABILITY: {
+            // TODO I18N
+            str.append("Availability Change To");
+            str.append(" [");
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            switch (operator) {
+            case AVAIL_GOES_DISABLED:
+            case AVAIL_GOES_DOWN:
+            case AVAIL_GOES_UNKNOWN:
+            case AVAIL_GOES_UP:
+            case AVAIL_GOES_NOT_UP:
+                str.append(operator);
+                break;
+            default:
+                str.append("*ERROR*");
+            }
+            str.append("]");
+
+            break;
+
+            /*            
             if ("up".equalsIgnoreCase(condition.getOption())) {
                 if (shortVersion) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_UP_SHORT));
@@ -834,9 +857,31 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_DOWN));
                 }
             }
+            */
+        }
+
+        case AVAIL_DURATION: {
+            // TODO I18N            
+            str.append("Availability Duration ");
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            switch (operator) {
+            case AVAIL_DURATION_DOWN:
+            case AVAIL_DURATION_NOT_UP:
+                str.append(operator);
+                break;
+            default:
+                str.append("*ERROR*");
+            }
+            str.append("] [");
+
+            double value = condition.getThreshold();
+            String formatted = MeasurementConverter.format(value, MeasurementUnits.MILLISECONDS, true);
+            str.append(formatted);
+            str.append("]");
 
             break;
         }
+
         case THRESHOLD: {
             double value = condition.getThreshold();
             MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
@@ -1151,8 +1196,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
-        String baseUrl = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
-            RHQConstants.BaseURL);
+        String baseUrl = systemManager.getSystemSettings(subjectManager.getOverlord()).get(SystemSetting.BASE_URL);
         builder.append(baseUrl);
         if (!baseUrl.endsWith("/")) {
             builder.append("/");

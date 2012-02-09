@@ -50,6 +50,7 @@ import org.jboss.mx.util.MBeanServerLocator;
  */
 @Stateless
 public class SchedulerBean implements SchedulerLocal {
+    @SuppressWarnings("unused")
     private static final long serialVersionUID = 1L;
     private final Log log = LogFactory.getLog(SchedulerBean.class.getName());
 
@@ -63,8 +64,8 @@ public class SchedulerBean implements SchedulerLocal {
      */
     private SchedulerServiceMBean getSchedulerService() throws SchedulerException {
         try {
-            return (SchedulerServiceMBean) MBeanServerInvocationHandler.newProxyInstance(MBeanServerLocator
-                .locateJBoss(), SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
+            return (SchedulerServiceMBean) MBeanServerInvocationHandler.newProxyInstance(
+                MBeanServerLocator.locateJBoss(), SCHEDULER_MBEAN_NAME, SchedulerServiceMBean.class, false);
         } catch (Exception e) {
             throw new SchedulerException("Failed to get a proxy to the scheduler service MBean", e);
         }
@@ -449,5 +450,13 @@ public class SchedulerBean implements SchedulerLocal {
 
     public void startDelayed(int delay) throws SchedulerException {
         getSchedulerService().startDelayed(delay);
+    }
+
+    @Override
+    public void scheduleTriggeredJob(Class<? extends Job> jobClass, boolean isVolatile, Trigger trigger)
+        throws SchedulerException {
+
+        new EnhancedSchedulerImpl(getSchedulerService()).scheduleTriggeredJob(jobClass, isVolatile, trigger);
+        return;
     }
 }

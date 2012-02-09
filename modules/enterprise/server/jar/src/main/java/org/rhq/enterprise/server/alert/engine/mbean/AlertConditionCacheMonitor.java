@@ -38,6 +38,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBean, MBeanRegistration {
 
     public AtomicInteger availabilityCacheElementMatches = new AtomicInteger();
+    public AtomicInteger availabilityDurationCacheElementMatches = new AtomicInteger();
     public AtomicInteger eventCacheElementMatches = new AtomicInteger();
     public AtomicInteger measurementCacheElementMatches = new AtomicInteger();
     public AtomicInteger resourceConfigurationCacheElementMatches = new AtomicInteger();
@@ -47,6 +48,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger totalCacheElementMatches = new AtomicInteger();
 
     public AtomicLong availabilityProcessingTime = new AtomicLong();
+    public AtomicLong availabilityDurationProcessingTime = new AtomicLong();
     public AtomicLong eventProcessingTime = new AtomicLong();
     public AtomicLong measurementProcessingTime = new AtomicLong();
     public AtomicLong resourceConfigurationProcessingTime = new AtomicLong();
@@ -77,6 +79,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public int getAvailabilityCacheElementCount() {
         return AlertConditionCacheCoordinator.getInstance().getCacheSize(
             AlertConditionCacheCoordinator.Cache.AvailabilityCache);
+    }
+
+    public int getAvailabilityDurationCacheElementCount() {
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.AvailabilityDurationCache);
     }
 
     public int getEventCacheElementCount() {
@@ -131,6 +138,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         return availabilityCacheElementMatches.get();
     }
 
+    public int getAvailabilityDurationCacheElementMatches() {
+        return availabilityDurationCacheElementMatches.get();
+    }
+
     public int getEventCacheElementMatches() {
         return eventCacheElementMatches.get();
     }
@@ -161,6 +172,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementAvailabilityCacheElementMatches(int matches) {
         availabilityCacheElementMatches.addAndGet(matches);
+        totalCacheElementMatches.addAndGet(matches);
+    }
+
+    public void incrementAvailabilityDurationCacheElementMatches(int matches) {
+        availabilityDurationCacheElementMatches.addAndGet(matches);
         totalCacheElementMatches.addAndGet(matches);
     }
 
@@ -198,6 +214,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         return availabilityProcessingTime.get();
     }
 
+    public long getAvailabilityDurationProcessingTime() {
+        return availabilityDurationProcessingTime.get();
+    }
+
     public long getEventProcessingTime() {
         return eventProcessingTime.get();
     }
@@ -224,6 +244,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementAvailabilityProcessingTime(long moreMillis) {
         availabilityProcessingTime.addAndGet(moreMillis);
+        totalProcessingTime.addAndGet(moreMillis);
+    }
+
+    public void incrementAvailabilityDurationProcessingTime(long moreMillis) {
+        availabilityDurationProcessingTime.addAndGet(moreMillis);
         totalProcessingTime.addAndGet(moreMillis);
     }
 

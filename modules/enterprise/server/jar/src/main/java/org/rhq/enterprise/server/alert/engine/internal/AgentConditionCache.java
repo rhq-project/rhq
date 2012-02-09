@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite;
@@ -54,7 +55,6 @@ import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator.Cache;
 import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
-import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement.CallTimeElementValue;
 import org.rhq.enterprise.server.alert.engine.model.DriftCacheElement;
@@ -176,8 +176,8 @@ class AgentConditionCache extends AbstractConditionCache {
         int alertConditionId = alertCondition.getId(); // auto-unboxing is safe here because as the PK it's guaranteed to be non-null
 
         AlertConditionCategory alertConditionCategory = alertCondition.getCategory();
-        AlertConditionOperator alertConditionOperator = AlertConditionCacheUtils.getAlertConditionOperator(
-            alertConditionCategory, alertCondition.getComparator(), alertCondition.getOption());
+        AlertConditionOperator alertConditionOperator = AlertConditionCacheUtils
+            .getAlertConditionOperator(alertCondition);
 
         if (DataType.CALLTIME == composite.getDataType()) { // call-time cases start here
             if (alertConditionCategory == AlertConditionCategory.CHANGE) {

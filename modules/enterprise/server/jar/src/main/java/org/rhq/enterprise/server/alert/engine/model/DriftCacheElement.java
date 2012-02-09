@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import java.util.regex.Pattern;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 

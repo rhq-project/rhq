@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.alert.engine.model;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
+
 /**
  * there are two ways we can check the value compared to the range, each with either inclusivness or exclusivness.
  * inclusive means if value equals either the lo or hi, it is considered inside the range.

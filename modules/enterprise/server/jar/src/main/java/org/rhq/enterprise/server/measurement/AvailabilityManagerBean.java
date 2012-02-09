@@ -611,7 +611,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         resourceAvailabilityManager.updateAgentResourcesLatestAvailability(agentId, childAvailType, false);
 
-        // To handle backfilling process, which will mark them down
+        // To handle backfilling process, which will mark them unknown
         notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities",
             newAvailabilities.toArray(new Availability[newAvailabilities.size()]));
 
@@ -796,6 +796,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     private void notifyAlertConditionCacheManager(String callingMethod, Availability... availabilities) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(availabilities);
 
-        log.debug(callingMethod + ": " + stats.toString());
+        if (log.isDebugEnabled()) {
+            log.debug(callingMethod + ": " + stats.toString());
+        }
     }
 }

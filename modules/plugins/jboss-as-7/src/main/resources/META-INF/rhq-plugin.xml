@@ -2003,7 +2003,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <server name="Naming"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="NamingComponent"
         singleton="true"
         >
 
@@ -2016,15 +2016,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
         </plugin-configuration>
 
-        <operation name="naming:jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
+        <operation name="jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
             <results>
-                <c:list-property name="operationResult">
-                    <c:list-property name="innerContext">
-                        <c:map-property name="innerContexts">
-                            <c:simple-property name="class-name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
+                <c:list-property name="java-contexts">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
+                </c:list-property>
+                <c:list-property name="applications">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
                 </c:list-property>
             </results>
         </operation>

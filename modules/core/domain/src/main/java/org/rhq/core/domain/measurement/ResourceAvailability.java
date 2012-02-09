@@ -65,13 +65,6 @@ import org.rhq.core.domain.resource.Resource;
         + "                           FROM Resource res " //
         + "                          WHERE res.agent.id = :agentId " //
         + "                            AND res.parentResource IS NOT NULL )"),
-    @NamedQuery(name = ResourceAvailability.INSERT_BY_RESOURCE_IDS, query = "" //
-        + "  INSERT INTO ResourceAvailability ( resourceId ) " //
-        + "       SELECT res.id " //
-        + "         FROM Resource res " //
-        + "    LEFT JOIN res.currentAvailability avail " //
-        + "        WHERE res.id IN ( :resourceIds ) " //
-        + "          AND avail IS NULL "),
     /*
      * Platform plugins always return up for availability.  Platforms are
      * only down if the check-suspect-agent's backfiller sets them down.
@@ -96,7 +89,6 @@ public class ResourceAvailability implements Serializable {
     public static final String QUERY_FIND_BY_RESOURCE_ID = "ResourceAvailability.findByResourceId";
     public static final String UPDATE_CHILD_BY_AGENT_ID = "ResourceAvailability.updateChildByAgentId";
     public static final String UPDATE_PLATFORM_BY_AGENT_ID = "ResourceAvailability.updatePlatformByAgentId";
-    public static final String INSERT_BY_RESOURCE_IDS = "ResourceAvailability.insertByResourceIds";
     public static final String QUERY_IS_AGENT_BACKFILLED = "ResourceAvailability.isAgentBackfilled";
 
     @SuppressWarnings("unused")

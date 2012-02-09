@@ -189,7 +189,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
-        <metric property="startTime" dataType="trait" displayName="Start time of the server"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -363,7 +363,7 @@
 
             <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                     displayType="summary"/>
-            <metric property="startTime" dataType="trait" displayName="Start time of the server"/>
+            <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
             <event name="logEntry" description="an entry in a log file"/>
 
@@ -519,7 +519,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
-        <metric property="startTime" dataType="trait" displayName="Start time of the server"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 

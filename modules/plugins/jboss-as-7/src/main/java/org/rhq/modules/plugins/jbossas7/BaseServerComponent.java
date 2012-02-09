@@ -26,6 +26,7 @@ import java.net.ConnectException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -258,12 +259,16 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
     public void getValues(MeasurementReport report, Set metrics) throws Exception {
 
         Set<MeasurementScheduleRequest> requests = metrics;
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 
         for (MeasurementScheduleRequest request: requests) {
             if (request.getName().equals("startTime")) {
                 String path = getPath();
                 if (context.getResourceType().getName().contains("Host Controller")) {
-                    path = "host=master," + path ;  // TODO is the local controller always on host=master?? AS7-3678
+                    if (path!=null)
+                        path = "host=master," + path ;  // TODO is the local controller always on host=master?? AS7-3678
+                    else
+                        path = "host=master";
                 }
                 Address address = new Address(path);
                 address.add("core-service","platform-mbean");
@@ -276,11 +281,13 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
                     MeasurementDataTrait data = new MeasurementDataTrait(request,new Date(startTime).toString());
                     report.addData(data);
                 }
-
+            }
+            else {
+                leftovers.add(request);
             }
         }
 
-        super.getValues(report, metrics);
+        super.getValues(report, leftovers);
     }
 
 }

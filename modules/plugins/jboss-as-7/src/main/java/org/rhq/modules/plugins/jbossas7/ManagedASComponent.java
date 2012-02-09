@@ -81,7 +81,7 @@ public class ManagedASComponent extends BaseComponent {
         for (MeasurementScheduleRequest request: requests) {
             if (request.getName().equals("startTime")) {
                 String path = getPath();
-                path = path.replace("server-config=","server=");
+                path = path.replace("server-config","server");
                 Address address = new Address(path);
                 address.add("core-service","platform-mbean");
                 address.add("type","runtime");

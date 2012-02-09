@@ -1,4 +1,4 @@
-package test.ejb.v2;
+package test.ejb;
 
 import java.rmi.RemoteException;
 

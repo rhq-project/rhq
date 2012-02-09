@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.2.0.JON.3.0.2-SNAPSHOT</version>
+  <version>4.2.0.JON.3.0.1.GA</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>

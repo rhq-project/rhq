@@ -51,17 +51,24 @@ public class AlertFormatUtility {
         AlertConditionCategory category = condition.getCategory();
         switch (category) {
         case AVAILABILITY: {
-            // TODO I18N
-            str.append("Availability Change To");
+            str.append(MSG.common_title_availability());
             str.append(" [");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
             switch (operator) {
             case AVAIL_GOES_DISABLED:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesDisabled());
+                break;
             case AVAIL_GOES_DOWN:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesDown());
+                break;
             case AVAIL_GOES_UNKNOWN:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesUnknown());
+                break;
             case AVAIL_GOES_UP:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesUp());
+                break;
             case AVAIL_GOES_NOT_UP:
-                str.append(operator);
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_goesNotUp());
                 break;
             default:
                 str.append("*ERROR*");
@@ -71,13 +78,14 @@ public class AlertFormatUtility {
             break;
         }
         case AVAIL_DURATION: {
-            // TODO I18N            
             str.append("Availability Duration [");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
             switch (operator) {
             case AVAIL_DURATION_DOWN:
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_durationDown());
+                break;
             case AVAIL_DURATION_NOT_UP:
-                str.append(operator);
+                str.append(MSG.view_alert_definition_condition_editor_operator_availability_durationNotUp());
                 break;
             default:
                 str.append("*ERROR*");

@@ -818,7 +818,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return builder.toString();
     }
 
-    private String prettyPrintAlertCondition(AlertCondition condition, boolean shortVersion) {
+    private String prettyPrintAlertCondition(AlertCondition condition, boolean isShort) {
         StringBuilder str = new StringBuilder();
 
         AlertConditionCategory category = condition.getCategory();
@@ -828,54 +828,57 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             str.append("Availability Change To");
             str.append(" [");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            String msg;
             switch (operator) {
             case AVAIL_GOES_DISABLED:
-            case AVAIL_GOES_DOWN:
-            case AVAIL_GOES_UNKNOWN:
-            case AVAIL_GOES_UP:
-            case AVAIL_GOES_NOT_UP:
-                str.append(operator);
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_DISABLED_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_DISABLED;
                 break;
+            case AVAIL_GOES_DOWN:
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_DOWN_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_DOWN;
+                break;
+            case AVAIL_GOES_UNKNOWN:
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_UNKNOWN_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_UNKNOWN;
+                break;
+            case AVAIL_GOES_UP:
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_UP_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_UP;
+                break;
+            case AVAIL_GOES_NOT_UP:
             default:
-                str.append("*ERROR*");
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_NOT_UP_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_GOES_NOT_UP;
+                break;
             }
+            str.append(AlertI18NFactory.getMessage(msg));
             str.append("]");
 
             break;
-
-            /*            
-            if ("up".equalsIgnoreCase(condition.getOption())) {
-                if (shortVersion) {
-                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_UP_SHORT));
-                } else {
-                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_UP));
-                }
-            } else {
-                if (shortVersion) {
-                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_DOWN_SHORT));
-                } else {
-                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_AVAILABILITY_DOWN));
-                }
-            }
-            */
         }
 
         case AVAIL_DURATION: {
             // TODO I18N            
             str.append("Availability Duration ");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
+            String msg;
             switch (operator) {
             case AVAIL_DURATION_DOWN:
-            case AVAIL_DURATION_NOT_UP:
-                str.append(operator);
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_DURATION_DOWN_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_DURATION_DOWN;
                 break;
+            case AVAIL_DURATION_NOT_UP:
             default:
-                str.append("*ERROR*");
+                msg = isShort ? AlertI18NResourceKeys.ALERT_AVAILABILITY_DURATION_NOT_UP_SHORT
+                    : AlertI18NResourceKeys.ALERT_AVAILABILITY_DURATION_NOT_UP;
+                break;
             }
-            str.append("] [");
+            str.append(AlertI18NFactory.getMessage(msg));
+            str.append(" ");
 
             double value = condition.getThreshold();
-            String formatted = MeasurementConverter.format(value, MeasurementUnits.MILLISECONDS, true);
+            String formatted = MeasurementConverter.format(value, MeasurementUnits.MINUTES, false);
             str.append(formatted);
             str.append("]");
 
@@ -903,7 +906,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
                 if (condition.getName() != null && condition.getName().length() > 0) {
                     String regex = condition.getName();
-                    if (shortVersion) {
+                    if (isShort) {
                         str.append(AlertI18NFactory.getMessage(
                             AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR_SHORT, metricName, limit,
                             comparator, formatted, regex));
@@ -913,7 +916,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             comparator, formatted, regex));
                     }
                 } else {
-                    if (shortVersion) {
+                    if (isShort) {
                         str.append(AlertI18NFactory.getMessage(
                             AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_SHORT, metricName, limit, comparator,
                             formatted));
@@ -933,7 +936,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             String percentage = MeasurementConverter.format(value, units, true);
             String baselineThreshold = condition.getOption(); // mean, min, max
 
-            if (shortVersion) {
+            if (isShort) {
                 if (baselineThreshold.equalsIgnoreCase("min")) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_BASELINE_MIN_SHORT, metricName,
                         comparator, percentage));
@@ -961,7 +964,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         case CHANGE: {
             if (condition.getOption() == null) {
                 String metricName = condition.getName();
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory
                         .getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
                 } else {
@@ -993,7 +996,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
                 if (condition.getName() != null && condition.getName().length() > 0) {
                     String regex = condition.getName();
-                    if (shortVersion) {
+                    if (isShort) {
                         str.append(AlertI18NFactory.getMessage(
                             AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_WITH_EXPR_SHORT, metricName, limit,
                             comparator, formatted, regex));
@@ -1003,7 +1006,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             comparator, formatted, regex));
                     }
                 } else {
-                    if (shortVersion) {
+                    if (isShort) {
                         str.append(AlertI18NFactory.getMessage(
                             AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHORT, metricName, limit, comparator,
                             formatted));
@@ -1017,7 +1020,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
         case TRAIT: {
             String metricName = condition.getName();
-            if (shortVersion) {
+            if (isShort) {
                 str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
             } else {
                 str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
@@ -1038,7 +1041,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
 
             String status = condition.getOption();
-            if (shortVersion) {
+            if (isShort) {
                 str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_OPERATION_SHORT, opName, status));
             } else {
                 str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_OPERATION, opName, status));
@@ -1047,7 +1050,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             break;
         }
         case RESOURCE_CONFIG: {
-            if (shortVersion) {
+            if (isShort) {
                 str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RESOURCECONFIGCHANGE_SHORT));
             } else {
                 str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RESOURCECONFIGCHANGE));
@@ -1058,7 +1061,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             String severity = condition.getName();
             if (condition.getOption() != null && condition.getOption().length() > 0) {
                 String expression = condition.getOption();
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_WITH_EXPR_SHORT, severity,
                         expression));
                 } else {
@@ -1066,7 +1069,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         expression));
                 }
             } else {
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT_SHORT, severity));
                 } else {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EVENT, severity));
@@ -1077,7 +1080,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         case DRIFT: {
             String configNameRegex = condition.getName();
             String pathNameRegex = condition.getOption();
-            if (shortVersion) {
+            if (isShort) {
                 if (configNameRegex == null || configNameRegex.length() == 0) {
                     if (pathNameRegex == null || pathNameRegex.length() == 0) {
                         // neither a config name regex nor path regex was specified 
@@ -1146,7 +1149,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             // <= means "inside the range", >= means "outside the range" - inclusive
 
             if ("<".equals(condition.getComparator())) {
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL_SHORT,
                         metricName, loValueFormatted, hiValueFormatted));
                 } else {
@@ -1154,7 +1157,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         loValueFormatted, hiValueFormatted));
                 }
             } else if (">".equals(condition.getComparator())) {
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL_SHORT,
                         metricName, loValueFormatted, hiValueFormatted));
                 } else {
@@ -1162,7 +1165,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         loValueFormatted, hiValueFormatted));
                 }
             } else if ("<=".equals(condition.getComparator())) {
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL_SHORT,
                         metricName, loValueFormatted, hiValueFormatted));
                 } else {
@@ -1170,7 +1173,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         loValueFormatted, hiValueFormatted));
                 }
             } else if (">=".equals(condition.getComparator())) {
-                if (shortVersion) {
+                if (isShort) {
                     str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL_SHORT,
                         metricName, loValueFormatted, hiValueFormatted));
                 } else {

@@ -177,8 +177,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
         condTypes.put(AlertConditionCategory.AVAILABILITY.name(),
             MSG.view_alert_definition_condition_editor_option_availability());
-        // TODO I18N
-        condTypes.put(AlertConditionCategory.AVAIL_DURATION.name(), "Availability Duration");
+        condTypes.put(AlertConditionCategory.AVAIL_DURATION.name(),
+            MSG.view_alert_definition_condition_editor_availabilityDuration());
         if (supportsMetrics) {
             condTypes.put(AlertConditionCategory.THRESHOLD.name(),
                 MSG.view_alert_definition_condition_editor_option_metric_threshold());
@@ -772,21 +772,23 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.AVAILABILITY);
 
-        String helpStr = MSG.view_alert_definition_condition_editor_avilability_tooltip();
+        String helpStr = MSG.view_alert_definition_condition_editor_availability_tooltip();
         StaticTextItem helpItem = buildHelpTextItem("availabilityHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
         SelectItem selection = new SelectItem(AVAILABILITY_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_avilability_value());
+            MSG.view_alert_definition_condition_editor_availability_value());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
-        avails.put(AlertConditionOperator.AVAIL_GOES_DOWN.name(), AlertConditionOperator.AVAIL_GOES_DOWN.toString());
+        avails.put(AlertConditionOperator.AVAIL_GOES_DOWN.name(),
+            MSG.view_alert_definition_condition_editor_operator_availability_goesDown());
         avails.put(AlertConditionOperator.AVAIL_GOES_DISABLED.name(),
-            AlertConditionOperator.AVAIL_GOES_DISABLED.toString());
+            MSG.view_alert_definition_condition_editor_operator_availability_goesDisabled());
         avails.put(AlertConditionOperator.AVAIL_GOES_UNKNOWN.name(),
-            AlertConditionOperator.AVAIL_GOES_UNKNOWN.toString());
-        avails
-            .put(AlertConditionOperator.AVAIL_GOES_NOT_UP.name(), AlertConditionOperator.AVAIL_GOES_NOT_UP.toString());
-        avails.put(AlertConditionOperator.AVAIL_GOES_UP.name(), AlertConditionOperator.AVAIL_GOES_UP.toString());
+            MSG.view_alert_definition_condition_editor_operator_availability_goesUnknown());
+        avails.put(AlertConditionOperator.AVAIL_GOES_NOT_UP.name(),
+            MSG.view_alert_definition_condition_editor_operator_availability_goesNotUp());
+        avails.put(AlertConditionOperator.AVAIL_GOES_UP.name(),
+            MSG.view_alert_definition_condition_editor_operator_availability_goesUp());
         selection.setValueMap(avails);
         selection.setDefaultValue(AlertConditionOperator.AVAIL_GOES_DOWN.name());
         selection.setShowIfCondition(ifFunc);
@@ -800,28 +802,26 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.AVAIL_DURATION);
 
-        // TODO I18N 
-        //String helpStr = MSG.view_alert_definition_condition_editor_avilability_tooltip();
-        String helpStr = "Trigger alert if resource stays in specified avail state for specified duration. This should be no less than several minutes to give the agent a chance to detect and report the change in availability.";
-        StaticTextItem helpItem = buildHelpTextItem("availabilityHelp", helpStr, ifFunc);
+        String helpStr = MSG.view_alert_definition_condition_editor_availabilityDuration_tooltip();
+        StaticTextItem helpItem = buildHelpTextItem("availabilityDurationHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        SelectItem selection = new SelectItem(AVAILABILITY_DURATION_ITEMNAME, "Availability Duration");
+        SelectItem selection = new SelectItem(AVAILABILITY_DURATION_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_availabilityDuration());
         LinkedHashMap<String, String> avails = new LinkedHashMap<String, String>(2);
         avails.put(AlertConditionOperator.AVAIL_DURATION_DOWN.name(),
-            AlertConditionOperator.AVAIL_DURATION_DOWN.toString());
+            MSG.view_alert_definition_condition_editor_operator_availability_durationDown());
         avails.put(AlertConditionOperator.AVAIL_DURATION_NOT_UP.name(),
-            AlertConditionOperator.AVAIL_DURATION_NOT_UP.toString());
+            MSG.view_alert_definition_condition_editor_operator_availability_durationNotUp());
         selection.setValueMap(avails);
         selection.setDefaultValue(AlertConditionOperator.AVAIL_DURATION_DOWN.name());
         selection.setShowIfCondition(ifFunc);
         formItems.add(selection);
 
-        TextItem durationValue = new TextItem(AVAILABILITY_DURATION_VAL_ITEMNAME, "Duration");
+        TextItem durationValue = new TextItem(AVAILABILITY_DURATION_VAL_ITEMNAME, MSG.common_title_duration());
         durationValue.setWrapTitle(false);
         durationValue.setRequired(true);
-        durationValue
-            .setTooltip("The number of minutes the resource must be at the given availability before the condition is met.");
+        durationValue.setTooltip(MSG.view_alert_definition_condition_editor_availabilityDuration_tooltip_duration());
         durationValue.setHoverWidth(200);
         durationValue.setValidateOnChange(true);
         durationValue.setValidators(new NumberWithUnitsValidator(MeasurementUnits.MINUTES));

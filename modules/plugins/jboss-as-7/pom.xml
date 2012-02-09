@@ -15,9 +15,9 @@
     <name>RHQ JBossAS 7.x Plugin</name>
 
     <properties>
-        <scm.module.path>TODO</scm.module.path>
         <json.version>${project.json.version}</json.version>
         <jackson.version>1.7.4</jackson.version>
+        <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
     </properties>
 
     <build>
@@ -50,6 +50,11 @@
                                     <artifactId>jackson-core-asl</artifactId>
                                     <version>${jackson.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.jboss.sasl</groupId>
+                                    <artifactId>jboss-sasl</artifactId>
+                                    <version>${jboss.sasl.version}</version>
+                                </artifactItem>
 
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -77,7 +82,7 @@
                 <plugins>
 
                     <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>          
+                        <artifactId>maven-antrun-plugin</artifactId>
                         <executions>
 
                             <execution>
@@ -203,6 +208,13 @@
             <artifactId>rhq-jmx-plugin</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- for the password hashing - we may want to copy the relevant stuff over ourselves -->
+        <dependency>
+            <groupId>org.jboss.sasl</groupId>
+            <artifactId>jboss-sasl</artifactId>
+            <version>${jboss.sasl.version}</version>
         </dependency>
 
         <dependency>

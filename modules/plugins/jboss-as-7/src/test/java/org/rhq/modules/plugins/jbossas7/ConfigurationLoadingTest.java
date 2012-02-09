@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -416,20 +417,50 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
     }
 
-    private String loadJsonFromFile(String fileName) throws Exception {
-        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(fileName);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        try {
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-            }
-            return builder.toString();
-        }
-        finally {
-            reader.close();
-        }
+    public void test9() throws Exception {
+        String resultString = loadJsonFromFile("web.json");
+        ConfigurationDefinition definition = loadDescriptor("test9");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+        assert config!=null;
+        Collection<Property> properties = config.getProperties();
+        assert properties.size()==6 : "Got " + properties.size() + " props instead of 6: " + properties.toString();
+        PropertySimple simple = config.getSimple("check-interval");
+        assert simple !=null;
+        Integer integerValue = simple.getIntegerValue();
+        assert integerValue !=null : "check-interval was null";
+        assert integerValue ==17 : "check-interval was not 17 but " + integerValue;
+        PropertySimple disabled = config.getSimple("disabled");
+        assert disabled !=null : "disabled was null";
+        Boolean booleanValue = disabled.getBooleanValue();
+        assert booleanValue !=null;
+        assert booleanValue;
+        PropertySimple listings = config.getSimple("listings");
+        assert listings !=null;
+        Boolean booleanValue1 = listings.getBooleanValue();
+        assert booleanValue1 !=null;
+        assert !booleanValue1;
+        PropertySimple simple1 = config.getSimple("max-depth");
+        assert simple1 !=null;
+        Integer integerValue1 = simple1.getIntegerValue();
+        assert integerValue1 !=null;
+        assert integerValue1 ==3;
+        PropertySimple simple2 = config.getSimple("default-virtual-server");
+        assert simple2 !=null;
+        String stringValue = simple2.getStringValue();
+        assert stringValue !=null;
+        assert stringValue.equals("default-host");
+
+
+
     }
 
 }

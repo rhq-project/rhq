@@ -40,10 +40,12 @@ public class Result {
     private boolean success = false;
     @JsonProperty("rolled-back")
     private boolean rolledBack = false;
+    @JsonIgnore
+    private Throwable rhqThrowable;
 
     /** Record throwsables during low level processing */
     @JsonIgnore
-    private Throwable throwable;
+    private Map<String,Object> throwable;
 
     public Object getResponseHeaders() {
         return responseHeaders;
@@ -98,14 +100,23 @@ public class Result {
         this.rolledBack = rolledBack;
     }
 
-    public Throwable getThrowable() {
+    public Map<String, Object> getThrowable() {
         return throwable;
     }
 
-    public void setThrowable(Throwable throwable) {
+    public void setThrowable(Map<String,Object> throwable) {
         this.throwable = throwable;
     }
 
+    @JsonIgnore
+    public Throwable getRhqThrowable() {
+        return rhqThrowable;
+    }
+
+    @JsonIgnore
+    public void setRhqThrowable(Throwable rhqThrowable) {
+        this.rhqThrowable = rhqThrowable;
+    }
 
     @Override
     public String toString() {

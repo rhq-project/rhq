@@ -213,7 +213,11 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
         Set<ResourcePackageDetails> results = new HashSet<ResourcePackageDetails>();
         if (PACKAGE_TYPE.equals(type.getName())) {
-            File scriptFile = new File(resourceContext.getResourceKey());
+            String jbossHomeDir = resourceContext.getParentResourceComponent().getResourceContext()
+                .getPluginConfiguration().getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
+            File binDirectory = new File(jbossHomeDir, "bin");
+
+            File scriptFile = new File(binDirectory, resourceContext.getResourceKey());
 
             PackageDetailsKey key = new PackageDetailsKey(scriptFile.getName(), PACKAGE_VERSION, PACKAGE_TYPE,
                 PACKAGE_ARCHITECTURE);

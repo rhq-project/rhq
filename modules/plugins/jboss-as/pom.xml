@@ -22,6 +22,7 @@
 
    <properties>
       <scm.module.path>modules/plugins/jboss-as/</scm.module.path>
+	  <powermock.version>1.4.11</powermock.version>
    </properties>
 
    <dependencies>
@@ -81,6 +82,29 @@
          <artifactId>jdom</artifactId>
          <version>1.0</version>
       </dependency>
+
+      <!-- test -->
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-client-api</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
+      </dependency>
+
+       <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
 
    </dependencies>
 

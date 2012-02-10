@@ -21,6 +21,7 @@
     </scm>
 
     <properties>
+        <powermock.version>1.4.11</powermock.version>
         <scm.module.path>modules/enterprise/server/plugins/disk/</scm.module.path>
     </properties>
 
@@ -34,6 +35,20 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
 
     </dependencies>
 

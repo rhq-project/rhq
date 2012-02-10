@@ -202,14 +202,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             // If the package exists see if package version already exists
             if (null != generalPackage) {
                 Query packageVersionQuery = entityManager
-                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS);
+                    .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VERSION);
                 packageVersionQuery.setFlushMode(FlushModeType.COMMIT);
                 packageVersionQuery.setParameter("packageName", discoveredPackage.getName());
                 packageVersionQuery.setParameter("packageTypeName", discoveredPackage.getPackageTypeName());
                 packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
-                packageVersionQuery.setParameter("architectureName", discoveredPackage.getArchitectureName());
                 packageVersionQuery.setParameter("version", discoveredPackage.getVersion());
-                packageVersionQuery.setParameter("sha", discoveredPackage.getSHA256());
                 List<PackageVersion> resultPackageVersions = packageVersionQuery.getResultList();
                 if (resultPackageVersions.size() > 0) {
                     packageVersion = resultPackageVersions.get(0);
@@ -346,6 +344,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public void deployPackages(Subject user, int[] resourceIds, int[] packageVersionIds) {
+        this.deployPackagesWithNote(user, resourceIds, packageVersionIds, null);
+    }
+
+    public void deployPackagesWithNote(Subject user, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
         for (int resourceId : resourceIds) {
             Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
             for (int packageVersionId : packageVersionIds) {
@@ -359,7 +361,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 packages.add(details);
             }
 
-            deployPackages(user, resourceId, packages, null);
+            deployPackages(user, resourceId, packages, requestNotes);
         }
     }
 
@@ -1237,6 +1239,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
         Integer architectureId, byte[] packageBytes) {
+        return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, null,
+            architectureId, packageBytes);
+    }
+
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version, String displayVersion, Integer architectureId, byte[] packageBytes) {
 
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
@@ -1244,13 +1252,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to create package versions");
         }
 
-        return createPackageVersion(subject, packageName, packageTypeId, version, (null == architectureId) ? getNoArchitecture()
+        return createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version, displayVersion,
+            (null == architectureId) ? getNoArchitecture()
                 .getId() : architectureId, new ByteArrayInputStream(packageBytes));
     }
 
     @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String version, int architectureId, InputStream packageBitStream) {
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version, String displayVersion, int architectureId, InputStream packageBitStream) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
         packageVersionQuery.setParameter("name", packageName);
@@ -1261,7 +1270,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Result of the query should be either 0 or 1
         List existingVersionList = packageVersionQuery.getResultList();
         if (existingVersionList.size() > 0) {
-            return (PackageVersion) existingVersionList.get(0);
+            PackageVersion existingPackageVersion = (PackageVersion) existingVersionList.get(0);
+            if (displayVersion != null && !displayVersion.trim().isEmpty()) {
+                existingPackageVersion.setDisplayVersion(displayVersion);
+                existingPackageVersion = persistOrMergePackageVersionSafely(existingPackageVersion);
+            }
+
+            return existingPackageVersion;
         }
 
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
@@ -1316,6 +1331,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion.setPackageBits(bits);
         newPackageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         newPackageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
+        newPackageVersion.setDisplayVersion(displayVersion);
         
         existingPackage.addVersion(newPackageVersion);
 
@@ -1598,8 +1614,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         PageList<InstalledPackage> ips = findInstalledPackagesByCriteria(subject, criteria);
 
         // should not be more than 1
-        if ((null != ips) && (1 == ips.size())) {
-            result = ips.get(0);
+        if ((null != ips) && (ips.size() > 0)) {
+            int mostRecentPackageIndex = 0;
+
+            if (ips.size() > 1) {
+                for (int index = 1; index < ips.size(); index++) {
+                    if (ips.get(index).getInstallationDate() > ips.get(mostRecentPackageIndex).getInstallationDate()) {
+                        mostRecentPackageIndex = index;
+                    }
+                }
+            }
+
+            result = ips.get(mostRecentPackageIndex);
 
             // fetch these
             result.getPackageVersion().getGeneralPackage().getId();
@@ -1713,13 +1739,14 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         packageVersion.setFileSize(Long.valueOf(contentDetails.get(UPLOAD_FILE_SIZE)).longValue());
         packageVersion.setSHA256(contentDetails.get(UPLOAD_SHA256));
-        
+
         //populate extra details, persist
         if (packageUploadDetails != null) {
             packageVersion.setFileCreatedDate(Long.valueOf(packageUploadDetails
                 .get(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE)));
             packageVersion.setFileName(packageUploadDetails.get(ContentManagerLocal.UPLOAD_FILE_NAME));
             packageVersion.setMD5(packageUploadDetails.get(ContentManagerLocal.UPLOAD_MD5));
+            packageVersion.setDisplayVersion(packageUploadDetails.get(ContentManagerLocal.UPLOAD_DISPLAY_VERSION));
         }
 
         entityManager.merge(packageVersion);
@@ -2072,5 +2099,4 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             ex.printStackTrace();
         }
     }
-
 }

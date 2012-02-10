@@ -30,6 +30,7 @@
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
         <jbossas.version>6.0.0.M1</jbossas.version>
+        <powermock.version>1.4.11</powermock.version>
     </properties>
 
     <dependencyManagement>
@@ -369,6 +370,21 @@
             <scope>provided</scope>
         </dependency>
 -->
+
+        <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
+
     </dependencies>
 
     <build>

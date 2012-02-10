@@ -43,6 +43,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
+import org.jboss.on.plugins.tomcat.helper.FileContentDelegate;
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -69,9 +70,9 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
@@ -449,8 +450,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     private List<EmsBean> getVHosts() {
         EmsConnection emsConnection = getEmsConnection();
         String query = QUERY_TEMPLATE_HOST;
-        query = query.replace("%PATH%", getResourceContext().getPluginConfiguration().getSimpleValue(
-            PROPERTY_CONTEXT_ROOT, ""));
+        query = query.replace("%PATH%",
+            getResourceContext().getPluginConfiguration().getSimpleValue(PROPERTY_CONTEXT_ROOT, ""));
         ObjectNameQueryUtility queryUtil = new ObjectNameQueryUtility(query);
         List<EmsBean> mBeans = emsConnection.queryBeans(queryUtil.getTranslatedQuery());
         return mBeans;
@@ -507,15 +508,17 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             log.warn("Failed to create app backup but proceeding with redeploy of " + appFile.getPath() + ": " + e);
         }
 
+        FileContentDelegate contentDelegate = new FileContentDelegate(appFile.getParentFile());
+
         try {
             // Write the new bits for the application. If successful Tomcat will pick it up and complete the deploy.
-            moveTempFileToDeployLocation(tempFile, appFile, isExploded);
+            contentDelegate.createContent(appFile, tempFile, isExploded);
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
                 FileUtils.purge(appFile, true);
-                moveTempFileToDeployLocation(backupFile, appFile, isExploded);
+                contentDelegate.createContent(appFile, backupFile, isExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
             } catch (Exception e1) {
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
@@ -534,17 +537,6 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         response.addPackageResponse(packageResponse);
 
         return response;
-    }
-
-    private void moveTempFileToDeployLocation(File tempFile, File appFile, boolean isExploded) throws IOException {
-        InputStream tempIs = null;
-        if (isExploded) {
-            tempIs = new BufferedInputStream(new FileInputStream(tempFile));
-            appFile.mkdir();
-            ZipUtil.unzipFile(tempIs, appFile);
-        } else {
-            tempFile.renameTo(appFile);
-        }
     }
 
     private File backupAppBitsToTempFile(File appFile) throws Exception {
@@ -622,8 +614,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
             String sha256 = getSHA256(file);
-            JarContentFileInfo info = new JarContentFileInfo(file);
-            String version = getVersion(info, sha256);
+            String version = getVersion(sha256);
+            String displayVersion = getDisplayVersion(file);
 
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
@@ -634,6 +626,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
             details.setFileCreatedDate(null); // TODO: get created date via SIGAR
             details.setInstallationTimestamp(System.currentTimeMillis()); // TODO: anything better than discovery time
             details.setSHA256(sha256);
+            details.setDisplayVersion(displayVersion);
 
             packages.add(details);
         }
@@ -641,24 +634,19 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return packages;
     }
 
-    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
-    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
-    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
+    /**
+     * Retrieve SHA256 for a deployed app.
+     *
+     * @param file application file
+     * @return SHA256 of the content
+     */
     private String getSHA256(File file) {
-
         String sha256 = null;
 
         try {
-            //if the filesize of discovered package is null then it's an exploded and deployed war/ear.
-            File app = new File(file.getPath());
-            if (app.isDirectory()) {
-                File associatedWarFile = new File(app.getAbsolutePath() + ".war");
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(associatedWarFile);
-            } else {
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(app);
-            }
-        } catch (IOException iex) {
-            //log exception but move on, discovery happens often. No reason to hold up anything.
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(file);
+            sha256 = fileContentDelegate.getSHA(file);
+        } catch (Exception iex) {
             if (log.isDebugEnabled()) {
                 log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }
@@ -667,22 +655,22 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         return sha256;
     }
 
-    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
-        // Version string in order of preference
-        // manifestVersion + sha256, sha256, manifestVersion, "0"
-        String version = "0";
-        String manifestVersion = fileInfo.getVersion(null);
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
+    }
 
-        if ((null != manifestVersion) && (null != sha256)) {
-            // this protects against the occasional differing binaries with poor manifest maintenance  
-            version = manifestVersion + " [sha256=" + sha256 + "]";
-        } else if (null != sha256) {
-            version = "[sha256=" + sha256 + "]";
-        } else if (null != manifestVersion) {
-            version = manifestVersion;
-        }
-
-        return version;
+    /**
+     * Retrieve the display version for the component. The display version should be stored
+     * in the manifest of the application (implementation and/or specification version).
+     * It will attempt to retrieve the version for both archived or exploded deployments.
+     *
+     * @param file component file
+     * @return
+     */
+    private String getDisplayVersion(File file) {
+        //JarContentFileInfo extracts the version from archived and exploded deployments
+        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
+        return contentFileInfo.getVersion(null);
     }
 
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
@@ -741,9 +729,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
 
         File file = new File(fileName);
         if (!file.exists()) {
-            log
-                .warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
-                    + fileName);
+            log.warn("Could not delete web application files (perhaps removed manually?). Proceeding with resource removal for: "
+                + fileName);
         } else {
             deleteApp(pluginConfiguration, file, false, true);
         }

@@ -74,8 +74,9 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
     public AvailabilityType getAvailability() {
         RunState runState = getManagedComponent().getRunState();
         return (runState == RunState.RUNNING || runState == RunState.UNKNOWN) ? AvailabilityType.UP
-            : AvailabilityType.DOWN;
+                    : AvailabilityType.DOWN;
     }
+
 
     // ConfigurationFacet -----------------------------
 
@@ -189,16 +190,16 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
 
     public CreateResourceReport createResource(CreateResourceReport report) {
         try {
+            ManagedComponent bindingManagerComponent = getBindingManager();
             if (BINDING_SET_SERVICE_NAME.equals(report.getResourceType().getName())) {
                 Configuration bindingConfiguration = report.getResourceConfiguration();
 
                 checkValidity(bindingConfiguration);
                 
-                CompositeValue newBindingSet = Util.getBindingSetFromConfiguration(getBindingSetValueMetaType(),
-                    bindingConfiguration);
+                CompositeValue newBindingSet = Util.getBindingSetFromConfiguration(
+                        getBindingSetValueMetaType(bindingManagerComponent), bindingConfiguration);
 
                 //ok, now we can update the bindingSets property with the update set of binding sets
-                ManagedComponent bindingManagerComponent = getBindingManager();
                 ManagedProperty bindingSetsProperty = bindingManagerComponent.getProperty(Util.BINDING_SETS_PROPERTY);
 
                 //check that the provided binding set name is unique
@@ -242,8 +243,8 @@ public class ManagerComponent extends ManagedComponentComponent implements Creat
         return report;
     }
 
-    public MetaType getBindingSetValueMetaType() {
-        CollectionMetaType bindingSetsMetaType = (CollectionMetaType) getBindingManager().getProperty(
+    public MetaType getBindingSetValueMetaType(ManagedComponent bindingManager) {
+        CollectionMetaType bindingSetsMetaType = (CollectionMetaType) bindingManager.getProperty(
             Util.BINDING_SETS_PROPERTY).getMetaType();
 
         return bindingSetsMetaType.getElementType();

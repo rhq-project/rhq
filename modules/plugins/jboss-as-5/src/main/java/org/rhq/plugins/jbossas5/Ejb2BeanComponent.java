@@ -45,9 +45,6 @@ public class Ejb2BeanComponent extends AbstractEjbBeanComponent {
                 //we need to reload the management view here, because the MDBs might have changed since
                 //the last call, because the @object-id is part of their names.
                 ManagementView mv = getConnection().getManagementView();
-                // TODO Review with ips to see if we need the following, commented out call
-                // jsanda
-                //mv.load();
 
                 Set<ManagedComponent> mdbs = mv.getComponentsForType(MDB_COMPONENT_TYPE);
 

@@ -125,15 +125,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     public AvailabilityType getAvailability() {
         long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
         if (timeSinceComponentRefresh > AVAIL_WATERMARK) {
-            try {
-                getManagedComponent();
-            } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Could not get component state for " + componentType + " component '" + componentName +
-                            "', cause: " + t.getMessage(), t);
-                    return AvailabilityType.DOWN;
-                }
-            }
+            getManagedComponent();
         }
 
         if (runState == RunState.RUNNING) {
@@ -164,8 +156,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     public Configuration loadResourceConfiguration() {
         Configuration resourceConfig;
+        ManagedComponent managedComponent = getManagedComponent();
         try {
-            ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(getResourceContext()
                 .getPluginConfiguration());
@@ -174,7 +166,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties, customProps,
                 getResourceContext().getResourceType());
         } catch (Exception e) {
-            RunState runState = getManagedComponent().getRunState();
+            RunState runState = managedComponent.getRunState();
             if (runState == RunState.RUNNING) {
                 this.log.error("Failed to load configuration for " + getResourceDescription() + ".", e);
             } else {
@@ -252,7 +244,6 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-//        ManagedComponent managedComponent = prepareForMetricCollection(metrics);
         ManagedComponent managedComponent = getManagedComponent();
         RunState runState = managedComponent.getRunState();
         for (MeasurementScheduleRequest request : metrics) {
@@ -269,39 +260,6 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             }
         }
     }
-
-//    protected ManagedComponent prepareForMetricCollection(Set<MeasurementScheduleRequest> metrics) {
-//        // this bit could be synchronized but I don't think it really hurts to perhaps go through this logic more
-//        // than once, it will settle down near immediately
-//        Map<String, Boolean> runtimeMetricMap = runtimeMetricMaps.get(this.getClass().getName());
-//        if (null == runtimeMetricMap) {
-//            //log.info("\nADDING MAP FOR CLASS=" + this.getClass().getName());
-//            runtimeMetricMap = new HashMap<String, Boolean>();
-//            runtimeMetricMaps.put(this.getClass().getName(), runtimeMetricMap);
-//        }
-//
-//        // determine whether we can use the cachedComponent or if we need to force a component fetch to
-//        // gather the requested metrics.
-//        boolean forceRefresh = false;
-//        for (MeasurementScheduleRequest request : metrics) {
-//            Boolean isRuntimeMetric = runtimeMetricMap.get(request.getName());
-//            // if this is the first time we've seen this metric find out if it's a runtime prop
-//            if (null == isRuntimeMetric) {
-//                //log.info("\nADDING MAP ENTRY FOR METRIC=" + request.getName());
-//                ManagedProperty managedProp = getManagedProperty(managedComponent, request);
-//                runtimeMetricMap.put(request.getName(),
-//                    Boolean.valueOf((null == managedProp || managedProp.hasViewUse(ViewUse.RUNTIME))));
-//            }
-//
-//            if (Boolean.FALSE.equals(runtimeMetricMap.get(request.getName()))) {
-//                //log.info("\nFORCING COMPONENT REFRESH DUE TO NON-RUNTIME PROP: " + request.getName());
-//                forceRefresh = true;
-//                break;
-//            }
-//        }
-//
-//        return getManagedComponent();
-//    }
 
     protected String getMeasurement(ManagedComponent component, String metricName) throws Exception {
         if ("runState".equals(metricName)) {
@@ -461,7 +419,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
                     + this.componentName + "].");
         }
-        log.trace("Retrieved " + toString(managedComponent) + ".");
+        if (log.isTraceEnabled()) {
+            log.trace("Retrieved " + toString(managedComponent) + ".");
+        }
         lastComponentRefresh = System.currentTimeMillis();
         runState = managedComponent.getRunState();
         return managedComponent;
@@ -490,7 +450,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 return operation;
         }
         throw new IllegalStateException("ManagedOperation named '" + operationDefinition.getName()
-            + "' not found on ManagedComponent [" + getManagedComponent() + "].");
+            + "' not found on ManagedComponent [" + managedComponent + "].");
     }
 
     private static String toString(ManagedComponent managedComponent) {

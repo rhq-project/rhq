@@ -33,9 +33,39 @@ import org.rhq.helpers.jeegen.ejb.EjbArchive;
 public class JeeGen {
 
     public static void main(String[] args) throws Exception {
-        EjbArchive ejbArchive = new EjbArchive(ShrinkWrap.create(JavaArchive.class), "2.1", 10, 10, 10);
+        if (args.length != 5) {
+            printUsageAndExit();
+        }
+
+        String ejbVersion = args[0];
+        int entityBeanCount = 0;
+        int statelessSessionBeanCount = 0;
+        int statefulSessionBeanCount = 0;
+        int messageDrivenBeanCount = 0;
+        try {
+            entityBeanCount = Integer.parseInt(args[1]);
+            statelessSessionBeanCount = Integer.parseInt(args[2]);
+            statefulSessionBeanCount = Integer.parseInt(args[3]);
+            messageDrivenBeanCount = Integer.parseInt(args[4]);
+        } catch (NumberFormatException e) {
+            printUsageAndExit();
+        }
+
+        if (entityBeanCount < 0 || statelessSessionBeanCount < 0 || statefulSessionBeanCount < 0 || messageDrivenBeanCount < 0) {
+            printUsageAndExit();
+        }
+
+        EjbArchive ejbArchive = new EjbArchive(ShrinkWrap.create(JavaArchive.class), ejbVersion, entityBeanCount,
+            statelessSessionBeanCount, statefulSessionBeanCount, messageDrivenBeanCount);
         File ejbJarFile = new File("test-ejb.jar");
         ejbArchive.as(ZipExporter.class).exportTo(ejbJarFile, true);
+    }
+
+    private static void printUsageAndExit() {
+        System.err.println("Usage: " + JeeGen.class.getName() +
+            " EJB_VERSION ENTITY_BEAN_COUNT STATELESS_SESSION_BEAN_COUNT STATEFUL_SESSION_BEAN_COUNT MESSAGE_DRIVEN_BEAN_COUNT");
+        System.err.println("Example: " + JeeGen.class.getName() + " 3.0 10 10 10 10");
+        System.exit(1);
     }
 
 }

@@ -53,65 +53,17 @@ import org.jboss.shrinkwrap.impl.base.path.BasicPath;
  */
 public class EjbArchive implements JavaArchive {
 
-    public static final String TEST_EJB_RESOURCE_PATH = "test/ejb";
+    private static final String TEST_EJB_RESOURCE_PATH = "test/ejb";
 
     private JavaArchive delegate;
 
-    enum EjbVersionInfo {
-        v2_0("2.0", "<!DOCTYPE ejb-jar PUBLIC \"-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN\" \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n<ejb-jar>"),
-        v2_1("2.1", "<ejb-jar version=\"2.1\"\n" +
-            " xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n" +
-            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/ejb-jar_2_1.xsd\">"),
-        v3_0("3.0", "<ejb-jar version=\"3.0\"\n" + "" +
-            " xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
-            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd\">"),
-        v3_1("3.1", "<ejb-jar version=\"3.1\"\n" +
-            " xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
-            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd\">");
-
-        private String version;
-        private String rootElement;
-
-        EjbVersionInfo(String version, String rootElement) {
-            this.version = version;
-            this.rootElement = rootElement;            
-        }
-        
-        private static final Map<String, EjbVersionInfo> VERSION_TO_VALUE_MAP  =
-            new HashMap<String, EjbVersionInfo>(values().length);
-        static {
-            for (EjbVersionInfo value : values()) {
-                VERSION_TO_VALUE_MAP.put(value.getVersion(), value);
-            }
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public String getRootElement() {
-            return rootElement;
-        }
-        
-        public static EjbVersionInfo forVersion(String version) {
-            if (!VERSION_TO_VALUE_MAP.containsKey(version)) {
-                throw new IllegalArgumentException("Unsupported version: \"" + version +
-                    "\". The following versions are supported: " + VERSION_TO_VALUE_MAP.keySet());
-            }
-            return VERSION_TO_VALUE_MAP.get(version);
-        }
-    }
-    
     /**
      * Create a new JavaArchive with any type storage engine as backing.
      *
      * @param delegate The storage backing.
      */
     public EjbArchive(JavaArchive delegate, String ejbVersion, int entityBeanCount, int statelessSessionBeanCount,
-                      int statefulSessionBeanCount) {
+                      int statefulSessionBeanCount, int messageDrivenBeanCount) {
         EjbVersionInfo ejbVersionInfo = EjbVersionInfo.forVersion(ejbVersion);
 
         this.delegate = delegate;
@@ -124,13 +76,15 @@ public class EjbArchive implements JavaArchive {
         try {
             Template template = config.getTemplate("v2/ejb-jar.xml.ftl");
 
-            Map dataModel = new HashMap();
+            Map<String, Object> dataModel = new HashMap<String, Object>();
             dataModel.put("name", "Test");
             dataModel.put("rootElement", ejbVersionInfo.getRootElement());
-            dataModel.put("package", "test.ejb");
-            dataModel.put("entityBeanCount", statelessSessionBeanCount);
+            dataModel.put("mdbElements", ejbVersionInfo.getMdbElements());
+            dataModel.put("package", TEST_EJB_RESOURCE_PATH.replace('/', '.'));
+            dataModel.put("entityBeanCount", entityBeanCount);
             dataModel.put("statelessSessionBeanCount", statelessSessionBeanCount);
             dataModel.put("statefulSessionBeanCount", statefulSessionBeanCount);
+            dataModel.put("messageDrivenBeanCount", messageDrivenBeanCount);
 
             byteArrayOutputStream = new ByteArrayOutputStream();
             Writer out = new OutputStreamWriter(byteArrayOutputStream);
@@ -158,6 +112,9 @@ public class EjbArchive implements JavaArchive {
         addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBHome.class"), TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBHome.class");
         addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBObject.class"),TEST_EJB_RESOURCE_PATH + "/StatefulSessionEJBObject.class");
         addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/StatefulSessionBean.class"), TEST_EJB_RESOURCE_PATH + "/StatefulSessionBean.class");
+
+        // add message-driven bean classes
+        addAsResource(new ClassLoaderAsset(TEST_EJB_RESOURCE_PATH + "/MessageDrivenBean.class"), TEST_EJB_RESOURCE_PATH + "/MessageDrivenBean.class");
     }
 
     @Override
@@ -584,4 +541,83 @@ public class EjbArchive implements JavaArchive {
     public JavaArchive addAsResource(Package resourcePackage, String resourceName, ArchivePath target) throws IllegalArgumentException {
         return delegate.addAsResource(resourcePackage, resourceName, target);
     }
+
+    private static final String v2_1_AND_3_x_MDB_ELEMENTS =
+        "         <activation-config>\n" +
+        "            <activation-config-property>\n" +
+        "               <activation-config-property-name>messageSelector</activation-config-property-name>\n" +
+        "               <activation-config-property-value>RECIPIENT='MDB'</activation-config-property-value>\n" +
+        "            </activation-config-property>\n" +
+        "            <activation-config-property>\n" +
+        "               <activation-config-property-name>destinationType</activation-config-property-name>\n" +
+        "               <activation-config-property-value>javax.jms.Queue</activation-config-property-value>\n" +
+        "            </activation-config-property>\n" +
+        "            <activation-config-property>\n" +
+        "               <activation-config-property-name>destination</activation-config-property-name>\n" +
+        "               <activation-config-property-value>jms/persistentQueue</activation-config-property-value>\n" +
+        "            </activation-config-property>\n" +
+        "         </activation-config>";
+
+    private enum EjbVersionInfo {
+        v2_0("2.0", "<!DOCTYPE ejb-jar PUBLIC \"-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN\"\n" +
+            " \"http://java.sun.com/dtd/ejb-jar_2_0.dtd\">\n<ejb-jar>", 
+            "         <message-selector>RECIPIENT='MDB'</message-selector>\n" +
+            "         <message-driven-destination>\n" +
+            "            <destination-type>javax.jms.Queue</destination-type>\n" +
+            "         </message-driven-destination>"),
+        v2_1("2.1", "<ejb-jar version=\"2.1\"\n" +
+            " xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n" +
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/ejb-jar_2_1.xsd\">",
+            v2_1_AND_3_x_MDB_ELEMENTS),
+        v3_0("3.0", "<ejb-jar version=\"3.0\"\n" + "" +
+            " xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd\">",
+            v2_1_AND_3_x_MDB_ELEMENTS),
+        v3_1("3.1", "<ejb-jar version=\"3.1\"\n" +
+            " xmlns=\"http://java.sun.com/xml/ns/javaee\"\n" +
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            " xsi:schemaLocation=\"http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd\">",
+            v2_1_AND_3_x_MDB_ELEMENTS);
+
+        private String version;
+        private String rootElement;
+        private String mdbElements;
+
+        EjbVersionInfo(String version, String rootElement, String mdbElements) {
+            this.version = version;
+            this.rootElement = rootElement;
+            this.mdbElements = mdbElements;
+        }
+
+        private static final Map<String, EjbVersionInfo> VERSION_TO_VALUE_MAP  =
+            new HashMap<String, EjbVersionInfo>(values().length);
+        static {
+            for (EjbVersionInfo value : values()) {
+                VERSION_TO_VALUE_MAP.put(value.getVersion(), value);
+            }
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public String getRootElement() {
+            return rootElement;
+        }
+
+        public String getMdbElements() {
+            return mdbElements;
+        }
+
+        public static EjbVersionInfo forVersion(String version) {
+            if (!VERSION_TO_VALUE_MAP.containsKey(version)) {
+                throw new IllegalArgumentException("Unsupported version: \"" + version +
+                    "\". The following versions are supported: " + VERSION_TO_VALUE_MAP.keySet());
+            }
+            return VERSION_TO_VALUE_MAP.get(version);
+        }
+    }
+    
 }

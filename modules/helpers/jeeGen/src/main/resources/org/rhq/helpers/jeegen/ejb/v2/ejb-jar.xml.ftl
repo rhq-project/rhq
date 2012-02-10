@@ -76,5 +76,35 @@ ${rootElement}
       </session>
 </#list>
 
+<!-- Stateful Session Beans -->
+
+<#list 1..messageDrivenBeanCount as index>
+      <message-driven>
+         <description>a very simple message-driven bean</description>
+         <display-name>Simple Message-Driven Bean</display-name>
+
+         <ejb-name>${name}MessageDrivenBean${index?c}</ejb-name>
+         <ejb-class>${package}.MessageDrivenBean</ejb-class>
+         <transaction-type>Container</transaction-type>
+
+${mdbElements}
+<!--
+         <resource-ref>
+            <description>description</description>
+            <res-ref-name>jms/myQueueConnectionFactory</res-ref-name>
+            <res-type>javax.jms.QueueConnectionFactory</res-type>
+            <res-auth>Application</res-auth>
+            <res-sharing-scope>Shareable</res-sharing-scope>
+         </resource-ref>
+-->
+<!--
+         <resource-env-ref>
+            <resource-env-ref-name>jms/persistentQueue</resource-env-ref-name>
+            <resource-env-ref-type>javax.jms.Queue</resource-env-ref-type>
+         </resource-env-ref>
+-->
+      </message-driven>
+</#list>
+
    </enterprise-beans>
 </ejb-jar>

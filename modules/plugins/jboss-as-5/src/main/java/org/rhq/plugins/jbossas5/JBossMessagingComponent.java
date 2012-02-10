@@ -43,10 +43,6 @@ public class JBossMessagingComponent extends ManagedComponentComponent implement
     MeasurementFacet {
     private CreateChildResourceFacetDelegate createChildResourceDelegate;
 
-    public AvailabilityType getAvailability() {
-        return super.getAvailability();
-    }
-
     public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         this.createChildResourceDelegate = new CreateChildResourceFacetDelegate(this);

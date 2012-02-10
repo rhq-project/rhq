@@ -321,7 +321,7 @@ public abstract class AbstractMetricGraphView extends LocatableVLayout {
         long max = System.currentTimeMillis();
         long min = max - (1000L * 60 * 60 * 8);
 
-        int xTicks = getWidth() / 140;
+        int xTicks = getDefaultWidth() / 140;
 
         plotOptions.setXAxisOptions(new AxisOptions().setTicks(xTicks).setMinimum(min).setMaximum(max)
             .setTickFormatter(new TickFormatter() {

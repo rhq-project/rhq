@@ -99,11 +99,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
-     * The availability watermark specifies a duration that if exceeded means a managed
+     * The availability refresh interval specifies a duration that if exceeded means a managed
      * component refresh is needed to perform an availability check. That duration is set
      * to 15 minutes.
      */
-    private static final long AVAIL_WATERMARK = 1000 * 60 * 15;  // 15 minutes
+    private static final long AVAIL_REFRESH_INTERVAL = 1000 * 60 * 15;  // 15 minutes
 
     /**
      * The ManagedComponent is fetched from the server in {@link #getManagedComponent} throughout
@@ -114,6 +114,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
      * perform an availability check.
      */
     private long lastComponentRefresh = 0L;
+    
+    private long availRefreshInterval = AVAIL_REFRESH_INTERVAL;
 
     private RunState runState = RunState.UNKNOWN;
 
@@ -124,7 +126,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     public AvailabilityType getAvailability() {
         long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
-        if (timeSinceComponentRefresh > AVAIL_WATERMARK) {
+        if (timeSinceComponentRefresh > availRefreshInterval) {
             getManagedComponent();
         }
 
@@ -141,11 +143,14 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
-        this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
+        componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        this.componentName = pluginConfig.getSimple(Config.COMPONENT_NAME).getStringValue();
-        log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
-            + " component '" + this.componentName + "'.");
+        componentName = pluginConfig.getSimple(Config.COMPONENT_NAME).getStringValue();
+        initAvailRefreshInterval(resourceContext);
+        if (log.isTraceEnabled()) {
+            log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
+                + " component '" + this.componentName + "'.");
+        }
     }
 
     public void stop() {
@@ -475,5 +480,27 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         } else {
             return value.toString();
         }
+    }
+
+    private void initAvailRefreshInterval(ResourceContext<ProfileServiceComponent<?>> context) {
+        ProfileServiceComponent<?> component = context.getParentResourceComponent();
+        while (component != null) {
+            if (component instanceof ApplicationServerComponent) {
+                break;
+            }
+            component = (ProfileServiceComponent<?>) component.getResourceContext().getParentResourceComponent();
+        }
+
+        if (component == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to find parent " + ApplicationServerComponent.class.getSimpleName() +
+                        ". Using default component refresh interval, " + AVAIL_REFRESH_INTERVAL + " ms");
+            }
+            return;
+        }
+
+        String interval = component.getResourceContext().getPluginConfiguration().getSimpleValue(
+                "serviceAvailabilityRefreshInterval", Long.toString(AVAIL_REFRESH_INTERVAL));
+        availRefreshInterval = Long.parseLong(interval) * 1000 * 60;
     }
 }

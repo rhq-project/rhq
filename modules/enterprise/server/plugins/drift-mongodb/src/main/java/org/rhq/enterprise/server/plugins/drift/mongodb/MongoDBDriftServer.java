@@ -71,6 +71,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+import org.rhq.enterprise.server.plugins.drift.mongodb.dao.ChangeSetDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.dao.FileDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
@@ -86,6 +87,8 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     private Morphia morphia;
 
     private Datastore ds;
+    
+    private ChangeSetDAO changeSetDAO;
 
     private FileDAO fileDAO;
 
@@ -94,6 +97,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         connection = new Mongo("127.0.0.1");
         morphia = new Morphia().map(MongoDBChangeSet.class).map(MongoDBChangeSetEntry.class).map(MongoDBFile.class);
         ds = morphia.createDatastore(connection, "rhq");
+        changeSetDAO =  new ChangeSetDAO(morphia, connection, "rhq");
         fileDAO = new FileDAO(ds.getDB());
     }
 
@@ -225,11 +229,9 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     @Override
     public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
         DriftChangeSetCriteria criteria) {
-        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class).filter("resourceId =",
-            criteria.getFilterResourceId());
-
+        List<MongoDBChangeSet> changeSets = changeSetDAO.findByChangeSetCritiera(criteria);
         PageList<DriftChangeSetDTO> results = new PageList<DriftChangeSetDTO>();
-        for (MongoDBChangeSet changeSet : query) {
+        for (MongoDBChangeSet changeSet : changeSets) {
             DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
             Set<DriftDTO> entries = new HashSet<DriftDTO>();
             for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {

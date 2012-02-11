@@ -117,6 +117,14 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
         return ctime;
     }
 
+    /**
+     * This is here only for testing.
+     * @param ctime The timestamp
+     */
+    public void setCtime(Long ctime) {
+        this.ctime = ctime;
+    }
+
     @Override
     public MongoDBChangeSet getChangeSet() {
         return changeSet;

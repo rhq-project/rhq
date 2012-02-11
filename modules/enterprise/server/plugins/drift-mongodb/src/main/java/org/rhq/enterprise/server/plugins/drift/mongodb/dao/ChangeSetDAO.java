@@ -31,6 +31,7 @@ import com.mongodb.Mongo;
 
 import org.bson.types.ObjectId;
 
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
@@ -44,6 +45,20 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     public ChangeSetDAO(Morphia morphia, Mongo mongo, String db) {
         super(mongo, morphia, db);
         this.morphia = morphia;
+    }
+    
+    public List<MongoDBChangeSet> findByChangeSetCritiera(DriftChangeSetCriteria criteria) {
+        Query<MongoDBChangeSet> query = createQuery();
+        
+        if (criteria.getFilterResourceId() != null) {
+            query.field("resourceId").equal(criteria.getFilterResourceId());
+        }
+
+        if (criteria.getFilterDriftDefinitionId() != null) {
+            query.field("driftDefId").equal(criteria.getFilterDriftDefinitionId());
+        }
+
+        return query.asList();
     }
 
     public List<MongoDBChangeSet> findByDriftCriteria(DriftCriteria criteria) {

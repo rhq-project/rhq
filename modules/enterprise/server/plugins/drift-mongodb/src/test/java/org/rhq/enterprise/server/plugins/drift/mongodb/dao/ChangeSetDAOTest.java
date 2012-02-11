@@ -26,6 +26,7 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -142,6 +143,67 @@ public class ChangeSetDAOTest {
     }
 
     @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithResourceIdFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(1);
+        c2.setResourceId(2);
+        c2.setDriftDefinitionId(2);
+        dao.save(c2);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterResourceId(1);
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1);
+        
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with resource id " +
+                "filter", expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithDriftDefIdFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+        
+        MongoDBChangeSet c11 = new MongoDBChangeSet();
+        c11.setCategory(DRIFT);
+        c11.setVersion(2);
+        c11.setResourceId(1);
+        c11.setDriftDefinitionId(1);
+        dao.save(c11);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(1);
+        c2.setResourceId(2);
+        c2.setDriftDefinitionId(2);
+        dao.save(c2);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1, c11);
+        
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with drift " +
+                "definition id filter", expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithResourceIdFilter() throws Exception {
         MongoDBChangeSet c1 = new MongoDBChangeSet();
         c1.setCategory(DRIFT);
@@ -155,6 +217,7 @@ public class ChangeSetDAOTest {
         c2.setVersion(1);
         c2.setResourceId(2);
         c2.setDriftDefinitionId(2);
+        dao.save(c2);
 
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.addFilterResourceIds(1);
@@ -275,16 +338,17 @@ public class ChangeSetDAOTest {
 
     @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithStartTimeFilter() throws Exception {
+        long startTime = System.currentTimeMillis() - (1000 * 60 * 60);  // one hour ago
+
         int resourceId = 1;
 
         MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, resourceId, 1);
+        c1.setCtime(startTime - (1000 * 5));  // c1 is created 5 seconds before startTime
         MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        e1.setCtime(startTime - (1000 * 5));  // e1 is created 5 seconds before startTime
         c1.add(e1);
 
         dao.save(c1);
-
-        long startTime = System.currentTimeMillis();
-        Thread.sleep(10);
 
         MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, resourceId, 1);
         MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
@@ -354,15 +418,19 @@ public class ChangeSetDAOTest {
 
     @Test(enabled = ENABLED)
     public void findEntriesWithResourceIdAndStartTimeFilter() throws Exception {
+        long startTime = System.currentTimeMillis() - (1000 * 60 * 60);  // one hour ago
+
         MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        c1.setCtime(startTime - (1000 * 5));  // c1 is created 5 seconds before startTime
         MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
         c1.add(e1);
+        e1.setCtime(startTime - (1000 * 5));  // e1 is created 5 seconds before startTime
         dao.save(c1);
 
-        long startTime = System.currentTimeMillis();
-        Thread.sleep(10);
-
         MongoDBChangeSet c2 = createChangeSet(COVERAGE, 1, 2, 1);
+        c2.setCtime(startTime - (1000 * 5));  // c2 is created 5 seconds before startTime
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        e2.setCtime(startTime - (1000 * 5));  // e2 is created 5 seconds before startTime
         c2.add(new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED));
         dao.save(c2);
 

@@ -64,7 +64,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     private DriftChangeSetCategory category;
 
-    private int configId;
+    private int driftDefId;
 
     private DriftHandlingMode driftHandlingMode;
 
@@ -96,6 +96,14 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
         return ctime;
     }
 
+    /**
+     * This is here only for testing.
+     * @param ctime The timestamp
+     */
+    public void setCtime(Long ctime) {
+        this.ctime = ctime;
+    }
+
     @Override
     public int getVersion() {
         return version;
@@ -118,12 +126,12 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     @Override
     public int getDriftDefinitionId() {
-        return configId;
+        return driftDefId;
     }
 
     @Override
     public void setDriftDefinitionId(int id) {
-        configId = id;
+        driftDefId = id;
     }
 
     @Override

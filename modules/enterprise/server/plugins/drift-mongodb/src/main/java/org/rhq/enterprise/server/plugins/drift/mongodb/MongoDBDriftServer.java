@@ -40,6 +40,8 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.bson.types.ObjectId;
 
 import org.rhq.common.drift.ChangeSetReader;
@@ -77,7 +79,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
-    //private final Log log = LogFactory.getLog(MongoDBDriftServer.class);
+    private Log log = LogFactory.getLog(MongoDBDriftServer.class);
 
     private Mongo connection;
 
@@ -89,7 +91,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
-        connection = new Mongo("localhost");
+        connection = new Mongo("127.0.0.1");
         morphia = new Morphia().map(MongoDBChangeSet.class).map(MongoDBChangeSetEntry.class).map(MongoDBFile.class);
         ds = morphia.createDatastore(connection, "rhq");
         fileDAO = new FileDAO(ds.getDB());
@@ -177,9 +179,18 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
                 ds.save(changeSet);
 
+                // The following section of code really should not be part of the plugin
+                // implementation, but it is currently required due to a flaw in the design
+                // of the drift plugin framework. Two things are done here. First, if we
+                // successfully persist the change set, then we need to send an
+                // acknowledgement to the agent. This is critical because the agent will
+                // in effect suspend drift detection (for the particular definition) until
+                // it receives the ACK. Secondly, we need to tell the agent to send the
+                // actual file bits for any change set content we do not have.
+                AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
+                DriftAgentService driftService = agent.getDriftAgentService();
+                driftService.ackChangeSet(headers.getResourceId(), headers.getDriftDefinitionName());
                 if (!missingContent.isEmpty()) {
-                    AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
-                    DriftAgentService driftService = agent.getDriftAgentService();
                     driftService.requestDriftFiles(resourceId, headers, missingContent);
                 }
 

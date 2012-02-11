@@ -37,7 +37,8 @@ import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 
 /**
  * A change set that is stored in a MongoDB database. The change set along with its entries
- * are stored as a single document.
+ * are stored as a single document. A change set consists of one or more
+ * {@link MongoDBChangeSetEntry entries}.
  */
 @Entity("changesets")
 public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, Serializable {

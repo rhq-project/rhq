@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.dao.BasicDAO;
@@ -50,12 +51,41 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     public List<MongoDBChangeSet> findByChangeSetCritiera(DriftChangeSetCriteria criteria) {
         Query<MongoDBChangeSet> query = createQuery();
         
+        if (criteria.getFilterId() != null) {
+            // There is no need to apply any additional filters if the id filter is specified
+            return query.field("id").equal(new ObjectId(criteria.getFilterId())).asList();
+        }
+        
         if (criteria.getFilterResourceId() != null) {
             query.field("resourceId").equal(criteria.getFilterResourceId());
         }
 
         if (criteria.getFilterDriftDefinitionId() != null) {
             query.field("driftDefId").equal(criteria.getFilterDriftDefinitionId());
+        }
+        
+        if (criteria.getFilterVersion() != null) {
+            query.field("version").equal(Integer.parseInt(criteria.getFilterVersion()));
+        }
+        
+        if (criteria.getFilterStartVersion() != null) {
+            query.field("version").greaterThanOrEq(Integer.parseInt(criteria.getFilterStartVersion()));
+        }
+        
+        if (criteria.getFilterEndVersion() != null) {
+            query.field("version").lessThan(Integer.parseInt(criteria.getFilterEndVersion()));
+        }
+
+        if (criteria.getFilterCreatedAfter() != null) {
+            query.field("ctime").greaterThanOrEq(criteria.getFilterCreatedAfter());
+        }
+
+        if (criteria.getFilterCreatedBefore() != null) {
+            query.field("ctime").lessThan(criteria.getFilterCreatedBefore());
+        }
+
+        if (criteria.getFilterDriftPath() != null) {
+            query.field("files.path").equal(Pattern.compile(".*" + criteria.getFilterDriftPath() + ".*"));
         }
 
         return query.asList();

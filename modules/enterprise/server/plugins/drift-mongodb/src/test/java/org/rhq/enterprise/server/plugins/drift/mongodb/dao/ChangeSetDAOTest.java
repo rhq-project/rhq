@@ -143,7 +143,7 @@ public class ChangeSetDAOTest {
     }
 
     @Test(enabled = ENABLED)
-    public void findByChangeSetCriteriaWithResourceIdFilter() throws Exception {
+    public void findByChangeSetCriteriaWithIdFilter() throws Exception {
         MongoDBChangeSet c1 = new MongoDBChangeSet();
         c1.setCategory(DRIFT);
         c1.setVersion(1);
@@ -159,6 +159,33 @@ public class ChangeSetDAOTest {
         dao.save(c2);
 
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterId(c1.getId());
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with id filter",
+                expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithResourceIdFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(2);
+        c2.setDriftDefinitionId(2);
+        dao.save(c2);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterResourceId(1);
         
         List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
@@ -167,6 +194,104 @@ public class ChangeSetDAOTest {
         String ignore = "drifts";
         assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with resource id " +
                 "filter", expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithVersionFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        dao.save(c2);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterVersion("2");
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c2);
+        
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change criteria with version filter",
+                expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithStartVersionFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = new MongoDBChangeSet();
+        c3.setCategory(DRIFT);
+        c3.setVersion(3);
+        c3.setResourceId(1);
+        c3.setDriftDefinitionId(1);
+        dao.save(c3);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterStartVersion("2");
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c2, c3);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change criteria with start version filter",
+                expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithEndVersionFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = new MongoDBChangeSet();
+        c3.setCategory(DRIFT);
+        c3.setVersion(3);
+        c3.setResourceId(1);
+        c3.setDriftDefinitionId(1);
+        dao.save(c3);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterEndVersion("3");
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1, c2);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change criteria with start version filter",
+                expected, actual, ignore);
     }
 
     @Test(enabled = ENABLED)
@@ -201,6 +326,101 @@ public class ChangeSetDAOTest {
         String ignore = "drifts";
         assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with drift " +
                 "definition id filter", expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithCreatedAfterFilter() throws Exception {
+        long creationTime = System.currentTimeMillis() - (1000 * 60 * 10);  // 10 minutes ago
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        c1.setCtime(creationTime);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        c2.setCtime(c1.getCtime() + (1000 * 60 * 5));  // 5 minutes ago
+        dao.save(c2);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterCreatedAfter(creationTime + 1000);
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c2);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with created after " +
+                "filter", expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithCreatedBeforeFilter() throws Exception {
+        long creationTime = System.currentTimeMillis() - (1000 * 60 * 10);  // 10 minutes ago
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        c1.setCtime(creationTime);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        c2.setCtime(c1.getCtime() + (1000 * 60 * 5));  // 5 minutes ago
+        dao.save(c2);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterCreatedBefore(c2.getCtime());
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with created after " +
+                "filter", expected, actual, ignore);
+    }
+    
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithPathFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("/test/foo.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("/test/bar.txt", FILE_ADDED);
+        c2.add(e2);
+        dao.save(c2);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftPath("foo");
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1);
+        
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set critiera with drift path filter",
+                expected, actual, ignore);
     }
 
     @Test(enabled = ENABLED)

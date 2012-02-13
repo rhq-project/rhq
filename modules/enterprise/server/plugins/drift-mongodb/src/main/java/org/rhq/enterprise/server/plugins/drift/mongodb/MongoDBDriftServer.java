@@ -244,29 +244,10 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
-        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class);
-        boolean changeSetIdFiltered = false;
-
-        if (criteria.getFilterId() != null) {
-            String[] idFields = criteria.getFilterId().split(":");
-            ObjectId changeSetId = new ObjectId(idFields[0]);
-            String path = idFields[1];
-
-            query.filter("files.path = ", path);
-            query.filter("id = ", changeSetId);
-        }
-
-        if (!changeSetIdFiltered && criteria.getFilterChangeSetId() != null) {
-            query.filter("id = ", new ObjectId(criteria.getFilterChangeSetId()));
-        }
-
+        List<MongoDBChangeSetEntry> entries = changeSetDAO.findEntries(criteria);
         PageList<DriftDTO> results = new PageList<DriftDTO>();
-
-        for (MongoDBChangeSet changeSet : query) {
-            DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
-            for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
-                results.add((toDTO(entry, changeSetDTO)));
-            }
+        for (MongoDBChangeSetEntry entry : entries) {
+            results.add(toDTO(entry, toDTO(entry.getChangeSet())));
         }
 
         return results;
@@ -352,7 +333,6 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
         // TODO Generate DriftFile DTOs for oldDriftFile and newDriftFile properties
         DriftFileDTO fileDTO = new DriftFileDTO();
-        fileDTO.setHashId("1a2b3c4e5f");
 
         dto.setOldDriftFile(fileDTO);
         dto.setNewDriftFile(fileDTO);

@@ -121,6 +121,8 @@
     -->
     <extend-property name="locale" values="${gwt.locale}" />
     <set-configuration-property name="locale.useragent" value="Y"/>
+    <set-configuration-property name="locale.usemeta" value="N"/>
+    <set-configuration-property name="locale.searchorder" value="queryparam,useragent,cookie"/>
 
     <!-- If the locale specified by the user, via the "locale" query string parameter, is not supported, fallback to
          "en", rather than the "default" locale. -->

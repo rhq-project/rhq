@@ -127,7 +127,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             long start = System.currentTimeMillis();
 
             checkInventory(inventoryManager.getPlatform(), availabilityReport,
-                availabilityReport.isChangesOnlyReport(), true, false);
+                availabilityReport.isChangesOnlyReport(), true, AvailabilityType.UP);
 
             // If the report is empty (meaning, nothing has changed since the last availability check), don't
             // send any report. In the past we needed to send a report as it doubled as an Agent heartbeat, but
@@ -153,7 +153,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     private void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
-        boolean checkChildren, boolean parentIsDown) {
+        boolean checkChildren, AvailabilityType parentAvailType) {
         // Only report avail for committed Resources - that's all the Server cares about.
         if (resource.getId() == 0 || resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
             return;
@@ -181,11 +181,11 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         Availability previous = (reportChangesOnly) ? this.inventoryManager.getAvailabilityIfKnown(resource) : null;
 
         AvailabilityType current;
-        if (parentIsDown) {
-            // If the resource's parent is down, the rules are that the resource and all of the parent's other
-            // descendants, must also be down, so there's no need to even ask the resource component for its
-            // current availability - its current avail is DOWN and that's that.
-            current = AvailabilityType.DOWN;
+        if (AvailabilityType.UP != parentAvailType) {
+            // If the resource's parent is not up, the rules are that the resource and all of the parent's other
+            // descendants, must also be of the parent avail type, so there's no need to even ask the resource component
+            // for its current availability - its current avail is set to the parent avail type and that's that.
+            current = parentAvailType;
         } else {
             current = null;
             try {
@@ -233,7 +233,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
             Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
             for (Resource child : children) {
-                checkInventory(child, availabilityReport, reportChangesOnly, true, current == AvailabilityType.DOWN);
+                checkInventory(child, availabilityReport, reportChangesOnly, true, current);
             }
         }
 

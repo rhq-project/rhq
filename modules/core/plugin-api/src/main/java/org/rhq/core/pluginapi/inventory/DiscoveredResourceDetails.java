@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -62,8 +62,9 @@ public class DiscoveredResourceDetails {
     /**
      * This creates a new instance that provides details for a newly discovered resource.
      *
-     * <p>Both resource key and resource name must be non-<code>null</code>; otherwise, an exception is thrown. If
-     * resource version or resource description are <code>null</code>, their values will be set to an empty string.</p>
+     * <p>The Resource type, key, and name must not be <code>null</code>. Additionally the key and name must not be "",
+     * and the key must not be longer than 500 characters. If any of these requirements are not met, an exception will
+     * be thrown.</p>
      *
      * @param  resourceType        the type of resource that was discovered (must not be <code>null</code>)
      * @param  resourceKey         the discovered resource's key where the key must be unique among the resource's
@@ -82,8 +83,8 @@ public class DiscoveredResourceDetails {
      * @param  processInfo         information on the process in which the newly discovered resource is running (this
      *                             may be <code>null</code> if unknown or not applicable)
      *
-     * @throws IllegalArgumentException if the resource type, key or name is <code>null</code> or one of the String
-     *                                  values are too long
+     * @throws IllegalArgumentException if the resource type, key, or name is <code>null</code>; the key or name is "";
+     *                                  or the key is longer than 500 characters
      */
     public DiscoveredResourceDetails(ResourceType resourceType, String resourceKey, String resourceName,
         String resourceVersion, String resourceDescription, Configuration pluginConfiguration, ProcessInfo processInfo) {
@@ -128,13 +129,17 @@ public class DiscoveredResourceDetails {
      * is, a parent's direct child resources must all have unique resource keys, but those keys need not be unique
      * across the entire inventory of all resources.
      *
-     * @param  resourceKey the discovered resource's key (must not be <code>null</code>)
+     * @param  resourceKey the discovered resource's key (must not be <code>null</code> or "")
      *
-     * @throws IllegalArgumentException if <code>resourceKey</code> is <code>null</code> or too long
+     * @throws IllegalArgumentException if <code>resourceKey</code> is <code>null</code>, "", or more than 500
+     *                                  characters long
      */
     public void setResourceKey(String resourceKey) {
         if (resourceKey == null) {
             throw new IllegalArgumentException("resourceKey==null");
+        }
+        if (resourceKey.length() == 0) {
+            throw new IllegalArgumentException("resourceKey==\"\"");
         }
 
         if (resourceKey.length() > RESOURCE_KEY_MAX_LENGTH) {
@@ -158,16 +163,19 @@ public class DiscoveredResourceDetails {
 
     /**
      * Sets the name of the discovered resource, which is used mainly for UI display purposes. The name can be anything
-     * (other than <code>null</code>); it has no uniqueness requirements (that is, even sibling resources can have the
-     * same name).
+     * (other than <code>null</code> or ""); it has no uniqueness requirements (that is, even sibling resources can have
+     * the same name). If the name is longer than 500 characters, it will automatically be truncated to 500 characters.
      *
-     * @param  resourceName the discovered resource's name (must not be <code>null</code>)
+     * @param  resourceName the discovered resource's name (must not be <code>null</code> or "")
      *
-     * @throws IllegalArgumentException if <code>resourceName</code> is <code>null</code>
+     * @throws IllegalArgumentException if <code>resourceName</code> is <code>null</code> or ""
      */
     public void setResourceName(String resourceName) {
         if (resourceName == null) {
             throw new IllegalArgumentException("resourceName==null");
+        }
+        if (resourceName.length() == 0) {
+            throw new IllegalArgumentException("resourceName==\"\"");
         }
 
         if (resourceName.length() > RESOURCE_NAME_MAX_LENGTH) {
@@ -192,25 +200,24 @@ public class DiscoveredResourceDetails {
 
     /**
      * Sets the discovered resource's version string (which may have any form or syntax that is appropriate for the
-     * resource and may be <code>null</code> which correlates to an empty version string).
+     * resource and may be <code>null</code> which correlates to an empty version string). If the version is longer than
+     * 100 characters, it will automatically be truncated to 100 characters.
      *
-     * @param  resourceVersion the discovered resource's version string (may be <code>null</code>, which correlates to
-     *                         an empty string)
-     *
-     * @throws IllegalArgumentException if the version string is too long
+     * @param  resourceVersion the discovered resource's version string; may be <code>null</code>, if the Resource
+     *                         does not have a version or if its version could not be determined
      */
     public void setResourceVersion(String resourceVersion) {
-        if (resourceVersion == null) {
-            resourceVersion = "";
-        }
-
-        if (resourceVersion.length() > RESOURCE_VERSION_MAX_LENGTH) {
-            log.warn("Plugin error: Resource version [" + resourceVersion + "] specified by [" + this.resourceType
-                + "] discovery component is longer than the maximum length (" + RESOURCE_VERSION_MAX_LENGTH
-                + ") - truncating it to " + RESOURCE_VERSION_MAX_LENGTH + " characters...");
-            this.resourceVersion = resourceVersion.substring(0, RESOURCE_VERSION_MAX_LENGTH);
+        if (resourceVersion != null && (resourceVersion.length() == 0)) {
+            this.resourceVersion = null;
         } else {
-            this.resourceVersion = resourceVersion;
+            if (resourceVersion != null && (resourceVersion.length() > RESOURCE_VERSION_MAX_LENGTH)) {
+                log.warn("Plugin error: Resource version [" + resourceVersion + "] specified by [" + this.resourceType
+                    + "] discovery component is longer than the maximum length (" + RESOURCE_VERSION_MAX_LENGTH
+                    + ") - truncating it to " + RESOURCE_VERSION_MAX_LENGTH + " characters...");
+                this.resourceVersion = resourceVersion.substring(0, RESOURCE_VERSION_MAX_LENGTH);
+            } else {
+                this.resourceVersion = resourceVersion;
+            }
         }
     }
 
@@ -224,25 +231,23 @@ public class DiscoveredResourceDetails {
     }
 
     /**
-     * Sets a simple description of the resource, which may or may not be an internationalized string
+     * Sets a simple description of the resource, which may or may not be an internationalized string. If the
+     * description is longer than 1000 characters, it will automatically be truncated to 1000 characters.
      *
-     * @param  resourceDescription the discovered resource's description (may be <code>null</code>, which correlates to
-     *                             an empty string)
-     *
-     * @throws IllegalArgumentException if the description string is too long
+     * @param  resourceDescription the discovered resource's description; may be <code>null</code>
      */
     public void setResourceDescription(String resourceDescription) {
-        if (resourceDescription == null) {
-            resourceDescription = "";
-        }
-
-        if (resourceDescription.length() > RESOURCE_DESCRIPTION_MAX_LENGTH) {
-            log.warn("Plugin error: Resource description [" + resourceDescription + "] specified by [" + this.resourceType
-                + "] discovery component is longer than the maximum length (" + RESOURCE_DESCRIPTION_MAX_LENGTH
-                + " - truncating it to " + RESOURCE_DESCRIPTION_MAX_LENGTH + " characters...");
-            this.resourceDescription = resourceDescription.substring(0, RESOURCE_DESCRIPTION_MAX_LENGTH);
+        if ((resourceDescription != null) && (resourceDescription.length() == 0)) {
+            this.resourceDescription = null;
         } else {
-            this.resourceDescription = resourceDescription;
+            if ((resourceDescription != null) && (resourceDescription.length() > RESOURCE_DESCRIPTION_MAX_LENGTH)) {
+                log.warn("Plugin error: Resource description [" + resourceDescription + "] specified by [" + this.resourceType
+                    + "] discovery component is longer than the maximum length (" + RESOURCE_DESCRIPTION_MAX_LENGTH
+                    + " - truncating it to " + RESOURCE_DESCRIPTION_MAX_LENGTH + " characters...");
+                this.resourceDescription = resourceDescription.substring(0, RESOURCE_DESCRIPTION_MAX_LENGTH);
+            } else {
+                this.resourceDescription = resourceDescription;
+            }
         }
     }
 
@@ -255,7 +260,7 @@ public class DiscoveredResourceDetails {
      */
     public Configuration getPluginConfiguration() {
         if (pluginConfiguration == null) {
-            pluginConfiguration = getDefaultPluginConfiguration();
+            pluginConfiguration = createDefaultPluginConfiguration();
         }
 
         return pluginConfiguration;
@@ -264,7 +269,8 @@ public class DiscoveredResourceDetails {
     /**
      * Returns the information on the operating system process in which the resource is running.
      *
-     * @return resource's process information or <code>null</code> if not known
+     * @return resource's process information or <code>null</code> if not known or not applicable (e.g. a platform
+     *         resource)
      */
     public ProcessInfo getProcessInfo() {
         return processInfo;
@@ -341,7 +347,7 @@ public class DiscoveredResourceDetails {
      *
      * @return copy of the resource's default plugin configuration
      */
-    private Configuration getDefaultPluginConfiguration() {
+    private Configuration createDefaultPluginConfiguration() {
         ConfigurationDefinition definition = resourceType.getPluginConfigurationDefinition();
         if (definition != null) {
             ConfigurationTemplate template = definition.getDefaultTemplate();

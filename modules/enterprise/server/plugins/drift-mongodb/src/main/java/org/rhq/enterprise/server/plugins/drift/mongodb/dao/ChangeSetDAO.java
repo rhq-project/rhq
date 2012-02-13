@@ -34,6 +34,7 @@ import org.bson.types.ObjectId;
 
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 
@@ -98,6 +99,18 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         
         if (criteria.getFilterDriftCategories() != null) {
             query.field("files.category").in(criteria.getFilterDriftCategories());
+        }
+
+        if (!criteria.isFetchDrifts()) {
+            query.retrievedFields(false, "files");
+        }
+
+        if (criteria.getSortVersion() != null) {
+            if (criteria.getSortVersion() == PageOrdering.ASC) {
+                query.order("version");
+            } else {
+                query.order("-version");
+            }
         }
 
         return query.asList();

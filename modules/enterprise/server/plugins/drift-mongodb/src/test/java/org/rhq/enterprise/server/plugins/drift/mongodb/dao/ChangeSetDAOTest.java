@@ -27,6 +27,7 @@ import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.util.PageOrdering;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -48,6 +49,7 @@ import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public class ChangeSetDAOTest {
 
@@ -530,6 +532,96 @@ public class ChangeSetDAOTest {
         assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with drift categories filter",
                 expected, actual, ignore);
     }
+    
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaAndDoNotFetchDrifts() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(COVERAGE);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        c1.add(new MongoDBChangeSetEntry("foo.txt", FILE_ADDED));
+        c1.add(new MongoDBChangeSetEntry("bar.txt", FILE_ADDED));
+        dao.save(c1);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.fetchDrifts(false);
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1);
+        
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change set when not fetching drifts", expected, actual, ignore);
+        assertTrue(actual.get(0).getDrifts().isEmpty(),
+                "The drift entries should not have been fetched with the change set");
+    }
+    
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaAndSortByVersionAscending() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(COVERAGE);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = new MongoDBChangeSet();
+        c3.setCategory(DRIFT);
+        c3.setVersion(3);
+        c3.setResourceId(1);
+        c3.setDriftDefinitionId(1);
+        dao.save(c3);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addSortVersion(PageOrdering.ASC);
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c1, c2, c3);
+        
+        assertChangeSetsMatch("Failed to sort change sets by version in ascending order", expected, actual);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaAndSortByVersionDescending() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(COVERAGE);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = new MongoDBChangeSet();
+        c3.setCategory(DRIFT);
+        c3.setVersion(3);
+        c3.setResourceId(1);
+        c3.setDriftDefinitionId(1);
+        dao.save(c3);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addSortVersion(PageOrdering.DESC);
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c3, c2, c1);
+
+        assertChangeSetsMatch("Failed to sort change sets by version in descending order", expected, actual);
+    }
 
     @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithResourceIdFilter() throws Exception {
@@ -847,11 +939,20 @@ public class ChangeSetDAOTest {
 
         List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
 
-        assertChangeSetsMatch("Failed to find change sets by drift criteria with change set id filter", asList(c2),
-            actual);
+        assertChangeSetsMatchNoOrder("Failed to find change sets by drift criteria with change set id filter", asList(c2),
+                actual);
+    }
+    
+    private void assertChangeSetsMatch(String msg, List<MongoDBChangeSet> expected, List<MongoDBChangeSet> actual) {
+        assertEquals(actual.size(), expected.size(), "The number of change sets differ: " + msg);
+        int i = 0;
+        for (MongoDBChangeSet expectedChangeSet : expected) {
+            assertChangeSetMatches("Change sets do not match: " + msg, expectedChangeSet, actual.get(i++));
+        }
     }
 
-    private void assertChangeSetsMatch(String msg, List<MongoDBChangeSet> expected, List<MongoDBChangeSet> actual) {
+    private void assertChangeSetsMatchNoOrder(String msg, List<MongoDBChangeSet> expected, 
+            List<MongoDBChangeSet> actual) {
         assertEquals(actual.size(), expected.size(), "The number of change sets differ: " + msg);
         for (MongoDBChangeSet expectedChangeSet : expected) {
             MongoDBChangeSet actualChangeSet = null;

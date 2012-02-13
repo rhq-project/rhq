@@ -350,6 +350,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         dto.setDirectory(entry.getDirectory());
         dto.setCategory(entry.getCategory());
 
+        // TODO Generate DriftFile DTOs for oldDriftFile and newDriftFile properties
         DriftFileDTO fileDTO = new DriftFileDTO();
         fileDTO.setHashId("1a2b3c4e5f");
 

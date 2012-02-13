@@ -120,6 +120,7 @@
          mvn command line (e.g. -Dgwt.locale=default) or in your ~/.m2/settings.xml.
     -->
     <extend-property name="locale" values="${gwt.locale}" />
+    <set-configuration-property name="locale.useragent" value="Y"/>
 
     <!-- If the locale specified by the user, via the "locale" query string parameter, is not supported, fallback to
          "en", rather than the "default" locale. -->

@@ -144,9 +144,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
                 for (FileEntry fileEntry : reader) {
                     String path = FileUtil.useForwardSlash(fileEntry.getFile());
-                    MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
-                    entry.setCategory(fileEntry.getType());
-                    entry.setPath(path);
+                    MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry(path, fileEntry.getType());
 
                     switch (fileEntry.getType()) {
                     case FILE_ADDED:
@@ -242,7 +240,6 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         }
 
         return results;
-        //return new PageList<DriftChangeSet>();
     }
 
     @Override
@@ -350,6 +347,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         dto.setId(entry.getId());
         dto.setCtime(entry.getCtime());
         dto.setPath(entry.getPath());
+        dto.setDirectory(entry.getDirectory());
         dto.setCategory(entry.getCategory());
 
         DriftFileDTO fileDTO = new DriftFileDTO();

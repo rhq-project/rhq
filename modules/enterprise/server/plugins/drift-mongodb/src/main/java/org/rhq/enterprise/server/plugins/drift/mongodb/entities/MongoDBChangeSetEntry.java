@@ -57,6 +57,8 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     public MongoDBChangeSetEntry(String path, DriftCategory category) {
         this.path = path;
+        int i = path.lastIndexOf("/");
+        directory = (i != -1) ? path.substring(0, i) : "./";
         this.category = category;
     }
 

@@ -87,6 +87,18 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         if (criteria.getFilterDriftPath() != null) {
             query.field("files.path").equal(Pattern.compile(".*" + criteria.getFilterDriftPath() + ".*"));
         }
+        
+        if (criteria.getFilterDriftDirectory() != null) {
+            query.field("files.directory").equal(criteria.getFilterDriftDirectory());
+        }
+
+        if (criteria.getFilterCategory() != null) {
+            query.field("category").equal(criteria.getFilterCategory());
+        }
+        
+        if (criteria.getFilterDriftCategories() != null) {
+            query.field("files.category").in(criteria.getFilterDriftCategories());
+        }
 
         return query.asList();
     }

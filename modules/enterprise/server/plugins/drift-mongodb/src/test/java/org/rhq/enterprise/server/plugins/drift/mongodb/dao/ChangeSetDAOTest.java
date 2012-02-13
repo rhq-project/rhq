@@ -424,6 +424,114 @@ public class ChangeSetDAOTest {
     }
 
     @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithDirectoryFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("./foo/foo.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("./bar/bar.txt", FILE_ADDED);
+        c2.add(e2);
+        dao.save(c2);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterDriftDirectory("./bar");
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c2);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set critiera with drift directory filter",
+                expected, actual, ignore);
+    }
+    
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithCategoryFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(COVERAGE);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = new MongoDBChangeSet();
+        c3.setCategory(DRIFT);
+        c3.setVersion(3);
+        c3.setResourceId(1);
+        c3.setDriftDefinitionId(1);
+        dao.save(c3);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterCategory(DRIFT);
+        
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c2, c3);
+        
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with category filter",
+                expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByChangeSetCriteriaWithDriftCategoryFilter() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(COVERAGE);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        c1.add(new MongoDBChangeSetEntry("foo.txt", FILE_ADDED));
+        c1.add(new MongoDBChangeSetEntry("bar.txt", FILE_ADDED));
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        c2.add(new MongoDBChangeSetEntry("foo.txt", FILE_CHANGED));
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = new MongoDBChangeSet();
+        c3.setCategory(DRIFT);
+        c3.setVersion(3);
+        c3.setResourceId(1);
+        c3.setDriftDefinitionId(1);
+        c3.add(new MongoDBChangeSetEntry("bar.txt", FILE_REMOVED));
+        dao.save(c3);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterDriftCategories(FILE_CHANGED, FILE_REMOVED);
+
+        List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
+        List<MongoDBChangeSet> expected = asList(c2, c3);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change set criteria with drift categories filter",
+                expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithResourceIdFilter() throws Exception {
         MongoDBChangeSet c1 = new MongoDBChangeSet();
         c1.setCategory(DRIFT);

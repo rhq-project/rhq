@@ -1,9 +1,22 @@
-#!/bin/sh
+#!/bin/bash
+#========================================================================================
+# Usage:
+# See usage function.
+#
+# Description: 
+# RHQ publish script. Supports publishing of artifacts to maven and sourceforge.
+#
+# Options: 
+# See usage function.
+#========================================================================================
 
+#include the utility library
 source `dirname $0`/rhq_bash.lib
 
-# Functions
 
+#========================================================================================
+# Description: Display usage information then abort the script.
+#========================================================================================
 usage() 
 {   
    EXE=`basename $0`
@@ -11,8 +24,14 @@ usage()
    abort "$@" "Usage:   $EXE community|enterprise RELEASE_BRANCH test|production" "Example: $EXE enterprise release-3.0.0 test"
 }
 
-validate_arguments()
+
+#========================================================================================
+# Description: Validate and parse input arguments
+#========================================================================================
+parse_and_validate_options()
 {
+   DEBUG_MODE=false
+
    if [ "$#" -ne 3 ]; then
       usage
    fi
@@ -34,7 +53,11 @@ validate_arguments()
    fi
 }
 
-set_variables()
+
+#========================================================================================
+# Description: Set all the local and environment variables required by the script.
+#========================================================================================
+set_local_and_environment_variables()
 {
    PROJECT_NAME="rhq"
    PROJECT_DISPLAY_NAME="RHQ"
@@ -95,97 +118,141 @@ set_variables()
    # property files.
    LANG=en_US.iso8859
    export LANG
+
+   # Print out a summary of the environment.
+   print_centered "Environment Variables"
+   environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
+   print_variables "${environment_variables[@]}"
+
+   print_centered "Local Variables"
+   local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
+                     "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
+                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME")
+   print_variables "${local_variables[@]}"
 }
 
 
-#### THE RELEASE SCRIPT ######
+#========================================================================================
+# Description: Run the validation process for all the system utilities needed by
+#              the script. At the end print the version of each utility.
+#========================================================================================
+validate_system_utilities()
+{
+   print_function_information $FUNCNAME
 
-if [ -n "$RELEASE_DEBUG" ]; then
-   echo "Debug output is enabled."
-   set -x
-fi
+   # TODO: Check that JDK version is < 1.7.
 
-# Process command line args.
-validate_arguments $@
+   validate_java_6
 
-# TODO: Check that JDK version is < 1.7.
+   validate_java_5
 
-validate_java_6
+   validate_maven
 
-validate_java_5
+   validate_git
 
-validate_maven
-
-validate_git
-
-set_variables
-
-# Print out a summary of the environment.
-echo "========================== Environment Variables =============================="
-environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
-print_variables "${environment_variables[@]}"
+   print_centered "Program Versions"
+   program_versions=("git --version" "java -version" "mvn --version")
+   print_program_versions "${program_versions[@]}"
+}
 
 
-echo "============================= Local Variables ================================="
-local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
-                  "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
-                  "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME")
-print_variables "${local_variables[@]}"
+#========================================================================================
+# Description: Checkout release branch.
+#========================================================================================
+checkout_release_branch()
+{
+   print_function_information $FUNCNAME
 
+   # Checkout the source from git, assume that the git repo is already cloned
+   git status >/dev/null 2>&1
+   GIT_STATUS_EXIT_CODE=$?
+   # Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
+   # and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if current folder
+   # is truly a git working copy.
+   if [ "$GIT_STATUS_EXIT_CODE" -le 1 ];
+   then
+       echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
+       git fetch origin "$RELEASE_BRANCH"
+       [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
 
-echo "============================= Program Versions ================================"
-program_versions=("git --version" "java -version" "mvn --version")
-print_program_versions "${program_versions[@]}"
+       git checkout --track "origin/$RELEASE_BRANCH"
+       if [ "$?" -ne 0 ];
+       then
+         git checkout "$RELEASE_BRANCH"
+       fi
+       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)." 
 
-echo "==============================================================================="
+       git reset --hard "origin/$RELEASE_BRANCH"
+       [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
 
-# Checkout the source from git.
-git status >/dev/null 2>&1
-GIT_STATUS_EXIT_CODE=$?
-# Note, git 1.6 and earlier returns an exit code of 1, rather than 0, if there are any uncommitted changes,
-# and git 1.7 returns 0, so we check if the exit code is less than or equal to 1 to determine if $WORKING_DIR
-# is truly a git working copy.
-if [ "$GIT_STATUS_EXIT_CODE" -le 1 ]; then       
-   echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
-   git fetch origin "$RELEASE_BRANCH"
-   [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
-   git checkout "$RELEASE_BRANCH" 2>/dev/null
-   if [ "$?" -ne 0 ]; then
-       git checkout --track -b "$RELEASE_BRANCH" "origin/$RELEASE_BRANCH"
+       git clean -dxf
+       [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
+
+       git pull origin $RELEASE_BRANCH
+       [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
+   else
+       echo "Current folder does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
    fi
-   [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
-   git reset --hard "origin/$RELEASE_BRANCH"
-   [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
-   git clean -dxf
-   [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
-   git pull
-   [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
-else
-   echo "$WORKING_DIR does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
-   cd ..
-   rm -rf "$WORKING_DIR"
-   [ "$?" -ne 0 ] && abort "Failed to remove bogus working directory ($WORKING_DIR)."
-fi
+}
 
 
-echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
-[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Release build succeeded!"
+#========================================================================================
+# Description: Build source code.
+#========================================================================================
+build_from_source()
+{
+   echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+   mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
+   [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+   echo
+   echo "Release build succeeded!"
+}
 
 
-
-# 5) Publish release artifacts - **FUTURE IMPROVEMENT**
-#echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-#mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-#[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-
-
+#========================================================================================
+# Description: Publish artifacts to external maven repostory.
+#========================================================================================
+publish_external_maven_repository()
+{
+   # 5) Publish release artifacts - **FUTURE IMPROVEMENT**
+   #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+   #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+   #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 
    #if [ "$MODE" = "production" ]; then
    #   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
    #      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
    #   fi
    #fi
+}
 
+
+#========================================================================================
+# Description: Publish artifacts to RHQ website.
+#========================================================================================
+publish_sourceforge()
+{
+   #future code here
+}
+
+
+
+############ MAIN SCRIPT ############
+
+parse_and_validate_options $@
+
+set_script_debug_mode $DEBUG_MODE
+
+validate_system_utilities
+
+set_local_and_environment_variables
+
+checkout_release_branch
+
+build_from_source
+
+publish_external_maven_repository
+
+publish_sourceforge
+
+unset_script_debug_mode $DEBUG_MODE

@@ -378,7 +378,7 @@ public class DriftDetector implements Runnable {
             long lastModified = file.lastModified();
             long length = file.length();
 
-            result = addedFileEntry(relativePath(basedir, file), sha256(file), file.lastModified(), file.length());
+            result = addedFileEntry(relativePath, sha256, lastModified, length);
 
         } catch (FileNotFoundException e) {
             if (log.isDebugEnabled()) {

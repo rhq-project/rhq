@@ -19,9 +19,42 @@ source `dirname $0`/rhq_bash.lib
 #========================================================================================
 usage() 
 {   
-   EXE=`basename $0`
+      USAGE=$(
+cat << EOF
+USAGE:   publish.sh OPTIONS
 
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_BRANCH test|production" "Example: $EXE enterprise release-3.0.0 test"
+   --release-version=version              [REQUIRED]
+      The release version to be tagged by this script.
+
+   --release-tag=git_tag                  [REQUIRED]
+      Git branch to be used as base for tagging and/or branching.
+
+   --release-type=community|enterprise    [REQUIRED]
+      Type of release.
+
+   --test-mode                            [OPTIONAL, DEFAULT]
+      Run this script in test mode. Create a test branch from release branch and perform tagging and version updates on this test branch.
+
+   --production-mode                      [OPTIONAL]
+      Run this script in production mode. Follow the official branching and tagging model.
+
+   --mode=test|production                 [OPTIONAL]
+      Used to directly set the script mode.
+
+   --extra-profile=extra_profile          [OPTIONAL]
+      An extra maven profile to be used for all the maven commands.
+
+   --debug=[true|false]                   [OPTIONAL]
+      Set maven in debug mode. Default is false; true if option specified without argument.
+
+   --workspace=workspace_to_use           [OPTIONAL]
+      Override the workspace used by default by the script.
+EOF
+)
+
+   EXAMPLE="publish.sh --release-type=\"enterprise\" --release-version=\"5.0.0.GA\" --release_tag=\"release_test_tag\""
+
+   abort "$@" "$USAGE" "$EXAMPLE"
 }
 
 
@@ -33,15 +66,14 @@ parse_and_validate_options()
    print_function_information $FUNCNAME
 
    RELEASE_VERSION=
-   RELEASE_BRANCH=
+   RELEASE_TAG=
    RELEASE_TYPE="community"
    MODE="test"
-   SCM_STRATEGY="tag"
    EXTRA_MAVEN_PROFILE=
    DEBUG_MODE=false
 
    short_options="h"
-   long_options="help,release-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,extra-profile:,debug::,workspace:"
+   long_options="help,release-version:,release-tag:,release-type:,test-mode,production-mode,mode:,branch,tag,extra-profile:,debug::,workspace:"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -57,9 +89,9 @@ parse_and_validate_options()
             RELEASE_VERSION="$1"
             shift
             ;;
-         --release-branch)
+         --release-tag)
             shift
-            RELEASE_BRANCH="$1"
+            RELEASE_TAG="$1"
             shift
             ;;
          --release-type)
@@ -138,9 +170,9 @@ parse_and_validate_options()
       usage "Development version not specified!"
    fi
 
-   if [ -z "$RELEASE_BRANCH" ];
+   if [ -z "$RELEASE_TAG" ];
    then
-      usage "Release branch not specified!"
+      usage "Release tag not specified!"
    fi
 
    if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
@@ -152,7 +184,7 @@ parse_and_validate_options()
    fi
 
    print_centered "Script Options"
-   script_options=( "RELEASE_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
+   script_options=( "RELEASE_VERSION" "RELEASE_TAG" "RELEASE_TYPE" \
                      "MODE" )
    print_variables "${script_options[@]}"
 }
@@ -163,36 +195,34 @@ parse_and_validate_options()
 #========================================================================================
 set_local_and_environment_variables()
 {
-   PROJECT_NAME="rhq"
-   PROJECT_DISPLAY_NAME="RHQ"
-   PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
-   TAG_PREFIX="RHQ"
-   MINIMUM_MAVEN_VERSION="2.1.0"
+   print_function_information $FUNCNAME
 
    # Set various environment variables.
    MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
    export MAVEN_OPTS
 
-
-   # Set various local variables.
-
-   if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
-      echo "We appear to be running in a Hudson job." 
-      WORKING_DIR="$WORKSPACE"
+   # Set various local variables
+   if [ -n "$WORKSPACE" ]; then
+      echo "Running script in a Hudson job."
       MAVEN_LOCAL_REPO_DIR="$WORKSPACE/.m2/repository"
+      if [ ! -d "$MAVEN_LOCAL_REPO_DIR" ]; then
+         mkdir -p "$MAVEN_LOCAL_REPO_DIR"
+      fi
       MAVEN_SETTINGS_FILE="$WORKSPACE/.m2/settings.xml"
-   elif [ -z "$WORKING_DIR" ]; then
-      WORKING_DIR="$HOME/release/rhq"
-      MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
-      #MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
-      MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
+   else
+      MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
+      MAVEN_SETTINGS_FILE="$HOME/.m2/settings.xml"
    fi
 
-   #MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
+   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE -Dmaven.repo.local=$MAVEN_LOCAL_REPO_DIR --batch-mode --errors"
 
-   PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
 
-   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Prhq-publish-release,enterprise,dist -Dmaven.repo.local=$MAVEN_LOCAL_REPO_DIR"
+   if [ -n "$EXTRA_MAVEN_PROFILE" ];
+   then
+      MAVEN_ARGS="$MAVEN_ARGS --activate-profiles $EXTRA_MAVEN_PROFILE,enterprise,dist"
+   else
+      MAVEN_ARGS="$MAVEN_ARGS --activate-profiles enterprise,dist"
+   fi
 
    if [ "$MODE" = "test" ]; then
       MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
@@ -200,13 +230,11 @@ set_local_and_environment_variables()
 
    if [ "$RELEASE_TYPE" = "enterprise" ]; then
       MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
-      #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
    fi
-   if [ -n "$RELEASE_DEBUG" ]; then
+
+   if [ -n "$DEBUG_MODE" ]; then
+      echo "Maven debug enabled"
       MAVEN_ARGS="$MAVEN_ARGS --debug"
-   fi
-   if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
-      MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
    fi
 
    if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
@@ -225,13 +253,13 @@ set_local_and_environment_variables()
 
    # Print out a summary of the environment.
    print_centered "Environment Variables"
-   environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
+   environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG")
    print_variables "${environment_variables[@]}"
 
    print_centered "Local Variables"
-   local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
-                     "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
-                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME")
+   local_variables=("WORKING_DIR" "RELEASE_TYPE" \
+                     "RELEASE_TAG" "MODE" "MAVEN_LOCAL_REPO_DIR" \
+                     "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" )
    print_variables "${local_variables[@]}"
 }
 
@@ -263,7 +291,7 @@ validate_system_utilities()
 #========================================================================================
 # Description: Checkout release branch.
 #========================================================================================
-checkout_release_branch()
+checkout_release_tag()
 {
    print_function_information $FUNCNAME
 
@@ -275,25 +303,12 @@ checkout_release_branch()
    # is truly a git working copy.
    if [ "$GIT_STATUS_EXIT_CODE" -le 1 ];
    then
-       echo "Checking out a clean copy of the release branch ($RELEASE_BRANCH)..."
-       git fetch origin "$RELEASE_BRANCH"
-       [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_BRANCH)."
+       echo "Checking out a clean copy of the release branch ($RELEASE_TAG)..."
+       git fetch origin "refs/tags/$RELEASE_TAG"
+       [ "$?" -ne 0 ] && abort "Failed to fetch release branch ($RELEASE_TAG)."
 
-       git checkout --track "origin/$RELEASE_BRANCH"
-       if [ "$?" -ne 0 ];
-       then
-         git checkout "$RELEASE_BRANCH"
-       fi
-       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)." 
-
-       git reset --hard "origin/$RELEASE_BRANCH"
-       [ "$?" -ne 0 ] && abort "Failed to reset release branch ($RELEASE_BRANCH)."
-
-       git clean -dxf
-       [ "$?" -ne 0 ] && abort "Failed to clean release branch ($RELEASE_BRANCH)."
-
-       git pull origin $RELEASE_BRANCH
-       [ "$?" -ne 0 ] && abort "Failed to update release branch ($RELEASE_BRANCH)."
+       git checkout "refs/tags/$RELEASE_TAG"
+       [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_TAG)." 
    else
        echo "Current folder does not appear to be a git working directory ('git status' returned $GIT_STATUS_EXIT_CODE) - removing it so we can freshly clone the repo..."
    fi
@@ -305,8 +320,8 @@ checkout_release_branch()
 #========================================================================================
 build_from_source()
 {
-   echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-   mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
+   echo "Building release from tag"
+   mvn clean install $MAVEN_ARGS -Ddbreset
    [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
    echo
    echo "Release build succeeded!"
@@ -318,7 +333,7 @@ build_from_source()
 #========================================================================================
 publish_external_maven_repository()
 {
-   mvn -Ddbsetup-do-not-check-schema=true -Dmaven.test.skip=true -P publish deploy
+   mvn -Ddbsetup-do-not-check-schema=true -Dmaven.test.skip=true -P publish $MAVEN_RELEASE_PERFORM_GOAL
    [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 }
 
@@ -328,7 +343,7 @@ publish_external_maven_repository()
 #========================================================================================
 publish_sourceforge()
 {
-   #future code here
+   #scp FILE jsmith,rhq@frs.sourceforge.net:/home/frs/project/r/rh/rhq/rhq_4.3
 }
 
 
@@ -343,7 +358,7 @@ validate_system_utilities
 
 set_local_and_environment_variables
 
-checkout_release_branch
+checkout_release_tag
 
 build_from_source
 

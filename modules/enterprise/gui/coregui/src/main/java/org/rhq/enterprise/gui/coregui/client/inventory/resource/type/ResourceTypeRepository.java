@@ -62,8 +62,8 @@ public class ResourceTypeRepository {
     /**
      * The following MetadadaTypes are subject to change and are always fetched from the database:<br/>
      * driftDefinitionTemplates
-     * 
-     * @author Jay Shaughnessy     
+     *
+     * @author Jay Shaughnessy
      */
     public enum MetadataType {
         children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates(
@@ -77,7 +77,7 @@ public class ResourceTypeRepository {
 
         /**
          * @param isFetchAlways if true then the cache for this metadata will be refreshed each time it is requested.
-         * Meaning, the db will always be called because this metadata is subject to change. 
+         * Meaning, the db will always be called because this metadata is subject to change.
          */
         private MetadataType(boolean isFetchAlways) {
             this.isFetchAlways = isFetchAlways;
@@ -219,8 +219,8 @@ public class ResourceTypeRepository {
                 // 2. we have the basic resource type but no additional metadata, but the caller is asking for additional metadata
                 // 3. we have the resource type and some additional metadata, but the caller is asking for metadata that we don't have
                 if (!typeCache.containsKey(typeId) // 1.
-                    || (!metadataTypes.isEmpty() && (!typeCacheLevel.containsKey(typeId) // 2. 
-                    || !typeCacheLevel.get(typeId).containsAll(metadataTypes)))) // 3. 
+                    || (!metadataTypes.isEmpty() && (!typeCacheLevel.containsKey(typeId) // 2.
+                    || !typeCacheLevel.get(typeId).containsAll(metadataTypes)))) // 3.
                 {
                     // add this type to the types we need to fetch
                     typesNeeded.add(typeId);
@@ -299,7 +299,7 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        Log.info("Loading " + typesNeeded.size() + " types fetching metadata " + metadataTypesNeeded + "...");
+        Log.info("Loading [" + typesNeeded.size() + "] types with facets=[" + metadataTypesNeeded + "]...");
 
         if ((topLevelServerAndServiceTypes == null) && metadataTypesNeeded.contains(MetadataType.children)) {
             // Perform a one-time load of server and service types with no parent types. These types are implicitly
@@ -314,9 +314,8 @@ public class ResourceTypeRepository {
     }
 
     private void loadTopLevelServerAndServiceTypes(final TypesLoadedCallback callback,
-                                                   final EnumSet<MetadataType> metadataTypes,
-                                                   final ResourceTypeCriteria criteria, final Map<Integer,
-            ResourceType> cachedTypes) {
+        final EnumSet<MetadataType> metadataTypes, final ResourceTypeCriteria criteria,
+        final Map<Integer, ResourceType> cachedTypes) {
         ResourceTypeCriteria topLevelCriteria = new ResourceTypeCriteria();
         topLevelCriteria.addFilterCategories(ResourceCategory.SERVER, ResourceCategory.SERVICE);
         topLevelCriteria.addFilterParentResourceTypesEmpty(true);
@@ -351,7 +350,8 @@ public class ResourceTypeRepository {
         });
     }
 
-    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes, ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
+    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes,
+        ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
@@ -366,8 +366,8 @@ public class ResourceTypeRepository {
                                 switch (metadataType) {
                                 case children:
                                     Set<ResourceType> childTypes = type.getChildResourceTypes();
-                                    if (type.getCategory() == ResourceCategory.PLATFORM &&
-                                            topLevelServerAndServiceTypes != null) {
+                                    if (type.getCategory() == ResourceCategory.PLATFORM
+                                        && topLevelServerAndServiceTypes != null) {
                                         // Add server and service types with no parent types to the list of child types.
                                         // These types are implicitly children of all platform types, even though they
                                         // are not included in the platform types' childResourceTypes field.
@@ -412,7 +412,7 @@ public class ResourceTypeRepository {
                                     break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()
-                                            + " not merged into cached ResourceType.");
+                                        + " not merged into cached ResourceType.");
                                 }
                             }
                         }

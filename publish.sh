@@ -30,27 +30,131 @@ usage()
 #========================================================================================
 parse_and_validate_options()
 {
+   print_function_information $FUNCNAME
+
+   RELEASE_VERSION=
+   RELEASE_BRANCH=
+   RELEASE_TYPE="community"
+   MODE="test"
+   SCM_STRATEGY="tag"
+   EXTRA_MAVEN_PROFILE=
    DEBUG_MODE=false
 
-   if [ "$#" -ne 3 ]; then
-      usage
-   fi
-   RELEASE_TYPE="$1"
-   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-      usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
-   fi
-   RELEASE_BRANCH="$2"
-   MODE="$3"
+   short_options="h"
+   long_options="help,release-version:,release-branch:,release-type:,test-mode,production-mode,mode:,branch,tag,extra-profile:,debug::,workspace:"
 
-   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
-      usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
-   fi
+   PROGNAME=${0##*/}
+   ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
+   eval set -- "$ARGS"
+
+   while true; do
+	   case $1 in
+         -h|--help)
+            usage
+            ;;
+         --release-version)
+            shift
+            RELEASE_VERSION="$1"
+            shift
+            ;;
+         --release-branch)
+            shift
+            RELEASE_BRANCH="$1"
+            shift
+            ;;
+         --release-type)
+            shift
+            RELEASE_TYPE="$1"
+            shift
+            ;;
+         --test-mode)
+            MODE="test"
+            shift
+            ;;
+         --production-mode)
+            MODE="production"
+            shift
+            ;;
+         --mode)
+            shift
+            MODE="$1"
+            shift
+            ;;
+         --extra-profile)
+            shift
+            EXTRA_MAVEN_PROFILE="$1"
+            shift
+            ;;
+         --debug)
+            shift
+            case "$1" in
+               true)
+                  DEBUG_MODE=true
+                  shift
+                  ;;
+               false)
+                  DEBUG_MODE=false
+                  shift
+                  ;;
+               "")
+                  DEBUG_MODE=true
+                  shift
+                  ;;
+               *)
+                  DEBUG_MODE=false
+                  shift
+                  ;;
+            esac
+            ;;
+         --workspace)
+            shift
+            WORKSPACE=$1
+            shift
+            ;;
+         --)
+            shift
+            break
+            ;;
+         *)
+            usage
+            ;;
+	   esac
+   done
 
    if [ "$MODE" = "production" ]; then
       if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
          usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
       fi
    fi
+
+
+   if [ -z "$RELEASE_VERSION" ];
+   then
+      usage "Release version not specified!"
+   fi
+
+   if [ -z "$DEVELOPMENT_VERSION" ];
+   then
+      usage "Development version not specified!"
+   fi
+
+   if [ -z "$RELEASE_BRANCH" ];
+   then
+      usage "Release branch not specified!"
+   fi
+
+   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+      usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
+   fi
+
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+      usage "Invalid script mode: $MODE (valid modes are 'test' or 'production')"
+   fi
+
+   print_centered "Script Options"
+   script_options=( "RELEASE_VERSION" "RELEASE_BRANCH" "RELEASE_TYPE" \
+                     "MODE" )
+   print_variables "${script_options[@]}"
 }
 
 
@@ -214,16 +318,8 @@ build_from_source()
 #========================================================================================
 publish_external_maven_repository()
 {
-   # 5) Publish release artifacts - **FUTURE IMPROVEMENT**
-   #echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-   #mvn deploy $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-   #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-
-   #if [ "$MODE" = "production" ]; then
-   #   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
-   #      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
-   #   fi
-   #fi
+   mvn -Ddbsetup-do-not-check-schema=true -Dmaven.test.skip=true -P publish deploy
+   [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 }
 
 

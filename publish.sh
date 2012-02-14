@@ -72,8 +72,10 @@ parse_and_validate_options()
    EXTRA_MAVEN_PROFILE=
    DEBUG_MODE=false
 
+   SOURCEFORGE=false
+
    short_options="h"
-   long_options="help,release-version:,release-tag:,release-type:,test-mode,production-mode,mode:,branch,tag,extra-profile:,debug::,workspace:"
+   long_options="help,release-version:,release-tag:,release-type:,test-mode,production-mode,mode:,branch,tag,extra-profile:,debug::,workspace:,sourceforge"
 
    PROGNAME=${0##*/}
    ARGS=$(getopt -s bash --options $short_options --longoptions $long_options --name $PROGNAME -- "$@" )
@@ -143,6 +145,10 @@ parse_and_validate_options()
             WORKSPACE=$1
             shift
             ;;
+         --sourceforge)
+            SOURCEFORGE=true
+            shift
+            ;;
          --)
             shift
             break
@@ -175,11 +181,13 @@ parse_and_validate_options()
       usage "Release tag not specified!"
    fi
 
-   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ];
+   then
       usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
    fi
 
-   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ];
+   then
       usage "Invalid script mode: $MODE (valid modes are 'test' or 'production')"
    fi
 
@@ -343,7 +351,11 @@ publish_external_maven_repository()
 #========================================================================================
 publish_sourceforge()
 {
-   #scp FILE jsmith,rhq@frs.sourceforge.net:/home/frs/project/r/rh/rhq/rhq_4.3
+   if [ -n "SOURCEFORGE"];
+   then
+      $FILE_PATH="modules/enterprise/server/container/target/rhq-server*.zip"
+      scp $FILE_PATH frs.sourceforge.net:/home/frs/project/r/rh/rhq/rhq_4.3
+   fi
 }
 
 

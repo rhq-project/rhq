@@ -999,13 +999,13 @@
 
                      <c:simple-property name="serviceAvailabilityRefreshInterval" units="minutes" required="false"
                                         default="15" type="integer"
-                                        description="The amount of time, in minutes, that can elapse for service availability checks
-                                        without having to refresh the managed object from the server. Services cache information
-                                        used to perform availability checks. This property determines how frequently that
-                                        data needs to be reloaded from the server. Any time the managed object is
-                                        loaded from the server, like for collecting metrics, the availability information
-                                        is updated and the interval is reset. Note that this property does not effect the
-                                        frequency of availability scans performed by the agent."/>
+                                        description="The amount of time, in minutes, that can elapse for service resource
+                                        (e.g., EJBs, data sources) availability checks without having to refresh the
+                                        managed object from the JBoss server. The information used to perform availability
+                                        checks is cached. This property determines how frequently that data needs to be
+                                        reloaded from the JBoss server. Any time the managed object is loaded from the
+                                        server, like for collecting metrics, the availability information is updated and
+                                        the interval is reset."/>
 
                      <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
                                         readOnly="true" required="false" 

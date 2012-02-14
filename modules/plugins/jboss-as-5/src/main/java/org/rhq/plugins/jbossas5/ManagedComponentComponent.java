@@ -127,6 +127,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     public AvailabilityType getAvailability() {
         long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
         if (timeSinceComponentRefresh > availRefreshInterval) {
+            if (log.isDebugEnabled()) {
+                log.debug("The availability refresh interval for [resourceKey: " + getResourceContext().getResourceKey()
+                        + ", type: " + componentType + ", name: " + componentName + "] has been exceeded by " +
+                        (timeSinceComponentRefresh - availRefreshInterval) + " ms. Reloading managed component.");
+            }
             getManagedComponent();
         }
 
@@ -249,7 +254,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ManagedComponent managedComponent = getManagedComponent();
+        getValues(getManagedComponent(), report, metrics);
+    }
+
+    protected void getValues(ManagedComponent managedComponent, MeasurementReport report,
+        Set<MeasurementScheduleRequest> metrics) throws Exception {
         RunState runState = managedComponent.getRunState();
         for (MeasurementScheduleRequest request : metrics) {
             try {
@@ -260,7 +269,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                     log.error("Failed to collect metric for " + request, e);
                 } else {
                     log.debug("Failed to collect metric for " + request
-                        + ", but managed component is not in the RUNNING state.", e);
+                            + ", but managed component is not in the RUNNING state.", e);
                 }
             }
         }

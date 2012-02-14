@@ -37,23 +37,22 @@
          specify the gwt.userAgent property on the mvn command line (e.g. -Dgwt.userAgent=gecko1_8)
          or in your ~/.m2/settings.xml
 
-         As of GWT 2.0.4, the recognized agents (defined in
+         As of GWT 2.4.0, the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
-           ie6: IE6/IE7
-           ie8: IE8 and later
+           ie9: IE9 (although for smartgwt we fallback to IE8)
+           ie8: IE8
            gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
            gecko1_8: FF2 and later
            safari: Safari/Chrome
            opera: Opera
 
-         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=EmulateIE7" HTTP header in CoreGUI.html, IE8 and later
-                 will emulate IE7, and so in order to run on IE8 and later, "ie6" must be specified, rather than "ie8".
-
+         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
+                 will emulate IE8.
          Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
          value below.
         -->
-        <gwt.userAgent>ie6,ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
+        <gwt.userAgent>ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed
              up gwt compilation. -->

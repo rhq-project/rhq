@@ -299,8 +299,7 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        Log.info("Loading " + typesNeeded.size()
-            + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
+        Log.info("Loading " + typesNeeded.size() + " types fetching metadata " + metadataTypesNeeded + "...");
 
         if ((topLevelServerAndServiceTypes == null) && metadataTypesNeeded.contains(MetadataType.children)) {
             // Perform a one-time load of server and service types with no parent types. These types are implicitly
@@ -310,7 +309,7 @@ public class ResourceTypeRepository {
             // server/service types will be added to the platform types' childResourceTypes fields.
             loadTopLevelServerAndServiceTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
         } else {
-            loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
+            loadRequestedTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
         }
     }
 

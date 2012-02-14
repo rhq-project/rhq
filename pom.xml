@@ -103,6 +103,7 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <resteasy.version>2.3.1.GA</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
+    <powermock.version>1.4.11</powermock.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>

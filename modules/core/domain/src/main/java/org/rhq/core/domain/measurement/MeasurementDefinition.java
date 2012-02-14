@@ -55,7 +55,7 @@ import org.rhq.core.domain.resource.ResourceType;
 
 //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = MeasurementDefinition.FIND_BY_RESOURCE_TYPE_DATA_TYPE_DISPLAY_TYPE, query = "" //
         + "  SELECT md " //
         + "    FROM MeasurementDefinition md " //
@@ -76,11 +76,10 @@ import org.rhq.core.domain.resource.ResourceType;
         + "   SET md.defaultOn = false"),
     @NamedQuery(name = MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME, query = "" //
         + " SELECT md FROM MeasurementDefinition md"
-        + " WHERE md.name = :name " 
+        + " WHERE md.name = :name "
         + " AND md.resourceType.name = :resourceTypeName"
-        + " AND md.resourceType.plugin = :resourceTypePlugin" 
-        + " AND ((:perMinute = 1 AND md.rawNumericType IS NOT NULL) OR (:perMinute = 0 AND md.rawNumericType IS NULL))")
-})
+        + " AND md.resourceType.plugin = :resourceTypePlugin"
+        + " AND ((:perMinute = 1 AND md.rawNumericType IS NOT NULL) OR (:perMinute = 0 AND md.rawNumericType IS NULL))") })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -111,7 +110,9 @@ public class MeasurementDefinition implements Serializable {
     public static final String FIND_BY_IDS = "MeasurementDefinition.findByIds";
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
     public static final String FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME = "MeasurementDefinition.findRawOrPerMinuteByNameAndResourceTypeName";
-    
+
+    public static final String AVAILABILITY_TYPE_NAME = "_AvailabilityType_";
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
@@ -211,7 +212,7 @@ public class MeasurementDefinition implements Serializable {
     /**
      * Version for optimistic locking. Don't ever set this yourself
      */
-    @SuppressWarnings( { "unused" })
+    @SuppressWarnings({ "unused" })
     @Version
     private int version;
 

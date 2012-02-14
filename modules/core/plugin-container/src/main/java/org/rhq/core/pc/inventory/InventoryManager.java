@@ -1863,7 +1863,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
                 // Copy child Resources to an array and iterate that, rather than iterating the Set, which could cause
                 // a ConcurrentModificationException if another thread tries to modify the Set while we're iterating it.
-                Resource[] childResources = resource.getChildResources().toArray(new Resource[resource.getChildResources().size()]);
+                Resource[] childResources = resource.getChildResources().toArray(
+                    new Resource[resource.getChildResources().size()]);
                 for (Resource child : childResources) {
                     deactivateResource(child);
                 }

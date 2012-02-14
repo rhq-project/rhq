@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.ResourceType;
@@ -28,6 +31,9 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 public class MeasurementMetadataManagerBean implements MeasurementMetadataManagerLocal {
 
     private final Log log = LogFactory.getLog(MeasurementMetadataManagerBean.class);
+
+    private static final Long AVAILABILITY_DEFAULT_PERIOD_SERVER = 60L * 1000; // 1 minute in ms
+    private static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 5; // 5 minutes in ms
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
@@ -48,6 +54,10 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
         existingType = entityMgr.find(ResourceType.class, existingType.getId());
         Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
+
+        // if necessary insert the mandatory AvailabilityScanPeriod metric
+        Set<MeasurementDefinition> newTypeMetricDefinitions = getMetricDefinitions(newType);
+
         if (existingDefinitions.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug(existingType + " currently does not define any metric definitions.");
@@ -58,7 +68,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                 if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                     newDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
                     log.info("Definition [" + newDefinition
-                            + "] has too short of a default interval, setting to minimum");
+                        + "] has too short of a default interval, setting to minimum");
                 }
                 existingType.addMetricDefinition(newDefinition);
                 entityMgr.persist(newDefinition);
@@ -72,7 +82,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                 boolean found = false;
                 for (MeasurementDefinition existingDefinition : existingDefinitions) {
                     if (existingDefinition.getName().equals(newDefinition.getName())
-                            && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
+                        && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
                         found = true;
 
                         if (log.isDebugEnabled()) {
@@ -86,7 +96,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                         if (existingDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                             existingDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
                             log.info("Definition [" + existingDefinition
-                                    + "] has too short of a default interval, setting to minimum");
+                                + "] has too short of a default interval, setting to minimum");
                         }
 
                         entityMgr.merge(existingDefinition);
@@ -128,13 +138,46 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
             }
             if (!definitionsToDelete.isEmpty() && log.isDebugEnabled()) {
                 log.debug("Metadata update: Measurement definitions deleted from resource type ["
-                        + existingType.getName() + "]:" + definitionsToDelete);
+                    + existingType.getName() + "]:" + definitionsToDelete);
             }
 
             entityMgr.flush();
         }
         // TODO what if they are null? --> delete everything from existingType
         // not needed see JBNADM-1639
+    }
+
+    private Set<MeasurementDefinition> getMetricDefinitions(ResourceType newType) {
+        Set<MeasurementDefinition> result = newType.getMetricDefinitions();
+        result = (null == result) ? new HashSet<MeasurementDefinition>(1) : result;
+        long period;
+
+        switch (newType.getCategory()) {
+        case PLATFORM:
+            return result;
+        case SERVER:
+            period = AVAILABILITY_DEFAULT_PERIOD_SERVER;
+            break;
+        default:
+            period = AVAILABILITY_DEFAULT_PERIOD_SERVICE;
+        }
+
+        MeasurementDefinition availabilityScanPeriod = new MeasurementDefinition(newType,
+            MeasurementDefinition.AVAILABILITY_TYPE_NAME);
+        // TODO I18N for this?
+        availabilityScanPeriod.setDisplayName("Availability Type");
+        availabilityScanPeriod.setCategory(MeasurementCategory.AVAILABILITY);
+        availabilityScanPeriod
+            .setDescription("The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.");
+        availabilityScanPeriod.setDefaultInterval(period);
+        availabilityScanPeriod.setDataType(DataType.AVAILABILITY);
+        availabilityScanPeriod.setDefaultOn(true);
+
+        if (!result.contains(availabilityScanPeriod)) {
+            result.add(availabilityScanPeriod);
+        }
+
+        return result;
     }
 
     @Override

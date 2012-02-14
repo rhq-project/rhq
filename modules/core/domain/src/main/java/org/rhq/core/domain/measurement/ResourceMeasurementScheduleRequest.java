@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
@@ -37,6 +37,11 @@ public class ResourceMeasurementScheduleRequest implements Serializable {
     private Set<MeasurementScheduleRequest> measurementSchedules = new HashSet<MeasurementScheduleRequest>();
     private final int resourceId;
 
+    // The avail schedule is stripped out on set and must be explicitly requested.  This allows the avail
+    // schedule to piggyback on all other standard schedule sync/updates while protecting all standard
+    // handling of measurement schedules.
+    private MeasurementScheduleRequest availabilitySchedule;
+
     /**
      * Creates a {@link ResourceMeasurementScheduleRequest} object that will contain measurement schedules for the given
      * resource.
@@ -48,15 +53,30 @@ public class ResourceMeasurementScheduleRequest implements Serializable {
     }
 
     public void addMeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
-        this.measurementSchedules.add(scheduleRequest);
+        if (MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(scheduleRequest.getName())) {
+            this.availabilitySchedule = scheduleRequest;
+        } else {
+            this.measurementSchedules.add(scheduleRequest);
+        }
     }
 
     public Set<MeasurementScheduleRequest> getMeasurementSchedules() {
         return measurementSchedules;
     }
 
+    public MeasurementScheduleRequest getAvailabilitySchedule() {
+        return availabilitySchedule;
+    }
+
     public void setMeasurementSchedules(Set<MeasurementScheduleRequest> measurementSchedules) {
-        this.measurementSchedules = measurementSchedules;
+        this.measurementSchedules = new HashSet<MeasurementScheduleRequest>(measurementSchedules.size());
+        for (MeasurementScheduleRequest scheduleRequest : measurementSchedules) {
+            if (MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(scheduleRequest.getName())) {
+                this.availabilitySchedule = scheduleRequest;
+            } else {
+                this.measurementSchedules.add(scheduleRequest);
+            }
+        }
     }
 
     public int getResourceId() {

@@ -54,7 +54,8 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Lukas Krejci
  * @author Ian Springer
  */
-public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent implements OperationFacet {
+public abstract class
+        AbstractEjbBeanComponent extends ManagedComponentComponent implements OperationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String VIEW_INVOCATION_STATS_OPERATION_NAME = "viewInvocationStats";
@@ -83,7 +84,7 @@ public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent
             }
         }
         // Let our superclass handle any metrics we didn't collect.
-        super.getValues(report, remainingRequests);
+        super.getValues(managedComponent, report, remainingRequests);
     }
 
     @Override

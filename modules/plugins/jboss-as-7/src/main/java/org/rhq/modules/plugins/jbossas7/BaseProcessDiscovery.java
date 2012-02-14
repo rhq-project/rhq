@@ -59,6 +59,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String JBOSS_EAP_6 = "JBoss Enterprise Application Platform 6";
+    private static final String JBOSS_EDG_6 = "JBoss Enterprise Data Grid 6";
+    private static final String JBOSS_EPP_6 = "JBoss Enterprise Portal Platform 6";
+    private static final String JBOSS_SOA_6 = "JBoss Service Oriented Architecture Platform 6";
     private static final String AS7 = "AS7";
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -84,6 +87,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 String homeDir = getHomeDirFromCommandLine(commandLine);
                 String version = determineServerVersionFromHomeDir(homeDir);
                 boolean isEAP = false;
+                boolean isEDG = false;
 
                 //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
                 String bootLogFile = getLogFileFromCommandLine(commandLine);
@@ -92,6 +96,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 if (homeDir.contains("eap")) {
                     isEAP=true;
                 }
+                if (homeDir.contains("edg")) {
+                    isEDG=true;
+                }
+
 
                 if (psName.equals("HostController")) {
 
@@ -133,6 +141,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
                     if (isEAP)
                         description = "Standalone " + JBOSS_EAP_6 + " server";
+                    else if (isEDG)
+                        description = "Standalone " + JBOSS_EDG_6 + " server";
                     else
                         description = "Standalone " + AS7 + " server";
 
@@ -172,6 +182,12 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     serverName = "EAP " + serverName;
                     version="EAP " + version;
                 }
+                else if (isEDG) {
+                    serverName = "EDG " + serverName;
+                    version="EDG " + version;
+
+                }
+
 
                 initLogEventSourcesConfigProp(logFile, config);
 
@@ -179,6 +195,15 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 config.put(new PropertySimple("hostname", managmentPort.host));
                 config.put(new PropertySimple("port", managmentPort.port));
                 config.put(new PropertySimple("realm",getManagementSecurtiyRealmFromHostXml()));
+
+                ProductInfo productInfo = new ProductInfo(managmentPort.host,config.getSimpleValue("user",null),config.getSimpleValue("password",null),managmentPort.port);
+                productInfo = productInfo.getFromRemote();
+                if (productInfo.fromRemote) {
+                    version = productInfo.productName + " " + productInfo.productVersion;
+                    serverName = productInfo.productName + " " +  productInfo.serverName;
+                    String tmp = getServerDescr(productInfo.getProductName());
+                    description = "Standalone " + tmp +" server";
+                }
 
                 //            String javaClazz = psr.getProcessInfo().getName();
 
@@ -198,7 +223,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                     serverNameFull, // key TODO distinguish per domain?
                     serverName, // Name
-                    version, // TODO get via API ?
+                    version,
                     description, // Description
                     config, psr.getProcessInfo());
 
@@ -212,6 +237,18 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
         return discoveredResources;
 
+    }
+
+    private String getServerDescr(String productName) {
+        if (productName.equals("EAP"))
+            return JBOSS_EAP_6;
+        if (productName.equals("EDG"))
+            return JBOSS_EDG_6;
+        if (productName.equals("SOA"))
+            return JBOSS_SOA_6;
+        if (productName.equals("EPP"))
+            return JBOSS_EPP_6;
+        return AS7;
     }
 
     /**
@@ -236,14 +273,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
         }
         int port = Integer.valueOf(portS);
 
-        ASConnection connection = new ASConnection(hostname,port, user,pass);
-        String productVersion = getServerAttribute(connection, "product-version");
-        String productName = getServerAttribute(connection,"product-name");
-        String releaseVersion = getServerAttribute(connection,"release-version");
-        if (productVersion == null)
-            productVersion = releaseVersion;
-        if (productName==null)
-            productName = "AS7";
+        ProductInfo productInfo = new ProductInfo(hostname, user, pass, port).getFromRemote();
+        String productName = productInfo.getProductName();
+        String productVersion = productInfo.getProductVersion();
 
         String resourceKey = hostname + ":" + portS + ":" + productName;
         String description;
@@ -393,4 +425,65 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
         }
     }
 
+    private class ProductInfo {
+        private String hostname;
+        private String user;
+        private String pass;
+        private int port;
+        private String productVersion;
+        private String productName;
+        private String releaseVersion;
+        private String releaseCodeName;
+        private boolean fromRemote = false;
+        private String serverName;
+
+        public ProductInfo(String hostname, String user, String pass, int port) {
+            this.hostname = hostname;
+            this.user = user;
+            this.pass = pass;
+            this.port = port;
+        }
+
+        public String getProductVersion() {
+            return productVersion;
+        }
+
+        public String getProductName() {
+            return productName;
+        }
+
+        public ProductInfo getFromRemote() {
+            ASConnection connection = new ASConnection(hostname, port, user, pass);
+            try {
+                productVersion = getServerAttribute(connection, "product-version");
+                productName = getServerAttribute(connection, "product-name");
+                releaseVersion = getServerAttribute(connection,"release-version");
+                releaseCodeName = getServerAttribute(connection,"release-codename");
+                serverName = getServerAttribute(connection,"name");
+                if (productVersion == null)
+                    productVersion = releaseVersion;
+                if (productName ==null)
+                    productName = "AS7";
+
+                fromRemote = true;
+            }
+            catch (InvalidPluginConfigurationException e) {
+                log.debug("Could not get the product info from [" + hostname + ":" + port +"] - probably a connection failure");
+            }
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "ProductInfo{" +
+                    "hostname='" + hostname + '\'' +
+                    ", port=" + port +
+                    ", productVersion='" + productVersion + '\'' +
+                    ", productName='" + productName + '\'' +
+                    ", releaseVersion='" + releaseVersion + '\'' +
+                    ", releaseCodeName='" + releaseCodeName + '\'' +
+                    ", fromRemote=" + fromRemote +
+                    '}';
+        }
+    }
 }

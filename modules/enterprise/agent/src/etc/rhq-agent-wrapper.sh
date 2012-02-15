@@ -136,8 +136,15 @@ fi
 # -------------------------------
 # The --daemon argument is required
 
-if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
-   RHQ_AGENT_CMDLINE_OPTS=--daemon
+found_daemon_option=0
+for opt in $RHQ_AGENT_CMDLINE_OPTS; do
+   if [ "$opt" = "-d" ] || [ "$opt" = "--daemon" ]; then
+      found_daemon_option=1
+      break
+   fi
+done
+if [ "$found_daemon_option" = "0" ]; then
+   RHQ_AGENT_CMDLINE_OPTS="--daemon $RHQ_AGENT_CMDLINE_OPTS"
 fi
 export RHQ_AGENT_CMDLINE_OPTS
 

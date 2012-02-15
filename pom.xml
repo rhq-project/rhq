@@ -1402,6 +1402,10 @@
             <name>Ian Springer</name>
             <timezone>-5</timezone>
         </developer>
+        <developer>
+            <name>Mike Thompson</name>
+            <timezone>-8</timezone>
+        </developer>
     </developers>
 
     <contributors>

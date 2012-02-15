@@ -31,6 +31,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.managed.api.ManagedComponent;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.metatype.api.values.CompositeValue;
@@ -53,24 +54,26 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Lukas Krejci
  * @author Ian Springer
  */
-public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent implements OperationFacet {
+public abstract class
+        AbstractEjbBeanComponent extends ManagedComponentComponent implements OperationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private static final String VIEW_INVOCATION_STATS_OPERATION_NAME = "viewInvocationStats";
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
+        ManagedComponent managedComponent = getManagedComponent();
         Set<MeasurementScheduleRequest> remainingRequests = new LinkedHashSet();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             try {
                 if (metricName.equals("methodInvocationTime")) {
                     // Convert the method stats CompositeValues into nice strongly typed objects.
-                    InvocationStats invocationStats = getInvocationStats();
+                    InvocationStats invocationStats = getInvocationStats(managedComponent);
                     if (!invocationStats.methodStats.isEmpty()) {
                         CallTimeData callTimeData = createCallTimeData(request, invocationStats);
                         report.addData(callTimeData);
-                        resetInvocationStats();
+                        resetInvocationStats(managedComponent);
                     }
                 } else {
                     remainingRequests.add(request);
@@ -81,19 +84,20 @@ public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent
             }
         }
         // Let our superclass handle any metrics we didn't collect.
-        super.getValues(report, remainingRequests);
+        super.getValues(managedComponent, report, remainingRequests);
     }
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         OperationResult result;
+        ManagedComponent managedComponent = getManagedComponent();
         if (VIEW_INVOCATION_STATS_OPERATION_NAME.equals(name)) {
             result = new OperationResult();
             PropertyList methodList = new PropertyList("methods");
             result.getComplexResults().put(methodList);
 
             // Convert the invocation stats CompositeValues into a nice strongly typed object.
-            List<MethodStats> allMethodStats = getInvocationStats().methodStats;
+            List<MethodStats> allMethodStats = getInvocationStats(managedComponent).methodStats;
 
             for (MethodStats methodStats : allMethodStats) {
                 PropertyMap method = new PropertyMap("method", new PropertySimple("methodName", methodStats.name),
@@ -108,12 +112,12 @@ public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent
         return result;
     }
 
-    private InvocationStats getInvocationStats() {
+    private InvocationStats getInvocationStats(ManagedComponent managedComponent) {
         InvocationStats invocationStats = new InvocationStats();
         List<MethodStats> allMethodStats = new ArrayList<MethodStats>();
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         String propName = pluginConfig.getSimple("invocationStatsPropertyName").getStringValue();
-        ManagedProperty detypedInvokedStatsProp = this.getManagedComponent().getProperty(propName);
+        ManagedProperty detypedInvokedStatsProp = managedComponent.getProperty(propName);
         invocationStats.endTime = System.currentTimeMillis();
         CompositeValue detypedInvokeStatsMetaValue = (CompositeValue) detypedInvokedStatsProp.getValue();
         CompositeValue allMethodStatsMetaValue = (CompositeValue) detypedInvokeStatsMetaValue.get("methodStats");
@@ -157,8 +161,8 @@ public abstract class AbstractEjbBeanComponent extends ManagedComponentComponent
         return callTimeData;
     }
 
-    private void resetInvocationStats() {
-        Set<ManagedOperation> operations = getManagedComponent().getOperations();
+    private void resetInvocationStats(ManagedComponent managedComponent) {
+        Set<ManagedOperation> operations = managedComponent.getOperations();
         for (ManagedOperation operation : operations) {
             if (operation.getName().equals("resetInvocationStats")) {
                 operation.invoke();

@@ -116,8 +116,9 @@ debug_msg "RHQ_AGENT_HOME: $RHQ_AGENT_HOME"
 if [ -z "$RHQ_AGENT_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_AGENT_JAVA_HOME" ]; then
       RHQ_AGENT_JAVA_HOME="${RHQ_AGENT_HOME}/jre"
-      debug_msg "Using the embedded JRE"
-      if [ ! -d "$RHQ_AGENT_JAVA_HOME" ]; then
+      if [ -d "$RHQ_AGENT_JAVA_HOME" ]; then
+         debug_msg "Using the embedded JRE"
+      else
          set_java_home
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
          RHQ_AGENT_JAVA_HOME="$JAVA_HOME"

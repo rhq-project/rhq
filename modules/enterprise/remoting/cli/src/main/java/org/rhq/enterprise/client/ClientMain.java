@@ -60,6 +60,8 @@ public class ClientMain {
     // Stored command map. Key to instance that handles that command.
     private static Map<String, ClientCommand> commands = new HashMap<String, ClientCommand>();
 
+    public static final int DEFAULT_CONSOLE_WIDTH = 80;
+    
     /**
      * This is the thread that is running the input loop; it accepts prompt commands from the user.
      */
@@ -80,7 +82,6 @@ public class ClientMain {
     private String user;
     private String pass;
     private ArrayList<String> notes = new ArrayList<String>();
-    private boolean showDetailedVersion;
 
     // reference to the webservice reference factory
     private RemoteClient remoteClient;
@@ -94,6 +95,55 @@ public class ClientMain {
 
     private Recorder recorder = new NoOpRecorder();
 
+    private class StartupConfiguration {
+        public boolean askForPassword;
+        public boolean displayUsage;
+        public List<String> commandsToExec;
+        public boolean invalidArgs;
+        public boolean showVersionAndExit;
+        public boolean showDetailedVersion;
+        
+        public void process() throws Exception {
+            if (invalidArgs) {
+                displayUsage();
+                throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
+            }
+            
+            if (displayUsage) {
+                displayUsage();
+            }
+            
+            if (askForPassword) {
+                setPass(getConsoleReader().readLine("password: ", (char) 0));
+            }
+            
+            if (isInteractiveMode()) {
+                String version = showDetailedVersion ? Version.getProductNameAndVersionBuildInfo() : Version.getProductNameAndVersion();
+                outputWriter.println(version);
+                if (showVersionAndExit) {
+                    // If -v was the only option specified, exit after printing the version.
+                    System.exit(0);
+                }
+            }
+            
+            if (getUser() != null && getPass() != null) {
+                ClientCommand loginCmd = getCommands().get("login");
+                if (getHost() != null) {
+                    loginCmd.execute(ClientMain.this, new String[] { "login", getUser(), getPass(), getHost(), String.valueOf(getPort()), getTransport() });
+                } else {
+                    loginCmd.execute(ClientMain.this, new String[] { "login", getUser(), getPass() });
+                }
+                if (!loggedIn()) {
+                    return;
+                }
+            }
+            
+            if (commandsToExec != null && !commandsToExec.isEmpty()) {
+                getCommands().get("exec").execute(ClientMain.this, commandsToExec.toArray(new String[commandsToExec.size()]));                
+            }            
+        }
+    }
+    
     // Entrance to main.
     public static void main(String[] args) throws Exception {
         initCommands();
@@ -101,10 +151,17 @@ public class ClientMain {
         // instantiate
         ClientMain main = new ClientMain();
 
-        // process startup arguments
-        main.processArguments(args);
+        // capture startup arguments and setup the properties
+        //from them
+        StartupConfiguration config = main.processArguments(args);
 
-        if (main.interactiveMode) {
+        //initialize the CLI
+        main.initialize();
+        
+        //process the arguments now that we are initialized
+        config.process();
+        
+        if (main.isInteractiveMode()) {
             // begin client access loop
             main.inputLoop();
         }
@@ -124,10 +181,13 @@ public class ClientMain {
         }
     }
 
-    private void initScriptCommandAndServiceCompletor() {
+    private void initScriptCommand() {
         ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        sc.initClient(this);
-
+        sc.initClient(this);        
+    }
+    
+    private void initServiceCompletor() {
+        ScriptCommand sc = (ScriptCommand) commands.get("exec");
         this.serviceCompletor.setContext(sc.getContext());
 
         if (remoteClient != null) {
@@ -135,35 +195,43 @@ public class ClientMain {
         }
     }
 
-    public ClientMain() throws Exception {
-
+    public ClientMain() {
+        // initialize the printwriter to system.out for console conversations
+        outputWriter = new PrintWriter(System.out, true);
+    }
+    
+    private void initialize() throws IOException {
         // this.inputReader = new BufferedReader(new
         // InputStreamReader(System.in));
 
         // initialize the printwriter to system.out for console conversations
         this.outputWriter = new PrintWriter(System.out, true);
 
-        // Initialize JLine console elements.
-        consoleReader = new jline.ConsoleReader();
-
-        // Setup the command line completers for listed actions for the user before login
-        // completes initial commands available
-        Completor commandCompletor = new SimpleCompletor(commands.keySet().toArray(new String[commands.size()]));
-        // completes help arguments (basically, help <command>)
-        Completor helpCompletor = new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
-            new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
-
-        this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
-        consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
-            commandCompletor }));
-
         //ScriptCommand is super special because it handles executing all the code for us
-        initScriptCommandAndServiceCompletor();
-
-        // enable pagination
-        consoleReader.setUsePagination(true);
+        initScriptCommand();
+        
+        if (isInteractiveMode()) {
+            // Initialize JLine console elements.
+            consoleReader = new jline.ConsoleReader();
+    
+            // Setup the command line completers for listed actions for the user before login
+            // completes initial commands available
+            Completor commandCompletor = new SimpleCompletor(commands.keySet().toArray(new String[commands.size()]));
+            // completes help arguments (basically, help <command>)
+            Completor helpCompletor = new ArgumentCompletor(new Completor[] { new SimpleCompletor("help"),
+                new SimpleCompletor(commands.keySet().toArray(new String[commands.size()])) });
+    
+            this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
+            consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
+                commandCompletor }));
+                
+            initServiceCompletor();
+    
+            // enable pagination
+            consoleReader.setUsePagination(true);
+        }
     }
-
+    
     public String getUserInput(String prompt) {
 
         String input_string = "";
@@ -378,7 +446,9 @@ public class ClientMain {
             .println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-v] [-f file]|[-c command]");
     }
 
-    void processArguments(String[] args) throws IllegalArgumentException, IOException {
+    StartupConfiguration processArguments(String[] args) throws IllegalArgumentException, IOException {
+        StartupConfiguration config = new StartupConfiguration();
+        
         String sopts = "-:hu:p:Ps:t:r:c:f:v";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("user", LongOpt.REQUIRED_ARGUMENT, null, 'u'),
@@ -402,9 +472,8 @@ public class ClientMain {
             switch (code) {
             case ':':
             case '?': {
-                // for now both of these should exit
-                displayUsage();
-                throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
+                config.invalidArgs = true;
+                break;
             }
 
             case 1: {
@@ -415,7 +484,7 @@ public class ClientMain {
             }
 
             case 'h': {
-                displayUsage();
+                config.displayUsage = true;
                 break;
             }
 
@@ -428,7 +497,7 @@ public class ClientMain {
                 break;
             }
             case 'P': {
-                this.pass = this.consoleReader.readLine("password: ", (char) 0);
+                config.askForPassword = true;
                 break;
             }
             case 'c': {
@@ -460,42 +529,25 @@ public class ClientMain {
                     setPort(Integer.parseInt(portArg));
                 } catch (Exception e) {
                     outputWriter.println("Invalid port [" + portArg + "]");
+                    System.exit(1);
                 }
                 break;
             }
-            case 'v': {
-                String versionString = Version.getProductNameAndVersionBuildInfo();
-                outputWriter.println(versionString);
+            case 'v': {        
+                config.showDetailedVersion  = true;
+                if (args.length == 1) {
+                    config.showVersionAndExit = true;
+                }
                 break;
             }
-            }
-        }
-
-        if (interactiveMode) {
-            String version = (showDetailedVersion) ? Version.getProductNameAndVersionBuildInfo() : Version
-                .getProductNameAndVersion();
-            outputWriter.println(version);
-            if (showDetailedVersion && args.length == 1) {
-                // If -v was the only option specified, exit after printing the version.
-                System.exit(0);
-            }
-        }
-
-        if (user != null && pass != null) {
-            ClientCommand loginCmd = commands.get("login");
-            if (host != null) {
-                loginCmd.execute(this, new String[] { "login", user, pass, host, String.valueOf(port), transport });
-            } else {
-                loginCmd.execute(this, new String[] { "login", user, pass });
-            }
-            if (!loggedIn()) {
-                return;
             }
         }
 
         if (!interactiveMode) {
-            commands.get("exec").execute(this, execCmdLine.toArray(new String[execCmdLine.size()]));
+            config.commandsToExec = execCmdLine;
         }
+        
+        return config;
     }
 
     public RemoteClient getRemoteClient() {
@@ -505,7 +557,10 @@ public class ClientMain {
     public void setRemoteClient(RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
 
-        initScriptCommandAndServiceCompletor();
+        initScriptCommand();
+        if (isInteractiveMode()) {
+            initServiceCompletor();
+        }
     }
 
     public Subject getSubject() {
@@ -565,7 +620,9 @@ public class ClientMain {
     }
 
     public int getConsoleWidth() {
-        return this.consoleReader.getTermwidth();
+        //the console reader might be null when this method is asked for the output
+        //width in non-interactive mode where we don't attach to stdin.
+        return this.consoleReader == null ? DEFAULT_CONSOLE_WIDTH : this.consoleReader.getTermwidth();
     }
 
     public Map<String, ClientCommand> getCommands() {

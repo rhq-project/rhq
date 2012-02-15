@@ -73,6 +73,30 @@ public interface ContentManagerRemote {
         @WebParam(name = "packageBytes") byte[] packageBytes);
 
     /**
+     * Creates a new package version in the system. If the parent package (identified by the packageName parameter) does
+     * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
+     * created and the existing package version instance will be returned.
+     *
+     * @param subject        The logged in subject
+     * @param packageName    parent package name; uniquely identifies the package under which this version goes
+     * @param packageTypeId  identifies the type of package in case the general package needs to be created
+     * @param version        identifies the version to be create
+     * @param architectureId architecture of the newly created package version. If null then no architecture restriction.
+     *
+     * @return newly created package version if one did not exist; existing package version that matches these data if
+     *         one was found
+     */
+    @WebMethod
+    PackageVersion createPackageVersionWithDisplayVersion( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "packageName") String packageName, //
+        @WebParam(name = "packageTypeId") int packageTypeId, //
+        @WebParam(name = "version") String version, //
+        @WebParam(name = "displayVersion") String displayVersion, //
+        @WebParam(name = "architectureId") Integer architectureId, //
+        @WebParam(name = "packageBytes") byte[] packageBytes);
+
+    /**
      * Deletes the specified package from the resource.
      *
      * @param subject             The logged in subject
@@ -109,10 +133,28 @@ public interface ContentManagerRemote {
      * @param packageVersionIds packageVersions we want to install
      */
     @WebMethod
-    void deployPackages( //
+    @Deprecated
+    void deployPackages(
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") int[] resourceIds, //
         @WebParam(name = "packageVersionIds") int[] packageVersionIds);
+
+    /**
+     * Deploys packages on the specified resources. Each installed package entry should be populated with the <code>
+     * PackageVersion</code> being installed, along with the deployment configuration values if any. This method will
+     * take care of populating the rest of the values in each installed package object.
+     *
+     * @param subject           The logged in subject
+     * @param resourceIds       identifies the resources against which the package will be deployed
+     * @param packageVersionIds packageVersions we want to install
+     * @param requestNotes      request notes
+     */
+    @WebMethod
+    void deployPackagesWithNote(
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceIds") int[] resourceIds, //
+        @WebParam(name = "packageVersionIds") int[] packageVersionIds,
+        @WebParam(name = "requestNotes") String requestNotes);
 
     /**
      * Returns all architectures known to the system.
@@ -157,7 +199,7 @@ public interface ContentManagerRemote {
         @WebParam(name = "resourceTypeId") Integer resourceTypeId,
         @WebParam(name = "packageTypeName") String packageTypeName
         );
-    
+
     /**
      * Similar to {@link #findPackageType(Subject, Integer, String)} but
      * returns the package type along with the version format specification.
@@ -172,6 +214,7 @@ public interface ContentManagerRemote {
         @WebParam(name = "subject") Subject subject,
         @WebParam(name ="resourceTypeId") Integer resourceTypeId,
         @WebParam(name = "packageTypeName") String packageTypeName);
+
     /**
      * @param subject
      * @param criteria {@link InstalledPackageCriteria}
@@ -210,7 +253,7 @@ public interface ContentManagerRemote {
     PageList<Package> findPackagesByCriteria(
         @WebParam(name = "subject") Subject subject,
         @WebParam(name = "criteria") PackageCriteria criteria);
-    
+
     /**
      * Akin to {@link #findPackagesByCriteria(Subject, PackageCriteria)} but also
      * determines the latest version of the returned packages.
@@ -222,11 +265,11 @@ public interface ContentManagerRemote {
      * @return
      * @throws IllegalArgumentException if the criteria doesn't define a repo filter
      */
-    @WebMethod    
+    @WebMethod
     PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(
         @WebParam(name = "subject") Subject subject, 
         @WebParam(name = "criteria") PackageCriteria criteria);
-    
+
     /**
      * For a resource that is content-backed (aka package-backed), this call will return InstalledPackage information
      * for the backing content (package).

@@ -58,7 +58,7 @@
                            <artifactItems>
                               <artifactItem>
                                  <groupId>com.oracle</groupId>
-                                 <artifactId>ojdbc5</artifactId>
+                                 <artifactId>ojdbc6</artifactId>
                               </artifactItem>
                            </artifactItems>
                            <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -161,10 +161,11 @@
          <dependencies>
             <dependency>
                <groupId>com.oracle</groupId>
-               <artifactId>ojdbc5</artifactId>
-               <version>${ojdbc5.version}</version>
+               <artifactId>ojdbc6</artifactId>
+               <version>${ojdbc6.version}</version>
             </dependency>
          </dependencies>
+
          <build>
             <plugins>
                <plugin>
@@ -186,7 +187,7 @@
                      </systemProperties>
                   <!-- The below is required for tests to run against Oracle.
                      <additionalClasspathElements>
-                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
                      </additionalClasspathElements>
                   -->
                   </configuration>

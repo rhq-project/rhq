@@ -600,19 +600,13 @@ public class ConfigurationEditor extends LocatableVLayout {
         return;
     }
 
-    public void addItemsForPropertyRecursively(String locatorId, PropertyDefinition propertyDefinition,
+    private void addItemsForPropertyRecursively(String locatorId, PropertyDefinition propertyDefinition,
         Property property, boolean oddRow, List<FormItem> fields) {
         List<FormItem> fieldsForThisProperty;
 
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
             final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinition;
             PropertySimple propertySimple = (PropertySimple) property;
-
-            if (propertySimple == null) {
-                propertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
-                configuration.put(propertySimple);
-            }
-
             fieldsForThisProperty = buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
                 propertySimple);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
@@ -1068,14 +1062,20 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private static boolean isAllReadOnly(List<PropertyDefinition> propertyDefinitions) {
-        boolean allPropsDefsReadOnly = true;
+        // TODO (ips, 02/13/12): If we are going to do this correctly, we need to call isPropertyReadOnly() on each
+        //                       member property to determine whether that particular property is read-only or not,
+        //                       rather than relying solely on whether the member property definition is read-only; this
+        //                       is because, for a couple special cases, isPropertyReadOnly() returns false even when
+        //                       the prop def is read-only.
+        /*boolean allPropsDefsReadOnly = true;
         for (PropertyDefinition subDef : propertyDefinitions) {
             if (!subDef.isReadOnly()) {
                 allPropsDefsReadOnly = false;
                 break;
             }
         }
-        return allPropsDefsReadOnly;
+        return allPropsDefsReadOnly;*/
+        return false;
     }
 
     private PropertyMapListGridRecord[] buildSummaryRecords(PropertyList propertyList,

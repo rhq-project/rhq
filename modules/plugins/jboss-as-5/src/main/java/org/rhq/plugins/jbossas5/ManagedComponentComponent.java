@@ -23,11 +23,7 @@
 package org.rhq.plugins.jbossas5;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +40,6 @@ import org.jboss.managed.api.ManagedDeployment;
 import org.jboss.managed.api.ManagedOperation;
 import org.jboss.managed.api.ManagedProperty;
 import org.jboss.managed.api.RunState;
-import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.values.ArrayValue;
 import org.jboss.metatype.api.values.CollectionValue;
 import org.jboss.metatype.api.values.CompositeValue;
@@ -103,8 +98,26 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    // Cache the ManagedComponent since it can be re-used to request any ViewUse.RUNTIME property values
-    private ManagedComponent managedComponent = null;
+    /**
+     * The availability refresh interval specifies a duration that if exceeded means a managed
+     * component refresh is needed to perform an availability check. That duration is set
+     * to 15 minutes.
+     */
+    private static final long AVAIL_REFRESH_INTERVAL = 1000 * 60 * 15;  // 15 minutes
+
+    /**
+     * The ManagedComponent is fetched from the server in {@link #getManagedComponent} throughout
+     * the life cycle of this resource component. For example during metrics collections
+     * when getValues is invoked, getManagedComponent is called. Any time getManagedComponent
+     * is called the lastComponentRefresh timestamp is updated. This timestamp is used in
+     * {@link #getAvailability} to determine whether or not a component is needed to
+     * perform an availability check.
+     */
+    private long lastComponentRefresh = 0L;
+    
+    private long availRefreshInterval = AVAIL_REFRESH_INTERVAL;
+
+    private RunState runState = RunState.UNKNOWN;
 
     private String componentName;
     private ComponentType componentType;
@@ -112,34 +125,40 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ResourceComponent Implementation  --------------------------------------------
 
     public AvailabilityType getAvailability() {
-        RunState runState;
-        try {
-            runState = getManagedComponent().getRunState();
-        } catch (Throwable t) {
-            log.debug("Could not get component state for " + this.componentType + " component '" + this.componentName
-                + "', cause: ", t);
-            return AvailabilityType.DOWN;
+        long timeSinceComponentRefresh = System.currentTimeMillis() - lastComponentRefresh;
+        if (timeSinceComponentRefresh > availRefreshInterval) {
+            if (log.isDebugEnabled()) {
+                log.debug("The availability refresh interval for [resourceKey: " + getResourceContext().getResourceKey()
+                        + ", type: " + componentType + ", name: " + componentName + "] has been exceeded by " +
+                        (timeSinceComponentRefresh - availRefreshInterval) + " ms. Reloading managed component.");
+            }
+            getManagedComponent();
         }
+
         if (runState == RunState.RUNNING) {
             return AvailabilityType.UP;
         } else {
-            log.debug(this.componentType + " component '" + this.componentName + "' was not running, state" + " was: "
-                + runState);
+            if (log.isDebugEnabled()) {
+                log.debug(componentType + " component '" + componentName + "' was not running, state was : " +
+                        runState);
+            }
             return AvailabilityType.DOWN;
         }
     }
 
     public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
-        this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
+        componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        this.componentName = pluginConfig.getSimple(Config.COMPONENT_NAME).getStringValue();
-        log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
-            + " component '" + this.componentName + "'.");
+        componentName = pluginConfig.getSimple(Config.COMPONENT_NAME).getStringValue();
+        initAvailRefreshInterval(resourceContext);
+        if (log.isTraceEnabled()) {
+            log.trace("Started ResourceComponent for " + getResourceDescription() + ", managing " + this.componentType
+                + " component '" + this.componentName + "'.");
+        }
     }
 
     public void stop() {
-        managedComponent = null;
         super.stop();
     }
 
@@ -147,8 +166,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     public Configuration loadResourceConfiguration() {
         Configuration resourceConfig;
+        ManagedComponent managedComponent = getManagedComponent();
         try {
-            ManagedComponent managedComponent = getManagedComponent(true);
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(getResourceContext()
                 .getPluginConfiguration());
@@ -157,7 +176,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             resourceConfig = ConversionUtils.convertManagedObjectToConfiguration(managedProperties, customProps,
                 getResourceContext().getResourceType());
         } catch (Exception e) {
-            RunState runState = getManagedComponent().getRunState();
+            RunState runState = managedComponent.getRunState();
             if (runState == RunState.RUNNING) {
                 this.log.error("Failed to load configuration for " + getResourceDescription() + ".", e);
             } else {
@@ -173,7 +192,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         Configuration resourceConfig = configurationUpdateReport.getConfiguration();
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         try {
-            ManagedComponent managedComponent = getManagedComponent(true);
+            ManagedComponent managedComponent = getManagedComponent();
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
             if (this.log.isDebugEnabled())
@@ -235,7 +254,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ManagedComponent managedComponent = prepareForMetricCollection(metrics);
+        getValues(getManagedComponent(), report, metrics);
+    }
+
+    protected void getValues(ManagedComponent managedComponent, MeasurementReport report,
+        Set<MeasurementScheduleRequest> metrics) throws Exception {
         RunState runState = managedComponent.getRunState();
         for (MeasurementScheduleRequest request : metrics) {
             try {
@@ -246,50 +269,17 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                     log.error("Failed to collect metric for " + request, e);
                 } else {
                     log.debug("Failed to collect metric for " + request
-                        + ", but managed component is not in the RUNNING state.", e);
+                            + ", but managed component is not in the RUNNING state.", e);
                 }
             }
         }
-    }
-
-    protected ManagedComponent prepareForMetricCollection(Set<MeasurementScheduleRequest> metrics) {
-        // this bit could be synchronized but I don't think it really hurts to perhaps go through this logic more
-        // than once, it will settle down near immediately
-        Map<String, Boolean> runtimeMetricMap = runtimeMetricMaps.get(this.getClass().getName());
-        if (null == runtimeMetricMap) {
-            //log.info("\nADDING MAP FOR CLASS=" + this.getClass().getName());
-            runtimeMetricMap = new HashMap<String, Boolean>();
-            runtimeMetricMaps.put(this.getClass().getName(), runtimeMetricMap);
-        }
-
-        // determine whether we can use the cachedComponent or if we need to force a component fetch to
-        // gather the requested metrics.
-        boolean forceRefresh = false;
-        for (MeasurementScheduleRequest request : metrics) {
-            Boolean isRuntimeMetric = runtimeMetricMap.get(request.getName());
-            // if this is the first time we've seen this metric find out if it's a runtime prop
-            if (null == isRuntimeMetric) {
-                //log.info("\nADDING MAP ENTRY FOR METRIC=" + request.getName());
-                ManagedProperty managedProp = getManagedProperty(managedComponent, request);
-                runtimeMetricMap.put(request.getName(),
-                    Boolean.valueOf((null == managedProp || managedProp.hasViewUse(ViewUse.RUNTIME))));
-            }
-
-            if (Boolean.FALSE.equals(runtimeMetricMap.get(request.getName()))) {
-                //log.info("\nFORCING COMPONENT REFRESH DUE TO NON-RUNTIME PROP: " + request.getName());
-                forceRefresh = true;
-                break;
-            }
-        }
-
-        return getManagedComponent(forceRefresh);
     }
 
     protected String getMeasurement(ManagedComponent component, String metricName) throws Exception {
         if ("runState".equals(metricName)) {
             return component.getRunState().name();
         } else {
-            Object value = getSimpleValue(managedComponent, metricName);
+            Object value = getSimpleValue(component, metricName);
             return value == null ? null : toString(value);
         }
     }
@@ -429,26 +419,25 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     protected ManagedComponent getManagedComponent() {
-        return getManagedComponent(false);
-    }
-
-    protected ManagedComponent getManagedComponent(boolean forceRefresh) {
-
-        if (!forceRefresh && null != this.managedComponent) {
-            return this.managedComponent;
-        }
-
+        ManagedComponent managedComponent = null;
         try {
             ManagementView managementView = getConnection().getManagementView();
             managedComponent = managementView.getComponent(this.componentName, this.componentType);
         } catch (Exception e) {
+            runState = RunState.UNKNOWN;
             throw new RuntimeException("Failed to load [" + this.componentType + "] ManagedComponent ["
-                + this.componentName + "].", e);
+                    + this.componentName + "].", e);
         }
-        if (managedComponent == null)
+        if (managedComponent == null) {
+            runState = RunState.UNKNOWN;
             throw new IllegalStateException("Failed to find [" + this.componentType + "] ManagedComponent named ["
-                + this.componentName + "].");
-        log.trace("Retrieved " + toString(managedComponent) + ".");
+                    + this.componentName + "].");
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("Retrieved " + toString(managedComponent) + ".");
+        }
+        lastComponentRefresh = System.currentTimeMillis();
+        runState = managedComponent.getRunState();
         return managedComponent;
     }
 
@@ -475,7 +464,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
                 return operation;
         }
         throw new IllegalStateException("ManagedOperation named '" + operationDefinition.getName()
-            + "' not found on ManagedComponent [" + getManagedComponent() + "].");
+            + "' not found on ManagedComponent [" + managedComponent + "].");
     }
 
     private static String toString(ManagedComponent managedComponent) {
@@ -500,5 +489,27 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         } else {
             return value.toString();
         }
+    }
+
+    private void initAvailRefreshInterval(ResourceContext<ProfileServiceComponent<?>> context) {
+        ProfileServiceComponent<?> component = context.getParentResourceComponent();
+        while (component != null) {
+            if (component instanceof ApplicationServerComponent) {
+                break;
+            }
+            component = (ProfileServiceComponent<?>) component.getResourceContext().getParentResourceComponent();
+        }
+
+        if (component == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to find parent " + ApplicationServerComponent.class.getSimpleName() +
+                        ". Using default component refresh interval, " + AVAIL_REFRESH_INTERVAL + " ms");
+            }
+            return;
+        }
+
+        String interval = component.getResourceContext().getPluginConfiguration().getSimpleValue(
+                "serviceAvailabilityRefreshInterval", Long.toString(AVAIL_REFRESH_INTERVAL));
+        availRefreshInterval = Long.parseLong(interval) * 1000 * 60;
     }
 }

@@ -167,7 +167,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     record.setAttribute(FIELD_SWAP, MSG.common_val_na());
 
                     setSortField(1);
-                    refreshFields();
                     markForRedraw();
                 }
 
@@ -179,7 +178,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     }
 
                     setSortField(1);
-                    refreshFields();
                     markForRedraw();
                 }
             });

@@ -23,13 +23,13 @@ import java.net.URL;
 public class RemotePackageInfo {
     private String location; // the path of the package relative to the root URL
     private URL url;
-    private String md5;
+    private String sha256;
     private SupportedPackageType supportedPackageType;
 
-    public RemotePackageInfo(String location, URL url, String md5) {
+    public RemotePackageInfo(String location, URL url, String sha256) {
         this.location = location;
         this.url = url;
-        this.md5 = md5;
+        this.sha256 = sha256;
         this.supportedPackageType = null; // we don't know it
     }
 
@@ -41,8 +41,8 @@ public class RemotePackageInfo {
         return this.url;
     }
 
-    public String getMD5() {
-        return this.md5;
+    public String getSHA256() {
+        return this.sha256;
     }
 
     /**
@@ -63,7 +63,7 @@ public class RemotePackageInfo {
         StringBuilder str = new StringBuilder("RemotePackageInfo: ");
         str.append("location=[").append(this.location);
         str.append("], url=[").append(this.url);
-        str.append("], md5=[").append(this.md5);
+        str.append("], sha256=[").append(this.sha256);
         if (this.supportedPackageType != null) {
             str.append("], supportedPackageType=[").append(this.supportedPackageType.packageTypeName);
             str.append(",").append(this.supportedPackageType.architectureName);

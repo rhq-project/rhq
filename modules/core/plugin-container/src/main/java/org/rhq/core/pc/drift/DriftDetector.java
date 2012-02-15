@@ -27,6 +27,7 @@ import static org.rhq.core.util.file.FileUtil.copyFile;
 import static org.rhq.core.util.file.FileUtil.forEachFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collection;
@@ -282,15 +283,17 @@ public class DriftDetector implements Runnable {
                         log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
                     }
 
-                    FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file), file.lastModified(),
-                        file.length());
+                    FileEntry addedFileEntry = getAddedFileEntry(basedir, file);
+                    if (null != addedFileEntry) {
+                        addedEntries.add(addedFileEntry);
+                    }
 
-                    addedEntries.add(newEntry);
-
-                } catch (IOException e) {
-                    log.error("An error occurred while generating a drift change set for " + schedule + ": "
-                        + e.getMessage());
-                    throw new DriftDetectionException("An error occurred while generating a drift change set", e);
+                } catch (Throwable t) {
+                    // report the error but keep going, perhaps it is specific to a single file, try to
+                    // finish the change set generation.
+                    log.error(
+                        "An unexpected error occurred while generating a drift change set for file " + file.getPath()
+                            + " in schedule " + schedule + ". Skipping file.", t);
                 }
             }
 
@@ -351,6 +354,39 @@ public class DriftDetector implements Runnable {
             // Help out the garbage collector by clearing all of our collections
             safeClear(newFiles, unchangedEntries, changedEntries, changedPinnedEntries);
         }
+    }
+
+    /**
+     * File.canRead() is basically a security check and does not guarantee that the file contents can truly be read.
+     * Certain files, like socket files on linux, can not be processed and it's not known until actually trying to
+     * construct a FileInputStream, as is done when we actually try to generate the digest. These files will generate 
+     * a FileNotFoundException. This method will catch, log and suppress that issue, and return null
+     * indicating the file is not suitable for drift detection.
+     * 
+     * @param basedir the drift def base directory
+     * @param file the new file to add
+     * @return the new FileEntry, or null if this file is not appropriate for drift detection (typically if the
+     * underlying file does not support the needed File operations.
+     * @throws Will throw unexpected IOExceptions, outside of the FileNotFoundException it looks for. 
+     */
+    private FileEntry getAddedFileEntry(File basedir, File file) throws IOException {
+        FileEntry result = null;
+
+        try {
+            String sha256 = sha256(file);
+            String relativePath = relativePath(basedir, file);
+            long lastModified = file.lastModified();
+            long length = file.length();
+
+            result = addedFileEntry(relativePath, sha256, lastModified, length);
+
+        } catch (FileNotFoundException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Skipping " + file.getPath() + " since it is missing or is not a physically readable file.");
+            }
+        }
+
+        return result;
     }
 
     static private void safeClear(Collection<?>... collections) {
@@ -431,8 +467,8 @@ public class DriftDetector implements Runnable {
                 }
 
                 if (isChanged) {
-                    FileEntry changedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA, file
-                        .lastModified(), file.length());
+                    FileEntry changedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA,
+                        file.lastModified(), file.length());
                     changedEntries.add(changedEntry);
 
                     if (null != changedPinnedEntries) {
@@ -456,7 +492,6 @@ public class DriftDetector implements Runnable {
         return result;
     }
 
-    @SuppressWarnings("unused")
     private boolean isPreviousChangeSetEmpty(int resourceId, DriftDefinition definition) throws IOException {
         File changeSet = changeSetMgr.findChangeSet(resourceId, definition.getName(), DRIFT);
         if (!changeSet.exists()) {
@@ -652,20 +687,25 @@ public class DriftDetector implements Runnable {
                     try {
                         if (!file.canRead()) {
                             if (log.isDebugEnabled()) {
-                                log.debug("Skipping " + file.getPath() + " since it is not readable.");
+                                log.debug("Skipping " + file.getPath() + " since we do not have read access.");
                             }
                             return;
                         }
+
                         if (log.isDebugEnabled()) {
                             log.debug("Adding " + file.getPath() + " to coverage change set for " + schedule);
                         }
-                        writer.write(addedFileEntry(relativePath(basedir, file), sha256(file), file.lastModified(),
-                            file.length()));
-                    } catch (IOException e) {
-                        log.error("An error occurred while generating a coverage change set for " + schedule + ": "
-                            + e.getMessage());
-                        throw new DriftDetectionException(
-                            "An error occurred while generating a coverage change set for " + schedule, e);
+
+                        FileEntry addedFileEntry = getAddedFileEntry(basedir, file);
+                        if (null != addedFileEntry) {
+                            writer.write(addedFileEntry);
+                        }
+
+                    } catch (Throwable t) {
+                        // report the error but keep going, perhaps it is specific to a single file, try to
+                        // finish the detection.
+                        log.error("An unexpected error occurred while generating a coverage change set for file "
+                            + file.getPath() + " in schedule " + schedule + ". Skipping file.", t);
                     }
                 }
             }));

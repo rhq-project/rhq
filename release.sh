@@ -311,8 +311,7 @@ set_local_and_environment_variables()
    print_variables "${environment_variables[@]}"
 
    print_centered "Local Variables"
-   local_variables=( "MAVEN_LOCAL_REPO_DIR" "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" \
-                     "JBOSS_ORG_USERNAME" )
+   local_variables=( "MAVEN_LOCAL_REPO_DIR" "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" )
    print_variables "${local_variables[@]}"
 }
 

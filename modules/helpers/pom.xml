@@ -34,6 +34,7 @@
     <module>pluginAnnotations</module>
 -->
     <module>bundleGen</module>
+    <module>jeeGen</module>
     <module>perftest-support</module>
 
     <!-- Not built by default because people will need this only rarely when developing tests. -->

@@ -73,6 +73,20 @@
          <scope>test</scope> <!-- this is OK. plugins do not have access to clientapi, but this is only for tests so this is OK -->
       </dependency>
 
+       <dependency>
+          <groupId>org.powermock</groupId>
+          <artifactId>powermock-module-testng</artifactId>
+          <version>${powermock.version}</version>
+          <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
+
    </dependencies>
 
    <build>

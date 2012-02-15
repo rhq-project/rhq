@@ -25,8 +25,11 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,17 +37,25 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Base component for functionality that is common to Standalone AS and HostControllers
  * @author Heiko W. Rupp
  */
-public class BaseServerComponent extends BaseComponent {
+public class BaseServerComponent extends BaseComponent implements MeasurementFacet {
 
     private static final String SEPARATOR = "\n-----------------------\n";
     final Log log = LogFactory.getLog(BaseServerComponent.class);
@@ -191,6 +202,13 @@ public class BaseServerComponent extends BaseComponent {
         String password = parameters.getSimpleValue("password","");
 
         OperationResult result = new OperationResult();
+
+        PropertySimple remoteProp = pluginConfig.getSimple("manuallyAdded");
+        if (remoteProp!=null && remoteProp.getBooleanValue()!= null && remoteProp.getBooleanValue()) {
+            result.setErrorMessage("This is a manually added server. This operation can not be used to install a management used. Use the server's 'bin/add-user.sh'");
+            return result;
+        }
+
         if (user.isEmpty() || password.isEmpty()) {
             result.setErrorMessage("User and Password must not be empty");
             return result;
@@ -237,4 +255,39 @@ public class BaseServerComponent extends BaseComponent {
 
         return result;
     }
+
+    public void getValues(MeasurementReport report, Set metrics) throws Exception {
+
+        Set<MeasurementScheduleRequest> requests = metrics;
+        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
+
+        for (MeasurementScheduleRequest request: requests) {
+            if (request.getName().equals("startTime")) {
+                String path = getPath();
+                if (context.getResourceType().getName().contains("Host Controller")) {
+                    if (path!=null)
+                        path = "host=master," + path ;  // TODO is the local controller always on host=master?? AS7-3678
+                    else
+                        path = "host=master";
+                }
+                Address address = new Address(path);
+                address.add("core-service","platform-mbean");
+                address.add("type","runtime");
+                Operation op = new ReadAttribute(address,"start-time");
+                Result res = getASConnection().execute(op);
+
+                if (res.isSuccess()) {
+                    Long startTime= (Long) res.getResult();
+                    MeasurementDataTrait data = new MeasurementDataTrait(request,new Date(startTime).toString());
+                    report.addData(data);
+                }
+            }
+            else {
+                leftovers.add(request);
+            }
+        }
+
+        super.getValues(report, leftovers);
+    }
+
 }

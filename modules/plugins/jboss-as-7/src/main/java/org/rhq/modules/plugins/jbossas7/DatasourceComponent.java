@@ -152,12 +152,11 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         Operation op = new Operation("disable",getAddress());
         Result res = getASConnection().execute(op);
         if (!res.isSuccess()) {
-            report.setErrorMessage("Was not able to disable the datasource for config changes");
+            report.setErrorMessage("Was not able to disable the datasource for config changes: " + res.getFailureDescription());
             return;
         }
 
-
-        super.updateResourceConfiguration(report);    // TODO: Customise this generated block
+        super.updateResourceConfiguration(report);
 
         op = new Operation("enable",getAddress());
         res = getASConnection().execute(op);

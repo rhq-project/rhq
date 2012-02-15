@@ -19,7 +19,13 @@
 package org.rhq.modules.plugins.jbossas7;
 
 
+import java.util.Date;
+import java.util.Set;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -66,4 +72,32 @@ public class ManagedASComponent extends BaseComponent {
 
         return super.getAvailability();
     }
+
+
+    public void getValues(MeasurementReport report, Set metrics) throws Exception {
+
+        Set<MeasurementScheduleRequest> requests = metrics;
+
+        for (MeasurementScheduleRequest request: requests) {
+            if (request.getName().equals("startTime")) {
+                String path = getPath();
+                path = path.replace("server-config","server");
+                Address address = new Address(path);
+                address.add("core-service","platform-mbean");
+                address.add("type","runtime");
+                Operation op = new ReadAttribute(address,"start-time");
+                Result res = getASConnection().execute(op);
+
+                if (res.isSuccess()) {
+                    Long startTime= (Long) res.getResult();
+                    MeasurementDataTrait data = new MeasurementDataTrait(request,new Date(startTime).toString());
+                    report.addData(data);
+                }
+
+            }
+        }
+
+        super.getValues(report, metrics);
+    }
+
 }

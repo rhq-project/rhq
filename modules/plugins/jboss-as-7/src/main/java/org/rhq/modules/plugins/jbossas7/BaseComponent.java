@@ -41,6 +41,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
@@ -93,6 +94,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     String managementUser;
     String managementPassword;
 
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
+
     /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -121,6 +124,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             managementUser = pluginConfiguration.getSimpleValue("user","-unset-");
             managementPassword = pluginConfiguration.getSimpleValue("password","-unset-");
             connection = new ASConnection(host,port, managementUser, managementPassword);
+            logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
+            logFileEventDelegate.startLogFileEventPollers();
         }
         else {
             connection = ((BaseComponent)context.getParentResourceComponent()).getASConnection();
@@ -141,8 +146,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
     public void stop() {
-
-
+       if (!(context.getParentResourceComponent() instanceof BaseComponent)) {
+          logFileEventDelegate.stopLogFileEventPollers();
+       }
     }
 
 
@@ -579,17 +585,17 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
-        } else if (what.equals("naming")) {
-            if (op.equals("jndi-view")) {
-                theAddress.add(address);
-                operation = new Operation("jndi-view",theAddress);
-            }
         }
 
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
             Result result = connection.execute(operation);
+
+            if (result==null) {
+                operationResult.setErrorMessage("Connection was null - is the server running?");
+                return operationResult;
+            }
 
             if (!result.isSuccess()) {
                 operationResult.setErrorMessage(result.getFailureDescription());

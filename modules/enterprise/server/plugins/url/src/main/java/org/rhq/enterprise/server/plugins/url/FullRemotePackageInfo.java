@@ -33,7 +33,7 @@ public class FullRemotePackageInfo extends RemotePackageInfo {
     private final ContentProviderPackageDetails details;
 
     public FullRemotePackageInfo(URL url, ContentProviderPackageDetails details) {
-        super(details.getLocation(), url, details.getMD5());
+        super(details.getLocation(), url, details.getSHA256());
         this.details = details;
 
         // the metadata provided let's us know our package type
@@ -53,7 +53,7 @@ public class FullRemotePackageInfo extends RemotePackageInfo {
         StringBuilder str = new StringBuilder("FullRemotePackageInfo: ");
         str.append("location=[").append(this.getLocation());
         str.append("], url=[").append(this.getUrl());
-        str.append("], md5=[").append(this.getMD5());
+        str.append("], sha256=[").append(this.getSHA256());
         if (this.getSupportedPackageType() != null) {
             str.append("], supportedPackageType=[").append(this.getSupportedPackageType().packageTypeName);
             str.append(",").append(this.getSupportedPackageType().architectureName);

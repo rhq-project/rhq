@@ -46,7 +46,7 @@ public class TxConnectionFactoryComponent extends ManagedComponentComponent {
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ManagedComponent mc = getManagedComponent(true);
+        ManagedComponent mc = getManagedComponent();
         Set<MeasurementScheduleRequest> uncollectedMetrics = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : metrics) {
             try {

@@ -108,10 +108,12 @@ public class Result {
         this.throwable = throwable;
     }
 
+    @JsonIgnore
     public Throwable getRhqThrowable() {
         return rhqThrowable;
     }
 
+    @JsonIgnore
     public void setRhqThrowable(Throwable rhqThrowable) {
         this.rhqThrowable = rhqThrowable;
     }

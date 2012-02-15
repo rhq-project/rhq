@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
@@ -46,6 +47,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.ViewChangedException;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -189,6 +191,10 @@ public class ResourceTreeDatasource extends DataSource {
      * @return
      */
     public static TreeNode[] buildNodes(List<Resource> resources, List<Resource> lockedData, TreeGrid treeGrid) {
+        if (treeGrid == null || treeGrid.getTree() == null) {
+            throw new ViewChangedException(ResourceTopView.VIEW_ID.getName() + "/*");
+        }
+        
         List<ResourceTreeNode> resourceNodes = new ArrayList<ResourceTreeNode>(resources.size());
         for (Resource resource : resources) {
             ResourceTreeNode node = new ResourceTreeNode(resource, lockedData.contains(resource));
@@ -242,7 +248,8 @@ public class ResourceTreeDatasource extends DataSource {
                 // anything more than the id.
                 Resource parentResource = resource.getParentResource();
                 String parentResourceNodeId = ResourceTreeNode.idOf(parentResource);
-                TreeNode parentResourceNode = treeGrid.getTree().findById(parentResourceNodeId);
+                Tree tree = treeGrid.getTree();
+                TreeNode parentResourceNode = tree.findById(parentResourceNodeId);
                 if (null != parentResourceNode) {
                     parentResource = ((ResourceTreeNode) parentResourceNode).getResource();
                     resource.setParentResource(parentResource);
@@ -429,7 +436,7 @@ public class ResourceTreeDatasource extends DataSource {
         private boolean parentSubcategory = false;
 
         /**
-         * @param resource.id must be set. resource.parentResource.id, .name must be set.
+         * @param resource resource.id must be set. resource.parentResource.id, .name must be set.
          * resource.resourceType.id, .name, .description, .subCategory  must be set.
          */
         private AutoGroupTreeNode(Resource resource) {

@@ -77,7 +77,6 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     public void setConfiguration(PluginContainerConfiguration configuration) {
         pluginContainerConfiguration = configuration;
         changeSetsDir = new File(pluginContainerConfiguration.getDataDirectory(), "changesets");
-        changeSetsDir.mkdir();
     }
 
     public boolean isInitialized() {
@@ -87,7 +86,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void initialize() {
         long initStartTime = System.currentTimeMillis();
-        changeSetsDir.mkdir();
+        boolean success = changeSetsDir.mkdir();
+        if (!success) {
+            log.warn("Could not create change sets directory " + changeSetsDir);
+            initialized = false;
+            return;
+        }
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
 
         DriftDetector driftDetector = new DriftDetector();
@@ -236,7 +240,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
      */
     public void scanForContentToResend() {
         log.info("Scanning for change set content to resend...");
-        for (File resourceDir : changeSetsDir.listFiles()) {
+        File[] files = changeSetsDir.listFiles();
+        if (files == null) {
+            return;
+        }
+        for (File resourceDir : files) {
             for (File defDir : resourceDir.listFiles()) {
                 for (File contentZipFile : defDir.listFiles(new ZipFileNameFilter("content_"))) {
                     if (log.isDebugEnabled()) {
@@ -268,11 +276,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void shutdown() {
-        driftThreadPool.shutdown();
-        driftThreadPool = null;
+        if (driftThreadPool != null) {
+            driftThreadPool.shutdown();
+            driftThreadPool = null;
+        }
 
-        schedulesQueue.clear();
-        schedulesQueue = null;
+        if (schedulesQueue != null) {
+            schedulesQueue.clear();
+            schedulesQueue = null;
+        }
 
         changeSetMgr = null;
     }

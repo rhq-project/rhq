@@ -99,8 +99,6 @@ public class GrubComponent implements ResourceComponent, ConfigurationFacet {
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
-
         // Find out where to look for the grub tree
         PropertySimple augeasTreeNodeProperty = pluginConfiguration.getSimple("augeas-grub-path");
 
@@ -115,6 +113,15 @@ public class GrubComponent implements ResourceComponent, ConfigurationFacet {
         // Load default properties
         String grubTreeNode = augeasTreeNodeProperty.getStringValue();
 
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
+        try {
+            return getConfig(configuration, grubTreeNode, augeas);
+        } finally {
+            augeas.close();
+        }
+    }
+
+    protected Configuration getConfig(Configuration configuration, String grubTreeNode, Augeas augeas) {
         List<String> generalMatches = augeas.match(grubTreeNode);
 
         if (generalMatches.size() > 0) {

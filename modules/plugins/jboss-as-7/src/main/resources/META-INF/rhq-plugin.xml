@@ -189,6 +189,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -362,6 +363,7 @@
 
             <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                     displayType="summary"/>
+            <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
             <event name="logEntry" description="an entry in a log file"/>
 
@@ -412,6 +414,7 @@
             discovery="BaseProcessDiscovery"
             class="StandaloneASComponent"
             description="Standalone AS7 server"
+            supportsManualAdd="true"
             >
 
         <plugin-configuration>
@@ -428,6 +431,7 @@
                                                         defaults to the home directory of the RHQ agent JRE."/>
             &logSources;
 
+<!--
          <c:group name="event" displayName="Events">
              <c:list-property name="logEventSources">
                  <c:map-property name="logEventSource">
@@ -462,6 +466,7 @@
                  </c:map-property>
              </c:list-property>
          </c:group>
+-->
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
@@ -514,6 +519,7 @@
         <metric property="release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
         <metric property="product-name" dataType="trait" displayName="Name of the product"/>
         <metric property="product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
+        <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
         <event name="logEntry" description="an entry in a log file"/>
 
@@ -1352,11 +1358,11 @@
                 <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
 
 
-                <c:group name="children:xa-datasource-properties:key+" displayName="XA Datasource Properties">
-                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="true">
-                        <c:map-property name="*:key" displayName="Name" readOnly="true">
-                            <c:simple-property name="key" displayName="Property-Name" readOnly="true"/>
-                            <c:simple-property name="value" displayName="Value" readOnly="true"/>
+                <c:group name="children:xa-datasource-properties:key+-" displayName="XA Datasource Properties">
+                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                        <c:map-property name="*:key" displayName="Name" readOnly="false">
+                            <c:simple-property name="key" displayName="Property-Name" readOnly="false"/>
+                            <c:simple-property name="value" displayName="Value" readOnly="false"/>
                         </c:map-property>
                     </c:list-property>
                 </c:group>
@@ -1997,7 +2003,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <server name="Naming"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="NamingComponent"
         singleton="true"
         >
 
@@ -2010,15 +2016,21 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
         </plugin-configuration>
 
-        <operation name="naming:jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
+        <operation name="jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
             <results>
-                <c:list-property name="operationResult">
-                    <c:list-property name="innerContext">
-                        <c:map-property name="innerContexts">
-                            <c:simple-property name="class-name"/>
-                            <c:simple-property name="value"/>
-                        </c:map-property>
-                    </c:list-property>
+                <c:list-property name="java-contexts">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
+                </c:list-property>
+                <c:list-property name="applications">
+                    <c:map-property name="context">
+                        <c:simple-property name="context" />
+                        <c:simple-property name="name"/>
+                        <c:simple-property name="value"/>
+                    </c:map-property>
                 </c:list-property>
             </results>
         </operation>

@@ -52,11 +52,12 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.FileUtils;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.JarContentFileInfo;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
+import org.rhq.plugins.jbossas.util.FileContentDelegate;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -128,9 +129,10 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
             // Package name and file name of the application are the same
             String fileName = new File(fullFileName).getName();
 
-            JarContentFileInfo fileInfo = new JarContentFileInfo(file);
-            String sha256 = getSHA256(fileInfo);
-            String version = getVersion(fileInfo, sha256);
+            String sha256 = getSHA256(file);
+            String version = getVersion(sha256);
+            String displayVersion = getDisplayVersion(file);
+
             PackageDetailsKey key = new PackageDetailsKey(fileName, version, PKG_TYPE_FILE, ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
             details.setFileName(fileName);
@@ -141,6 +143,7 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
             details.setFileCreatedDate(file.lastModified()); // TODO: get created date via SIGAR            
             details.setSHA256(sha256);
             details.setInstallationTimestamp(Long.valueOf(System.currentTimeMillis()));
+            details.setDisplayVersion(displayVersion);
 
             packages.add(details);
         }
@@ -148,46 +151,39 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         return packages;
     }
 
-    // TODO: if needed we can speed this up by looking in the ResourceContainer's installedPackage
-    // list for previously discovered packages. If there use the sha256 from that record. We'd have to
-    // get access to that info by adding access in org.rhq.core.pluginapi.content.ContentServices
-    private String getSHA256(JarContentFileInfo fileInfo) {
+    private String getSHA256(File file) {
 
         String sha256 = null;
 
         try {
-            sha256 = fileInfo.getAttributeValue(RHQ_SHA256, null);
-            if (null == sha256) {
-                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileInfo
-                    .getContentFile());
-            }
-        } catch (IOException iex) {
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(file, null, null);
+            sha256 = fileContentDelegate.getSHA(file);
+        } catch (Exception iex) {
             //log exception but move on, discovery happens often. No reason to hold up anything.
             if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + fileInfo.getContentFile().getPath() + "]."
-                    + iex.getMessage());
+                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
             }
         }
 
         return sha256;
     }
 
-    private String getVersion(JarContentFileInfo fileInfo, String sha256) {
-        // Version string in order of preference
-        // manifestVersion + sha256, sha256, manifestVersion, "0"
-        String version = "0";
-        String manifestVersion = fileInfo.getVersion(null);
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
+    }
 
-        if ((null != manifestVersion) && (null != sha256)) {
-            // this protects against the occasional differing binaries with poor manifest maintenance  
-            version = manifestVersion + " [sha256=" + sha256 + "]";
-        } else if (null != sha256) {
-            version = "[sha256=" + sha256 + "]";
-        } else if (null != manifestVersion) {
-            version = manifestVersion;
-        }
-
-        return version;
+    /**
+     * Retrieve the display version for the component. The display version should be stored
+     * in the manifest of the application (implementation and/or specification version).
+     * It will attempt to retrieve the version for both archived or exploded deployments.
+     *
+     * @param file component file
+     * @return
+     */
+    private String getDisplayVersion(File file) {
+        //JarContentFileInfo extracts the version from archived and exploded deployments
+        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
+        return contentFileInfo.getVersion(null);
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {

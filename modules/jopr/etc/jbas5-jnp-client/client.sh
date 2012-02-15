@@ -9,39 +9,33 @@
 MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
 MAIN_CLASS=test.RmiClient
 
-if [ "x$JBOSS_HOME" = "x" ]; then
-  echo "JBOSS_HOME environment variable is undefined."
+if [ -z "$JBOSS_HOME" ]; then
+  echo "JBOSS_HOME environment variable is undefined." >&2
   exit 1
 fi
 
 if [ ! -d "$JBOSS_HOME" ]; then
-   echo "Dir specified by JBOSS_HOME variable ($JBOSS_HOME) does not exist."
+   echo "Dir specified by JBOSS_HOME variable ($JBOSS_HOME) does not exist." >&2
    exit 1
 fi
-JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8788"
+JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8788"
 
 
 # Find MAIN_JAR, or we can't continue
 
 MAIN_JAR=target/$MAIN_JAR_NAME
-if [  ! -f "$MAIN_JAR" ] 
-then
-  echo Could not locate $MAIN_JAR%. Please check that you are in the
-  echo bin directory when running this script.
+if [  ! -f "$MAIN_JAR" ]; then
+  echo "Could not locate $MAIN_JAR. Please check that you are in the bin directory when running this script." >&2
   exit 1
 fi
 
-if [ "`uname`" == "Darwin" ]
-then
+if [ "`uname`" == "Darwin" ]; then
     JAVA_HOME=/usr
 fi
 
-if [ "$JAVA_HOME" == "" ]
-then
+if [ "$JAVA_HOME" == "" ]; then
   JAVA=java
-
-  echo JAVA_HOME is not set.  Unexpected results may occur.
-  echo Set JAVA_HOME to the directory of your local JDK to avoid this message.
+  echo "JAVA_HOME is not set.  Unexpected results may occur. Set JAVA_HOME to the directory of your local JDK to avoid this message."
 fi
 
 

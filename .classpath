@@ -126,6 +126,12 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.2.1.GA/jaxrs-api-2.2.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/sasl/jboss-sasl/1.0.0.Beta9/jboss-sasl-1.0.0.Beta9.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/mockito/mockito-all/1.9.0/mockito-all-1.9.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-mockito/1.4.11/powermock-api-mockito-1.4.11.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-core/1.4.11/powermock-core-1.4.11.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-support/1.4.11/powermock-api-support-1.4.11.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng-common/1.4.11/powermock-module-testng-common-1.4.11.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng/1.4.11/powermock-module-testng-1.4.11.jar"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/main/java"/>
@@ -204,9 +210,6 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/yum/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/packagetype-cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/cobbler/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/src/test/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/plugins/rhnhosted/target/classes/generated-source"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jmx/src/main/java"/>
@@ -289,5 +292,6 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/disk/src/test/java"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

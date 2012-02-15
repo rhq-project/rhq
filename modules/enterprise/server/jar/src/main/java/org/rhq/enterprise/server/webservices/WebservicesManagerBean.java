@@ -508,8 +508,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //CONTENTMANAGER: BEGIN ----------------------------------
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
         Integer architectureId, byte[] packageBytes) {
-        return contentManager.createPackageVersion(subject, packageName, packageTypeId, version, architectureId,
-            packageBytes);
+        return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
+            null, architectureId, packageBytes);
+    }
+
+    public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
+        int packageTypeId, String version,
+        String displayVersion, Integer architectureId, byte[] packageBytes) {
+        return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
+            displayVersion, architectureId, packageBytes);
     }
 
     public void deletePackages(Subject subject, int resourceId, int[] installedPackageIds, String requestNotes) {
@@ -521,7 +528,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public void deployPackages(Subject subject, int[] resourceIds, int[] packageVersionIds) {
-        contentManager.deployPackages(subject, resourceIds, packageVersionIds);
+        contentManager.deployPackagesWithNote(subject, resourceIds, packageVersionIds, null);
+    }
+
+    public void deployPackagesWithNote(Subject subject, int[] resourceIds, int[] packageVersionIds, String requestNotes) {
+        contentManager.deployPackagesWithNote(subject, resourceIds, packageVersionIds, requestNotes);
     }
 
     public List<Architecture> findArchitectures(Subject subject) {
@@ -1202,7 +1213,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public void setSystemSettings(Subject subject, SystemSettings settings) throws Exception {
         systemManager.setSystemSettings(subject, settings);
     }
-    
+
     //SYSTEMMANAGER: END ------------------------------------
 
     //SYNCHRONIZATIONMANANGER: BEGIN -------------------------
@@ -1237,5 +1248,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
+
 
 }

@@ -118,10 +118,8 @@ unset JBOSS_CLASSPATH
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ "x$RHQ_SERVER_DEBUG" != "x" ]; then
-      if [ "$RHQ_SERVER_DEBUG" != "false" ]; then
-         echo $1
-      fi
+   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+      echo $1
    fi
 }
 
@@ -202,7 +200,7 @@ esac
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
-   if [ "x${_LINUX}${_SOLARIS}${_CYGWIN}" != "x" ]; then
+   if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
       # only certain platforms support the -e argument for readlink
       _READLINK_ARG="-e"
    fi
@@ -253,9 +251,10 @@ fi
 
 if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
-      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"
-      debug_msg "Using the embedded JRE"
-      if [ ! -d "$RHQ_SERVER_JAVA_HOME" ]; then
+      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"     
+      if [ -d "$RHQ_SERVER_JAVA_HOME" ]; then
+         debug_msg "Using the embedded JRE"
+      else
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
          RHQ_SERVER_JAVA_HOME="$JAVA_HOME"
       fi
@@ -381,8 +380,7 @@ case "$1" in
 
         _JBOSS_STATUS=$?
 
-        rm "$_SERVER_PIDFILE"
-        rm "$_JVM_PIDFILE"
+        remove_pid_files
 
         exit $_JBOSS_STATUS
         ;;
@@ -484,3 +482,4 @@ case "$1" in
         exit 1
         ;;
 esac
+

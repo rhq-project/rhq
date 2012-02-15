@@ -350,20 +350,27 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
     }
 
     public AvailabilityType getAvailability() {
+        AvailabilityType avail;
         try {
             EmsConnection connection = loadConnection();
             EmsBean bean = connection.getBean("Catalina:type=Server");
 
             // this is necessary to prove that that not only the connection exists but is servicing requests.
             bean.getAttribute("serverInfo").refresh();
-            return AvailabilityType.UP;
+            avail = AvailabilityType.UP;
         } catch (Exception e) {
-            // If the connection is not servicing requests then close it. this seems necessary for the
-            // Tomcat connection as when Tomcat does come up again it seems a new EMS connection is required,
-            // otherwise we're not seeing EMS be able to pick up the new process.
+            if (log.isDebugEnabled()) {
+                log.debug("An exception occurred during availability check for Tomcat Server Resource with key ["
+                    + this.getResourceContext().getResourceKey() + "] and plugin config ["
+                    + this.getPluginConfiguration().getAllProperties() + "].", e);
+            }
+            // If the connection is not servicing requests, then close it. this seems necessary for the
+            // Tomcat connection, as, when Tomcat does come up again, it seems a new EMS connection is required,
+            // otherwise EMS is not able to pick up the new process.
             closeConnection();
-            return AvailabilityType.DOWN;
+            avail = AvailabilityType.DOWN;
         }
+        return avail;
     }
 
     ResourceContext<T> getResourceContext() {

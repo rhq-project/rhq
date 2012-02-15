@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
@@ -34,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.ViewChangedException;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
@@ -97,7 +99,12 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      */
     protected abstract void loadSelectedItem(int itemId, ViewPath viewPath);
 
-    protected abstract void updateTabContent(T selectedItem);
+    protected void updateTabContent(T selectedItem) {
+        String currentViewPath = History.getToken();
+        if (!currentViewPath.startsWith(this.baseViewPath)) {
+            throw new ViewChangedException(this.baseViewPath + "/" + getSelectedItemId());
+        }
+    }
 
     // ---------------------------------------------------------
 

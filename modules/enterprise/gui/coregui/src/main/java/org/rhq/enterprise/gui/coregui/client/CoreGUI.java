@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -154,7 +154,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
-                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+                if (e instanceof ViewChangedException) {
+                    ViewChangedException viewChangedException = (ViewChangedException) e;
+                    String obsoleteView = viewChangedException.getObsoleteView();
+                    Log.debug("User navigated to view [" + currentView + "] before view [" + obsoleteView
+                        + "] was done rendering - rendering of view [" + obsoleteView + "] has been aborted.");
+                } else {
+                    getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+                }
             }
         });
 

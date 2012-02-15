@@ -273,6 +273,8 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     protected void updateTabContent(ResourceComposite resourceComposite) {
+        super.updateTabContent(resourceComposite);
+
         try {
             this.resourceComposite = resourceComposite;
             for (ResourceSelectListener selectListener : this.selectListeners) {

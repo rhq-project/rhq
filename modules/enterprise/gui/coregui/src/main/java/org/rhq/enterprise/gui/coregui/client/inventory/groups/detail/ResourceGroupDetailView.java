@@ -242,6 +242,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     protected void updateTabContent(ResourceGroupComposite groupComposite) {
+        super.updateTabContent(groupComposite);
+
         try {
             this.groupComposite = groupComposite;
             getTitleBar().setGroup(groupComposite);

@@ -27,7 +27,7 @@ import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
@@ -60,7 +60,7 @@ public class DeleteAlertsTest extends AbstractEJB3Test {
         try {
             connection = getConnection();
             IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
-            DatabaseOperation.CLEAN_INSERT.execute(dbUnitConnection, getDataSet());
+            DatabaseOperation.REFRESH.execute(dbUnitConnection, getDataSet());
         } finally {
             if (connection != null) {
                 connection.close();
@@ -70,15 +70,15 @@ public class DeleteAlertsTest extends AbstractEJB3Test {
         newResource = getEntityManager().find(Resource.class, 1);
     }
 
-    @AfterClass
-    public void cleanupDB() throws Exception {
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod() throws Exception {
         if ("true".equals(System.getProperty("clean.db"))) {
             Connection connection = null;
 
             try {
                 connection = getConnection();
                 IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
-                DatabaseOperation.DELETE_ALL.execute(dbUnitConnection, getDataSet());
+                DatabaseOperation.DELETE.execute(dbUnitConnection, getDataSet());
             } finally {
                 if (connection != null) {
                     connection.close();
@@ -103,17 +103,17 @@ public class DeleteAlertsTest extends AbstractEJB3Test {
         int resourceTypeId = 1;
         int deletedCount = alertManager.deleteAlertsByContext(superuser, EntityContext.forTemplate(resourceTypeId));
 
-        List<AlertConditionLog> alertConditionLogs = getEntityManager().createQuery(
-            "from AlertConditionLog log where log.id = :id").setParameter("id", 2).getResultList();
+        List<AlertConditionLog> alertConditionLogs = getEntityManager()
+            .createQuery("from AlertConditionLog log where log.id = :id").setParameter("id", 2).getResultList();
 
-        List<AlertNotificationLog> notificationLogs = getEntityManager().createQuery(
-            "from AlertNotificationLog log where log.id = :id").setParameter("id", 2).getResultList();
+        List<AlertNotificationLog> notificationLogs = getEntityManager()
+            .createQuery("from AlertNotificationLog log where log.id = :id").setParameter("id", 2).getResultList();
 
         assertEquals("Failed to delete alerts by template", 1, deletedCount);
-        assertEquals("Failed to delete alert condition logs when deleting alerts by template", 0, alertConditionLogs
-            .size());
-        assertEquals("Failed to delete alert notification logs when deleting alerts by template", 0, notificationLogs
-            .size());
+        assertEquals("Failed to delete alert condition logs when deleting alerts by template", 0,
+            alertConditionLogs.size());
+        assertEquals("Failed to delete alert notification logs when deleting alerts by template", 0,
+            notificationLogs.size());
     }
 
     public void testAlertDeleteInRange() {

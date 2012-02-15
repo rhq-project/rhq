@@ -512,7 +512,7 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         // ContentManager.deployPackages( [war.getId()], [pv.getId()] );
         List<Integer> warBag = new ArrayList<Integer>();
         warBag.add(war.getId());
-        WEBSERVICE_REMOTE.deployPackages(subject, warBag, pvBag);
+        WEBSERVICE_REMOTE.deployPackages(subject, warBag, pvBag, "Test Notes");
 
         // Make sure things still look good
 

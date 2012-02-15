@@ -127,9 +127,20 @@ public class AbstractBaseDiscovery  {
         String portString;
         String interfaceExpession;
 
-        String socketBindingName = obtainXmlPropertyViaXPath(
+        String socketBindingName;
+
+        socketBindingName = obtainXmlPropertyViaXPath(
                 "//management/management-interfaces/http-interface/socket-binding/@http");
-        if (socketBindingName==null || socketBindingName.isEmpty()) {
+        String socketInterface = obtainXmlPropertyViaXPath(
+                "//management/management-interfaces/http-interface/socket/@interface");
+
+        if (!socketInterface.isEmpty()) {
+            interfaceExpession = obtainXmlPropertyViaXPath(
+                                "//interfaces/interface[@name='" + socketInterface + "']/inet-address/@value");
+            portString = obtainXmlPropertyViaXPath(
+                    "//management/management-interfaces/http-interface/socket/@port");
+        }
+        else if (socketBindingName.isEmpty()) {
             // old AS7.0, early 7.1 style
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
             String interfaceName = obtainXmlPropertyViaXPath(
@@ -138,7 +149,7 @@ public class AbstractBaseDiscovery  {
                     "/server/interfaces/interface[@name='" + interfaceName + "']/inet-address/@value");
         }
         else {
-            // later AS7.1 and EAP6
+            // later AS7.1 and EAP6 standalone.xml
             portString = obtainXmlPropertyViaXPath(
                     "/server/socket-binding-group/socket-binding[@name='" + socketBindingName + "']/@port");
             String interfaceName = obtainXmlPropertyViaXPath(
@@ -152,13 +163,13 @@ public class AbstractBaseDiscovery  {
         HostPort hp = new HostPort();
 
         if (!interfaceExpession.isEmpty())
-            hp.host = replaceDollarExpression(interfaceExpession, commandLine);
+            hp.host = replaceDollarExpression(interfaceExpession, commandLine, "localhost");
         else
             hp.host = "localhost"; // Fallback
 
 
         if (portString!=null && !portString.isEmpty()) {
-            String tmp = replaceDollarExpression(portString,commandLine);
+            String tmp = replaceDollarExpression(portString,commandLine, "9990");
             hp.port = Integer.valueOf(tmp);
         }
         else
@@ -172,17 +183,19 @@ public class AbstractBaseDiscovery  {
      * try to resolve it. Resolution is done by looking at the command line to see if
      * there are -bmanagement or -Djboss.bind.address.management arguments present
      *
+     *
      * @param value a hostname or hostname expression
      * @param commandLine The command line from the process
+     * @param lastResort
      * @return resolved value
      */
-    private String replaceDollarExpression(String value, String[] commandLine) {
+    private String replaceDollarExpression(String value, String[] commandLine, String lastResort) {
         if (!value.contains("${"))
             return value;
 
         // remove ${ }
         value = value.substring(2,value.length()-1);
-        String fallback = "localhost";
+        String fallback = lastResort;
         String expression;
         if (value.contains(":")) {
             int i = value.indexOf(":");
@@ -202,16 +215,19 @@ public class AbstractBaseDiscovery  {
          */
 
         String ret=null;
-        for (String line: commandLine) {
+        for (int i = 0, commandLineLength = commandLine.length; i < commandLineLength; i++) {
+            String line = commandLine[i];
             if (expression.contains("address")) {
                 if (line.contains("-bmanagement") || line.contains("jboss.bind.address.management")) {
-                    ret = line.substring(line.indexOf("=")+1);
+                    if (line.contains("="))
+                        ret = line.substring(line.indexOf("=") + 1); // -bmanagement=1.2.3.4
+                    else
+                        ret = commandLine[i+1]; // -bmanagement 1.2.3.4
                     break;
                 }
-            }
-            else if (expression.contains("port")) {
+            } else if (expression.contains("port")) {
                 if (line.contains(expression)) {
-                    ret = line.substring(line.indexOf("=")+1);
+                    ret = line.substring(line.indexOf("=") + 1);
                     break;
                 }
             }

@@ -43,6 +43,8 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
+import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
@@ -55,6 +57,8 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private ConfigurationDefinition configurationDefinition;
     private String namePropLocator;
     private String type;
+    private boolean addNewChildren;
+    private boolean addDeleteModifiedChildren;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -114,10 +118,22 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         for (PropertyGroupDefinition pgd: configurationDefinition.getGroupDefinitions()) {
             String groupName = pgd.getName();
             namePropLocator = null;
-            if (groupName.startsWith("children:")) {
+            if (groupName.startsWith("children:")) { // children, where the key in key=value from the path is known
                 type = groupName.substring("children:".length());
                 if (type.contains(":")) {
                     namePropLocator = type.substring(type.indexOf(":") + 1);
+                    if (namePropLocator.endsWith("+")) { // ending in +  -> we need to :add new entries
+                        namePropLocator=namePropLocator.substring(0,namePropLocator.length()-1);
+                        addNewChildren = true;
+                    }
+                    else if (namePropLocator.endsWith("+-")) { // ending in +-  -> we need to :add new entries and remove/add to modify
+                        namePropLocator=namePropLocator.substring(0,namePropLocator.length()-2);
+                        addNewChildren = true;
+                        addDeleteModifiedChildren = true;
+                    }
+                    else {
+                        addNewChildren = false;
+                    }
                     type = type.substring(0, type.indexOf(":"));
                 }
                 else {
@@ -128,7 +144,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                 for (PropertyDefinition def : definitions) {
                     updateProperty(conf,cop,def, address);
                 }
-            } if (groupName.startsWith("child:")) {
+            } if (groupName.startsWith("child:")) { // one named child resource
                 String subPath = groupName.substring("child:".length());
                 if (!subPath.contains("="))
                     throw new IllegalArgumentException("subPath of 'child:' expression has no =");
@@ -156,17 +172,54 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             return;
 
         // Handle the special case
-        if (propDef instanceof PropertyDefinitionList && propDef.getName().equals("*")) {
+        String propDefName = propDef.getName();
+        if (propDef instanceof PropertyDefinitionList && propDefName.startsWith("*")) {
             propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
-            PropertyList pl = (PropertyList) conf.get("*");  // TODO loop over the list content
+            PropertyList pl = (PropertyList) conf.get(propDefName);
 
-            for (Property prop2 : pl.getList()) {
-                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef, baseAddress);
+            // check if we need to see if that property exists - get the current state of affairs from the AS
+            List<String> existingPropnames = new ArrayList<String>();
+            if (addNewChildren) {
+                Operation op = new ReadChildrenResources(baseAddress,type);
+                Result tmp = connection.execute(op);
+                if (tmp.isSuccess()) {
+                    Map<String,Object> tmpResMap = (Map<String, Object>) tmp.getResult();
+                    existingPropnames.addAll(tmpResMap.keySet());
+                }
             }
+
+            // Loop over the list - i.e. the individual rows that come from the server
+            for (Property prop2 : pl.getList()) {
+                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef, baseAddress,
+                        existingPropnames);
+            }
+            // now check about removed properties
+            for (String existingName : existingPropnames ) {
+                boolean found=false;
+                for (Property prop2 : pl.getList()) {
+                    PropertyMap propMap2 = (PropertyMap) prop2;
+                    String itemName = propMap2.getSimple(namePropLocator).getStringValue();
+                    if (itemName==null) {
+                        throw new IllegalArgumentException("Map contains no entry with name '" + namePropLocator + "'");
+                    }
+                    if (itemName.equals(existingName)) {
+                        found=true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Address tmpAddr = new Address(baseAddress);
+                    tmpAddr.add(type, existingName);
+                    Operation operation = new Operation("remove",tmpAddr);
+                    cop.addStep(operation);
+                }
+            }
+
         }
         else {
             // Normal cases
-            Property prop = conf.get(propDef.getName());
+            Property prop = conf.get(propDefName);
 
             if (prop instanceof PropertySimple) {
                 updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef, baseAddress);
@@ -188,18 +241,47 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     }
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
-                                                Address address) {
+                                                Address address, List<String> existingPropNames) {
         Map<String,Object> results = updateHandleMap(prop,propDef, address);
         if (prop.get(namePropLocator)==null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
         }
-        String addrVal= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
+        String key= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
+
+
         Address addr = new Address(address);
-        addr.add(type,addrVal);
+        addr.add(type,key);
         for (Map.Entry<String,Object> entry : results.entrySet()) {
-            Operation writeAttribute = new WriteAttribute(addr,entry.getKey(),entry.getValue());
-            cop.addStep(writeAttribute);
+
+            if (entry.getValue().equals(key))
+                continue; // skip TODO always or only in the case of degenerated props?
+
+
+            Operation operation;
+            if (!addNewChildren || existingPropNames.contains(key)) {
+                // update existing entry
+                if (addDeleteModifiedChildren) {
+                    operation = new Remove(addr);
+                    cop.addStep(operation);
+                    operation = new Operation("add",addr);
+                    operation.addAdditionalProperty("name",key);
+                    operation.addAdditionalProperty("value",entry.getValue());
+
+                }
+                else {
+                    operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
+                }
+            }
+            else {
+                // write new child ( :name+ case )
+
+                operation = new Operation("add",addr);
+                operation.addAdditionalProperty("name",key);
+                operation.addAdditionalProperty("value",entry.getValue());
+            }
+            cop.addStep(operation);
         }
+
     }
 
     private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef,

@@ -83,7 +83,7 @@ import org.rhq.core.domain.util.Summary;
  * Represents an RHQ managed resource (i.e. a platform, server, or service).
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
@@ -1302,6 +1302,12 @@ public class Resource implements Comparable<Resource>, Serializable {
         return this.mtime;
     }
 
+    /**
+     * Call this directly only when needing manual manipulation of the mtime. Otherwise, you probably want to
+     * call {@link #setAgentSynchronizationNeeded()}.
+     * 
+     * @param mtime
+     */
     public void setMtime(long mtime) {
         this.mtime = mtime;
     }
@@ -1336,8 +1342,6 @@ public class Resource implements Comparable<Resource>, Serializable {
      *
      * For a list of changes that the agent cares about, see InventoryManager.mergeResource(Resource, Resource)
      */
-
-    // @PreUpdate
     public void setAgentSynchronizationNeeded() {
         this.mtime = System.currentTimeMillis();
     }
@@ -1434,7 +1438,7 @@ public class Resource implements Comparable<Resource>, Serializable {
         return schedules;
     }
 
-    public void setSchendules(Set<MeasurementSchedule> schedules) {
+    public void setSchedules(Set<MeasurementSchedule> schedules) {
         this.schedules = schedules;
     }
 
@@ -1785,8 +1789,29 @@ public class Resource implements Comparable<Resource>, Serializable {
         driftDefinition.setResource(this);
     }
 
+    // NOTE: It's vital that compareTo() is consistent with equals(), otherwise TreeSets containing Resources, or
+    //       TreeMaps with Resources as keys, will not work reliably. See the Javadoc for Comparable for a precise
+    //       definition of "consistent with equals()".
+    @Override
     public int compareTo(Resource that) {
-        return this.name.compareTo(that.getName());
+        if (this == that) {
+            return 0;
+        }
+        int result;
+        if (this.name != null) {
+            result = (that.name != null) ? this.name.compareTo(that.name) : -1;
+        } else {
+            result = (that.name == null) ? 0 : 1;
+        }
+        if (result == 0) {
+            // The names are equal - compare the UUIDs to break the tie.
+            if (this.uuid != null) {
+                result = (that.uuid != null) ? this.uuid.compareTo(that.uuid) : -1;
+            } else {
+                result = (that.uuid == null) ? 0 : 1;
+            }
+        }
+        return result;
     }
 
     @Override

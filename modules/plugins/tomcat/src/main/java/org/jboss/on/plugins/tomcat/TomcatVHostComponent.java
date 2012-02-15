@@ -23,13 +23,10 @@
 
 package org.jboss.on.plugins.tomcat;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
@@ -305,13 +302,11 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
             return;
         }
 
-        FileContentDelegate fileContent = new FileContentDelegate(deployDir, details.getPackageTypeName());
-        InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        fileContent.createContent(path, isForTempDir, explodeOnDeploy);
+        FileContentDelegate fileContent = new FileContentDelegate(deployDir);
+        fileContent.createContent(path, tempFile, explodeOnDeploy);
 
-        // Resource key is a canonical objectName similar to :        
-        // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none        
-
+        // Resource key is a canonical objectName similar to:
+        // Catalina:j2eeType=WebModule,name=//<vHost>/<path>,J2EEApplication=none,J2EEServer=none
         String objectName = "Catalina:j2eeType=WebModule,J2EEApplication=none,J2EEServer=none,name=//" + getName()
             + "/" + contextRoot;
 

@@ -16,11 +16,23 @@
    <description>a plugin for managing a generic JMX-enabled application</description>
 
    <dependencies>
+
       <dependency>
          <groupId>mc4j</groupId>
          <artifactId>org-mc4j-ems</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
+
+      <!-- needed for the JVM Attach API. NOTE: we do not package tools.jar in the plugin jar's lib dir, because if it
+           is available at runtime, rhq-agent.sh/rhq-agent.bat will add it to the Agent's classpath. -->
+      <dependency>
+         <groupId>com.sun</groupId>
+         <artifactId>tools</artifactId>
+         <version>1.6.0</version>
+         <scope>system</scope>
+         <systemPath>${jdkToolsJar}</systemPath>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -48,10 +60,35 @@
                </execution>
             </executions>
          </plugin>
-</plugins>
-      </build>
+      </plugins>
+   </build>
 
    <profiles>
+
+      <profile>
+          <id>sun_jdk</id>
+          <activation>
+              <file>
+                  <exists>${java.home}/../lib/tools.jar</exists>
+              </file>
+          </activation>
+          <properties>                          
+              <jdkToolsJar>${java.home}/../lib/tools.jar</jdkToolsJar>
+          </properties>
+      </profile>
+
+      <profile>
+          <id>osx_jdk</id>
+          <activation>
+              <file>
+                  <exists>${java.home}/../Classes/classes.jar</exists>
+              </file>
+          </activation>
+          <properties>                          
+              <jdkToolsJar>${java.home}/../Classes/classes.jar</jdkToolsJar>
+          </properties>
+      </profile>
+
       <profile>
          <id>integration-tests</id>
          <activation>
@@ -146,28 +183,7 @@
 
       </plugins>
    </build>
-</profile>
-   <!-- This includes the tools.jar in the system classpath to avoid the unsatisfied link error on
-      tools.jar dependencies that EMS was trying to load multiple times. -->
-      <profile>
-         <id>default-tools.jar</id>
-         <activation>
-            <property>
-               <name>java.vendor</name>
-               <value>Sun Microsystems Inc.</value>
-            </property>
-         </activation>
-
-         <dependencies>
-            <dependency>
-               <groupId>com.sun</groupId>
-               <artifactId>tools</artifactId>
-               <version>1.4.2</version>
-               <scope>system</scope>
-               <systemPath>${java.home}/../lib/tools.jar</systemPath>
-            </dependency>
-         </dependencies>
-      </profile>
+ </profile>
 
       <profile>
          <id>dev</id>
@@ -241,6 +257,7 @@
             </plugins>
          </build>
       </profile>
+
     <profile>
       <id>cobertura-plugins</id>
       <activation>

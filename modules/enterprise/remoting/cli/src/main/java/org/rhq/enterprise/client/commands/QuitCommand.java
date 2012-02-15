@@ -19,7 +19,6 @@
 package org.rhq.enterprise.client.commands;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.Controller;
 
 /**
  * @author Greg Hinkle
@@ -35,11 +34,11 @@ public class QuitCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "quit";
+        return getPromptCommandString();
     }
 
     public String getHelp() {
-        return "Exit the CLI interpreter";
+        return "Exit the CLI";
     }
 
     public String getDetailedHelp() {

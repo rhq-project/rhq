@@ -24,13 +24,9 @@ package org.rhq.plugins.jbossas;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -57,9 +53,9 @@ import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 import org.rhq.plugins.jbossas.util.WarDeploymentInformation;
 import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
-/**
+ /**
  * A resource component for managing a web application (WAR) deployed to a JBossAS server.
  *
  * @author Ian Springer

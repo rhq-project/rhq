@@ -40,7 +40,6 @@ import javax.script.ScriptException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.bindings.SandboxedScriptEngine;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.StandardScriptPermissions;
@@ -127,8 +126,6 @@ public class CliSender extends AlertSender<CliComponent> {
 
             engine = getScriptEngine(alert, scriptOut, config);
 
-            final SandboxedScriptEngine sandbox = new SandboxedScriptEngine(engine, new StandardScriptPermissions());
-
             InputStream packageBits = getPackageBits(config.packageId, config.repoId);
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
@@ -137,10 +134,11 @@ public class CliSender extends AlertSender<CliComponent> {
 
             final ExceptionHolder exceptionHolder = new ExceptionHolder();
 
+            final ScriptEngine e = engine;
             Thread scriptRunner = new Thread(new Runnable() {
                 public void run() {
                     try {
-                        sandbox.eval(rdr);
+                        e.eval(rdr);
                     } catch (ScriptException e) {
                         exceptionHolder.scriptException = e;
                     }
@@ -337,8 +335,10 @@ public class CliSender extends AlertSender<CliComponent> {
 
             if (versionToUse != null) {
                 ret = ret.replace("$packageName", versionToUse.getDisplayName());
-                ret = ret.replace("$packageVersion", versionToUse.getDisplayVersion() == null ? versionToUse
-                    .getVersion() : versionToUse.getDisplayVersion());
+                ret = ret.replace(
+                    "$packageVersion",
+                    versionToUse.getDisplayVersion() == null ? versionToUse.getVersion() : versionToUse
+                        .getDisplayVersion());
             } else {
                 ret = ret.replace("$packageName", "unknown script with package id " + config.packageId);
                 ret = ret.replace("$packageVersion", "no version");
@@ -414,8 +414,8 @@ public class CliSender extends AlertSender<CliComponent> {
             ScriptEngine engine = SCRIPT_ENGINES.poll();
 
             if (engine == null) {
-                engine = ScriptEngineFactory.getScriptEngine(ENGINE_NAME, new PackageFinder(Collections
-                    .<File> emptyList()), bindings);
+                engine = ScriptEngineFactory.getSecuredScriptEngine(ENGINE_NAME,
+                    new PackageFinder(Collections.<File> emptyList()), bindings, new StandardScriptPermissions());
             } else {
                 ScriptEngineFactory.injectStandardBindings(engine, bindings, true);
             }

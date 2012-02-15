@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,9 +19,13 @@
 package org.rhq.enterprise.client.commands;
 
 import java.util.Properties;
+import java.util.jar.Attributes;
 
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 import org.rhq.enterprise.client.ClientMain;
 import org.rhq.enterprise.client.Version;
+import org.rhq.enterprise.client.script.CommandLineParseException;
 
 /**
  * Command to show the user the version information of the CLI.
@@ -35,26 +39,57 @@ public class VersionCommand implements ClientCommand {
     }
 
     public boolean execute(ClientMain client, String[] args) {
-        if (args.length <= 1) {
+        VersionArgs versionArgs = parseArgs(args);
+        if (versionArgs.verbose) {
             client.getPrintWriter().println(Version.getVersionPropertiesAsString());
         } else {
             Properties props = Version.getVersionProperties();
-            for (int i = 1; i < args.length; i++) {
-                client.getPrintWriter().println(args[i] + "=" + props.getProperty(args[i], "<unknown>"));
-            }
+            String version = props.getProperty(Attributes.Name.IMPLEMENTATION_VERSION.toString());
+            client.getPrintWriter().println(version);
         }
+
         return true;
     }
 
     public String getSyntax() {
-        return "version [prop name]...";
+        return getPromptCommandString() + " [-v | --verbose]";
     }
 
     public String getHelp() {
-        return "Show version information and properties";
+        return "Show CLI version information";
     }
 
     public String getDetailedHelp() {
-        return getHelp();
+        return getHelp() + ". If no arguments are specified, the CLI's version is printed. If the verbose option is "
+            + "specified, the values of the main attributes from the CLI jar's MANIFEST.MF are printed.";
+    }
+
+    private VersionArgs parseArgs(String[] args) {
+        String shortOpts = "-:v";
+        LongOpt[] longOpts = {
+            new LongOpt("verbose", LongOpt.OPTIONAL_ARGUMENT, null, 'v')
+        };
+        Getopt getopt = new Getopt(getPromptCommandString(), args, shortOpts, longOpts);
+        getopt.setOpterr(false);
+
+        VersionArgs versionArgs = new VersionArgs();
+
+        int code = getopt.getopt();
+        while (code != -1) {
+            switch (code) {
+                case ':':
+                    throw new CommandLineParseException("Invalid option");
+                case 'v':
+                    versionArgs.verbose = true;
+                    break;
+            }
+            code = getopt.getopt();
+        }
+
+        return versionArgs;
+    }
+
+    private static class VersionArgs {
+        boolean verbose;
     }
 }

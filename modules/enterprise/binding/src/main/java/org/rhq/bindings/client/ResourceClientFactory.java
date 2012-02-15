@@ -199,7 +199,13 @@ public class ResourceClientFactory {
                 }
             }
 
-            return customClass.toClass();
+            ClassLoader cl = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(ResourceClientProxy.class.getClassLoader());
+                return customClass.toClass();
+            } finally {
+                Thread.currentThread().setContextClassLoader(cl);
+            }
         } catch (NotFoundException e) {
             LOG.error("Could not create custom interface for resource with id " + proxy.getId(), e);
         } catch (CannotCompileException e) {

@@ -117,13 +117,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSecuritySection() {
         NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID, "global/User_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new UsersView(extendLocatorId("Users"));
+                return new UsersView(extendLocatorId("Users"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
             }
         });
 
         NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, "global/Role_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new RolesView(extendLocatorId("Roles"));
+                return new RolesView(extendLocatorId("Roles"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
             }
         });
 

@@ -34,7 +34,6 @@
                               
                               <pathelement location="../disk/target/rhq-serverplugin-disk-${project.version}.jar" />
                               <pathelement location="../jboss-software/target/rhq-serverplugin-jboss-software-${project.version}.jar" />
-                              <pathelement location="../rhnhosted/target/rhq-serverplugin-rhnhosted-${project.version}.jar" />
                               <pathelement location="../url/target/rhq-serverplugin-url-${project.version}.jar" />
                               <pathelement location="../yum/target/rhq-serverplugin-yum-${project.version}.jar" />
                               <pathelement location="../alert-email/target/alert-email-${project.version}.jar" />

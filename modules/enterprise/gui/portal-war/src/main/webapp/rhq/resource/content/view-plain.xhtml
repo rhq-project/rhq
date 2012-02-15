@@ -105,7 +105,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.version}"/>
+                  <h:outputText value="#{ not empty item.displayVersion ? item.displayVersion : item.version  }"/>
                </rich:column>
 
                <rich:column>

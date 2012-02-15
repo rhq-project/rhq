@@ -100,7 +100,6 @@ import org.rhq.core.pluginapi.support.SnapshotReportResults;
 import org.rhq.core.pluginapi.support.SupportFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.SelectiveSkippingEntityResolver;
-import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas.helper.JavaSystemProperties;
 import org.rhq.plugins.jbossas.helper.MainDeployer;
 import org.rhq.plugins.jbossas.util.ConnectionFactoryConfigurationEditor;
@@ -114,7 +113,7 @@ import org.rhq.plugins.jbossas.util.JarContentDelegate;
 import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
 * Resource component for managing JBoss AS 3.2.3 through 4.2.x, and JBoss EAP and SOA-P 4.x.
@@ -896,9 +895,7 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             return;
         }
 
-        InputStream isForTempDir = new BufferedInputStream(new FileInputStream(tempFile));
-        String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).getDigestString(tempFile);
-        deployer.createContent(details, isForTempDir, !zip, createBackup, shaString);
+        deployer.createContent(details, tempFile, !zip, createBackup);
 
         String vhost = null;
         if (resourceTypeName.equals(RESOURCE_TYPE_WAR)) {

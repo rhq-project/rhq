@@ -21,6 +21,7 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.testng.annotations.BeforeSuite;
@@ -32,6 +33,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 
@@ -360,6 +362,133 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step1.getAdditionalProperties().get("value").equals("Heiko");
         assert step2.getAdditionalProperties().get("name").equals("check-interval");
         assert step2.getAdditionalProperties().get("value").equals("23");
+
+    }
+
+    public void test10() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test10");
+
+        FakeConnection connection = new FakeConnection();
+        String resultString = loadJsonFromFile("system-props.json");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        connection.setContent(json);
+
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+
+        // We have properties 'bar' and 'hello' on the server
+        // update 'bar', add 'hulla' and remove 'hello'
+
+        PropertyList propertyList = new PropertyList("*2");
+        PropertyMap propertyMap = new PropertyMap("*");
+        propertyMap.put(new PropertySimple("name","hulla"));
+        propertyMap.put(new PropertySimple("value","hopp"));
+        propertyList.add(propertyMap);
+        propertyMap = new PropertyMap("*");
+        propertyMap.put(new PropertySimple("name","bar"));
+        propertyMap.put(new PropertySimple("value","42!"));
+        propertyList.add(propertyMap);
+        conf.put(propertyList);
+
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 3 : "#Steps should be 3 but were " + cop.numberOfSteps();
+
+        Operation step1 = cop.step(0);
+        Operation step2 = cop.step(1);
+        Operation step3 = cop.step(2);
+
+        assert step1.getAddress().size()==1;
+        assert step2.getAddress().size()==1;
+        assert step3.getAddress().size()==1;
+        assert step1.getAddress().get(0).equals("system-property=hulla");
+        assert step2.getAddress().get(0).equals("system-property=bar");
+        assert step3.getAddress().get(0).equals("system-property=hello");
+        assert step1.getOperation().equals("add");
+        assert step2.getOperation().equals("write-attribute");
+        assert step3.getOperation().equals("remove");
+
+        assert step1.getAdditionalProperties().get("name").equals("hulla");
+        assert step1.getAdditionalProperties().get("value").equals("hopp");
+        assert step2.getAdditionalProperties().get("name").equals("value"); // This is the name of the property
+        assert step2.getAdditionalProperties().get("value").equals("42!");
+        assert step3.getAdditionalProperties().isEmpty();
+
+    }
+
+    public void test11() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test11");
+
+        FakeConnection connection = new FakeConnection();
+        String resultString = loadJsonFromFile("system-props.json");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        connection.setContent(json);
+
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+
+        // We have properties 'bar' and 'hello' on the server
+        // bar has a value of 44
+        // update 'bar', add 'hulla' and remove 'hello'
+
+        PropertyList propertyList = new PropertyList("*2");
+        PropertyMap propertyMap = new PropertyMap("*");
+        // add 'hulla'
+        propertyMap.put(new PropertySimple("name","hulla"));
+        propertyMap.put(new PropertySimple("value","hopp"));
+        propertyList.add(propertyMap);
+        propertyMap = new PropertyMap("*");
+        // update 'bar' -> needs to trigger a remove + an :add
+        propertyMap.put(new PropertySimple("name","bar"));
+        propertyMap.put(new PropertySimple("value","42!"));
+        propertyList.add(propertyMap);
+        conf.put(propertyList);
+        // 'hello' is not present -> needs to trigger a :remove for it
+
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop.numberOfSteps() == 4 : "#Steps should be 4 but were " + cop.numberOfSteps();
+
+        Operation step1 = cop.step(0);
+        Operation step2 = cop.step(1);
+        Operation step3 = cop.step(2);
+        Operation step4 = cop.step(3);
+
+        assert step1.getAddress().size()==1;
+        assert step2.getAddress().size()==1;
+        assert step3.getAddress().size()==1;
+        assert step4.getAddress().size()==1;
+        assert step1.getAddress().get(0).equals("system-property=hulla");
+        assert step2.getAddress().get(0).equals("system-property=bar");
+        assert step3.getAddress().get(0).equals("system-property=bar");
+        assert step4.getAddress().get(0).equals("system-property=hello");
+        assert step1.getOperation().equals("add");
+        assert step2.getOperation().equals("remove");
+        assert step3.getOperation().equals("add");
+        assert step4.getOperation().equals("remove");
+
+        assert step1.getAdditionalProperties().get("name").equals("hulla");
+        assert step1.getAdditionalProperties().get("value").equals("hopp");
+        assert step2.getAdditionalProperties().isEmpty();
+        assert step3.getAdditionalProperties().get("name").equals("bar"); // This is the name of the property
+        assert step3.getAdditionalProperties().get("value").equals("42!");
+        assert step4.getAdditionalProperties().isEmpty();
 
     }
 }

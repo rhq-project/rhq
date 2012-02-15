@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.system;
 
 import java.util.Properties;
 
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -43,24 +43,25 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
     @BeforeClass
     public void setupServer() {
         systemManager = LookupUtil.getSystemManager();
-        
+    }
+
+    @BeforeMethod
+    public void beforeMethod() {
+        // do this each method so it doesn't expire
+        overlord = LookupUtil.getSubjectManager().getOverlord();
+
         //we need this because the drift plugins are referenced from the system settings that we use in our tests
         testServerPluginService = new TestServerPluginService();
         prepareCustomServerPluginService(testServerPluginService);
         testServerPluginService.startMasterPluginContainer();
     }
 
-    @AfterClass
+    @AfterMethod(alwaysRun = true)
     public void tearDownServer() throws Exception {
         unprepareServerPluginService();
-        testServerPluginService.stopMasterPluginContainer();
-    }
-    
-    @BeforeMethod
-    public void beforeMethod() {
-        overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
+    @SuppressWarnings("deprecation")
     public void testGetSystemConfiguration() {
         assert null != systemManager.getSystemConfiguration(overlord);
     }
@@ -88,7 +89,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
     public void testVacuumAppdef() {
         systemManager.vacuumAppdef(overlord);
     }
-        
+
     @SuppressWarnings("deprecation")
     public void testLegacySystemSettingsInCorrectFormat() throws Exception {
         //some of the properties are represented differently
@@ -96,45 +97,45 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
         //settings (and consequently database).
         //These two still co-exist together in the codebase
         //so let's make sure the values correspond to each other.
-        
+
         SystemSettings settings = systemManager.getSystemSettings(overlord);
         Properties config = systemManager.getSystemConfiguration(overlord);
-        
+
         SystemSettings origSettings = new SystemSettings(settings);
-        
+
         try {
             //let's make sure the values are the same
             checkFormats(settings, config);
-            
+
             boolean currentJaasProvider = Boolean.valueOf(settings.get(SystemSetting.LDAP_BASED_JAAS_PROVIDER));
             settings.put(SystemSetting.LDAP_BASED_JAAS_PROVIDER, Boolean.toString(!currentJaasProvider));
-            
+
             boolean currentUseSslForLdap = Boolean.valueOf(settings.get(SystemSetting.USE_SSL_FOR_LDAP));
             settings.put(SystemSetting.USE_SSL_FOR_LDAP, Boolean.toString(!currentUseSslForLdap));
-            
+
             systemManager.setSystemSettings(overlord, settings);
-            
+
             settings = systemManager.getSystemSettings(overlord);
             config = systemManager.getSystemConfiguration(overlord);
-            
+
             checkFormats(settings, config);
         } finally {
             systemManager.setSystemSettings(overlord, origSettings);
         }
     }
-    
-    private void checkFormats(SystemSettings settings, Properties config) {        
+
+    private void checkFormats(SystemSettings settings, Properties config) {
         assert settings.size() == config.size() : "The old and new style system settings differ in size";
-        
-        for(String name : config.stringPropertyNames()) {
+
+        for (String name : config.stringPropertyNames()) {
             SystemSetting setting = SystemSetting.getByInternalName(name);
-            
-            String oldStyleValue = config.getProperty(name);            
+
+            String oldStyleValue = config.getProperty(name);
             String newStyleValue = settings.get(setting);
-            
+
             assert setting != null : "Could not find a system setting called '" + name + "'.";
-            
-            switch(setting) {
+
+            switch (setting) {
             case USE_SSL_FOR_LDAP:
                 if (RHQConstants.LDAP_PROTOCOL_SECURED.equals(oldStyleValue)) {
                     assert Boolean.valueOf(newStyleValue) : "Secured LDAP protocol should be represented by a 'true' in new style settings.";

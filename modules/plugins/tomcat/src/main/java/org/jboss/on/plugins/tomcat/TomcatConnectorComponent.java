@@ -45,7 +45,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
  * Plugin component for representing Tomcat connectors. Much of the functionality is left to the super class,

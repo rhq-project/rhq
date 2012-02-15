@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,13 +28,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.jmx.JMXDiscoveryComponent;
+import org.rhq.plugins.jmx.util.JvmResourceKey;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -61,38 +70,38 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
  * Integration test for the JMX plugin.
  *
  * @author Greg Hinkle
+ * @author Ian Springer
  */
 public class JMXPluginTest {
-    static final String PROGRAM_CLASS = "org.rhq.plugins.jmx.test.JMXPluginTest$TestProgram";
-    static final String MONITORABLE = "-Dcom.sun.management.jmxremote.port=9921 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false";
-    static final String MBEAN_SERVER_ADDRESS = "service:jmx:rmi:///jndi/rmi://localhost:9921/jmxrmi";
 
-    static final String PROJECT_ARTIFACT_ID_SYSPROP = "project.artifactId";
-    static final String PROJECT_VERSION_SYSPROP = "project.version";
+    private static final int JMX_REMOTING_PORT1 = 9921;
+    private static final int JMX_REMOTING_PORT2 = 9922;
 
-    private Process testProgram;
-    private InventoryManager inventoryManager;
     private static final String PLUGIN_NAME = "JMX";
+    private static final String SERVER_TYPE_NAME = "JMX Server";
+    private static final String EXPLICIT_RESOURCE_KEY1 = "foo1";
+    private static final String EXPLICIT_RESOURCE_KEY2 = "foo2";
 
+    private List<Process> testServerJvms = new ArrayList<Process>();
+    
+    private InventoryManager inventoryManager;
+    
     @BeforeSuite
     public void start() {
         try {
-            String javaHome = System.getProperty("java.home");
-            String javaCmd = javaHome + "/bin/java";
+            // Start the test server JVMs.
+            this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT1,
+                "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false"));
 
-            ProcessBuilder processBuilder = new ProcessBuilder(javaCmd, "-cp", "target/test-classes",
-                "-Dcom.sun.management.jmxremote.port=9921", "-Dcom.sun.management.jmxremote.ssl=false",
-                "-Dcom.sun.management.jmxremote.authenticate=false", PROGRAM_CLASS);
-            processBuilder.redirectErrorStream(true);
-            testProgram = processBuilder.start();
+            this.testServerJvms.add(startTestServerJvm("-D" + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "="
+                + EXPLICIT_RESOURCE_KEY1));
 
-            OutputReader or = new OutputReader(testProgram.getInputStream());
-            Thread ort = new Thread(or);
-            ort.setDaemon(true);
-            ort.start();
+            this.testServerJvms.add(startTestServerJvm("-Dcom.sun.management.jmxremote.port=" + JMX_REMOTING_PORT2,
+                "-Dcom.sun.management.jmxremote.ssl=false", "-Dcom.sun.management.jmxremote.authenticate=false",
+                "-D" + JMXDiscoveryComponent.SYSPROP_RHQ_RESOURCE_KEY + "=" + EXPLICIT_RESOURCE_KEY2));
 
-            // Give it time to start
-            Thread.sleep(2000);
+            // Give them time to fully start.
+            Thread.sleep(3000);
 
             File pluginDir = new File("target/itest/plugins");
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
@@ -102,10 +111,9 @@ public class JMXPluginTest {
 
             PluginContainer.getInstance().setConfiguration(pcConfig);
             PluginContainer.getInstance().initialize();
-            System.out.println("PC Started");
-            for (String plugin : PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames()) {
-                System.out.println("PLUGIN: " + plugin);
-            }
+
+            Set<String> pluginNames = PluginContainer.getInstance().getPluginManager().getMetadataManager().getPluginNames();
+            System.out.println("PC started with plugins " + pluginNames + ".");
 
             this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
         } catch (Throwable t) {
@@ -116,17 +124,43 @@ public class JMXPluginTest {
         }
     }
 
+    private Process startTestServerJvm(String... jvmArgs) throws IOException {
+        String javaHome = System.getProperty("java.home");
+        String javaCmd = javaHome + "/bin/java";
+
+        List<String> args = new ArrayList<String>();
+        args.add(javaCmd);
+        args.add("-cp");
+        args.add("target/test-classes");
+        args.addAll(Arrays.asList(jvmArgs));
+        args.add(TestProgram.class.getName());
+        
+        ProcessBuilder processBuilder = new ProcessBuilder(args);        
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+
+        OutputReader outputReader = new OutputReader(process.getInputStream());
+        Thread outputReaderThread = new Thread(outputReader);
+        outputReaderThread.setDaemon(true);
+        outputReaderThread.start();
+        
+        return process;
+    }
+
     @AfterSuite
-    public void stop() {
+    public void stop() {        
         PluginContainer.getInstance().shutdown();
-        testProgram.destroy();
+        
+        for (Process process : this.testServerJvms) {
+            process.destroy();
+        }        
     }
 
     @Test
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
-        assert pluginEnvironment != null : "Null environment, plugin not loaded";
+        assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
@@ -135,9 +169,43 @@ public class JMXPluginTest {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         assert report != null;
         System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-        Set<Resource> servers = platform.getChildResources();
-        System.out.println("Found " + servers.size() + " servers");
+
+        Set<Resource> jmxServers = getChildResourcesOfType(platform, new ResourceType(SERVER_TYPE_NAME, PLUGIN_NAME,
+            ResourceCategory.SERVER, null));
+        System.out.println("Found " + jmxServers.size() + " JMX Servers:");
+
+        boolean foundJmxRemotingServer = false;
+        boolean foundExplicitKey1Server = false;
+        boolean foundExplicitKey2Server = false;
+        for (Resource jmxServer : jmxServers) {
+            System.out.println("  * " + jmxServer);
+            JvmResourceKey key = JvmResourceKey.valueOf(jmxServer.getResourceKey());
+            switch (key.getType()) {
+                case Explicit:
+                   if (key.getExplicitValue().equals(EXPLICIT_RESOURCE_KEY1)) {
+                       assert key.getMainClassName().equals(TestProgram.class.getName());
+                       foundExplicitKey1Server = true;
+                   } else if (key.getExplicitValue().equals(EXPLICIT_RESOURCE_KEY2)) {
+                       assert key.getMainClassName().equals(TestProgram.class.getName());
+                       foundExplicitKey2Server = true;
+                   }
+                   break;
+                case JmxRemotingPort:
+                   if (key.getMainClassName().equals(TestProgram.class.getName()) &&
+                       key.getJmxRemotingPort().equals(JMX_REMOTING_PORT1)) {
+                       assert key.getMainClassName().equals(TestProgram.class.getName());
+                       foundJmxRemotingServer = true;
+                   }
+                   break;
+                default:
+                   throw new IllegalStateException("Unsupported key type: " + key.getType());
+            }
+        }
+        assert foundJmxRemotingServer : "JMX Remoting server not found.";
+        assert foundExplicitKey1Server : "Explicit key server not found.";
+        assert foundExplicitKey2Server : "JMX Remoting + explicit key server not found.";
     }
 
     @Test(dependsOnMethods = "testServerDiscovery")
@@ -147,27 +215,20 @@ public class JMXPluginTest {
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
 
         assert platform != null;
-        Set<Resource> childResources = platform.getChildResources();
-        assert childResources != null;
 
-        /*System.out.println("RUNTIME SERVERS: " + childResources.size());
-         * for (Resource server : platform.getChildResources()) { System.out.println("Server: " + server.toString());
-         * System.out.println("Found with " + server.getChildResources().size() + " child services");}*/
+        Set<Resource> jmxServers = getChildResourcesOfType(platform, new ResourceType(SERVER_TYPE_NAME, PLUGIN_NAME,
+                    ResourceCategory.SERVER, null));
+
+        for (Resource jmxServer : jmxServers) {
+            Set<Resource> childResources = jmxServer.getChildResources();
+            // Each JMX Server should have exactly six singleton child Resources with the following types:
+            // Operating System, Threading, VM Class Loading System, VM Compilation System, VM Memory System, and
+            // java.util.logging.
+            assert childResources.size() == 6 : jmxServer + " does not have 6 child Resources - child Resources: "
+                + childResources;
+        }
+
         InventoryPrinter.outputInventory(new PrintWriter(System.out), false);
-    }
-
-    @Test(dependsOnMethods = "testServerDiscovery")
-    public void testNumberOfServers() throws Exception {
-        InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
-        assert report != null;
-        Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
-
-        assert platform != null;
-        Set<Resource> childResources = platform.getChildResources();
-        assert childResources != null;
-
-        // TODO GH: ccrouch... why would this be two now?
-        //assert childResources.size() == 2 : "Not all Server instances were found.";
     }
 
     @Test(dependsOnMethods = "testServiceDiscovery")
@@ -198,8 +259,6 @@ public class JMXPluginTest {
 
     @Test(dependsOnMethods = "testServiceDiscovery")
     public void testOperation() throws Exception {
-        // TODO GH: Test only runs when tested on JDK 6 as the JVM services aren't detected
-        // currently for the test platform
         Resource platform = PluginContainer.getInstance().getInventoryManager().getPlatform();
         for (Resource server : platform.getChildResources()) {
             List<Resource> services = new ArrayList<Resource>(server.getChildResources());
@@ -253,6 +312,19 @@ public class JMXPluginTest {
      * } }
      */
 
+    private static Set<Resource> getChildResourcesOfType(Resource platform, ResourceType resourceType) {
+        Set<Resource> childResources = platform.getChildResources();
+        Set<Resource> results = new HashSet<Resource>();
+        for (Resource resource : childResources) {
+            ResourceType childResourceType = resource.getResourceType();
+            if (childResourceType.getPlugin().equals(resourceType.getPlugin()) &&
+                childResourceType.getName().equals(resourceType.getName())) {
+                results.add(resource);
+            }
+        }
+        return results;
+    }
+
     public static class OutputReader implements Runnable {
         InputStream inputStream;
 
@@ -262,10 +334,10 @@ public class JMXPluginTest {
 
         public void run() {
             try {
-                BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
                 String line;
-                while ((line = r.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
                     System.out.println("__" + line);
                 }
             } catch (IOException e) {
@@ -277,8 +349,35 @@ public class JMXPluginTest {
     public static class TestProgram implements Runnable {
         long started = System.currentTimeMillis();
 
-        public static void main(String[] args) {
-            System.out.println("Test program running...");
+        public static void main(String[] args) {            
+            final ServerSocket serverSocket;
+            try {
+                serverSocket = new ServerSocket(0);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+            String jvmName = runtimeMXBean.getName();
+            int atIndex = jvmName.indexOf('@');
+            String pid = (atIndex != -1) ? jvmName.substring(0, atIndex) : "?";
+            
+            System.out.println("Test server JVM with pid [" + pid + "] listening on port ["
+                + serverSocket.getLocalPort() + "]...");
+            Runnable runnable = new Runnable() {
+                public void run() {
+                    Socket socket;
+                    try {
+                        while ((socket = serverSocket.accept()) != null) {
+                            socket.close();
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+            runnable.run();
+
             TestProgram tp = new TestProgram();
             tp.run();
         }
@@ -289,8 +388,10 @@ public class JMXPluginTest {
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
+                    // ignore
                 }
             }
         }
     }
+
 }

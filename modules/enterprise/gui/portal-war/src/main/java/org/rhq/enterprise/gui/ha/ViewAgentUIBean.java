@@ -56,6 +56,9 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
             hasPermission();
             int agentId = FacesContextUtility.getRequiredRequestParameter("agentId", Integer.class);
             agent = agentManager.getAgentByID(agentId);
+            if (!hasPermissionToViewSecurityToken()) {
+                agent.setAgentToken("******");
+            }
         }
         return agent;
     }
@@ -93,5 +96,10 @@ public class ViewAgentUIBean extends PagedDataTableUIBean {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have the proper permissions to view or manage agents");
         }
+    }
+
+    private boolean hasPermissionToViewSecurityToken() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        return LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SECURITY);
     }
 }

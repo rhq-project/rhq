@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 
 import org.apache.commons.logging.Log;
@@ -51,6 +52,8 @@ public class ASConnection {
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
     Authenticator passwordAuthenticator ;
+    private String host;
+    private int port;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -61,6 +64,8 @@ public class ASConnection {
      * @param password password needed for authentication
      */
     public ASConnection(String host, int port, String user, String password) {
+        this.host = host;
+        this.port = port;
 
         try {
             url = new URL("http", host, port, MANAGEMENT);
@@ -104,12 +109,17 @@ public class ASConnection {
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept","application/json");
+            conn.setConnectTimeout(10 * 1000); // 10s
+            conn.setReadTimeout(10 * 1000); // 10s
+
+            if (conn.getReadTimeout()!=10*1000)
+                log.warn("JRE uses a broken timeout mechanism - nothing we can do");
 
             OutputStream out = conn.getOutputStream();
 
-            String result = mapper.writeValueAsString(operation);
+            String json_to_send = mapper.writeValueAsString(operation);
             if (verbose) {
-                log.info("Json to send: " + result);
+                log.info("Json to send: " + json_to_send);
             }
             mapper.writeValue(out, operation);
 
@@ -154,6 +164,19 @@ public class ASConnection {
             } else {
                 log.error("IS was null and code was " + responseCode);
             }
+        } catch (IllegalArgumentException iae) {
+            log.error("Illegal argument " + iae);
+            log.error("  for input " + operation);
+        } catch (SocketTimeoutException ste) {
+            log.error("Request to AS timed out " + ste.getMessage());
+            conn.disconnect();
+            Result failure = new Result();
+            failure.setFailureDescription(ste.getMessage());
+            failure.setOutcome("failure");
+            failure.setRhqThrowable(ste);
+
+            JsonNode ret = mapper.valueToTree(failure);
+            return ret;
 
         } catch (IOException e) {
             log.error("Failed to get data: " + e.getMessage());
@@ -178,7 +201,7 @@ public class ASConnection {
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
             failure.setOutcome("failure");
-            failure.setThrowable(e);
+            failure.setRhqThrowable(e);
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
@@ -241,7 +264,9 @@ public class ASConnection {
 
         if (node==null) {
             log.warn("Operation [" + op + "] returned null");
-            return null;
+            Result failure = new Result();
+            failure.setFailureDescription("Operation [" + op + "] returned null");
+            return failure;
         }
         try {
             Result res;
@@ -256,5 +281,11 @@ public class ASConnection {
         }
     }
 
+    public String getHost() {
+        return host;
+    }
 
+    public int getPort() {
+        return port;
+    }
 }

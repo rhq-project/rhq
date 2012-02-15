@@ -23,7 +23,6 @@
 package org.jboss.on.plugins.tomcat;
 
 import java.io.File;
-import java.sql.SQLException;
 import java.util.Properties;
 import java.util.Set;
 
@@ -124,7 +123,7 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
      */
     private TomcatServerOperationsDelegate operationsDelegate;
 
-    private ResourceContext resourceContext;
+    private ResourceContext<T> resourceContext;
 
     // JMXComponent Implementation  --------------------------------------------
 
@@ -134,7 +133,9 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         try {
             emsConnection = loadConnection();
         } catch (Exception e) {
-            log.error("Component attempting to access a connection that could not be loaded");
+            if (log.isTraceEnabled()) {
+                log.debug("Component attempting to access a connection that could not be loaded:" + e.getMessage());
+            }
         }
 
         return emsConnection;
@@ -232,6 +233,7 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 if (log.isDebugEnabled())
                     log.debug("Successfully made connection to the Tomcat Server for resource ["
                         + this.resourceContext.getResourceKey() + "]");
+
             } catch (Exception e) {
 
                 // The connection will be established even in the case that the principal cannot be authenticated,
@@ -239,8 +241,9 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 // the connection is established. If we get to this point that an exception was thrown, close any
                 // connection that was made and null it out so we can try to establish it again.
                 if (this.connection != null) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.debug("Connection created but an exception was thrown. Closing the connection.", e);
+                    }
                     try {
                         this.connection.close();
                     } catch (Exception e2) {
@@ -250,19 +253,21 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 }
 
                 // Since the connection is attempted each time it's used, failure to connect could result in log
-                // file spamming. Log it once for every 10 consecutive times it's encountered. 
-                if (consecutiveConnectionErrors % 10 == 0) {
-                    log.warn(
+                // file spamming. Log a warning only one time outside of debug mode, and throttle even in debug
+                // mode (once for every 10 connect errors).
+                if (0 == consecutiveConnectionErrors) {
+                    log.warn("Could not connect to the Tomcat instance for resource ["
+                        + resourceContext.getResourceKey() + "] (enable debug logging for more info): "
+                        + e.getMessage());
+                }
+
+                if (log.isDebugEnabled() && (consecutiveConnectionErrors % 10 == 0)) {
+                    log.debug(
                         "Could not establish connection to the Tomcat instance [" + (consecutiveConnectionErrors + 1)
                             + "] times for resource [" + resourceContext.getResourceKey() + "]", e);
                 }
 
-                if (log.isDebugEnabled())
-                    log.debug(
-                        "Could not connect to the Tomcat instance for resource [" + resourceContext.getResourceKey()
-                            + "]", e);
-
-                consecutiveConnectionErrors++;
+                ++consecutiveConnectionErrors;
 
                 throw e;
             }
@@ -293,7 +298,8 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         }
     }
 
-    public void start(ResourceContext context) throws SQLException {
+    @Override
+    public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = context;
         this.operationsDelegate = new TomcatServerOperationsDelegate(this, resourceContext.getSystemInformation());
 
@@ -344,23 +350,30 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
     }
 
     public AvailabilityType getAvailability() {
+        AvailabilityType avail;
         try {
             EmsConnection connection = loadConnection();
             EmsBean bean = connection.getBean("Catalina:type=Server");
 
             // this is necessary to prove that that not only the connection exists but is servicing requests.
             bean.getAttribute("serverInfo").refresh();
-            return AvailabilityType.UP;
+            avail = AvailabilityType.UP;
         } catch (Exception e) {
-            // If the connection is not servicing requests then close it. this seems necessary for the
-            // Tomcat connection as when Tomcat does come up again it seems a new EMS connection is required,
-            // otherwise we're not seeing EMS be able to pick up the new process.
+            if (log.isDebugEnabled()) {
+                log.debug("An exception occurred during availability check for Tomcat Server Resource with key ["
+                    + this.getResourceContext().getResourceKey() + "] and plugin config ["
+                    + this.getPluginConfiguration().getAllProperties() + "].", e);
+            }
+            // If the connection is not servicing requests, then close it. this seems necessary for the
+            // Tomcat connection, as, when Tomcat does come up again, it seems a new EMS connection is required,
+            // otherwise EMS is not able to pick up the new process.
             closeConnection();
-            return AvailabilityType.DOWN;
+            avail = AvailabilityType.DOWN;
         }
+        return avail;
     }
 
-    ResourceContext getResourceContext() {
+    ResourceContext<T> getResourceContext() {
         return this.resourceContext;
     }
 

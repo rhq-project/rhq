@@ -209,4 +209,14 @@ public class URLPreferringContextDecorator implements Context, ContextDecorator,
     public String getNameInNamespace() throws NamingException {
         return getOriginal().getNameInNamespace();
     }
+       
+    @Override
+    public int hashCode() {
+        return original == null ? super.hashCode() : original.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        return original == null ? super.equals(o) : original.equals(o);
+    }    
 }

@@ -20,18 +20,14 @@ package org.rhq.enterprise.client.commands;
 
 import java.io.PrintWriter;
 
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.clientapi.RemoteClient;
-import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Greg Hinkle
@@ -49,22 +45,22 @@ public class LoginCommand implements ClientCommand {
     }
 
     public boolean execute(ClientMain client, String[] args) {
-        String user = null;
-        String pass = null;
+        if (args.length < 3) {
+            throw new CommandLineParseException("Too few arguments");
+        }
+        if (args.length > 7) {
+            throw new CommandLineParseException("Too many arguments");
+        }
+
+        String user = args[1];
+        String pass = args[2];
         String host = "localhost";
         String transport = null;
         int port = 7080;
 
         PrintWriter printWriter = client.getPrintWriter();
-        if (args.length<3) {
-            printWriter.println(usage());
-            return true;
-        }
 
         try {
-            user = args[1];
-            pass = args[2];
-
             if (args.length == 5) {
                 host = args[3];
                 port = Integer.parseInt(args[4]);
@@ -116,21 +112,14 @@ public class LoginCommand implements ClientCommand {
         Subject subject = remoteClient.login(username, password);
 
         ProductInfo info = remoteClient.getSystemManager().getProductInfo(subject);
-        String version = info.getVersion()
-            + " (" + info.getBuildNumber() + ")";
+        String version = info.getVersion() + " (" + info.getBuildNumber() + ")";
         client.getPrintWriter().println("Remote server version is: " + version);
 
+        // this call has the side effect of setting bindings for the new remote client and its subject
         client.setRemoteClient(remoteClient);
         client.setSubject(subject);
 
-        bindSubject(client, subject);
-
         return subject;
-    }
-
-    private void bindSubject(ClientMain client, Subject subject) {
-        ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
-        cmd.initBindings(client);
     }
 
     private String usage() {
@@ -138,7 +127,7 @@ public class LoginCommand implements ClientCommand {
     }
 
     public String getSyntax() {
-        return "login username password [host port [transport]]";
+        return getPromptCommandString() + " username password [host port [transport]]";
     }
 
     public String getHelp() {

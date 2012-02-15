@@ -26,9 +26,6 @@ import java.util.Set;
 
 import javax.persistence.EntityManager;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -68,8 +65,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
     // Attributes  --------------------------------------------
 
-    private final Log log = LogFactory.getLog(ResourceFactoryManagerBeanTest.class);
-
     private ResourceFactoryManagerLocal resourceFactoryManager;
     private ResourceManagerLocal resourceManager;
     private Subject overlord;
@@ -89,7 +84,10 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         resourceManager = LookupUtil.getResourceManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
+    }
 
+    @BeforeMethod
+    public void setupBeforeMethod() throws Exception {
         prepareScheduler();
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.resourceFactoryService = mockAgentService;
@@ -98,22 +96,16 @@ public class ResourceFactoryManagerBeanTest extends AbstractEJB3Test {
         StandardServerPluginService serverPluginService = new StandardServerPluginService();
         prepareCustomServerPluginService(serverPluginService);
         serverPluginService.startMasterPluginContainer();
-    }
 
-    @AfterClass
-    public void teardownAfterClass() throws Exception {
-        unprepareForTestAgents();
-        unprepareScheduler();
-        unprepareServerPluginService();
-    }
-
-    @BeforeMethod
-    public void setupBeforeMethod() throws Exception {
         setupResourceEnvironment();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void teardownAfterMethod() throws Exception {
+        unprepareForTestAgents();
+        unprepareScheduler();
+        unprepareServerPluginService();
+
         teardownResourceEnvironment();
     }
 

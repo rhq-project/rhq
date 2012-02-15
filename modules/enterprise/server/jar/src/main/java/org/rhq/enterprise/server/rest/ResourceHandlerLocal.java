@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -80,6 +81,10 @@ public interface ResourceHandlerLocal {
     @GET
     @Path("/{id}/availability")
     AvailabilityRest getAvailability(@PathParam("id") int resourceId);
+
+    @PUT
+    @Path("/{id}/availability")
+    public void reportAvailability(@PathParam("id") int resourceId, AvailabilityRest avail);
 
     @GET
     @Path("/{id}/schedules")

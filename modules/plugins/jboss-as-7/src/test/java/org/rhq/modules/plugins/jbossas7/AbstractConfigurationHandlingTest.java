@@ -18,6 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.List;
 
@@ -87,6 +90,22 @@ public class AbstractConfigurationHandlingTest {
         }
 
         return null;
+    }
+
+    protected String loadJsonFromFile(String fileName) throws Exception {
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(fileName);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try {
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+            return builder.toString();
+        }
+        finally {
+            reader.close();
+        }
     }
 
     /**

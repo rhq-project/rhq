@@ -51,7 +51,7 @@ public class XmlIndexParserTest {
         assert details instanceof FullRemotePackageInfo : "Bad class=" + details.getClass();
         FullRemotePackageInfo fullDetails = (FullRemotePackageInfo) details;
         assert "Mazzlocation".equals(fullDetails.getLocation()) : fullDetails.getLocation();
-        assert "Mazzmd5".equals(fullDetails.getMD5()) : fullDetails.getMD5();
+        assert "Mazzsha256".equals(fullDetails.getSHA256()) : fullDetails.getSHA256();
         assert new URL("http://root/url/Mazzlocation").equals(fullDetails.getUrl()) : fullDetails.getUrl();
         assert "Mazzarchitecture-name".equals(fullDetails.getSupportedPackageType().architectureName) : fullDetails
             .getSupportedPackageType().architectureName;
@@ -79,7 +79,7 @@ public class XmlIndexParserTest {
         assert "Mazzpackage-type-name".equals(cspd.getPackageTypeName()) : cspd.getPackageTypeName();
         assert "Mazzsha256".equals(cspd.getSHA256()) : cspd.getSHA256();
         assert "Mazzshort-description".equals(cspd.getShortDescription()) : cspd.getShortDescription();
-        assert "Mazzversion".equals(cspd.getVersion()) : cspd.getVersion();
+        assert ("[sha256=" + cspd.getSHA256() + "]").equals(cspd.getVersion()) : cspd.getVersion();
         assert cspd.getResourceVersions().contains("Mazzresource-version1") : cspd.getResourceVersions();
         assert cspd.getResourceVersions().contains("Mazzresource-version2") : cspd.getResourceVersions();
 
@@ -140,7 +140,7 @@ public class XmlIndexParserTest {
         assert details instanceof FullRemotePackageInfo : "Bad class=" + details.getClass();
         fullDetails = (FullRemotePackageInfo) details;
         assert "WOTGORILLAlocation".equals(fullDetails.getLocation()) : fullDetails.getLocation();
-        assert null == fullDetails.getMD5() : fullDetails.getMD5();
+        assert null == fullDetails.getSHA256() : fullDetails.getSHA256();
         assert new URL("http://root/url/WOTGORILLAlocation").equals(fullDetails.getUrl()) : fullDetails.getUrl();
         assert "WOTGORILLAarchitecture-name".equals(fullDetails.getSupportedPackageType().architectureName) : fullDetails
             .getSupportedPackageType().architectureName;
@@ -168,7 +168,7 @@ public class XmlIndexParserTest {
         assert "WOTGORILLApackage-type-name".equals(cspd.getPackageTypeName()) : cspd.getPackageTypeName();
         assert null == cspd.getSHA256() : cspd.getSHA256();
         assert null == cspd.getShortDescription() : cspd.getShortDescription();
-        assert "WOTGORILLAversion".equals(cspd.getVersion()) : cspd.getVersion();
+        assert "[sha256=null]".equals(cspd.getVersion()) : cspd.getVersion();
         assert 0 == cspd.getResourceVersions().size() : cspd.getResourceVersions();
     }
 }

@@ -15,7 +15,7 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.117</db.schema.version>
+        <db.schema.version>2.118</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>
@@ -144,7 +144,7 @@
                     </systemProperties>
                     <!-- The below is required for tests to run against Oracle. -->
                     <additionalClasspathElements>
-                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
                     </additionalClasspathElements>
                 </configuration>
             </plugin>
@@ -209,7 +209,7 @@
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
-                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="ojdbc6.version" value="${ojdbc6.version}" />
                                             <property name="postgresql.version" value="${postgresql.version}" />
                                             <property name="h2.version" value="${h2.version}" />
                                             <property name="jtds.version" value="${jtds.version}" />
@@ -240,7 +240,7 @@
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
-                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="ojdbc6.version" value="${ojdbc6.version}" />
                                             <property name="postgresql.version" value="${postgresql.version}" />
                                             <property name="h2.version" value="${h2.version}" />
                                             <property name="jtds.version" value="${jtds.version}" />
@@ -270,7 +270,7 @@
                                         <echo>settings.localRepository=${settings.localRepository}</echo>
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
-                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="ojdbc6.version" value="${ojdbc6.version}" />
                                             <property name="postgresql.version" value="${postgresql.version}" />
                                             <property name="h2.version" value="${h2.version}" />
                                             <property name="jtds.version" value="${jtds.version}" />
@@ -317,7 +317,7 @@
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="create-release-schema">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
-                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="ojdbc6.version" value="${ojdbc6.version}" />
                                             <property name="postgresql.version" value="${postgresql.version}" />
                                             <property name="h2.version" value="${h2.version}" />
                                             <property name="jtds.version" value="${jtds.version}" />
@@ -480,8 +480,8 @@
             <dependencies>
                 <dependency>
                     <groupId>com.oracle</groupId>
-                    <artifactId>ojdbc5</artifactId>
-                    <version>${ojdbc5.version}</version>
+                    <artifactId>ojdbc6</artifactId>
+                    <version>${ojdbc6.version}</version>
                 </dependency>
             </dependencies>
             <build>
@@ -493,8 +493,8 @@
                         <dependencies>
                             <dependency>
                                 <groupId>com.oracle</groupId>
-                                <artifactId>ojdbc5</artifactId>
-                                <version>${ojdbc5.version}</version>
+                                <artifactId>ojdbc6</artifactId>
+                                <version>${ojdbc6.version}</version>
                             </dependency>
                         </dependencies>
                     </plugin>

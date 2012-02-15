@@ -34,6 +34,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.plugins.database.DatabaseComponent;
 import org.rhq.plugins.database.DatabaseQueryUtility;
 
@@ -47,23 +48,21 @@ public class OracleServerComponent implements DatabaseComponent, MeasurementFace
 
     private ResourceContext resourceContext;
 
+    private boolean started;
+
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         this.connection = buildConnection(resourceContext.getPluginConfiguration());
+        this.started = true;
     }
 
     public void stop() {
-        if (this.connection != null) {
-            try {
-                this.connection.close();
-            } catch (SQLException e) {
-                LOG.debug("Unable to close oracle connection", e);
-            }
-        }
+        removeConnection();
+        this.started = false;
     }
 
     public AvailabilityType getAvailability() {
-        if (getConnection() != null) {
+        if (started && getConnection() != null) {
             return AvailabilityType.UP;
         } else {
             return AvailabilityType.DOWN;
@@ -88,18 +87,18 @@ public class OracleServerComponent implements DatabaseComponent, MeasurementFace
     }
 
     public Connection getConnection() {
-        if (this.connection == null) {
-            try {
+        try {
+            if (this.connection == null || connection.isClosed()) {
                 this.connection = buildConnection(this.resourceContext.getPluginConfiguration());
-            } catch (SQLException e) {
-                LOG.info("Unable to create oracle connection", e);
             }
+        } catch (SQLException e) {
+            LOG.info("Unable to create oracle connection", e);
         }
-
         return this.connection;
     }
 
     public void removeConnection() {
+        JDBCUtil.safeClose(connection);
         this.connection = null;
     }
 

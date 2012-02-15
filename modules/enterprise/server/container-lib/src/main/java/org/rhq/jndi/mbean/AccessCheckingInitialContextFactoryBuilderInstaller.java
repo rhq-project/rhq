@@ -32,7 +32,7 @@ import org.rhq.jndi.AccessCheckingInitialContextFactoryBuilder;
  * @author Lukas Krejci
  */
 public class AccessCheckingInitialContextFactoryBuilderInstaller implements AccessCheckingInitialContextFactoryBuilderInstallerMBean {
-    private static final Log LOG = LogFactory.getLog(AccessCheckingInitialContextFactoryBuilder.class);
+    private static final Log LOG = LogFactory.getLog(AccessCheckingInitialContextFactoryBuilderInstaller.class);
     
     public void start() throws Exception {
         LOG.info("Installing RHQ's access permission checking initial context factory builder");

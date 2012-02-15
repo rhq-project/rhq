@@ -80,6 +80,12 @@
             <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-enterprise-server</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -94,6 +100,12 @@
             <artifactId>rhq-server-client-api</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.rhq</groupId>
+                    <artifactId>rhq-enterprise-server</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -300,11 +312,11 @@
                         <jnp.port>${jnp.port}</jnp.port>
                         <jnp.rmiPort>${jnp.rmiPort}</jnp.rmiPort>
                     </systemPropertyVariables>
-                    <argLine>-Djava.security.manager -Djava.security.policy==target/test-classes/security.policy</argLine>
+                    <argLine>-Djava.security.manager -Djava.security.policy==${basedir}/target/test-classes/security.policy</argLine>
                     <additionalClasspathElements>
                         <!-- The below is required for tests to run against 
                             Oracle. -->
-                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
                     </additionalClasspathElements>
                 </configuration>
             </plugin>

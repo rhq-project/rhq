@@ -195,4 +195,23 @@ public class Address {
         PROPERTY_VALUE property_value = path.get(n);
         return property_value.getKey() + "=" + property_value.getValue();
     }
+
+    /**
+     * Return the parent Address of the current one. That is the address with one
+     * path segment less.
+     * If the current address is empty (the root), an empty address is returned.
+     * @return parent Address
+     */
+    public Address getParent() {
+        Address tmp = new Address();
+        int l = path.size();
+        if (l<1)
+            return tmp;
+
+        for (int i = 0; i < l-1 ; i++) {
+            tmp.path.add(path.get(i));
+        }
+
+        return tmp;
+    }
 }

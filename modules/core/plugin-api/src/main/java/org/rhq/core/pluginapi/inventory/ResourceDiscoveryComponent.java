@@ -76,8 +76,9 @@ public interface ResourceDiscoveryComponent<T extends ResourceComponent<?>> {
      *
      * @return a set of discovered resource details that were discovered and can be imported/merged into inventory
      *
-     * @throws InvalidPluginConfigurationException if a plugin configuration found in the context was somehow invalid
-     *                                             and thus caused a failure to connect to a resource
+     * @throws InvalidPluginConfigurationException (used only be the deprecated manual add API) if the plugin
+     *                                             configuration found in the context was somehow invalid and thus
+     *                                             caused a failure to connect to a managed resource
      * @throws Exception                           if a generic error occurred that caused the discovery to abort
      */
     Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context)

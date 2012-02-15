@@ -155,11 +155,6 @@
       }
       else if ("calculateAutoBaselines".equals(mode))
       {
-         // for now, baselines aren't calculated until we hit our day limit, we force it here
-         java.util.Properties props = systemManager.getSystemConfiguration(subjectManager.getOverlord());
-         props.put("CAM_BASELINE_LASTTIME", "0");
-         systemManager.setSystemConfiguration(subjectManager.getOverlord(), props,true);
-
          measurementBaselineManager.calculateAutoBaselines();
       }
       else if ("calculateOOBs".equals(mode))

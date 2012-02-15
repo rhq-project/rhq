@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@ package org.rhq.enterprise.client;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -46,6 +45,7 @@ import mazz.i18n.Msg;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.client.commands.ClientCommand;
 import org.rhq.enterprise.client.commands.ScriptCommand;
+import org.rhq.enterprise.client.script.CommandLineParseException;
 import org.rhq.enterprise.clientapi.RemoteClient;
 
 /**
@@ -65,8 +65,6 @@ public class ClientMain {
      */
     private Thread inputLoopThread;
 
-    private BufferedReader inputReader;
-
     // JLine console reader
     private ConsoleReader consoleReader;
 
@@ -82,6 +80,7 @@ public class ClientMain {
     private String user;
     private String pass;
     private ArrayList<String> notes = new ArrayList<String>();
+    private boolean showDetailedVersion;
 
     // reference to the webservice reference factory
     private RemoteClient remoteClient;
@@ -97,7 +96,7 @@ public class ClientMain {
 
     // Entrance to main.
     public static void main(String[] args) throws Exception {
-        initCommands();        
+        initCommands();
 
         // instantiate
         ClientMain main = new ClientMain();
@@ -113,7 +112,7 @@ public class ClientMain {
 
     private static void initCommands() {
         for (Class<ClientCommand> commandClass : ClientCommand.COMMANDS) {
-            ClientCommand command = null;
+            ClientCommand command;
             try {
                 command = commandClass.newInstance();
                 commands.put(command.getPromptCommandString(), command);
@@ -127,16 +126,15 @@ public class ClientMain {
 
     private void initScriptCommandAndServiceCompletor() {
         ScriptCommand sc = (ScriptCommand) commands.get("exec");
-        sc.initBindings(this);
-        
+        sc.initClient(this);
+
         this.serviceCompletor.setContext(sc.getContext());
-        
+
         if (remoteClient != null) {
             this.serviceCompletor.setServices(remoteClient.getManagers());
         }
     }
-    
-    //
+
     public ClientMain() throws Exception {
 
         // this.inputReader = new BufferedReader(new
@@ -158,32 +156,23 @@ public class ClientMain {
         this.serviceCompletor = new InteractiveJavascriptCompletor(consoleReader);
         consoleReader.addCompletor(new MultiCompletor(new Completor[] { serviceCompletor, helpCompletor,
             commandCompletor }));
-        
+
         //ScriptCommand is super special because it handles executing all the code for us
         initScriptCommandAndServiceCompletor();
 
         // enable pagination
-        consoleReader.setUsePagination(true);                
-    }
-
-    // ?? what is this again? Might be able to remove this.
-    public void start() {
-        outputWriter = new PrintWriter(System.out);
-        // inputReader = new BufferedReader(new InputStreamReader(System.in));
-
+        consoleReader.setUsePagination(true);
     }
 
     public String getUserInput(String prompt) {
 
         String input_string = "";
-        boolean use_default_prompt = (prompt == null);
 
         while ((input_string != null) && (input_string.trim().length() == 0)) {
             if (prompt == null) {
                 if (!loggedIn()) {
                     prompt = "unconnected$ ";
                 } else {
-                    // prompt = host + ":" + port + "> ";
                     // Modify the prompt to display host:port(logged-in-user)
                     String loggedInUser = "";
                     if ((getSubject() != null) && (getSubject().getName() != null)) {
@@ -196,12 +185,10 @@ public class ClientMain {
                     }
                 }
             }
-            // outputWriter.print(prompt);
 
             try {
                 outputWriter.flush();
                 input_string = consoleReader.readLine(prompt);
-                // inputReader.readLine();
             } catch (Exception e) {
                 input_string = null;
             }
@@ -211,12 +198,6 @@ public class ClientMain {
             // if we are processing a script, show the input that was just read
             if (!stdinInput) {
                 outputWriter.println(input_string);
-            }
-        } else if (!stdinInput) {
-            // if we are processing a script, we hit the EOF, so close the inputstream
-            try {
-                inputReader.close();
-            } catch (IOException e1) {
             }
         }
 
@@ -293,14 +274,8 @@ public class ClientMain {
             ClientCommand command = commands.get(cmd);
 
             if (shouldDisplayHelp(args)) {
-                outputWriter.println("syntax: " + command.getSyntax());
-                outputWriter.println("description: " + command.getHelp() + "\n");
-                return true;
-            }
-
-            if (shouldDisplayDetailedHelp(args)) {
-                outputWriter.println("syntax: " + command.getSyntax());
-                outputWriter.println("description: " + command.getDetailedHelp() + "\n");
+                outputWriter.println("Usage: " + command.getSyntax());
+                outputWriter.println(command.getDetailedHelp());
                 return true;
             }
 
@@ -309,9 +284,13 @@ public class ClientMain {
                 processNotes(outputWriter);
                 outputWriter.println("");
                 return response;
+            } catch (CommandLineParseException e) {
+                outputWriter.println(command.getPromptCommandString() + ": " + e.getMessage());
+                outputWriter.println("Usage: " + command.getSyntax());
             } catch (ArrayIndexOutOfBoundsException e) {
-                outputWriter.println("An incorrect number of arguments was specified.");
-                outputWriter.println("Expected syntax: " + command.getSyntax());
+                outputWriter.println(command.getPromptCommandString()
+                    + ": An incorrect number of arguments was specified.");
+                outputWriter.println("Usage: " + command.getSyntax());
             }
         } else {
             boolean result = commands.get("exec").execute(this, args);
@@ -329,15 +308,7 @@ public class ClientMain {
             return false;
         }
 
-        return args[1].equals("-h");
-    }
-
-    private boolean shouldDisplayDetailedHelp(String[] args) {
-        if (args.length < 2) {
-            return false;
-        }
-
-        return args[1].equals("--help");
+        return args[1].equals("-h") || args[1].equals("--help");
     }
 
     /**
@@ -403,7 +374,8 @@ public class ClientMain {
     }
 
     private void displayUsage() {
-        outputWriter.println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-f file]|[-c command]");
+        outputWriter
+            .println("rhq-cli.sh [-h] [-u user] [-p pass] [-P] [-s host] [-t port] [-v] [-f file]|[-c command]");
     }
 
     void processArguments(String[] args) throws IllegalArgumentException, IOException {
@@ -428,79 +400,85 @@ public class ClientMain {
 
         while ((code = getopt.getopt()) != -1) {
             switch (code) {
-                case ':':
-                case '?': {
-                    // for now both of these should exit
-                    displayUsage();
-                    throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
-                }
+            case ':':
+            case '?': {
+                // for now both of these should exit
+                displayUsage();
+                throw new IllegalArgumentException(MSG.getMsg(ClientI18NResourceKeys.BAD_ARGS));
+            }
 
-                case 1: {
-                    // this catches non-option arguments which can be passed when running a script in non-interactive mode
-                    // with -f or running a single command in non-interactive mode with -c.
-                    execCmdLine.add(getopt.getOptarg());
-                    break;
-                }
+            case 1: {
+                // this catches non-option arguments which can be passed when running a script in non-interactive mode
+                // with -f or running a single command in non-interactive mode with -c.
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
 
-                case 'h': {
-                    displayUsage();
-                    break;
-                }
+            case 'h': {
+                displayUsage();
+                break;
+            }
 
-                case 'u': {
-                    this.user = getopt.getOptarg();
-                    break;
-                }
-                case 'p': {
-                    this.pass = getopt.getOptarg();
-                    break;
-                }
-                case 'P': {
-                    this.pass = this.consoleReader.readLine("password: ", (char) 0);
-                    break;
-                }
-                case 'c': {
-                    interactiveMode = false;
-                    execCmdLine.add(getopt.getOptarg());
-                    break;
-                }
-                case 'f': {
-                    interactiveMode = false;
-                    execCmdLine.add("-f");
-                    execCmdLine.add(getopt.getOptarg());
-                    break;
-                }
-                case -2: {
-                    execCmdLine.add("--args-style=" + getopt.getOptarg());
-                    break;
-                }
-                case 's': {
-                    setHost(getopt.getOptarg());
-                    break;
-                }
+            case 'u': {
+                this.user = getopt.getOptarg();
+                break;
+            }
+            case 'p': {
+                this.pass = getopt.getOptarg();
+                break;
+            }
+            case 'P': {
+                this.pass = this.consoleReader.readLine("password: ", (char) 0);
+                break;
+            }
+            case 'c': {
+                interactiveMode = false;
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
+            case 'f': {
+                interactiveMode = false;
+                execCmdLine.add("-f");
+                execCmdLine.add(getopt.getOptarg());
+                break;
+            }
+            case -2: {
+                execCmdLine.add("--args-style=" + getopt.getOptarg());
+                break;
+            }
+            case 's': {
+                setHost(getopt.getOptarg());
+                break;
+            }
             case 'r': {
                 setTransport(getopt.getOptarg());
                 break;
             }
-                case 't': {
-                    String portArg = getopt.getOptarg();
-                    try {
-                        setPort(Integer.parseInt(portArg));
-                    } catch (Exception e) {
-                        outputWriter.println("Invalid port [" + portArg + "]");
-                    }
-                    break;
+            case 't': {
+                String portArg = getopt.getOptarg();
+                try {
+                    setPort(Integer.parseInt(portArg));
+                } catch (Exception e) {
+                    outputWriter.println("Invalid port [" + portArg + "]");
                 }
-                case 'v': {
-                    String versionString = Version.getProductNameAndVersionBuildInfo();
-                    outputWriter.println(versionString);
-                    break;
-                }
+                break;
+            }
+            case 'v': {
+                String versionString = Version.getProductNameAndVersionBuildInfo();
+                outputWriter.println(versionString);
+                break;
+            }
             }
         }
 
         if (interactiveMode) {
-            outputWriter.println(Version.getProductNameAndVersion());
+            String version = (showDetailedVersion) ? Version.getProductNameAndVersionBuildInfo() : Version
+                .getProductNameAndVersion();
+            outputWriter.println(version);
+            if (showDetailedVersion && args.length == 1) {
+                // If -v was the only option specified, exit after printing the version.
+                System.exit(0);
+            }
         }
 
         if (user != null && pass != null) {
@@ -516,7 +494,7 @@ public class ClientMain {
         }
 
         if (!interactiveMode) {
-            commands.get("exec").execute(this, execCmdLine.toArray(new String[] {}));
+            commands.get("exec").execute(this, execCmdLine.toArray(new String[execCmdLine.size()]));
         }
     }
 
@@ -526,10 +504,10 @@ public class ClientMain {
 
     public void setRemoteClient(RemoteClient remoteClient) {
         this.remoteClient = remoteClient;
-        
+
         initScriptCommandAndServiceCompletor();
     }
-    
+
     public Subject getSubject() {
         return subject;
     }
@@ -596,12 +574,12 @@ public class ClientMain {
 
     /**
      * This method allows ClientCommands to insert a small note to be displayed after the command has been executed. A
-     * note can be an indicaiton of a problem that was handled or a note about some option that should be changed.
+     * note can be an indication of a problem that was handled or a note about some option that should be changed.
      *
      * These notes are meant to be terse, and pasted/purged at the end of every command execution.
      *
-     * @param note
-     *            String. Ex."There were errors retrieving some data from the server objects. See System Admin."
+     * @param note the note to be displayed, e.g. "There were errors retrieving some data from the server objects. See
+     *             System Admin."
      */
     public void addMenuNote(String note) {
         if ((note != null) && (note.trim().length() > 0)) {

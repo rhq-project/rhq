@@ -40,7 +40,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jbossas5.ProfileServiceComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
  * 

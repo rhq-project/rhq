@@ -74,8 +74,6 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
      * @param def the MeasuremendDefinition to delete
      */
     public void removeMeasurementDefinition(MeasurementDefinition def) {
-        long now = System.currentTimeMillis();
-
         // First remove the schedules and associated OOBs.
         List<MeasurementSchedule> schedules = def.getSchedules();
         Iterator<MeasurementSchedule> schedIter = schedules.iterator();
@@ -86,8 +84,7 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
                 sched.setBaseline(null);
             }
             oobManager.removeOOBsForSchedule(subjectManager.getOverlord(), sched);
-            // IMPORTANT: Update the mtime to tell the Agent this Resource needs to be synced.
-            sched.getResource().setMtime(now);
+            sched.getResource().setAgentSynchronizationNeeded();
             entityManager.remove(sched);
             schedIter.remove();
         }
@@ -134,14 +131,13 @@ public class MeasurementDefinitionManagerBean implements MeasurementDefinitionMa
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
         MeasurementDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         ;
 
-        CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
-            entityManager);
+        CriteriaQueryRunner<MeasurementDefinition> queryRunner = new CriteriaQueryRunner<MeasurementDefinition>(
+            criteria, generator, entityManager);
         return queryRunner.execute();
     }
 }

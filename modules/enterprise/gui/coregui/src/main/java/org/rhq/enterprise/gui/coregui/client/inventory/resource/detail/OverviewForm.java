@@ -40,8 +40,8 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
-import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -153,6 +153,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         // Key
         StaticTextItem keyItem = new StaticTextItem(ResourceDataSourceField.KEY.propertyName(),
             ResourceDataSourceField.KEY.title());
+        keyItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         keyItem.setValue(resource.getResourceKey());
         formItems.add(keyItem);
 
@@ -189,8 +190,8 @@ public class OverviewForm extends EnhancedDynamicForm {
                         public void onSuccess(Void result) {
                             titleBar.displayResourceName(newName);
                             CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(String
-                                    .valueOf(resource.getId()), oldName, newName), Message.Severity.Info));
+                                new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(
+                                    String.valueOf(resource.getId()), oldName, newName), Message.Severity.Info));
                         }
                     });
                 }
@@ -218,8 +219,8 @@ public class OverviewForm extends EnhancedDynamicForm {
                     OverviewForm.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
-                                MSG.view_summaryOverviewForm_error_descriptionChangeFailure(String.valueOf(resource
-                                    .getId()), oldDescription, newDescription), caught);
+                                MSG.view_summaryOverviewForm_error_descriptionChangeFailure(
+                                    String.valueOf(resource.getId()), oldDescription, newDescription), caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setDescription(oldDescription);
@@ -227,11 +228,10 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter()
-                                .notify(
-                                    new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(String
-                                        .valueOf(resource.getId()), oldDescription, newDescription),
-                                        Message.Severity.Info));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(
+                                    String.valueOf(resource.getId()), oldDescription, newDescription),
+                                    Message.Severity.Info));
                         }
                     });
                 }
@@ -259,8 +259,8 @@ public class OverviewForm extends EnhancedDynamicForm {
                     OverviewForm.this.resourceService.updateResource(resource, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(
-                                MSG.view_summaryOverviewForm_error_locationChangeFailure(String.valueOf(resource
-                                    .getId()), oldLocation, newLocation), caught);
+                                MSG.view_summaryOverviewForm_error_locationChangeFailure(
+                                    String.valueOf(resource.getId()), oldLocation, newLocation), caught);
                             // We failed to update it on the Server, so change back the Resource and the form item to
                             // the original value.
                             resource.setLocation(oldLocation);
@@ -268,9 +268,11 @@ public class OverviewForm extends EnhancedDynamicForm {
                         }
 
                         public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(String
-                                    .valueOf(resource.getId()), oldLocation, newLocation), Message.Severity.Info));
+                            CoreGUI.getMessageCenter()
+                                .notify(
+                                    new Message(MSG.view_summaryOverviewForm_message_nameChangeSuccess(
+                                        String.valueOf(resource.getId()), oldLocation, newLocation),
+                                        Message.Severity.Info));
                         }
                     });
                 }

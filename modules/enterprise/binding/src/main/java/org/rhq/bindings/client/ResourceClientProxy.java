@@ -29,10 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javassist.util.proxy.MethodHandler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import javassist.util.proxy.MethodHandler;
 
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
@@ -66,6 +66,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.Summary;
 import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 
@@ -504,7 +505,17 @@ public class ResourceClientProxy {
             return remoteClient.getContentManager().getBackingPackageForResource(remoteClient.getSubject(), resourceClientProxy.resourceId);
         }
 
+        /**
+         * @deprecated Superseded by ({@link #updateBackingContent(String, String)}
+         *
+         * @param fileName file name
+         */
+        @Deprecated
         public void updateBackingContent(String filename) {
+            this.updateBackingContent(filename, null);
+        }
+
+        public void updateBackingContent(String filename, String displayVersion) {
             File file = new File(filename);
             if (!file.exists()) {
                 throw new IllegalArgumentException("File not found: " + file.getAbsolutePath());
@@ -513,41 +524,35 @@ public class ResourceClientProxy {
                 throw new IllegalArgumentException("File expected, found directory: " + file.getAbsolutePath());
             }
 
+            byte[] fileContents = new ScriptUtil(remoteClient).getFileBytes(filename);
+            String sha = null;
+            try {
+                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(fileContents);
+            }
+            catch(Exception e){
+                //do nothing because the sha will remain null.
+                LOG.error("Message digest for the package bits failed.", e);
+            }
+
+            String packageVersion = "[sha256="+sha+"]";
 
             InstalledPackage oldPackage = getBackingContent();
 
-
-            String oldVersion = oldPackage.getPackageVersion().getVersion();
-            String newVersion = "1.0";
-            if (oldVersion != null && oldVersion.length() != 0) {
-                String[] parts = oldVersion.split("[^a-zA-Z0-9]");
-                String lastPart = parts[parts.length-1];
-                try {
-                    int lastNumber = Integer.parseInt(lastPart);
-                    newVersion = oldVersion.substring(0, oldVersion.length() - lastPart.length()) + (lastNumber + 1);
-                } catch (NumberFormatException nfe) {
-                    newVersion = oldVersion + ".1";
-                }
-            }
-
-            byte[] fileContents = new ScriptUtil(remoteClient).getFileBytes(filename);
-
-
             PackageVersion pv =
-                    remoteClient.getContentManager().createPackageVersion(
+                    remoteClient.getContentManager().createPackageVersionWithDisplayVersion(
                         remoteClient.getSubject(),
                         oldPackage.getPackageVersion().getGeneralPackage().getName(),
                         oldPackage.getPackageVersion().getGeneralPackage().getPackageType().getId(),
-                        newVersion,
+                        packageVersion,
+                displayVersion,
                         oldPackage.getPackageVersion().getArchitecture().getId(),
                         fileContents);
 
-            remoteClient.getContentManager().deployPackages(
+            remoteClient.getContentManager().deployPackagesWithNote(
                     remoteClient.getSubject(),
                     new int[] { resourceClientProxy.getId()},
-                    new int[] {pv.getId()});
-
-
+                    new int[] {pv.getId()},
+                    "CLI deployment request");
         }
 
         public void retrieveBackingContent(String fileName) throws IOException {
@@ -649,9 +654,15 @@ public class ResourceClientProxy {
 
         public InstalledPackage getBackingContent();
 
-
+        /**
+         * @deprecated Superseded by ({@link #updateBackingContent(String, String)}
+         *
+         * @param fileName file name
+         */
+        @Deprecated
         public void updateBackingContent(String fileName);
 
+        public void updateBackingContent(String fileName, String displayVersion);
 
         public void retrieveBackingContent(String fileName) throws IOException;
 

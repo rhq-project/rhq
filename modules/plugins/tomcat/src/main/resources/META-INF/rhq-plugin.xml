@@ -576,7 +576,103 @@
                      description="Pathname to a scratch directory to be provided by this Context for temporary read-write use by servlets within the associated web application. This directory will be made visible to servlets in the web application by a servlet context attribute (of type java.io.File) named javax.servlet.context.tempdir as described in the Servlet Specification. If not specified, a suitable directory underneath $CATALINA_BASE/work will be provided."
                      required="false" />
                </c:group>
-            </resource-configuration>
+            </resource-configuration>            
+
+            <service
+               name="Tomcat Datasource"
+               discovery="TomcatDatasourceDiscoveryComponent"
+               class="TomcatDatasourceComponent"
+               description="A Tomcat Application (WAR) Datasource"
+               singleton="false">
+
+               <plugin-configuration>
+                  <c:group name="General">
+                     <c:simple-property
+                        name="objectName"
+                        readOnly="true"
+                        default="Catalina:type=DataSource,path=%path%,host=%host%,class=javax.sql.DataSource,name=%name%" />
+                  </c:group>
+
+                  <c:group
+                     name="Advanced"
+                     hiddenByDefault="true">
+                     <c:simple-property
+                        name="name"
+                        type="string"
+                        readOnly="true"
+                        description="The virtual host" />
+                     <c:simple-property
+                        name="host"
+                        description="The datasource host"
+                        readOnly="true" />
+                     <c:simple-property
+                        name="path"
+                        description="The datasource application path"
+                        readOnly="true" />
+                     <c:simple-property
+                        name="nameTemplate"
+                        default="{name}" />
+                     <c:simple-property
+                        name="descriptionTemplate"
+                        default="Tomcat Web Application Datasource"
+                        readOnly="true" />
+                  </c:group>
+               </plugin-configuration>
+
+               <metric
+                  property="numActive"
+                  displayType="summary"
+                  description="Number of active connections in the pool" />
+               <metric
+                  property="numIdle"
+                  displayType="summary"
+                  description="Number of idle connections in the pool" /> 
+                  
+               <resource-configuration>
+                  <c:group name="Attributes">
+                     <c:simple-property
+                        name="initialSize"
+                        type="integer"
+                        description="The initial number of connections that are created when the pool is started. Default is 0." />
+                     <c:simple-property
+                        name="maxActive"
+                        type="integer"
+                        description="The maximum number of active connections that can be allocated from this pool at the same time, or negative for no limit. Default is 8." />
+                     <c:simple-property
+                        name="maxIdle"
+                        type="integer"
+                        description="The maximum number of connections that can remain idle in the pool, without extra ones being released, or negative for no limit. Default is 8." />
+                     <c:simple-property
+                        name="minIdle"
+                        type="integer"
+                        description="The minimum number of connections that can remain idle in the pool, without extra ones being created, or zero to create none. Default is 0." />                                                                        
+                     <c:simple-property
+                        name="maxWait"
+                        type="integer"
+                        description="The maximum number of milliseconds that the pool will wait (when there are no available connections) for a connection to be returned before throwing an exception, or -1 to wait indefinitely. Default is indefinitely." />
+                     <c:simple-property
+                        name="poolPreparedStatements"
+                        type="boolean"
+                        description="Enable prepared statement pooling for this pool. Default is false." />                                                                        
+                     <c:simple-property
+                        name="maxOpenPreparedStatements"
+                        type="integer"
+                        description="The maximum number of open statements that can be allocated from the statement pool at the same time, or zero for no limit. Default is unlimited." />                                                                        
+                     <c:simple-property
+                        name="removeAbandoned"
+                        type="boolean"
+                        description="Flag to remove abandoned connections if they exceed the removeAbandonedTimout. If set to true a connection is considered abandoned and eligible for removal if it has been idle longer than the removeAbandonedTimeout. Setting this to true can recover db connections from poorly written applications which fail to close a connection. Default is false." />                                                                        
+                     <c:simple-property
+                        name="removeAbandonedTimeout"
+                        type="integer"
+                        description="Timeout in seconds before an abandoned connection can be removed. Default is 300." />                                                                        
+                     <c:simple-property
+                        name="logAbandoned"
+                        type="boolean"
+                        description="Flag to log stack traces for application code which abandoned a Statement or Connection. Logging of abandoned Statements and Connections adds overhead for every Connection open or new Statement because a stack trace has to be generated. Default is false." />                                                                        
+                  </c:group>
+               </resource-configuration>                                   
+            </service>                      
 
             <service
                name="Tomcat Cache"
@@ -630,6 +726,7 @@
                   property="cacheMaxSize"
                   description="Maximum number of cache entries" />
             </service>
+            
          </service>
 
       </service>

@@ -38,8 +38,6 @@ public class AvailabilityRest {
 
     int resourceId;
 
-    private RESTServiceDiscovery rest;
-
     public AvailabilityRest() {
         // for RESTEasy/JAXB
     }
@@ -47,6 +45,12 @@ public class AvailabilityRest {
     public AvailabilityRest(AvailabilityType type, long since, int resourceId) {
         this.since = since;
         this.type = type.toString();
+        this.resourceId = resourceId;
+    }
+
+    public AvailabilityRest(long since, int resourceId) {
+        this.since = since;
+        this.type = "- unknown -";
         this.resourceId = resourceId;
     }
 
@@ -65,12 +69,15 @@ public class AvailabilityRest {
         return resourceId;
     }
 
-    @XmlElementRef
-    public RESTServiceDiscovery getRest() {
-        return rest;
+    public void setSince(long since) {
+        this.since = since;
     }
 
-    public void setRest(RESTServiceDiscovery rest) {
-        this.rest = rest;
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setResourceId(int resourceId) {
+        this.resourceId = resourceId;
     }
 }

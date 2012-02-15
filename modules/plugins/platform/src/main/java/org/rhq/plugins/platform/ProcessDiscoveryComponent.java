@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,22 +52,25 @@ public class ProcessDiscoveryComponent implements ResourceDiscoveryComponent, Ma
                     resourceDiscoveryContext.getSystemInformation());
         }
         catch (Exception e) {
-            throw new RuntimeException("Failed to create process based on plugin config: " + pluginConfig);
+            throw new RuntimeException("Failed to manually add process Resource based on plugin config: "
+                + pluginConfig.toString(true), e);
         }
 
         String type = pluginConfig.getSimpleValue("type", "pidFile");
         String resourceKey = pluginConfig.getSimpleValue(type, null);
         if (resourceKey == null || resourceKey.length() == 0) {
-            throw new InvalidPluginConfigurationException("Invalid type [" + type + "] value [" + resourceKey + "]");
+            throw new InvalidPluginConfigurationException("Invalid type [" + type + "] value: [" + resourceKey + "]");
         }
 
         ResourceType resourceType = resourceDiscoveryContext.getResourceType();
         String resourceName = processInfo.getBaseName();
         String resourceVersion = null;
-        String resourceDescription = null;
+        String resourceDescription = processInfo.getBaseName() + " process with "
+            + (type.equals("pidFile") ? "PID file" : "PIQL expression") + " [" + resourceKey + "]";
 
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
             resourceVersion, resourceDescription, pluginConfig, processInfo);
         return detail;
     }
+
 }

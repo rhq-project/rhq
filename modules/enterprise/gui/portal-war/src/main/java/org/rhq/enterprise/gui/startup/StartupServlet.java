@@ -511,11 +511,8 @@ public class StartupServlet extends HttpServlet {
 
         // Data Purge Job
         try {
-            // Let's leave this non-volatile - in case we fail to schedule any jobs above, then at least
-            // our old schedule from a previous run will still be there - we want to be able to make sure we run
-            // db maintenance when the server starts.
             // TODO [mazz]: make the data purge job's cron string configurable via SystemManagerBean
-            // For Quartz cron syntax, see: http://www.opensymphony.com/quartz/wikidocs/CronTriggers%20Tutorial.html
+            // For Quartz cron syntax, see: http://www.quartz-scheduler.org/documentation/quartz-2.1.x/tutorials/crontrigger
             String cronString = "0 0 * * * ?"; // every hour, on the hour
             scheduler.scheduleSimpleCronJob(DataPurgeJob.class, true, false, cronString);
         } catch (Exception e) {

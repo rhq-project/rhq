@@ -63,7 +63,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jbossas.util.DeploymentUtility;
 import org.rhq.plugins.jmx.JMXComponent;
-import org.rhq.plugins.jmx.ObjectNameQueryUtility;
+import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
 /**
  * Get statistic for JBossCache instances

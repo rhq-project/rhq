@@ -25,8 +25,9 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -86,20 +87,23 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
      * Prepares things for the entire test class.
      */
     @BeforeClass
-    public void beforeClass() {
+    public void beforeClassBase() {
         configurationManager = LookupUtil.getConfigurationManager();
         resourceManager = LookupUtil.getResourceManager();
         resourceGroupManager = LookupUtil.getResourceGroupManager();
         subjectManager = LookupUtil.getSubjectManager();
+    }
 
+    @BeforeMethod
+    public void beforeMethodBase() throws Exception {
         TestServerCommunicationsService agentServiceContainer = prepareForTestAgents();
         setupMockAgentServices(agentServiceContainer);
 
         prepareScheduler();
     }
 
-    @AfterClass(alwaysRun = true)
-    public void afterClass() throws Exception {
+    @AfterMethod(alwaysRun = true)
+    public void afterMethodBase() throws Exception {
         try {
             unprepareForTestAgents();
         } finally {

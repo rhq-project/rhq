@@ -36,6 +36,8 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -62,7 +64,10 @@ import org.jboss.cache.Fqn;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataPK;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -70,6 +75,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
@@ -77,6 +83,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
+import org.rhq.enterprise.server.rest.domain.StringValue;
 
 /**
  * Deal with metrics
@@ -93,6 +100,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     MeasurementScheduleManagerLocal scheduleManager;
     @EJB
     ResourceManagerLocal resMgr;
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    EntityManager em;
 
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
@@ -114,7 +123,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             startTime = endTime - EIGHT_HOURS;
         }
 
-        MeasurementSchedule schedule = obtainSchedule(scheduleId);
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
         MetricAggregate res = new MetricAggregate(scheduleId, aggr.getMin(),aggr.getAvg(),aggr.getMax());
@@ -149,13 +158,17 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
     /**
      * Get the schedule for the passed schedule id
+     *
      * @param scheduleId id to look up
+     * @param force
+     * @param type
      * @return schedule
      * @throws StuffNotFoundException if there is no schedule with the passed id
      */
-    private MeasurementSchedule obtainSchedule(int scheduleId) {
-        MeasurementSchedule schedule;
-        schedule = getFromCache(scheduleId,MeasurementSchedule.class);
+    private MeasurementSchedule obtainSchedule(int scheduleId, boolean force, DataType type) {
+        MeasurementSchedule schedule=null;
+        if(!force)
+            schedule = getFromCache(scheduleId,MeasurementSchedule.class);
         if (schedule==null) {
             schedule = scheduleManager.getScheduleById(caller,scheduleId);
             if (schedule==null) {
@@ -165,8 +178,8 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 putToCache(scheduleId,MeasurementSchedule.class,schedule);
         }
 
-        if (schedule.getDefinition().getDataType()!= DataType.MEASUREMENT)
-            throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a (numerical) metric");
+        if (schedule.getDefinition().getDataType()!= type)
+            throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a ("+ type + ") metric");
         return schedule;
     }
     private MetricAggregate fill(MetricAggregate res, List<MeasurementDataNumericHighLowComposite> list, int scheduleId,
@@ -419,7 +432,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             throw new IllegalArgumentException("Start time is older than 7 days");
 
         // Check if the schedule exists
-        obtainSchedule(scheduleId);
+        obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         RawNumericStreamingOutput so = new RawNumericStreamingOutput();
         so.scheduleId = scheduleId;
@@ -427,7 +440,6 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         so.endTime = endTime;
         so.mediaType = mediaType;
         so.now = now-1; // pass this so that the for the 7days case is still handled from raw tables.
-
 
         return so;
     }
@@ -441,7 +453,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                    NumericDataPoint point, @Context HttpHeaders headers, UriInfo uriInfo) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        MeasurementSchedule schedule = obtainSchedule(scheduleId);
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
         data.add(new MeasurementDataNumeric(point.getTimeStamp(),scheduleId,point.getValue()));
@@ -455,6 +467,36 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         URI uri = uriBuilder.build(scheduleId);
 
         return Response.created(uri).type(mediaType).build();
+    }
+
+    public Response putTraitValue(@PathParam("scheduleId") int scheduleId, StringValue value) {
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.TRAIT);
+
+        Set<MeasurementDataTrait> traits = new HashSet<MeasurementDataTrait>(1);
+        MeasurementDataPK pk = new MeasurementDataPK(System.currentTimeMillis(),scheduleId);
+        traits.add(new MeasurementDataTrait(pk,value.getValue()));
+
+        dataManager.addTraitData(traits);
+
+        return Response.ok().build();
+    }
+
+    @Override
+    public Response getTraitValue(@PathParam("scheduleId") int scheduleId) {
+
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.TRAIT);
+        List<MeasurementDataTrait> traits = dataManager.findTraits(caller,schedule.getResource().getId(),schedule.getDefinition().getId());
+        Response.ResponseBuilder builder;
+        if (traits!=null && traits.size()>0) {
+            builder = Response.ok();
+            StringValue value = new StringValue(traits.get(0).getValue());
+            builder.entity(value);
+
+        } else {
+            builder = Response.status(Response.Status.NOT_FOUND);
+        }
+
+        return builder.build();
     }
 
 
@@ -473,6 +515,50 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         dataManager.addNumericData(data);
 
         return Response.noContent().type(mediaType).build();
+
+    }
+
+    @Override
+    @GET
+    @Path("data/{scheduleId}/baseline")
+    public Baseline getBaseline(@PathParam("scheduleId") int scheduleId, @Context HttpHeaders headers,
+                                @Context UriInfo uriInfo) {
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, true, DataType.MEASUREMENT);
+        MeasurementBaseline mBase = schedule.getBaseline();
+
+        Baseline b;
+        if (mBase==null)
+            throw new StuffNotFoundException("Baseline for schedule [" + scheduleId +"]");
+        else
+            b = new Baseline(mBase.getMin(),mBase.getMax(),mBase.getMean(),mBase.getComputeTime().getTime());
+        return b;
+
+    }
+
+    @Override
+    @PUT
+    @Path("data/{scheduleId}/baseline")
+    public void setBaseline(@PathParam("scheduleId") int scheduleId,
+                                Baseline baseline, HttpHeaders headers, @Context UriInfo uriInfo) {
+        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
+
+        // little bit of sanity checking
+        if (baseline.getMin()>baseline.getMean() || baseline.getMean()>baseline.getMax() || baseline.getMin()>baseline.getMax())
+            throw new IllegalArgumentException("Baseline not correct. it should be min<=mean<=max");
+
+        MeasurementBaseline mBase = schedule.getBaseline();
+        if (mBase == null) {
+            mBase = new MeasurementBaseline();
+            mBase.setSchedule(schedule);
+            schedule.setBaseline(mBase);
+            em.persist(mBase);
+        }
+        mBase.setMax(baseline.getMax());
+        mBase.setMin(baseline.getMin());
+        mBase.setMean(baseline.getMean());
+        mBase.setUserEntered(true);
+
+        scheduleManager.updateSchedule(caller,schedule);
 
     }
 
@@ -551,6 +637,31 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                         pw.println("\"/>");
                     }
                     pw.println("</collection>");
+                }
+                else if (mediaType.toString().equals("text/csv")) {
+                    pw.println("#schedule,timestamp,value");
+                    while (rs.next()) {
+                        pw.print(scheduleId);
+                        pw.print(',');
+                        pw.print(rs.getLong(1));
+                        pw.print(',');
+                        pw.println(rs.getDouble(2));
+                    }
+                }
+                else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+                    pw.println("<table>");
+                    pw.print("<th><td>time</td><td>value</td></th>");
+                    while (rs.next()) {
+                        pw.print("  <tr>");
+                        pw.print("<td>");
+                        pw.print(new Date(rs.getLong(1)));
+                        pw.print("</td><td>");
+                        pw.print(rs.getDouble(2));
+                        pw.print("</td>");
+                        pw.println("</tr>");
+                    }
+                    pw.println("</table>");
+
                 }
                 pw.flush();
                 pw.close();

@@ -35,8 +35,6 @@
     <product.help.guide.agent>Running+the+RHQ+Agent</product.help.guide.agent>
     <product.help.FAQ>FAQ</product.help.FAQ>
     <product.help.config.props>http://support.rhq-project.org/display/JOPR2/Startup+Properties#ConfiguringtheServer</product.help.config.props>
-
-    <rhq.db.installation.test.db-name>rhq_installer_test_db</rhq.db.installation.test.db-name>
   </properties>
 
   <dependencies>
@@ -151,8 +149,6 @@
             <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
             <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
             <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
-            <rhq.db.installation.test.db-name>${rhq.db.installation.test.db-name}</rhq.db.installation.test.db-name>
-            <rhq.db.installation.test.connection-url>jdbc:postgresql://${rhq.test.ds.server-name}:5432/${rhq.db.installation.test.db-name}</rhq.db.installation.test.connection-url>
           </systemPropertyVariables>
         </configuration>
       </plugin>

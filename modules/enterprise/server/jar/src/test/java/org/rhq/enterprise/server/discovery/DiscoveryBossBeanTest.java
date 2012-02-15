@@ -23,10 +23,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.Connection;
+import java.util.List;
 import java.util.Random;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseConnection;
@@ -39,7 +42,7 @@ import org.dbunit.ext.oracle.Oracle10DataTypeFactory;
 import org.dbunit.ext.oracle.OracleDataTypeFactory;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.dbunit.operation.DatabaseOperation;
-import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -54,11 +57,13 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsService;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     private DiscoveryBossLocal discoveryBoss;
+    private ResourceManagerLocal resourceManager;
     private MBeanServer dummyJBossMBeanServer;
 
     private ResourceType platformType;
@@ -74,26 +79,29 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     @BeforeClass
     public void beforeClass() throws Exception {
         discoveryBoss = LookupUtil.getDiscoveryBoss();
-
-        dummyJBossMBeanServer = MBeanServerFactory.createMBeanServer("jboss");
-        MBeanServerLocator.setJBoss(dummyJBossMBeanServer);
-        dummyJBossMBeanServer.registerMBean(new ServerCommunicationsService(),
-                ServerCommunicationsServiceMBean.OBJECT_NAME);
-    }
-
-    @AfterClass
-    public void afterClass() {
-        MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
     }
 
     @BeforeMethod
     public void setupTestData() throws Exception {
+        dummyJBossMBeanServer = MBeanServerFactory.createMBeanServer("jboss");
+        MBeanServerLocator.setJBoss(dummyJBossMBeanServer);
+        dummyJBossMBeanServer.registerMBean(new ServerCommunicationsService(),
+            ServerCommunicationsServiceMBean.OBJECT_NAME);
+
         initDB();
+
         platformType = getEntityManager().find(ResourceType.class, 1);
         serverType = getEntityManager().find(ResourceType.class, 2);
         serviceType1 = getEntityManager().find(ResourceType.class, 3);
         serviceType2 = getEntityManager().find(ResourceType.class, 4);
         agent = getEntityManager().find(Agent.class, 1);
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void afterMethod() throws Exception {
+        MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
+
+        cleanDB();
     }
 
     @Test(groups = "integration.ejb3")
@@ -180,7 +188,51 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             connection = getConnection();
             IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
             setDbType(dbUnitConnection);
-            DatabaseOperation.CLEAN_INSERT.execute(dbUnitConnection, getDataSet());
+            DatabaseOperation.REFRESH.execute(dbUnitConnection, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+    }
+
+    public void cleanDB() throws Exception {
+        Connection connection = null;
+        EntityManager em = null;
+
+        try {
+            getTransactionManager().begin();
+            em = getEntityManager();
+
+            Query q;
+            List<?> doomed;
+            q = em.createQuery("SELECT r FROM Resource r WHERE r.resourceType.id <= 4 ORDER BY r.id DESC");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(Resource.class, ((Resource) removeMe).getId()));
+            }
+            em.flush();
+            getTransactionManager().commit();
+            em.close();
+            em = null;
+        } catch (Exception e) {
+            try {
+                System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
+                getTransactionManager().rollback();
+            } catch (Exception ignore) {
+            }
+        } finally {
+            if (null != em) {
+                em.close();
+            }
+        }
+
+        try {
+            connection = getConnection();
+
+            IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
+            setDbType(dbUnitConnection);
+            DatabaseOperation.DELETE.execute(dbUnitConnection, getDataSet());
         } finally {
             if (connection != null) {
                 connection.close();
@@ -211,7 +263,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     IDataSet getDataSet() throws Exception {
         FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass().getResourceAsStream(
-                getDataSetFile())));
+            getDataSetFile())));
         xmlProducer.setColumnSensing(true);
         return new FlatXmlDataSet(xmlProducer);
     }

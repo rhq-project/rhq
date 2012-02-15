@@ -24,8 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.SerializablePermission;
-import java.security.PermissionCollection;
 import java.util.Collections;
 import java.util.Properties;
 
@@ -41,7 +39,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import org.rhq.bindings.SandboxedScriptEngine;
 import org.rhq.bindings.ScriptEngineFactory;
 import org.rhq.bindings.StandardBindings;
 import org.rhq.bindings.StandardScriptPermissions;
@@ -145,9 +142,9 @@ public class JndiAccessTest extends AbstractEJB3Test {
 
         try {
             engine.eval(""
-                + "context = new javax.naming.InitialContext();\n"
-                + "entityManagerFactory = context.lookup('java:/RHQEntityManagerFactory');\n"
-                + "entityManager = entityManagerFactory.createEntityManager();\n"
+                + "var ctx = new javax.naming.InitialContext();\n"
+                + "var entityManagerFactory = ctx.lookup('java:/RHQEntityManagerFactory');\n"
+                + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
             
             Assert.fail("The script shouldn't have been able to use the EntityManager.");
@@ -164,11 +161,11 @@ public class JndiAccessTest extends AbstractEJB3Test {
 
         try {
             engine.eval(""
-                + "env = new java.util.Hashtable();"
+                + "var env = new java.util.Hashtable();"
                 + "env.put('java.naming.factory.initial', 'org.jboss.naming.NamingContextFactory');"
                 + "env.put('java.naming.provider.url', 'jnp://localhost:" + jnpPort + "');"
-                + "context = new javax.naming.InitialContext(env);\n"
-                + "kachny = context.lookup('kachny');\n"
+                + "var ctx = new javax.naming.InitialContext(env);\n"
+                + "var kachny = ctx.lookup('kachny');\n"
                 + "assertNotNull(kachny);\n");
         } catch (ScriptException e) {            
             Assert.fail("The script should have been able to access a remote JNDI server.", e);
@@ -177,11 +174,7 @@ public class JndiAccessTest extends AbstractEJB3Test {
         
     private ScriptEngine getEngine(Subject subject) throws ScriptException, IOException {
         StandardBindings bindings = new StandardBindings(new PrintWriter(System.out), new LocalClient(subject));
-        ScriptEngine engine = ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), bindings);
-        
-        PermissionCollection perms = new StandardScriptPermissions();
-        
-        return new SandboxedScriptEngine(engine, perms);
+        return ScriptEngineFactory.getSecuredScriptEngine("JavaScript", new PackageFinder(Collections.<File>emptyList()), bindings, new StandardScriptPermissions());
     }
     
     private static void checkIsDesiredSecurityException(ScriptException e) {

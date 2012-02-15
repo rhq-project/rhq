@@ -30,10 +30,8 @@
 debug_wrapper_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
-      if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
-         echo "rhq-agent-wrapper.sh: $1"
-      fi
+   if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+      echo "rhq-agent-wrapper.sh: $1"
    fi
 }
 
@@ -60,7 +58,7 @@ check_status ()
 
 check_status_of_pid ()
 {
-    if [ "x$1" != "x" ] && kill -0 $1 2>/dev/null ; then
+    if [ -n "$1" ] && kill -0 $1 2>/dev/null ; then
         _STATUS="RHQ Agent (pid $1) is running"
         _RUNNING=1
     else
@@ -117,7 +115,7 @@ esac
 # is a symlink to the real agent installation script.
 # Only certain platforms support the -e option of readlink
 
-if [ "x${_LINUX}${_SOLARIS}${_CYGWIN}" != "x" ]; then
+if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
    _READLINK_ARG="-e"
 fi
 
@@ -160,7 +158,7 @@ _THIS_SCRIPT="${_THIS_SCRIPT_DIR}"/`basename "$_DOLLARZERO"`
 # If RHQ_AGENT_HOME is not defined, we will assume we are running
 # directly from the agent installation's bin directory
 
-if [ "x$RHQ_AGENT_HOME" = "x" ]; then
+if [ -z "$RHQ_AGENT_HOME" ]; then
    cd ..
    RHQ_AGENT_HOME=`pwd`
 else
@@ -180,7 +178,7 @@ fi
 # -------------------------------
 # Find out where to put the pidfile and prepare its directory
 
-if [ "x$RHQ_AGENT_PIDFILE_DIR" = "x" ]; then
+if [ -z "$RHQ_AGENT_PIDFILE_DIR" ]; then
    RHQ_AGENT_PIDFILE_DIR="${RHQ_AGENT_HOME}/bin"
 fi
 _PIDFILE="${RHQ_AGENT_PIDFILE_DIR}/rhq-agent.pid"
@@ -200,13 +198,13 @@ case "$1" in
            exit 0
         fi
 
-        echo Starting RHQ Agent...
+        echo "Starting RHQ Agent..."
 
         RHQ_AGENT_IN_BACKGROUND="${_PIDFILE}"
         export RHQ_AGENT_IN_BACKGROUND
 
         # Determine the command to execute when starting the agent
-        if [ "x$RHQ_AGENT_START_COMMAND" = "x" ]; then
+        if [ -z "$RHQ_AGENT_START_COMMAND" ]; then
            # Find out where the agent start script is located
            _START_SCRIPT="${RHQ_AGENT_HOME}/bin/rhq-agent.sh"
 
@@ -221,7 +219,7 @@ case "$1" in
         fi
 
         # If a password prompt needs to be shown, do it now
-        if [ "x$RHQ_AGENT_PASSWORD_PROMPT" != "x" ]; then
+        if [ -n "$RHQ_AGENT_PASSWORD_PROMPT" ]; then
            if [ "$RHQ_AGENT_PASSWORD_PROMPT" = "true" ]; then
               RHQ_AGENT_PASSWORD_PROMPT="Enter password to start the agent"
            fi
@@ -229,7 +227,7 @@ case "$1" in
         fi
 
         # start the agent now!
-        if [ "x$RHQ_AGENT_DEBUG" != "x" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+        if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
            debug_wrapper_msg "Executing agent with command: ${RHQ_AGENT_START_COMMAND}"
            eval $RHQ_AGENT_START_COMMAND
         else
@@ -243,7 +241,7 @@ case "$1" in
         if [ "$_RUNNING" = "1" ]; then
            exit 0
         else
-           echo Failed to start - make sure the RHQ Agent is fully configured properly
+           echo "Failed to start - make sure the RHQ Agent is fully configured properly"
            exit 1
         fi
         ;;
@@ -257,7 +255,7 @@ case "$1" in
            exit 0
         fi
 
-        echo Stopping RHQ Agent...
+        echo "Stopping RHQ Agent..."
 
         _PID_TO_KILL=$_PID;
 
@@ -266,12 +264,12 @@ case "$1" in
 
         sleep 5
         check_status_of_pid $_PID_TO_KILL
-        if [ "$_RUNNING" = "1"  ]; then
+        if [ "$_RUNNING" = "1" ]; then
            debug_wrapper_msg "Agent did not die yet, trying to kill it again"
            kill -TERM $_PID_TO_KILL
         fi
 
-        while [ "$_RUNNING" = "1"  ]; do
+        while [ "$_RUNNING" = "1" ]; do
            sleep 2
            check_status_of_pid $_PID_TO_KILL
         done
@@ -290,7 +288,7 @@ case "$1" in
            exit 0
         fi
 
-        echo Killing RHQ Agent...
+        echo "Killing RHQ Agent..."
 
         _PID_TO_KILL=$_PID;
 

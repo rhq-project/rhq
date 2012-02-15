@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -39,11 +35,10 @@ import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
+import com.mongodb.gridfs.GridFSDBFile;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.bson.types.ObjectId;
-
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.FileEntry;
@@ -57,8 +52,9 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -66,6 +62,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -77,6 +74,10 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
@@ -209,6 +210,13 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         return file;
     }
 
+    private DriftFileDTO newDriftFile(String hash, DriftFileStatus status) {
+        DriftFileDTO file = new DriftFileDTO();
+        file.setHashId(hash);
+        file.setStatus(status);
+        return file;
+    }
+
     @Override
     public void saveChangeSetFiles(final Subject subject, final File changeSetFilesZip) throws Exception {
         String zipFileName = changeSetFilesZip.getName();
@@ -275,8 +283,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public DriftFile getDriftFile(Subject subject, String hashId) throws Exception {
-        // TODO
-        return null;
+        GridFSDBFile gridFSDBFile = fileDAO.findById(hashId);
+        if (gridFSDBFile == null) {
+            return null;
+        }
+        return newDriftFile(hashId, DriftFileStatus.LOADED);
     }
 
     @Override
@@ -292,7 +303,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public String getDriftFileBits(Subject subject, String hash) {
-        return null;
+        GridFSDBFile file = fileDAO.findById(hash);
+        if (file == null) {
+            return null;
+        }
+        return new String(StreamUtil.slurp(file.getInputStream()));
     }
 
     Map<Integer, Resource> loadResourceMap(Subject subject, Integer[] resourceIds) {
@@ -332,14 +347,22 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         dto.setCategory(entry.getCategory());
 
         // TODO Generate DriftFile DTOs for oldDriftFile and newDriftFile properties
-        DriftFileDTO fileDTO = new DriftFileDTO();
-
-        dto.setOldDriftFile(fileDTO);
-        dto.setNewDriftFile(fileDTO);
-
+        switch (entry.getCategory())
+        {
+            case FILE_ADDED:
+                dto.setNewDriftFile(newDriftFile(entry.getNewFileHash()));
+                break;
+            case FILE_CHANGED:
+                dto.setNewDriftFile(newDriftFile(entry.getNewFileHash()));
+                dto.setOldDriftFile(newDriftFile(entry.getOldFileHash()));
+                break;
+            default:  // FILE_REMOVED
+                dto.setOldDriftFile(newDriftFile(entry.getOldFileHash()));
+        }
+        
         return dto;
     }
-
+    
     @Override
     public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
         return null;

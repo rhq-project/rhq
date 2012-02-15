@@ -41,6 +41,10 @@ public class FileDAO {
         this.db = db;
         gridFS = new GridFS(this.db);
     }
+    
+    public GridFSDBFile findById(String hash) {
+        return gridFS.findOne(new BasicDBObject("_id", hash));
+    }
 
     public InputStream findOne(String hash) {
         GridFSDBFile dbFile = gridFS.findOne(new BasicDBObject("_id", hash));

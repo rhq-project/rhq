@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import java.util.ArrayList;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -103,7 +104,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource composite for resource [" + resourceId + "]:"
-                        + caught.getMessage());
+                            + caught.getMessage());
                     currentlyLoading = false;
                 }
 

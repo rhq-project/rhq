@@ -22,10 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import java.util.logging.Logger;
 import java.util.EnumSet;
 import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -64,6 +65,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -77,6 +79,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class LoginView extends LocatableCanvas {
 
+    private static final Logger log = Logger.getLogger("");
     private static boolean loginShowing = false;
 
     private LocatableWindow window;

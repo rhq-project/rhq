@@ -24,6 +24,7 @@ import com.smartgwt.client.util.SC;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Joseph Marques
@@ -43,7 +44,7 @@ public class SearchGUI implements EntryPoint {
 
     public void onModuleLoad() {
         if (SearchBar.existsOnPage() == false) {
-            com.allen_sauer.gwt.log.client.Log.info("Suppressing load of SearchGUI module");
+            Log.info("Suppressing load of SearchGUI module");
             return;
         }
 

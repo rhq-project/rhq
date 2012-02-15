@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupPkgH
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the Package History display
@@ -105,7 +106,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
             @Override
             public void onFailure(Throwable caught) {
                 Log.debug("Error retrieving installed package history for group [" + resourceId + "]:"
-                    + caught.getMessage());
+                        + caught.getMessage());
                 currentlyLoading = false;
             }
 

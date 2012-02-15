@@ -286,13 +286,13 @@ public class ChangeSetDAOTest {
 
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterDriftDefinitionId(1);
-        criteria.addFilterEndVersion("3");
+        criteria.addFilterEndVersion("2");
 
         List<MongoDBChangeSet> actual = dao.findByChangeSetCritiera(criteria);
         List<MongoDBChangeSet> expected = asList(c1, c2);
 
         String ignore = "drifts";
-        assertCollectionMatchesNoOrder("Failed to find change sets by drift change criteria with start version filter",
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift change criteria with end version filter",
                 expected, actual, ignore);
     }
 

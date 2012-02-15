@@ -74,7 +74,7 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         }
         
         if (criteria.getFilterEndVersion() != null) {
-            query.field("version").lessThan(Integer.parseInt(criteria.getFilterEndVersion()));
+            query.field("version").lessThanOrEq(Integer.parseInt(criteria.getFilterEndVersion()));
         }
 
         if (criteria.getFilterCreatedAfter() != null) {

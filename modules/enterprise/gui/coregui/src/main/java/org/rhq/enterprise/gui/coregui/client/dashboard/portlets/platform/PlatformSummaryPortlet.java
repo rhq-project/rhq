@@ -91,6 +91,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setAutoFitData(Autofit.VERTICAL);
         setOverflow(Overflow.AUTO);
         setAutoFetchData(false);
+        setShowEmptyMessage(false);
 
         setDataSource(new PlatformMetricDataSource(this));
     }
@@ -152,6 +153,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                 setTypes(result);
                 fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
                     .name()));
+                setShowEmptyMessage(true);
             }
         });
     }

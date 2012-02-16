@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,44 +27,47 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jboss.managed.api.ManagedComponent;
-import org.jboss.managed.api.ManagedProperty;
-import org.jboss.metatype.api.values.SimpleValue;
-
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.operation.OperationResult;
 
 /**
- * A Resource component for JBoss AS 5 Tx Connection Factories.
+ * A Resource component for managing JBoss AS 5/6 datasources or connection factories.
  *
  * @author Ian Springer
  */
-public class TxConnectionFactoryComponent extends DatasourceOrConnectionFactoryComponent {
+public class DatasourceOrConnectionFactoryComponent extends ManagedComponentComponent {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ManagedComponent managedComponent = getManagedComponent();
+        getValues(getManagedComponent(), report, metrics);
+    }
 
+    @Override
+    protected void getValues(ManagedComponent managedComponent, MeasurementReport report,
+                             Set<MeasurementScheduleRequest> metrics) throws Exception {
         Set<MeasurementScheduleRequest> uncollectedMetrics = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : metrics) {
-            try {
-                if (request.getName().equals("custom.transactionType")) {
-                    ManagedProperty xaTransactionProp = managedComponent.getProperty("xa-transaction");
-                    SimpleValue xaTransactionMetaValue = (SimpleValue) xaTransactionProp.getValue();
-                    Boolean xaTransactionValue = (xaTransactionMetaValue != null) ? (Boolean) xaTransactionMetaValue
-                        .getValue() : null;
-                    boolean isXa = (xaTransactionValue != null && xaTransactionValue);
-                    String transactionType = (isXa) ? "XA" : "Local";
-                    report.addData(new MeasurementDataTrait(request, transactionType));
-                } else {
-                    uncollectedMetrics.add(request);
+            String metricName = request.getName();
+            if (metricName.equals("custom.connectionAvailable")) {
+                try {
+                    Configuration parameters = new Configuration();
+                    OperationResult result = invokeOperation(managedComponent, "testConnection", parameters);
+                    PropertySimple resultProp = result.getComplexResults().getSimple("result");
+                    boolean connectionAvailable = resultProp.getBooleanValue();
+                    MeasurementDataTrait trait = new MeasurementDataTrait(request, connectionAvailable ? "yes" : "no");
+                    report.addData(trait);
+                } catch (Exception e) {
+                    log.error("Failed to collect trait [" + metricName + "].", e);
                 }
-            } catch (Exception e) {
-                log.error("Failed to collect metric for " + request, e);
+            } else {
+                uncollectedMetrics.add(request);
             }
         }
 

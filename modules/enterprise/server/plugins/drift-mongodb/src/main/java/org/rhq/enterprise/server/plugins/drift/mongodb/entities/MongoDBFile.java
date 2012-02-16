@@ -30,6 +30,11 @@ public class MongoDBFile implements Serializable, DriftFile {
     public MongoDBFile(String hash) {
         this.hash = hash;
     }
+    
+    public MongoDBFile(DriftFile driftFile) {
+        hash = driftFile.getHashId();
+        size = driftFile.getDataSize();
+    }
 
     @Override
     public String getHashId() {

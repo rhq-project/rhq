@@ -98,10 +98,20 @@ public interface DriftServerPluginFacet {
     DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
 
     /**
+     * Persists a new initial change set for a pinned snapshot. This can happen when pinning
+     * a snapshot to a definition (resource level) or when pinning a snapshot to a template
+     * (resource type level). The RHQ server takes a snapshot, converts it into a change 
+     * set, and then calls this method to persist the newly created change set. Note that
+     * when the RHQ server is pinning a snapshot to a definition, the change set will have
+     * a valid resource id associated with it, but when the snapshot is getting pinned to a
+     * template, the {@link DriftChangeSet#getResourceId() resourceId} property can be
+     * ignored.
      *
-     * @param subject
-     * @param changeSet
-     * @return The change set id
+     * @param subject The user submitting the request
+     * @param changeSet The change set to persist which may be a resource level change set meaning it belongs
+     * to a drift definition, or it may be a type level change set meaning it belongs to
+     * a {@link org.rhq.core.domain.drift.DriftDefinitionTemplate template}
+     * @return The id of the newly persisted change set
      */
     String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
 
@@ -123,7 +133,7 @@ public interface DriftServerPluginFacet {
      * When a user wants to completely remove all data related to a drift definition,
      * this method will be called to give the plugin a chance to clean up any data related
      * to the drift definition that is going to be deleted.
-     * @param Subject
+     * @param subject
      * @param resourceId the resource whose drift definition is being purged
      * @param driftDefName identifies the data that is to be purged
      */

@@ -997,6 +997,16 @@
                          </c:constraint>
                      </c:simple-property>
 
+                     <c:simple-property name="serviceAvailabilityRefreshInterval" units="minutes" required="false"
+                                        default="15" type="integer"
+                                        description="The amount of time, in minutes, that can elapse for service resource
+                                        (e.g., EJBs, data sources) availability checks without having to refresh the
+                                        managed object from the JBoss server. The information used to perform availability
+                                        checks is cached. This property determines how frequently that data needs to be
+                                        reloaded from the JBoss server. Any time the managed object is loaded from the
+                                        server, like for collecting metrics, the availability information is updated and
+                                        the interval is reset."/>
+
                      <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
                                         readOnly="true" required="false" 
                                         description="The name of the JBoss AS JVM resource."/>
@@ -2278,7 +2288,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="The name of this EAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="ear" readOnly="true"/>
@@ -2335,8 +2344,8 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this WAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
-                    <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console)" readOnly="true"/>
+                    <!--  setting to required=false since this is not usually set properly at discovery time -->                    
+                    <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console)" required="false" readOnly="false"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="war" readOnly="true"/>
@@ -2418,7 +2427,8 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this WAR" readOnly="true"/>
-                    <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" readOnly="true"/>
+                    <!--  setting to required=false since this is not usually set properly at discovery time -->
+                    <c:simple-property name="contextPath" description="this WAR's context path (e.g. /admin-console" required="false" readOnly="false"/>
                 </c:group>
                 <c:group name="ResponseTime">
                    <c:simple-property name="responseTimeLogFile" required="false"
@@ -2485,7 +2495,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
@@ -2581,7 +2590,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
@@ -2654,7 +2662,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
@@ -2731,7 +2738,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this EJB JAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="jar" readOnly="true"/>
@@ -2793,7 +2799,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this RAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="rar" readOnly="true"/>
@@ -2839,7 +2844,6 @@
             <plugin-configuration>
                 <c:group name="general" displayName="General">
                     <c:simple-property name="deploymentName" description="the name of this RAR" readOnly="true"/>
-                    <c:simple-property name="filename" readOnly="true"/>
                 </c:group>
                 <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                     <c:simple-property name="extension" default="rar" readOnly="true"/>

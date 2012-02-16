@@ -74,7 +74,7 @@ public class ServerGroupComponent extends ManagedASComponent implements ContentF
 
         for (ResourcePackageDetails details : packages) {
 
-            ASUploadConnection uploadConnection = new ASUploadConnection(host,port);
+            ASUploadConnection uploadConnection = new ASUploadConnection(host,port, super.managementUser, super.managementPassword);
             String fileName = details.getFileName();
             OutputStream out = uploadConnection.getOutputStream(fileName);
             contentServices.downloadPackageBits(cctx, details.getKey(), out, false);

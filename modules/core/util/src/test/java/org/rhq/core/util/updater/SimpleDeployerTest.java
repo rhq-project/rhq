@@ -118,7 +118,11 @@ public class SimpleDeployerTest {
     }
 
     public void testX_Y_X() throws Exception {
-        baseX_Y_X(false);
+        baseX_Y_X(false, false);
+    }
+
+    public void testX_Y_X_Clean() throws Exception {
+        baseX_Y_X(false, true);
     }
 
     public void testX_Y_Y() throws Exception {
@@ -166,7 +170,11 @@ public class SimpleDeployerTest {
     }
 
     public void testX_Y_X_DryRun() throws Exception {
-        baseX_Y_X(true);
+        baseX_Y_X(true, false);
+    }
+
+    public void testX_Y_X_DryRun_Clean() throws Exception {
+        baseX_Y_X(true, true);
     }
 
     public void testX_Y_Y_DryRun() throws Exception {
@@ -398,7 +406,7 @@ public class SimpleDeployerTest {
         }
     }
 
-    private void baseX_Y_X(boolean dryRun) throws Exception {
+    private void baseX_Y_X(boolean dryRun, boolean clean) throws Exception {
         String newContent = "testX_Y_X";
         String newHashcode = MessageDigestGenerator.getDigestString(newContent);
         writeFile(newContent, this.currentFile);
@@ -407,11 +415,7 @@ public class SimpleDeployerTest {
             null, null, true, null);
         Deployer deployer = new Deployer(dd);
         FileHashcodeMap newFileHashcodeMap;
-        if (dryRun) {
-            newFileHashcodeMap = deployer.dryRun(this.diff);
-        } else {
-            newFileHashcodeMap = deployer.deploy(this.diff);
-        }
+        newFileHashcodeMap = deployer.deploy(this.diff, clean, dryRun);
 
         // very important to understand this - even though the current file is changed, the hashcode
         // stored in the map and the metadata directory is the ORIGINAL hashcode. This is to make it
@@ -423,17 +427,37 @@ public class SimpleDeployerTest {
 
         assert newFileHashcodeMap.equals(this.originalFileHashcodeMap);
         String[] contentHash = getOriginalFilenameContentHashcode();
-        assert contentHash[0].equals(newContent);
-        assert contentHash[1].equals(newHashcode);
+
+        // if we are cleaning, then the old content is blown away anyway and the original is replaced
+        // (but not if this is a dryRun - dryRun always means the changed/new content remains)
+        if (clean && !dryRun) {
+            assert contentHash[0].equals(originalContent);
+            assert contentHash[1].equals(originalHashcode);
+        } else {
+            assert contentHash[0].equals(newContent);
+            assert contentHash[1].equals(newHashcode);
+        }
 
         // note nothing changed - our current file remains as is
         assert this.diff.getAddedFiles().isEmpty() : this.diff;
         assert this.diff.getDeletedFiles().isEmpty() : this.diff;
         assert this.diff.getChangedFiles().isEmpty() : this.diff;
-        assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
+        if (clean) {
+            assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+            assert this.diff.getBackedUpFiles().containsKey(originalFileName) : this.diff;
+            File backupFile = new File(this.diff.getBackedUpFiles().get(originalFileName));
+            if (dryRun) {
+                assert !backupFile.exists() : "dry run should not create backup";
+            } else {
+                assert readFile(backupFile).equals(newContent) : "did not backup the correct file?";
+            }
+        } else {
+            assert this.diff.getBackedUpFiles().isEmpty() : this.diff;
+        }
         assert this.diff.getIgnoredFiles().isEmpty() : this.diff;
         assert this.diff.getRealizedFiles().isEmpty() : this.diff;
         assert this.diff.getErrors().isEmpty() : this.diff;
+        assert this.diff.wasCleaned() == clean : this.diff;
 
         if (dryRun) {
             assert this.metadata.getCurrentDeploymentProperties().equals(originalDeployProps);

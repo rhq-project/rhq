@@ -548,6 +548,7 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
                 importChildMenu.setSubmenu(importChildSubMenu);
             }
+
             resourceContextMenu.addItem(importChildMenu);
         }
     }

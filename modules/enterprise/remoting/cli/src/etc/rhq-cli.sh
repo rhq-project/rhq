@@ -160,14 +160,6 @@ fi
 debug_msg "RHQ_CLI_ADDITIONAL_JAVA_OPTS: $RHQ_CLI_ADDITIONAL_JAVA_OPTS"
 
 # ----------------------------------------------------------------------
-# Prepare the command line arguments passed to the RHQ Agent
-# ----------------------------------------------------------------------
-if [ "x$RHQ_CLI_CMDLINE_OPTS" = "x" ]; then
-   RHQ_CLI_CMDLINE_OPTS=$*
-fi
-debug_msg "RHQ_CLI_CMDLINE_OPTS: $RHQ_CLI_CMDLINE_OPTS"
-
-# ----------------------------------------------------------------------
 # Execute the VM which starts the CLI
 # ----------------------------------------------------------------------
 
@@ -191,8 +183,19 @@ if [ "x$_CYGWIN" != "x" ]; then
 fi
 
 # Build the command line that starts the VM
+# We're using an if on existence of externally passed RHQ_CLI_CMDLINE_OPTS
+# variable rather than assigning RHQ_CLI_CMDLINE_OPTS to "$@" if nothing passed
+# because doing that would expand the quoted variables at the assignment time.
+# If we then passed that variable to the actual command, the quoted arguments
+# would be already expanded and we'd therefore loose the ability to pass in
+# quoted args.
 debug_msg "Executing the CLI with this command line:"
-debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
-"${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}
+if [ "x$RHQ_CLI_CMDLINE_OPTS" = "x" ]; then
+    debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain $@"
+    "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain "$@"
+else
+    debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}"
+    "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain ${RHQ_CLI_CMDLINE_OPTS}
+fi
 
 debug_msg "$0 done."

@@ -20,17 +20,13 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
@@ -45,12 +41,12 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.carousel.BookmarkableCarousel;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftCarouselMemberView.DriftSelectionListener;
+import org.rhq.enterprise.gui.coregui.client.drift.util.DiffUtility;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -167,7 +163,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
                             break;
                         }
                     }
-                    if (null == maxSnapshotVersion || maxSnapshotVersion < carouselStart) {
+                    if (null == maxSnapshotVersion || null == carouselStart || maxSnapshotVersion < carouselStart) {
                         maxSnapshotVersion = carouselStart;
                         setCarouselStartFilterMax(maxSnapshotVersion);
                     }
@@ -266,7 +262,6 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
         addCarouselAction("Compare", MSG.common_button_compare(), null, new CarouselAction() {
 
             public void executeAction(Object actionValue) {
-
                 Record record1 = selectedRecords.get(0);
                 Record record2 = selectedRecords.get(1);
                 final String path = record1.getAttribute(DriftDataSource.ATTR_PATH);
@@ -280,68 +275,16 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
 
                 GWTServiceLookup.getDriftService().generateUnifiedDiffByIds(diffOldId, diffNewId,
                     new AsyncCallback<FileDiffReport>() {
-                        @Override
                         public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError("Failed to generate diff", caught);
+                            CoreGUI.getErrorHandler().handleError("Failed to generate diff.", caught);
                         }
 
-                        @Override
                         public void onSuccess(FileDiffReport diffReport) {
-                            String diffContents = toHtml(diffReport.getDiff(), 1, 2);
-                            LocatableWindow window = createDiffViewer(diffContents, path, 1, 2);
+                            String diffContents = DiffUtility.formatAsHtml(diffReport.getDiff(), 1, 2);
+                            LocatableWindow window = DiffUtility.createDiffViewerWindow(diffContents, path, 1, 2);
                             window.show();
                         }
-
-                        private String toHtml(List<String> deltas, int oldVersion, int newVersion) {
-                            StringBuilder diff = new StringBuilder();
-                            diff.append("<font color=\"red\">").append(deltas.get(0)).append(":").append(oldVersion)
-                                .append("</font><br/>");
-                            diff.append("<font color=\"green\">").append(deltas.get(1)).append(":").append(newVersion)
-                                .append("</font><br/>");
-
-                            for (String line : deltas.subList(2, deltas.size())) {
-                                if (line.startsWith("@@")) {
-                                    diff.append("<font color=\"purple\">").append(line).append("</font><br/>");
-                                } else if (line.startsWith("-")) {
-                                    diff.append("<font color=\"red\">").append(line).append("</font><br/>");
-                                } else if (line.startsWith("+")) {
-                                    diff.append("<font color=\"green\">").append(line).append("</font><br/>");
-                                } else {
-                                    diff.append(line).append("<br/>");
-                                }
-                            }
-                            return diff.toString();
-                        }
-
-                        private LocatableWindow createDiffViewer(String contents, String path, int oldVersion,
-                            int newVersion) {
-                            VLayout layout = new VLayout();
-                            DynamicForm form = new DynamicForm();
-                            form.setWidth100();
-                            form.setHeight100();
-
-                            CanvasItem canvasItem = new CanvasItem();
-                            canvasItem.setColSpan(2);
-                            canvasItem.setShowTitle(false);
-                            canvasItem.setWidth("*");
-                            canvasItem.setHeight("*");
-
-                            Canvas canvas = new Canvas();
-                            canvas.setContents(contents);
-                            canvasItem.setCanvas(canvas);
-
-                            form.setItems(canvasItem);
-                            layout.addMember(form);
-
-                            PopupWindow window = new PopupWindow("diffViewer", layout);
-                            window.setTitle(path + ":" + oldVersion + ":" + newVersion);
-                            window.setIsModal(false);
-
-                            return window;
-                        }
-
                     });
-
             }
 
             public boolean isEnabled() {
@@ -354,6 +297,7 @@ public class DriftCarouselView extends BookmarkableCarousel implements DetailsVi
 
                 return false;
             }
+
         });
 
         super.configureCarousel();

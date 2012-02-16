@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Set;
 
 import ca.nanometrics.gflot.client.Axis;
@@ -81,6 +82,7 @@ public class LiveGraphView extends LocatableVLayout {
 
     private SimplePlot plot;
     private Timer dataLoader;
+    @SuppressWarnings("unused")
     private long min, max;
 
     public LiveGraphView(String locatorId) {
@@ -231,7 +233,12 @@ public class LiveGraphView extends LocatableVLayout {
                         }
 
                         public void onSuccess(Set<MeasurementData> result) {
-                            MeasurementDataNumeric d = (MeasurementDataNumeric) result.iterator().next();
+                            Iterator<MeasurementData> i = result.iterator();
+                            if (!i.hasNext()) {
+                                return;
+                            }
+
+                            MeasurementDataNumeric d = (MeasurementDataNumeric) i.next();
 
                             handler.add(new DataPoint(d.getTimestamp(), d.getValue()));
                             plot.redraw();

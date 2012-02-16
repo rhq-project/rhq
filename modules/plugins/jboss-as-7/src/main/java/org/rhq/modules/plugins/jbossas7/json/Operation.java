@@ -47,10 +47,12 @@ public class Operation {
         this.operation = operation;
         this.address = new Address(addressKey,addressValue);
         this._address = address.path;
+        additionalProperties = new HashMap<String, Object>();
     }
 
     public Operation(String operation, Address address) {
         this.operation = operation;
+        additionalProperties = new HashMap<String, Object>();
         if (address!=null && address.path!=null) {
             this.address = address;
             this._address = address.path;

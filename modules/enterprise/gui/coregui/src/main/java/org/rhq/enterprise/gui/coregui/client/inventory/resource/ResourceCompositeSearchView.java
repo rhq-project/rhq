@@ -22,13 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -133,96 +128,48 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         super.configureTable();
     }
 
-    @SuppressWarnings("unchecked")
     private void addImportButton() {
         ResourceType parentType = parentResourceComposite.getResource().getResourceType();
 
         // manual import type menu
-        Set<ResourceType> importableChildTypes = getImportableChildTypes(parentType);
-        if (!importableChildTypes.isEmpty()) {
-            Map<String, ResourceType> displayNames = getDisplayNames(importableChildTypes);
-            LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>(displayNames);
+        // TODO: Use TreeMap instead, so the types will be sorted by name.
+        LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>();
 
+        for (ResourceType childType : parentType.getChildResourceTypes()) {
+            if (childType.isSupportsManualAdd()) {
+                importTypeValueMap.put(childType.getName(), childType);
+            }
+        }
+        if (!importTypeValueMap.isEmpty()) {
             addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
-                            (ResourceType) actionValue);
-                        // we can refresh the table buttons immediately since the wizard is a dialog, the
-                        // user can't access enabled buttons anyway.
-                        ResourceCompositeSearchView.this.refreshTableInfo();
-                    }
-                });
+                    new AbstractTableAction(TableActionEnablement.ALWAYS) {
+
+                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                            ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
+                                    (ResourceType) actionValue);
+                        }
+                    });
         }
 
         // creatable child type menu
-        Set<ResourceType> creatableChildTypes = getCreatableChildTypes(parentType);
-        if (!creatableChildTypes.isEmpty()) {
-            Map<String, ResourceType> displayNames = getDisplayNames(creatableChildTypes);
-            LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>(displayNames);
+        // TODO: Use TreeMap instead, so the types will be sorted by name.
+        LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>();
 
-            addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null, createTypeValueMap,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+        for (ResourceType childType : parentType.getChildResourceTypes()) {
+            if (childType.isCreatable()) {
+                createTypeValueMap.put(childType.getName(), childType);
+            }
+        }
+        if (!createTypeValueMap.isEmpty()) {
+            addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
+                createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
 
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
-                            (ResourceType) actionValue);
-                        // we can refresh the table buttons immediately since the wizard is a dialog, the
-                        // user can't access enabled buttons anyway.
-                        ResourceCompositeSearchView.this.refreshTableInfo();
+                                (ResourceType) actionValue);
                     }
                 });
         }
-    }
-
-    private static Set<ResourceType> getImportableChildTypes(ResourceType type) {
-        Set<ResourceType> results = new TreeSet<ResourceType>();
-        Set<ResourceType> childTypes = type.getChildResourceTypes();
-        for (ResourceType childType : childTypes) {
-            if (childType.isSupportsManualAdd()) {
-                results.add(childType);
-            }
-        }
-        return results;
-    }
-
-    private static Set<ResourceType> getCreatableChildTypes(ResourceType type) {
-        Set<ResourceType> results = new TreeSet<ResourceType>();
-        Set<ResourceType> childTypes = type.getChildResourceTypes();
-        for (ResourceType childType : childTypes) {
-            if (childType.isCreatable()) {
-                results.add(childType);
-            }
-        }
-        return results;
-    }
-
-    private static Map<String, ResourceType> getDisplayNames(Set<ResourceType> types) {
-        Set<String> allNames = new HashSet<String>();
-        Set<String> repeatedNames = new HashSet<String>();
-        for (ResourceType type : types) {
-            String typeName = type.getName();
-            if (allNames.contains(typeName)) {
-                repeatedNames.add(typeName);
-            } else {
-                allNames.add(typeName);
-            }
-        }
-        Map<String, ResourceType> results = new TreeMap<String, ResourceType>();
-        for (ResourceType type : types) {
-            String displayName = type.getName();
-            if (repeatedNames.contains(type.getName())) {
-                displayName += " (" + type.getPlugin() + " plugin)";
-            }
-            results.put(displayName, type);
-        }
-        return results;
-    }
-
-    protected void onUninventorySuccess() {
-        // refresh the entire gui so it encompasses any relevant tree view. Don't call this.refresh()
-        // because CoreGUI.refresh is more comprehensive.
-        CoreGUI.refresh();
     }
 
     public ResourceComposite getParentResourceComposite() {

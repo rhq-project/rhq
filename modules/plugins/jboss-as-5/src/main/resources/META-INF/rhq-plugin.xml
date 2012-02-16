@@ -7,6 +7,13 @@
             dataType="trait" category="performance"/>
 '>
 
+<!ENTITY datasourceAndConnectionFactoryMetrics '
+    <!-- Traits -->
+    <metric property="custom.connectionAvailable" displayType="summary" displayName="Connection Available?"
+            dataType="trait" category="availability" defaultInterval="900000"
+            description="could a connection to the underlying data provider be obtained?"/>
+'>
+
 <!ENTITY datasourceAndConnectionFactoryOperations '
     <operation name="flush" displayName="Flush"
                description="Flush the connections in the pool"/>
@@ -1257,7 +1264,7 @@
         <!-- =================================== ManagedComponent Resource types =================================== -->
 
         <service name="No Tx Datasource"
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
                  subCategory="Datasources"
@@ -1279,6 +1286,7 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -1306,7 +1314,7 @@
         </service>
 
         <service name="Local Tx Datasource"
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
                  subCategory="Datasources"
@@ -1328,6 +1336,7 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -1356,7 +1365,7 @@
         </service>
 
         <service name="XA Datasource"
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
                  subCategory="Datasources"
@@ -1378,6 +1387,7 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -1458,7 +1468,7 @@
 
         <service name="No Tx ConnectionFactory"
                  description="A ConnectionFactory that does not take part in JTA transactions."
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
                  discovery="ManagedComponentDiscoveryComponent">
@@ -1488,6 +1498,7 @@
  			&datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &connectionFactoryMetrics;
 
             <resource-configuration>
@@ -1541,6 +1552,7 @@
                     dataType="trait" category="performance"/>
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &connectionFactoryMetrics;
 
             <resource-configuration>

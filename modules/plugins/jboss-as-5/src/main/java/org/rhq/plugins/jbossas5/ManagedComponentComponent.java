@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2012 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,10 @@
 package org.rhq.plugins.jbossas5;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -91,10 +94,6 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     protected static final char PREFIX_DELIMITER = '|';
-
-    // Map the managedComponentComponent class name to a map of metricName to "isRuntimeProp".  So, for a given
-    // component we can quickly determine whether requested metrics need to refresh the managedComponent, or not. 
-    private static final Map<String, Map<String, Boolean>> runtimeMetricMaps = new HashMap<String, Map<String, Boolean>>();
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -237,8 +236,13 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // OperationFacet Implementation  --------------------------------------------
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+        return invokeOperation(getManagedComponent(), name, parameters);
+    }
+
+    protected OperationResult invokeOperation(ManagedComponent managedComponent, String name, Configuration parameters)
+        throws Exception {
         OperationDefinition operationDefinition = getOperationDefinition(name);
-        ManagedOperation managedOperation = getManagedOperation(operationDefinition);
+        ManagedOperation managedOperation = getManagedOperation(managedComponent, operationDefinition);
         // Convert parameters into MetaValue array.
         MetaValue[] parameterMetaValues = ConversionUtils.convertOperationsParametersToMetaValues(managedOperation,
             parameters, operationDefinition);
@@ -419,7 +423,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     protected ManagedComponent getManagedComponent() {
-        ManagedComponent managedComponent = null;
+        ManagedComponent managedComponent;
         try {
             ManagementView managementView = getConnection().getManagementView();
             managedComponent = managementView.getComponent(this.componentName, this.componentType);
@@ -453,8 +457,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     }
 
     @NotNull
-    private ManagedOperation getManagedOperation(OperationDefinition operationDefinition) {
-        ManagedComponent managedComponent = getManagedComponent();
+    private ManagedOperation getManagedOperation(ManagedComponent managedComponent,
+                                                 OperationDefinition operationDefinition) {
         Set<ManagedOperation> operations = managedComponent.getOperations();
         for (ManagedOperation operation : operations) {
             ConfigurationDefinition paramsConfigDef = operationDefinition.getParametersConfigurationDefinition();

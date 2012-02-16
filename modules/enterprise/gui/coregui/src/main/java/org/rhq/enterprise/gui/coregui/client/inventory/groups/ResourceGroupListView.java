@@ -188,13 +188,13 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                         resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
+                                refreshTableInfo();
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
                                     new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
-
-                                ResourceGroupListView.this.refresh();
+                                refresh(true);
                             }
                         });
                     }

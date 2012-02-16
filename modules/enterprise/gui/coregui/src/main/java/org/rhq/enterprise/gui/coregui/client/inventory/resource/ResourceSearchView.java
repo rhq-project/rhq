@@ -162,12 +162,12 @@ public class ResourceSearchView extends Table {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(),
                                 caught);
+                            refreshTableInfo();
                         }
 
                         public void onSuccess(List<Integer> result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
-
                             onUninventorySuccess();
                         }
                     });
@@ -187,7 +187,7 @@ public class ResourceSearchView extends Table {
     }
 
     protected void onUninventorySuccess() {
-        refresh();
+        refresh(true);
     }
 
     protected List<ListGridField> createFields() {

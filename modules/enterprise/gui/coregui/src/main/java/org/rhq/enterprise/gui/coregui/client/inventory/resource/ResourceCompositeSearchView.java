@@ -118,7 +118,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
 
-                        // refresh the entire gui so it encompasses any relevant tree view. Don't call this.refresh()
+                        refresh(true);
+                        // refresh the entire gui so it encompasses any relevant tree view. Don't just call this.refresh(),
                         // because CoreGUI.refresh is more comprehensive.
                         CoreGUI.refresh();
                     }
@@ -220,7 +221,8 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     }
 
     protected void onUninventorySuccess() {
-        // refresh the entire gui so it encompasses any relevant tree view. Don't call this.refresh()
+        refresh(true);
+        // refresh the entire gui so it encompasses any relevant tree view. Don't just call this.refresh(),
         // because CoreGUI.refresh is more comprehensive.
         CoreGUI.refresh();
     }

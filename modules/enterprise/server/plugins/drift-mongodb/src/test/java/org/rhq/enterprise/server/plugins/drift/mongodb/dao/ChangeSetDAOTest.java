@@ -943,6 +943,29 @@ public class ChangeSetDAOTest {
                 actual);
     }
     
+    @Test(enabled = ENABLED)
+    public void deleteChangeSets() throws Exception {
+        MongoDBChangeSet c1 = new MongoDBChangeSet();
+        c1.setCategory(DRIFT);
+        c1.setVersion(1);
+        c1.setResourceId(1);
+        c1.setDriftDefinitionId(1);
+        c1.setDriftDefinitionName("delete-test");
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = new MongoDBChangeSet();
+        c2.setCategory(DRIFT);
+        c2.setVersion(2);
+        c2.setResourceId(1);
+        c2.setDriftDefinitionId(1);
+        c2.setDriftDefinitionName("delete-test");
+        dao.save(c2);
+
+        dao.deleteChangeSets(1, "delete-test");
+
+        assertTrue(dao.find().asList().isEmpty(), "Failed to delete one or more change sets");
+    }
+    
     private void assertChangeSetsMatch(String msg, List<MongoDBChangeSet> expected, List<MongoDBChangeSet> actual) {
         assertEquals(actual.size(), expected.size(), "The number of change sets differ: " + msg);
         int i = 0;

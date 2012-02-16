@@ -69,6 +69,8 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     private DriftHandlingMode driftHandlingMode;
 
     private int resourceId;
+    
+    private String driftDefName;
 
     @Embedded("files")
     private List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();
@@ -132,6 +134,14 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     @Override
     public void setDriftDefinitionId(int id) {
         driftDefId = id;
+    }
+    
+    public String getDriftDefinitionName() {
+        return driftDefName;
+    }
+    
+    public void setDriftDefinitionName(String name) {
+        driftDefName = name;
     }
 
     @Override

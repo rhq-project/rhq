@@ -123,9 +123,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
 
-        ZipUtil.walkZipFile(changeSetZip, new ZipUtil.ZipEntryVisitor() {
+        ZipUtil.walkZipFile(changeSetZip, new ZipUtil.ZipEntryVisitor()
+        {
             @Override
-            public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
+            public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception
+            {
                 ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(stream)));
                 Headers headers = reader.getHeaders();
 
@@ -135,6 +137,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 changeSet.setCategory(headers.getType());
                 changeSet.setResourceId(resourceId);
                 changeSet.setDriftDefinitionId(headers.getDriftDefinitionId());
+                changeSet.setDriftDefinitionName(headers.getDriftDefinitionName());
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
                 changeSet.setVersion(headers.getVersion());
 
@@ -143,31 +146,37 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 summary.setDriftDefinitionName(headers.getDriftDefinitionName());
                 summary.setCreatedTime(changeSet.getCtime());
 
-                for (FileEntry fileEntry : reader) {
+                for (FileEntry fileEntry : reader)
+                {
                     String path = FileUtil.useForwardSlash(fileEntry.getFile());
                     MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry(path, fileEntry.getType());
 
-                    switch (fileEntry.getType()) {
-                    case FILE_ADDED:
-                        entry.setNewFileHash(fileEntry.getNewSHA());
-                        if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
-                            missingContent.add(newDriftFile(fileEntry.getNewSHA()));
-                        }
-                        break;
-                    case FILE_CHANGED:
-                        entry.setOldFileHash(fileEntry.getOldSHA());
-                        entry.setNewFileHash(fileEntry.getNewSHA());
-                        if (fileDAO.findOne(fileEntry.getNewSHA()) == null) {
-                            missingContent.add(newDriftFile(fileEntry.getNewSHA()));
-                        }
-                        if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
-                            missingContent.add(newDriftFile(fileEntry.getNewSHA()));
-                        }
-                        break;
-                    default: // FILE_REMOVED
-                        if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
-                            missingContent.add(newDriftFile(fileEntry.getOldSHA()));
-                        }
+                    switch (fileEntry.getType())
+                    {
+                        case FILE_ADDED:
+                            entry.setNewFileHash(fileEntry.getNewSHA());
+                            if (fileDAO.findOne(fileEntry.getNewSHA()) == null)
+                            {
+                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                            }
+                            break;
+                        case FILE_CHANGED:
+                            entry.setOldFileHash(fileEntry.getOldSHA());
+                            entry.setNewFileHash(fileEntry.getNewSHA());
+                            if (fileDAO.findOne(fileEntry.getNewSHA()) == null)
+                            {
+                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                            }
+                            if (fileDAO.findOne(fileEntry.getOldSHA()) == null)
+                            {
+                                missingContent.add(newDriftFile(fileEntry.getNewSHA()));
+                            }
+                            break;
+                        default: // FILE_REMOVED
+                            if (fileDAO.findOne(fileEntry.getOldSHA()) == null)
+                            {
+                                missingContent.add(newDriftFile(fileEntry.getOldSHA()));
+                            }
                     }
                     changeSet.add(entry);
 
@@ -175,7 +184,8 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                     // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
                     // not alert on coverage reports) - so don't waste memory by collecting all the paths
                     // when we know they aren't going to be used anyway.
-                    if (headers.getType() == DriftChangeSetCategory.DRIFT) {
+                    if (headers.getType() == DriftChangeSetCategory.DRIFT)
+                    {
                         summary.addDriftPathname(path);
                     }
                 }
@@ -193,7 +203,8 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
                 DriftAgentService driftService = agent.getDriftAgentService();
                 driftService.ackChangeSet(headers.getResourceId(), headers.getDriftDefinitionName());
-                if (!missingContent.isEmpty()) {
+                if (!missingContent.isEmpty())
+                {
                     driftService.requestDriftFiles(resourceId, headers, missingContent);
                 }
 
@@ -292,7 +303,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
-        // TODO implement me!        
+        changeSetDAO.deleteChangeSets(resourceId, driftDefName);
     }
 
     @Override
@@ -377,7 +388,10 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public byte[] getDriftFileAsByteArray(Subject subject, String hash) {
-        // TODO Auto-generated method stub
-        return null;
+        GridFSDBFile file = fileDAO.findById(hash);
+        if (file == null) {
+            return null;
+        }
+        return StreamUtil.slurp(file.getInputStream());
     }
 }

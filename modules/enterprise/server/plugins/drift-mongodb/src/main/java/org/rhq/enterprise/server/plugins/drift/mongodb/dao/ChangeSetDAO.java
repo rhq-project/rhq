@@ -243,5 +243,11 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         }
         return null;
     }
+    
+    public void deleteChangeSets(int resourceId, String driftDefName) {
+        deleteByQuery(createQuery()
+                .field("resourceId").equal(resourceId)
+                .field("driftDefName").equal(driftDefName));
+    }
 
 }

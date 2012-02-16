@@ -572,13 +572,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
     }
 
-    // this will NOT send a availability report up to the server!
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport) {
+        return executeAvailabilityScanImmediately(changedOnlyReport, false);
+    }
+
+    // this will NOT send a availability report up to the server!
+    public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport, boolean forceChecks) {
         try {
-            AvailabilityExecutor availExec = new AvailabilityExecutor(this);
+            AvailabilityExecutor availExec = (forceChecks) ? new ForceAvailabilityExecutor(this)
+                : new AvailabilityExecutor(this);
 
             if (changedOnlyReport) {
-                availExec.sendChangedOnlyReportNextTime();
+                availExec.sendChangesOnlyReportNextTime();
             } else {
                 availExec.sendFullReportNextTime();
             }
@@ -592,8 +597,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // still have their availabilities updated. This may mean a change in availability detected
             // in the above scan will not make its way to the server. To avoid the possibility of losing
             // availability status changes, we need to tell the real availability executor to send a
-            // full report next time it runs its periodic scan. (RHQ-1997)
-            this.availabilityExecutor.sendFullReportNextTime();
+            // full report next time it runs its periodic scan. (RHQ-1997)  So, if the report contains
+            // any entries, request the full report.
+            if (!(null == availabilityReport || availabilityReport.getResourceAvailability().isEmpty())) {
+                this.availabilityExecutor.sendFullReportNextTime();
+            }
 
             return availabilityReport;
         } catch (InterruptedException e) {
@@ -2155,6 +2163,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
                 ResourceContainer resourceContainer = getResourceContainer(resourceRequest.getResourceId());
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
             }
         }
     }

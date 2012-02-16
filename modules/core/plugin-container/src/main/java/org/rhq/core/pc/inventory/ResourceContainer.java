@@ -87,11 +87,11 @@ public class ResourceContainer implements Serializable {
 
     // non-transient fields
     private final Resource resource;
-    private Availability availability;
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
     private Map<String, DriftDefinition> driftDefinitions = new HashMap<String, DriftDefinition>();
+    private MeasurementScheduleRequest availabilitySchedule = null;
 
     // transient fields
     private transient ResourceComponent resourceComponent;
@@ -100,6 +100,10 @@ public class ResourceContainer implements Serializable {
     private transient ReentrantReadWriteLock facetAccessLock = new ReentrantReadWriteLock();
     private transient Map<Integer, Object> proxyCache = new HashMap<Integer, Object>();
     private transient ClassLoader resourceClassLoader;
+    // the currently known availability
+    private transient Availability availability;
+    // the time at which this resource is up for an avail check. null indicates unscheduled.
+    private transient Long availabilityScheduleTime;
 
     /**
      * Initialize the ResourceContainer's internals, such as its thread pools.
@@ -216,6 +220,28 @@ public class ResourceContainer implements Serializable {
         synchronized (this) {
             this.measurementSchedule = measurementSchedule;
         }
+    }
+
+    public MeasurementScheduleRequest getAvailabilitySchedule() {
+        return availabilitySchedule;
+    }
+
+    public void setAvailabilitySchedule(MeasurementScheduleRequest availabilitySchedule) {
+        synchronized (this) {
+            this.availabilitySchedule = availabilitySchedule;
+            // when the schedule is (re)set just null out the schedule time and it will get rescheduled on the
+            // next avail execution.
+            this.availabilityScheduleTime = null;
+        }
+    }
+
+    public Long getAvailabilityScheduleTime() {
+        return availabilityScheduleTime;
+    }
+
+    // TODO: Is there a reason for this to be synchronized like the other setters? I don't see why it would need to be.
+    public void setAvailabilityScheduleTime(Long availabilityScheduleTime) {
+        this.availabilityScheduleTime = availabilityScheduleTime;
     }
 
     /**

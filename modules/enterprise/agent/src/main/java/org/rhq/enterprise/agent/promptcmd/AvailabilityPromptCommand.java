@@ -88,10 +88,12 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
         PrintWriter out = agent.getOut();
         boolean changedOnly = false;
         boolean verbose = false;
+        boolean force = false;
 
-        String sopts = "-cv";
+        String sopts = "-cvf";
         LongOpt[] lopts = { new LongOpt("changed", LongOpt.NO_ARGUMENT, null, 'c'),
-            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v') };
+            new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'),
+            new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f') };
 
         Getopt getopt = new Getopt(getPromptCommandString(), args, sopts, lopts);
         int code;
@@ -114,6 +116,11 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
                 verbose = true;
                 break;
             }
+
+            case 'f': {
+                force = true;
+                break;
+            }
             }
         }
 
@@ -133,7 +140,7 @@ public class AvailabilityPromptCommand implements AgentPromptCommand {
 
         // process the inventory
         InventoryManager inventoryManager = pc.getInventoryManager();
-        AvailabilityReport report = inventoryManager.executeAvailabilityScanImmediately(changedOnly);
+        AvailabilityReport report = inventoryManager.executeAvailabilityScanImmediately(changedOnly, force);
 
         if (report == null) {
             out.println(MSG.getMsg(AgentI18NResourceKeys.AVAILABILITY_NO_COMMITTED_INVENTORY));

@@ -75,7 +75,8 @@ public class PluginContainerConfiguration {
     private static final String AVAILABILITY_SCAN_INITIAL_DELAY_PROP = PROP_PREFIX + "availability-scan-initial-delay";
     public static final long AVAILABILITY_SCAN_INITIAL_DELAY_DEFAULT = 5L; // in seconds
     private static final String AVAILABILITY_SCAN_PERIOD_PROP = PROP_PREFIX + "availability-scan-period";
-    public static final long AVAILABILITY_SCAN_PERIOD_DEFAULT = 300L; // in seconds
+    // in seconds, should be the shortest avail collection interval allowed
+    public static final long AVAILABILITY_SCAN_PERIOD_DEFAULT = 30L;
 
     // Measurement ----------
 

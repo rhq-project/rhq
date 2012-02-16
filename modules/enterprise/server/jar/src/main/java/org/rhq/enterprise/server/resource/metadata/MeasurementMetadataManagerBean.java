@@ -18,9 +18,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -172,6 +175,9 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         availabilityScanPeriod.setDefaultInterval(period);
         availabilityScanPeriod.setDataType(DataType.AVAILABILITY);
         availabilityScanPeriod.setDefaultOn(true);
+        availabilityScanPeriod.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
+        availabilityScanPeriod.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
+        availabilityScanPeriod.setDisplayType(DisplayType.DETAIL); // n/a protects against non-null
 
         if (!result.contains(availabilityScanPeriod)) {
             result.add(availabilityScanPeriod);

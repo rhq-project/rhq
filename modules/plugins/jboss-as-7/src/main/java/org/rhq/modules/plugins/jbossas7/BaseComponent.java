@@ -182,7 +182,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this
                         try {
-                            Double d = Double.parseDouble((String)val);
+                            Double d = Double.parseDouble(getStringValue(val));
                             MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
                             report.addData(data);
                         } catch (NumberFormatException e) {
@@ -191,17 +191,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     }
                 } else if (req.getDataType()== DataType.TRAIT) {
 
-                    String realVal;
-                    if (val instanceof String)
-                        realVal = (String)val;
-                    else
-                        realVal = String.valueOf(val);
+                    String realVal = getStringValue(val);
 
                     MeasurementDataTrait data = new MeasurementDataTrait(req,realVal);
                     report.addData(data);
                 }
             }
         }
+    }
+
+    private String getStringValue(Object val) {
+        String realVal;
+        if (val instanceof String)
+            realVal = (String)val;
+        else
+            realVal = String.valueOf(val);
+        return realVal;
     }
 
     /**

@@ -1237,6 +1237,10 @@
                       category="utilization" displayType="summary"
                       description="the number of threads for this connector that currently exist"/>
 
+              <metric property="ThreadPool|maxThreads"
+                      displayName="Maximum Threads"
+                      category="utilization" displayType="summary" dataType="trait"
+                      description="Maximum number of threads that can be allocated for the thread pool of this connector"/>
            </service>
 
            <service name="Virtual Host"

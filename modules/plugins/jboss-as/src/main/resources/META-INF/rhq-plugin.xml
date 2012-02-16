@@ -415,7 +415,14 @@
                     displayName="Threads Allocated"
                     category="utilization" displayType="summary"/>
 
+            <!-- jboss.web:name=http-0.0.0.0-8080,type=ThreadPool:maxThreads -->
+            <metric property="jboss.web:name=%schema%%dash%%address%-%port%,type=ThreadPool:maxThreads"
+                    displayName="Maximum Threads"
+                    description="Maximum number of threads that can be allocated for the thread pool of this connector"
+                    category="utilization" displayType="summary" dataType="trait"/>
+
          </service>
+
          <service name="VHost"
             discovery="JBossASTomcatVHostDiscoveryService"
             class="JBossASTomcatVHostService"
@@ -432,6 +439,7 @@
                     displayName="Aliases"
                     dataType="trait" />
          </service>
+
       </server>
 
       <server name="JBoss AS JVM"

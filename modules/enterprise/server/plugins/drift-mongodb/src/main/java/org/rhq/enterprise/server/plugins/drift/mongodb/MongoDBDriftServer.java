@@ -171,6 +171,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                             }
                             break;
                         default: // FILE_REMOVED
+                            entry.setOldFileHash(fileEntry.getOldSHA());
                             if (fileDAO.findOne(fileEntry.getOldSHA()) == null) {
                                 missingContent.add(newDriftFile(fileEntry.getOldSHA()));
                             }
@@ -349,7 +350,6 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         dto.setDirectory(entry.getDirectory());
         dto.setCategory(entry.getCategory());
 
-        // TODO Generate DriftFile DTOs for oldDriftFile and newDriftFile properties
         switch (entry.getCategory()) {
             case FILE_ADDED:
                 dto.setNewDriftFile(newDriftFile(entry.getNewFileHash()));
@@ -401,9 +401,9 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
             MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
             entry.setPath(drift.getPath());
             entry.setCategory(drift.getCategory());
-            // we only need to initialize the newDriftFile property here since each drift
+            // we only need to initialize the newFileHash property here since each drift
             // is going to be a FILE_ADDED entry.
-            entry.setNewDriftFile(new MongoDBFile(drift.getNewDriftFile().getHashId()));
+            entry.setNewFileHash(drift.getNewDriftFile().getHashId());
             newChangeSet.add(entry);
         }
 

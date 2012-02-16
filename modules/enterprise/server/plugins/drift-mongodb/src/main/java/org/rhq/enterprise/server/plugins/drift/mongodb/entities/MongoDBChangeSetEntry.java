@@ -44,10 +44,6 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
     @Transient
     private MongoDBChangeSet changeSet;
 
-    private MongoDBFile oldFile;
-
-    private MongoDBFile newFile;
-
     private String oldFileHash;
 
     private String newFileHash;
@@ -187,21 +183,21 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     @Override
     public MongoDBFile getOldDriftFile() {
-        return oldFile;
+        return new MongoDBFile(oldFileHash);
     }
 
     @Override
     public void setOldDriftFile(MongoDBFile oldDriftFile) {
-        oldFile = oldDriftFile;
+        oldFileHash = oldDriftFile.getHashId();
     }
 
     @Override
     public MongoDBFile getNewDriftFile() {
-        return newFile;
+        return new MongoDBFile(newFileHash);
     }
 
     @Override
     public void setNewDriftFile(MongoDBFile newDriftFile) {
-        newFile = newDriftFile;
+        newFileHash = newDriftFile.getHashId();
     }
 }

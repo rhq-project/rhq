@@ -1,6 +1,6 @@
- /*
+/*
   * Jopr Management Platform
-  * Copyright (C) 2005-2010 Red Hat, Inc.
+  * Copyright (C) 2005-2012 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,9 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
@@ -90,13 +92,17 @@ public class JBossASTomcatConnectorComponent extends MBeanResourceComponent<JBos
                 }
 
                 EmsAttribute attribute = eBean.getAttribute(attributeName);
-
                 Object valueObject = attribute.refresh();
-                Number value = (Number) valueObject;
-
-                report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+                
+                if (valueObject != null) {
+                    if (request.getDataType() == DataType.TRAIT) {
+                        report.addData(new MeasurementDataTrait(request, valueObject.toString()));
+                	} else { // numeric
+                		report.addData(new MeasurementDataNumeric(request, ((Number)valueObject).doubleValue()));
+                    }
+                }
             } catch (Exception e) {
-                log.error("Failed to obtain measurement [" + name + "]", e);
+                log.error("Failed to obtain measurement [" + name + "].", e);
             }
         }
     }

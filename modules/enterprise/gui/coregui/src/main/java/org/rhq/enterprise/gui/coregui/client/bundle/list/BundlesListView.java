@@ -121,7 +121,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute(BundlesWithLatestVersionDataSource.FIELD_ID);
                     CoreGUI.goToView(LinkManager.getBundleLink(Integer.valueOf(selectedId)));

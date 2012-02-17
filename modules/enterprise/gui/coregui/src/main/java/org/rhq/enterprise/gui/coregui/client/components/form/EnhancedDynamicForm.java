@@ -22,21 +22,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import com.smartgwt.client.types.DSOperationType;
+import com.smartgwt.client.widgets.form.fields.*;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import com.smartgwt.client.types.DSOperationType;
-import com.smartgwt.client.widgets.form.fields.BooleanItem;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.HiddenItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * A subclass of SmartGWT's DynamicForm widget that can provides additional layout settings and features.
@@ -121,7 +114,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     staticItem.setColSpan(item.getAttribute("colSpan"));
                     Boolean outputAsHtml = item.getAttributeAsBoolean(OUTPUT_AS_HTML_ATTRIBUTE);
                     if (Boolean.TRUE.equals(outputAsHtml) && null != displayValue && !displayValue.isEmpty()) {
-                        staticItem.setOutputAsHTML(true);
+                        staticItem.setEscapeHTML(true);
                     }
                     // TODO: Any other fields we should copy? icons?
 

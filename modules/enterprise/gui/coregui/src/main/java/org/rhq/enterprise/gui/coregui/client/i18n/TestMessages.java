@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.i18n;
 
-import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.i18n.client.Messages;
 
 /*
  * @PluralText takes an array of strings.  The even indexes represent plural form names, while the odd indexes
@@ -52,6 +52,6 @@ public interface TestMessages extends Messages {
      * @return a message specifying the number of items in the user's cart
      */
     @DefaultMessage("{0}, there are {1,number} items in your cart")
-    @PluralText( { "one", "{0}, there is {1,number} item in your cart" })
+    @AlternateMessage({ "one", "{0}, there is {1,number} item in your cart" })
     String cartLabel(String subject, @PluralCount int cartItems);
 }

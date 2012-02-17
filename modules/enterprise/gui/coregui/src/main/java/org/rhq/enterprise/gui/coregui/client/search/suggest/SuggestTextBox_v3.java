@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -53,12 +53,12 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextBoxBase;
 
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
@@ -67,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
@@ -665,32 +666,32 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             String expression = suggestionRequest.getQuery();
             int caretPosition = suggestionRequest.getCursorPosition();
 
-            searchService.getTabAwareSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition, searchBar
-                .getSelectedTab(), new AsyncCallback<List<SearchSuggestion>>() {
+            searchService.getTabAwareSuggestions(searchBar.getSearchSubsystem(), expression, caretPosition,
+                searchBar.getSelectedTab(), new AsyncCallback<List<SearchSuggestion>>() {
 
-                public void onSuccess(List<SearchSuggestion> results) {
-                    adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
-                }
-
-                public void onFailure(Throwable caught) {
-                    SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, MSG
-                        .view_searchBar_instructional_failSuggest());
-                    adaptAndHandle(errorInform);
-                }
-
-                private void adaptAndHandle(SearchSuggestion... searchSuggestionResults) {
-                    List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
-                    for (SearchSuggestion next : searchSuggestionResults) {
-                        adaptedResults.add(new SearchSuggestionOracleAdapter(next));
+                    public void onSuccess(List<SearchSuggestion> results) {
+                        adaptAndHandle(results.toArray(new SearchSuggestion[results.size()]));
                     }
-                    if (adaptedResults.isEmpty()) {
-                        adaptedResults.add(new SearchSuggestionOracleAdapter(new SearchSuggestion(
-                            Kind.InstructionalTextComment, MSG.view_searchBar_instructional_noSuggest())));
+
+                    public void onFailure(Throwable caught) {
+                        SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, MSG
+                            .view_searchBar_instructional_failSuggest());
+                        adaptAndHandle(errorInform);
                     }
-                    SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
-                    callback.onSuggestionsReady(request, response);
-                }
-            });
+
+                    private void adaptAndHandle(SearchSuggestion... searchSuggestionResults) {
+                        List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
+                        for (SearchSuggestion next : searchSuggestionResults) {
+                            adaptedResults.add(new SearchSuggestionOracleAdapter(next));
+                        }
+                        if (adaptedResults.isEmpty()) {
+                            adaptedResults.add(new SearchSuggestionOracleAdapter(new SearchSuggestion(
+                                Kind.InstructionalTextComment, MSG.view_searchBar_instructional_noSuggest())));
+                        }
+                        SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
+                        callback.onSuggestionsReady(request, response);
+                    }
+                });
         }
     }
 

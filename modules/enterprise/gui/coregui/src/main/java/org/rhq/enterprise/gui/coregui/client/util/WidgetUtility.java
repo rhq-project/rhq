@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.ui.Widget;
 import com.smartgwt.client.widgets.BaseWidget;
 import com.smartgwt.client.widgets.Canvas;

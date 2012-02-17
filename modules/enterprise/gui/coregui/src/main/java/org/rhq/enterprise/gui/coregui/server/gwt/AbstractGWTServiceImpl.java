@@ -26,13 +26,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -66,7 +66,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
                 Subject subject = subjectManager.getSubjectBySessionId(Integer.parseInt(sid));
                 sessionSubject.set(subject);
             } catch (Exception e) {
-                Log.debug("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
+                Log.trace("Failed to validate request: sessionId was '" + sid + "', requestURL=" + req.getRequestURL());
                 continueProcessing = false;
             }
         } else {
@@ -120,6 +120,7 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
         id.append("] ");
 
         // log the exception server-side
+        //logger.warning("Sending exception to client: " + id.toString(), t);
         Log.warn("Sending exception to client: " + id.toString(), t);
 
         // cannot assume gwt client has our exception classes, only send the messages in a generic runtime exception

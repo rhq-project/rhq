@@ -22,7 +22,6 @@ public class GwtRelativeDurationConverter {
     private static final long MILLIS_IN_SECOND = 1000L;
     private static final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
     private static final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
-    private static final long NEVER = -1;
 
     private static final long MILLIS_IN_DAY = 24 * MILLIS_IN_HOUR;
     private static final DateTimeFormat dayFormatter = DateTimeFormat.getFormat("d");
@@ -50,6 +49,7 @@ public class GwtRelativeDurationConverter {
         return result;
     }
 
+    @SuppressWarnings("unused")
     private static TimeZone getTimeZone() {
         if (tz == null) {
             return TimeZone.createTimeZone(TimeZoneInfo.buildTimeZoneData(""));

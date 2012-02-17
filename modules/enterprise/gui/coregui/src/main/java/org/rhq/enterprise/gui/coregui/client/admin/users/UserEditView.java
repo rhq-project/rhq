@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
@@ -38,8 +38,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.common.composite.SystemSetting;
-import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
@@ -50,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and if the user is authenticated via RHQ and
@@ -81,11 +80,13 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions == null) {
                     // TODO: i18n
-                    CoreGUI.getErrorHandler().handleError("Failed to load global permissions for current user. Perhaps the Server is down.");
+                    CoreGUI.getErrorHandler().handleError(
+                        "Failed to load global permissions for current user. Perhaps the Server is down.");
                     return;
                 }
 
-                UserEditView.this.loggedInUserHasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
+                UserEditView.this.loggedInUserHasManageSecurityPermission = permissions
+                    .contains(Permission.MANAGE_SECURITY);
                 Subject sessionSubject = UserSessionManager.getSessionSubject();
                 boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
                 final boolean isReadOnly = (!UserEditView.this.loggedInUserHasManageSecurityPermission && !isEditingSelf);
@@ -116,7 +117,6 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     protected Record createNewRecord() {
         Subject subject = new Subject();
         subject.setFactive(true);
-        @SuppressWarnings( { "UnnecessaryLocalVariable" })
         Record userRecord = UsersDataSource.getInstance().copyUserValues(subject, false);
         return userRecord;
     }
@@ -173,7 +173,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
             nameItem = new TextItem(UsersDataSource.Field.NAME);
         } else {
             nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
-            ((StaticTextItem)nameItem).setOutputAsHTML(true);
+            ((StaticTextItem) nameItem).setEscapeHTML(true);
         }
         items.add(nameItem);
 

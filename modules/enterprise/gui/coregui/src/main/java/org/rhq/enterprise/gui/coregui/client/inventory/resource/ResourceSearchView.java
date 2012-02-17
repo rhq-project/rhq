@@ -162,12 +162,12 @@ public class ResourceSearchView extends Table {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(),
                                 caught);
+                            refreshTableInfo();
                         }
 
                         public void onSuccess(List<Integer> result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
-
                             onUninventorySuccess();
                         }
                     });
@@ -177,7 +177,7 @@ public class ResourceSearchView extends Table {
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute("id");
                     CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
@@ -187,7 +187,7 @@ public class ResourceSearchView extends Table {
     }
 
     protected void onUninventorySuccess() {
-        refresh();
+        refresh(true);
     }
 
     protected List<ListGridField> createFields() {

@@ -55,6 +55,12 @@ rem                          agent's defaults. If you only want to add options
 rem                          to the agent's defaults, then you will want to
 rem                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
 rem
+rem                          NOTE: This variable is only used by
+rem                          rhq-agent.bat; it is NOT used by
+rem                          rhq-agent-wrapper.bat. The Java VM command line
+rem                          options used by rhq-agent-wrapper.bat are set in
+rem                          wrapper\rhq-agent-wrapper.conf.
+rem
 rem set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
 
 rem    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
@@ -92,6 +98,13 @@ rem                                     is mainly used to augment the agent's
 rem                                     default set of options. This can be
 rem                                     left unset if it is not needed.
 rem
+rem                                     NOTE: This variable is only used by
+rem                                     rhq-agent.bat; it is NOT used by
+rem                                     rhq-agent-wrapper.bat. The Java VM
+rem                                     command line options used by
+rem                                     rhq-agent-wrapper.bat are set in
+rem                                     wrapper\rhq-agent-wrapper.conf.
+rem
 rem set RHQ_AGENT_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=9797,server=y,suspend=n
 
 rem    RHQ_AGENT_CMDLINE_OPTS - If this is defined, these are the command line
@@ -108,7 +121,13 @@ rem                             line options and the ones specified here will
 rem                             be passed to the Agent. Note, the --daemon option
 rem                             should generally not be included here, since it
 rem                             would cause the Agent to always start in daemon
-rem                             mode, even when started via rhq-agent.bat.
+rem                             mode, when started via rhq-agent.bat.
+rem
+rem                             NOTE: This variable is only used by
+rem                             rhq-agent.bat; it is NOT used by
+rem                             rhq-agent-wrapper.bat. The Agent command line
+rem                             options used by rhq-agent-wrapper.bat are set in
+rem                             wrapper\rhq-agent-wrapper.conf.
 rem
 rem set RHQ_AGENT_CMDLINE_OPTS=--nonative %*
 

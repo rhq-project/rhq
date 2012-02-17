@@ -14,10 +14,6 @@
 
    <name>RHQ Tomcat Plugin</name>
    <description>A plugin for managing standalone JBoss EWS and Apache Tomcat Servers</description>
-   
-   <properties>
-        <powermock.version>1.4.11</powermock.version>
-   </properties>
 
    <dependencies>
 

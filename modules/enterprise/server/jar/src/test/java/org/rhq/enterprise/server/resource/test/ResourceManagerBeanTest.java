@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource.test;
 
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.transaction.NotSupportedException;
@@ -114,12 +115,14 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
 
     public void testResourceLineage() throws Exception {
-       // given a resource id for the leaf resource in a resource hierachy
+       // given a resource id for the leaf resource in a resource hierarchy
        int leafResourceId = givenASampleResourceHierarchy();
 
     	// when
     	List<Resource> resourceLineage = resourceManager.getResourceLineage(leafResourceId);
 
+        assertEquals(resourceLineage.size(), 4);
+        
     	// then
     	StringBuilder stringBuilder = new StringBuilder();
     	for (Resource resource : resourceLineage) {
@@ -130,13 +133,17 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 		}
     	System.err.println(stringBuilder.toString());
 
+        // cleanup the DB
+        for (int i = resourceLineage.size() - 1; i >=0; i--) {
+            deleteNewResourceAgentResourceType(resourceLineage.get(i));
+        }
     }
 
 	private int givenASampleResourceHierarchy() throws NotSupportedException,
 			SystemException {
 		getTransactionManager().begin();
     	EntityManager em = getEntityManager();
-    	int leafResoureId = 0;
+    	int leafResourceId = 0;
     	try {
 			ResourceType platformType = createResourceType(em, "platform"
 					+ System.currentTimeMillis(), "test", null,
@@ -150,7 +157,8 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 			ResourceType memType = createResourceType(em, "Memory Subsystem"
 					+ System.currentTimeMillis(), "jbossas5", jvmType,
 					ResourceCategory.SERVICE);
-			Agent agent = new Agent("hamza007", "hamzahost", 1, "", "hamzatoken");
+			Agent agent = new Agent("agent" + System.currentTimeMillis(), "host" + System.currentTimeMillis(), 1, "",
+                "token" + System.currentTimeMillis());
 			em.persist(agent);
 			em.flush();
 
@@ -160,11 +168,12 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 			Resource appserver = createResource(em, appserverType, agent,
 					"JEAP" + System.currentTimeMillis(), "JBOSS EAP 5.1.1",
 					platform);
-			Resource jvm = createResource(em, memType, agent, "jvm"
+			Resource jvm = createResource(em, jvmType, agent, "jvm"
 					+ System.currentTimeMillis(), "JBoss AS JVM", appserver);
-			Resource memSubystem = createResource(em, appserverType, agent,
+			Resource memSubystem = createResource(em, memType, agent,
 					"mem" + System.currentTimeMillis(), "Memory Subsystem", jvm);
-			leafResoureId = memSubystem.getId();
+			leafResourceId = memSubystem.getId();
+
 			getTransactionManager().commit();
 		} catch (Exception e) {
 			try {
@@ -175,14 +184,14 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 		} finally {
 			em.close();
 		}
-		return leafResoureId;
+		return leafResourceId;
 	}
 
 	private Resource createResource(EntityManager em, ResourceType platformType,
 			Agent agent, String resourceKey, String resourceName,
 			Resource parent) {
 		Resource resource = new Resource(resourceKey, resourceName, platformType);
-        resource.setUuid("" + new Random().nextInt());
+        resource.setUuid(UUID.randomUUID().toString());
         resource.setAgent(agent);
         resource.setParentResource(parent);
         em.persist(resource);
@@ -214,7 +223,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
                 em.persist(resourceType);
 
-                Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
+                Agent agent = new Agent("testagent", "testaddress", 16163, "", "testtoken");
                 em.persist(agent);
                 em.flush();
 
@@ -241,16 +250,20 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             getTransactionManager().begin();
             EntityManager em = getEntityManager();
             try {
-                ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
                 Resource res = em.find(Resource.class, resource.getId());
-                Agent agent = em.find(Agent.class, res.getAgent().getId());
-
+                System.out.println("Removing " + res + "...");
                 List<Integer> deletedIds = resourceManager.uninventoryResource(superuser, res.getId());
                 for (Integer deletedResourceId : deletedIds) {
                     resourceManager.uninventoryResourceAsyncWork(superuser, deletedResourceId);
                 }
-                em.remove(agent);
+                em.flush();
+                
+                ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
+                System.out.println("Removing " + type + "...");
                 em.remove(type);
+                em.flush();
+
+                // NOTE: No need to remove the Agent entity, since uninventorying the platform will do that automatically.
 
                 getTransactionManager().commit();
             } catch (Exception e) {

@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -63,6 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationTable;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -300,7 +301,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving resource group composite for group [" + context.getGroupId() + "]:"
-                        + caught.getMessage());
+                            + caught.getMessage());
                     currentlyLoading = false;
                 }
 
@@ -357,7 +358,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         public void refreshTableInfo() {
             super.refreshTableInfo();
             if (getTableInfo() != null) {
-                int count = getListGrid().getSelection().length;
+                int count = getListGrid().getSelectedRecords().length;
                 getTableInfo().setContents(
                     MSG.view_table_matchingRows(String.valueOf(getListGrid().getTotalRows()), String.valueOf(count)));
             }

@@ -211,7 +211,7 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
         } else {
             // calendar mode
             Date startTime = jobTriggerRecord.getAttributeAsDate(Field.START_TIME);
-            Long repeatInterval = (Long) jobTriggerRecord.getAttributeAsObject(Field.REPEAT_INTERVAL);
+            Long repeatInterval = jobTriggerRecord.getAttributeAsLong(Field.REPEAT_INTERVAL);
             Integer repeatCount = jobTriggerRecord.getAttributeAsInt(Field.REPEAT_COUNT);
             Date endTime = jobTriggerRecord.getAttributeAsDate(Field.END_TIME);
 

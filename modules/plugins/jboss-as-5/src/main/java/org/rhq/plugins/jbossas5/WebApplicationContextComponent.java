@@ -115,7 +115,7 @@ public class WebApplicationContextComponent extends ManagedComponentComponent {
         ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
         ManagementView managementView = warComponent.getConnection().getManagementView();
 
-        ManagedComponent component = prepareForMetricCollection(requests);
+        ManagedComponent component = getManagedComponent();
         for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
             try {

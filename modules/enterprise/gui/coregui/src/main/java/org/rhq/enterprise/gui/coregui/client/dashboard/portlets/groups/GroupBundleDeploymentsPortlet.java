@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -55,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -220,7 +221,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving installed bundle deployments for group [" + groupId + "]:"
-                        + caught.getMessage());
+                            + caught.getMessage());
                     currentlyLoading = false;
                 }
 

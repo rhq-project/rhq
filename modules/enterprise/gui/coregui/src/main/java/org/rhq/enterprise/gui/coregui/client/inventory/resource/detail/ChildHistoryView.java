@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -31,18 +27,13 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SpinnerItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
+import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -59,6 +50,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * @author John Mazzitelli
@@ -176,7 +171,7 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String typeString = selectedRows[0].getAttribute(DataSource.Field.TYPE);
                     ChildHistoryDetails detailsView = null;
@@ -331,7 +326,7 @@ public class ChildHistoryView extends Table<ChildHistoryView.DataSource> {
             setCanDragResize(true);
             centerInPage();
             addCloseClickHandler(new CloseClickHandler() {
-                public void onCloseClick(CloseClientEvent event) {
+                public void onCloseClick(CloseClickEvent event) {
                     markForDestroy();
                 }
             });

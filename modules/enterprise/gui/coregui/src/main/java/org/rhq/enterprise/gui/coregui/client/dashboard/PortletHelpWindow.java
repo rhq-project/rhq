@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
  */
 public class PortletHelpWindow extends Window {
     private static Messages MSG = CoreGUI.getMessages();
+    @SuppressWarnings("unused")
     private DashboardPortlet storedPortlet;
     private Portlet view;
 
@@ -86,7 +87,5 @@ public class PortletHelpWindow extends Window {
         }
 
         addItem(layout);
-
     }
-
 }

@@ -838,7 +838,7 @@ public abstract class Carousel extends LocatableHLayout implements RefreshableVi
                 //this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            //int selectionCount = this.listGrid.getSelection().length;
+            //int selectionCount = this.listGrid.getSelectedRecords().length;
             for (CarouselActionInfo carouselAction : this.carouselActions) {
                 if (carouselAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.carouselActionDisableOverride && carouselAction.action.isEnabled());

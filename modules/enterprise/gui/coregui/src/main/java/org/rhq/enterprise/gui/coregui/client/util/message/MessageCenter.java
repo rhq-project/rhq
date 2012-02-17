@@ -18,11 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.message;
 
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 
 /**
  * @author Greg Hinkle

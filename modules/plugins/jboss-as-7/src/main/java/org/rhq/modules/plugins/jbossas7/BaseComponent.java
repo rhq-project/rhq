@@ -41,6 +41,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
@@ -93,6 +94,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     String managementUser;
     String managementPassword;
 
+    private LogFileEventResourceComponentHelper logFileEventDelegate;
+
     /**
      * Return availability of this resource
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -121,6 +124,8 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             managementUser = pluginConfiguration.getSimpleValue("user","-unset-");
             managementPassword = pluginConfiguration.getSimpleValue("password","-unset-");
             connection = new ASConnection(host,port, managementUser, managementPassword);
+            logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
+            logFileEventDelegate.startLogFileEventPollers();
         }
         else {
             connection = ((BaseComponent)context.getParentResourceComponent()).getASConnection();
@@ -141,8 +146,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
      */
     public void stop() {
-
-
+       if (!(context.getParentResourceComponent() instanceof BaseComponent)) {
+          logFileEventDelegate.stopLogFileEventPollers();
+       }
     }
 
 
@@ -176,7 +182,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this
                         try {
-                            Double d = Double.parseDouble((String)val);
+                            Double d = Double.parseDouble(getStringValue(val));
                             MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
                             report.addData(data);
                         } catch (NumberFormatException e) {
@@ -185,17 +191,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     }
                 } else if (req.getDataType()== DataType.TRAIT) {
 
-                    String realVal;
-                    if (val instanceof String)
-                        realVal = (String)val;
-                    else
-                        realVal = String.valueOf(val);
+                    String realVal = getStringValue(val);
 
                     MeasurementDataTrait data = new MeasurementDataTrait(req,realVal);
                     report.addData(data);
                 }
             }
         }
+    }
+
+    private String getStringValue(Object val) {
+        String realVal;
+        if (val instanceof String)
+            realVal = (String)val;
+        else
+            realVal = String.valueOf(val);
+        return realVal;
     }
 
     /**

@@ -18,9 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Label;
 
 /**
  * @author Greg Hinkle

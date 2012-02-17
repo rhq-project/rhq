@@ -39,7 +39,6 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
     private PackageVersionFileUploadForm uploadForm;
     private ResourceFactoryCreateWizard wizard;
     private boolean isUploadComplete = false;
-    private int packageVersionId;
 
     public ResourceFactoryPackageStep(ResourceFactoryCreateWizard wizard) {
         this.wizard = wizard;
@@ -50,12 +49,12 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
 
             if (parent != null) {
                 uploadForm = new PackageVersionFileUploadForm(parent.extendLocatorId("ResFactPackageStep"), wizard
-                    .getNewResourcePackageType().getId(), wizard.getChildType().getName(), wizard
-                    .getNewResourceVersion(), wizard.getNewResourceArchitectureId(), null, true, true, null);
+                    .getNewResourcePackageType().getId(), wizard.getChildType().getName(),
+                    wizard.getNewResourceVersion(), wizard.getNewResourceArchitectureId(), null, true, true, null);
             } else {
                 uploadForm = new PackageVersionFileUploadForm("ResFactPackageStep", wizard.getNewResourcePackageType()
-                    .getId(), wizard.getChildType().getName(), wizard.getNewResourceVersion(), wizard
-                    .getNewResourceArchitectureId(), null, true, true, null);
+                    .getId(), wizard.getChildType().getName(), wizard.getNewResourceVersion(),
+                    wizard.getNewResourceArchitectureId(), null, true, true, null);
             }
             uploadForm.setPadding(20);
             uploadForm.addFormHandler(new DynamicFormHandler() {

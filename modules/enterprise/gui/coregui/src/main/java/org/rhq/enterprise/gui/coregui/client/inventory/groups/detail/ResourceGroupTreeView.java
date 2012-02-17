@@ -64,6 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -212,11 +213,11 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                         }
                     }
 
-                    com.allen_sauer.gwt.log.client.Log.debug("Node selected in tree: " + newNode);
+                    Log.debug("Node selected in tree: " + newNode);
 
                     if (newNode.isCompatibleGroupTopNode()) {
                         currentNodeId = newNode.getID();
-                        com.allen_sauer.gwt.log.client.Log.debug("Selecting compatible group [" + currentNodeId
+                        Log.debug("Selecting compatible group [" + currentNodeId
                             + "]...");
                         String viewPath = LinkManager.getResourceGroupLink(Integer.parseInt(currentNodeId));
                         String currentViewPath = History.getToken();
@@ -229,14 +230,14 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                     } else if (newNode.isAutoClusterNode()) {
                         ClusterKey key = newNode.getClusterKey();
-                        com.allen_sauer.gwt.log.client.Log.debug("Selecting autocluster group [" + key + "]...");
+                        Log.debug("Selecting autocluster group [" + key + "]...");
                         currentNodeId = newNode.getID();
                         // the user selected a cluster node - let's switch to that cluster group view                            
                         selectClusterGroup(key);
 
                     } else if (newNode.isMixedGroupTopNode()) {
                         currentNodeId = newNode.getID();
-                        com.allen_sauer.gwt.log.client.Log.debug("Selecting mixed group [" + currentNodeId + "]...");
+                        Log.debug("Selecting mixed group [" + currentNodeId + "]...");
 
                     } else {
                         // a subcategory node, deselect and reselect the current node

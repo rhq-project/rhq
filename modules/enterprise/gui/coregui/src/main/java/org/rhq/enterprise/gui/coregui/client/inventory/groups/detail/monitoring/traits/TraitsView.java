@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;

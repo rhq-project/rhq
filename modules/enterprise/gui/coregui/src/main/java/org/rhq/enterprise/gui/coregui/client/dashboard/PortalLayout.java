@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.events.ResizedHandler;
 
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -133,7 +134,7 @@ public class PortalLayout extends LocatableHLayout {
                         };
                     save(callback);
 
-                    com.allen_sauer.gwt.log.client.Log.info("Rearranged column indexes");
+                    Log.info("Rearranged column indexes");
                 }
             });
 

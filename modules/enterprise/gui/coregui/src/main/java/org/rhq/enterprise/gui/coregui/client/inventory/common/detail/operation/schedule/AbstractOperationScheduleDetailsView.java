@@ -113,7 +113,14 @@ public abstract class AbstractOperationScheduleDetailsView extends
         // to the history page so that he can view the status/result of the operation;
         // otherwise, the user will stay on the schedules list view.
         if (isImmediateExecution) {
-            return viewPath.getPathToIndex(viewPath.getCurrentIndex() - 2) + "/History";
+            // If the operation is scheduled from the context menu, the view path will
+            // another entry appended to the end, the operation definition id.
+            if (viewPath.getCurrentIndex() == 6) {
+                return viewPath.getPathToIndex(viewPath.getCurrentIndex() - 3) + "/History";
+            } else {
+                return viewPath.getPathToIndex(viewPath.getCurrentIndex() - 2) + "/History";
+            }
+
         }
         return super.getListViewPath();
     }

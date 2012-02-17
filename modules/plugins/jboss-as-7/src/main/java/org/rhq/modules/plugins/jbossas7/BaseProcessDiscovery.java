@@ -151,6 +151,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                         // Try to obtain the server name
                         //  -Dorg.jboss.boot.log.file=domain/servers/server-one/log/boot.log
                         // This is a hack until I know a better way to do so.
+                        //XXX hardcoded separators?
                         String tmp = getLogFileFromCommandLine(commandLine);
                         int i = tmp.indexOf("servers/");
                         tmp = tmp.substring(i + 8);
@@ -175,7 +176,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     fillUserPassFromFile(config, AS7Mode.STANDALONE, serverNameFull);
 
                     //preload server.log file for event log monitoring
-                    logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
+                    logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf(File.separator)) + File.separator + "server.log";
                 }
 
                 if (isEAP) {

@@ -268,11 +268,12 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
         if (availCheckPeriodProp != null) {
             try {
                 long availCheckMillis = Integer.parseInt(availCheckPeriodProp) * 1000L;
-                this.availCollector = resourceContext.createAvailabilityCollectorRunnable(new AvailabilityFacet() {
-                    public AvailabilityType getAvailability() {
-                        return getAvailabilityNow();
-                    }
-                }, availCheckMillis);
+                this.availCollector = resourceContext.getAvailabilityContext().createAvailabilityCollectorRunnable(
+                    new AvailabilityFacet() {
+                        public AvailabilityType getAvailability() {
+                            return getAvailabilityNow();
+                        }
+                    }, availCheckMillis);
                 this.availCollector.start();
             } catch (NumberFormatException nfe) {
                 log.error("avail check period config prop was not a valid number. Cause: " + nfe);
@@ -950,7 +951,8 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             if (entry != null) {
                 is = jfile.getInputStream(entry);
                 SAXBuilder saxBuilder = new SAXBuilder();
-                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver
+                    .getDtdAndXsdSkippingInstance();
                 saxBuilder.setEntityResolver(entityResolver);
 
                 Document doc = saxBuilder.build(is);

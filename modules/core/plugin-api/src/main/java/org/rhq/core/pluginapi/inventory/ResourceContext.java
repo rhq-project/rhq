@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 import org.apache.commons.logging.LogFactory;
 
@@ -36,6 +35,7 @@ import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
@@ -72,7 +72,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final EventContext eventContext;
     private final OperationContext operationContext;
     private final ContentContext contentContext;
-    private final Executor availCollectionThreadPool;
+    private final AvailabilityContext availabilityContext;
     private final PluginContainerDeployment pluginContainerDeployment;
 
     private ProcessInfo processInfo;
@@ -99,6 +99,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *                                   operation manager
      * @param contentContext             a {@link ContentContext} the plugin can use to interoperate with the content
      *                                   manager
+     * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
+     *                                   plugin container inventory manager
      * @param availCollectorThreadPool   a thread pool that can be used by the plugin component should it wish
      *                                   or need to perform asynchronous availability checking. See the javadoc on
      *                                   {@link AvailabilityCollectorRunnable} for more information on this.
@@ -107,7 +109,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     public ResourceContext(Resource resource, T parentResourceComponent,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
-        ContentContext contentContext, Executor availCollectorThreadPool,
+        ContentContext contentContext, AvailabilityContext availabilityContext,
         PluginContainerDeployment pluginContainerDeployment) {
 
         this.resourceKey = resource.getResourceKey();
@@ -130,7 +132,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.eventContext = eventContext;
         this.operationContext = operationContext;
         this.contentContext = contentContext;
-        this.availCollectionThreadPool = availCollectorThreadPool;
+        this.availabilityContext = availabilityContext;
     }
 
     /**
@@ -355,34 +357,21 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
-     * Under certain circumstances, a resource component may want to perform asynchronous availability checks, as
-     * opposed to {@link AvailabilityFacet#getAvailability()} blocking waiting for the managed resource to return
-     * its availability status. Using asynchronous availability checking frees the resource component from having
-     * to guarantee that the managed resource will provide availability status in a timely fashion.
-     * 
-     * If the resource component needs to perform asynchronous availability checking, it should call this
-     * method to create an instance of {@link AvailabilityCollectorRunnable} inside the {@link ResourceComponent#start} method.
-     * It should then call the returned object's {@link AvailabilityCollectorRunnable#start()} method within the same resource
-     * component {@link ResourceComponent#start(ResourceContext)} method. The resource component should call the
-     * {@link AvailabilityCollectorRunnable#stop()} method when the resource component
-     * {@link ResourceComponent#stop() stops}. The resource component's {@link AvailabilityFacet#getAvailability()} method
-     * should simply return the value returned by {@link AvailabilityCollectorRunnable#getLastKnownAvailability()}. This
-     * method will be extremely fast since it simply returns the last availability that was retrieved by the
-     * given availability checker. Only when the availability checker finishes checking for availability of the managed resource
-     * (however long it takes to do so) will the last known availability state change.
-     * 
-     * For more information, read the javadoc in {@link AvailabilityCollectorRunnable}.
+     * Returns an {@link AvailabilityContext} that allows the plugin to access the availability functionality provided by the
+     * plugin container.
      *
-     * @param availChecker the object that will perform the actual check of the managed resource's availability
-     * @param interval the interval, in milliseconds, between availability checks. The minimum value allowed
-     *                 for this parameter is {@link AvailabilityCollectorRunnable#MIN_INTERVAL}.
-     *
-     * @return the availability collector runnable that will perform the asynchronous checking
+     * @return availability context object
+     */
+    public AvailabilityContext getAvailabilityContext() {
+        return availabilityContext;
+    }
+
+    /**
+     * @deprecated Use {@link AvailabilityContext#createAvailabilityCollectorRunnable(AvailabilityFacet, long)}
      */
     public AvailabilityCollectorRunnable createAvailabilityCollectorRunnable(AvailabilityFacet availChecker,
         long interval) {
-        // notice that we assume we are called with the same context classloader that will be need by the avail checker
-        return new AvailabilityCollectorRunnable(availChecker, interval,
-            Thread.currentThread().getContextClassLoader(), this.availCollectionThreadPool);
+
+        return getAvailabilityContext().createAvailabilityCollectorRunnable(availChecker, interval);
     }
 }

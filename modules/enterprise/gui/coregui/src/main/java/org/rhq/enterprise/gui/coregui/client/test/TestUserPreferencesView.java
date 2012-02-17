@@ -23,18 +23,15 @@
 
 package org.rhq.enterprise.gui.coregui.client.test;
 
-import java.util.Map;
-
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -45,6 +42,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.Map;
 
 public class TestUserPreferencesView extends Table {
 
@@ -164,7 +163,7 @@ public class TestUserPreferencesView extends Table {
             centerInPage();
             addCloseClickHandler(new CloseClickHandler() {
                 @Override
-                public void onCloseClick(CloseClientEvent event) {
+                public void onCloseClick(CloseClickEvent event) {
                     markForDestroy();
                 }
             });

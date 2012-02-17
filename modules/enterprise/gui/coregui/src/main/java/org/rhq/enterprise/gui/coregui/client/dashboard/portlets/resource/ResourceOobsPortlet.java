@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**This portlet allows the end user to customize the OOB display
@@ -101,7 +102,7 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving out of bound metrics for resource [" + resourceId + "]:"
-                        + caught.getMessage());
+                            + caught.getMessage());
                     currentlyLoading = false;
                 }
 

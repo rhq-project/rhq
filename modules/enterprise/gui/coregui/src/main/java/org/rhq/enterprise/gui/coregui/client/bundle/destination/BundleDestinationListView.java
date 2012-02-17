@@ -134,7 +134,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute(BundleDestinationDataSource.FIELD_BUNDLE_ID);
                     String selectedDestId = selectedRows[0].getAttribute(BundleDestinationDataSource.FIELD_ID);

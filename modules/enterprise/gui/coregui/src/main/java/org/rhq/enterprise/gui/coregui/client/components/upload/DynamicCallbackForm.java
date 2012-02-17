@@ -20,10 +20,10 @@ package org.rhq.enterprise.gui.coregui.client.components.upload;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
@@ -104,7 +104,7 @@ public class DynamicCallbackForm extends LocatableDynamicForm implements Dynamic
             // because clients that detach the form panel when submission is
             // complete can cause some browsers (i.e. Mozilla) to go into an
             // 'infinite loading' state. See issue 916.
-            DeferredCommand.addCommand(new Command() {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                 public void execute() {
                     formHandlers.fireOnComplete(DynamicCallbackForm.this, impl.getContents(synthesizedFrame));
                 }

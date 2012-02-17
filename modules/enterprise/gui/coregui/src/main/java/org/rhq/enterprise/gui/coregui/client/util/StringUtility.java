@@ -19,6 +19,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util;
 
+import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,7 +121,7 @@ public class StringUtility {
             return null;
         }
 
-        return string.replaceAll("<script", "&lt;script").replaceAll("<SCRIPT", "&lt;SCRIPT");
+        return SimpleHtmlSanitizer.sanitizeHtml(string).asString();
     }
 
     private StringUtility() {

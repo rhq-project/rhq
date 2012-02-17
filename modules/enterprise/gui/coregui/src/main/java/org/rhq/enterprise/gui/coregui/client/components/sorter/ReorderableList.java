@@ -169,7 +169,7 @@ public class ReorderableList extends LocatableVLayout {
 
     private void notifyListOrderChangedHandlers() {
         for (ListOrderChangedHandler handler : this.listOrderChangedHandlers) {
-            handler.onListOrderChanged(new ListOrderChangedEvent(this.listGrid.getSelection()));
+            handler.onListOrderChanged(new ListOrderChangedEvent(this.listGrid.getSelectedRecords()));
         }
     }
 

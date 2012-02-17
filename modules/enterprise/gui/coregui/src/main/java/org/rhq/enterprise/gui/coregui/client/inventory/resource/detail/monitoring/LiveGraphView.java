@@ -40,6 +40,7 @@ import ca.nanometrics.gflot.client.options.PointsSeriesOptions;
 import ca.nanometrics.gflot.client.options.TickFormatter;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
@@ -49,8 +50,8 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.MouseOutEvent;
 import com.smartgwt.client.widgets.events.MouseOutHandler;
 
@@ -207,7 +208,7 @@ public class LiveGraphView extends LocatableVLayout {
 
     private String getHover(PlotItem item) {
         if (definition != null) {
-            DateTimeFormat df = DateTimeFormat.getMediumDateTimeFormat();
+            DateTimeFormat df = DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
             return definition.getDisplayName() + ": "
                 + MeasurementConverterClient.format(item.getDataPoint().getY(), definition.getUnits(), true) + "<br/>"
                 + df.format(new Date((long) item.getDataPoint().getX()));
@@ -257,8 +258,8 @@ public class LiveGraphView extends LocatableVLayout {
 
         dataLoader.scheduleRepeating(1000);
 
-        plotOptions.setYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5).setTickFormatter(
-            new TickFormatter() {
+        plotOptions.setYAxisOptions(new AxisOptions().setLabelWidth(70).setTicks(5)
+            .setTickFormatter(new TickFormatter() {
                 public String formatTickValue(double v, Axis axis) {
                     return MeasurementConverterClient.format(v, definition.getUnits(), true);
                 }
@@ -269,7 +270,7 @@ public class LiveGraphView extends LocatableVLayout {
 
         plotOptions.setXAxisOptions(new AxisOptions().setTicks(8).setTickFormatter(new TickFormatter() {
             public String formatTickValue(double tickValue, Axis axis) {
-                DateTimeFormat dateFormat = DateTimeFormat.getMediumTimeFormat();
+                DateTimeFormat dateFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
                 return dateFormat.format(new Date((long) tickValue));
             }
         }));
@@ -290,7 +291,7 @@ public class LiveGraphView extends LocatableVLayout {
         graphPopup.show();
 
         graphPopup.addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClientEvent closeClientEvent) {
+            public void onCloseClick(CloseClickEvent closeClientEvent) {
                 graph.stop();
                 graphPopup.destroy();
             }

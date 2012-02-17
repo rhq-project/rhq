@@ -23,10 +23,9 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -75,7 +74,7 @@ public class MembersView extends ResourceSearchView {
                     winModal.centerInPage();
                     winModal.addCloseClickHandler(new CloseClickHandler() {
                         @Override
-                        public void onCloseClick(CloseClientEvent event) {
+                        public void onCloseClick(CloseClickEvent event) {
                             winModal.markForDestroy();
                             MembersView.this.refreshTableInfo();
                         }

@@ -18,23 +18,18 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
@@ -48,6 +43,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -173,7 +172,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
         StaticTextItem requesterItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.SUBJECT, MSG
             .view_operationHistoryDetails_requestor());
 
-        requesterItem.setOutputAsHTML(true);
+        requesterItem.setEscapeHTML(true);
         requesterItem.setValue(operationHistory.getSubjectName());
         items.add(requesterItem);
 
@@ -214,7 +213,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
                     winModal.centerInPage();
                     winModal.addCloseClickHandler(new CloseClickHandler() {
                         @Override
-                        public void onCloseClick(CloseClientEvent event) {
+                        public void onCloseClick(CloseClickEvent event) {
                             winModal.markForDestroy();
                         }
                     });

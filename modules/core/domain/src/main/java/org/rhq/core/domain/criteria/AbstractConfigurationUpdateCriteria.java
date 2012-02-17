@@ -34,7 +34,6 @@ import org.rhq.core.domain.util.PageOrdering;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings("unused")
 public abstract class AbstractConfigurationUpdateCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 

@@ -40,9 +40,9 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
-
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
+
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
@@ -85,7 +85,6 @@ public class JobTriggerEditor extends LocatableVLayout {
     private LocatableDynamicForm cronForm;
 
     // These flags allow us to determine the trigger type.
-    private boolean isCronMode;
     private boolean isStartLater;
     private boolean isRecurring;
     private boolean isRepeatDuration;
@@ -212,7 +211,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         calendarTypeItem.setValue("now");
 
         this.calendarTypeForm.setFields(calendarTypeItem);
-        
+
         this.calendarModeLayout.addMember(this.calendarTypeForm);
         addMember(this.calendarModeLayout);
 
@@ -222,7 +221,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         this.cronForm = new LocatableDynamicForm(this.cronModeLayout.extendLocatorId("Form"));
 
         TextItem cronExpressionItem = new TextItem(FIELD_CRON_EXPRESSION,
-                MSG.widget_jobTriggerEditor_field_cronExpression());
+            MSG.widget_jobTriggerEditor_field_cronExpression());
         cronExpressionItem.setRequired(true);
         cronExpressionItem.setWidth(340);
 
@@ -244,279 +243,213 @@ public class JobTriggerEditor extends LocatableVLayout {
         Tab formatTab = new Tab(MSG.widget_jobTriggerEditor_tab_format());
         HTMLFlow formatPane = new HTMLFlow();
         formatPane.setWidth100();
-        formatPane.setContents("<p>A cron expression is a string comprised of 6 or 7 fields separated by white space. Fields can contain any of the\n" +
-                "allowed values, along with various combinations of the allowed special characters for that field. The fields are as\n" +
-                "follows:</p>\n" +
-                "<table cellpadding=\"3\" cellspacing=\"1\">\n" +
-                "    <tbody>\n" +
-                "\n" +
-                "        <tr>\n" +
-                "            <th>Field Name</th>\n" +
-                "            <th>Mandatory</th>\n" +
-                "            <th>Allowed Values</th>\n" +
-                "            <th>Allowed Special Characters</th>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Seconds</td>\n" +
-                "            <td>YES</td>\n" +
-                "\n" +
-                "            <td>0-59</td>\n" +
-                "            <td>, - * /</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Minutes</td>\n" +
-                "            <td>YES</td>\n" +
-                "            <td>0-59</td>\n" +
-                "\n" +
-                "            <td>, - * /</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Hours</td>\n" +
-                "            <td>YES</td>\n" +
-                "            <td>0-23</td>\n" +
-                "            <td>, - * /</td>\n" +
-                "\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Day of month</td>\n" +
-                "            <td>YES</td>\n" +
-                "            <td>1-31</td>\n" +
-                "            <td>, - * ? / L W<br clear=\"all\" />\n" +
-                "            </td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Month</td>\n" +
-                "            <td>YES</td>\n" +
-                "            <td>1-12 or JAN-DEC</td>\n" +
-                "            <td>, - * /</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Day of week</td>\n" +
-                "\n" +
-                "            <td>YES</td>\n" +
-                "            <td>1-7 or SUN-SAT</td>\n" +
-                "            <td>, - * ? / L #</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td>Year</td>\n" +
-                "            <td>NO</td>\n" +
-                "\n" +
-                "            <td>empty, 1970-2099</td>\n" +
-                "            <td>, - * /</td>\n" +
-                "        </tr>\n" +
-                "    </tbody>\n" +
-                "\n" +
-                "</table>\n" +
-                "<p>So cron expressions can be as simple as this: <tt>&#42; * * * ? *</tt><br />\n" +
-                "or more complex, like this: <tt>0/5 14,18,3-39,52 * ? JAN,MAR,SEP MON-FRI 2002-2010</tt></p>\n" +
-                "\n" +
-                "<h2><a name=\"CronTriggersTutorial-Specialcharacters\"></a>Special Characters</h2>\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li><tt><b>&#42;</b></tt> (<em>\"all values\"</em>) - used to select all values within a field. For example, \"*\"\n" +
-                "    in the minute field means <em>\"every minute\"</em>.</li>\n" +
-                "\n" +
-                "</ul>\n" +
-                "\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li><tt><b>?</b></tt> (<em>\"no specific value\"</em>) - useful when you need to specify something in one of the\n" +
-                "    two fields in which the character is allowed, but not the other. For example, if I want my trigger to fire on a\n" +
-                "    particular day of the month (say, the 10th), but don't care what day of the week that happens to be, I would put\n" +
-                "    \"10\" in the day-of-month field, and \"?\" in the day-of-week field. See the examples below for clarification.</li>\n" +
-                "\n" +
-                "</ul>\n" +
-                "\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li><tt><b>&#45;</b></tt> &#45; used to specify ranges. For example, \"10-12\" in the hour field means <em>\"the\n" +
-                "    hours 10, 11 and 12\"</em>.</li>\n" +
-                "\n" +
-                "</ul>\n" +
-                "\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li><tt><b>,</b></tt> &#45; used to specify additional values. For example, \"MON,WED,FRI\" in the day-of-week\n" +
-                "    field means <em>\"the days Monday, Wednesday, and Friday\"</em>.</li>\n" +
-                "\n" +
-                "</ul>\n" +
-                "\n" +
-                "\n" +
-                "<ul>\n" +
-                "\n" +
-                "    <li><tt><b>/</b></tt> &#45; used to specify increments. For example, \"0/15\" in the seconds field means <em>\"the\n" +
-                "    seconds 0, 15, 30, and 45\"</em>. And \"5/15\" in the seconds field means <em>\"the seconds 5, 20, 35, and 50\"</em>. You can\n" +
-                "    also specify '/' after the '<b>' character - in this case '</b>' is equivalent to having '0' before the '/'. '1/3'\n" +
-                "    in the day-of-month field means <em>\"fire every 3 days starting on the first day of the month\"</em>.</li>\n" +
-                "\n" +
-                "</ul>\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li><tt><b>L</b></tt> (<em>\"last\"</em>) - has different meaning in each of the two fields in which it is\n" +
-                "    allowed. For example, the value \"L\" in the day-of-month field means <em>\"the last day of the month\"</em> &#45; day\n" +
-                "    31 for January, day 28 for February on non-leap years. If used in the day-of-week field by itself, it simply means\n" +
-                "    \"7\" or \"SAT\". But if used in the day-of-week field after another value, it means <em>\"the last xxx day of the\n" +
-                "    month\"</em> &#45; for example \"6L\" means <em>\"the last friday of the month\"</em>. When using the 'L' option, it is\n" +
-                "    important not to specify lists, or ranges of values, as you'll get confusing results.</li>\n" +
-                "\n" +
-                "</ul>\n" +
-                "\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li><tt><b>W</b></tt> (<em>\"weekday\"</em>) - used to specify the weekday (Monday-Friday) nearest the given day.\n" +
-                "    As an example, if you were to specify \"15W\" as the value for the day-of-month field, the meaning is: <em>\"the\n" +
-                "    nearest weekday to the 15th of the month\"</em>. So if the 15th is a Saturday, the trigger will fire on Friday the 14th.\n" +
-                "    If the 15th is a Sunday, the trigger will fire on Monday the 16th. If the 15th is a Tuesday, then it will fire on\n" +
-                "    Tuesday the 15th. However if you specify \"1W\" as the value for day-of-month, and the 1st is a Saturday, the trigger\n" +
-                "    will fire on Monday the 3rd, as it will not 'jump' over the boundary of a month's days. The 'W' character can only\n" +
-                "    be specified when the day-of-month is a single day, not a range or list of days.\n" +
-                "        <div class=\"tip\">\n" +
-                "            The 'L' and 'W' characters can also be combined in the day-of-month field to yield 'LW', which\n" +
-                "            translates to <em>\"last weekday of the month\"</em>.\n" +
-                "        </div>\n" +
-                "\n" +
-                "    </li>\n" +
-                "\n" +
-                "    <li><tt><b>&#35;</b></tt> &#45; used to specify \"the nth\" XXX day of the month. For example, the value of \"6#3\"\n" +
-                "    in the day-of-week field means <em>\"the third Friday of the month\"</em> (day 6 = Friday and \"#3\" = the 3rd one in\n" +
-                "    the month). Other examples: \"2#1\" = the first Monday of the month and \"4#5\" = the fifth Wednesday of the month. Note\n" +
-                "    that if you specify \"#5\" and there is not 5 of the given day-of-week in the month, then no firing will occur that\n" +
-                "    month.\n" +
-                "        <div class=\"tip\">\n" +
-                "            The legal characters and the names of months and days of the week are not case sensitive. <tt>MON</tt>\n" +
-                "            is the same as <tt>mon</tt>.\n" +
-                "        </div>\n" +
-                "\n" +
-                "    </li>\n" +
-                "</ul>" +
-                "<h2><a name=\"CronTriggersTutorial-Notes\"></a>Notes</h2>\n" +
-                "\n" +
-                "<ul>\n" +
-                "    <li>Support for specifying both a day-of-week and a day-of-month value is not complete (you must currently use\n" +
-                "    the '?' character in one of these fields).</li>\n" +
-                "    <li>Be careful when setting fire times between mid-night and 1:00 AM - \"daylight savings\" can cause a skip or a\n" +
-                "    repeat depending on whether the time moves back or jumps forward.</li>\n" +
-                "\n" +
-                "</ul>");
+        formatPane
+            .setContents("<p>A cron expression is a string comprised of 6 or 7 fields separated by white space. Fields can contain any of the\n"
+                + "allowed values, along with various combinations of the allowed special characters for that field. The fields are as\n"
+                + "follows:</p>\n"
+                + "<table cellpadding=\"3\" cellspacing=\"1\">\n"
+                + "    <tbody>\n"
+                + "\n"
+                + "        <tr>\n"
+                + "            <th>Field Name</th>\n"
+                + "            <th>Mandatory</th>\n"
+                + "            <th>Allowed Values</th>\n"
+                + "            <th>Allowed Special Characters</th>\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Seconds</td>\n"
+                + "            <td>YES</td>\n"
+                + "\n"
+                + "            <td>0-59</td>\n"
+                + "            <td>, - * /</td>\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Minutes</td>\n"
+                + "            <td>YES</td>\n"
+                + "            <td>0-59</td>\n"
+                + "\n"
+                + "            <td>, - * /</td>\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Hours</td>\n"
+                + "            <td>YES</td>\n"
+                + "            <td>0-23</td>\n"
+                + "            <td>, - * /</td>\n"
+                + "\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Day of month</td>\n"
+                + "            <td>YES</td>\n"
+                + "            <td>1-31</td>\n"
+                + "            <td>, - * ? / L W<br clear=\"all\" />\n"
+                + "            </td>\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Month</td>\n"
+                + "            <td>YES</td>\n"
+                + "            <td>1-12 or JAN-DEC</td>\n"
+                + "            <td>, - * /</td>\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Day of week</td>\n"
+                + "\n"
+                + "            <td>YES</td>\n"
+                + "            <td>1-7 or SUN-SAT</td>\n"
+                + "            <td>, - * ? / L #</td>\n"
+                + "        </tr>\n"
+                + "        <tr>\n"
+                + "\n"
+                + "            <td>Year</td>\n"
+                + "            <td>NO</td>\n"
+                + "\n"
+                + "            <td>empty, 1970-2099</td>\n"
+                + "            <td>, - * /</td>\n"
+                + "        </tr>\n"
+                + "    </tbody>\n"
+                + "\n"
+                + "</table>\n"
+                + "<p>So cron expressions can be as simple as this: <tt>&#42; * * * ? *</tt><br />\n"
+                + "or more complex, like this: <tt>0/5 14,18,3-39,52 * ? JAN,MAR,SEP MON-FRI 2002-2010</tt></p>\n"
+                + "\n"
+                + "<h2><a name=\"CronTriggersTutorial-Specialcharacters\"></a>Special Characters</h2>\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li><tt><b>&#42;</b></tt> (<em>\"all values\"</em>) - used to select all values within a field. For example, \"*\"\n"
+                + "    in the minute field means <em>\"every minute\"</em>.</li>\n"
+                + "\n"
+                + "</ul>\n"
+                + "\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li><tt><b>?</b></tt> (<em>\"no specific value\"</em>) - useful when you need to specify something in one of the\n"
+                + "    two fields in which the character is allowed, but not the other. For example, if I want my trigger to fire on a\n"
+                + "    particular day of the month (say, the 10th), but don't care what day of the week that happens to be, I would put\n"
+                + "    \"10\" in the day-of-month field, and \"?\" in the day-of-week field. See the examples below for clarification.</li>\n"
+                + "\n"
+                + "</ul>\n"
+                + "\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li><tt><b>&#45;</b></tt> &#45; used to specify ranges. For example, \"10-12\" in the hour field means <em>\"the\n"
+                + "    hours 10, 11 and 12\"</em>.</li>\n"
+                + "\n"
+                + "</ul>\n"
+                + "\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li><tt><b>,</b></tt> &#45; used to specify additional values. For example, \"MON,WED,FRI\" in the day-of-week\n"
+                + "    field means <em>\"the days Monday, Wednesday, and Friday\"</em>.</li>\n"
+                + "\n"
+                + "</ul>\n"
+                + "\n"
+                + "\n"
+                + "<ul>\n"
+                + "\n"
+                + "    <li><tt><b>/</b></tt> &#45; used to specify increments. For example, \"0/15\" in the seconds field means <em>\"the\n"
+                + "    seconds 0, 15, 30, and 45\"</em>. And \"5/15\" in the seconds field means <em>\"the seconds 5, 20, 35, and 50\"</em>. You can\n"
+                + "    also specify '/' after the '<b>' character - in this case '</b>' is equivalent to having '0' before the '/'. '1/3'\n"
+                + "    in the day-of-month field means <em>\"fire every 3 days starting on the first day of the month\"</em>.</li>\n"
+                + "\n"
+                + "</ul>\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li><tt><b>L</b></tt> (<em>\"last\"</em>) - has different meaning in each of the two fields in which it is\n"
+                + "    allowed. For example, the value \"L\" in the day-of-month field means <em>\"the last day of the month\"</em> &#45; day\n"
+                + "    31 for January, day 28 for February on non-leap years. If used in the day-of-week field by itself, it simply means\n"
+                + "    \"7\" or \"SAT\". But if used in the day-of-week field after another value, it means <em>\"the last xxx day of the\n"
+                + "    month\"</em> &#45; for example \"6L\" means <em>\"the last friday of the month\"</em>. When using the 'L' option, it is\n"
+                + "    important not to specify lists, or ranges of values, as you'll get confusing results.</li>\n"
+                + "\n"
+                + "</ul>\n"
+                + "\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li><tt><b>W</b></tt> (<em>\"weekday\"</em>) - used to specify the weekday (Monday-Friday) nearest the given day.\n"
+                + "    As an example, if you were to specify \"15W\" as the value for the day-of-month field, the meaning is: <em>\"the\n"
+                + "    nearest weekday to the 15th of the month\"</em>. So if the 15th is a Saturday, the trigger will fire on Friday the 14th.\n"
+                + "    If the 15th is a Sunday, the trigger will fire on Monday the 16th. If the 15th is a Tuesday, then it will fire on\n"
+                + "    Tuesday the 15th. However if you specify \"1W\" as the value for day-of-month, and the 1st is a Saturday, the trigger\n"
+                + "    will fire on Monday the 3rd, as it will not 'jump' over the boundary of a month's days. The 'W' character can only\n"
+                + "    be specified when the day-of-month is a single day, not a range or list of days.\n"
+                + "        <div class=\"tip\">\n"
+                + "            The 'L' and 'W' characters can also be combined in the day-of-month field to yield 'LW', which\n"
+                + "            translates to <em>\"last weekday of the month\"</em>.\n"
+                + "        </div>\n"
+                + "\n"
+                + "    </li>\n"
+                + "\n"
+                + "    <li><tt><b>&#35;</b></tt> &#45; used to specify \"the nth\" XXX day of the month. For example, the value of \"6#3\"\n"
+                + "    in the day-of-week field means <em>\"the third Friday of the month\"</em> (day 6 = Friday and \"#3\" = the 3rd one in\n"
+                + "    the month). Other examples: \"2#1\" = the first Monday of the month and \"4#5\" = the fifth Wednesday of the month. Note\n"
+                + "    that if you specify \"#5\" and there is not 5 of the given day-of-week in the month, then no firing will occur that\n"
+                + "    month.\n"
+                + "        <div class=\"tip\">\n"
+                + "            The legal characters and the names of months and days of the week are not case sensitive. <tt>MON</tt>\n"
+                + "            is the same as <tt>mon</tt>.\n"
+                + "        </div>\n"
+                + "\n"
+                + "    </li>\n"
+                + "</ul>"
+                + "<h2><a name=\"CronTriggersTutorial-Notes\"></a>Notes</h2>\n"
+                + "\n"
+                + "<ul>\n"
+                + "    <li>Support for specifying both a day-of-week and a day-of-month value is not complete (you must currently use\n"
+                + "    the '?' character in one of these fields).</li>\n"
+                + "    <li>Be careful when setting fire times between mid-night and 1:00 AM - \"daylight savings\" can cause a skip or a\n"
+                + "    repeat depending on whether the time moves back or jumps forward.</li>\n" + "\n" + "</ul>");
         formatTab.setPane(formatPane);
 
         Tab examplesTab = new Tab(MSG.widget_jobTriggerEditor_tab_examples());
         HTMLFlow examplesPane = new HTMLFlow();
         examplesPane.setWidth100();
-        examplesPane.setContents("<table cellpadding=\"3\" cellspacing=\"1\">\n" +
-                "    <tbody>\n" +
-                "        <tr>\n" +
-                "            <th>Expression</th>\n" +
-                "\n" +
-                "            <th>Meaning</th>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 0 12 * * ?</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 12pm (noon) every day</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td><tt>0 15 10 ? * *</tt></td>\n" +
-                "            <td>Fire at 10:15am every day</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 * * ?</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 10:15am every day</td>\n" +
-                "\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 * * ? *</tt></td>\n" +
-                "            <td>Fire at 10:15am every day</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 * * ? 2005</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 10:15am every day during the year 2005</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 * 14 * * ?</tt></td>\n" +
-                "            <td>Fire every minute starting at 2pm and ending at 2:59pm, every day</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td><tt>0 0/5 14 * * ?</tt></td>\n" +
-                "\n" +
-                "            <td>Fire every 5 minutes starting at 2pm and ending at 2:55pm, every day</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 0/5 14,18 * * ?</tt></td>\n" +
-                "            <td>Fire every 5 minutes starting at 2pm and ending at 2:55pm, AND fire every 5\n" +
-                "            minutes starting at 6pm and ending at 6:55pm, every day</td>\n" +
-                "\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 0-5 14 * * ?</tt></td>\n" +
-                "\n" +
-                "            <td>Fire every minute starting at 2pm and ending at 2:05pm, every day</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 10,44 14 ? 3 WED</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 2:10pm and at 2:44pm every Wednesday in the month of March.</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 ? * MON-FRI</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 10:15am every Monday, Tuesday, Wednesday, Thursday and Friday</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td><tt>0 15 10 15 * ?</tt></td>\n" +
-                "            <td>Fire at 10:15am on the 15th day of every month</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 L * ?</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 10:15am on the last day of every month</td>\n" +
-                "\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 ? * 6L</tt></td>\n" +
-                "            <td>Fire at 10:15am on the last Friday of every month</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 ? * 6L</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 10:15am on the last Friday of every month</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 15 10 ? * 6L 2002-2005</tt></td>\n" +
-                "            <td>Fire at 10:15am on every last friday of every month during the years 2002,\n" +
-                "            2003, 2004 and 2005</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "\n" +
-                "            <td><tt>0 15 10 ? * 6#3</tt></td>\n" +
-                "\n" +
-                "            <td>Fire at 10:15am on the third Friday of every month</td>\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 0 12 1/5 * ?</tt></td>\n" +
-                "            <td>Fire at 12pm (noon) every 5 days every month, starting on the first day of the\n" +
-                "            month.</td>\n" +
-                "\n" +
-                "        </tr>\n" +
-                "        <tr>\n" +
-                "            <td><tt>0 11 11 11 11 ?</tt></td>\n" +
-                "\n" +
-                "            <td>Fire every November 11th at 11:11am.</td>\n" +
-                "        </tr>\n" +
-                "    </tbody>\n" +
-                "</table>");
+        examplesPane.setContents("<table cellpadding=\"3\" cellspacing=\"1\">\n" + "    <tbody>\n" + "        <tr>\n"
+            + "            <th>Expression</th>\n" + "\n" + "            <th>Meaning</th>\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 0 12 * * ?</tt></td>\n" + "\n"
+            + "            <td>Fire at 12pm (noon) every day</td>\n" + "        </tr>\n" + "        <tr>\n" + "\n"
+            + "            <td><tt>0 15 10 ? * *</tt></td>\n" + "            <td>Fire at 10:15am every day</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "            <td><tt>0 15 10 * * ?</tt></td>\n" + "\n"
+            + "            <td>Fire at 10:15am every day</td>\n" + "\n" + "        </tr>\n" + "        <tr>\n"
+            + "            <td><tt>0 15 10 * * ? *</tt></td>\n" + "            <td>Fire at 10:15am every day</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "            <td><tt>0 15 10 * * ? 2005</tt></td>\n" + "\n"
+            + "            <td>Fire at 10:15am every day during the year 2005</td>\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 * 14 * * ?</tt></td>\n"
+            + "            <td>Fire every minute starting at 2pm and ending at 2:59pm, every day</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "\n" + "            <td><tt>0 0/5 14 * * ?</tt></td>\n" + "\n"
+            + "            <td>Fire every 5 minutes starting at 2pm and ending at 2:55pm, every day</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "            <td><tt>0 0/5 14,18 * * ?</tt></td>\n"
+            + "            <td>Fire every 5 minutes starting at 2pm and ending at 2:55pm, AND fire every 5\n"
+            + "            minutes starting at 6pm and ending at 6:55pm, every day</td>\n" + "\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 0-5 14 * * ?</tt></td>\n" + "\n"
+            + "            <td>Fire every minute starting at 2pm and ending at 2:05pm, every day</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "            <td><tt>0 10,44 14 ? 3 WED</tt></td>\n" + "\n"
+            + "            <td>Fire at 2:10pm and at 2:44pm every Wednesday in the month of March.</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "            <td><tt>0 15 10 ? * MON-FRI</tt></td>\n" + "\n"
+            + "            <td>Fire at 10:15am every Monday, Tuesday, Wednesday, Thursday and Friday</td>\n"
+            + "        </tr>\n" + "        <tr>\n" + "\n" + "            <td><tt>0 15 10 15 * ?</tt></td>\n"
+            + "            <td>Fire at 10:15am on the 15th day of every month</td>\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 15 10 L * ?</tt></td>\n" + "\n"
+            + "            <td>Fire at 10:15am on the last day of every month</td>\n" + "\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 15 10 ? * 6L</tt></td>\n"
+            + "            <td>Fire at 10:15am on the last Friday of every month</td>\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 15 10 ? * 6L</tt></td>\n" + "\n"
+            + "            <td>Fire at 10:15am on the last Friday of every month</td>\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 15 10 ? * 6L 2002-2005</tt></td>\n"
+            + "            <td>Fire at 10:15am on every last friday of every month during the years 2002,\n"
+            + "            2003, 2004 and 2005</td>\n" + "        </tr>\n" + "        <tr>\n" + "\n"
+            + "            <td><tt>0 15 10 ? * 6#3</tt></td>\n" + "\n"
+            + "            <td>Fire at 10:15am on the third Friday of every month</td>\n" + "        </tr>\n"
+            + "        <tr>\n" + "            <td><tt>0 0 12 1/5 * ?</tt></td>\n"
+            + "            <td>Fire at 12pm (noon) every 5 days every month, starting on the first day of the\n"
+            + "            month.</td>\n" + "\n" + "        </tr>\n" + "        <tr>\n"
+            + "            <td><tt>0 11 11 11 11 ?</tt></td>\n" + "\n"
+            + "            <td>Fire every November 11th at 11:11am.</td>\n" + "        </tr>\n" + "    </tbody>\n"
+            + "</table>");
         examplesTab.setPane(examplesPane);
 
         cronHelpTabSet.addTab(formatTab);
@@ -551,7 +484,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         calendarTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String calendarType = (String)event.getValue();
+                String calendarType = (String) event.getValue();
                 changeCalendarType(calendarType);
             }
         });
@@ -588,12 +521,10 @@ public class JobTriggerEditor extends LocatableVLayout {
 
     private void changeMode(String mode) {
         if (mode.equals("calendar")) {
-            this.isCronMode = false;
             calendarModeLayout.show();
             cronModeLayout.hide();
         } else {
             // cron expression mode
-            this.isCronMode = true;
             calendarModeLayout.hide();
             cronModeLayout.show();
         }
@@ -613,8 +544,7 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
         DurationItem repeatIntervalItem = new DurationItem(FIELD_REPEAT_INTERVAL,
-                MSG.widget_jobTriggerEditor_field_repeatInterval_now(),
-                supportedUnits, false, this.isReadOnly, repeatForm);
+            MSG.widget_jobTriggerEditor_field_repeatInterval_now(), supportedUnits, false, this.isReadOnly, repeatForm);
         repeatIntervalItem.setRequired(true);
         repeatIntervalItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_repeatInterval());
 
@@ -635,8 +565,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.WEEKS);
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
-        final DurationItem repeatDurationItem = new DurationItem(FIELD_REPEAT_DURATION, null,
-                supportedUnits, true, this.isReadOnly, repeatForm);
+        final DurationItem repeatDurationItem = new DurationItem(FIELD_REPEAT_DURATION, null, supportedUnits, true,
+            this.isReadOnly, repeatForm);
         repeatDurationItem.setShowTitle(false);
         repeatDurationItem.setVisible(false);
         repeatDurationItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_repeatDuration());
@@ -649,7 +579,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         recurrenceTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String recurrenceType = (String)event.getValue();
+                String recurrenceType = (String) event.getValue();
                 changeRecurrenceType(recurrenceType, endTimeItem, repeatDurationItem);
             }
         });
@@ -692,7 +622,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         laterForm.setNumCols(4);
         laterForm.setColWidths(140, 130, 130);
 
-        RadioGroupItem startTypeItem = new RadioGroupItem(FIELD_START_TYPE, MSG.widget_jobTriggerEditor_field_startType());
+        RadioGroupItem startTypeItem = new RadioGroupItem(FIELD_START_TYPE,
+            MSG.widget_jobTriggerEditor_field_startType());
         LinkedHashMap<String, String> startTypeValueMap = new LinkedHashMap<String, String>();
         startTypeValueMap.put("on", MSG.widget_jobTriggerEditor_value_on());
         startTypeValueMap.put("in", MSG.widget_jobTriggerEditor_value_in());
@@ -709,8 +640,8 @@ public class JobTriggerEditor extends LocatableVLayout {
         supportedUnits.add(TimeUnit.WEEKS);
         supportedUnits.add(TimeUnit.MONTHS);
         supportedUnits.add(TimeUnit.YEARS);
-        final DurationItem startDelayItem = new DurationItem(FIELD_START_DELAY, null,
-                supportedUnits, false, this.isReadOnly, laterForm);
+        final DurationItem startDelayItem = new DurationItem(FIELD_START_DELAY, null, supportedUnits, false,
+            this.isReadOnly, laterForm);
         startDelayItem.setShowTitle(false);
         startDelayItem.setVisible(false);
         startDelayItem.setContextualHelp(MSG.widget_jobTriggerEditor_fieldHelp_startDelay());
@@ -719,7 +650,7 @@ public class JobTriggerEditor extends LocatableVLayout {
 
         startTypeItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                String startType = (String)event.getValue();
+                String startType = (String) event.getValue();
                 changeStartType(startType, startDelayItem, startTimeItem);
             }
         });
@@ -771,7 +702,7 @@ public class JobTriggerEditor extends LocatableVLayout {
             startTime = new Date(startTimestamp);
         } else {
             // start time
-            DateTimeItem startTimeItem = (DateTimeItem)this.laterForm.getField(FIELD_START_TIME);
+            DateTimeItem startTimeItem = (DateTimeItem) this.laterForm.getField(FIELD_START_TIME);
             startTime = startTimeItem.getValueAsDate();
         }
         return startTime;
@@ -824,7 +755,7 @@ public class JobTriggerEditor extends LocatableVLayout {
                     endTime = new Date(endTimestamp);
                 }
             } else if (this.isEndTime) {
-                DateTimeItem endTimeItem = (DateTimeItem)this.repeatForm.getField(FIELD_END_TIME);
+                DateTimeItem endTimeItem = (DateTimeItem) this.repeatForm.getField(FIELD_END_TIME);
                 endTime = endTimeItem.getValueAsDate();
             } else {
                 endTime = null;
@@ -852,16 +783,15 @@ public class JobTriggerEditor extends LocatableVLayout {
             if (startTime != null) {
                 if (startTime.before(currentTime)) {
                     Message message = new Message(MSG.widget_jobTriggerEditor_message_startTimeMustBeInFuture(),
-                            Message.Severity.Error,
-                            EnumSet.of(Message.Option.Transient));
+                        Message.Severity.Error, EnumSet.of(Message.Option.Transient));
                     CoreGUI.getMessageCenter().notify(message);
                     isValid = false;
                 }
                 if (this.isRecurring && endTime != null) {
                     if (endTime.before(startTime)) {
-                        Message message = new Message(MSG.widget_jobTriggerEditor_message_endTimeMustBeAfterStartTime(),
-                                Message.Severity.Error,
-                                EnumSet.of(Message.Option.Transient));
+                        Message message = new Message(
+                            MSG.widget_jobTriggerEditor_message_endTimeMustBeAfterStartTime(), Message.Severity.Error,
+                            EnumSet.of(Message.Option.Transient));
                         CoreGUI.getMessageCenter().notify(message);
                         isValid = false;
                     }
@@ -873,8 +803,7 @@ public class JobTriggerEditor extends LocatableVLayout {
             if (endTime != null) {
                 if (endTime.before(currentTime)) {
                     Message message = new Message(MSG.widget_jobTriggerEditor_message_endTimeMustBeAfterStartTime(),
-                            Message.Severity.Error,
-                            EnumSet.of(Message.Option.Transient));
+                        Message.Severity.Error, EnumSet.of(Message.Option.Transient));
                     CoreGUI.getMessageCenter().notify(message);
                     isValid = false;
                 }

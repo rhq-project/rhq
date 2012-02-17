@@ -31,8 +31,8 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -106,9 +107,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
         idField.setWidth(50);
 
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryField.setWidth(25);
-        categoryField.setAlign(Alignment.CENTER);
+        IconField categoryField = new IconField(CATEGORY.propertyName());
         categoryField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String categoryName = (String) value;
@@ -124,14 +123,14 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 GroupCategory category = GroupCategory.valueOf(categoryName);
                 String displayName;
                 switch (category) {
-                    case COMPATIBLE:
-                        displayName = MSG.view_group_summary_compatible();
-                        break;
-                    case MIXED:
-                        displayName = MSG.view_group_summary_mixed();
-                        break;
-                    default:
-                        throw new IllegalStateException("Unknown group category: " + category);
+                case COMPATIBLE:
+                    displayName = MSG.view_group_summary_compatible();
+                    break;
+                case MIXED:
+                    displayName = MSG.view_group_summary_mixed();
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown group category: " + category);
                 }
                 return displayName;
             }
@@ -228,7 +227,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                         winModal.setWidth(700);
                         winModal.setHeight(450);
                         winModal.addCloseClickHandler(new CloseClickHandler() {
-                            public void onCloseClick(CloseClientEvent event) {
+                            public void onCloseClick(CloseClickEvent event) {
                                 refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
                             }
                         });
@@ -249,7 +248,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute("id");
                     CoreGUI.goToView(LinkManager.getResourceGroupLink(Integer.valueOf(selectedId)));

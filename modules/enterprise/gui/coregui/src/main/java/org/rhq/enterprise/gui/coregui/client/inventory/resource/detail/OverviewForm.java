@@ -207,10 +207,9 @@ public class OverviewForm extends EnhancedDynamicForm {
         descriptionItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         if (descriptionItem instanceof EditableFormItem) {
             EditableFormItem togglableDescriptionItem = (EditableFormItem) descriptionItem;
-            togglableDescriptionItem.setValidators(notNullValidator);
             togglableDescriptionItem.setValueEditedHandler(new ValueEditedHandler() {
                 public void editedValue(Object newValue) {
-                    final String newDescription = newValue.toString();
+                    final String newDescription = newValue != null ? newValue.toString() : "";
                     final String oldDescription = resource.getDescription();
                     if (newDescription.equals(oldDescription)) {
                         return;
@@ -247,10 +246,9 @@ public class OverviewForm extends EnhancedDynamicForm {
         locationItem.setAttribute(OUTPUT_AS_HTML_ATTRIBUTE, true);
         if (locationItem instanceof EditableFormItem) {
             EditableFormItem togglableLocationItem = (EditableFormItem) locationItem;
-            togglableLocationItem.setValidators(notNullValidator);
             togglableLocationItem.setValueEditedHandler(new ValueEditedHandler() {
                 public void editedValue(Object newValue) {
-                    final String newLocation = newValue.toString();
+                    final String newLocation = newValue != null ?  newValue.toString() : "";
                     final String oldLocation = resource.getLocation();
                     if (newLocation.equals(oldLocation)) {
                         return;

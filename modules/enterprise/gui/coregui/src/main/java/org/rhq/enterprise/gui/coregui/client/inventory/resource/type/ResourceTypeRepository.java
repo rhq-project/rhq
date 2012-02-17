@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * A cache for ResourceTypes and their various fields. Fields are only fetched as needed.
@@ -412,7 +413,7 @@ public class ResourceTypeRepository {
                                     break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()
-                                        + " not merged into cached ResourceType.");
+                                            + " not merged into cached ResourceType.");
                                 }
                             }
                         }

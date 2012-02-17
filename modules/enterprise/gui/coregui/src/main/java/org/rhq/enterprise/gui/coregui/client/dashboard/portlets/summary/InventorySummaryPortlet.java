@@ -93,35 +93,35 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
                     summary.getPlatformCount(), "Inventory/Resources/Platforms");
                 formItems.add(platformTotal);
 
-                StaticTextItem serverTotal = createSummaryRow("serverTotal", MSG.common_title_server_total(), summary
-                    .getServerCount(), "Inventory/Resources/Servers");
+                StaticTextItem serverTotal = createSummaryRow("serverTotal", MSG.common_title_server_total(),
+                    summary.getServerCount(), "Inventory/Resources/Servers");
                 formItems.add(serverTotal);
 
                 StaticTextItem serviceTotal = createSummaryRow("serviceTotal", MSG.common_title_service_total(),
                     summary.getServiceCount(), "Inventory/Resources/Services");
                 formItems.add(serviceTotal);
 
-                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal", MSG
-                    .common_title_compatibleGroups_total(), summary.getCompatibleGroupCount(),
+                StaticTextItem compatibleGroupTotal = createSummaryRow("compatibleGroupTotal",
+                    MSG.common_title_compatibleGroups_total(), summary.getCompatibleGroupCount(),
                     "Inventory/Groups/CompatibleGroups");
                 formItems.add(compatibleGroupTotal);
 
-                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal", MSG
-                    .common_title_mixedGroups_total(), summary.getMixedGroupCount(), "Inventory/Groups/MixedGroups");
+                StaticTextItem mixedGroupTotal = createSummaryRow("mixedGroupTotal",
+                    MSG.common_title_mixedGroups_total(), summary.getMixedGroupCount(), "Inventory/Groups/MixedGroups");
                 formItems.add(mixedGroupTotal);
 
-                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal", MSG
-                    .common_title_group_def_total(), summary.getGroupDefinitionCount(),
+                StaticTextItem groupDefinitionTotal = createSummaryRow("groupDefinitionTotal",
+                    MSG.common_title_group_def_total(), summary.getGroupDefinitionCount(),
                     "Inventory/Groups/DynagroupDefinitions");
                 formItems.add(groupDefinitionTotal);
 
-                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal", MSG
-                    .common_title_average_metrics(), summary.getScheduledMeasurementsPerMinute(), null);
+                StaticTextItem avergeMetricsTotal = createSummaryRow("averageMetricsTotal",
+                    MSG.common_title_average_metrics(), summary.getScheduledMeasurementsPerMinute(), null);
                 formItems.add(avergeMetricsTotal);
 
                 form.setItems(formItems.toArray(new FormItem[formItems.size()]));
                 form.setWrapItemTitles(false);
-                form.setCellSpacing(5);
+                form.setCellPadding(5);
                 addMember(form);
             }
         });

@@ -24,8 +24,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -283,7 +283,7 @@ public class ConfigurationComparisonView extends VLayout {
         dialog.addItem(view);
         dialog.addCloseClickHandler(new CloseClickHandler() {
             @Override
-            public void onCloseClick(CloseClientEvent event) {
+            public void onCloseClick(CloseClickEvent event) {
                 dialog.markForDestroy();
             }
         });

@@ -22,18 +22,18 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
-import com.smartgwt.client.types.TimeFormatter;
+import com.smartgwt.client.types.TimeDisplayFormat;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -96,7 +97,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                 window.addItem(this); // Use addItem(), not addMember(), when adding a widget to a Window!
                 window.addCloseClickHandler(new CloseClickHandler() {
                     @Override
-                    public void onCloseClick(CloseClientEvent event) {
+                    public void onCloseClick(CloseClickEvent event) {
                         try {
                             window.hide();
                         } catch (Throwable e) {
@@ -138,7 +139,8 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     protected void configureTable() {
         getListGrid().setEmptyMessage(MSG.view_messageCenter_noRecentMessages());
 
-        updateTitleCanvas(MSG.view_messageCenter_lastNMessages(String.valueOf(CoreGUI.getMessageCenter().getMaxMessages())));
+        updateTitleCanvas(MSG.view_messageCenter_lastNMessages(String.valueOf(CoreGUI.getMessageCenter()
+            .getMaxMessages())));
 
         ListGridField severityField = new ListGridField(FIELD_SEVERITY);
         severityField.setType(ListGridFieldType.ICON);
@@ -188,7 +190,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
 
         ListGridField timeField = new ListGridField(FIELD_TIME, MSG.view_messageCenter_messageTime());
         timeField.setType(ListGridFieldType.TIME);
-        timeField.setAttribute("displayFormat", TimeFormatter.TOPADDEDTIME);
+        timeField.setAttribute("displayFormat", TimeDisplayFormat.TOPADDEDTIME);
         timeField.setAlign(Alignment.LEFT);
         timeField.setShowHover(true);
         timeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(FIELD_TIME));
@@ -206,7 +208,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
             public void onDoubleClick(DoubleClickEvent event) {
                 try {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length > 0) {
                         Message message = (Message) selectedRows[0].getAttributeAsObject(FIELD_OBJECT); // show the first selected
                         showDetails(message);
@@ -371,7 +373,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         dialogWin.show();
         dialogWin.addCloseClickHandler(new CloseClickHandler() {
             @Override
-            public void onCloseClick(CloseClientEvent event) {
+            public void onCloseClick(CloseClickEvent event) {
                 dialogWin.destroy();
             }
         });

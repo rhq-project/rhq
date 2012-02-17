@@ -26,11 +26,13 @@ import java.util.Map;
  */
 public class CompoundAsyncOperationException extends Exception {
 
-    private Map<AsyncOperation,Object> successResults;
-    private Map<AsyncOperation,Throwable> failureThrowables;
+    private static final long serialVersionUID = 1L;
+
+    private Map<AsyncOperation, Object> successResults;
+    private Map<AsyncOperation, Throwable> failureThrowables;
 
     public CompoundAsyncOperationException(Map<AsyncOperation, Object> successResults,
-                                           Map<AsyncOperation, Throwable> failureThrowables) {
+        Map<AsyncOperation, Throwable> failureThrowables) {
         super("One or more child operations failed.");
         this.successResults = successResults;
         this.failureThrowables = failureThrowables;

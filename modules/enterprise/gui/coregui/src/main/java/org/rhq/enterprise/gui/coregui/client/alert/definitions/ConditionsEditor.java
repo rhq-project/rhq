@@ -22,11 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
@@ -34,11 +29,10 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.drift.DriftDefinitionTemplate;
@@ -53,6 +47,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author John Mazzitelli
@@ -187,7 +186,7 @@ public class ConditionsEditor extends LocatableVLayout {
                                 winModal.centerInPage();
                                 winModal.addCloseClickHandler(new CloseClickHandler() {
                                     @Override
-                                    public void onCloseClick(CloseClientEvent event) {
+                                    public void onCloseClick(CloseClickEvent event) {
                                         winModal.markForDestroy();
                                     }
                                 });

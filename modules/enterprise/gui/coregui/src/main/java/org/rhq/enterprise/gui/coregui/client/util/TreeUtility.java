@@ -33,7 +33,7 @@ public class TreeUtility {
     public static void printTree(Tree tree) {
         String treeString = getTreeString(tree);
         System.out.print(treeString);
-        com.allen_sauer.gwt.log.client.Log.info(treeString);
+        Log.info(treeString);
     }
 
     public static String getTreeString(Tree tree) {

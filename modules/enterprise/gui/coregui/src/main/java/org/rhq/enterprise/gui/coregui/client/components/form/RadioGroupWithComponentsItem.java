@@ -23,21 +23,19 @@
 
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * TODO
@@ -48,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 public class RadioGroupWithComponentsItem extends CanvasItem {
 
     private final LinkedHashMap<NameAndTitle, Canvas> valueMap;
+    private LinkedHashMap<NameAndTitle, CanvasItem> canvasItems;
     private final RGWCCanvas canvas;
     private final DynamicForm form;
     private String selected;
@@ -155,7 +154,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         @Override
         protected void onInit() {
             super.onInit();
-
+            canvasItems = new LinkedHashMap<NameAndTitle, CanvasItem>();
             ArrayList<FormItem> items = new ArrayList<FormItem>();
 
             for (final NameAndTitle label : valueMap.keySet()) {
@@ -172,8 +171,8 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
                     ci.setCanvas(value);
                 }
                 ci.setDisabled(true);
+                canvasItems.put(label, ci);
                 items.add(ci);
-
                 button.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent changedEvent) {
                         selected = (String) changedEvent.getValue();
@@ -186,40 +185,33 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         }
 
         public void updateEnablement() {
-
-            for (NameAndTitle key : valueMap.keySet()) {
-                Canvas value = valueMap.get(key);
-                Boolean disabled = !selected.equals(key.getTitle());
+            for (NameAndTitle key : canvasItems.keySet()) {
+                CanvasItem canvasItem = canvasItems.get(key);
+                Canvas nestedCanvas = canvasItem.getCanvas();
+                boolean disabled = !selected.equals(key.getTitle());
                 if (disabled) {
+                    canvasItem.disable();
+                    clearValues(nestedCanvas);
                     canvas.getItem(key.getName()).clearValue();
-                    canvas.getItem(key.getName()).redraw();
+                    if (nestedCanvas != null) {
+                        nestedCanvas.markForRedraw();
+                    }
+                } else {
+                    canvasItem.enable();
                 }
-                disableAllFormFields(value, disabled);
             }
+
         }
 
-        private void disableAllFormFields(Canvas value, Boolean disabled) {
+        private void clearValues(Canvas value) {
             if (value != null && value instanceof DynamicForm) {
                 for (FormItem item : ((DynamicForm) value).getFields()) {
                     if (item instanceof CanvasItem) {
-                        // recursively drill down in case this is a dynamic form inside a dynamic form
-                        disableAllFormFields(((CanvasItem) item).getCanvas(), disabled);
-                    }
-
-                    if (disabled) {
-                        item.clearValue();
-                        item.redraw();
-                        if (item instanceof ButtonItem) {
-                            item.disable();
-                        }
+                        clearValues(((CanvasItem) item).getCanvas());
                     } else {
-                        if (item instanceof ButtonItem) {
-                            item.enable();
-                        }
+                        item.clearValue();
                     }
                 }
-                value.setDisabled(disabled);
-                value.markForRedraw();
             }
         }
     }

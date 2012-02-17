@@ -25,9 +25,9 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

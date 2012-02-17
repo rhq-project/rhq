@@ -1,10 +1,11 @@
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0.4//EN"
-    "http://google-web-toolkit.googlecode.com/svn/tags/2.0.4/distro-source/core/src/gwt-module.dtd">
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.4.0//EN"
+    "http://google-web-toolkit.googlecode.com/svn/tags/2.4.0/distro-source/core/src/gwt-module.dtd">
 
 <module>
 
     <inherits name='com.google.gwt.user.User'/>
     <inherits name='com.google.gwt.i18n.I18N'/>
+    <inherits name="com.google.gwt.logging.Logging"/>
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
@@ -15,59 +16,29 @@
     <!-- precompress .html, .js, and .css files -->
     <!--<inherits name="com.google.gwt.precompress.Precompress"/>-->
 
-    <!-- removing this, we can add it back if we find something that looks odd. But,
-         1) it seemed like a trouble spot during initial load for certain IE configurations
-         2) we probably don't want to be defaulting to GWT standards as opposed to SmartGWT.
-    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-    -->
-    <!--
-     <inherits name="com.smartclient.theme.graphite.Graphite"/>
-    -->
 
     <inherits name='ca.nanometrics.gflot.GFlot'/>
 
-    <!--
-     <inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>
-    -->
 
-    <!-- ============================ gwt-log ============================= -->
+    <!-- ============================ gwt logging ============================= -->
+    <set-property name="gwt.logging.enabled" value="TRUE"/>
+    <!-- FINE ~= DEBUG in gwt-log -->
+    <set-property name="gwt.logging.logLevel" value="FINE"/>
+    <set-property name="gwt.logging.consoleHandler" value="ENABLED" />
+    <set-property name="gwt.logging.developmentModeHandler" value="ENABLED" />
+    <set-property name="gwt.logging.firebugHandler" value="ENABLED" />
+    <set-property name="gwt.logging.hasWidgetsHandler" value="DISABLED" />
+    <set-property name="gwt.logging.popupHandler" value="DISABLED" />
+    <set-property name="gwt.logging.systemHandler" value="ENABLED" />
+    <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
-    <!-- For development, a default of 'DEBUG' is recommended. -->
-    <!-- <inherits name="com.allen_sauer.gwt.log.gwt-log-DEBUG" />-->
-    <inherits name="com.allen_sauer.gwt.log.gwt-log-TRACE" />
 
-    <!-- For production, most teams prefer to set the default log level to 'OFF'. -->
-    <!--<inherits name="com.allen_sauer.gwt.log.gwt-log-OFF" />-->
-
-    <!--
-    Enable experimental WindowLogger, which logs messages to a separate
-    popup window. There are currently a couple of restrictions:
-
-    1. When Firefox is configured to open new Windows as new tabs,
-       WindowLogger does not work
-    2. In hosted mode, the windows are not automatically closed,
-       although you can easily close them manually in the usual way
-    -->
-    <!-- When enabled FireFox is hard to use due to excessive popup window generation
-
-    <set-property name="log_WindowLogger" value="ENABLED" />
-    -->
-
-    <!--
-    You probably will want to disable the default `DivLogger` as well:
-    -->
-    <set-property name="log_DivLogger" value="DISABLED" />
 
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE6">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-        <when-property-is name="user.agent" value="ie6"/>
-    </replace-with>
-    
-    
+
     <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
@@ -83,24 +54,23 @@
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.
-         As of GWT 2.0.4, the recognized agents (defined in
+         As of GWT 2.4.0 the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
-           ie6: IE6/IE7
-           ie8: IE8 and later
-           gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
+           ie8: IE8
+           ie9: IE9 (new support for IE9 with GWT 2.3.0+)
            gecko1_8: FF2 and later
            safari: Safari/Chrome
            opera: Opera
 
-         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=EmulateIE7" HTTP header in CoreGUI.html, IE8 and later
-                 will emulate IE7, and so in order to run on IE8 and later, "ie6" must be specified, rather than "ie8".
+         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
+                 will emulate IE8
 
          Multiple agents can be specified as a comma-delimited list.
 
          The gwt.userAgent property is substituted by the Maven resources plugin
          during the resources phase. The default value (defined in coregui/pom.xml)
-         is "ie6,ie8,gecko1_8,safari,opera" (i.e. all supported browsers, except FF1).
+         is "ie8,ie9,gecko1_8,safari,opera"
          To override this value, specify the gwt.userAgent property on the mvn
          command line (e.g. -Dgwt.userAgent=gecko1_8) or in your ~/.m2/settings.xml.
     -->
@@ -119,7 +89,14 @@
          message bundles. To override this value, specify the gwt.locale property on the
          mvn command line (e.g. -Dgwt.locale=default) or in your ~/.m2/settings.xml.
     -->
+
     <extend-property name="locale" values="${gwt.locale}" />
+    <!-- we want meta to override useragent so that we can set the <meta name="gwt:property" content="locale=en">
+        queryparam is still first priority so that ?locale=de overrides everything else.
+    -->
+    <set-configuration-property name="locale.usemeta" value="Y"/>
+    <set-configuration-property name="locale.useragent" value="Y"/>
+    <set-configuration-property name="locale.searchorder" value="queryparam,meta,useragent,cookie"/>
 
     <!-- If the locale specified by the user, via the "locale" query string parameter, is not supported, fallback to
          "en", rather than the "default" locale. -->

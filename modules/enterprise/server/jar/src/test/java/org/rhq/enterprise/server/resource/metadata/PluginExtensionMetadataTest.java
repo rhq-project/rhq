@@ -38,6 +38,7 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
     private static final String PROCESS_SCAN_QUERY = "process|basename|match=A.exe";
     private static final String OP_NAME = "A-op";
     private static final String METRIC_PROP = "A-metric";
+    private static final long METRIC_DEFAULT_INTERVAL = 123456L;
     private static final String EVENT_NAME = "A-event";
     private static final String RC_PROP = "A-rc-prop";
     private static final String DRIFT_DEF_NAME = "A-drift-def";
@@ -59,10 +60,46 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
     public void testRegisterPlugins() throws Exception {
         registerParentPluginV1();
         registerChildPluginV1();
+        registerParentPluginV2();
+        checkChildPlugin();
     }
 
     private void registerParentPluginV1() throws Exception {
-        ResourceType resourceType;
+        // register the plugin, load the new type and test to make sure its what we expect
+        createPlugin("parent-plugin.jar", "1.0", "parent_plugin_v1.xml");
+        ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
+        assert resourceType.getName().equals(TYPE_NAME_PARENT);
+        assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);
+        assertVersion1(resourceType);
+    }
+
+    private void registerChildPluginV1() throws Exception {
+        // register the plugin, load the new type and test to make sure its what we expect
+        createPlugin("child-plugin.jar", "1.0", "child_plugin_v1.xml");
+        ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD, PLUGIN_NAME_CHILD);
+        assert resourceType.getName().equals(TYPE_NAME_CHILD);
+        assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD);
+        assertVersion1(resourceType);
+    }
+
+    private void registerParentPluginV2() throws Exception {
+        // register the plugin, load the new type and test to make sure its what we expect
+        createPlugin("parent-plugin.jar", "2.0", "parent_plugin_v2.xml");
+        ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
+        assert resourceType.getName().equals(TYPE_NAME_PARENT);
+        assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);
+        assertVersion2(resourceType);
+    }
+
+    private void checkChildPlugin() throws Exception {
+        // load the child type and test to make sure it has been updated to what we expect
+        ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD, PLUGIN_NAME_CHILD);
+        assert resourceType.getName().equals(TYPE_NAME_CHILD);
+        assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD);
+        assertVersion2(resourceType);
+    }
+
+    private void assertVersion1(ResourceType resourceType) {
         PropertyGroupDefinition group;
         PropertyDefinition prop;
         ProcessScan processScan;
@@ -73,17 +110,6 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         BaseDirectory driftBasedir;
         ResourceTypeBundleConfiguration bundle;
         BundleDestinationBaseDirectory bundleBasedir;
-
-        // register the plugin
-        createPlugin("parent-plugin.jar", "1.0", "parent_plugin_v1.xml");
-
-        // load the new resource type that was just registered
-        resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
-
-        // now test to make sure all metadata was created as expected
-        assert resourceType.getName().equals(TYPE_NAME_PARENT);
-        assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);
-
         assert resourceType.getChildSubCategories().size() == 1;
         assert resourceType.getChildSubCategories().get(0).getName().equals(SUBCAT);
 
@@ -129,8 +155,7 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         assert bundleBasedir.getValueName().equals(BUNDLE_BASEDIR_VALUE);
     }
 
-    private void registerChildPluginV1() throws Exception {
-        ResourceType resourceType;
+    private void assertVersion2(ResourceType resourceType) {
         PropertyGroupDefinition group;
         PropertyDefinition prop;
         ProcessScan processScan;
@@ -141,17 +166,6 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         BaseDirectory driftBasedir;
         ResourceTypeBundleConfiguration bundle;
         BundleDestinationBaseDirectory bundleBasedir;
-
-        // register the plugin
-        createPlugin("child-plugin.jar", "1.0", "child_plugin_v1.xml");
-
-        // load the new resource type that was just registered
-        resourceType = loadResourceTypeFully(TYPE_NAME_CHILD, PLUGIN_NAME_CHILD);
-
-        // now test to make sure all metadata was created as expected
-        assert resourceType.getName().equals(TYPE_NAME_CHILD);
-        assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD);
-
         assert resourceType.getChildSubCategories().size() == 1;
         assert resourceType.getChildSubCategories().get(0).getName().equals(SUBCAT);
 
@@ -173,6 +187,9 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         assert resourceType.getMetricDefinitions().size() == 1;
         metric = resourceType.getMetricDefinitions().iterator().next();
         assert metric.getName().equals(METRIC_PROP);
+        // even though our _v2 plugin set this to something different, our upgrade doesn't change it because
+        // we don't want to overwrite changes a user possibly made to the defaut interval (aka metric template)
+        assert metric.getDefaultInterval() == METRIC_DEFAULT_INTERVAL;
 
         assert resourceType.getEventDefinitions().size() == 1;
         event = resourceType.getEventDefinitions().iterator().next();

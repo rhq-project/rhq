@@ -387,8 +387,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         newChangeSet.setDriftDefinitionId(changeSet.getDriftDefinitionId());
         
         if (!isTemplateChangeSet(changeSet)) {
-            DriftManagerLocal driftMgr = LookupUtil.getDriftManager();
-            DriftDefinition driftDef = driftMgr.getDriftDefinition(subject, changeSet.getDriftDefinitionId());
+            DriftDefinition driftDef = getDriftDef(subject, changeSet.getDriftDefinitionId());
             if (driftDef == null) {
                 throw new IllegalArgumentException("Cannot persist change set. " +
                         DriftDefinition.class.getSimpleName() + " with id " + changeSet.getDriftDefinitionId() +
@@ -407,9 +406,9 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
             newChangeSet.add(entry);
         }
 
-        Key key = changeSetDAO.save(newChangeSet);
-        ObjectId id = (ObjectId) key.getId();
-        return id.toString();
+        changeSetDAO.save(newChangeSet);
+
+        return newChangeSet.getId();
     }
 
     private boolean isTemplateChangeSet(DriftChangeSet<?> changeSet) {
@@ -418,8 +417,21 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {
-        // TODO Auto-generated method stub
-        return null;
+        // TODO Pass definition name in as an argument
+        // We need to store the definition name to support deletes. This method is invoked
+        // from DriftManagerBean.updateDriftDefinition when creating a definition from a
+        // pinned template. Because the transaction in which the definition is created has
+        // not yet been committed when this method is invoked, we cannot look up the
+        // definition.
+
+        MongoDBChangeSet changeSet = changeSetDAO.findOne("id", new ObjectId(changeSetId));
+        changeSet.setDriftDefinitionId(driftDefId);
+        changeSet.setResourceId(resourceId);
+        changeSet.setId(new ObjectId());
+
+        changeSetDAO.save(changeSet);
+
+        return changeSet.getId();
     }
 
     @Override
@@ -429,5 +441,10 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
             return null;
         }
         return StreamUtil.slurp(file.getInputStream());
+    }
+    
+    private DriftDefinition getDriftDef(Subject subject, int id) {
+        DriftManagerLocal driftMgr = LookupUtil.getDriftManager();
+        return driftMgr.getDriftDefinition(subject, id);
     }
 }

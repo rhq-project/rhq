@@ -94,6 +94,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
                 config.put(new PropertySimple("path", path));
 
                 // get from the domain or other place as soon as the domain provides it.
+                //XXX hardcoded separators?
                 String serverLog = hcConfig.getSimpleValue("baseDir","/tmp")+File.separator+"domain/servers/"+serverInfo.name+"/log/server.log";
                 initLogEventSourcesConfigProp(serverLog,config);
 

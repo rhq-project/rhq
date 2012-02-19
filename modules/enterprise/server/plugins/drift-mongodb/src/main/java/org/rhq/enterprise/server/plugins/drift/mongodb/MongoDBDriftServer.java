@@ -98,6 +98,46 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     private FileDAO fileDAO;
 
+    public Mongo getConnection() {
+        return connection;
+    }
+
+    public void setConnection(Mongo connection) {
+        this.connection = connection;
+    }
+
+    public Morphia getMorphia() {
+        return morphia;
+    }
+
+    public void setMorphia(Morphia morphia) {
+        this.morphia = morphia;
+    }
+
+    public Datastore getDatastore() {
+        return ds;
+    }
+
+    public void setDatastore(Datastore ds) {
+        this.ds = ds;
+    }
+
+    public ChangeSetDAO getChangeSetDAO() {
+        return changeSetDAO;
+    }
+
+    public void setChangeSetDAO(ChangeSetDAO changeSetDAO) {
+        this.changeSetDAO = changeSetDAO;
+    }
+
+    public FileDAO getFileDAO() {
+        return fileDAO;
+    }
+
+    public void setFileDAO(FileDAO fileDAO) {
+        this.fileDAO = fileDAO;
+    }
+
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
         connection = new Mongo("127.0.0.1");
@@ -109,22 +149,19 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public void start() {
-
     }
 
     @Override
     public void stop() {
-
     }
 
     @Override
     public void shutdown() {
-
     }
 
     @Override
     public DriftChangeSetSummary saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip)
-        throws Exception {
+            throws Exception {
 
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
 
@@ -197,8 +234,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 // in effect suspend drift detection (for the particular definition) until
                 // it receives the ACK. Secondly, we need to tell the agent to send the
                 // actual file bits for any change set content we do not have.
-                AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
-                DriftAgentService driftService = agent.getDriftAgentService();
+                DriftAgentService driftService = getDriftAgentService(resourceId);
                 driftService.ackChangeSet(headers.getResourceId(), headers.getDriftDefinitionName());
                 if (!missingContent.isEmpty()) {
                     driftService.requestDriftFiles(resourceId, headers, missingContent);
@@ -209,6 +245,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         });
 
         return summary;
+    }
+    
+    protected DriftAgentService getDriftAgentService(int resourceId) {
+        AgentClient agent = getAgentManager().getAgentClient(getSubjectManager().getOverlord(), resourceId);
+        return agent.getDriftAgentService();
     }
 
     private DriftFileDTO newDriftFile(String hash) {

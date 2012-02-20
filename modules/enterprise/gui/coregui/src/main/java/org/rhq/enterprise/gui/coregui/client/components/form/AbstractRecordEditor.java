@@ -299,7 +299,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                     }
 
                     message = new Message(conciseMessage, detailedMessage);
-                    CoreGUI.goToView(getListViewPath(), message);
+                    CoreGUI.goToView(getListViewPath(), message, true);
                 } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
                     Message message = new Message(MSG.widget_recordEditor_error_operationInvalidValues(),
                         Message.Severity.Error);

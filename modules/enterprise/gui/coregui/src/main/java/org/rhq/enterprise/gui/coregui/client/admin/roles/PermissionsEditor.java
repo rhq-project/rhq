@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.smartgwt.client.core.RefDataClass;
 import com.smartgwt.client.data.Record;
@@ -34,7 +33,6 @@ import com.smartgwt.client.types.ListGridEditEvent;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -168,14 +166,17 @@ public class PermissionsEditor extends LocatableVStack {
         ListGridRecord record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSecurity(),
             "global/Locked", Permission.MANAGE_SECURITY, MSG.view_adminRoles_permissions_permDesc_manageSecurity());
         records.add(record);
+
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageInventory(),
             "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY,
             MSG.view_adminRoles_permissions_permDesc_manageInventory());
         records.add(record);
+
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSettings(),
             "subsystems/configure/Configure", Permission.MANAGE_SETTINGS,
             MSG.view_adminRoles_permissions_permDesc_manageSettings(productInfo.getShortName()));
         records.add(record);
+
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundles(),
             "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
             MSG.view_adminRoles_permissions_permDesc_manageBundles());
@@ -184,6 +185,11 @@ public class PermissionsEditor extends LocatableVStack {
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
             "subsystems/content/Content", Permission.MANAGE_REPOSITORIES,
             MSG.view_adminRoles_permissions_permDesc_manageRepositories());
+        records.add(record);
+
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(),
+            "global/User", Permission.VIEW_USERS,
+            MSG.view_adminRoles_permissions_permDesc_viewUsers());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));

@@ -94,12 +94,11 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 String logFile = bootLogFile;
 
                 if (homeDir.contains("eap")) {
-                    isEAP=true;
+                    isEAP = true;
                 }
                 if (homeDir.contains("edg")) {
-                    isEDG=true;
+                    isEDG = true;
                 }
-
 
                 if (psName.equals("HostController")) {
 
@@ -112,8 +111,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                             description = "Domain controller for a " + JBOSS_EAP_6 + " domain";
                         else
                             description = "Domain controller for an " + AS7 + " domain";
-                    }
-                    else {
+                    } else {
                         serverName = "HostController"; // TODO make more unique
                         serverNameFull = "HostController";
                         if (isEAP)
@@ -133,8 +131,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     // provide running config
                     String domainConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.DOMAIN);
                     String hostConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.HOST);
-                    config.put(new PropertySimple("domainConfig",domainConfig));
-                    config.put(new PropertySimple("hostConfig",hostConfig));
+                    config.put(new PropertySimple("domainConfig", domainConfig));
+                    config.put(new PropertySimple("hostConfig", hostConfig));
 
                 } else { // Standalone server
                     serverNameFull = homeDir;
@@ -147,15 +145,15 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                         description = "Standalone " + AS7 + " server";
 
                     readStandaloneOrHostXml(psr.getProcessInfo(), false);
-                    if ( serverNameFull.isEmpty()) {
+                    if (serverNameFull.isEmpty()) {
                         // Try to obtain the server name
                         //  -Dorg.jboss.boot.log.file=domain/servers/server-one/log/boot.log
                         // This is a hack until I know a better way to do so.
                         //XXX hardcoded separators?
                         String tmp = getLogFileFromCommandLine(commandLine);
-                        int i = tmp.indexOf("servers/");
+                        int i = tmp.indexOf("servers" + File.separator);
                         tmp = tmp.substring(i + 8);
-                        tmp = tmp.substring(0, tmp.indexOf("/"));
+                        tmp = tmp.substring(0, tmp.indexOf(File.separator));
                         serverNameFull = tmp;
 
                     }
@@ -168,42 +166,41 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     if (serverName.isEmpty())
                         serverName = serverNameFull;
 
-
                     String serverConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.STANDALONE);
-                    config.put(new PropertySimple("config",serverConfig));
-                    config.put(new PropertySimple("startScript",AS7Mode.STANDALONE.getStartScript()));
+                    config.put(new PropertySimple("config", serverConfig));
+                    config.put(new PropertySimple("startScript", AS7Mode.STANDALONE.getStartScript()));
 
                     fillUserPassFromFile(config, AS7Mode.STANDALONE, serverNameFull);
 
                     //preload server.log file for event log monitoring
-                    logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf(File.separator)) + File.separator + "server.log";
+                    logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf(File.separator)) + File.separator
+                        + "server.log";
                 }
 
                 if (isEAP) {
                     serverName = "EAP " + serverName;
-                    version="EAP " + version;
-                }
-                else if (isEDG) {
+                    version = "EAP " + version;
+                } else if (isEDG) {
                     serverName = "EDG " + serverName;
-                    version="EDG " + version;
+                    version = "EDG " + version;
 
                 }
-
 
                 initLogEventSourcesConfigProp(logFile, config);
 
                 HostPort managmentPort = getManagementPortFromHostXml(commandLine);
                 config.put(new PropertySimple("hostname", managmentPort.host));
                 config.put(new PropertySimple("port", managmentPort.port));
-                config.put(new PropertySimple("realm",getManagementSecurtiyRealmFromHostXml()));
+                config.put(new PropertySimple("realm", getManagementSecurtiyRealmFromHostXml()));
 
-                ProductInfo productInfo = new ProductInfo(managmentPort.host,config.getSimpleValue("user",null),config.getSimpleValue("password",null),managmentPort.port);
+                ProductInfo productInfo = new ProductInfo(managmentPort.host, config.getSimpleValue("user", null),
+                    config.getSimpleValue("password", null), managmentPort.port);
                 productInfo = productInfo.getFromRemote();
                 if (productInfo.fromRemote) {
                     version = productInfo.productName + " " + productInfo.productVersion;
-                    serverName = productInfo.productName + " " +  productInfo.serverName;
+                    serverName = productInfo.productName + " " + productInfo.serverName;
                     String tmp = getServerDescr(productInfo.getProductName());
-                    description = "Standalone " + tmp +" server";
+                    description = "Standalone " + tmp + " server";
                 }
 
                 //            String javaClazz = psr.getProcessInfo().getName();
@@ -224,15 +221,15 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                     serverNameFull, // key TODO distinguish per domain?
                     serverName, // Name
-                    version,
-                    description, // Description
+                    version, description, // Description
                     config, psr.getProcessInfo());
 
                 // Add to return values
                 discoveredResources.add(detail);
                 log.info("Discovered new ...  " + discoveryContext.getResourceType() + ", " + serverNameFull);
             } catch (Exception e) {
-                log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + psr + " :" + e.getMessage());
+                log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + psr + " :"
+                    + e.getMessage());
             }
         }
 
@@ -262,14 +259,14 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
      */
     @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
-                                                      ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
 
-        String hostname = pluginConfiguration.getSimpleValue("hostname",null);
-        String portS = pluginConfiguration.getSimpleValue("port",null);
-        String user = pluginConfiguration.getSimpleValue("user",null);
-        String pass = pluginConfiguration.getSimpleValue("password",null);
+        String hostname = pluginConfiguration.getSimpleValue("hostname", null);
+        String portS = pluginConfiguration.getSimpleValue("port", null);
+        String user = pluginConfiguration.getSimpleValue("user", null);
+        String pass = pluginConfiguration.getSimpleValue("password", null);
 
-        if (hostname==null || portS==null) {
+        if (hostname == null || portS == null) {
             throw new InvalidPluginConfigurationException("Host and port must not be null");
         }
         int port = Integer.valueOf(portS);
@@ -284,40 +281,32 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             description = "Standalone JBoss Enterprise Application Platform server";
         } else if (productName.contains("EDG")) {
             description = "Standalone JBoss Enterprise DataGrid server";
-        }
-        else
+        } else
             description = context.getResourceType().getDescription();
 
-        pluginConfiguration.put(new PropertySimple("manuallyAdded",true));
+        pluginConfiguration.put(new PropertySimple("manuallyAdded", true));
 
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                context.getResourceType(),
-                resourceKey,
-                productName + " @ " + hostname + ":" + port,
-                productVersion,
-                description,
-                pluginConfiguration,
-                null
-        );
+        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
+            productName + " @ " + hostname + ":" + port, productVersion, description, pluginConfiguration, null);
 
         return detail;
     }
 
     private String getServerAttribute(ASConnection connection, String attributeName) {
-        Operation op = new ReadAttribute(null,attributeName);
+        Operation op = new ReadAttribute(null, attributeName);
         Result res = connection.execute(op);
         if (!res.isSuccess()) {
-            throw new InvalidPluginConfigurationException("Could not connect to remote server [" + res.getFailureDescription() + "]. Did you enable management?");
+            throw new InvalidPluginConfigurationException("Could not connect to remote server ["
+                + res.getFailureDescription() + "]. Did you enable management?");
         }
         return (String) res.getResult();
     }
 
     private void fillUserPassFromFile(Configuration config, AS7Mode mode, String baseDir) {
 
-//        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
+        //        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
         String realm = getManagementSecurtiyRealmFromHostXml();
-        String fileName = getSecurityPropertyFileFromHostXml(baseDir,mode, realm);
-
+        String fileName = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 
         File file = new File(fileName);
         if (!file.exists() || !file.canRead()) {
@@ -342,7 +331,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 String user = line.substring(0, line.indexOf("="));
                 String pass = line.substring(line.indexOf("=") + 1);
                 config.put(new PropertySimple("user", user));
-//                config.put(new PropertySimple("password", pass));  // this is now hashed, so no point in supplying it
+                //                config.put(new PropertySimple("password", pass));  // this is now hashed, so no point in supplying it
 
             }
         } catch (IOException e) {
@@ -387,9 +376,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
      */
     String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
         String configArg = mode.getConfigArg();
-        for (String line: commandLine) {
+        for (String line : commandLine) {
             if (line.startsWith(configArg))
-                return line.substring(configArg.length()+1);
+                return line.substring(configArg.length() + 1);
         }
         return mode.getDefaultXmlFile();
     }
@@ -458,33 +447,28 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             try {
                 productVersion = getServerAttribute(connection, "product-version");
                 productName = getServerAttribute(connection, "product-name");
-                releaseVersion = getServerAttribute(connection,"release-version");
-                releaseCodeName = getServerAttribute(connection,"release-codename");
-                serverName = getServerAttribute(connection,"name");
+                releaseVersion = getServerAttribute(connection, "release-version");
+                releaseCodeName = getServerAttribute(connection, "release-codename");
+                serverName = getServerAttribute(connection, "name");
                 if (productVersion == null)
                     productVersion = releaseVersion;
-                if (productName ==null)
+                if (productName == null)
                     productName = "AS7";
 
                 fromRemote = true;
-            }
-            catch (InvalidPluginConfigurationException e) {
-                log.debug("Could not get the product info from [" + hostname + ":" + port +"] - probably a connection failure");
+            } catch (InvalidPluginConfigurationException e) {
+                log.debug("Could not get the product info from [" + hostname + ":" + port
+                    + "] - probably a connection failure");
             }
             return this;
         }
 
         @Override
         public String toString() {
-            return "ProductInfo{" +
-                    "hostname='" + hostname + '\'' +
-                    ", port=" + port +
-                    ", productVersion='" + productVersion + '\'' +
-                    ", productName='" + productName + '\'' +
-                    ", releaseVersion='" + releaseVersion + '\'' +
-                    ", releaseCodeName='" + releaseCodeName + '\'' +
-                    ", fromRemote=" + fromRemote +
-                    '}';
+            return "ProductInfo{" + "hostname='" + hostname + '\'' + ", port=" + port + ", productVersion='"
+                + productVersion + '\'' + ", productName='" + productName + '\'' + ", releaseVersion='"
+                + releaseVersion + '\'' + ", releaseCodeName='" + releaseCodeName + '\'' + ", fromRemote=" + fromRemote
+                + '}';
         }
     }
 }

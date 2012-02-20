@@ -3944,7 +3944,7 @@
                 <!-- Remove an obsolete drift table that may be hanging around -->
                 <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" />
                 
-                <!-- Remove an unwanted null consraint -->
+                <!-- Remove an unwanted null constraint -->
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_DEFINITION_ID" nullable="TRUE" />                
             </schemaSpec>
 
@@ -3956,7 +3956,16 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
+            <schemaSpec version="2.119">
+                <schema-directSQL>
+                    <statement desc="Adding VIEW_USERS global permission to all existing roles">
+                        INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
+                        SELECT r.ID, 17 FROM RHQ_ROLE r WHERE r.ID > 2
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

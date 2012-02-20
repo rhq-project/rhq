@@ -12,22 +12,22 @@
             class="ParentComponent">
 
         <subcategories>
-            <subcategory name="A-subcat" />
+            <subcategory name="A-subcat" displayName="a subcat"/>
         </subcategories>
 
         <plugin-configuration>
-            <c:group name="A-pc-group">
-                <c:simple-property name="A-pc-prop" description="test plugin config prop" default="A-pcdefault" />
+            <c:group name="A-pc-group" hiddenByDefault="true">
+                <c:simple-property name="A-pc-prop" description="test plugin config prop" required="false"  />
             </c:group>
         </plugin-configuration>
 
         <process-scan name="A-process-scan" query="process|basename|match=A.exe"/>
-        <operation name="A-op"></operation>
+        <operation name="A-op" timeout="123456" description="a op"></operation>
         <metric property="A-metric" defaultInterval="123456"></metric>
-        <event name="A-event"></event>
+        <event name="A-event" description="a event"></event>
 
         <resource-configuration>
-            <c:simple-property name="A-rc-prop" description="test resource config prop" default="A-rcdefault" />
+            <c:simple-property name="A-rc-prop" description="test resource config prop" required="false" />
         </resource-configuration>
 
         <drift-definition name="A-drift-def">

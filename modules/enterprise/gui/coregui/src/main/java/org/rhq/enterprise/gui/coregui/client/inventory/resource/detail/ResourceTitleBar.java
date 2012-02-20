@@ -29,6 +29,7 @@ import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -200,6 +201,13 @@ public class ResourceTitleBar extends LocatableVLayout {
                 winModal.centerInPage();
                 winModal.setTitle(MSG.common_title_component_errors());
 
+                Label disposalReminder = new Label();
+                disposalReminder.setHeight(12);
+                disposalReminder.setPadding(4);
+                disposalReminder.setAlign(Alignment.CENTER);
+                disposalReminder.setValign(VerticalAlignment.CENTER);
+                disposalReminder.setContents(MSG.view_resource_title_component_errors_cleanup());
+
                 LocatableVLayout form = new LocatableVLayout(extendLocatorId("_Modal_Form"));
                 form.setAlign(VerticalAlignment.CENTER);
                 form.setLayoutMargin(10);
@@ -215,7 +223,9 @@ public class ResourceTitleBar extends LocatableVLayout {
                 errorsGrid.setDataSource(errors);
 
                 form.addMember(errorsGrid);
+                winModal.addItem(disposalReminder);
                 winModal.addItem(form);
+                winModal.setPadding(2);
 
                 winModal.show();
             }

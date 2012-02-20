@@ -71,4 +71,20 @@ public class MongoDBFile implements Serializable, DriftFile {
         this.status = status;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MongoDBFile that = (MongoDBFile) o;
+
+        if (hash != null ? !hash.equals(that.hash) : that.hash != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return hash != null ? hash.hashCode() : 0;
+    }
 }

@@ -24,6 +24,7 @@ import java.util.List;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
+import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
 import org.jmock.Expectations;
@@ -32,7 +33,9 @@ import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -43,37 +46,32 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.test.JMockTest;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static java.util.Arrays.asList;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
+import static org.testng.Assert.assertEquals;
 
-public class MongoDBDriftServerTest extends JMockTest {
-
-    Mongo connection;
-
-    Morphia morphia;
-
-    Datastore ds;
-    
-    String db = "rhqtest";
+public class MongoDBDriftServerTest extends MongoDBTest {
 
     MessageDigestGenerator digestGenerator;
     
     @BeforeClass
-    public void initDB() throws Exception {
-        connection = new Mongo("127.0.0.1");
-        morphia = new Morphia().map(MongoDBChangeSet.class).map(MongoDBChangeSetEntry.class).map(MongoDBFile.class);
-        ds = morphia.createDatastore(connection, db);
-
+    public void initClass() throws Exception {
         digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
     }
     
     @BeforeMethod
     public void initTest() {
+        Query deleteAll = ds.createQuery(MongoDBChangeSet.class);
+        ds.delete(deleteAll);
+
         File basedir = getBaseDir();
         basedir.delete();
         getBaseDir().mkdirs();
@@ -103,7 +101,7 @@ public class MongoDBDriftServerTest extends JMockTest {
         driftServer.setConnection(connection);
         driftServer.setMorphia(morphia);
         driftServer.setDatastore(ds);
-        driftServer.setChangeSetDAO(new ChangeSetDAO(morphia, connection, db));
+        driftServer.setChangeSetDAO(new ChangeSetDAO(morphia, connection, "rhqtest"));
         driftServer.setFileDAO(new FileDAO(ds.getDB()));
         
         final List<? extends DriftFile> missingContent = asList(new TestDriftFile(sha256("1a2b3c4d")));
@@ -120,6 +118,26 @@ public class MongoDBDriftServerTest extends JMockTest {
         // We can pass null for the subject because MongoDBDriftServer currently does not
         // use the subject argument.
         driftServer.saveChangeSet(null, resourceId, changeSetZip);
+        
+        // verify that the change set was persisted
+        ChangeSetDAO changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
+        List<MongoDBChangeSet> actual = changeSetDAO.find().asList();
+        
+        MongoDBChangeSet changeSet = new MongoDBChangeSet();
+        changeSet.setDriftDefinitionId(driftDefId);
+        changeSet.setResourceId(resourceId);
+        changeSet.setDriftDefinitionName(driftDefName);
+        changeSet.setCategory(COVERAGE);
+        changeSet.setVersion(0);
+        changeSet.setDriftHandlingMode(plannedChanges);
+
+        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("1.txt", FILE_ADDED);
+        entry.setNewFileHash(sha256("1a2b3c4d"));
+        changeSet.add(entry);
+        
+        List<MongoDBChangeSet> expected = asList(changeSet);
+
+        assertEquals(actual.size(), 1, "Expected to find one change set");
     }
     
     protected File createChangeSetZipFile(Headers headers, FileEntry... fileEntries) throws Exception {

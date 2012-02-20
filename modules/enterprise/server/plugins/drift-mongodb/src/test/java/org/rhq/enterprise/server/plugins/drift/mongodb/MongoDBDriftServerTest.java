@@ -80,7 +80,7 @@ public class MongoDBDriftServerTest extends JMockTest {
     }
 
     @Test
-    public void saveInitialChangeSet() throws Exception {
+    public void persistChangeSetWithContentNotInDB() throws Exception {
         int driftDefId = 1;
         final String driftDefName = "saveInitialChangeSet";        
         final int resourceId = 1;
@@ -106,13 +106,14 @@ public class MongoDBDriftServerTest extends JMockTest {
         driftServer.setChangeSetDAO(new ChangeSetDAO(morphia, connection, db));
         driftServer.setFileDAO(new FileDAO(ds.getDB()));
         
-        final List<? extends DriftFile> missingContent = asList(newDriftFile(sha256("1a2b3c4d")));
+        final List<? extends DriftFile> missingContent = asList(new TestDriftFile(sha256("1a2b3c4d")));
 
         final DriftAgentService driftAgentService = context.mock(DriftAgentService.class);
         context.checking(new Expectations() {{
-            allowing(driftAgentService).ackChangeSet(resourceId, driftDefName);
-            allowing(driftAgentService).requestDriftFiles(with(resourceId), with(any(Headers.class)), 
-                    with(any(List.class)));
+            exactly(1).of(driftAgentService).ackChangeSet(resourceId, driftDefName);
+            // TODO Need to verify that we send the correct headers to the agent
+            exactly(1).of(driftAgentService).requestDriftFiles(with(resourceId), with(any(Headers.class)),
+                    with(missingContent));
         }});
         driftServer.setDriftAgentService(driftAgentService);
         
@@ -182,6 +183,45 @@ public class MongoDBDriftServerTest extends JMockTest {
         
         public void setDriftAgentService(DriftAgentService driftAgentService) {
             this.driftAgentService = driftAgentService;
+        }
+    }
+
+    /**
+     * {@link DriftFileDTO} does not implement equals/hashCode which makes some of the 
+     * verification a little tricky in situations where collections of DriftFile objects
+     * are getting passed around. This subclass implements equals and hashCode.
+     */
+    private static class TestDriftFile extends DriftFileDTO {
+
+        public TestDriftFile(String hash) {
+            super();
+            setHashId(hash);
+        }
+
+        /**
+         * Equality is based soley on the {@link #getHashId() hashId} property.
+         *
+         * @param o The object to compare against
+         * @return true if the object is a TestDriftFile and has the same hashId.
+         */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || !(o instanceof DriftFileDTO)) return false;
+
+            DriftFileDTO that = (DriftFileDTO) o;
+
+            if (!getHashId().equals(that.getHashId())) return false;
+
+            return true;
+        }
+
+        /**
+         * @return A hash code based on the {@link #getHashId() hashId} property.
+         */
+        @Override
+        public int hashCode() {
+            return getHashId().hashCode();
         }
     }
          

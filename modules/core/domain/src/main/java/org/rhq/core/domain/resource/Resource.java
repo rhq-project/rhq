@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -976,7 +976,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
     @OrderBy
     // primary key
-    private Set<Resource> childResources = new LinkedHashSet<Resource>();
+    private Set<Resource> childResources = new HashSet<Resource>();
 
     // LAZY fetch otherwise this will recursively call all parents until null is found
     @JoinColumn(name = "PARENT_RESOURCE_ID", nullable = true)
@@ -1181,7 +1181,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * Using the current settings for resource field set the encoded ancestry string. This method
      * is called automatically from {@link #setParentResource(Resource)} because the parent defines the ancestry.
      * The parent should be an attached entity to ensure access to all necessary information. If the parent is
-     * not a persisted entity, or if it lacks the required information, the update will be skipped.<br/><br.>
+     * not a persisted entity, or if it lacks the required information, the update will be skipped.
      * It can also be called at any time the ancestry has changed, for example, if a resource name has
      * been updated.
      *  
@@ -1362,6 +1362,7 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.location = location;
     }
 
+    @NotNull
     public Set<Resource> getChildResources() {
         return this.childResources;
     }
@@ -1376,10 +1377,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     public void setChildResources(Set<Resource> children) {
-        if (children == null) {
-            children = new LinkedHashSet<Resource>();
-        }
-        this.childResources = children;
+        // Never allow this.childResources to become null, so we can guarantee getChildResources() will always return a
+        // non-null value.
+        this.childResources = (children != null) ? children : new HashSet<Resource>();
     }
 
     @Nullable

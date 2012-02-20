@@ -148,7 +148,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
     private void discoverForResourceRecursive(Resource parent, InventoryReport report) throws PluginContainerException {
         Set<Resource> children = parent.getChildResources();
-        if (children != null && !children.isEmpty()) {
+        if (!children.isEmpty()) {
             Set<Resource> childrenCopy = new HashSet<Resource>(children); // prevent concurrent mod
             for (Resource child : childrenCopy) {
                 // See if the child has new children itself. Then we check those children to see if there are grandchildren.
@@ -289,7 +289,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     // TODO: Move this to InventoryManager, so it can be used by AutoDiscoveryExecutor too.
     private void removeStaleResources(Resource parent, ResourceType childResourceType,
         Map<String, Resource> mergedResources) {
-        Set<Resource> existingChildResources = new HashSet<Resource>(parent.getChildResources()); // wrap in new HashSet to avoid CMEs
+        Set<Resource> existingChildResources = parent.getChildResources();
         for (Resource existingChildResource : existingChildResources) {
             // NOTE: If inside Agent, only remove Resources w/ id == 0. Other Resources may still exist in the
             //       the Server's inventory.
@@ -300,7 +300,5 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 this.inventoryManager.removeResourceAndIndicateIfScanIsNeeded(existingChildResource);
             }
         }
-        existingChildResources.clear(); // help GC
-        existingChildResources = null;
     }
 }

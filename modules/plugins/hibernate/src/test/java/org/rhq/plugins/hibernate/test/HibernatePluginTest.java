@@ -112,13 +112,10 @@ public class HibernatePluginTest
          {
             found.add(resource);
          }
-         if (resource.getChildResources() != null)
-         {
-            for (Resource child : found)
-            {
-               found.addAll(findResource(child,typeName));
-            }
-         }
+          for (Resource child : found)
+          {
+             found.addAll(findResource(child,typeName));
+          }
       }
       return found;
    }

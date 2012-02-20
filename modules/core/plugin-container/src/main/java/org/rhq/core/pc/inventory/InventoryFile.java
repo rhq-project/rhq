@@ -139,7 +139,7 @@ public class InventoryFile {
 
     private void removeIgnoredResourcesFromChildren(Resource resource, Set<String> uuidsToIgnore) {
         Set<Resource> children = resource.getChildResources();
-        if (children != null && !children.isEmpty() && !uuidsToIgnore.isEmpty()) {
+        if (!children.isEmpty() && !uuidsToIgnore.isEmpty()) {
             Iterator<Resource> iterator = children.iterator();
             while (iterator.hasNext() && !uuidsToIgnore.isEmpty()) {
                 Resource child = iterator.next();
@@ -164,10 +164,8 @@ public class InventoryFile {
 
                 // now reconnect all its children's types
                 Set<Resource> children = resource.getChildResources();
-                if (children != null) {
-                    for (Resource child : children) {
-                        connectTypes(child, uuidsToIgnore);
-                    }
+                for (Resource child : children) {
+                    connectTypes(child, uuidsToIgnore);
                 }
             } else {
                 log.info("Persisted resource [" + resource + "] has a disabled resource type - will not reconnect it");
@@ -185,10 +183,8 @@ public class InventoryFile {
     private void addAllUUIDsToList(Resource resource, Set<String> list) {
         list.add(resource.getUuid());
         Set<Resource> children = resource.getChildResources();
-        if (children != null) {
-            for (Resource child : children) {
-                addAllUUIDsToList(child, list);
-            }
+        for (Resource child : children) {
+            addAllUUIDsToList(child, list);
         }
         return;
     }

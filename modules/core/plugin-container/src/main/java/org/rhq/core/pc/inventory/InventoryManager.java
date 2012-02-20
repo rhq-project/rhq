@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -840,6 +841,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     static Resource createNewResource(DiscoveredResourceDetails details) {
         Resource resource = new Resource();
+
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceKey(details.getResourceKey());
         resource.setName(details.getResourceName());
@@ -850,8 +852,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Configuration pluginConfiguration = details.getPluginConfiguration();
         ConfigurationUtility.normalizeConfiguration(details.getPluginConfiguration(), details.getResourceType()
             .getPluginConfigurationDefinition());
-
         resource.setPluginConfiguration(pluginConfiguration);
+
+        // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
+        // (i.e. to avoid ConcurrentModificationExceptions).
+        resource.setChildResources(Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>()));
+
         return resource;
     }
 
@@ -1167,9 +1173,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // recursively, but we need to do this now to ensure everything is stopped prior to removing them from inventory
             deactivateResource(resource);
 
-            // put in new set to avoid concurrent mod exceptions
-            Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
-            for (Resource child : children) {
+            for (Resource child : resource.getChildResources()) {
                 scanIsNeeded |= removeResourceAndIndicateIfScanIsNeeded(child);
             }
 
@@ -1724,11 +1728,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     return this.platform;
                 }
             } else {
-                if (parent.getChildResources() != null) {
-                    for (Resource child : parent.getChildResources()) {
-                        if (child != null && matches(resource, child)) {
-                            return child;
-                        }
+                for (Resource child : parent.getChildResources()) {
+                    if (child != null && matches(resource, child)) {
+                        return child;
                     }
                 }
             }
@@ -1861,10 +1863,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         try {
             ResourceContainer container = getResourceContainer(resource);
             if ((container != null) && (container.getResourceComponentState() == ResourceComponentState.STARTED)) {
-                // Copy child Resources to an array and iterate that, rather than iterating the Set, which could cause
-                // a ConcurrentModificationException if another thread tries to modify the Set while we're iterating it.
-                Resource[] childResources = resource.getChildResources().toArray(new Resource[resource.getChildResources().size()]);
-                for (Resource child : childResources) {
+                for (Resource child : resource.getChildResources()) {
                     deactivateResource(child);
                 }
 
@@ -2035,7 +2034,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // performing syncing of the children schedules in one fell swoop
                 Set<Integer> childrenIds = new HashSet<Integer>();
-                for (Resource child : new HashSet<Resource>(resource.getChildResources())) {
+                for (Resource child : resource.getChildResources()) {
                     childrenIds.add(child.getId());
                 }
                 scheduleRequests = configuration.getServerServices().getMeasurementServerService()
@@ -2702,9 +2701,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         refreshResourceComponentState(resourceContainer, pluginConfigUpdated);
 
-        // Recurse... wrap in new HashSet to avoid CMEs
-        Set<Resource> childResources = new HashSet<Resource>(passedResource.getChildResources());
-        for (Resource childResource : childResources) {
+        for (Resource childResource : passedResource.getChildResources()) {
             mergeResource(childResource);
         }
     }

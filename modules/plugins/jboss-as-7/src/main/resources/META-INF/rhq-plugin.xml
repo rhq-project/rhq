@@ -2095,7 +2095,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     </server>
 
 
-    <service name="NetworkInterface"
+    <service name="Network Interface"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
@@ -2126,9 +2126,9 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
-                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               description="Default Interface for these bindings. See Network Interfaces for its definition"
                                required="true">
-                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
             </c:simple-property>
             <!-- note: at domain level there is no port-offset -->
             <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
@@ -2140,7 +2140,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
                     <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
                                        required="false">
-                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                        <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
                     </c:simple-property>
                     <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
                     <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
@@ -2168,9 +2168,9 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
-                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               description="Default Interface for these bindings. See Network Interfaces for its definition"
                                required="true">
-                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
             </c:simple-property>
             <c:list-property name="includes" required="false" readOnly="true"> <!-- read-only until AS7-1467 is fixed -->
                 <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
@@ -2181,7 +2181,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
                     <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
                                        required="false">
-                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                        <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
                     </c:simple-property>
 
                     <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>

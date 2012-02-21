@@ -60,6 +60,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
     private static final AvailabilityType UP = AvailabilityType.UP;
     private static final AvailabilityType DOWN = AvailabilityType.DOWN;
+    private static final AvailabilityType DISABLED = AvailabilityType.DISABLED;
+    private static final AvailabilityType UNKNOWN = AvailabilityType.UNKNOWN;
 
     private AvailabilityManagerLocal availabilityManager;
     private ResourceAvailabilityManagerLocal resourceAvailabilityManager;
@@ -276,9 +278,9 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(), 1,
                 System.currentTimeMillis(), 3, false);
             assert availPoints.size() == 3 : "There is no avail data, but should still get 3 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
-            assert availPoints.get(1).getValue() == DOWN.ordinal(); // aka unknown
-            assert availPoints.get(2).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN;
+            assert availPoints.get(1).getAvailabilityType() == UNKNOWN;
+            assert availPoints.get(2).getAvailabilityType() == UNKNOWN;
 
             long startMillis = 60000;
             Date startDate = new Date(startMillis);
@@ -290,58 +292,58 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(), startMillis,
                 startMillis + 10000, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
-            assert availPoints.get(0).getValue() == UP.ordinal();
-            assert availPoints.get(1).getValue() == UP.ordinal();
-            assert availPoints.get(2).getValue() == UP.ordinal();
+            assert availPoints.get(0).getAvailabilityType() == UP;
+            assert availPoints.get(1).getAvailabilityType() == UP;
+            assert availPoints.get(2).getAvailabilityType() == UP;
 
             // our avail data point is right on the end edge
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 3, startMillis, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(0).getAvailabilityType() == DOWN; // aka unknown
             assert !availPoints.get(0).isKnown() : availPoints;
-            assert availPoints.get(1).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(1).getAvailabilityType() == DOWN; // aka unknown
             assert !availPoints.get(1).isKnown() : availPoints;
-            assert availPoints.get(2).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(2).getAvailabilityType() == DOWN; // aka unknown
             assert !availPoints.get(2).isKnown() : availPoints;
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 20000, startMillis + 10000, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN;
             assert !availPoints.get(0).isKnown() : availPoints;
-            assert availPoints.get(1).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(1).getAvailabilityType() == UNKNOWN;
             assert !availPoints.get(1).isKnown() : availPoints;
-            assert availPoints.get(2).getValue() == UP.ordinal();
+            assert availPoints.get(2).getAvailabilityType() == UP;
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 10000, startMillis + 20000, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal(); // aka unknown
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN;
             assert !availPoints.get(0).isKnown() : availPoints;
-            assert availPoints.get(1).getValue() == UP.ordinal();
+            assert availPoints.get(1).getAvailabilityType() == UP;
             assert availPoints.get(1).isKnown() : availPoints;
-            assert availPoints.get(2).getValue() == UP.ordinal();
+            assert availPoints.get(2).getAvailabilityType() == UP;
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 20000, startMillis + 20000, 10, false);
             assert availPoints.size() == 10 : "There is 1 avail data, but should still get 10 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal() : availPoints; // aka unknown
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN : availPoints;
             assert !availPoints.get(0).isKnown() : availPoints;
-            assert availPoints.get(1).getValue() == DOWN.ordinal() : availPoints;
+            assert availPoints.get(1).getAvailabilityType() == DOWN : availPoints;
             assert !availPoints.get(1).isKnown() : availPoints;
-            assert availPoints.get(2).getValue() == DOWN.ordinal() : availPoints;
+            assert availPoints.get(2).getAvailabilityType() == DOWN : availPoints;
             assert !availPoints.get(2).isKnown() : availPoints;
-            assert availPoints.get(3).getValue() == DOWN.ordinal() : availPoints;
+            assert availPoints.get(3).getAvailabilityType() == DOWN : availPoints;
             assert !availPoints.get(3).isKnown() : availPoints;
-            assert availPoints.get(4).getValue() == DOWN.ordinal() : availPoints;
+            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints;
             assert !availPoints.get(4).isKnown() : availPoints;
-            assert availPoints.get(5).getValue() == UP.ordinal() : availPoints;
+            assert availPoints.get(5).getAvailabilityType() == UP : availPoints;
             assert availPoints.get(5).isKnown() : availPoints;
-            assert availPoints.get(6).getValue() == UP.ordinal() : availPoints;
-            assert availPoints.get(7).getValue() == UP.ordinal() : availPoints;
-            assert availPoints.get(8).getValue() == UP.ordinal() : availPoints;
-            assert availPoints.get(9).getValue() == UP.ordinal() : availPoints;
+            assert availPoints.get(6).getAvailabilityType() == UP : availPoints;
+            assert availPoints.get(7).getAvailabilityType() == UP : availPoints;
+            assert availPoints.get(8).getAvailabilityType() == UP : availPoints;
+            assert availPoints.get(9).getAvailabilityType() == UP : availPoints;
 
             report = new AvailabilityReport(false, theAgent.getName());
             report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 10000), DOWN));
@@ -358,31 +360,31 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 15000, startMillis + 35000, 5, false);
             assert availPoints.size() == 5 : "There is 1 avail data, but should still get 5 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal() : availPoints; // 45000-55000 == unknown=down
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN : availPoints; // 45000-55000 == unknown
             assert !availPoints.get(0).isKnown() : availPoints;
 
             // this next point is on the edge - part was unknown, part was up - because its on the edge, and part of it
             // was UP, we consider the data point UP
-            assert availPoints.get(1).getValue() == UP.ordinal() : availPoints; // 55000-65000 == 55-60=unknown=down, 60-70=up
+            assert availPoints.get(1).getAvailabilityType() == UP : availPoints; // 55000-65000 == 55-60=unknown=down, 60-70=up
             assert availPoints.get(1).isKnown() : availPoints;
 
-            assert availPoints.get(2).getValue() == DOWN.ordinal() : availPoints; // 65000-75000 == 60-70=up, 70-80=down (0.5==down)
-            assert availPoints.get(3).getValue() == DOWN.ordinal() : availPoints; // 75000-85000, 0.5 == down
-            assert availPoints.get(4).getValue() == DOWN.ordinal() : availPoints; // 85000-95000, 0.5 == down
+            assert availPoints.get(2).getAvailabilityType() == DOWN : availPoints; // 65000-75000 == 60-70=up, 70-80=down (0.5==down)
+            assert availPoints.get(3).getAvailabilityType() == DOWN : availPoints; // 75000-85000, 0.5 == down
+            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints; // 85000-95000, 0.5 == down
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 30000, startMillis + 30000, 10, false);
             assert availPoints.size() == 10 : "There is 1 avail data, but should still get 10 availability points";
-            assert availPoints.get(0).getValue() == DOWN.ordinal() : availPoints;
-            assert availPoints.get(1).getValue() == DOWN.ordinal() : availPoints;
-            assert availPoints.get(2).getValue() == DOWN.ordinal() : availPoints;
-            assert availPoints.get(3).getValue() == DOWN.ordinal() : availPoints;
-            assert availPoints.get(4).getValue() == DOWN.ordinal() : availPoints;
-            assert availPoints.get(5).getValue() == UP.ordinal() : availPoints;
-            assert availPoints.get(6).getValue() == DOWN.ordinal() : availPoints; // 0.5
-            assert availPoints.get(7).getValue() == DOWN.ordinal() : availPoints;
-            assert availPoints.get(8).getValue() == DOWN.ordinal() : availPoints; // 0.5
-            assert availPoints.get(9).getValue() == UP.ordinal() : availPoints;
+            assert availPoints.get(0).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(1).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(2).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(3).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(5).getAvailabilityType() == UP : availPoints;
+            assert availPoints.get(6).getAvailabilityType() == DOWN : availPoints; // 0.5
+            assert availPoints.get(7).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(8).getAvailabilityType() == DOWN : availPoints; // 0.5
+            assert availPoints.get(9).getAvailabilityType() == UP : availPoints;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -860,11 +862,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             List<AvailabilityPoint> points = availabilityManager.findAvailabilitiesForResource(overlord,
                 theResource.getId(), date1.getTime(), date6.getTime(), 5, false);
             assert points.size() == 5;
-            assert points.get(0).getValue() == 1;
-            assert points.get(1).getValue() == 0;
-            assert points.get(2).getValue() == 1;
-            assert points.get(3).getValue() == 0;
-            assert points.get(4).getValue() == 1;
+            assert points.get(0).getAvailabilityType() == UP;
+            assert points.get(1).getAvailabilityType() == DOWN;
+            assert points.get(2).getAvailabilityType() == UP;
+            assert points.get(3).getAvailabilityType() == DOWN;
+            assert points.get(4).getAvailabilityType() == UP;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -1075,17 +1077,19 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             time.getTime(), time.getTime() + 1, 1, false);
         assert list != null;
         assert list.size() == 1 : "Should have returned a single point";
-        int typeOrdinal = list.get(0).getValue();
+        AvailabilityType type = list.get(0).getAvailabilityType();
 
-        if (UP.ordinal() == typeOrdinal) {
-            return UP;
+        switch (type) {
+        case UP:
+        case DOWN:
+        case DISABLED:
+        case UNKNOWN:
+            return type;
+
+        default:
+            assert false : "AvailabilityType enum has some additional values not known to this test: " + type;
         }
 
-        if (DOWN.ordinal() == typeOrdinal) {
-            return DOWN;
-        }
-
-        assert false : "AvailabilityType enum has some additional values not known to this test: " + typeOrdinal;
         return null;
     }
 

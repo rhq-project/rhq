@@ -1,32 +1,31 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform;
 
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -40,7 +39,7 @@ import org.rhq.core.system.NetworkAdapterInfo;
 import org.rhq.core.system.NetworkAdapterStats;
 
 public class NetworkAdapterComponent implements ResourceComponent<PlatformComponent>, MeasurementFacet {
-    private final Log log = LogFactory.getLog(NetworkAdapterComponent.class);
+    //private final Log log = LogFactory.getLog(NetworkAdapterComponent.class);
 
     private ResourceContext<PlatformComponent> context;
 
@@ -52,11 +51,16 @@ public class NetworkAdapterComponent implements ResourceComponent<PlatformCompon
     }
 
     public AvailabilityType getAvailability() {
-        if (getInfo().getOperationalStatus() == NetworkAdapterInfo.OperationState.UP) {
+        switch (getInfo().getOperationalStatus()) {
+        case UP:
             return AvailabilityType.UP;
+        case LOWERLAYERDOWN:
+            return AvailabilityType.DOWN;
+        case UNKNOWN:
+            return AvailabilityType.UNKNOWN;
+        default:
+            return AvailabilityType.DISABLED;
         }
-
-        return AvailabilityType.DOWN;
     }
 
     private NetworkAdapterInfo getInfo() {

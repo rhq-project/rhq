@@ -22,7 +22,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -203,9 +215,9 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute(VERSION.propertyName(), res.getVersion());
         record.setAttribute(CATEGORY.propertyName(), res.getResourceType().getCategory().name());
         record.setAttribute("icon", ImageManager.getResourceIcon(res.getResourceType().getCategory(), res
-            .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
-        record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(AVAILABILITY.propertyName(),
+            ImageManager.getAvailabilityIconFromAvailType(res.getCurrentAvailability().getAvailabilityType()));
         record.setAttribute(CTIME.propertyName(), res.getCtime());
         record.setAttribute(ITIME.propertyName(), res.getItime());
         record.setAttribute(MTIME.propertyName(), res.getMtime());

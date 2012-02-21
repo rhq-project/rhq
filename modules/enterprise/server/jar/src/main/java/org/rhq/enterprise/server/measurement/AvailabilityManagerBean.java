@@ -209,7 +209,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             long totalMillis = fullRangeEndTime - fullRangeBeginTime;
             long perPointMillis = totalMillis / numberOfPoints;
             for (int i = numberOfPoints; i >= 0; i--) {
-                availabilityPoints.add(new AvailabilityPoint(i * perPointMillis));
+                availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, i * perPointMillis));
             }
 
             Collections.reverse(availabilityPoints);
@@ -258,13 +258,16 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         long currentTime = fullRangeEndTime;
         int currentAvailabilityIndex = availabilities.size() - 1;
         long timeUpInDataPoint = 0;
+        long timeDisabledInDataPoint = 0;
         boolean hasDownPeriods = false;
+        boolean hasDisabledPeriods = false;
+        boolean hasUnknownPeriods = false;
         long dataPointStartBarrier = fullRangeEndTime - perPointMillis;
 
         while (currentTime > fullRangeBeginTime) {
             if (currentAvailabilityIndex <= -1) {
                 // no more availability data, the rest of the data points are unknown
-                availabilityPoints.add(new AvailabilityPoint(currentTime));
+                availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, currentTime));
                 currentTime -= perPointMillis;
                 continue;
             }
@@ -272,36 +275,64 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             Availability currentAvailability = availabilities.get(currentAvailabilityIndex);
             long availabilityStartBarrier = currentAvailability.getStartTime().getTime();
 
-            if (dataPointStartBarrier >= availabilityStartBarrier) { // the start of the data point comes first or at same time as availability record (remember, we are going backwards in time)
+            // the start of the data point comes first or at same time as availability record (remember, we are going 
+            // backwards in time)
+            if (dataPointStartBarrier >= availabilityStartBarrier) {
 
                 // end the data point
                 if (currentAvailability.getAvailabilityType() == null) {
-                    // we are on the edge of the range, but know that at least one point there was red, so
-                    // we'll be pessimistic and set our entire point down instead of unknown
+                    // we are on the edge of the range, the null avail type means we have an unknown period for
+                    // this data point.  Be pessimistic, if we have had any down time, set to down, then disabled,
+                    // then up, and finally unknown.
                     if (hasDownPeriods) {
                         availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
+
+                    } else if (hasDisabledPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DISABLED, currentTime));
+
+                    } else if (timeUpInDataPoint > 0) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
+
                     } else {
-                        // we are on the edge of the range - if we have ANY data saying we were UP, consider this UP
-                        if (timeUpInDataPoint > 0) {
-                            availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
-                        } else {
-                            // happens when this timeslice only has surrogates or known avails
-                            availabilityPoints.add(new AvailabilityPoint(currentTime)); // unknown
-                        }
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, currentTime));
                     }
                 } else {
-                    // if the resource has been up in the current time frame, bump up the counter
-                    if (currentAvailability.getAvailabilityType() == AvailabilityType.UP) {
+                    // bump up the proper counter or set the proper flag for the current time frame
+                    switch (currentAvailability.getAvailabilityType()) {
+                    case UP:
                         timeUpInDataPoint += currentTime - dataPointStartBarrier;
+                        break;
+                    case DOWN:
+                        hasDownPeriods = true;
+                        break;
+                    case DISABLED:
+                        hasDisabledPeriods = true;
+                        break;
+                    case UNKNOWN:
+                        hasUnknownPeriods = true;
+                        break;
                     }
 
-                    AvailabilityType type = (timeUpInDataPoint != perPointMillis) ? AvailabilityType.DOWN
-                        : AvailabilityType.UP;
-                    availabilityPoints.add(new AvailabilityPoint(type, currentTime));
+                    // if the period has been all green then set it to UP, otherwise, be pessimistic if there is any
+                    // mix of avail types
+                    if (timeUpInDataPoint == perPointMillis) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
+
+                    } else if (hasDownPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
+
+                    } else if (hasDisabledPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DISABLED, currentTime));
+
+                    } else {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, currentTime));
+                    }
                 }
 
                 timeUpInDataPoint = 0;
                 hasDownPeriods = false;
+                hasDisabledPeriods = false;
+                hasUnknownPeriods = false;
 
                 // if we reached the start of the current availability record, move to the previous one (going back in time, remember)
                 if (dataPointStartBarrier == availabilityStartBarrier) {
@@ -311,6 +342,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // move the current time pointer to the next data point and move back to the next data point start time
                 currentTime = dataPointStartBarrier;
                 dataPointStartBarrier -= perPointMillis;
+
             } else { // the end of the availability record comes first, in the middle of a data point
 
                 // if the resource has been up in the current time frame, bump up the counter
@@ -340,12 +372,14 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
             if (context.type == EntityContext.Type.Resource) {
                 newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(subject, context.resourceId);
+
             } else if (context.type == EntityContext.Type.ResourceGroup) {
                 ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(subject,
                     context.groupId);
                 Double firstAvailability = composite.getExplicitAvail();
                 newFirstAvailabilityType = firstAvailability == null ? null
                     : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
+
             } else {
                 // March 20, 2009: we only support the "summary area" for resources and resourceGroups to date
                 // as a result, newFirstAvailabilityType will be a pass-through of the type in oldFirstAvailabilityPoint
@@ -517,13 +551,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // update the last known availability data for this resource
         ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
             .getResource().getId());
-        if (currentAvailability!=null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
+        if (currentAvailability != null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
             // but only update the record if necessary (if the AvailabilityType changed)
             currentAvailability.setAvailabilityType(reported.getAvailabilityType());
             entityManager.merge(currentAvailability);
-        }
-        else if (currentAvailability==null) {
-            currentAvailability = new ResourceAvailability(reported.getResource(),reported.getAvailabilityType());
+        } else if (currentAvailability == null) {
+            currentAvailability = new ResourceAvailability(reported.getResource(), reported.getAvailabilityType());
             entityManager.persist(currentAvailability);
         }
     }

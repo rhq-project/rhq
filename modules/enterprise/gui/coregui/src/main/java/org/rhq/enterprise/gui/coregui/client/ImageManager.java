@@ -198,18 +198,7 @@ public class ImageManager {
         }
 
         ResourceAvailability resourceAvail = resource.getCurrentAvailability();
-        Boolean avail;
-        if (resourceAvail != null) {
-            AvailabilityType availType = resourceAvail.getAvailabilityType();
-            if (availType != null) {
-                avail = Boolean.valueOf(availType == AvailabilityType.UP);
-            } else {
-                avail = null;
-            }
-        } else {
-            avail = null;
-        }
-        return getResourceIcon(category, avail, size);
+        return getResourceIcon(category, resourceAvail.getAvailabilityType(), size);
     }
 
     public static String getClusteredResourceIcon(ResourceCategory category) {
@@ -234,40 +223,46 @@ public class ImageManager {
     }
 
     public static String getResourceIcon(ResourceCategory category) {
-        return getResourceIcon(category, Boolean.TRUE);
+        return getResourceIcon(category, AvailabilityType.UP);
     }
 
     public static String getResourceLargeIcon(ResourceCategory category) {
-        return getResourceLargeIcon(category, Boolean.TRUE);
+        return getResourceLargeIcon(category, AvailabilityType.UP);
     }
 
-    public static String getResourceIcon(ResourceCategory category, Boolean avail) {
+    public static String getResourceIcon(ResourceCategory category, AvailabilityType avail) {
         return getResourceIcon(category, avail, "16");
     }
 
-    public static String getResourceLargeIcon(ResourceCategory category, Boolean avail) {
+    public static String getResourceLargeIcon(ResourceCategory category, AvailabilityType avail) {
         return getResourceIcon(category, avail, "24");
     }
 
-    private static String getResourceIcon(ResourceCategory category, Boolean avail, String size) {
+    private static String getResourceIcon(ResourceCategory category, AvailabilityType avail, String size) {
         String categoryName = null;
         String availName = null;
+
+        if (null == avail) {
+            avail = AvailabilityType.UNKNOWN;
+        }
 
         switch (category) {
         case PLATFORM: {
             categoryName = "Platform";
-            availName = (avail != null && avail.booleanValue()) ? "up" : "down";
+            // platform can only be up or down
+            availName = (AvailabilityType.UP == avail) ? "up" : "down";
             break;
         }
         case SERVER: {
             categoryName = "Server";
-            // only server icons have an explicit "unknown" icon, the others will be assumed down when null
-            availName = (avail != null) ? (avail.booleanValue() ? "up" : "down") : "unknown";
-            break;
+            // no break
         }
         case SERVICE: {
-            categoryName = "Service";
-            availName = (avail != null && avail.booleanValue()) ? "up" : "down";
+            if (null == categoryName) {
+                categoryName = "Service";
+            }
+
+            availName = avail.name().toLowerCase();
             break;
         }
         }
@@ -325,29 +320,51 @@ public class ImageManager {
     }
 
     public static String getAvailabilityIconFromAvailType(AvailabilityType availType) {
-        return getAvailabilityIcon((availType != null) ? Boolean.valueOf(availType == AvailabilityType.UP) : null);
+        return getAvailabilityIconFromAvailTypeAndSize(availType, false);
     }
 
     public static String getAvailabilityLargeIconFromAvailType(AvailabilityType availType) {
-        return getAvailabilityLargeIcon((availType != null) ? Boolean.valueOf(availType == AvailabilityType.UP) : null);
+        return getAvailabilityIconFromAvailTypeAndSize(availType, true);
     }
 
-    /**
-     * Given a Boolean to indicate if something is to be considered available or unavailable, the appropriate
-     * availability icon is returned. If the given Boolean is null, the availability will be considered unknown
-     * and thus the unknown/question icon is returned.
-     * 
-     * @param avail
-     * @return the avail icon
-     */
-    public static String getAvailabilityIcon(Boolean avail) {
-        return "subsystems/availability/availability_" + ((avail == null) ? "grey" : (avail ? "green" : "red"))
-            + "_16.png";
+    private static String getAvailabilityIconFromAvailTypeAndSize(AvailabilityType availType, boolean isLarge) {
+        if (null == availType) {
+            availType = AvailabilityType.UNKNOWN;
+        }
+
+        String color = null;
+        switch (availType) {
+        case UP:
+            color = "green";
+            break;
+        case DOWN:
+            color = "red";
+            break;
+        case DISABLED:
+            color = "yellow";
+            break;
+        case UNKNOWN:
+            color = "grey";
+            break;
+        }
+
+        return "subsystems/availability/availability_" + color + "_" + (isLarge ? "24" : "16") + ".png";
     }
 
-    public static String getAvailabilityLargeIcon(Boolean avail) {
-        return "subsystems/availability/availability_" + ((avail == null) ? "grey" : (avail ? "green" : "red"))
-            + "_24.png";
+    // TODO: Fix this overloading of avail icons, status should have their own icons
+    public static String getAvailabilityIcon(Boolean status) {
+        AvailabilityType availType = (null == status) ? AvailabilityType.UNKNOWN
+            : (Boolean.TRUE == status) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+        return getAvailabilityIconFromAvailTypeAndSize(availType, false);
+    }
+
+    // TODO: Fix this overloading of avail icons, status should have their own icons
+    public static String getAvailabilityLargeIcon(Boolean status) {
+        AvailabilityType availType = (null == status) ? AvailabilityType.UNKNOWN
+            : (Boolean.TRUE == status) ? AvailabilityType.UP : AvailabilityType.DOWN;
+
+        return getAvailabilityIconFromAvailTypeAndSize(availType, true);
     }
 
     /**
@@ -383,6 +400,24 @@ public class ImageManager {
 
     public static String getAvailabilityYellowLargeIcon() {
         return "subsystems/availability/availability_yellow_24.png";
+    }
+
+    public static String getAvailBarImagePath(AvailabilityType availType) {
+
+        switch (availType) {
+        case UP:
+            return "availBar/up.png";
+
+        case DOWN:
+            return "availBar/down.png";
+
+        case DISABLED:
+            return "availBar/disabled.png";
+
+        case UNKNOWN:
+        default:
+            return "availBar/unknown.png";
+        }
     }
 
     public static String getAlertIcon(AlertPriority priority) {
@@ -478,11 +513,12 @@ public class ImageManager {
         if (status == null) {
             status = ResultState.UNKNOWN;
         }
+
         switch (status) {
         case SUCCESS:
-            return ImageManager.getAvailabilityIcon(Boolean.TRUE);
+            return ImageManager.getAvailabilityIcon(true);
         case FAILURE:
-            return ImageManager.getAvailabilityIcon(Boolean.FALSE);
+            return ImageManager.getAvailabilityIcon(false);
         case PARTIAL:
             return ImageManager.getAvailabilityYellowIcon();
         case DEFERRED:

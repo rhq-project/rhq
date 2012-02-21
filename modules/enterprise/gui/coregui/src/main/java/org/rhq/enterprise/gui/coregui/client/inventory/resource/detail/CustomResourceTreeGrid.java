@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
@@ -50,8 +49,8 @@ public class CustomResourceTreeGrid extends LocatableTreeGrid {
                     return ImageManager.getLockedIcon();
                 } else {
                     Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) record).getResource();
-                    boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
-                    return ImageManager.getResourceIcon(resource.getResourceType().getCategory(), up);
+                    return ImageManager.getResourceIcon(resource.getResourceType().getCategory(), resource
+                        .getCurrentAvailability().getAvailabilityType());
                 }
             } else if (record instanceof SubCategoryTreeNode) {
                 return "resources/folder_mixed_" + (open ? "opened" : "closed") + ".png";

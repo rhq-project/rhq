@@ -25,10 +25,13 @@ package org.rhq.core.pluginapi.inventory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,6 +43,7 @@ import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
@@ -60,6 +64,8 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
 @SuppressWarnings("unchecked")
 public class ResourceContext<T extends ResourceComponent<?>> {
     
+    private static final Log LOG = LogFactory.getLog(ResourceContext.class);
+    
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
@@ -76,9 +82,42 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ContentContext contentContext;
     private final Executor availCollectionThreadPool;
     private final PluginContainerDeployment pluginContainerDeployment;
+    private final ResourceTypeProcesses trackedProcesses;
+    
+    private static class Children {
+        public ResourceType resourceType;
+        public String parentResourceUuid;
+        
+        public Children(String parentResourceUuid, ResourceType resourceType) {
+            this.parentResourceUuid = parentResourceUuid;
+            this.resourceType = resourceType;
+        }
+        
+        @Override
+        public int hashCode() {
+            int uuidHashCode = parentResourceUuid == null ? 1 : parentResourceUuid.hashCode();
+            return 31 * uuidHashCode * resourceType.getId();
+        }
+        
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
 
-    private ProcessInfo processInfo;
+            if (!(other instanceof Children)) {
+                return false;
+            }
 
+            Children o = (Children) other;
+
+            return (parentResourceUuid == null ? o.parentResourceUuid == null : parentResourceUuid
+                .equals(o.parentResourceUuid)) && resourceType.equals(o.resourceType);
+        }
+    }
+    
+    private static Map<Children, ResourceTypeProcesses> PROCESSES_PER_PARENT_PER_RESOURCE_TYPE = new HashMap<Children, ResourceTypeProcesses>();
+        
     /**
      * Creates a new {@link ResourceContext} object. The plugin container is responsible for instantiating these
      * objects; plugin writers should never have to actually create context objects.
@@ -135,6 +174,12 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.operationContext = operationContext;
         this.contentContext = contentContext;
         this.availCollectionThreadPool = availCollectorThreadPool;
+        
+        String parentResourceUuid = "";
+        if (resource.getParentResource() != null) {
+            parentResourceUuid = resource.getParentResource().getUuid();
+        }
+        this.trackedProcesses = getTrackedProcesses(parentResourceUuid, resourceType);
     }
 
     /**
@@ -219,46 +264,74 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return information on the resource's process
      */
     public ProcessInfo getNativeProcess() {
-        boolean rediscover = this.processInfo == null;
-
-        if (!rediscover) {
-            //if the process info thinks the process is running,
-            //refresh it to check its facts again
-            if (this.processInfo.isRunning()) {
-                this.processInfo.refresh();
-            }
-            rediscover = !this.processInfo.isRunning();
+        ProcessInfo processInfo = trackedProcesses.getProcessInfo(resourceKey);
+        
+        if (!isRediscoveryRequired(processInfo)) {
+            return processInfo;
         }
+        
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("getNativeProcess(): rediscovery required on resource " + resourceType + " with key " + resourceKey + ", syncing on " + trackedProcesses);
+        }
+        
+        synchronized (trackedProcesses) {
+            //right, we've entered the critical section...
+            //we might have waited for another thread to actually fill in the tracked processes
+            //so let's check again if we really need to run the discovery
+            processInfo = trackedProcesses.getProcessInfo(resourceKey);
 
-        if (rediscover) {
-            //This method is documented to return null if the process can no longer be found.
-            //Let's make sure that's the case and null it out now. The discovery might or might not
-            //reassign it.
-            this.processInfo = null;
-            if (this.resourceDiscoveryComponent != null) {
+            if (isRediscoveryRequired(processInfo)) {
+
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("getNativeProcess(): recheck for rediscovery confirmed the need for it");
+                }
+
                 try {
-                    Set<DiscoveredResourceDetails> details;
-                    ResourceDiscoveryContext<T> context;
+                    Set<DiscoveredResourceDetails> details = Collections.emptySet();
 
-                    context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent, this.parentResourceContext,
-                        this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
-                        getPluginContainerName(), getPluginContainerDeployment());
+                    List<ProcessScanResult> processes = getNativeProcessesForType();
+                    if (!processes.isEmpty()) {
+                        ResourceDiscoveryContext<T> context;
 
-                    details = this.resourceDiscoveryComponent.discoverResources(context);
+                        context =
+                            new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent,
+                                this.parentResourceContext, this.systemInformation, processes, Collections.EMPTY_LIST,
+                                getPluginContainerName(), getPluginContainerDeployment());
 
-                    for (DiscoveredResourceDetails detail : details) {
-                        if (detail.getResourceKey().equals(this.resourceKey)) {
-                            this.processInfo = detail.getProcessInfo();
-                        }
+                        details = this.resourceDiscoveryComponent.discoverResources(context);
+
+                        trackedProcesses.update(details);
+                        processInfo = trackedProcesses.getProcessInfo(resourceKey);
                     }
                 } catch (Exception e) {
-                    LogFactory.getLog(getClass()).warn(
-                        "Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
+                    LOG.warn("Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
                 }
             }
         }
 
-        return this.processInfo;
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("getNativeProcess(): rediscovery done");            
+        }
+        
+        return processInfo;
+    }
+
+    /**
+     * @param processInfo
+     * @return
+     */
+    private boolean isRediscoveryRequired(ProcessInfo processInfo) {
+        boolean rediscover = processInfo == null;
+
+        if (!rediscover) {
+            //if the process info thinks the process is running,
+            //refresh it to check its facts again
+            if (processInfo.isRunning()) {
+                processInfo.refresh();
+            }
+            rediscover = !processInfo.isRunning();
+        }
+        return rediscover;
     }
 
     /**
@@ -401,5 +474,28 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         // notice that we assume we are called with the same context classloader that will be need by the avail checker
         return new AvailabilityCollectorRunnable(availChecker, interval,
             Thread.currentThread().getContextClassLoader(), this.availCollectionThreadPool);
+    }
+    
+    /**
+     * Returns a shared object representing the processes detected for given resource type under given parent.
+     * Note that this comes from a static field so it is shared by any resource contexts representing a
+     * resource of the same type under a single parent. This is to reduce the number of needed discoveries
+     * to a minimum.
+     * 
+     * @param parentResourceUuid
+     * @param resourceType
+     * @return
+     */
+    private static ResourceTypeProcesses getTrackedProcesses(String parentResourceUuid, ResourceType resourceType) {
+        synchronized(PROCESSES_PER_PARENT_PER_RESOURCE_TYPE) {
+            Children key = new Children(parentResourceUuid, resourceType);
+            ResourceTypeProcesses ret = PROCESSES_PER_PARENT_PER_RESOURCE_TYPE.get(key);
+            if (ret == null) {
+                ret = new ResourceTypeProcesses();
+                PROCESSES_PER_PARENT_PER_RESOURCE_TYPE.put(key, ret);
+            }
+            
+            return ret;
+        }
     }
 }

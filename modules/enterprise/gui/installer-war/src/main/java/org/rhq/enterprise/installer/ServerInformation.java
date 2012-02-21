@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.installer;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -26,7 +25,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -62,6 +60,7 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
@@ -690,7 +689,7 @@ public class ServerInformation {
         // first slurp the file contents in memory
         InputStream resourceInStream = this.getClass().getClassLoader().getResourceAsStream(xmlFileName);
         ByteArrayOutputStream contentOutStream = new ByteArrayOutputStream();
-        copyStreamData(resourceInStream, contentOutStream);
+        StreamUtil.copy(resourceInStream, contentOutStream);
 
         // now replace their replacement strings with values from the properties
         String content = contentOutStream.toString();
@@ -716,31 +715,9 @@ public class ServerInformation {
         File xmlFile = new File(getLogDirectory(), xmlFileName);
         FileOutputStream xmlFileOutStream = new FileOutputStream(xmlFile);
         ByteArrayInputStream contentInStream = new ByteArrayInputStream(content.getBytes());
-        copyStreamData(contentInStream, xmlFileOutStream);
+        StreamUtil.copy(contentInStream, xmlFileOutStream);
 
         return xmlFile.getAbsolutePath();
-    }
-
-    private void copyStreamData(InputStream input, OutputStream output) throws IOException {
-        int bufferSize = 32768;
-
-        try {
-            // make sure we buffer the input
-            input = new BufferedInputStream(input, bufferSize);
-
-            byte[] buffer = new byte[bufferSize];
-
-            for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
-                output.write(buffer, 0, bytesRead);
-            }
-
-            output.flush();
-        } finally {
-            JDBCUtil.safeClose(output);
-            JDBCUtil.safeClose(input);
-        }
-
-        return;
     }
 
     /**

@@ -67,11 +67,11 @@ public class MD5Task extends Task {
             md5 = Base64.encode(md5_bytes);
         } else {
             // put the md5 bytes in string form
-            StringBuffer md5_string = new StringBuffer(md5_bytes.length * 2);
+            StringBuilder md5_string = new StringBuilder(md5_bytes.length * 2);
 
-            for (int i = 0; i < md5_bytes.length; i++) {
-                int hi = (md5_bytes[i] >> 4) & 0xf;
-                int lo = md5_bytes[i] & 0xf;
+            for (byte md5_byte : md5_bytes) {
+                int hi = (md5_byte >> 4) & 0xf;
+                int lo = md5_byte & 0xf;
                 md5_string.append(Character.forDigit(hi, 16));
                 md5_string.append(Character.forDigit(lo, 16));
             }

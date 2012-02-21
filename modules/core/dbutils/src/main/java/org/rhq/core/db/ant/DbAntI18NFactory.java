@@ -24,8 +24,8 @@ import mazz.i18n.LoggerLocale;
 import mazz.i18n.Msg;
 
 /**
- * Convienence utility that creates I18N {@link Logger loggers} and {@link Msg messages} for the ant tools. These
- * factory methods are used to create I18N objects that access the propery resource bundle for the ant tools.
+ * Convenience utility that creates I18N {@link Logger loggers} and {@link Msg messages} for the ant tools. These
+ * factory methods are used to create I18N objects that access the proper resource bundle for the ant tools.
  *
  * @author John Mazzitelli
  *

@@ -355,6 +355,7 @@ public class DBUpgrader extends Task {
                     try {
                         fis.close();
                     } catch (IOException e) {
+                        // ignore
                     }
                 }
             }

@@ -100,14 +100,17 @@ public class DbUtil {
     /**
      * Given an SQL exception, this will return a string that contains the error code and message for it and its causes.
      *
-     * @param  e
+     * @param  e the SQL exception
      *
      * @return error message containing all the SQL error codes and messages
      */
     public static String getSQLExceptionString(SQLException e) {
-        StringBuffer str = new StringBuffer();
+        StringBuilder str = new StringBuilder();
 
         do {
+            if (e instanceof ExtendedSQLException) {
+                str.append("SQL=[" + ((ExtendedSQLException) e).getSQL() + "]; ");
+            }
             str.append("ErrorCode=[" + e.getErrorCode() + "]; ");
             str.append("SQLState=[" + e.getSQLState() + "]; ");
             str.append("Message=[" + e.getMessage() + "]; ");

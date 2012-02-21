@@ -23,8 +23,6 @@
 package org.rhq.core.util.stream;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -60,7 +58,7 @@ public class StreamUtil {
 
     /**
      * Reads in the entire contents of the given input stream and returns the data in a byte array. Be careful - if the
-     * stream has alot of data, you run the risk of an <code>OutOfMemoryError</code>.
+     * stream has a lot of data, you run the risk of an <code>OutOfMemoryError</code>.
      *
      * @param  stream the stream to read
      *
@@ -120,7 +118,7 @@ public class StreamUtil {
     /**
      * Copies data from the input stream to the output stream. Upon completion or on an exception, the streams will be
      * closed but only if <code>closeStreams</code> is <code>true</code>. If <code>closeStreams</code> is <code>
-     * false</code>, the streams are left open; the caller has the reponsibility to close them.
+     * false</code>, the streams are left open; the caller has the responsibility to close them.
      *
      * @param  input        the originating stream that contains the data to be copied
      * @param  output       the destination stream where the data should be copied to
@@ -209,7 +207,7 @@ public class StreamUtil {
     }
     
     /**
-     * Copies data from the input stream to the output stream. The caller has the reponsibility to close them. This
+     * Copies data from the input stream to the output stream. The caller has the responsibility to close them. This
      * method allows you to copy a byte range from the input stream. The start byte is the index (where the first byte
      * of the stream is index #0) that starts to be copied. <code>length</code> indicates how many bytes to copy, a
      * negative length indicates copy everything up to the EOF of the input stream.

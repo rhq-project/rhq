@@ -51,16 +51,11 @@ public class NetworkAdapterComponent implements ResourceComponent<PlatformCompon
     }
 
     public AvailabilityType getAvailability() {
-        switch (getInfo().getOperationalStatus()) {
-        case UP:
+        if (getInfo().getOperationalStatus() == NetworkAdapterInfo.OperationState.UP) {
             return AvailabilityType.UP;
-        case LOWERLAYERDOWN:
-            return AvailabilityType.DOWN;
-        case UNKNOWN:
-            return AvailabilityType.UNKNOWN;
-        default:
-            return AvailabilityType.DISABLED;
         }
+
+        return AvailabilityType.DOWN;
     }
 
     private NetworkAdapterInfo getInfo() {

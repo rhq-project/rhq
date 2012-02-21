@@ -39,6 +39,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
+import org.rhq.core.db.ExtendedSQLException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -696,7 +697,7 @@ public class DBSetup {
                 }
             }
 
-            // our second pass - hopefully, we've cleared out data that caused contraint errors in the first pass
+            // our second pass - hopefully, we've cleared out data that caused constraint errors in the first pass
             if (failed_tables.size() > 0) {
                 log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_CLEAR_SECOND_PASS, failed_tables.size());
 
@@ -989,8 +990,10 @@ public class DBSetup {
      * just prepares it in a statement and expects the caller to execute the statement. The caller must close the
      * returned prepared statement (which occurs if <code>returnPreparedStatement</code> is <code>true</code>)
      *
-     * @param  sql
-     * @param  returnPreparedStatement if <code>true</code>, the SQL isn't executed, it is just prepared
+     * @param  sql an SQL Data Manipulation Language (DML) statement, such as <code>INSERT</code>, <code>UPDATE</code>
+     *             or <code>DELETE</code>; or an SQL statement that returns nothing, 
+     *             such as a DDL statement
+     * @param  returnPreparedStatement if <code>true</code>, the SQL isn't executed; it is just prepared
      *
      * @return the statement (which may be a prepared statement or may be the statement that was executed)
      *
@@ -1027,7 +1030,7 @@ public class DBSetup {
                     // Log this?
                 }
 
-                throw e;
+                throw new ExtendedSQLException(e, sql);
             } finally {
                 if (stmt != null) {
                     stmt.close();
@@ -1120,6 +1123,7 @@ public class DBSetup {
         try {
             m_connection.close();
         } catch (Exception e) {
+            // ignore
         } finally {
             m_connection = null;
             m_databaseType = null;

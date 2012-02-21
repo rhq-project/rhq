@@ -18,7 +18,6 @@
  */
 package org.rhq.core.db;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -113,7 +112,8 @@ public class TypeMap {
 
     /**
      * Given a DOM node, this will ensure it is a valid <i>typemap</i> node and parses it. This constructor is private,
-     * use {@link #loadTypeMapsFromFile(File)} to create instances of this object.
+     * use {@link #loadKnownTypeMaps()} TypeMapsFromFile(File)} or {@link #loadTypeMapsFromStream(java.io.InputStream)}
+     * to create instances of this object.
      *
      * @param  typemap_node the top-level <i>typemap</i> DOM node
      *
@@ -227,7 +227,7 @@ public class TypeMap {
      */
     @Override
     public String toString() {
-        StringBuffer str = new StringBuffer(m_genericTypeName);
+        StringBuilder str = new StringBuilder(m_genericTypeName);
         str.append('=');
         str.append(m_databaseTypeMap);
         return str.toString();

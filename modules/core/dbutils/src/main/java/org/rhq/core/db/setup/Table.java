@@ -115,26 +115,23 @@ class Table {
         List collCmds = new java.util.Vector();
         this.getCreateCommands(collCmds, typemaps, m_parent.getDatabaseType());
 
-        Iterator iter = collCmds.iterator();
-        while (iter.hasNext()) {
-            String strCmd = (String) iter.next();
+        for (Object collCmd : collCmds) {
+            String strCmd = (String) collCmd;
             m_parent.doSQL(strCmd);
         }
     }
 
     private void doCmd(List collCmds) throws SQLException {
-        Iterator iter = collCmds.iterator();
-        while (iter.hasNext()) {
-            String strCmd = (String) iter.next();
+        for (Object collCmd : collCmds) {
+            String strCmd = (String) collCmd;
             m_parent.doSQL(strCmd);
         }
     }
 
     private void doCmdsWithoutAbortingOnErrors(List collCmds) throws SQLException {
         SQLException sqlException = null;
-        Iterator cmdsIter = collCmds.iterator();
-        while (cmdsIter.hasNext()) {
-            String strCmd = (String) cmdsIter.next();
+        for (Object collCmd : collCmds) {
+            String strCmd = (String) collCmd;
             try {
                 m_parent.doSQL(strCmd);
             } catch (SQLException e) {
@@ -326,10 +323,8 @@ class Table {
         String strCmd = "DROP TABLE " + this.getName();
         cmds.add(strCmd);
 
-        Iterator iter = this.getColumns().iterator();
-
-        while (iter.hasNext()) {
-            ((Column) iter.next()).getDropCommands(cmds);
+        for (Object o : this.getColumns()) {
+            ((Column) o).getDropCommands(cmds);
         }
     }
 

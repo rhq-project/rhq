@@ -237,7 +237,7 @@ public abstract class DatabaseType {
      *
      * @return    <code>true</code> if the column exists in the table, <code>false</code> otherwise
      *
-     * @exception SQLException
+     * @throws SQLException
      */
     public boolean checkColumnExists(Connection conn, String table, String column) throws SQLException {
         PreparedStatement ps = null;

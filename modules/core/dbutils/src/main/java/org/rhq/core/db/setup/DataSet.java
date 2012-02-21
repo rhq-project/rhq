@@ -18,7 +18,6 @@
  */
 package org.rhq.core.db.setup;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,6 @@ abstract class DataSet {
     }
 
     protected int create() throws SQLException {
-        PreparedStatement stmt = null;
         int rowcnt = 0;
 
         try {
@@ -60,10 +58,6 @@ abstract class DataSet {
             }
 
             throw e;
-        } finally {
-            if (stmt != null) {
-                stmt.close();
-            }
         }
 
         return rowcnt; // The number of rows created.
@@ -103,7 +97,7 @@ abstract class DataSet {
     protected String getInsertCommand() throws SQLException {
         int iCols = this.getNumberColumns();
 
-        StringBuffer strCmd = new StringBuffer("INSERT INTO ");
+        StringBuilder strCmd = new StringBuilder("INSERT INTO ");
         strCmd.append(this.getTableName());
         strCmd.append(" (");
 
@@ -154,7 +148,7 @@ abstract class DataSet {
     protected String getUpdateCommand() throws SQLException {
         int iCols = this.getNumberColumns();
 
-        StringBuffer strCmd = new StringBuffer("UPDATE ");
+        StringBuilder strCmd = new StringBuilder("UPDATE ");
         strCmd.append(this.getTableName());
         strCmd.append(" SET ");
 
@@ -206,7 +200,7 @@ abstract class DataSet {
             }
 
             need_AND_keyword = true;
-            strCmd.append(data.getActualColumnName() + " = ");
+            strCmd.append(data.getActualColumnName()).append(" = ");
 
             String key_value = data.getValue();
             if (key_value != null) {

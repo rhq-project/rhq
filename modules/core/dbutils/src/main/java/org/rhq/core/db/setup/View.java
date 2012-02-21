@@ -21,7 +21,6 @@ package org.rhq.core.db.setup;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -78,17 +77,15 @@ class View {
     protected void create(Collection typemaps) throws SQLException {
         List commands = new java.util.Vector();
         this.getCreateCommands(commands, typemaps, m_parent.getDatabaseType());
-        Iterator iter = commands.iterator();
-        while (iter.hasNext()) {
-            String strCmd = (String) iter.next();
+        for (Object command : commands) {
+            String strCmd = (String) command;
             m_parent.doSQL(strCmd);
         }
     }
 
     private void doCmd(List collCmds) throws SQLException {
-        Iterator iter = collCmds.iterator();
-        while (iter.hasNext()) {
-            String strCmd = (String) iter.next();
+        for (Object collCmd : collCmds) {
+            String strCmd = (String) collCmd;
             m_parent.doSQL(strCmd);
         }
     }
@@ -142,6 +139,7 @@ class View {
                 try {
                     colResult.add(new View(nodeView, dbtype, parent));
                 } catch (SAXException e) {
+                    // ignore
                 }
             }
         }

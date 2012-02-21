@@ -1551,11 +1551,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 type.getPluginConfigurationDefinition());
 
             ResourceComponent<?> parentComponent = null;
+            ResourceContext<?> parentResourceContext = null;
             if (resource.getParentResource() != null) {
-                parentComponent = getResourceComponent(resource.getParentResource());
+                ResourceContainer rc = getResourceContainer(resource.getParentResource());
+                
+                parentComponent = rc.getResourceComponent();
+                parentResourceContext = rc.getResourceContext();                
             }
 
-            ResourceContext context = createResourceContext(resource, parentComponent, discoveryComponent);
+            ResourceContext context = createResourceContext(resource, parentComponent, parentResourceContext, discoveryComponent);
             container.setResourceContext(context);
             return true;
 
@@ -1645,11 +1649,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private <T extends ResourceComponent<?>> ResourceContext<T> createResourceContext(Resource resource,
-        T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
+        T parentComponent, ResourceContext<?> parentResourceContext, ResourceDiscoveryComponent<T> discoveryComponent) {
         File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
 
         return new ResourceContext<T>(resource, // the resource itself
             parentComponent, // its parent component
+            parentResourceContext, //the resource context of the parent
             discoveryComponent, // the discovery component (this is actually the proxy to it)
             SystemInfoFactory.createSystemInfo(), // for native access
             this.configuration.getTemporaryDirectory(), // location for plugin to write temp files

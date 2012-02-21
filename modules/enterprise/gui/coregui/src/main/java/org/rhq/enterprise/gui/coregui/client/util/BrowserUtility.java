@@ -32,29 +32,6 @@ public class BrowserUtility {
         // static access only
     }
 
-    /*
-     * Adapted from http://code.google.com/p/google-web-toolkit/issues/detail?id=3608
-     * 
-     * Should 
-     */
-    public static native void forceIe6Hacks()
-    /*-{
-        if (typeof $doc.body.style.maxHeight == "undefined") {
-            $wnd.XMLHttpRequestBackup = $wnd.XMLHttpRequest;
-            $wnd.XMLHttpRequest = null;
-        }
-    }-*/;
-
-    /*
-     * Adapted from http://code.google.com/p/google-web-toolkit/issues/detail?id=3608
-     */
-    public static native void unforceIe6Hacks()
-    /*-{
-        if (typeof $doc.body.style.maxHeight == "undefined") {
-            $wnd.XMLHttpRequest = $wnd.XMLHttpRequestBackup;
-            $wnd.XMLHttpRequestBackup = null;
-        }
-    }-*/;
 
     //This is a JSNI call out to the third party javascript lib to execute on the data inserted into the DOM.
     public static native void graphSparkLines()

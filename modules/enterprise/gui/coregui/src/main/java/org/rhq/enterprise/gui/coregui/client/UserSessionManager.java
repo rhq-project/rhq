@@ -144,7 +144,6 @@ public class UserSessionManager {
     }
 
     public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
-        BrowserUtility.forceIe6Hacks();
         //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
         //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
         final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
@@ -379,8 +378,6 @@ public class UserSessionManager {
             b.send();
         } catch (RequestException e) {
             callback.onFailure(e);
-        } finally {
-            BrowserUtility.unforceIe6Hacks();
         }
     }
 

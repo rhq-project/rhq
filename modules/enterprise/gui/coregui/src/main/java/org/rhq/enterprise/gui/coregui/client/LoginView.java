@@ -553,7 +553,6 @@ public class LoginView extends LocatableCanvas {
     }
 
     private void login(final String username, final String password) {
-        BrowserUtility.forceIe6Hacks();
 
         loginButton.setDisabled(true);
 
@@ -585,8 +584,6 @@ public class LoginView extends LocatableCanvas {
             requestBuilder.send();
         } catch (Exception e) {
             handleError(0);
-        } finally {
-            BrowserUtility.unforceIe6Hacks();
         }
     }
 

@@ -20,7 +20,10 @@ package org.rhq.enterprise.server.auth.test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.security.auth.login.LoginException;
 
@@ -50,8 +53,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class SubjectManagerBeanTest extends AbstractEJB3Test {
+    
     private SubjectManagerLocal subjectManager;
     private AuthorizationManagerLocal authorizationManager;
+    private RoleManagerLocal roleManager;
 
     /**
      * Prepares things for the entire test class.
@@ -60,6 +65,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
     public void beforeClass() {
         subjectManager = LookupUtil.getSubjectManager();
         authorizationManager = LookupUtil.getAuthorizationManager();
+        roleManager = LookupUtil.getRoleManager();
     }
 
     /**
@@ -463,4 +469,103 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         }
 
     }
+    
+    public void testViewUsersPermission_subjectWithViewUsersRoleCanViewOtherUsers() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+            Subject rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+
+            Role roleWithViewUsersPerm = new Role("role" + UUID.randomUUID());
+            roleWithViewUsersPerm.addPermission(Permission.VIEW_USERS);
+            roleWithViewUsersPerm = roleManager.createRole(overlord, roleWithViewUsersPerm);
+
+            Subject subjectWithViewUsersRole = new Subject("subject" + UUID.randomUUID(), true, false);
+            subjectWithViewUsersRole.addRole(roleWithViewUsersPerm);
+            subjectWithViewUsersRole = subjectManager.createSubject(overlord, subjectWithViewUsersRole, "password");
+            subjectWithViewUsersRole = subjectManager.loginUnauthenticated(subjectWithViewUsersRole.getName());
+
+            Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
+            anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
+
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithViewUsersRole, new SubjectCriteria());
+            Set<Subject> subjectSet = new HashSet<Subject>(subjects);
+            assertTrue(subjectSet.contains(subjectWithViewUsersRole));
+            assertTrue(subjectSet.contains(anotherSubject));
+            assertTrue(subjectSet.contains(rhqadmin));
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    public void testViewUsersPermission_rhqadminCanViewOtherUsers() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+
+            Subject rhqadmin = subjectManager.getSubjectByName("rhqadmin");
+            rhqadmin = subjectManager.loginUnauthenticated(rhqadmin.getName());
+
+            Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
+            anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
+
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(rhqadmin, new SubjectCriteria());
+            Set<Subject> subjectSet = new HashSet<Subject>(subjects);
+            assertTrue(subjectSet.contains(anotherSubject));
+            assertTrue(subjectSet.contains(rhqadmin));
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    public void testViewUsersPermission_subjectWithNonViewUsersRoleCannotViewOtherUsers() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+
+            Role roleWithoutViewUsersPerm = new Role("role" + UUID.randomUUID());
+            roleWithoutViewUsersPerm = roleManager.createRole(overlord, roleWithoutViewUsersPerm);
+
+            Subject subjectWithNonViewUsersRole = new Subject("subject" + UUID.randomUUID(), true, false);
+            subjectWithNonViewUsersRole.addRole(roleWithoutViewUsersPerm);
+            subjectWithNonViewUsersRole = subjectManager.createSubject(overlord, subjectWithNonViewUsersRole, "password");
+            subjectWithNonViewUsersRole = subjectManager.loginUnauthenticated(subjectWithNonViewUsersRole.getName());
+
+            Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
+            anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
+
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithNonViewUsersRole, new SubjectCriteria());
+            Set<Subject> subjectSet = new HashSet<Subject>(subjects);
+            assertEquals(1, subjectSet.size());
+            assertTrue(subjectSet.contains(subjectWithNonViewUsersRole));
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
+    public void testViewUsersPermission_subjectWithNoRolesCannotViewOtherUsers() throws Exception {
+        getTransactionManager().begin();
+
+        try {
+            Subject overlord = subjectManager.getOverlord();
+
+            Subject subjectWithNoRoles = new Subject("subject" + UUID.randomUUID(), true, false);
+            subjectWithNoRoles = subjectManager.createSubject(overlord, subjectWithNoRoles, "password");
+            subjectWithNoRoles = subjectManager.loginUnauthenticated(subjectWithNoRoles.getName());
+
+            Subject anotherSubject = new Subject("subject" + UUID.randomUUID(), true, false);
+            anotherSubject = subjectManager.createSubject(overlord, anotherSubject, "password");
+
+            PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subjectWithNoRoles, new SubjectCriteria());
+            Set<Subject> subjectSet = new HashSet<Subject>(subjects);
+            assertEquals(1, subjectSet.size());
+            assertTrue(subjectSet.contains(subjectWithNoRoles));
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
 }

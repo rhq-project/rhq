@@ -39,9 +39,19 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
     private Map<String, TwoLevelTab> hiddenTabs = new LinkedHashMap<String, TwoLevelTab>();
     
     private boolean ignoreSelectEvents = false;
+    
+    private TwoLevelTab head;
+
+    /**
+     * This is the visible tail. Because the actual order of tabs is fixed we know that the
+     * actual tail will always be the content tab.
+     */
+    private TwoLevelTab tail;
 
     public TwoLevelTabSet(String locatorId) {
         super(locatorId);
+        // Need to set destroyPanes property to false so that we do not lose tab
+        // content when hiding a tab.
         setDestroyPanes(false);
     }
 
@@ -51,8 +61,27 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
             tab.getLayout().addTwoLevelTabSelectedHandler(this);
             updateTab(tab, tab.getPane());
         }
-
+        buildTabList();        
         addTabSelectedHandler(this);
+    }
+
+    /**
+     * This method initializes the head and tail pointers. Then it initializes the
+     * {@link TwoLevelTab#getActualNext actualNext} and {@link TwoLevelTab#getVisibleNext visibleNext}
+     * properties of each tab. This list is built so that when hiding and showing tabs, the
+     * tab order remains consistent. The order of the list is the same as the order of the
+     * tabs passed to {@link #setTabs(TwoLevelTab...)}
+     */
+    private void buildTabList() {
+        TwoLevelTab[] tabs = getTabs();
+        head = tabs[0];
+        tail = tabs[tabs.length - 1];
+        TwoLevelTab current = head; 
+        for (int i = 1; i < tabs.length; ++i) {
+            current.setActualNext(tabs[i]);
+            current.setVisibleNext(tabs[i]);
+            current = tabs[i];
+        }
     }
 
     public TwoLevelTab[] getTabs() {
@@ -75,9 +104,29 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
             if (hiddenTabs.containsKey(tab.getLocatorId())) {
                 return;
             }
+
+            TwoLevelTab visiblePrevious = findClosestVisiblePredecessor(tab);
+            if (visiblePrevious == null) {
+                // if visiblePrevious is null then that means we are updating
+                // then head. Note that as of now (02/21/2012), the visible head,
+                // the summary tab, is fixed, so we don't really need to worry
+                // about updating the head; however, doing so will make it easier
+                // to support things like hiding arbitrary tabs or reordering tabs.
+                head = tab.getVisibleNext();
+
+            } else {
+                visiblePrevious.setVisibleNext(tab.getVisibleNext());
+                // check to see if the tail needs to be updated. If the
+                // following check is true, then that means visiblePrevious is
+                // now the tail.
+                if (visiblePrevious.getVisibleNext() == null) {
+                    tail = visiblePrevious;
+                }
+            }
+            tab.setVisibleNext(null);
             // Note that removing the tab does *not* destroy its content pane
             // since we set the destroyPanes property to false in the
-            removeTab(tab);
+            removeTab(tab);            
             hiddenTabs.put(tab.getLocatorId(), tab);
         } else {
             if (!hiddenTabs.containsKey(tab.getLocatorId())) {
@@ -85,10 +134,66 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
             }
 
             hiddenTabs.remove(tab.getLocatorId());
-            addTab(tab);
+            TwoLevelTab successor = findClosestVisibleSuccessor(tab);
+            if (successor == null) {
+                // if successor is null then that means we are updating the tail
+                tail.setVisibleNext(tab);
+                tail = tab;
+                addTab(tab);
+            } else {
+                TwoLevelTab visiblePrevious = findClosestVisiblePredecessor(successor);
+                tab.setVisibleNext(visiblePrevious.getVisibleNext());
+                visiblePrevious.setVisibleNext(tab);
+                addTab(tab, (getTabNumber(visiblePrevious.getID()) + 1));
+            }
         }
     }
 
+    /**
+     * Walks the list of tabs to find the closest, visible predecessor.
+     *
+     * @param tab A {@link TwoLevelTab tab} that is currently visible
+     * @return The closest, visible predecessor or null if have the head
+     */
+    private TwoLevelTab findClosestVisiblePredecessor(TwoLevelTab tab) {
+        if (tab == head) {
+            return null;
+        }
+        
+        TwoLevelTab current = head;
+        while (current != tab) {
+            // if we have reached the visible tail or the immediate predecessor
+            // of the tab, then return it.
+            if (current.getVisibleNext() == null || current.getVisibleNext() == tab) {
+                return current;
+            }
+            current = current.getVisibleNext();
+        }
+        // Not sure what we should do if we get here. return null for now
+        return null;
+    }
+
+    /**
+     * Walks the list to find the closest, visible successor.
+     *
+     * @param tab A {@link TwoLevelTab tab} that is currently hidden
+     * @return The closest, visisble successor or null if the insertion point
+     * is the tail.
+     */
+    private TwoLevelTab findClosestVisibleSuccessor(TwoLevelTab tab) {
+        TwoLevelTab current = tab;
+        while (current != null) {
+            // Walk the list of tabs until we reach a visible successor or the tail
+            if (current.getVisibleNext() == null && current != tail) {
+                current = current.getActualNext();
+            } else {
+                return current;
+            }
+        }
+        // if we reach this point then that means we will be inserting at the tail
+        return null;
+    }
+    
     public void destroyViews() {
         for (TwoLevelTab tab : getTabs()) {
             tab.getLayout().destroyViews();

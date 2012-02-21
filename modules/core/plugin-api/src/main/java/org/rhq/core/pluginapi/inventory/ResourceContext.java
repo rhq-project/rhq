@@ -59,10 +59,12 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
  */
 @SuppressWarnings("unchecked")
 public class ResourceContext<T extends ResourceComponent<?>> {
+    
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
     private final T parentResourceComponent;
+    private final ResourceContext<?> parentResourceContext;
     private final Configuration pluginConfiguration;
     private final SystemInfo systemInformation;
     private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
@@ -83,7 +85,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *
      * @param resource                   the resource whose {@link org.rhq.core.pluginapi.inventory.ResourceComponent}
      *                                   will be given this context object of the plugin
-     * @param parentResourceComponent    the parent component of the context's associated resource component
+     * @param parentResourceComponent    the parent component of the context's associated resource component (or null if parent resource is null)
+     * @param parentResourceContext      the resource context of the parent resource (or null if parent resource is null)
      * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
      *                                   type as this resource (may be <code>null</code>)
      * @param systemInfo                 information about the system on which the plugin and its plugin container are
@@ -104,7 +107,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *                                   {@link AvailabilityCollectorRunnable} for more information on this.
      * @param pluginContainerDeployment  indicates where the plugin container is running
      */
-    public ResourceContext(Resource resource, T parentResourceComponent,
+    public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
         ContentContext contentContext, Executor availCollectorThreadPool,
@@ -114,6 +117,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.resourceType = resource.getResourceType();
         this.version = resource.getVersion();
         this.parentResourceComponent = parentResourceComponent;
+        this.parentResourceContext = parentResourceContext;
         this.resourceDiscoveryComponent = resourceDiscoveryComponent;
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
@@ -172,6 +176,19 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
+     * Returns the resource context of the parent resource or null if there is no parent resource.
+     * <p>
+     * (This method is protected to be able to share that information with the {@link ResourceUpgradeContext}
+     * but at the same time to not pollute the ResourceContext public API with data that doesn't belong
+     * to it).
+     * 
+     * @return
+     */
+    protected ResourceContext<?> getParentResourceContext() {
+        return this.parentResourceContext;
+    }
+    
+    /**
      * Returns a {@link SystemInfo} object that contains information about the platform/operating system that the
      * resource is running on. With this object, you can natively obtain things such as the operating system name, its
      * hostname,and other things. Please refer to the javadoc on {@link SystemInfo} for more details on the types of
@@ -223,7 +240,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                     Set<DiscoveredResourceDetails> details;
                     ResourceDiscoveryContext<T> context;
 
-                    context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent, this,
+                    context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent, this.parentResourceContext,
                         this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
                         getPluginContainerName(), getPluginContainerDeployment());
 

@@ -124,14 +124,16 @@ public abstract class ComponentTest {
             resource.setResourceType(resourceType);
             resource.setPluginConfiguration(configuration);
             resource.setName(resourceType.getName());
+
             ResourceComponent parentResourceComponent = null;
+            ResourceContext<?> parentResourceContext = null;
 
             components.put(component, resource);
             resource.setParentResource(pluginContainer.getInventoryManager().getPlatform());
 
             ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
             EventContext eventContext = new EventContextImpl(resource);
-            ResourceContext context = new ResourceContext(resource, parentResourceComponent,
+            ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                     resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
                     pluginContainerName, eventContext, operationContext, contentContext,
                     availCollectorThreadPool, pluginContainerDeployment);
@@ -141,7 +143,7 @@ public abstract class ComponentTest {
                     Collections.emptyList(), Collections.emptyList(), pluginContainerName, pluginContainerDeployment);
 
             for (ResourceType rt : resourceType.getChildResourceTypes()) {
-                processChild(rt, component, resource);
+                processChild(rt, component, context, resource);
             }
         }
 
@@ -154,7 +156,7 @@ public abstract class ComponentTest {
      * @param resource parent resource
      * @param resourceType child resource type
      */
-    private void processChild(ResourceType resourceType, ResourceComponent component, Resource resource) throws Exception {
+    private void processChild(ResourceType resourceType, ResourceComponent component, ResourceContext<?> parentContext, Resource resource) throws Exception {
         Configuration configuration = resourceType.getPluginConfigurationDefinition().getDefaultTemplate().createConfiguration();
         setConfiguration(configuration, resourceType);
         log.info("childResource " + resourceType + " properties " + configuration.getProperties());
@@ -164,7 +166,7 @@ public abstract class ComponentTest {
         log.debug("rdc=" + rdc);
 
         EventContext eventContext = new EventContextImpl(resource);
-        ResourceContext context = new ResourceContext(resource, component,
+        ResourceContext context = new ResourceContext(resource, component, parentContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,
                 availCollectorThreadPool, pluginContainerDeployment);
@@ -174,7 +176,7 @@ public abstract class ComponentTest {
         Set<DiscoveredResourceDetails> d = rdc.discoverResources(resourceDiscoveryContext);
         for (DiscoveredResourceDetails drd : d) {
             log.debug("discovered " + drd);
-            createChild(drd, resource, configuration, component);
+            createChild(drd, resource, configuration, component, context);
         }
 
     }
@@ -182,7 +184,7 @@ public abstract class ComponentTest {
     private void createChild(DiscoveredResourceDetails drd,
             Resource resource,
             Configuration configuration,
-            ResourceComponent parentComponent) throws Exception
+            ResourceComponent parentComponent, ResourceContext<?> parentContext) throws Exception
     {
         ResourceType type = pmm.getType(drd.getResourceType());
 
@@ -197,7 +199,7 @@ public abstract class ComponentTest {
         ResourceComponent component = (ResourceComponent) Class.forName(rclassname).newInstance();
 
         EventContext eventContext = new EventContextImpl(resource);
-        ResourceContext context = new ResourceContext(cresource, parentComponent,
+        ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,
                 availCollectorThreadPool, pluginContainerDeployment);

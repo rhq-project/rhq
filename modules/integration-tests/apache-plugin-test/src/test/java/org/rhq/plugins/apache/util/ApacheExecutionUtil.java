@@ -46,14 +46,14 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.platform.PlatformComponent;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
 public class ApacheExecutionUtil {
 
     private static final Log LOG = LogFactory.getLog(ApacheExecutionUtil.class);
-    
+
     private ResourceType apacheServerResourceType;
     private ApacheServerComponent serverComponent;
     private ResourceContext<PlatformComponent> resourceContext;
@@ -67,7 +67,7 @@ public class ApacheExecutionUtil {
     public enum ExpectedApacheState {
         RUNNING, STOPPED
     };
-    
+
     public ApacheExecutionUtil(ResourceType apacheServerResourceType, String serverRootPath, String exePath,
         String httpdConfPath, String pingUrl, String snmpHost, int snmpPort) {
 
@@ -103,7 +103,7 @@ public class ApacheExecutionUtil {
 
         Resource resource = new Resource(result.getResourceKey(), null, apacheServerResourceType);
         resource.setPluginConfiguration(config);
-        resourceContext = new ResourceContext<PlatformComponent>(resource, null,
+        resourceContext = new ResourceContext<PlatformComponent>(resource, null, null,
             discoveryComponent, systemInfo, null, null, null, null, null, null, null, null);
 
         serverComponent.start(resourceContext);
@@ -113,13 +113,13 @@ public class ApacheExecutionUtil {
         int i = 0;
         while (i < 10) {
             serverComponent.invokeOperation(operation, new Configuration());
-            
-            //wait for max 30s for the operation to "express" itself                 
+
+            //wait for max 30s for the operation to "express" itself
             int w = 0;
             ProcessInfo pi;
             while (w < 30) {
                 pi = getResourceContext().getNativeProcess();
-                
+
                 switch (desiredState) {
                 case RUNNING:
                     if (pi != null && pi.isRunning()) {
@@ -131,16 +131,16 @@ public class ApacheExecutionUtil {
                         return;
                     }
                 }
-                
+
                 Thread.sleep(1000);
                 ++w;
             }
-            
+
             ++i;
-            
+
             LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
         }
-        
+
         throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
     }
 
@@ -155,7 +155,7 @@ public class ApacheExecutionUtil {
     public ApacheServerComponent getServerComponent() {
         return serverComponent;
     }
-    
+
     private List<ProcessScanResult> scanProcesses(SystemInfo systemInfo) {
         List<ProcessScanResult> scanResults = new ArrayList<ProcessScanResult>();
         Set<ProcessScan> processScans = apacheServerResourceType.getProcessScans();

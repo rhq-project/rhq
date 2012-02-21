@@ -98,7 +98,7 @@ public class AntBundlePluginComponentTest {
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        ResourceContext<?> context = new ResourceContext(resource, null, null,
+        ResourceContext<?> context = new ResourceContext(resource, null, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);
         this.plugin.start(context);
     }
@@ -212,7 +212,7 @@ public class AntBundlePluginComponentTest {
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
 
-        // check the backup directory - note, clean flag is irrelevent when determining what should be backed up 
+        // check the backup directory - note, clean flag is irrelevent when determining what should be backed up
         File backupDir = metadata.getDeploymentBackupDirectory(deployment.getId());
         File ignoredBackupFile = new File(backupDir, "ignore/ignore-file.txt");
         assert ignoredBackupFile.isFile() : "old recipe didn't ignore these, should be backed up";

@@ -82,6 +82,7 @@ public abstract class ComponentTest {
 
         resource.setPluginConfiguration(configuration);
         ResourceComponent parentResourceComponent = null;
+        ResourceContext<?> parentResourceContext = null;
         ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
         File temporaryDirectory = temp;
@@ -92,7 +93,7 @@ public abstract class ComponentTest {
         ContentContext contentContext = new ContentContextImpl(0);
         Executor availCollectorThreadPool = Executors.newCachedThreadPool();
         PluginContainerDeployment pluginContainerDeployment = null;
-        ResourceContext context = new ResourceContext(resource, parentResourceComponent,
+        ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
                 resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
                 pluginContainerName, eventContext, operationContext, contentContext,
                 availCollectorThreadPool, pluginContainerDeployment);

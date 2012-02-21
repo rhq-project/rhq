@@ -131,7 +131,6 @@ import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
-import sun.management.resources.agent;
 
 /**
  * The manager responsible for working with Resource and plugin configurations.

@@ -103,10 +103,8 @@ public class TomcatPluginTest {
                 foundResources.add(currentResource);
             }
 
-            if (currentResource.getChildResources() != null) {
-                for (Resource child : currentResource.getChildResources()) {
-                    discoveryQueue.add(child);
-                }
+            for (Resource child : currentResource.getChildResources()) {
+                discoveryQueue.add(child);
             }
         }
 

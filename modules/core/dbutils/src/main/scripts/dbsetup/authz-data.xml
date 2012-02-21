@@ -49,6 +49,7 @@
         <data ROLE_ID="1" OPERATION="2"/>        <!-- Permission.MANAGE_SETTINGS -->
         <data ROLE_ID="1" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
         <data ROLE_ID="1" OPERATION="15"/>       <!-- Permission.MANAGE_REPOSITORIES -->
+        <data ROLE_ID="1" OPERATION="17"/>       <!-- Permission.VIEW_USERS -->
         <!-- resource permissions start here-->
         <data ROLE_ID="1" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
         <data ROLE_ID="1" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
@@ -67,6 +68,7 @@
              (explicitly add resource perms as well, even though they are implied by MANAGE_INVENTORY) -->
         <data ROLE_ID="2" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
         <data ROLE_ID="2" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
+        <data ROLE_ID="2" OPERATION="17"/>       <!-- Permission.VIEW_USERS -->
         <!-- resource permissions start here-->
         <data ROLE_ID="2" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
         <data ROLE_ID="2" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->

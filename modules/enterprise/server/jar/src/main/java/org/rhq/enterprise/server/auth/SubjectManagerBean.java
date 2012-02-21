@@ -774,9 +774,15 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
-        return queryRunner.execute();
+        PageList<Subject> subjects = queryRunner.execute();
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_USERS)) {
+            subjects.clear();
+            Subject attachedSubject = entityManager.find(Subject.class, subject.getId());
+            subjects.add(attachedSubject);
+            subjects.setTotalSize(1);
+        }
+        return subjects;        
     }
 
     private boolean isLdapAuthenticationEnabled() {

@@ -42,6 +42,7 @@ import javax.security.auth.login.LoginException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.quartz.JobDataMap;
@@ -791,7 +792,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         if (existingResource != null) {
-            existingResource.getChildResources().size(); // eager load child resources to avoid later failures in adding children
+            // eager load child resources to avoid later failures in adding children
+            Hibernate.initialize(existingResource.getChildResources());
         }
 
         return existingResource;

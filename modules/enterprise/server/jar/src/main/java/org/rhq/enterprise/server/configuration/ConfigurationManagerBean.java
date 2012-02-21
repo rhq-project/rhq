@@ -131,6 +131,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
+import sun.management.resources.agent;
 
 /**
  * The manager responsible for working with Resource and plugin configurations.
@@ -1438,13 +1439,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         resource.addResourceConfigurationUpdates(newUpdateRequest);
 
-        resource.getChildResources().size();
-
-        // agent field is LAZY - force it to load because the caller will need it.
-        Agent agent = resource.getAgent();
-        if (agent != null) {
-            agent.getName();
-        }
+        // agent and childResources fields are LAZY - force them to load, because the caller will need them.
+        Hibernate.initialize(resource.getChildResources());
+        Hibernate.initialize(resource.getAgent());
 
         return newUpdateRequest;
     }

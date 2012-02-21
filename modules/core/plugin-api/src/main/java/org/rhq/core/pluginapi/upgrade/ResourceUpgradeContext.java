@@ -50,7 +50,6 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
     private final Configuration resourceConfiguration;
     private final String name;
     private final String description;
-    private ResourceContext<?> parentResourceContext;
 
     /**
      * @see ResourceContext#ResourceContext(Resource, ResourceComponent, ResourceDiscoveryComponent, SystemInfo, File, File, String, EventContext, OperationContext, ContentContext, Executor, PluginContainerDeployment)
@@ -61,18 +60,18 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
         OperationContext operationContext, ContentContext contentContext, AvailabilityContext availabilityContext,
         PluginContainerDeployment pluginContainerDeployment) {
 
-        super(resource, parentResourceComponent, resourceDiscoveryComponent, systemInfo, temporaryDirectory,
-            dataDirectory, pluginContainerName, eventContext, operationContext, contentContext, availabilityContext,
-            pluginContainerDeployment);
+        super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
+            temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
+            availabilityContext, pluginContainerDeployment);
 
-        this.parentResourceContext = parentResourceContext;
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();
         this.description = resource.getDescription();
     }
 
+    @Override
     public ResourceContext<?> getParentResourceContext() {
-        return parentResourceContext;
+        return super.getParentResourceContext();
     }
 
     public Configuration getResourceConfiguration() {

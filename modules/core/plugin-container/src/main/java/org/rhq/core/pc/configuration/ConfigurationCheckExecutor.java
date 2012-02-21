@@ -129,9 +129,7 @@ public class ConfigurationCheckExecutor implements Runnable, Callable {
             }
 
             if (checkChildren) {
-                // Avoid concurrent mod exceptions during potentially long duration issues
-                Set<Resource> childSet = new HashSet<Resource>(resource.getChildResources());
-                for (Resource child : childSet) {
+                for (Resource child : resource.getChildResources()) {
                     try {
                     checkConfigurations(child, true);
                     } catch (Exception e) {

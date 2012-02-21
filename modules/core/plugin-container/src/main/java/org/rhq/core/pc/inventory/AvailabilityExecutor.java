@@ -26,9 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -364,9 +362,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         }
 
         if (checkChildren) {
-            // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
-            Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
-            for (Resource child : children) {
+            for (Resource child : resource.getChildResources()) {
                 checkInventory(child, availabilityReport, reportChangesOnly, true, current, checkInventoryTime,
                     forceCheck);
             }

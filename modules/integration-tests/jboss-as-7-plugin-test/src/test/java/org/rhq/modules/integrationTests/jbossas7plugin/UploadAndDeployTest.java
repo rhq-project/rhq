@@ -368,7 +368,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
         Resource resource = new Resource("deployment="+TEST_WAR,TEST_WAR,rt); // TODO resource key?
-        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null);
+        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR);
@@ -403,7 +403,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
         Resource resource = new Resource("server-group=main-server-group",TEST_WAR,rt);
-        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null);
+        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR);

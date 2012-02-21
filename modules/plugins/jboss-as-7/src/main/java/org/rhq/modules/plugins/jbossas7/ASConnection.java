@@ -35,6 +35,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -51,7 +52,7 @@ public class ASConnection {
     String urlString;
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
-    Authenticator passwordAuthenticator ;
+    Authenticator passwordAuthenticator;
     private String host;
     private int port;
 
@@ -75,7 +76,7 @@ public class ASConnection {
             throw new IllegalArgumentException(e.getMessage());
         }
 
-        passwordAuthenticator = new AS7Authenticator(user,password);
+        passwordAuthenticator = new AS7Authenticator(user, password);
         Authenticator.setDefault(passwordAuthenticator);
 
         // read system property "as7plugin.verbose"
@@ -101,18 +102,18 @@ public class ASConnection {
         InputStream inputStream = null;
         BufferedReader br = null;
         InputStream es = null;
-        HttpURLConnection conn=null;
+        HttpURLConnection conn = null;
         long t1 = System.currentTimeMillis();
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
-            conn.addRequestProperty("Accept","application/json");
+            conn.addRequestProperty("Accept", "application/json");
             conn.setConnectTimeout(10 * 1000); // 10s
             conn.setReadTimeout(10 * 1000); // 10s
 
-            if (conn.getReadTimeout()!=10*1000)
+            if (conn.getReadTimeout() != 10 * 1000)
                 log.warn("JRE uses a broken timeout mechanism - nothing we can do");
 
             OutputStream out = conn.getOutputStream();
@@ -163,6 +164,11 @@ public class ASConnection {
                 return operationResult;
             } else {
                 log.error("IS was null and code was " + responseCode);
+                //if not properly authorized sends plugin exception for visual indicator in the ui.
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    throw new InvalidPluginConfigurationException(
+                        "Credentials for plugin to communicate with are invalid. Update Connection Settings with valid credentials.");
+                }
             }
         } catch (IllegalArgumentException iae) {
             log.error("Illegal argument " + iae);
@@ -262,7 +268,7 @@ public class ASConnection {
     public Result execute(Operation op, boolean isComplex) {
         JsonNode node = executeRaw(op);
 
-        if (node==null) {
+        if (node == null) {
             log.warn("Operation [" + op + "] returned null");
             Result failure = new Result();
             failure.setFailureDescription("Operation [" + op + "] returned null");

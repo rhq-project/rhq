@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -130,7 +130,13 @@ public enum Permission {
     /**
      * Can C/U/D drift related entities
      */
-    MANAGE_DRIFT(Target.RESOURCE) // 16
+    MANAGE_DRIFT(Target.RESOURCE), // 16
+
+    /**
+     * Can view other RHQ users, except for their assigned roles
+     */
+    // NOTE: This is a GLOBAL permission but defined here to maintain the ordinal indexes
+    VIEW_USERS(Target.GLOBAL) // 17
 
     ;
 

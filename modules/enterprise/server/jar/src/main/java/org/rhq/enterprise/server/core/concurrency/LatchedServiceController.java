@@ -70,10 +70,15 @@ public class LatchedServiceController {
             nextService.controller = this;
         }
 
+        // When this latched service stuff was originally written, it was to help speed up
+        // plugin deployment by registering multiple plugins concurrently. However, it turns
+        // out that that causes problems today. Plugin registraton should not be done
+        // concurrently - each plugin must be registered one after the other serially.
+        // See BZ 616395
         try {
-            this.threadPoolSize = Integer.parseInt(System.getProperty("rhq.server.plugin-deployer-threads", "5"));
+            this.threadPoolSize = Integer.parseInt(System.getProperty("rhq.server.plugin-deployer-threads", "1"));
         } catch (NumberFormatException e) {
-            this.threadPoolSize = 5;
+            this.threadPoolSize = 1;
             log.warn("Invalid number of threads specified, defaulting to [" + this.threadPoolSize + "]: " + e);
         }
     }

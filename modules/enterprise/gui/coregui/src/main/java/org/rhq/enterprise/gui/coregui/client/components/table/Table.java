@@ -339,6 +339,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 contents.removeChild(child);
             }
 
+            if (filterForm.hasContent()) {
+                contents.addMember(filterForm);
+            }
+
             // add the listGrid defined in onInit
             contents.addMember(listGrid);
 
@@ -351,10 +355,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
-            }
-
-            if (filterForm.hasContent()) {
-                contents.addMember(filterForm);
             }
 
             // Footer

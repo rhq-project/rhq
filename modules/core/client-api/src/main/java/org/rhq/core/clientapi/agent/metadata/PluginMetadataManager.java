@@ -25,6 +25,7 @@ package org.rhq.core.clientapi.agent.metadata;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -55,7 +58,7 @@ public class PluginMetadataManager {
     private Object typesLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
-    
+
     public PluginMetadataManager() {
     }
 
@@ -225,4 +228,67 @@ public class PluginMetadataManager {
         return dependencyGraph;
     }
 
+    /**
+     * Returns a map of plugins and their descriptors where those plugins are child extensions of the given
+     * parent plugin. The child extensions are those that used the "embedded" plugin extension model (that is,
+     * those whose types used sourcePlugin attribute in their type metedata).
+     *
+     * @param parentPlugin the parent plugin
+     * @return a map of child plugin info where the children are those that extended the given parent plugin.
+     *         If the given parent plugin was not extended by any other plugin, the map will be empty.
+     */
+    public Map<String, PluginDescriptor> getEmbeddedExtensions(String parentPlugin) {
+        Map<String, PluginDescriptor> map = new HashMap<String, PluginDescriptor>();
+        for (Map.Entry<String, PluginMetadataParser> entry : parsersByPlugin.entrySet()) {
+            String pluginName = entry.getKey();
+            PluginMetadataParser parser = entry.getValue();
+            PluginDescriptor descriptor = parser.getDescriptor();
+
+            // let's see if any servers extend the parent plugin...
+            if (doServersExtendParent(descriptor.getServers(), parentPlugin)) {
+                map.put(pluginName, descriptor);
+                continue; // no need to keep checking this plugin, go on to the next
+            }
+
+            // if no servers extended the parent plugin, let's check to see if any services do...
+            if (!map.containsKey(pluginName)) {
+                if (doServicesExtendParent(descriptor.getServices(), parentPlugin)) {
+                    map.put(pluginName, descriptor);
+                    continue; // no need to keep checking this plugin, go on to the next
+                }
+            }
+        }
+        return map;
+    }
+
+    private boolean doServersExtendParent(List<ServerDescriptor> servers, String parentPlugin) {
+        if (servers != null && !servers.isEmpty()) {
+            for (ServerDescriptor serverDescriptor : servers) {
+                if (doServersExtendParent(serverDescriptor.getServers(), parentPlugin)) {
+                    return true;
+                }
+                if (doServicesExtendParent(serverDescriptor.getServices(), parentPlugin)) {
+                    return true;
+                }
+                if (parentPlugin.equals(serverDescriptor.getSourcePlugin())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean doServicesExtendParent(List<ServiceDescriptor> services, String parentPlugin) {
+        if (services != null && !services.isEmpty()) {
+            for (ServiceDescriptor serviceDescriptor : services) {
+                if (doServicesExtendParent(serviceDescriptor.getServices(), parentPlugin)) {
+                    return true;
+                }
+                if (parentPlugin.equals(serviceDescriptor.getSourcePlugin())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

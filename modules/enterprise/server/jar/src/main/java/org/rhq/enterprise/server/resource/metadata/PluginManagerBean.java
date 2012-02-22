@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -347,12 +348,27 @@ public class PluginManagerBean implements PluginManagerLocal {
         log.debug("Registering " + plugin);
         long startTime = System.currentTimeMillis();
 
-        //        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
-        //            pluginFile, forceUpdate);
         boolean newOrUpdated = pluginMgr.installPluginJar(subject, plugin, pluginDescriptor, pluginFile);
-        boolean typesUpdated = pluginMgr.registerPluginTypes(plugin, pluginDescriptor, newOrUpdated, forceUpdate);
+        boolean typesUpdated = pluginMgr.registerPluginTypes(plugin.getName(), pluginDescriptor, newOrUpdated,
+            forceUpdate);
 
         if (typesUpdated) {
+            // There may be other types in other plugins that extended from this plugin (the "embedded" extension mechanism).
+            // In this case, we have to re-deploy those plugins so those types get recreated with the new metadata.
+            // We do the same thing with the extended plugins that we will do with our passed-in "parent" plugin, that is,
+            // we register the extended plugins' types (we'll force it to update types since we know something changed in the parent)
+            // and then we'll remove any obsoleted types from the extended plugins.
+            Map<String, PluginDescriptor> extensions = PLUGIN_METADATA_MANAGER.getEmbeddedExtensions(plugin.getName());
+            if (extensions != null && extensions.size() > 0) {
+                for (Map.Entry<String, PluginDescriptor> entry : extensions.entrySet()) {
+                    String extPluginName = entry.getKey();
+                    PluginDescriptor extPluginDescriptor = entry.getValue();
+                    pluginMgr.registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
+                    resourceMetadataManager.removeObsoleteTypes(subject, extPluginName, PLUGIN_METADATA_MANAGER);
+                }
+            }
+
+            // now remove any obsolete types from the newly registered plugin
             resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
         }
 
@@ -398,14 +414,15 @@ public class PluginManagerBean implements PluginManagerLocal {
         return newOrUpdated;
     }
 
-    public boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
+    @Override
+    public boolean registerPluginTypes(String newPluginName, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;
 
-        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPlugin.getName())) {
+        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPluginName)) {
             Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
             if (rootResourceTypes == null) {
-                throw new Exception("Failed to load plugin [" + newPlugin.getName() + "].");
+                throw new Exception("Failed to load plugin [" + newPluginName + "].");
             }
             if (newOrUpdated || forceUpdate) {
                 // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to

@@ -1120,6 +1120,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * @param id the Resource's id
      */
     public Resource(int id) {
+        this();
         this.id = id;
     }
 
@@ -1127,6 +1128,7 @@ public class Resource implements Comparable<Resource>, Serializable {
         @NotNull String resourceKey, //
         String name, //
         @NotNull ResourceType type) {
+        this();
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;

@@ -103,6 +103,7 @@ public class CliSender extends AlertSender<CliComponent> {
 
     private static class ExceptionHolder {
         public ScriptException scriptException;
+        public Throwable throwable;
     }
 
     public SenderResult send(Alert alert) {
@@ -136,11 +137,14 @@ public class CliSender extends AlertSender<CliComponent> {
 
             final ScriptEngine e = engine;
             Thread scriptRunner = new Thread(new Runnable() {
+                @Override
                 public void run() {
                     try {
-                        e.eval(rdr);
+                        e.eval(rdr);                    
                     } catch (ScriptException e) {
                         exceptionHolder.scriptException = e;
+                    } catch (Throwable e) {
+                        exceptionHolder.throwable = e;
                     }
                 }
             }, "Script Runner for alert " + alert);
@@ -166,6 +170,11 @@ public class CliSender extends AlertSender<CliComponent> {
                 int line = exceptionHolder.scriptException.getLineNumber();
                 String scriptName = createSummary(config, "script $packageName ($packageVersion) in repo $repoName");
                 throw new ScriptException(message, scriptName, line, col);
+            } else if (exceptionHolder.throwable  != null) {
+                LOG.info("The script execution for CLI notification of alert [" + alert + "] failed.",
+                    exceptionHolder.throwable);
+
+                throw exceptionHolder.throwable;
             }
 
             scriptOut.flush();
@@ -184,7 +193,7 @@ public class CliSender extends AlertSender<CliComponent> {
             return result;
         } catch (IllegalArgumentException e) {
             return SenderResult.getSimpleFailure(e.getMessage()); //well, let's just hope the message doesn't exceed 4k.
-        } catch (Exception e) {
+        } catch (Throwable e) {
             result.addFailureMessage(ThrowableUtil.getAllMessages(e, true, remainingResultSize(result)));
             return result;
         } finally {

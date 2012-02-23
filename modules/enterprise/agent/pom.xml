@@ -183,6 +183,7 @@ Build-Number=${buildNumber}
                    <property name="augeas.zip.location" value="${augeas.zip.location}"/>
                    <property name="augeas.zip.mask" value="${augeas.zip.mask}"/>
                    <property name="augeas.zip.version" value="${augeas.zip.version}" />
+                   <property name="log4j.version" value="${log4j.version}" />
                 </ant>
               </tasks>
             </configuration>

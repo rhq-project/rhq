@@ -341,7 +341,7 @@ public class ImageManager {
             color = "red";
             break;
         case DISABLED:
-            color = "yellow";
+            color = "orange";
             break;
         case UNKNOWN:
             color = "grey";

@@ -2214,6 +2214,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
     }
 
+    public void requestFullAvailabilityReport() {
+        if (null != availabilityExecutor) {
+            availabilityExecutor.sendFullReportNextTime();
+        }
+    }
+
     /**
      * Instructs the inventory manager to notify the specified listener of inventory change events.
      *

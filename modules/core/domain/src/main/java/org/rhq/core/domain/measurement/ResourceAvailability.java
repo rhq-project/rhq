@@ -78,7 +78,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  JOIN res.currentAvailability avail " // we only want the current availability
         + " WHERE res.agent.id = :agentId " // use id not name to prevent an unnecessary join to agent table
         + "   AND res.parentResource IS NULL " // we only want platforms
-        + "   AND avail.availabilityType <> 1") // get all DOWN or UNKNOWN
+        + "   AND avail.availabilityType <> 1") // get all NOT UP
 })
 @SequenceGenerator(name = "RHQ_RESOURCE_AVAIL_SEQ", sequenceName = "RHQ_RESOURCE_AVAIL_ID_SEQ", allocationSize = 100)
 public class ResourceAvailability implements Serializable {

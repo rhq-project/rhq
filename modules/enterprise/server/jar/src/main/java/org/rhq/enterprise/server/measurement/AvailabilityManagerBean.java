@@ -418,32 +418,34 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         // translate data into Availability objects for downstream processing
-        int j = 0;
-        Availability[] availabilities = new Availability[report.getResourceAvailability().size()];
+        List<Availability> availabilities = new ArrayList<Availability>(report.getResourceAvailability().size());
         for (AvailabilityReport.Datum datum : report.getResourceAvailability()) {
-            availabilities[j++] = new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
-                datum.getAvailabilityType());
+            availabilities.add(new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
+                datum.getAvailabilityType()));
         }
 
-        notifyAlertConditionCacheManager("mergeAvailabilityReport", availabilities);
+        // We will alert only on the avails for enabled resources. Keep track of any that are disabled. 
+        List<Availability> disabledAvailabilities = new ArrayList<Availability>();
 
         boolean askForFullReport = false;
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
 
-        if (agentToUpdate != null) {
+        // if this report is from an agent update the lastAvailreport time
+        if (!report.isEnablementReport() && agentToUpdate != null) {
             // do this now, before we might clear() the entity manager
             availabilityManager.updateLastAvailabilityReport(agentToUpdate.intValue());
-            //agentToUpdate.setLastAvailabilityReport(System.currentTimeMillis());
         }
 
         int numInserted = 0;
 
-        // if we got a changes-only report, and the agent appears backfilled, then we need
-        // to skip this report so as not to waste our time and immediately request and process
+        // if this report is from an agent, and is a changes-only report, and the agent appears backfilled,
+        // then we need to skip this report so as not to waste our time> Then, immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (report.isChangesOnlyReport() && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
+        if (!report.isEnablementReport() && report.isChangesOnlyReport()
+            && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
             askForFullReport = true;
+
         } else {
             Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
             q.setFlushMode(FlushModeType.COMMIT);
@@ -455,18 +457,30 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     entityManager.clear();
                 }
 
-                // availability reports only tell us the current state at the start time - end time is ignored/must be null
+                // availability reports only tell us the current state at the start time - end time is 
+                // ignored/must be null
                 reported.setEndTime(null);
 
                 try {
                     q.setParameter("resourceId", reported.getResource().getId());
                     Availability latest = (Availability) q.getSingleResult();
+                    AvailabilityType latestType = latest.getAvailabilityType();
+                    AvailabilityType reportedType = reported.getAvailabilityType();
+
+                    // If the current avail is DISABLED, and this report is not trying to re-enable the resource,
+                    // Then ignore the reported avail.
+                    if (AvailabilityType.DISABLED == latestType) {
+                        if (!(report.isEnablementReport() && (AvailabilityType.UNKNOWN == reportedType))) {
+                            disabledAvailabilities.add(reported);
+                            continue;
+                        }
+                    }
 
                     if (reported.getStartTime().getTime() >= latest.getStartTime().getTime()) {
                         //log.info( "new avail (latest/reported)-->" + latest + "/" + reported );
 
                         // the new availability data is for a time after our last known state change
-                        // we are runlength encoded, so only persist data if the availability changed
+                        // we are runlength encoded, so only persist data if the availability changed                        
                         if (latest.getAvailabilityType() != reported.getAvailabilityType()) {
                             entityManager.persist(reported);
                             numInserted++;
@@ -530,18 +544,25 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             watch.reset();
         }
 
-        // a single report comes from a single agent - update the agent's last availability report timestamp
-        if (agentToUpdate != null) {
-            // don't bother asking for a full report if the one we are currently processing is already full
-            if (askForFullReport && report.isChangesOnlyReport()) {
-                log.debug("The server is unsure that it has up-to-date availabilities for agent [" + agentName
-                    + "]; asking for a full report to be sent");
-                return false;
+        // notify alert condition cache manager for all reported avails for for enabled resources
+        availabilities.removeAll(disabledAvailabilities);
+        notifyAlertConditionCacheManager("mergeAvailabilityReport",
+            availabilities.toArray(new Availability[availabilities.size()]));
+
+        if (!report.isEnablementReport()) {
+            // a single report comes from a single agent - update the agent's last availability report timestamp
+            if (agentToUpdate != null) {
+                // don't bother asking for a full report if the one we are currently processing is already full
+                if (askForFullReport && report.isChangesOnlyReport()) {
+                    log.debug("The server is unsure that it has up-to-date availabilities for agent [" + agentName
+                        + "]; asking for a full report to be sent");
+                    return false;
+                }
+            } else {
+                log.error("Could not figure out which agent sent availability report. "
+                    + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
+                    + agentName + "] was recently removed. In any other case this is a bug." + report);
             }
-        } else {
-            log.error("Could not figure out which agent sent availability report. "
-                + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
-                + agentName + "] was recently removed. In any other case this is a bug." + report);
         }
 
         return true; // everything is OK and things look to be in sync

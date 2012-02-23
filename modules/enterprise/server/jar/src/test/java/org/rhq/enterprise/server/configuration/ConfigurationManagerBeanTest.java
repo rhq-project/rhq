@@ -1109,5 +1109,10 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             throws PluginContainerException {
             return null;
         }
+
+        @Override
+        public void requestFullAvailabilityReport() {
+            return;
+        }
     }
 }

@@ -181,8 +181,7 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>${testng.version}</version>
-            <scope>compile</scope> <!-- yes, this is meant to be in compile, because we're providing assertions 
-                to the scripts -->
+            <scope>test</scope>
         </dependency>
 
         <dependency>

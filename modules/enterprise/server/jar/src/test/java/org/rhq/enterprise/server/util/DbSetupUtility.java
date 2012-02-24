@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URL;
@@ -48,24 +49,35 @@ public class DbSetupUtility {
 
     public static final String JON300_SCHEMA_VERSION = "2.116";
 
-    private static final String DB_NAME = System.getProperty("rhq.test.ds.db-name", "rhq");
-    private static final String DB_SERVER_NAME = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
-    private static final String DB_CONNECTION_URL = System.getProperty("rhq.test.ds.connection-url",
-        "jdbc:postgresql://" + DB_SERVER_NAME + ":5432/" + DB_NAME);
-    private static final String DB_USER_NAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
-    private static final String DB_PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
-
     private static final String BASE_RESOURCE_PATH = DbSetupUtility.class.getPackage().getName().replace('.', '/');
 
+    private static TestDatasourceConfiguration testDsConfig;
+
+    private static TestDatasourceConfiguration getTestDatasourceConfiguration() {
+        if (testDsConfig == null) {
+            Properties testDsProperties = new Properties();
+            InputStream resourceAsStream = DbSetupUtility.class.getResourceAsStream("test-ds.properties");
+            try {
+                testDsProperties.load(resourceAsStream);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load test-ds.properties from classloader.", e);
+            }
+            testDsConfig = new TestDatasourceConfiguration(testDsProperties);
+            System.out.println("Using test datasource with config " + testDsConfig + "...");
+        }
+        return testDsConfig;
+    }
+    
     public static void dbreset() throws Exception {
-        System.out.println("Resetting DB at " + DB_CONNECTION_URL + "...");
+        TestDatasourceConfiguration testDs = getTestDatasourceConfiguration();
+        System.out.println("Resetting DB at " + testDs.connectionUrl + "...");
 
         // NOTE: We do not use DBReset.performDBReset() here, since DBReset deletes the schema, which requires there to
         //       be no active connections to the DB. Liquibase.dropAll(), on the other hand, just deletes all the
         //       objects in the DB, which has no such requirement.
-        String dbDriver = DatabaseFactory.getInstance().findDefaultDriver(DB_CONNECTION_URL);
+        String dbDriver = DatabaseFactory.getInstance().findDefaultDriver(testDs.connectionUrl);
         Database database = CommandLineUtils.createDatabaseObject(DbSetupUtility.class.getClassLoader(),
-            DB_CONNECTION_URL, DB_USER_NAME, DB_PASSWORD, dbDriver, null, null, null);
+            testDs.connectionUrl, testDs.userName, testDs.password, dbDriver, null, null, null);
         //Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
         //    new JdbcConnection(AbstractEJB3Test.getConnection()));
         Liquibase liquibase = new Liquibase(null, new ClassLoaderResourceAccessor(), database);
@@ -92,7 +104,9 @@ public class DbSetupUtility {
             dataFileResourcePath = "db-data-combined.xml";
         }
 
-        DBSetup dbsetup = new DBSetup(DB_CONNECTION_URL, DB_USER_NAME, DB_PASSWORD);
+        TestDatasourceConfiguration testDs = getTestDatasourceConfiguration();
+        
+        DBSetup dbsetup = new DBSetup(testDs.connectionUrl, testDs.userName, testDs.password);
         dbsetup.setup(schemaFileResourcePath);
         dbsetup.setup(dataFileResourcePath);
     }
@@ -101,20 +115,21 @@ public class DbSetupUtility {
         System.out.println("Upgrading RHQ DB to schema version [" + targetSchemaVersion + "]...");
         File logfile = File.createTempFile("rhq.test", "dbupgrade.log");
 
+        TestDatasourceConfiguration testDs = getTestDatasourceConfiguration();
         try {
-            // get the URL for the dbupgrade Ant script, which is located in the dbutils jar
+            // Get the URL for the dbupgrade Ant script, which is located in the dbutils jar.
             URL dbupgradeXmlFileUrl = DbSetupUtility.class.getClassLoader().getResource("db-upgrade.xml");
 
             Properties antProps = new Properties();
-            antProps.setProperty("jdbc.url", DB_CONNECTION_URL);
-            antProps.setProperty("jdbc.user", DB_USER_NAME);
-            antProps.setProperty("jdbc.password", DB_PASSWORD);
+            antProps.setProperty("jdbc.url", testDs.connectionUrl);
+            antProps.setProperty("jdbc.user", testDs.userName);
+            antProps.setProperty("jdbc.password", testDs.password);
             antProps.setProperty("target.schema.version", targetSchemaVersion);
 
             startAnt(dbupgradeXmlFileUrl, "db-ant-tasks.properties", antProps, logfile);
         } catch (Exception e) {
-            throw new RuntimeException("Cannot upgrade the RHQ DB at URL " + DB_CONNECTION_URL + " to schema version "
-                + targetSchemaVersion + ".", e);
+            throw new RuntimeException("Cannot upgrade the RHQ DB at [" + testDs.connectionUrl + "] to schema version ["
+                + targetSchemaVersion + "].", e);
         }
 
         return;
@@ -203,6 +218,41 @@ public class DbSetupUtility {
             if (logFileOutput != null) {
                 logFileOutput.close();
             }
+        }
+    }
+    
+    private static class TestDatasourceConfiguration {
+        abstract class Property {
+            public static final String DB_CONNECTION_URL = "rhq.test.ds.connection-url";
+            public static final String DB_SERVER_NAME = "rhq.test.ds.server-name";
+            public static final String DB_NAME = "rhq.test.ds.db-name";
+            public static final String DB_USER_NAME = "rhq.test.ds.user-name";
+            public static final String DB_PASSWORD = "rhq.test.ds.password";    
+        }
+
+        String connectionUrl;
+        String serverName;
+        String dbName;
+        String userName;
+        String password;
+        
+        private TestDatasourceConfiguration(Properties props) {
+            connectionUrl = props.getProperty(Property.DB_CONNECTION_URL);
+            serverName = props.getProperty(Property.DB_SERVER_NAME);
+            dbName = props.getProperty(Property.DB_NAME);
+            userName = props.getProperty(Property.DB_USER_NAME);
+            password = props.getProperty(Property.DB_PASSWORD);
+        }
+
+        @Override
+        public String toString() {
+            // NOTE: For the sake of security, we don't include the password here.
+            return "{" +
+                "connectionUrl='" + connectionUrl + '\'' +
+                ", serverName='" + serverName + '\'' +
+                ", dbName='" + dbName + '\'' +
+                ", userName='" + userName + '\'' +
+                '}';
         }
     }
 

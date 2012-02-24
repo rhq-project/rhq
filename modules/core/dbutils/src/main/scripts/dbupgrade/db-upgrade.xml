@@ -3961,7 +3961,7 @@
                 <schema-directSQL>
                     <statement desc="Adding VIEW_USERS global permission to all existing roles">
                         INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION)
-                        SELECT r.ID, 17 FROM RHQ_ROLE r WHERE r.ID > 2
+                        SELECT r.ID, 17 FROM RHQ_ROLE r
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

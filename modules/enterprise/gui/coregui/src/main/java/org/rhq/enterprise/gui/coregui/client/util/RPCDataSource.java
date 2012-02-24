@@ -672,9 +672,16 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             if (minValue != null) {
                 integerRangeValidator.setMin(minValue);
             }
+            else {
+                integerRangeValidator.setMin(Integer.MIN_VALUE);
+            }
             if (maxValue != null) {
                 integerRangeValidator.setMax(maxValue);
             }
+            else {
+                integerRangeValidator.setMax(Integer.MAX_VALUE);
+            }
+
             textField.setValidators(integerRangeValidator);
         }
         return textField;

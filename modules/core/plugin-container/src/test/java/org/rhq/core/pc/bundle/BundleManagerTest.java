@@ -106,7 +106,7 @@ public class BundleManagerTest {
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
         BundleDestination destination = new BundleDestination(bundle, "destName", null,
-            MockInventoryManager.BUNDLE_CONFIG_NAME_FS, "/tmp/dest"); // ABSOLUTE PATH
+            MockInventoryManager.BUNDLE_CONFIG_NAME_FS, getPath("/tmp/dest")); // ABSOLUTE PATH
         BundleDeployment bundleDeployment = new BundleDeployment(bundleVersion, destination, "deploymentName");
         BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(bundleDeployment, im.serverFS);
         BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
@@ -114,11 +114,14 @@ public class BundleManagerTest {
         // No matter what the CONTEXT_VALUE_FS is (i.e. the default context value in the plugin descriptor),
         // if the user specifies an absolute path for the destination, that will be used explicitly. So here in this test,
         // the destination was specified with a destDir that had an absolute path of /tmp/dest and it will be used as-is
-        mockBundleManager.absolutePathToAssert = "/tmp/dest";
+        mockBundleManager.absolutePathToAssert = getPath("/tmp/dest");
         BundleScheduleResponse response = mockBundleManager.schedule(request);
         assertSuccess(response);
         assertBundleDeploymentStatus(BundleDeploymentStatus.SUCCESS);
+    }
 
+    private static String getPath(String path) {
+        return ((File.separatorChar == '\\') && path.startsWith("/")) ? ("C:" + path) : path;
     }
 
     public void testNonPlatformBundleDeploy_FileSystem_RelativePath() throws Exception {
@@ -208,7 +211,7 @@ public class BundleManagerTest {
         Bundle bundle = new Bundle("bundleName", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bundleVersionName", "1.0", bundle, "");
         BundleDestination destination = new BundleDestination(bundle, "destName", null,
-            MockInventoryManager.BUNDLE_CONFIG_NAME_FS, "/tmp/dest"); // ABSOLUTE PATH
+            MockInventoryManager.BUNDLE_CONFIG_NAME_FS, getPath("/tmp/dest")); // ABSOLUTE PATH
         BundleDeployment bundleDeployment = new BundleDeployment(bundleVersion, destination, "deploymentName");
         BundleResourceDeployment resourceDeployment = new BundleResourceDeployment(bundleDeployment, im.serverFS);
         BundleScheduleRequest request = new BundleScheduleRequest(resourceDeployment);
@@ -307,21 +310,21 @@ public class BundleManagerTest {
         }
     }
 
-    private class MockInventoryManager extends InventoryManager {
+    private static class MockInventoryManager extends InventoryManager {
         private static final String BUNDLE_CONFIG_NAME_FS = "fsBaseDirLocation";
-        private static final String BUNDLE_CONFIG_CONTEXT_VALUE_FS = "/blah";
+        private static final String BUNDLE_CONFIG_CONTEXT_VALUE_FS = getPath("/blah");
 
         private static final String BUNDLE_CONFIG_NAME_PC = "pcBaseDirLocation";
         private static final String BUNDLE_CONFIG_CONTEXT_VALUE_PC = "pcPropBundle";
-        private static final String BUNDLE_CONFIG_LOCATION_PC = "/pluginconfig/base/dir";
+        private static final String BUNDLE_CONFIG_LOCATION_PC = getPath("/pluginconfig/base/dir");
 
         private static final String BUNDLE_CONFIG_NAME_RC = "rcBaseDirLocation";
         private static final String BUNDLE_CONFIG_CONTEXT_VALUE_RC = "rcPropBundle";
-        private static final String BUNDLE_CONFIG_LOCATION_RC = "/resourceconfig/base/dir";
+        private static final String BUNDLE_CONFIG_LOCATION_RC = getPath("/resourceconfig/base/dir");
 
         private static final String BUNDLE_CONFIG_NAME_MT = "mtBaseDirLocation";
         private static final String BUNDLE_CONFIG_CONTEXT_VALUE_MT = "traitBundle";
-        private static final String BUNDLE_CONFIG_LOCATION_MT = "/trait/base/dir";
+        private static final String BUNDLE_CONFIG_LOCATION_MT = getPath("/trait/base/dir");
 
         // mocking the following:
         // - one platform type and a platform resource to be used as the root parent
@@ -475,7 +478,7 @@ public class BundleManagerTest {
     }
 
     @SuppressWarnings("unchecked")
-    private class MockResourceContext extends ResourceContext {
+    private static class MockResourceContext extends ResourceContext {
         public MockResourceContext(Resource resource) {
             super(resource, null, null, null, null, null, null, null, null, null, null, null, null);
         }

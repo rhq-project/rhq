@@ -371,7 +371,7 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
                 Log.debug("key press pattern name field");
                 turnNameFieldIntoLabel(true);
             }
@@ -562,7 +562,7 @@ public class FlexSearchBar extends AbstractSearchBar {
     }
 
     public String getValue() {
-        return autoCompletePatternField.getValue();
+        return autoCompletePatternField.getText();
     }
 
 }

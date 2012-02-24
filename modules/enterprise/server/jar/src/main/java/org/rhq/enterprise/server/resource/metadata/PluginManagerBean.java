@@ -59,8 +59,6 @@ public class PluginManagerBean implements PluginManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    private static final PluginMetadataManager PLUGIN_METADATA_MANAGER = new PluginMetadataManager();
-
     @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager;
 
@@ -163,7 +161,7 @@ public class PluginManagerBean implements PluginManagerLocal {
         }
 
         // we need to make sure that if a plugin is enabled, all of its dependencies are enabled
-        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
+        PluginDependencyGraph graph = getPluginMetadataManager().buildDependencyGraph();
         List<Plugin> allPlugins = getInstalledPlugins();
         Set<String> pluginsThatNeedToBeEnabled = new HashSet<String>();
 
@@ -202,7 +200,7 @@ public class PluginManagerBean implements PluginManagerLocal {
         }
 
         // we need to make sure that if a plugin is disabled, no other plugins that depend on it are enabled
-        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
+        PluginDependencyGraph graph = getPluginMetadataManager().buildDependencyGraph();
         List<Plugin> allPlugins = getInstalledPlugins();
         Set<String> pluginsThatNeedToBeDisabled = new HashSet<String>();
 
@@ -240,7 +238,7 @@ public class PluginManagerBean implements PluginManagerLocal {
             return;
         }
 
-        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
+        PluginDependencyGraph graph = getPluginMetadataManager().buildDependencyGraph();
         List<Plugin> allPlugins = getInstalledPlugins();
         Set<String> pluginsToDelete = new HashSet<String>();
 
@@ -358,18 +356,19 @@ public class PluginManagerBean implements PluginManagerLocal {
             // We do the same thing with the extended plugins that we will do with our passed-in "parent" plugin, that is,
             // we register the extended plugins' types (we'll force it to update types since we know something changed in the parent)
             // and then we'll remove any obsoleted types from the extended plugins.
-            Map<String, PluginDescriptor> extensions = PLUGIN_METADATA_MANAGER.getEmbeddedExtensions(plugin.getName());
+            PluginMetadataManager metadataManager = getPluginMetadataManager();
+            Map<String, PluginDescriptor> extensions = metadataManager.getEmbeddedExtensions(plugin.getName());
             if (extensions != null && extensions.size() > 0) {
                 for (Map.Entry<String, PluginDescriptor> entry : extensions.entrySet()) {
                     String extPluginName = entry.getKey();
                     PluginDescriptor extPluginDescriptor = entry.getValue();
                     pluginMgr.registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
-                    resourceMetadataManager.removeObsoleteTypes(subject, extPluginName, PLUGIN_METADATA_MANAGER);
+                    resourceMetadataManager.removeObsoleteTypes(subject, extPluginName, metadataManager);
                 }
             }
 
             // now remove any obsolete types from the newly registered plugin
-            resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
+            resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), metadataManager);
         }
 
         long endTime = System.currentTimeMillis();
@@ -419,8 +418,10 @@ public class PluginManagerBean implements PluginManagerLocal {
         boolean forceUpdate) throws Exception {
         boolean typesUpdated = false;
 
-        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPluginName)) {
-            Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
+        PluginMetadataManager metadataManager = getPluginMetadataManager();
+
+        if (newOrUpdated || forceUpdate || !metadataManager.getPluginNames().contains(newPluginName)) {
+            Set<ResourceType> rootResourceTypes = metadataManager.loadPlugin(pluginDescriptor);
             if (rootResourceTypes == null) {
                 throw new Exception("Failed to load plugin [" + newPluginName + "].");
             }
@@ -503,4 +504,13 @@ public class PluginManagerBean implements PluginManagerLocal {
         return;
     }
 
+    /**
+     * Returns the metadata manager that will be used to obtain the resource types from
+     * descriptors.
+     *
+     * @return metadata manager
+     */
+    private PluginMetadataManager getPluginMetadataManager() {
+        return LookupUtil.getPluginDeploymentScanner().getPluginMetadataManager();
+    }
 }

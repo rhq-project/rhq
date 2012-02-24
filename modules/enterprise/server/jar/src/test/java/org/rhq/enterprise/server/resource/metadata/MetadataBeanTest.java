@@ -79,6 +79,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
         prepareScheduler();
+        preparePluginScannerService();
     }
 
     /**
@@ -90,6 +91,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     void afterMethod() throws Exception {
         unprepareServerPluginService();
         unprepareScheduler();
+        unpreparePluginScannerService();
     }
 
     protected void setupDB() throws Exception {

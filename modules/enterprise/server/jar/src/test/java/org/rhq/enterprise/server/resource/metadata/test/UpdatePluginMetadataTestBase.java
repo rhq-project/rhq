@@ -80,6 +80,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     @AfterClass
     public void afterClass() throws Exception {
         cleanupTest();
+        unpreparePluginScannerService();
     }
 
     @BeforeMethod
@@ -88,6 +89,12 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         prepareMockAgentServiceContainer();
 
         prepareScheduler();
+        try {
+            unpreparePluginScannerService(true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        preparePluginScannerService();
 
         try {
             pluginMgr = LookupUtil.getPluginManager();

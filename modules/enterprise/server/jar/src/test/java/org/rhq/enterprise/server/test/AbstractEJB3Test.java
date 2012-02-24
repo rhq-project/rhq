@@ -55,6 +55,8 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
@@ -77,6 +79,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
     private MBeanServer dummyJBossMBeanServer;
+    private PluginDeploymentScannerMBean pluginScannerService;
 
     @BeforeClass
     public void resetDB() throws Exception {
@@ -398,6 +401,49 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             }
 
             schedulerService = null;
+        }
+    }
+
+    public PluginDeploymentScannerMBean getPluginScannerService() {
+        return pluginScannerService;
+    }
+
+    public void preparePluginScannerService() {
+        preparePluginScannerService(null);
+    }
+
+    public void preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
+        try {
+            if (scannerService == null) {
+                scannerService = new PluginDeploymentScanner();
+            }
+            MBeanServer mbs = getJBossMBeanServer();
+            mbs.registerMBean(scannerService, PluginDeploymentScannerMBean.OBJECT_NAME);
+            pluginScannerService = scannerService;
+            return;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void unpreparePluginScannerService() throws Exception {
+        unpreparePluginScannerService(false);
+    }
+
+    public void unpreparePluginScannerService(boolean beanOnly) throws Exception {
+        if (pluginScannerService != null) {
+            pluginScannerService.stop();
+            if (beanOnly) {
+                MBeanServer mbs = getJBossMBeanServer();
+                if (mbs.isRegistered(PluginDeploymentScannerMBean.OBJECT_NAME)) {
+                    getJBossMBeanServer().unregisterMBean(PluginDeploymentScannerMBean.OBJECT_NAME);
+                }
+            } else {
+                releaseJBossMBeanServer();
+            }
+
+            pluginScannerService = null;
         }
     }
 

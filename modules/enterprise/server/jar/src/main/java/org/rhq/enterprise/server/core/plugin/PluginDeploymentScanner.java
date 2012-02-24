@@ -26,9 +26,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -95,6 +96,10 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
 
     public void setAgentPluginDir(File dir) {
         this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(dir);
+    }
+
+    public PluginMetadataManager getPluginMetadataManager() {
+        return this.agentPluginScanner.getAgentPluginDeployer().getPluginMetadataManager();
     }
 
     public void start() throws Exception {

@@ -106,7 +106,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
 
-        System.out.println("Starting ejb3...");
+        System.out.println("Starting JBoss EJB3 Embedded Container...");
         String deployDir = System.getProperty("deploymentDirectory", "target/classes");
         System.out.println("Loading EJB3 deployments from directory: " + deployDir);
         try {
@@ -169,9 +169,11 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     //@Configuration(groups = "integration.ejb3", afterSuite = true)
     @AfterSuite(alwaysRun = true)
     public static void shutdownEmbeddedJboss() {
+        System.out.println("Stopping JBoss EJB3 Embedded Container...");
+
         System.err.println("!!! Any errors occurring after this point    !!!");
         System.err.println("!!! occurred during embedded server shutdown !!!");
-        System.err.println("!!! and is probably not a real problem.      !!!");
+        System.err.println("!!! and are probably not a real problem.     !!!");
         if (deployer != null) {
             try {
                 deployer.stop();

@@ -176,9 +176,8 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     "LargeGroupTestCompatGroup", lge.serverType);
 
                 // create our many server resources
-                System.out.print("   Creating resources, this might take some time");
+                System.out.print("=====> Creating member Resources (this might take some time)...");
                 for (int i = 1; i <= groupSize; i++) {
-                    System.out.print(((i % 100) == 0) ? String.valueOf(i) : ".");
                     Resource res = SessionTestHelper.createNewResourceForGroup(em, lge.compatibleGroup,
                         "LargeGroupTestServer", lge.serverType, (i % 100) == 0);
                     res.setAgent(lge.agent);
@@ -190,8 +189,14 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
                     pc.put(new PropertySimple(PC_PROP2_NAME, res.getId()));
                     em.persist(pc);
                     res.setPluginConfiguration(pc);
+
+                    if ((i % 100) == 0) {
+                        System.out.print(i);
+                    } else if ((i % 10) == 0) {
+                        System.out.print('.');
+                    }
                 }
-                System.out.println("Done.");
+                System.out.println(" Done.");
 
                 em.flush();
                 return null;
@@ -205,8 +210,9 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
     }
 
     /**
-     * Purges all the entities that were created by the {@link #createLargeGroupWithNormalUserRoleAccess(int)} method.
-     * This includes the user, role, agent and all resources along with the group itself.
+     * Purges all the entities that were created by the
+     * {@link #createLargeGroupWithNormalUserRoleAccess(int, org.rhq.core.domain.authz.Permission...)} method.
+     * This includes the user, role, agent and all resources, along with the group itself.
      *
      * @param lge contains information that was created which needs to be deleted
      */
@@ -219,13 +225,17 @@ public abstract class LargeGroupTestBase extends AbstractEJB3Test {
         // purge all resources by performing in-band and out-of-band work in quick succession.
         // this takes a long time but trying to get this right using native queries is hard to get right so just do it this way.
         // only need to delete the platform which will delete all children servers AND the agent itself
-        System.out.print("   Removing resources, this might take some time");
+        System.out.print("=====> Removing member Resources (this might take some time)...");
         final List<Integer> deletedIds = resourceManager.uninventoryResource(getOverlord(),
             lge.platformResource.getId());
-        int i = deletedIds.size();
-        for (Integer deletedResourceId : deletedIds) {
-            System.out.print(((--i % 100) == 0) ? String.valueOf(i) : ".");
+        for (int i = 1, deletedIdsSize = deletedIds.size(); i <= deletedIdsSize; i++) {
+            Integer deletedResourceId = deletedIds.get(i - 1);
             resourceManager.uninventoryResourceAsyncWork(getOverlord(), deletedResourceId);
+            if ((i % 100) == 0) {
+                System.out.print(i);
+            } else if ((i % 10) == 0) {
+                System.out.print('.');
+            }
         }
         System.out.println(" Done.");
 

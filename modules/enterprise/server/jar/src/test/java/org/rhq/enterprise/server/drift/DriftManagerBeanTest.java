@@ -80,7 +80,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 // TODO: Figure out how to get this test class to run without causing issues in the test-jar generation. I don't
 // understand exactly what the deal is but removing this dependency on an itests group causes the server test jar to
 // not correctly generate the drift package contents. 
-@Test(dependsOnGroups = "drift")
+@Test
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;

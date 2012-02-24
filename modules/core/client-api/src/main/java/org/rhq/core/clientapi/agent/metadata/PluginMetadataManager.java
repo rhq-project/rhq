@@ -45,10 +45,12 @@ import org.rhq.core.domain.resource.ResourceType;
  * metadata for the rest of the services in the form of the domain object classes and the jaxb version of the
  * descriptors.
  *
- * This object can also be used to separately store plugin descriptors without converting them into types.
+ * This object can also be used to separately store plugin descriptors without converting them into types (i.e.
+ * the descriptor staging area).
  * The thinking here is the server has the ability to get all the plugin descriptors early on and in any order;
  * only later does it load/register those plugins (because it needs to order them via the proper dependency graph.
- * There may be times when we need a plugin's descriptor but before that plugin has been loaded/registered. 
+ * There may be times when we need a plugin's descriptor but before that plugin has been loaded/registered. This
+ * manager lets us stage those descriptors prior to converting them into types.
  *
  * @author Greg Hinkle
  * @author John Mazzitelli
@@ -82,21 +84,22 @@ public class PluginMetadataManager {
     }
 
     /**
-     * Get the plugin descriptor for the named plugin. If the descriptor was previous loaded/parsed
-     * via {@link #loadPlugin(PluginDescriptor)}, it will be used. If it hasn't been loaded yet, but
-     * previously stored via {@link #storePluginDescriptor(PluginDescriptor)}, the stored descriptor
-     * will be returned. If the descriptor cannot be found anywhere, returns null.
+     * Get the plugin descriptor for the named plugin. If the descriptor was previously staged
+     * via {@link #storePluginDescriptor(PluginDescriptor)}, it will be used. If a new descriptor
+     * hasn't been staged, but a previous descriptor was loaded and converted into types,
+     * via {@link #loadPlugin(PluginDescriptor)}, it will be used.
+     * If the descriptor cannot be found anywhere, returns null.
      *
      * @param pluginName name of the plugin whose descriptor is to be returned.
      * @return the descriptor or null if not available
      */
     public PluginDescriptor getPluginDescriptor(String pluginName) {
-        PluginDescriptor descriptor = null;
-        PluginMetadataParser parser = this.parsersByPlugin.get(pluginName);
-        if (parser != null) {
-            descriptor = parser.getDescriptor();
-        } else {
-            descriptor = this.descriptorsByPlugin.get(pluginName);
+        PluginDescriptor descriptor = this.descriptorsByPlugin.get(pluginName);
+        if (descriptor == null) {
+            PluginMetadataParser parser = this.parsersByPlugin.get(pluginName);
+            if (parser != null) {
+                descriptor = parser.getDescriptor();
+            }
         }
         return descriptor;
     }

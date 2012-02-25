@@ -41,7 +41,7 @@ import org.rhq.core.system.ProcessInfo;
  * in the area of processes and host.xml
  * @author Heiko W. Rupp
  */
-public class AbstractBaseDiscovery  {
+public class AbstractBaseDiscovery {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
     static final int DEFAULT_MGMT_PORT = 9990;
@@ -51,8 +51,6 @@ public class AbstractBaseDiscovery  {
     protected final Log log = LogFactory.getLog(this.getClass());
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
     private XPathFactory factory;
-
-
 
     protected AbstractBaseDiscovery() {
         synchronized (this) {
@@ -68,7 +66,7 @@ public class AbstractBaseDiscovery  {
      * @param isDomainMode Indiates if host.xml should be read (true) or standalone.xml (false)
      */
     protected void readStandaloneOrHostXml(ProcessInfo processInfo, boolean isDomainMode) {
-        String hostXmlFile = getHostXmlFileLocation(processInfo,isDomainMode);
+        String hostXmlFile = getHostXmlFileLocation(processInfo, isDomainMode);
         readStandaloneOrHostXmlFromFile(hostXmlFile);
     }
 
@@ -93,11 +91,11 @@ public class AbstractBaseDiscovery  {
      * @return The home dir if found or empty string otherwise
      */
     String getHomeDirFromCommandLine(String[] commandLine) {
-            for (String line: commandLine) {
-                if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
-                    return line.substring(DJBOSS_SERVER_HOME_DIR.length()+1);
-            }
-            return "";
+        for (String line : commandLine) {
+            if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
+                return line.substring(DJBOSS_SERVER_HOME_DIR.length() + 1);
+        }
+        return "";
     }
 
     /**
@@ -107,7 +105,7 @@ public class AbstractBaseDiscovery  {
      */
     String getLogFileFromCommandLine(String[] commandLine) {
 
-        for (String line: commandLine) {
+        for (String line : commandLine) {
             if (line.startsWith(DORG_JBOSS_BOOT_LOG_FILE))
                 return line.substring(DORG_JBOSS_BOOT_LOG_FILE.length());
         }
@@ -121,7 +119,7 @@ public class AbstractBaseDiscovery  {
      * @param commandLine Command line arguments of the process to
      */
     protected HostPort getManagementPortFromHostXml(String[] commandLine) {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
         String portString;
@@ -129,35 +127,29 @@ public class AbstractBaseDiscovery  {
 
         String socketBindingName;
 
-        socketBindingName = obtainXmlPropertyViaXPath(
-                "//management/management-interfaces/http-interface/socket-binding/@http");
-        String socketInterface = obtainXmlPropertyViaXPath(
-                "//management/management-interfaces/http-interface/socket/@interface");
+        socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
+        String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@interface");
 
         if (!socketInterface.isEmpty()) {
-            interfaceExpession = obtainXmlPropertyViaXPath(
-                                "//interfaces/interface[@name='" + socketInterface + "']/inet-address/@value");
-            portString = obtainXmlPropertyViaXPath(
-                    "//management/management-interfaces/http-interface/socket/@port");
-        }
-        else if (socketBindingName.isEmpty()) {
+            interfaceExpession = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
+                + "']/inet-address/@value");
+            portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@port");
+        } else if (socketBindingName.isEmpty()) {
             // old AS7.0, early 7.1 style
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
-            String interfaceName = obtainXmlPropertyViaXPath(
-                    "//management/management-interfaces/http-interface/@interface");
-            interfaceExpession = obtainXmlPropertyViaXPath(
-                    "/server/interfaces/interface[@name='" + interfaceName + "']/inet-address/@value");
-        }
-        else {
+            String interfaceName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@interface");
+            interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+                + "']/inet-address/@value");
+        } else {
             // later AS7.1 and EAP6 standalone.xml
-            portString = obtainXmlPropertyViaXPath(
-                    "/server/socket-binding-group/socket-binding[@name='" + socketBindingName + "']/@port");
-            String interfaceName = obtainXmlPropertyViaXPath(
-                    "/server/socket-binding-group/socket-binding[@name='" + socketBindingName + "']/@interface");
+            portString = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
+                + socketBindingName + "']/@port");
+            String interfaceName = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
+                + socketBindingName + "']/@interface");
 
             // TODO the next may also be expressed differently
-            interfaceExpession = obtainXmlPropertyViaXPath(
-                    "/server/interfaces/interface[@name='" + interfaceName + "']/inet-address/@value");
+            interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+                + "']/inet-address/@value");
 
         }
         HostPort hp = new HostPort();
@@ -167,16 +159,13 @@ public class AbstractBaseDiscovery  {
         else
             hp.host = "localhost"; // Fallback
 
-
-        if (portString!=null && !portString.isEmpty()) {
-            String tmp = replaceDollarExpression(portString,commandLine, "9990");
+        if (portString != null && !portString.isEmpty()) {
+            String tmp = replaceDollarExpression(portString, commandLine, "9990");
             hp.port = Integer.valueOf(tmp);
-        }
-        else
+        } else
             hp.port = 9990; // Fallback to default
         return hp;
     }
-
 
     /**
      * Check if the passed value has an expression in the form of ${var} or ${var:default},
@@ -194,15 +183,14 @@ public class AbstractBaseDiscovery  {
             return value;
 
         // remove ${ }
-        value = value.substring(2,value.length()-1);
+        value = value.substring(2, value.length() - 1);
         String fallback = lastResort;
         String expression;
         if (value.contains(":")) {
             int i = value.indexOf(":");
-            expression = value.substring(0,i);
-            fallback = value.substring(i+1);
-        }
-        else {
+            expression = value.substring(0, i);
+            fallback = value.substring(i + 1);
+        } else {
             expression = value;
         }
         /*
@@ -214,7 +202,7 @@ public class AbstractBaseDiscovery  {
          * to find the management addresss
          */
 
-        String ret=null;
+        String ret = null;
         for (int i = 0, commandLineLength = commandLine.length; i < commandLineLength; i++) {
             String line = commandLine[i];
             if (expression.contains("address")) {
@@ -222,7 +210,7 @@ public class AbstractBaseDiscovery  {
                     if (line.contains("="))
                         ret = line.substring(line.indexOf("=") + 1); // -bmanagement=1.2.3.4
                     else
-                        ret = commandLine[i+1]; // -bmanagement 1.2.3.4
+                        ret = commandLine[i + 1]; // -bmanagement 1.2.3.4
                     break;
                 }
             } else if (expression.contains("port")) {
@@ -233,7 +221,7 @@ public class AbstractBaseDiscovery  {
             }
 
         }
-        if (ret==null)
+        if (ret == null)
             ret = fallback;
 
         return ret;
@@ -246,7 +234,7 @@ public class AbstractBaseDiscovery  {
      * @return server name
      */
     protected String findHostName() {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
         String hostName = hostXml.getDocumentElement().getAttribute("name");
@@ -258,9 +246,8 @@ public class AbstractBaseDiscovery  {
      * @return host and port of the domain controller
      */
     protected HostPort getDomainControllerFromHostXml() {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
 
         // first check remote, as we can't distinguish between a missing local element or
         // and empty one which is the default
@@ -272,8 +259,7 @@ public class AbstractBaseDiscovery  {
             hp = new HostPort(false);
             hp.host = remoteHost;
             hp.port = Integer.parseInt(portString);
-        }
-        else {
+        } else {
             hp = new HostPort(true);
             hp.port = 9999;
         }
@@ -283,7 +269,7 @@ public class AbstractBaseDiscovery  {
     }
 
     String getManagementSecurtiyRealmFromHostXml() {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
         String realm = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@security-realm");
@@ -292,21 +278,24 @@ public class AbstractBaseDiscovery  {
     }
 
     String getSecurityPropertyFileFromHostXml(String baseDir, AS7Mode mode, String realm) {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 
-        String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm + "']/authentication/properties/@path");
-        String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm + "']/authentication/properties/@relative-to");
+        String fileName = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
+            + "']/authentication/properties/@path");
+        String relDir = obtainXmlPropertyViaXPath("//security-realms/security-realm[@name='" + realm
+            + "']/authentication/properties/@relative-to");
 
         String dmode;
-        if (mode==AS7Mode.STANDALONE)
-            dmode="server";
+        if (mode == AS7Mode.STANDALONE)
+            dmode = "server";
         else
-            dmode="domain";
+            dmode = "domain";
 
-        String fullName ;
+        String fullName;
         if (relDir.equals("jboss." + dmode + ".config.dir"))
-            fullName = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator + fileName;
+            fullName = baseDir + File.separator + mode.getBaseDir() + File.separator + "configuration" + File.separator
+                + fileName;
         else
             fullName = relDir + File.separator + fileName;
 
@@ -323,7 +312,7 @@ public class AbstractBaseDiscovery  {
     protected String getHostXmlFileLocation(ProcessInfo processInfo, boolean isDomain) {
 
         String home = processInfo.getEnvironmentVariable("jboss.home.dir");
-        if (home==null)
+        if (home == null)
             home = getHomeDirFromCommandLine(processInfo.getCommandLine());
         StringBuilder builder = new StringBuilder(home);
         if (isDomain)
@@ -341,7 +330,7 @@ public class AbstractBaseDiscovery  {
 
     protected String determineServerVersionFromHomeDir(String homeDir) {
         String version;
-        String tmp = homeDir.substring(homeDir.lastIndexOf("/")+1);
+        String tmp = homeDir.substring(homeDir.lastIndexOf("/") + 1);
         if (tmp.startsWith(JBOSS_AS_PREFIX)) {
             version = tmp.substring(JBOSS_AS_PREFIX.length());
         } else if (tmp.startsWith(JBOSS_EAP_PREFIX)) {
@@ -362,9 +351,8 @@ public class AbstractBaseDiscovery  {
      *
      */
     protected String obtainXmlPropertyViaXPath(String xpathExpression) {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
-
 
         XPath xpath = factory.newXPath();
         try {
@@ -378,7 +366,6 @@ public class AbstractBaseDiscovery  {
             return null;
         }
     }
-
 
     /**
      * Helper class that holds information about the host,port tuple
@@ -401,11 +388,7 @@ public class AbstractBaseDiscovery  {
 
         @Override
         public String toString() {
-            return "HostPort{" +
-                    "host='" + host + '\'' +
-                    ", port=" + port +
-                    ", isLocal=" + isLocal +
-                    '}';
+            return "HostPort{" + "host='" + host + '\'' + ", port=" + port + ", isLocal=" + isLocal + '}';
         }
     }
 }

@@ -31,7 +31,6 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -64,9 +63,8 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
         String hostName = hcConfig.getSimpleValue("domainHost", "master"); // TODO good default?
 
         HostInfo hostInfo = getHostInfo(hostName);
-        if (hostInfo==null)
+        if (hostInfo == null)
             return discoveredResources;
-
 
         try {
             // get the HostController, as this is an indicator for managed AS
@@ -85,7 +83,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
                     config.put(new PropertySimple("socket-binding-group", serverInfo.bindingGroup));
                 } else {
                     String group = resolveSocketBindingGroup(serverInfo.group);
-                    config.put(new PropertySimple("socket-binding-group",group));
+                    config.put(new PropertySimple("socket-binding-group", group));
 
                 }
                 config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
@@ -95,8 +93,9 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
 
                 // get from the domain or other place as soon as the domain provides it.
                 //XXX hardcoded separators?
-                String serverLog = hcConfig.getSimpleValue("baseDir","/tmp")+File.separator+"domain/servers/"+serverInfo.name+"/log/server.log";
-                initLogEventSourcesConfigProp(serverLog,config);
+                String serverLog = hcConfig.getSimpleValue("baseDir", "/tmp") + File.separator + "domain/servers/"
+                    + serverInfo.name + "/log/server.log";
+                initLogEventSourcesConfigProp(serverLog, config);
 
                 String version;
                 String resourceDescription;
@@ -107,43 +106,42 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
                     version = "EAP " + hostInfo.productVersion;
                     resourceDescription = "Managed JBoss Enterprise Application Platform 6 server";
                     resourceName = "EAP " + resourceName;
-                }
-                else if (hostInfo.productName.equalsIgnoreCase("EDG")) {
+                } else if (hostInfo.productName.equalsIgnoreCase("EDG")) {
                     version = "EDG " + hostInfo.productVersion;
                     resourceDescription = "Managed JBoss Enterprise Data Grid 6 server";
-                }
-                else {
+                } else {
                     resourceDescription = "Managed AS7 server";
                     version = hostInfo.releaseVersion;
                 }
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
-                        hostName + "/" + serverInfo.name, // key
-                        resourceName, // Name
-                        version, // TODO  get from Domain as soon as it is provided
-                        resourceDescription, // Description
-                        config, null);
+                    hostName + "/" + serverInfo.name, // key
+                    resourceName, // Name
+                    version, // TODO  get from Domain as soon as it is provided
+                    resourceDescription, // Description
+                    config, null);
 
                 // Add to return values
                 discoveredResources.add(detail);
                 log.info("Discovered new ...  " + discoveryContext.getResourceType() + ", " + serverInfo);
             }
         } catch (Exception e) {
-            log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process "  + " :" + e.getMessage());
+            log.warn("Discovery for a " + discoveryContext.getResourceType() + " failed for process " + " :"
+                + e.getMessage());
         }
         return discoveredResources;
     }
 
     private String resolveSocketBindingGroup(String serverGroup) {
-        Address address = new Address("server-group",serverGroup);
-        Operation operation = new ReadAttribute(address,"socket-binding-group");
+        Address address = new Address("server-group", serverGroup);
+        Operation operation = new ReadAttribute(address, "socket-binding-group");
         Result result = parentComponent.getASConnection().execute(operation);
         return (String) result.getResult();
     }
 
     private List<ServerInfo> getManagedServers(String domainHost) {
-        Address address = new Address("host",domainHost);
-        Operation operation = new ReadChildrenNames(address,"server-config");
+        Address address = new Address("host", domainHost);
+        Operation operation = new ReadChildrenNames(address, "server-config");
         ASConnection connection = parentComponent.getASConnection();
         Result res = connection.execute(operation);
         List<String> servers = (List<String>) res.getResult();
@@ -153,15 +151,15 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
             info.name = server;
             ret.add(info);
 
-            address= new Address("host",domainHost);
-            address.add("server-config",server);
+            address = new Address("host", domainHost);
+            address.add("server-config", server);
             operation = new ReadResource(address);
             ComplexResult cres = connection.executeComplex(operation);
-            Map<String,Object> map = cres.getResult();
+            Map<String, Object> map = cres.getResult();
             info.group = (String) map.get("group");
-            info.autoStart =  (Boolean)map.get("auto-start");
+            info.autoStart = (Boolean) map.get("auto-start");
             Integer offset = (Integer) map.get("socket-binding-port-offset");
-            if (offset!=null)
+            if (offset != null)
                 info.portOffset = offset;
             info.bindingGroup = (String) map.get("socket-binding-group");
         }
@@ -170,7 +168,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
     }
 
     private HostInfo getHostInfo(String domainHost) {
-        Address address = new Address("host",domainHost);
+        Address address = new Address("host", domainHost);
         Operation operation = new ReadResource(address);
         HostInfo info = new HostInfo();
 
@@ -178,11 +176,11 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery implements Resourc
         if (!cres.isSuccess())
             return null;
 
-        Map<String,Object> map = cres.getResult();
+        Map<String, Object> map = cres.getResult();
         info.releaseCodeName = (String) map.get("release-codename");
-        info.releaseVersion =  (String)map.get("release-version");
+        info.releaseVersion = (String) map.get("release-version");
         info.productName = (String) map.get("product-name");
-        info.productVersion =  (String)map.get("product-version");
+        info.productVersion = (String) map.get("product-version");
 
         return info;
     }

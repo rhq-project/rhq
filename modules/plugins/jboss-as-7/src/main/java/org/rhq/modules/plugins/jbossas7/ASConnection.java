@@ -403,7 +403,15 @@ public class ASConnection {
             return res;
         } catch (IOException e) {
             log.error(e.getMessage());
-            return null;
+            if (verbose) {
+                log.error("----------- Operation execution unparsable. Request " + ":[" + op + "] Response:<" + node
+                    + ">");
+            }
+            Result failure = new Result();
+            failure.setFailureDescription("Operation <" + op + "> returned unparsable JSON, <" + node + ">.");
+            return failure;
+            //don't return null.
+            //return null;
         }
     }
 

@@ -50,6 +50,10 @@ public class AbstractBaseDiscovery {
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
+    public static final String EAP = "EAP";
+    public static final String EDG = "EDG";
+    public static final String EAP_PREFIX = EAP + " ";
+    public static final String EDG_PREFIX = EDG + " ";
     private XPathFactory factory;
 
     protected AbstractBaseDiscovery() {

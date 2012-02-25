@@ -178,11 +178,11 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 }
 
                 if (isEAP) {
-                    serverName = "EAP " + serverName;
-                    version = "EAP " + version;
+                    serverName = EAP_PREFIX + serverName;
+                    version = EAP_PREFIX + version;
                 } else if (isEDG) {
-                    serverName = "EDG " + serverName;
-                    version = "EDG " + version;
+                    serverName = EDG_PREFIX + serverName;
+                    version = EDG_PREFIX + version;
 
                 }
 

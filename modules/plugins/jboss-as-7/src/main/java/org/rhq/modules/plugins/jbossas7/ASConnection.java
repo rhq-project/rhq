@@ -57,6 +57,7 @@ public class ASConnection {
     Authenticator passwordAuthenticator;
     private String host;
     private int port;
+    private String UNPARSABLE_JSON = ",\"server-groups\":null";
     private static String EAP_PREFIX = AbstractBaseDiscovery.EAP_PREFIX;
     private static String EDG_PREFIX = AbstractBaseDiscovery.EDG_PREFIX;
     private static String NAME = "name";
@@ -362,6 +363,23 @@ public class ASConnection {
         }
         Result res;
         try {
+
+            String as7ResultSerialization = node.toString();
+
+            //spinder 2/22/12: if unparsable JSON detected remove it. TODO: see if fixed with later version of jackson
+            if (as7ResultSerialization.indexOf(UNPARSABLE_JSON) > -1) {
+                if (verbose) {
+                    log.warn("------ Detected unparsable JSON <" + as7ResultSerialization + ">.");
+                }
+                String trimExtraJson = "";
+                int index = as7ResultSerialization.indexOf(UNPARSABLE_JSON);
+                trimExtraJson = as7ResultSerialization.substring(0, index)
+                    + as7ResultSerialization.substring(index + UNPARSABLE_JSON.length());
+                res = (isComplex) ? mapper.readValue(trimExtraJson, ComplexResult.class) : mapper.readValue(
+                    trimExtraJson, Result.class);
+                return res;
+            }
+
             if (isComplex) {
                 res = mapper.readValue(node, ComplexResult.class);
             } else {

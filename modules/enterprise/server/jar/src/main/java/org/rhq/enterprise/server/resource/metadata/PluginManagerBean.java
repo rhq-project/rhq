@@ -362,6 +362,8 @@ public class PluginManagerBean implements PluginManagerLocal {
                 for (Map.Entry<String, PluginDescriptor> entry : extensions.entrySet()) {
                     String extPluginName = entry.getKey();
                     PluginDescriptor extPluginDescriptor = entry.getValue();
+                    log.debug("Plugin [" + extPluginName
+                        + "] will be re-registered because it embeds types from plugin [" + plugin.getName() + "]");
                     pluginMgr.registerPluginTypes(extPluginName, extPluginDescriptor, false, true);
                     resourceMetadataManager.removeObsoleteTypes(subject, extPluginName, metadataManager);
                 }

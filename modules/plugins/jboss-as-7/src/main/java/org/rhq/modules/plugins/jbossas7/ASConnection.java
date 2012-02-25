@@ -57,6 +57,7 @@ public class ASConnection {
     Authenticator passwordAuthenticator;
     private String host;
     private int port;
+    private String FAILURE_DESCRIPTION = "\"failure-description\"";
     private String UNPARSABLE_JSON = ",\"server-groups\":null";
     private static String EAP_PREFIX = AbstractBaseDiscovery.EAP_PREFIX;
     private static String EDG_PREFIX = AbstractBaseDiscovery.EDG_PREFIX;
@@ -364,8 +365,22 @@ public class ASConnection {
         Result res;
         try {
 
+            //check for failure-description indicator, otherwise ObjectMapper will try to deserialize as json. Ex.
+            // {"outcome":"failed","failure-description":"JBAS014792: Unknown attribute number-of-timed-out-transactions","rolled-back":true}
             String as7ResultSerialization = node.toString();
 
+            if (as7ResultSerialization.indexOf(FAILURE_DESCRIPTION) > -1) {
+                if (verbose) {
+                    log.warn("------ Detected 'failure-description' when communicating with server."
+                        + as7ResultSerialization);
+                }
+                Result failure = new Result();
+                int failIndex = as7ResultSerialization.indexOf(FAILURE_DESCRIPTION);
+                String failMessage = "";
+                failMessage = as7ResultSerialization.substring(failIndex + FAILURE_DESCRIPTION.length() + 1);
+                failure.setFailureDescription("Operation <" + op + "> returned <" + failMessage + ">");
+                return failure;
+            }
             //spinder 2/22/12: if unparsable JSON detected remove it. TODO: see if fixed with later version of jackson
             if (as7ResultSerialization.indexOf(UNPARSABLE_JSON) > -1) {
                 if (verbose) {

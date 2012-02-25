@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +37,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -55,6 +57,12 @@ public class ASConnection {
     Authenticator passwordAuthenticator;
     private String host;
     private int port;
+    private static String EAP_PREFIX = AbstractBaseDiscovery.EAP_PREFIX;
+    private static String EDG_PREFIX = AbstractBaseDiscovery.EDG_PREFIX;
+    private static String NAME = "name";
+    private static String OPERATION_SERVER_CONFIG = "server-config=";
+    private static String JSON_SERVER_CONFIG = "{\"server-config\":\"";
+    private static String JSON_NAME = "\"name\":\"";
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -119,9 +127,26 @@ public class ASConnection {
             OutputStream out = conn.getOutputStream();
 
             String json_to_send = mapper.writeValueAsString(operation);
+            //BZ:785128. removing artificial prefix for messages going back to the server.
+            //check for prefixed names
+            if ((json_to_send.indexOf(JSON_SERVER_CONFIG + EAP_PREFIX) > -1)
+                || (json_to_send.indexOf(JSON_SERVER_CONFIG + EDG_PREFIX) > -1)
+                || (json_to_send.indexOf(JSON_NAME + EAP_PREFIX) > -1)
+                || (json_to_send.indexOf(JSON_NAME + EAP_PREFIX) > -1)) {
+
+                //delve into Operation and remove prefixes
+                Operation purgedOperation = purgeOperation(operation);
+                if (verbose) {
+                    log.warn("---------------- Purging EAP/EDG prefixes detected. Was <" + operation + "> but now <"
+                        + purgedOperation + ">.");
+                }
+                operation = purgedOperation;
+            }
+
             if (verbose) {
                 log.info("Json to send: " + json_to_send);
             }
+
             mapper.writeValue(out, operation);
 
             out.flush();
@@ -236,6 +261,67 @@ public class ASConnection {
         return null;
     }
 
+    /** This operation purges the Operation passed in of EAP/EDG prefixes in the
+     *  Address portion and in the AdditionalProperties section. The returned 
+     *  operation should be identical in every other way and should be used 
+     *  instead of the unpurged operation which will cause unrecognized property
+     *  errors.
+     * 
+     * @param operation to be purged.
+     * @return The same operation minus the prefixes.
+     */
+    private Operation purgeOperation(Operation operation) {
+        //purge prefixes from name
+        if (operation != null) {
+            boolean prefixLocated = false;
+
+            //Ex.
+            //Operation{operation='remove', address=Address{path: host=master,server-config=EAP server-six}, 
+            //additionalProperties={socket-binding-port-offset=0, name=EAP server-six, auto-start=false, group=, 
+            //socket-binding-group=}}
+
+            //ADDRESS parsing
+            String path = operation.getAddress().getPath();
+            if (path.indexOf(OPERATION_SERVER_CONFIG + EAP_PREFIX) > -1
+                || path.indexOf(OPERATION_SERVER_CONFIG + EDG_PREFIX) > -1) {
+                int index = -1;
+                prefixLocated = true;
+                if ((index = path.indexOf(OPERATION_SERVER_CONFIG + EAP_PREFIX)) > -1) {
+                    path = path.substring(0, index + OPERATION_SERVER_CONFIG.length())
+                        + path.substring(index + OPERATION_SERVER_CONFIG.length() + EAP_PREFIX.length());
+                }
+                if ((index = path.indexOf(OPERATION_SERVER_CONFIG + EDG_PREFIX)) > -1) {
+                    path = path.substring(0, index + OPERATION_SERVER_CONFIG.length())
+                        + path.substring(index + OPERATION_SERVER_CONFIG.length() + EDG_PREFIX.length());
+                }
+            }
+
+            //ADDITIONAL-PROPERTIES parsing
+            Map<String, Object> additionalProperties = operation.getAdditionalProperties();
+            if ((additionalProperties != null) && !additionalProperties.isEmpty()
+                && additionalProperties.containsKey(NAME)) {
+                String contents = (String) additionalProperties.get(NAME);
+                if (contents.startsWith(EAP_PREFIX) || contents.startsWith(EDG_PREFIX)) {
+                    prefixLocated = true;
+                    if (contents.startsWith(EAP_PREFIX)) {
+                        contents = contents.substring(EAP_PREFIX.length());
+                    } else if (contents.startsWith(EDG_PREFIX)) {
+                        contents = contents.substring(EDG_PREFIX.length());
+                    }
+                    additionalProperties.put(NAME, contents);
+                }
+            }
+
+            if (prefixLocated) {
+                //create new Operation to return.
+                Operation newOperation = new Operation(operation.getOperation(), new Address(path),
+                    additionalProperties);
+                return newOperation;
+            }
+        }
+        return operation;
+    }
+
     /**
      * Execute the passed Operation and return its Result. This is a shortcut of
      * #execute(Operation, false)
@@ -274,12 +360,13 @@ public class ASConnection {
             failure.setFailureDescription("Operation [" + op + "] returned null");
             return failure;
         }
+        Result res;
         try {
-            Result res;
-            if (isComplex)
+            if (isComplex) {
                 res = mapper.readValue(node, ComplexResult.class);
-            else
+            } else {
                 res = mapper.readValue(node, Result.class);
+            }
             return res;
         } catch (IOException e) {
             log.error(e.getMessage());

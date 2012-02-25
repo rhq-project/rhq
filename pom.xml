@@ -820,6 +820,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <systemProperties>
+            <java.util.prefs.userRoot>${java.io.tmpdir}/${user.name}</java.util.prefs.userRoot>
+          </systemProperties>
         </configuration>
       </plugin>
 

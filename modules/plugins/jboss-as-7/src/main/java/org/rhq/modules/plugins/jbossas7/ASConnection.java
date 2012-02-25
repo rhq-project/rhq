@@ -382,6 +382,8 @@ public class ASConnection {
                 return failure;
             }
             //spinder 2/22/12: if unparsable JSON detected remove it. TODO: see if fixed with later version of jackson
+            //This needs to be in place until i)Jackson version where this is fixed or 
+            //                                ii) fix for https://issues.jboss.org/browse/JBPAPP-8233 
             if (as7ResultSerialization.indexOf(UNPARSABLE_JSON) > -1) {
                 if (verbose) {
                     log.warn("------ Detected unparsable JSON <" + as7ResultSerialization + ">.");

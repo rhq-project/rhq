@@ -79,11 +79,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 // TODO: Figure out how to get this test class to run without causing issues in the test-jar generation. I don't
 // understand exactly what the deal is but removing this dependency on an itests group causes the server test jar to
-// not correctly generate the drift package contents. 
-@Test
+// not correctly generate the drift package contents.
 public class DriftManagerBeanTest extends AbstractEJB3Test {
-
-    private static final boolean ENABLE_TESTS = true;
 
     private JPADriftServerLocal jpaDriftServer;
     private DriftManagerLocal driftManager;
@@ -134,7 +131,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test
     public void testStoreChangeSet() throws Exception {
         File rootDir = toFile(getClass().getResource("."));
         deleteDirectory(rootDir);
@@ -214,7 +211,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test
     public void testDriftDef() throws Exception {
         Configuration config = new Configuration();
         DriftDefinition driftDefPojo = new DriftDefinition(config);

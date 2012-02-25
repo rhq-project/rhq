@@ -27,6 +27,7 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
+import org.bson.types.ObjectId;
 import org.jmock.Expectations;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
@@ -55,6 +56,7 @@ import static java.util.Arrays.asList;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
 import static org.testng.Assert.assertEquals;
 
@@ -121,23 +123,28 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         
         // verify that the change set was persisted
         ChangeSetDAO changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
-        List<MongoDBChangeSet> actual = changeSetDAO.find().asList();
+        List<MongoDBChangeSet> changeSets = changeSetDAO.find().asList();
         
-        MongoDBChangeSet changeSet = new MongoDBChangeSet();
-        changeSet.setDriftDefinitionId(driftDefId);
-        changeSet.setResourceId(resourceId);
-        changeSet.setDriftDefinitionName(driftDefName);
-        changeSet.setCategory(COVERAGE);
-        changeSet.setVersion(0);
-        changeSet.setDriftHandlingMode(plannedChanges);
+        assertEquals(changeSets.size(), 1, "Expected to find one change set in the database.");
+        MongoDBChangeSet actual = changeSets.get(0);
+        
+        MongoDBChangeSet expected = new MongoDBChangeSet();
+        // Need to set the id to actual.id. Since ids are random, we cannot use a canned
+        // value. We have to set it the same value that is in the database.
+        expected.setId(actual.getId());
+        expected.setDriftDefinitionId(driftDefId);
+        expected.setResourceId(resourceId);
+        expected.setDriftDefinitionName(driftDefName);
+        expected.setCategory(COVERAGE);
+        expected.setVersion(0);
+        expected.setDriftHandlingMode(normal);
 
         MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("1.txt", FILE_ADDED);
         entry.setNewFileHash(sha256("1a2b3c4d"));
-        changeSet.add(entry);
+        expected.add(entry);
         
-        List<MongoDBChangeSet> expected = asList(changeSet);
-
-        assertEquals(actual.size(), 1, "Expected to find one change set");
+        String[] ignore = new String[] {"id", "objectId", "ctime"};
+        assertChangeSetMatches("Failed to persist change set", expected, actual, ignore);
     }
     
     protected File createChangeSetZipFile(Headers headers, FileEntry... fileEntries) throws Exception {

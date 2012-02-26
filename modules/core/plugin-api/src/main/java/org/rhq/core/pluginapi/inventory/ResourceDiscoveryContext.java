@@ -85,6 +85,8 @@ public class ResourceDiscoveryContext<T extends ResourceComponent<?>> {
      * @param pluginContainerName  the name of the plugin container in which the discovery component is running. Components
      *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
      * @param pluginContainerDeployment  indicates where the plugin container is running
+     *
+     * @since 3.0
      */
     public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent,
         ResourceContext<?> parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
@@ -115,6 +117,8 @@ public class ResourceDiscoveryContext<T extends ResourceComponent<?>> {
      * @param pluginContainerName  the name of the plugin container in which the discovery component is running. Components
      *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
      * @param pluginContainerDeployment  indicates where the plugin container is running
+     *
+     * @since 1.3
      */
     @SuppressWarnings("unchecked")
     public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent,
@@ -158,7 +162,8 @@ public class ResourceDiscoveryContext<T extends ResourceComponent<?>> {
      * plugin configuration values for use in discovery of the children.
      *
      * @return the resource context for the parent
-     * @since 1.0.1
+     *
+     * @since 1.1
      */
     public ResourceContext<?> getParentResourceContext() {
         return parentResourceContext;
@@ -243,6 +248,8 @@ public class ResourceDiscoveryContext<T extends ResourceComponent<?>> {
      * See {@link PluginContainerDeployment} for more information on what the return value means.
      * 
      * @return indicator of where the plugin container is deployed and running
+     *
+     * @since 1.3
      */
     public PluginContainerDeployment getPluginContainerDeployment() {
         return pluginContainerDeployment;

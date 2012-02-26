@@ -65,7 +65,9 @@ public class CreateResourceReport {
      *                                  may be <code>null</code>
      * @param resourceConfiguration     any configuration values necessary for the resource; may be <code>null</code>
      * @param packageDetails            information regarding the package to be deployed when creating the new
-     *                                  resource; may be <code>null</code> 
+     *                                  resource; may be <code>null</code>
+     *
+     * @since 1.1
      */
     public CreateResourceReport(String userSpecifiedResourceName, ResourceType resourceType, Configuration pluginConfiguration,
         Configuration resourceConfiguration, ResourcePackageDetails packageDetails) {
@@ -78,10 +80,16 @@ public class CreateResourceReport {
 
     // Public  --------------------------------------------
 
+    /**
+     * @since 1.1
+     */
     public String getUserSpecifiedResourceName() {
         return userSpecifiedResourceName;
     }
 
+    /**
+     * @since 1.1
+     */
     public void setUserSpecifiedResourceName(String userSpecifiedResourceName) {
         this.userSpecifiedResourceName = userSpecifiedResourceName;
     }
@@ -118,6 +126,9 @@ public class CreateResourceReport {
         return resourceConfiguration;
     }
 
+    /**
+     * @since 1.1
+     */
     public ResourcePackageDetails getPackageDetails() {
         return packageDetails;
     }

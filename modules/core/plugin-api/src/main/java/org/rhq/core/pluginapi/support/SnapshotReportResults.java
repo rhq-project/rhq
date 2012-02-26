@@ -29,6 +29,8 @@ import java.io.Serializable;
  * Contains the results of a snapshot report, including a stream to the contents of the snapshot.
  * 
  * @author John Mazzitelli
+ *
+ * @since 1.3
  */
 public class SnapshotReportResults implements Serializable {
     private static final long serialVersionUID = 1L;

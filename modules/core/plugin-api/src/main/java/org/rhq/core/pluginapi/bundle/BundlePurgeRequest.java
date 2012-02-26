@@ -28,6 +28,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 /**
  * A request to purge a bundle, essentially erasing the bundle files from the destination.
  *
+ * @since 4.0
  * @author John Mazzitelli
  */
 public class BundlePurgeRequest implements Serializable {
@@ -45,11 +46,18 @@ public class BundlePurgeRequest implements Serializable {
      * where the bundle should be deployed. This is the bundle destination's
      * {@link BundleDestination#getDeployDir() relative destination directory} under the
      * {@link BundleDestination#getDestinationBaseDirectoryName() destination base directory}.
+     *
+     * @since 4.1
      */
     public File getAbsoluteDestinationDirectory() {
         return this.absDestDir;
     }
 
+    /**
+     * @since 4.1
+     *
+     * @param absoluteDestDir
+     */
     public void setAbsoluteDestinationDirectory(File absoluteDestDir) {
         this.absDestDir = absoluteDestDir;
     }

@@ -93,7 +93,10 @@ public class OperationResult {
 
     /**
      * Returns the plugin-specific error message for this operation, or null if the operation was successful.
+     *
      * @return The stored message or null.
+     *
+     * @since 1.2
      */
     public String getErrorMessage() {
         return this.errorMessage;
@@ -106,6 +109,8 @@ public class OperationResult {
      * be marked as FAILURE
      *
      * @param errorMessage a plugin specific error that indicates why this operation has failed
+     *
+     * @since 1.2
      */
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;

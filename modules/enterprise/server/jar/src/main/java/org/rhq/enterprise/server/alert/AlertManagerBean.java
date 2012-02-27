@@ -824,9 +824,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         AlertConditionCategory category = condition.getCategory();
         switch (category) {
         case AVAILABILITY: {
-            // TODO I18N
-            str.append("Availability Change To");
-            str.append(" [");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
             String msg;
             switch (operator) {
@@ -853,14 +850,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 break;
             }
             str.append(AlertI18NFactory.getMessage(msg));
-            str.append("]");
 
             break;
         }
 
         case AVAIL_DURATION: {
-            // TODO I18N            
-            str.append("Availability Duration ");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
             String msg;
             switch (operator) {
@@ -875,10 +869,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 break;
             }
             str.append(AlertI18NFactory.getMessage(msg));
-            str.append(" ");
+            str.append(" [");
 
-            double value = condition.getThreshold();
-            String formatted = MeasurementConverter.format(value, MeasurementUnits.MINUTES, false);
+            String value = condition.getOption();
+            String formatted = MeasurementConverter.format(value, MeasurementUnits.MINUTES);
             str.append(formatted);
             str.append("]");
 

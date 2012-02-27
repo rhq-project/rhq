@@ -3996,9 +3996,10 @@
                            SET AVAILABILITY_TYPE = 2 
                          WHERE AVAILABILITY_TYPE IS NULL
                     </statement>
-                    <schema-alterColumn table="RHQ_AVAILABILITY"   column="AVAILABILITY_TYPE" nullable="FALSE"/>
-                    <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="FALSE"/>                    
                 </schema-directSQL>
+
+                <schema-alterColumn table="RHQ_AVAILABILITY"   column="AVAILABILITY_TYPE" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="FALSE"/>                    
                 
             </schemaSpec>
         

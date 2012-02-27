@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class AvailabilityManagerTest extends AbstractEJB3Test {
-    // private static final boolean ENABLE_TESTS = false;
+    private static final boolean ENABLE_TESTS = true;
 
     private static final AvailabilityType UP = AvailabilityType.UP;
     private static final AvailabilityType DOWN = AvailabilityType.DOWN;
@@ -147,7 +147,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testInsertPastAvailabilities() throws Exception {
         Date now = new Date();
         Date middle = new Date(now.getTime() - 30000); // 30s ago
@@ -159,13 +159,13 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             setupResource(em);
             commitAndClose(em);
 
-            Availability aThen = new Availability(theResource, then, AvailabilityType.UP);
+            Availability aThen = new Availability(theResource, then, UP);
             aThen.setEndTime(middle);
 
-            Availability aMiddle = new Availability(theResource, middle, AvailabilityType.DOWN);
+            Availability aMiddle = new Availability(theResource, middle, DOWN);
             aMiddle.setEndTime(now);
 
-            Availability aNow = new Availability(theResource, now, AvailabilityType.UP);
+            Availability aNow = new Availability(theResource, now, UP);
 
             /*
              * Simulate a report (aMiddle) that came in late (e.g. because of sorting
@@ -195,7 +195,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     @SuppressWarnings("unchecked")
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testPurgeAvailabilities() throws Exception {
         Date now = new Date();
         Date middle = new Date(now.getTime() - 30000); // 30s ago
@@ -207,13 +207,12 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             setupResource(em);
             commitAndClose(em);
 
-            Availability aThen = new Availability(theResource, then, AvailabilityType.UP);
-            aThen.setEndTime(middle);
+            Availability aThen = new Availability(theResource, then, UP);
 
-            Availability aMiddle = new Availability(theResource, middle, AvailabilityType.DOWN);
+            Availability aMiddle = new Availability(theResource, middle, DOWN);
             aMiddle.setEndTime(now);
 
-            Availability aNow = new Availability(theResource, now, AvailabilityType.UP);
+            Availability aNow = new Availability(theResource, now, UP);
 
             persistAvailability(aThen);
             persistAvailability(aMiddle);
@@ -229,10 +228,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             List<Availability> avails = q.getResultList();
 
             assert avails.size() == 2;
-            assert avails.get(0).getAvailabilityType() == AvailabilityType.DOWN;
+            assert avails.get(0).getAvailabilityType() == DOWN;
             assert avails.get(0).getStartTime().equals(middle);
             assert avails.get(0).getEndTime().equals(now);
-            assert avails.get(1).getAvailabilityType() == AvailabilityType.UP;
+            assert avails.get(1).getAvailabilityType() == UP;
             assert avails.get(1).getStartTime().equals(now);
             assert avails.get(1).getEndTime() == null;
 
@@ -247,7 +246,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             avails = q.getResultList();
 
             assert avails.size() == 1;
-            assert avails.get(0).getAvailabilityType() == AvailabilityType.UP;
+            assert avails.get(0).getAvailabilityType() == UP;
             assert avails.get(0).getStartTime().equals(now);
             assert avails.get(0).getEndTime() == null;
         } catch (Exception e) {
@@ -261,7 +260,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testGetAvailabilities() throws Exception {
         EntityManager em = beginTx();
 
@@ -300,11 +299,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
                 startMillis - 3, startMillis, 3, false);
             assert availPoints.size() == 3 : "There is 1 avail data, but should still get 3 availability points";
-            assert availPoints.get(0).getAvailabilityType() == DOWN; // aka unknown
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN;
             assert !availPoints.get(0).isKnown() : availPoints;
-            assert availPoints.get(1).getAvailabilityType() == DOWN; // aka unknown
+            assert availPoints.get(1).getAvailabilityType() == UNKNOWN;
             assert !availPoints.get(1).isKnown() : availPoints;
-            assert availPoints.get(2).getAvailabilityType() == DOWN; // aka unknown
+            assert availPoints.get(2).getAvailabilityType() == UNKNOWN;
             assert !availPoints.get(2).isKnown() : availPoints;
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
@@ -330,13 +329,13 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availPoints.size() == 10 : "There is 1 avail data, but should still get 10 availability points";
             assert availPoints.get(0).getAvailabilityType() == UNKNOWN : availPoints;
             assert !availPoints.get(0).isKnown() : availPoints;
-            assert availPoints.get(1).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(1).getAvailabilityType() == UNKNOWN : availPoints;
             assert !availPoints.get(1).isKnown() : availPoints;
-            assert availPoints.get(2).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(2).getAvailabilityType() == UNKNOWN : availPoints;
             assert !availPoints.get(2).isKnown() : availPoints;
-            assert availPoints.get(3).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(3).getAvailabilityType() == UNKNOWN : availPoints;
             assert !availPoints.get(3).isKnown() : availPoints;
-            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints;
+            assert availPoints.get(4).getAvailabilityType() == UNKNOWN : availPoints;
             assert !availPoints.get(4).isKnown() : availPoints;
             assert availPoints.get(5).getAvailabilityType() == UP : availPoints;
             assert availPoints.get(5).isKnown() : availPoints;
@@ -345,46 +344,55 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             assert availPoints.get(8).getAvailabilityType() == UP : availPoints;
             assert availPoints.get(9).getAvailabilityType() == UP : availPoints;
 
-            report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 10000), DOWN));
+            report = new AvailabilityReport(false, theAgent.getName()); // 70000
+            report.setEnablementReport(true); // simulate a real disable
+            report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 10000), DISABLED));
             availabilityManager.mergeAvailabilityReport(report);
 
-            report = new AvailabilityReport(false, theAgent.getName());
+            // before setting other avails, must end disable with enablement report to unknown
+            report = new AvailabilityReport(false, theAgent.getName()); // 75000
+            report.setEnablementReport(true);
+            report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 15000), UNKNOWN));
+            availabilityManager.mergeAvailabilityReport(report);
+
+            report = new AvailabilityReport(false, theAgent.getName()); // 80000
             report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 20000), UP));
             availabilityManager.mergeAvailabilityReport(report);
 
-            report = new AvailabilityReport(false, theAgent.getName());
+            report = new AvailabilityReport(false, theAgent.getName()); // 90000
             report.addAvailability(new Availability(theResource, new Date(startDate.getTime() + 30000), DOWN));
             availabilityManager.mergeAvailabilityReport(report);
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
-                startMillis - 15000, startMillis + 35000, 5, false);
+                startMillis - 15000, startMillis + 35000, 5, false); // 45000 - 95000
+
             assert availPoints.size() == 5 : "There is 1 avail data, but should still get 5 availability points";
-            assert availPoints.get(0).getAvailabilityType() == UNKNOWN : availPoints; // 45000-55000 == unknown
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN : availPoints; // 45-55 == unknown
             assert !availPoints.get(0).isKnown() : availPoints;
 
             // this next point is on the edge - part was unknown, part was up - because its on the edge, and part of it
             // was UP, we consider the data point UP
-            assert availPoints.get(1).getAvailabilityType() == UP : availPoints; // 55000-65000 == 55-60=unknown=down, 60-70=up
+            assert availPoints.get(1).getAvailabilityType() == UP : availPoints; // 55-65 == 55-60=unknown, 60-65=up
             assert availPoints.get(1).isKnown() : availPoints;
 
-            assert availPoints.get(2).getAvailabilityType() == DOWN : availPoints; // 65000-75000 == 60-70=up, 70-80=down (0.5==down)
-            assert availPoints.get(3).getAvailabilityType() == DOWN : availPoints; // 75000-85000, 0.5 == down
-            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints; // 85000-95000, 0.5 == down
+            assert availPoints.get(2).getAvailabilityType() == DISABLED : availPoints; // 65-75 == 65-70=up, 70-75=disabled
+            assert availPoints.get(3).getAvailabilityType() == UNKNOWN : availPoints; // 75-85 == 75-80=unknown, 80-85=up
+            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints; // 85-95,  == 85-90=up, 90-95=down
 
             availPoints = availabilityManager.findAvailabilitiesForResource(overlord, theResource.getId(),
-                startMillis - 30000, startMillis + 30000, 10, false);
+                startMillis - 30000, startMillis + 30000, 10, false); // 30000 - 90000
+
             assert availPoints.size() == 10 : "There is 1 avail data, but should still get 10 availability points";
-            assert availPoints.get(0).getAvailabilityType() == DOWN : availPoints;
-            assert availPoints.get(1).getAvailabilityType() == DOWN : availPoints;
-            assert availPoints.get(2).getAvailabilityType() == DOWN : availPoints;
-            assert availPoints.get(3).getAvailabilityType() == DOWN : availPoints;
-            assert availPoints.get(4).getAvailabilityType() == DOWN : availPoints;
-            assert availPoints.get(5).getAvailabilityType() == UP : availPoints;
-            assert availPoints.get(6).getAvailabilityType() == DOWN : availPoints; // 0.5
-            assert availPoints.get(7).getAvailabilityType() == DOWN : availPoints;
-            assert availPoints.get(8).getAvailabilityType() == DOWN : availPoints; // 0.5
-            assert availPoints.get(9).getAvailabilityType() == UP : availPoints;
+            assert availPoints.get(0).getAvailabilityType() == UNKNOWN : availPoints; // 30-36
+            assert availPoints.get(1).getAvailabilityType() == UNKNOWN : availPoints; // 36-42
+            assert availPoints.get(2).getAvailabilityType() == UNKNOWN : availPoints; // 42-48
+            assert availPoints.get(3).getAvailabilityType() == UNKNOWN : availPoints; // 58-54
+            assert availPoints.get(4).getAvailabilityType() == UNKNOWN : availPoints; // 54-60
+            assert availPoints.get(5).getAvailabilityType() == UP : availPoints; // 60-66
+            assert availPoints.get(6).getAvailabilityType() == DISABLED : availPoints; // 66-72
+            assert availPoints.get(7).getAvailabilityType() == DISABLED : availPoints; // 72-78
+            assert availPoints.get(8).getAvailabilityType() == UNKNOWN : availPoints; // 78-84
+            assert availPoints.get(9).getAvailabilityType() == UP : availPoints; // 84-90
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -396,7 +404,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testSetAllAgentResourceAvailabilities() throws Exception {
         EntityManager em = beginTx();
 
@@ -406,10 +414,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             em = null;
 
             // setAllAgentResourceAvails will only operate on those that have at least 1 avail row
-            Availability avail = new Availability(theResource, new Date(), null);
+            Availability avail = new Availability(theResource, new Date(), UNKNOWN);
             persistAvailability(avail);
 
-            assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == null;
+            assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UNKNOWN;
             availabilityManager.updateAgentResourceAvailabilities(theAgent.getId(), UP, UP);
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UP;
             availabilityManager.updateAgentResourceAvailabilities(theAgent.getId(), DOWN, DOWN);
@@ -427,7 +435,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentBackfillNewResource() throws Exception {
         EntityManager em = beginTx();
 
@@ -438,7 +446,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             // have never heard from the new agent yet - we do not backfill anything in this case
             LookupUtil.getAgentManager().checkForSuspectAgents();
-            assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == null; // unknown
+            assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == UNKNOWN;
 
             em = beginTx();
             Resource resource = em.find(Resource.class, theResource.getId());
@@ -456,7 +464,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentBackfill() throws Exception {
         EntityManager em = beginTx();
 
@@ -477,15 +485,16 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
+            agent.setLastAvailabilityPing(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
             commitAndClose(em);
             em = null;
 
-            // the agent should be suspect and will be considered down
-            LookupUtil.getAgentManager().checkForSuspectAgents(); // checks for 15 mins !!
+            // the agent should be suspect and will be considered down, the platform resource should be down
+            // (although children should be UNKNOWN)
+            LookupUtil.getAgentManager().checkForSuspectAgents(); // checks for 5 mins !!
             AvailabilityType curAvail;
             curAvail = availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId());
-            assert curAvail == AvailabilityType.DOWN : curAvail; // backfilled with "null" to mean "unknown"
+            assert curAvail == DOWN : curAvail;
 
             // make sure our resource's new availabilities are consistent (first (UP) is before second (unknown))
             em = beginTx();
@@ -497,8 +506,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             Availability first = allAvails.get(0);
             Availability second = allAvails.get(1);
-            assert first.getAvailabilityType() == AvailabilityType.UP;
-            assert second.getAvailabilityType() == AvailabilityType.DOWN : second.getAvailabilityType();
+            assert first.getAvailabilityType() == UP;
+            assert second.getAvailabilityType() == DOWN : second.getAvailabilityType();
             assert first.getEndTime() != null;
             assert second.getEndTime() == null;
             assert first.getEndTime().getTime() > first.getStartTime().getTime();
@@ -516,7 +525,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentBackfillPerformance() throws Exception {
         EntityManager em = beginTx();
         List<Resource> allResources = new ArrayList<Resource>();
@@ -542,7 +551,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
                 Availability currentAvailability = availabilityManager.getCurrentAvailabilityForResource(overlord,
                     resId);
                 assert currentAvailability != null : "Current Availability was null for " + resId;
-                assert currentAvailability.getAvailabilityType() == null : "Current AvailabilityType should have been null for "
+                assert currentAvailability.getAvailabilityType() == UNKNOWN : "Current AvailabilityType should have been UNKNOWN for "
                     + resId;
 
                 List<Availability> allData = availabilityManager.findAvailabilityWithinInterval(resId, new Date(0),
@@ -552,14 +561,14 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
                 ResourceAvailability currentResAvail = resourceAvailabilityManager.getLatestAvailability(resId);
                 assert currentResAvail != null : "Current ResourceAvailability was null for " + resId;
-                assert currentResAvail.getAvailabilityType() == null : "Current ResourceAvailabilityType should have been null for "
+                assert currentResAvail.getAvailabilityType() == UNKNOWN : "Current ResourceAvailabilityType should have been UNKNOWN for "
                     + resId;
             }
 
             // let's pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             Agent agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
+            agent.setLastAvailabilityPing(System.currentTimeMillis() - (1000 * 60 * 18)); // 18 mins
             commitAndClose(em);
             em = null;
 
@@ -591,7 +600,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // let's again pretend we haven't heard from the agent in a few minutes
             em = beginTx();
             agent = em.find(Agent.class, theAgent.getId());
-            agent.setLastAvailabilityReport(System.currentTimeMillis() - (1000 * 60 * 18));
+            agent.setLastAvailabilityPing(System.currentTimeMillis() - (1000 * 60 * 18));
             commitAndClose(em);
             em = null;
 
@@ -608,7 +617,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             for (Resource resource : allResources) {
                 curAvail = availabilityManager.getCurrentAvailabilityTypeForResource(overlord, resource.getId());
-                assert curAvail == AvailabilityType.DOWN : curAvail; // backfilled with "null" to mean "unknown"
+                AvailabilityType expected = (null == resource.getParentResource()) ? DOWN : UNKNOWN;
+                assert curAvail == expected : curAvail;
 
                 // make sure our resources' new availabilities are consistent
                 // the first time we suspected the agent and backfilled with unknown, there was no rows
@@ -622,8 +632,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
                 Availability a0 = allAvails.get(0);
                 Availability a1 = allAvails.get(1);
-                assert a0.getAvailabilityType() == AvailabilityType.UP : allAvails;
-                assert a1.getAvailabilityType() == AvailabilityType.DOWN : allAvails;
+                assert a0.getAvailabilityType() == UP : allAvails;
+                assert a1.getAvailabilityType() == expected : allAvails;
                 assert a0.getEndTime() != null : allAvails;
                 assert a1.getEndTime() == null : allAvails;
                 assert a0.getEndTime().getTime() > a0.getStartTime().getTime() : allAvails;
@@ -647,7 +657,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport() throws Exception {
         EntityManager em = beginTx();
 
@@ -670,11 +680,11 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             report = new AvailabilityReport(false, theAgent.getName());
             report.addAvailability(avail);
             availabilityManager.mergeAvailabilityReport(report);
-            assert getPointInTime(new Date(avail.getStartTime().getTime() - 1)) == DOWN; // should be unknown
+            assert getPointInTime(new Date(avail.getStartTime().getTime() - 1)) == UNKNOWN;
             assert getPointInTime(avail.getStartTime()) == UP;
             assert getPointInTime(new Date(avail.getStartTime().getTime() + 1)) == UP;
 
-            // its still down though - since we've received a more recent report saying it was down
+            // it's still down though - since we've received a more recent report saying it was down
             assert availabilityManager.getCurrentAvailabilityTypeForResource(overlord, theResource.getId()) == DOWN;
 
             // now pretend the agent sent us reports from inbetween our existing time periods
@@ -721,7 +731,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             report = new AvailabilityReport(false, theAgent.getName());
             report.addAvailability(avail);
             availabilityManager.mergeAvailabilityReport(report);
-            assert getPointInTime(new Date(avail.getStartTime().getTime() - 1)) == DOWN; // should be unknown
+            assert getPointInTime(new Date(avail.getStartTime().getTime() - 1)) == UNKNOWN;
             assert getPointInTime(avail.getStartTime()) == UP;
             assert getPointInTime(new Date(avail.getStartTime().getTime() + 1)) == UP;
         } catch (Exception e) {
@@ -735,7 +745,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport2() throws Exception {
         EntityManager em = beginTx();
 
@@ -795,7 +805,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testGetAvailabilities2() throws Exception {
         EntityManager em = beginTx();
 
@@ -836,27 +846,27 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             cal.set(Calendar.MINUTE, 30);
             Date date6 = cal.getTime();
 
-            avail = new Availability(theResource, date1, AvailabilityType.UP);
+            avail = new Availability(theResource, date1, UP);
             avail.setEndTime(date2);
             persistAvailability(avail);
 
-            avail = new Availability(theResource, date2, AvailabilityType.DOWN);
+            avail = new Availability(theResource, date2, DOWN);
             avail.setEndTime(date3);
             persistAvailability(avail);
 
-            avail = new Availability(theResource, date3, AvailabilityType.UP);
+            avail = new Availability(theResource, date3, UP);
             avail.setEndTime(date4);
             persistAvailability(avail);
 
-            avail = new Availability(theResource, date4, AvailabilityType.DOWN);
+            avail = new Availability(theResource, date4, DOWN);
             avail.setEndTime(date5);
             persistAvailability(avail);
 
-            avail = new Availability(theResource, date5, AvailabilityType.UP);
+            avail = new Availability(theResource, date5, UP);
             avail.setEndTime(date6);
             persistAvailability(avail);
 
-            avail = new Availability(theResource, date6, AvailabilityType.DOWN);
+            avail = new Availability(theResource, date6, DOWN);
             persistAvailability(avail);
 
             List<AvailabilityPoint> points = availabilityManager.findAvailabilitiesForResource(overlord,
@@ -883,7 +893,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
      *
      * @throws Exception in case of error
      */
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testMergeReport() throws Exception {
         EntityManager em = beginTx();
 
@@ -957,7 +967,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testMergeReportPerformance() throws Exception {
         EntityManager em = beginTx();
         List<Resource> allResources = new ArrayList<Resource>();
@@ -1029,7 +1039,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             // at this point, the resources have 2 rows in availability - after the merge they will have 3
             report = new AvailabilityReport(false, theAgent.getName());
             for (Resource resource : allResources) {
-                Availability avail = new Availability(resource, new Date(), null);
+                Availability avail = new Availability(resource, new Date(), UNKNOWN);
                 report.addAvailability(avail);
             }
 
@@ -1043,7 +1053,7 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
             for (Resource resource : allResources) {
                 curAvail = availabilityManager.getCurrentAvailabilityTypeForResource(overlord, resource.getId());
-                assert curAvail == null : curAvail;
+                assert curAvail == UNKNOWN : curAvail;
             }
 
             System.out.println("testMergeReportPerformance: checking validity of data 3 took "
@@ -1197,15 +1207,15 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
 
         long count = countAvailabilitiesInDB(em);
 
-        availability1 = new Availability(theResource, start, AvailabilityType.UP);
+        availability1 = new Availability(theResource, start, UP);
         availability1.setEndTime(splitStart);
         persistAvailability(availability1);
 
-        availability2 = new Availability(theResource, splitStart, AvailabilityType.DOWN);
+        availability2 = new Availability(theResource, splitStart, DOWN);
         availability2.setEndTime(splitEnd);
         persistAvailability(availability2);
 
-        availability3 = new Availability(theResource, splitEnd, AvailabilityType.UP);
+        availability3 = new Availability(theResource, splitEnd, UP);
         persistAvailability(availability3);
 
         long countNow = countAvailabilitiesInDB(em);

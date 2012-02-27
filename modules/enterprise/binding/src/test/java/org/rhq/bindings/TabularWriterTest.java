@@ -25,6 +25,7 @@ package org.rhq.bindings;
 
 import static org.testng.Assert.assertEquals;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -62,10 +63,10 @@ public class TabularWriterTest {
 
         writer.print(users);
 
-        assertLineEquals(1, "id  password username", "Cannot print entity array header");
+        assertLineEquals(1, "id  password username", "Cannot print entity array header", false);
         // skip line 2 - its the separator "--------------"
-        assertLineEquals(3, "1   rhqadmin rhqadmin", "Cannot print first entity array item");
-        assertLineEquals(4, "222 pw       name    ", "Cannot print second entity array item");
+        assertLineEquals(3, "1   rhqadmin rhqadmin", "Cannot print first entity array item", false);
+        assertLineEquals(4, "222 pw       name    ", "Cannot print second entity array item", false);
     }
 
     /**
@@ -78,8 +79,8 @@ public class TabularWriterTest {
         writer.print(obj);
 
         // first two lines are the header and "----" separator
-        assertLineEquals(3, "first string ", "Cannot print first string array item");
-        assertLineEquals(4, "second string", "Cannot print first string array item");
+        assertLineEquals(3, "first string ", "Cannot print first string array item", false);
+        assertLineEquals(4, "second string", "Cannot print first string array item", false);
     }
 
     /**
@@ -91,7 +92,8 @@ public class TabularWriterTest {
         Object obj = objArray;
         writer.print(obj);
 
-        String expected = "Array of java.lang.Integer\n123\n789\n";
+        String term = (File.separatorChar == '/') ? "\n" : "\r\n";
+        String expected = "Array of java.lang.Integer" + term + "123" + term + "789" + term;
         String actual = stringWriter.toString();
         assertEquals(actual, expected, "Could not print an object Integer array");
     }
@@ -105,7 +107,8 @@ public class TabularWriterTest {
         Object obj = primitiveArray;
         writer.print(obj);
 
-        String expected = "Array of byte\n" + (int) 'a' + '\n' + (int) 'b' + '\n' + (int) 'c' + '\n';
+        String term = (File.separatorChar == '/') ? "\n" : "\r\n";
+        String expected = "Array of byte" + term + (int) 'a' + term + (int) 'b' + term + (int) 'c' + term;
         String actual = stringWriter.toString();
         assertEquals(actual, expected, "Could not print a primitive byte array");
     }
@@ -116,7 +119,7 @@ public class TabularWriterTest {
 
         writer.print(value);
 
-        String expected = "1\n";
+        String expected = (File.separatorChar == '/') ? "1\n" : "1\r\n";
         String actual = stringWriter.toString();
 
         assertEquals(actual, expected, "A byte or Byte should have its value printed as a String");
@@ -128,7 +131,7 @@ public class TabularWriterTest {
 
         writer.print(value);
 
-        String expected = "1\n";
+        String expected = (File.separatorChar == '/') ? "1\n" : "1\r\n";
         String actual = stringWriter.toString();
 
         assertEquals(actual, expected, "An int or Integer should have its value printed as a String");
@@ -141,7 +144,8 @@ public class TabularWriterTest {
         writer.print(user);
 
         assertNumberOfLinesPrintedIs(4);
-        assertLineEquals(0, user.getClass().getSimpleName() + ":", "The simple class name should be the first line printed");
+        assertLineEquals(0, user.getClass().getSimpleName() + ":",
+            "The simple class name should be the first line printed");
     }
 
     @Test
@@ -166,12 +170,14 @@ public class TabularWriterTest {
         int passwordLineNumber = 2;
         String expectedPasswordLine = "\tpassword: " + user.getPassword();
 
-        assertLineEquals(passwordLineNumber, expectedPasswordLine, "The password property should be the 3rd line printed");
+        assertLineEquals(passwordLineNumber, expectedPasswordLine,
+            "The password property should be the 3rd line printed");
 
         int usernameLineNumber = 3;
         String expectedUsernameLine = "\tusername: " + user.getUsername();
 
-        assertLineEquals(usernameLineNumber, expectedUsernameLine, "The username property should be the 4th line printed");
+        assertLineEquals(usernameLineNumber, expectedUsernameLine,
+            "The username property should be the 4th line printed");
     }
 
     @Test
@@ -187,7 +193,8 @@ public class TabularWriterTest {
         assertLineEquals(lineNumber, expectedLine, "The manager property should be the 3rd line printed");
     }
 
-    @Test(enabled = false) // TODO revisit
+    @Test(enabled = false)
+    // TODO revisit
     public void oneToManyAssociationShouldPrintForEntity() {
         User employee = new User(1, "rhq", "rhq");
 
@@ -199,8 +206,8 @@ public class TabularWriterTest {
         int lineNumber = 2;
         String expectedLine = "\temployees: " + company.getEmployees();
 
-        assertLineEquals(lineNumber, expectedLine, "The employees property should be the 2nd line printed and the " +
-                "toString() value of the collection should be displayed.");
+        assertLineEquals(lineNumber, expectedLine, "The employees property should be the 2nd line printed and the "
+            + "toString() value of the collection should be displayed.");
     }
 
     @Test
@@ -209,11 +216,8 @@ public class TabularWriterTest {
 
         writer.print(resource);
 
-        assertLineEquals(
-            1,
-            "\t" + padResourceField("id") + ": " + resource.getId(),
-            "Expected Resource.id to be the first property printed."
-        );
+        assertLineEquals(1, "\t" + padResourceField("id") + ": " + resource.getId(),
+            "Expected Resource.id to be the first property printed.");
     }
 
     @Test
@@ -222,11 +226,8 @@ public class TabularWriterTest {
 
         writer.print(resource);
 
-        assertLineEquals(
-            2,
-            "\t" + padResourceField("name") + ": " + resource.getName(),
-            "Expected Resource.name to be second property printed"
-        );
+        assertLineEquals(2, "\t" + padResourceField("name") + ": " + resource.getName(),
+            "Expected Resource.name to be second property printed");
     }
 
     @Test
@@ -235,11 +236,8 @@ public class TabularWriterTest {
 
         writer.print(resource);
 
-        assertLineEquals(
-            3,
-            "\t" + padResourceField("version") + ": " + resource.getVersion(),
-            "Expected Resource.version to be third property printed"
-        );
+        assertLineEquals(3, "\t" + padResourceField("version") + ": " + resource.getVersion(),
+            "Expected Resource.version to be third property printed");
     }
 
     @Test
@@ -248,11 +246,9 @@ public class TabularWriterTest {
 
         writer.print(resource);
 
-        assertLineEquals(
-            4,
-            "\t" + padResourceField("currentAvailability") + ": " + resource.getCurrentAvailability().getAvailabilityType(),
-            "Expected short version of Resource.currentAvailability to be fourth property printed"
-        );
+        assertLineEquals(4, "\t" + padResourceField("currentAvailability") + ": "
+            + resource.getCurrentAvailability().getAvailabilityType(),
+            "Expected short version of Resource.currentAvailability to be fourth property printed");
     }
 
     @Test
@@ -261,11 +257,8 @@ public class TabularWriterTest {
 
         writer.print(resource);
 
-        assertLineEquals(
-            4,
-            "\t" + padResourceField("currentAvailability") + ": ",
-            "Expected to see empty string for Resource.currentAvailability when property is null"
-        );
+        assertLineEquals(4, "\t" + padResourceField("currentAvailability") + ": ",
+            "Expected to see empty string for Resource.currentAvailability when property is null");
     }
 
     @Test
@@ -274,47 +267,26 @@ public class TabularWriterTest {
 
         writer.print(resource);
 
-        assertLineEquals(
-            5,
-            "\t" + padResourceField("resourceType") + ": " + resource.getResourceType().getName(),
-            "Expected short version of Resource.resourceType to be the fifth property printed"
-        );
+        assertLineEquals(5, "\t" + padResourceField("resourceType") + ": " + resource.getResourceType().getName(),
+            "Expected short version of Resource.resourceType to be the fifth property printed");
     }
 
     private Resource createResource() {
-        return new ResourceBuilder().createServer()
-            .usingDefaultResourceType()
-            .withId(111)
-            .withName("test-server")
-            .withUuid("12345")
-            .withVersion("1.0")
-            .inInventory()
-            .withCurrentAvailability(AvailabilityType.UP)
-            .build();
+        return new ResourceBuilder().createServer().usingDefaultResourceType().withId(111).withName("test-server")
+            .withUuid("12345").withVersion("1.0").inInventory().withCurrentAvailability(AvailabilityType.UP).build();
     }
 
     private Resource createUncommittedResource() {
-        return new ResourceBuilder().createServer()
-            .usingDefaultResourceType()
-            .withId(111)
-            .withName("test-server")
-            .withUuid("12345")
-            .withVersion("1.0")
-            .notInInventory()
-            .build();
+        return new ResourceBuilder().createServer().usingDefaultResourceType().withId(111).withName("test-server")
+            .withUuid("12345").withVersion("1.0").notInInventory().build();
     }
 
     @Test
     public void printCollectionOfUncommittedResource() {
-        Resource parent = new ResourceBuilder().createServer()
-            .usingDefaultResourceType()
-            .withName("test-server")
-            .withUuid("12345")
-            .withVersion("1.0")
-            .inInventory()
-            .with(2).randomChildServices()
-//                .notInInventory()
-//                .included()
+        Resource parent = new ResourceBuilder().createServer().usingDefaultResourceType().withName("test-server")
+            .withUuid("12345").withVersion("1.0").inInventory().with(2).randomChildServices()
+            //                .notInInventory()
+            //                .included()
             .build();
 
         writer.print(parent.getChildResources());
@@ -322,12 +294,20 @@ public class TabularWriterTest {
 
     void assertNumberOfLinesPrintedIs(int expectedNumberOfLines) {
         String lines[] = getLines();
-        assertEquals(lines.length, expectedNumberOfLines, "The actual lines printed were\n[\n" +
-            stringWriter.toString() + "\n]");
+        assertEquals(lines.length, expectedNumberOfLines,
+            "The actual lines printed were\n[\n" + stringWriter.toString() + "\n]");
     }
 
     void assertLineEquals(int lineNumber, String expectedLine, String msg) {
+        assertLineEquals(lineNumber, expectedLine, msg, true);
+    }
+
+    void assertLineEquals(int lineNumber, String expectedLine, String msg, boolean addCR) {
         String actualLine = getLines()[lineNumber];
+
+        if (addCR) {
+            expectedLine = (File.separatorChar == '/') ? expectedLine : (expectedLine + "\r");
+        }
 
         assertEquals(actualLine, expectedLine, msg + " -- The actual output was \n[\n" + stringWriter + "\n].");
     }

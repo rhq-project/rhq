@@ -78,7 +78,8 @@ public class AlertFormatUtility {
             break;
         }
         case AVAIL_DURATION: {
-            str.append("Availability Duration [");
+            str.append(MSG.view_alert_definition_condition_editor_availabilityDuration());
+            str.append(" [");
             AlertConditionOperator operator = AlertConditionOperator.valueOf(condition.getName().toUpperCase());
             switch (operator) {
             case AVAIL_DURATION_DOWN:

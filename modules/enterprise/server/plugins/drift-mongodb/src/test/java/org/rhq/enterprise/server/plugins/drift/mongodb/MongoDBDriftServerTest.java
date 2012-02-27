@@ -18,73 +18,77 @@
  */
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
-import com.google.code.morphia.Datastore;
-import com.google.code.morphia.Morphia;
-import com.google.code.morphia.query.Query;
-import com.mongodb.Mongo;
-
-import org.bson.types.ObjectId;
 import org.jmock.Expectations;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugins.drift.mongodb.dao.ChangeSetDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.dao.FileDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
-import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
-import org.rhq.test.JMockTest;
-import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.List;
+import java.util.Random;
+
 import static java.util.Arrays.asList;
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.apache.commons.io.IOUtils.write;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 
 public class MongoDBDriftServerTest extends MongoDBTest {
 
-    MessageDigestGenerator digestGenerator;
+    private MessageDigestGenerator digestGenerator;
+
+    private Random random;
+
+    private TestMongoDBDriftServer driftServer;
     
     @BeforeClass
     public void initClass() throws Exception {
         digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+        random = new Random();
     }
     
     @BeforeMethod
     public void initTest() {
-        Query deleteAll = ds.createQuery(MongoDBChangeSet.class);
-        ds.delete(deleteAll);
+        clearCollections("changesets", "fs.files", "fs.chunks");
 
         File basedir = getBaseDir();
         basedir.delete();
         getBaseDir().mkdirs();
+
+        driftServer = new TestMongoDBDriftServer();
+        driftServer.setConnection(connection);
+        driftServer.setMorphia(morphia);
+        driftServer.setDatastore(ds);
+        driftServer.setChangeSetDAO(new ChangeSetDAO(morphia, connection, "rhqtest"));
+        driftServer.setFileDAO(new FileDAO(ds.getDB()));
     }
 
     @Test
-    public void persistChangeSetWithContentNotInDB() throws Exception {
+    public void persistInitialChangeSetWithContentNotInDB() throws Exception {
         int driftDefId = 1;
-        final String driftDefName = "saveInitialChangeSet";        
+        final String driftDefName = "saveInitialChangeSetWithContentNotInDB";
         final int resourceId = 1;
-        
+
         final Headers headers = new Headers();
         headers.setBasedir(getBaseDir().getAbsolutePath());
         headers.setDriftDefinitionId(driftDefId);
@@ -92,21 +96,16 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         headers.setResourceId(resourceId);
         headers.setType(COVERAGE);
         headers.setVersion(0);
-        
-        long timestamp = System.currentTimeMillis();
-        long size = 1024;
-        
+
+        String file1SHA = sha256("1a2b3c4d");
+        String file2SHA = sha256("1a2b3c4d");
+
         File changeSetZip = createChangeSetZipFile(headers,
-                addedFileEntry("1.txt", sha256("1a2b3c4d"), timestamp, size));
-                                
-        TestMongoDBDriftServer driftServer = new TestMongoDBDriftServer();
-        driftServer.setConnection(connection);
-        driftServer.setMorphia(morphia);
-        driftServer.setDatastore(ds);
-        driftServer.setChangeSetDAO(new ChangeSetDAO(morphia, connection, "rhqtest"));
-        driftServer.setFileDAO(new FileDAO(ds.getDB()));
-        
-        final List<? extends DriftFile> missingContent = asList(new TestDriftFile(sha256("1a2b3c4d")));
+                addedFileEntry("1.bin", file1SHA),
+                addedFileEntry("2.bin", file2SHA));
+
+        final List<? extends DriftFile> missingContent = asList(new TestDriftFile(file1SHA),
+                new TestDriftFile(file2SHA));
 
         final DriftAgentService driftAgentService = context.mock(DriftAgentService.class);
         context.checking(new Expectations() {{
@@ -116,18 +115,18 @@ public class MongoDBDriftServerTest extends MongoDBTest {
                     with(missingContent));
         }});
         driftServer.setDriftAgentService(driftAgentService);
-        
+
         // We can pass null for the subject because MongoDBDriftServer currently does not
         // use the subject argument.
-        driftServer.saveChangeSet(null, resourceId, changeSetZip);
-        
+        DriftChangeSetSummary actualSummary = driftServer.saveChangeSet(null, resourceId, changeSetZip);
+
         // verify that the change set was persisted
         ChangeSetDAO changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
         List<MongoDBChangeSet> changeSets = changeSetDAO.find().asList();
-        
+
         assertEquals(changeSets.size(), 1, "Expected to find one change set in the database.");
         MongoDBChangeSet actual = changeSets.get(0);
-        
+
         MongoDBChangeSet expected = new MongoDBChangeSet();
         // Need to set the id to actual.id. Since ids are random, we cannot use a canned
         // value. We have to set it the same value that is in the database.
@@ -139,14 +138,188 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         expected.setVersion(0);
         expected.setDriftHandlingMode(normal);
 
-        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("1.txt", FILE_ADDED);
-        entry.setNewFileHash(sha256("1a2b3c4d"));
-        expected.add(entry);
-        
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("1.bin", FILE_ADDED);
+        entry1.setNewFileHash(file1SHA);
+        expected.add(entry1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("2.bin", FILE_ADDED);
+        entry2.setNewFileHash(file2SHA);
+        expected.add(entry2);
+
         String[] ignore = new String[] {"id", "objectId", "ctime"};
         assertChangeSetMatches("Failed to persist change set", expected, actual, ignore);
+
+        DriftChangeSetSummary expectedSummary = new DriftChangeSetSummary();
+        expectedSummary.setCategory(COVERAGE);
+        expectedSummary.setResourceId(resourceId);
+        expectedSummary.setDriftDefinitionName(driftDefName);
+        expectedSummary.setCreatedTime(actual.getCtime());
+
+        assertPropertiesMatch("The change set summary is wrong", expectedSummary, actualSummary);
     }
-    
+
+    @Test
+    public void persistInitialChangeSetWithContentInDB() throws Exception {
+        int driftDefId = 1;
+        final String driftDefName = "saveInitialChangeSetWithContentInDB";
+        final int resourceId = 1;
+
+        final Headers headers = new Headers();
+        headers.setBasedir(getBaseDir().getAbsolutePath());
+        headers.setDriftDefinitionId(driftDefId);
+        headers.setDriftDefinitionName(driftDefName);
+        headers.setResourceId(resourceId);
+        headers.setType(COVERAGE);
+        headers.setVersion(0);
+
+        String file1SHA = sha256("1a2b3c4d");
+        String file2SHA = sha256("1a2b3c4d");
+
+        // store content in the database
+        File file1 = createRandomFile(getBaseDir(), file1SHA, 1024);
+        File file2 = createRandomFile(getBaseDir(), file2SHA, 1024);
+
+        FileDAO fileDAO = new FileDAO(ds.getDB());
+        fileDAO.save(file1);
+        fileDAO.save(file2);
+
+        File changeSetZip = createChangeSetZipFile(headers,
+                addedFileEntry("1.bin", file1SHA),
+                addedFileEntry("2.bin", file2SHA));
+
+
+        final DriftAgentService driftAgentService = context.mock(DriftAgentService.class);
+        context.checking(new Expectations() {{
+            exactly(1).of(driftAgentService).ackChangeSet(resourceId, driftDefName);
+        }});
+        driftServer.setDriftAgentService(driftAgentService);
+
+        // We can pass null for the subject because MongoDBDriftServer currently does not
+        // use the subject argument.
+        DriftChangeSetSummary actualSummary = driftServer.saveChangeSet(null, resourceId, changeSetZip);
+
+        // verify that the change set was persisted
+        ChangeSetDAO changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
+        List<MongoDBChangeSet> changeSets = changeSetDAO.find().asList();
+
+        assertEquals(changeSets.size(), 1, "Expected to find one change set in the database.");
+        MongoDBChangeSet actual = changeSets.get(0);
+
+        MongoDBChangeSet expected = new MongoDBChangeSet();
+        // Need to set the id to actual.id. Since ids are random, we cannot use a canned
+        // value. We have to set it the same value that is in the database.
+        expected.setId(actual.getId());
+        expected.setDriftDefinitionId(driftDefId);
+        expected.setResourceId(resourceId);
+        expected.setDriftDefinitionName(driftDefName);
+        expected.setCategory(COVERAGE);
+        expected.setVersion(0);
+        expected.setDriftHandlingMode(normal);
+
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("1.bin", FILE_ADDED);
+        entry1.setNewFileHash(file1SHA);
+        expected.add(entry1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("2.bin", FILE_ADDED);
+        entry2.setNewFileHash(file2SHA);
+        expected.add(entry2);
+
+        String[] ignore = new String[] {"id", "objectId", "ctime"};
+        assertChangeSetMatches("Failed to persist change set", expected, actual, ignore);
+
+        DriftChangeSetSummary expectedSummary = new DriftChangeSetSummary();
+        expectedSummary.setCategory(COVERAGE);
+        expectedSummary.setResourceId(resourceId);
+        expectedSummary.setDriftDefinitionName(driftDefName);
+        expectedSummary.setCreatedTime(actual.getCtime());
+
+        assertPropertiesMatch("The change set summary is wrong", expectedSummary, actualSummary);
+    }
+
+    @Test
+    public void persistChangeSetWithSomeContentInDB() throws Exception {
+        int driftDefId = 1;
+        final String driftDefName = "saveChangeSetWithSomeContentInDB";
+        final int resourceId = 1;
+
+        final Headers headers = new Headers();
+        headers.setBasedir(getBaseDir().getAbsolutePath());
+        headers.setDriftDefinitionId(driftDefId);
+        headers.setDriftDefinitionName(driftDefName);
+        headers.setResourceId(resourceId);
+        headers.setType(DRIFT);
+        headers.setVersion(1);
+
+        String oldFile1SHA = sha256("1a2b3c4d");
+        String newFile1SHA = sha256("2a3b4c5d");
+        String file2SHA = sha256("1a2b3c4d");
+
+        // store content in the database
+        File oldFile1 = createRandomFile(getBaseDir(), oldFile1SHA, 1024);
+        File file2 = createRandomFile(getBaseDir(), file2SHA, 1024);
+
+        FileDAO fileDAO = new FileDAO(ds.getDB());
+        fileDAO.save(oldFile1);
+        fileDAO.save(file2);
+
+        File changeSetZip = createChangeSetZipFile(headers,
+                changedFileEntry("1.bin", oldFile1SHA, newFile1SHA),
+                removedFileEntry("2.bin", file2SHA));
+
+        final List<? extends DriftFile> missingContent = asList(new TestDriftFile(newFile1SHA));
+        final DriftAgentService driftAgentService = context.mock(DriftAgentService.class);
+        context.checking(new Expectations() {{
+            exactly(1).of(driftAgentService).ackChangeSet(resourceId, driftDefName);
+            exactly(1).of(driftAgentService).requestDriftFiles(with(resourceId), with(any(Headers.class)),
+                    with(missingContent));
+        }});
+        driftServer.setDriftAgentService(driftAgentService);
+
+        // We can pass null for the subject because MongoDBDriftServer currently does not
+        // use the subject argument.
+        DriftChangeSetSummary actualSummary = driftServer.saveChangeSet(null, resourceId, changeSetZip);
+
+        // verify that the change set was persisted
+        ChangeSetDAO changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
+        List<MongoDBChangeSet> changeSets = changeSetDAO.find().asList();
+
+        assertEquals(changeSets.size(), 1, "Expected to find one change set in the database.");
+        MongoDBChangeSet actual = changeSets.get(0);
+
+        MongoDBChangeSet expected = new MongoDBChangeSet();
+        // Need to set the id to actual.id. Since ids are random, we cannot use a canned
+        // value. We have to set it the same value that is in the database.
+        expected.setId(actual.getId());
+        expected.setDriftDefinitionId(driftDefId);
+        expected.setResourceId(resourceId);
+        expected.setDriftDefinitionName(driftDefName);
+        expected.setCategory(DRIFT);
+        expected.setVersion(1);
+        expected.setDriftHandlingMode(normal);
+
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("1.bin", FILE_CHANGED);
+        entry1.setOldFileHash(oldFile1SHA);
+        entry1.setNewFileHash(newFile1SHA);
+        expected.add(entry1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("2.bin", FILE_REMOVED);
+        entry2.setOldFileHash(file2SHA);
+        expected.add(entry2);
+
+        String[] ignore = new String[] {"id", "objectId", "ctime"};
+        assertChangeSetMatches("Failed to persist change set", expected, actual, ignore);
+
+        DriftChangeSetSummary expectedSummary = new DriftChangeSetSummary();
+        expectedSummary.setCategory(DRIFT);
+        expectedSummary.setResourceId(resourceId);
+        expectedSummary.setDriftDefinitionName(driftDefName);
+        expectedSummary.setCreatedTime(actual.getCtime());
+        expectedSummary.addDriftPathname("1.bin");
+        expectedSummary.addDriftPathname("2.bin");
+
+        assertPropertiesMatch("The change set summary is wrong", expectedSummary, actualSummary);
+    }
+
     protected File createChangeSetZipFile(Headers headers, FileEntry... fileEntries) throws Exception {
         ChangeSetWriter writer = newChangeSetWriter(headers);
         for (FileEntry entry : fileEntries) {
@@ -187,13 +360,34 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         return new File("target", getClass().getSimpleName());
     }
 
+    protected FileEntry addedFileEntry(String path, String sha256) {
+        long timestamp = System.currentTimeMillis();
+        long size = 1024;
+        return FileEntry.addedFileEntry(path, sha256, timestamp, size);
+    }
+
+    protected FileEntry changedFileEntry(String path, String oldSHA, String newSHA) {
+        long timestamp = System.currentTimeMillis();
+        long size = 1024;
+        return FileEntry.changedFileEntry(path, oldSHA, newSHA, timestamp, size);
+    }
+
+    protected FileEntry removedFileEntry(String path, String oldSHA) {
+        return FileEntry.removedFileEntry(path, oldSHA);
+    }
+
     protected String sha256(String string) {
         return digestGenerator.calcDigestString(string);
     }
 
-    protected DriftFileDTO newDriftFile(String hash) {
-        DriftFileDTO file = new DriftFileDTO();
-        file.setHashId(hash);
+    protected File createRandomFile(File dir, String fileName, int numBytes) throws Exception {
+        File file = new File(dir, fileName);
+        FileOutputStream stream = new FileOutputStream(file);
+        byte[] bytes = new byte[numBytes];
+        random.nextBytes(bytes);
+        write(bytes, stream);
+        stream.close();
+
         return file;
     }
 

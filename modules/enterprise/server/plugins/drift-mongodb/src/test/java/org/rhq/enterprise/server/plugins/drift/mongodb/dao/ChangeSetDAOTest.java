@@ -19,31 +19,25 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
-import java.util.List;
-
-import com.google.code.morphia.query.Query;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.plugins.drift.mongodb.MongoDBTest;
+import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
+import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.criteria.GenericDriftCriteria;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
-import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
+import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
+import static org.rhq.core.domain.drift.DriftCategory.*;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 public class ChangeSetDAOTest extends MongoDBTest {
@@ -52,8 +46,7 @@ public class ChangeSetDAOTest extends MongoDBTest {
 
     @BeforeMethod
     public void initDAO() {
-        Query deleteAll = ds.createQuery(MongoDBChangeSet.class);
-        ds.delete(deleteAll);
+        clearCollections("changesets");
         dao = new ChangeSetDAO(morphia, connection, "rhqtest");
     }
 

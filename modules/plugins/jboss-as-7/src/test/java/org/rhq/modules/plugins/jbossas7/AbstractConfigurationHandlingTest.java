@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -31,6 +32,8 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 
@@ -42,6 +45,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Base class for configuration handling tests
@@ -52,7 +56,6 @@ public class AbstractConfigurationHandlingTest {
     private static final String DESCRIPTOR_FILENAME = "test-plugin.xml";
     private Log log = LogFactory.getLog(getClass());
     private PluginDescriptor pluginDescriptor;
-
 
     void loadPluginDescriptor() throws Exception {
         try {
@@ -102,8 +105,7 @@ public class AbstractConfigurationHandlingTest {
                 builder.append(line);
             }
             return builder.toString();
-        }
-        finally {
+        } finally {
             reader.close();
         }
     }
@@ -114,6 +116,23 @@ public class AbstractConfigurationHandlingTest {
      *
      */
     protected class FakeConnection extends ASConnection {
+        private ObjectMapper mapper = new ObjectMapper();
+
+        @Override
+        public Result execute(Operation op) {
+            JsonNode json = executeRaw(op);
+            Result result = null;
+            try {
+                result = mapper.readValue(json, Result.class);
+            } catch (JsonParseException e) {
+                e.printStackTrace();
+            } catch (JsonMappingException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return result;
+        }
 
         JsonNode content;
 
@@ -127,11 +146,11 @@ public class AbstractConfigurationHandlingTest {
 
         @Override
         public JsonNode executeRaw(Operation operation) {
-            if (content==null)
+            if (content == null)
                 throw new IllegalStateException("Content not yet set");
 
             Address address = operation.getAddress();
-            if (address!=null && !address.isEmpty()) {
+            if (address != null && !address.isEmpty()) {
                 // we need to clone the content and then for the result find the right sub-content to put into result and
                 // return this one.
 
@@ -139,17 +158,17 @@ public class AbstractConfigurationHandlingTest {
                 String[] parts = address.getPath().split("=");
                 String key = parts[0];
                 String val = parts[1];
-                JsonNode result  = content.get("result");
+                JsonNode result = content.get("result");
                 JsonNode keyNode = result.get(key);
                 JsonNode valNode = keyNode.get(val);
 
                 // clone the original content
                 ObjectMapper tmpMapper = new ObjectMapper();
                 JsonNode tmp = tmpMapper.createObjectNode();
-                ((ObjectNode)tmp).putAll(((ObjectNode)content));
+                ((ObjectNode) tmp).putAll(((ObjectNode) content));
 
                 // replace the result with the sub-content
-                ((ObjectNode)tmp).put("result",valNode);
+                ((ObjectNode) tmp).put("result", valNode);
 
                 return tmp;
             }

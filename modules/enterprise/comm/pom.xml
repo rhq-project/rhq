@@ -146,7 +146,7 @@
           <!--
           <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
           -->
-          <systemPropertyVariables>
+          <systemPropertyVariables combine.children="append">
             <rhq.comm.test.connectorBindPort>${rhq.comm.test.connectorBindPort}</rhq.comm.test.connectorBindPort>
             <rhq.comm.test.connector2BindPort>${rhq.comm.test.connector2BindPort}</rhq.comm.test.connector2BindPort>
           </systemPropertyVariables>

@@ -579,7 +579,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-jar-plugin</artifactId>
-           <version>2.3.1</version>
+           <version>2.4</version>
          </plugin>
          <plugin>
            <artifactId>maven-javadoc-plugin</artifactId>
@@ -820,6 +820,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <trimStackTrace>false</trimStackTrace>
+          <systemPropertyVariables>
+            <java.util.prefs.userRoot>${java.io.tmpdir}/${user.name}</java.util.prefs.userRoot>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 

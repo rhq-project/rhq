@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -235,7 +234,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             public void onKeyPress(KeyPressEvent event) {
-                if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+                if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
+                    Log.debug("******  Pressed Enter in SearchBar");
                     hideSuggestionList();
                 }
 
@@ -249,6 +249,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             }
 
             public void onValueChange(ValueChangeEvent<String> event) {
+                Log.debug("OnValueChange in SearchBar: "+event.getValue());
                 delegateEvent(SuggestTextBox_v3.this, event);
             }
 

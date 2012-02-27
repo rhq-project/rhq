@@ -28,6 +28,8 @@ import java.io.Serializable;
  * Encapsulates information about a snapshot report request.
  * 
  * @author John Mazzitelli
+ *
+ * @since 1.3
  */
 public class SnapshotReportRequest implements Serializable {
     private static final long serialVersionUID = 1L;

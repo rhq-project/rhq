@@ -24,7 +24,8 @@ package org.rhq.core.pluginapi.inventory;
 
 /**
  * This enum indicates where the plugin container (and therefore the plugins) are deployed.
- * 
+ *
+ * @since 1.3
  * @author John Mazzitelli
  */
 public enum PluginContainerDeployment {

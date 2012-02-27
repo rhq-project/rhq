@@ -43,7 +43,10 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.system.SystemInfoFactory;
 
 /**
- * @author Ian Springer
+ * A helper class that plugins can use to start and stop {@link LogFileEventPoller}s.
+ *
+ * @since 1.3
+ * @author Ian Springer  
  */
 public class LogFileEventResourceComponentHelper {
     public static final String LOG_ENTRY_EVENT_TYPE = "logEntry";

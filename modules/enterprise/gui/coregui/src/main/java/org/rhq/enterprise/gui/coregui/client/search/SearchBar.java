@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.search;
 
 import java.util.List;
 
-import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -401,8 +400,9 @@ public class SearchBar extends AbstractSearchBar {
 
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-                Log.debug("key press pattern name field");
+            //if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
+                Log.debug("ENTER key press on pattern name field");
                 turnNameFieldIntoLabel();
             }
         }
@@ -414,6 +414,7 @@ public class SearchBar extends AbstractSearchBar {
         }
 
         public void onBlur(BlurEvent event) {
+            Log.debug("onblur event on pattern name field");
             lastNameFieldBlurTime = System.currentTimeMillis();
             turnNameFieldIntoLabel();
         }
@@ -427,6 +428,8 @@ public class SearchBar extends AbstractSearchBar {
 
     class StarImageEventHandler implements ClickHandler, MouseOverHandler, MouseOutHandler {
         public void onClick(ClickEvent event) {
+            Log.debug("onClick for StarImage");
+            lastNameFieldBlurTime = System.currentTimeMillis();
             long diff = System.currentTimeMillis() - lastNameFieldBlurTime;
             if (Math.abs(diff) < 750) {
                 /*
@@ -472,6 +475,7 @@ public class SearchBar extends AbstractSearchBar {
 
     class ArrowImageEventHandler implements ClickHandler {
         public void onClick(ClickEvent event) {
+            Log.debug("onClick for ArrowImage");
             savedSearchesGrid.updateModel(new AsyncCallback<List<SavedSearch>>() {
                 @Override
                 public void onFailure(Throwable caught) {

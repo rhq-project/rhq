@@ -28,6 +28,7 @@ package org.rhq.core.pluginapi.support;
  * 
  * @author John Mazzitelli
  *
+ * @since 1.3
  */
 public interface SupportFacet {
     /**

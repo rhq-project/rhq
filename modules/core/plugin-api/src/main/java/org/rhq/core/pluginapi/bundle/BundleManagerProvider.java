@@ -28,7 +28,8 @@ import org.rhq.core.domain.content.PackageVersion;
 
 /**
  * Provides bundle functionality that plugin components will need in order to process bundles.
- * 
+ *
+ * @since 3.0
  * @author John Mazzitelli
  */
 public interface BundleManagerProvider {

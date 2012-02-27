@@ -29,6 +29,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 /**
  * The results after an attempt to purge a bundle has been completed.
  *
+ * @since 4.0
  * @author John Mazzitelli
  */
 public class BundlePurgeResult implements Serializable {

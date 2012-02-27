@@ -339,12 +339,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 contents.removeChild(child);
             }
 
-            if (filterForm.hasContent()) {
-                contents.addMember(filterForm);
-            }
-
-            // add the listGrid defined in onInit
-            contents.addMember(listGrid);
 
             // Title
             this.titleCanvas = new HTMLFlow();
@@ -356,6 +350,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
             }
+
+            if (filterForm.hasContent()) {
+                contents.addMember(filterForm);
+            }
+            // add the listGrid defined in onInit
+            contents.addMember(listGrid);
 
             // Footer
 
@@ -1134,6 +1134,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         @Override
         public void onKeyPress(KeyPressEvent event) {
             if (event.getKeyName().equals("Enter")) {
+                Log.debug("Table.TableFilter Pressed Enter key");
                 fetchFilteredTableData();
             }
         }
@@ -1149,15 +1150,18 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         @Override
         public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
-            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+             if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
                 // TODO (ips, 10/14/11): Figure out why this event is being sent twice. However, this is not urgent,
                 //                       since the if check below will prevent the 2nd event from triggering a redundant
                 //                       fetch request.
+                Log.debug("Table.TableFilter Pressed Enter key2");
                 String searchBarValue = searchBarItem.getSearchBar().getValue();
                 String hiddenValue = (String) hiddenItem.getValue();
+                 Log.debug("Table.TableFilter searchBarValue :"+searchBarValue+ ", hiddenValue"+hiddenValue);
                 // Only send a fetch request if the user actually changed the search expression.
                 if (!equals(searchBarValue, hiddenValue)) {
                     hiddenItem.setValue(searchBarValue);
+                    Log.debug("Table.TableFilter fetchFilteredTableData");
                     fetchFilteredTableData();
                 }
             }

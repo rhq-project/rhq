@@ -31,7 +31,8 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * upgrading the existing resources to a new format needed by an updated resource component.
  * This is useful for example in the case when a new version of plugin redefined a resource
  * key generation algorithm and wants to upgrade the legacy resources to use the new format.
- * 
+ *
+ * @since 3.0
  * @author Lukas Krejci
  */
 public interface ResourceUpgradeFacet<T extends ResourceComponent<?>> {

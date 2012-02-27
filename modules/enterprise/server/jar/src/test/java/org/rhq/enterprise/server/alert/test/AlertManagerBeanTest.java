@@ -9,8 +9,8 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -26,19 +26,50 @@ public class AlertManagerBeanTest {
     private String pretty;
 
     public void testPrettyPrintAVAILABILITY() {
-        AlertCondition condition = createCondition(AlertConditionCategory.AVAILABILITY, null, null, null,
-            AvailabilityType.UP.name(), null);
+        AlertCondition condition = createCondition(AlertConditionCategory.AVAILABILITY,
+            AlertConditionOperator.AVAIL_GOES_UP.name(), null, null, null, null);
         pretty = getPrettyAlertConditionString(condition);
         assert "Availability goes UP".equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
         assert "Avail goes UP".equals(pretty) : pretty;
 
-        condition = createCondition(AlertConditionCategory.AVAILABILITY, null, null, null,
-            AvailabilityType.DOWN.name(), null);
+        condition = createCondition(AlertConditionCategory.AVAILABILITY, AlertConditionOperator.AVAIL_GOES_DOWN.name(),
+            null, null, null, null);
         pretty = getPrettyAlertConditionString(condition);
         assert "Availability goes DOWN".equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
         assert "Avail goes DOWN".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.AVAILABILITY,
+            AlertConditionOperator.AVAIL_GOES_DISABLED.name(), null, null, null, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Availability goes DISABLED".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Avail goes DISABLED".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.AVAILABILITY,
+            AlertConditionOperator.AVAIL_GOES_UNKNOWN.name(), null, null, null, null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Availability goes UNKNOWN".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Avail goes UNKNOWN".equals(pretty) : pretty;
+
+    }
+
+    public void testPrettyPrintAVAILABILITY_DURATION() {
+        AlertCondition condition = createCondition(AlertConditionCategory.AVAIL_DURATION,
+            AlertConditionOperator.AVAIL_DURATION_DOWN.name(), null, null, "2", null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Availability stays DOWN [2m]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Avail stays DOWN [2m]".equals(pretty) : pretty;
+
+        condition = createCondition(AlertConditionCategory.AVAIL_DURATION,
+            AlertConditionOperator.AVAIL_DURATION_NOT_UP.name(), null, null, "2", null);
+        pretty = getPrettyAlertConditionString(condition);
+        assert "Availability stays NOT UP [2m]".equals(pretty) : pretty;
+        pretty = getShortPrettyAlertConditionString(condition);
+        assert "Avail stays NOT UP [2m]".equals(pretty) : pretty;
     }
 
     public void testPrettyPrintTHRESHOLD() {

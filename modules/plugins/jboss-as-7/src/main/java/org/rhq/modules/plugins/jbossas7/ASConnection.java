@@ -134,7 +134,7 @@ public class ASConnection {
             if ((json_to_send.indexOf(JSON_SERVER_CONFIG + EAP_PREFIX) > -1)
                 || (json_to_send.indexOf(JSON_SERVER_CONFIG + EDG_PREFIX) > -1)
                 || (json_to_send.indexOf(JSON_NAME + EAP_PREFIX) > -1)
-                || (json_to_send.indexOf(JSON_NAME + EAP_PREFIX) > -1)) {
+                || (json_to_send.indexOf(JSON_NAME + EDG_PREFIX) > -1)) {
 
                 //delve into Operation and remove prefixes
                 Operation purgedOperation = purgeOperation(operation);

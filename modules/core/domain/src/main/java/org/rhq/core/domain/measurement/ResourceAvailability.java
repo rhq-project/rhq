@@ -107,7 +107,7 @@ public class ResourceAvailability implements Serializable {
     /**
      * Availability state for this time period
      */
-    @Column(name = "AVAILABILITY_TYPE", nullable = true)
+    @Column(name = "AVAILABILITY_TYPE", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private AvailabilityType availabilityType;
 
@@ -116,8 +116,7 @@ public class ResourceAvailability implements Serializable {
     }
 
     /**
-     * Constructor for {@link ResourceAvailability}. If <code>type</code> is <code>null</code>, it will be 
-     * considered unknown.
+     * Constructor for {@link ResourceAvailability}.
      *
      * @param resource
      * @param type
@@ -137,19 +136,12 @@ public class ResourceAvailability implements Serializable {
     }
 
     /**
-     * Indicates the availability status as either UP or DOWN; if <code>null</code> is returned, the status is unknown.
-     *
-     * @return availability status
+     * @return availability type
      */
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
     }
 
-    /**
-     * Sets the availability status. This can be <code>null</code> to indicate an "unknown" availability status.
-     *
-     * @param availabilityType
-     */
     public void setAvailabilityType(AvailabilityType availabilityType) {
         this.availabilityType = availabilityType;
     }

@@ -3983,6 +3983,23 @@
                          WHERE PROPERTY_KEY = 'AGENT_MAX_QUIET_TIME_ALLOWED'
                     </statement>
                 </schema-directSQL>
+                
+                <!-- set null availabilities to UNKNOWN -->
+                <schema-directSQL>
+                    <statement desc="Changing NULL RHQ_AVAILABILITY.AVAILABILITY_TYPE to UNKNOWN">
+                        UPDATE RHQ_AVAILABILITY
+                           SET AVAILABILITY_TYPE = 2 
+                         WHERE AVAILABILITY_TYPE IS NULL
+                    </statement>
+                    <statement desc="Changing NULL RHQ_RESOURCE_AVAIL.AVAILABILITY_TYPE to UNKNOWN">
+                        UPDATE RHQ_RESOURCE_AVAIL
+                           SET AVAILABILITY_TYPE = 2 
+                         WHERE AVAILABILITY_TYPE IS NULL
+                    </statement>
+                    <schema-alterColumn table="RHQ_AVAILABILITY"   column="AVAILABILITY_TYPE" nullable="FALSE"/>
+                    <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="FALSE"/>                    
+                </schema-directSQL>
+                
             </schemaSpec>
         
         </dbupgrade>

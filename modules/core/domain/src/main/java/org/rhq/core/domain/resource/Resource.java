@@ -72,6 +72,7 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -1867,7 +1868,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     // this should only ever be called once, during initial persistence
     public void initCurrentAvailability() {
         if (this.currentAvailability == null) {
-            this.currentAvailability = new ResourceAvailability(this, null);
+            this.currentAvailability = new ResourceAvailability(this, AvailabilityType.UNKNOWN);
         }
     }
 }

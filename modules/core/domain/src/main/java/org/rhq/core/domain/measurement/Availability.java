@@ -170,7 +170,7 @@ public class Availability implements Serializable {
     /**
      * Availability state for this time period
      */
-    @Column(name = "AVAILABILITY_TYPE", nullable = true)
+    @Column(name = "AVAILABILITY_TYPE", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private AvailabilityType availabilityType;
 
@@ -230,20 +230,10 @@ public class Availability implements Serializable {
         this.endTime = (endTime != null) ? endTime.getTime() : null;
     }
 
-    /**
-     * Indicates the availability status as either UP or DOWN; if <code>null</code> is returned, the status is unknown.
-     *
-     * @return availability status
-     */
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
     }
 
-    /**
-     * Sets the availability status. This can be <code>null</code> to indicate an "unknown" availability status.
-     *
-     * @param availabilityType
-     */
     public void setAvailabilityType(AvailabilityType availabilityType) {
         this.availabilityType = availabilityType;
     }

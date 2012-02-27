@@ -59,7 +59,8 @@ public interface ResourceManagerRemote {
      * @param  resourceId the id of a {@link Resource} in inventory.
      *
      * @return the resource availability - note that if the encapsulated availability type is <code>null</code>,
-     *         the resource availability is UNKNOWN.
+     *         the resource availability is UNKNOWN. As of RHQ 4.4 this does not return null but rather
+     *         {@link AvailabilityType.UNKNOWN}. 
      *
      * @throws FetchException if the resource represented by the resourceId parameter does not exist, or if the
      *                        passed subject does not have permission to view this resource.

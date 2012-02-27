@@ -132,7 +132,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 log.warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
                 retAvailability = availList.get(availList.size() - 1);
             } else {
-                retAvailability = new Availability(resource, new Date(), null);
+                retAvailability = new Availability(resource, new Date(), AvailabilityType.UNKNOWN);
             }
         }
 
@@ -281,7 +281,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
                 // end the data point
                 if (currentAvailability.getAvailabilityType() == null) {
-                    // we are on the edge of the range, the null avail type means we have an unknown period for
+                    // we are on the edge of the range, the null avail type indicates a surrogate for
                     // this data point.  Be pessimistic, if we have had any down time, set to down, then disabled,
                     // then up, and finally unknown.
                     if (hasDownPeriods) {
@@ -343,13 +343,28 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 currentTime = dataPointStartBarrier;
                 dataPointStartBarrier -= perPointMillis;
 
+                // the division determing perPointMillis drops the remainder, which may leave us slightly short.
+                // if we go negative, we're done.
+                if (dataPointStartBarrier < 0) {
+                    break;
+                }
+
             } else { // the end of the availability record comes first, in the middle of a data point
 
-                // if the resource has been up in the current time frame, bump up the counter
-                if (currentAvailability.getAvailabilityType() == AvailabilityType.UP) {
+                switch (currentAvailability.getAvailabilityType()) {
+                case UP:
+                    // if the resource has been up in the current time frame, bump up the counter
                     timeUpInDataPoint += currentTime - availabilityStartBarrier;
-                } else if (currentAvailability.getAvailabilityType() == AvailabilityType.DOWN) {
+                    break;
+                case DOWN:
                     hasDownPeriods = true;
+                    break;
+                case DISABLED:
+                    hasDisabledPeriods = true;
+                    break;
+                case UNKNOWN:
+                default:
+                    hasUnknownPeriods = true;
                 }
 
                 // move to the previous availability record
@@ -492,7 +507,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         }
 
                         // our last known state was unknown, ask for a full report to ensure we are in sync with agent
-                        if (latest.getAvailabilityType() == null) {
+                        if (latest.getAvailabilityType() == AvailabilityType.UNKNOWN) {
                             askForFullReport = true;
                         }
                     } else {

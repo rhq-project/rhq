@@ -2328,7 +2328,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
         Resource res = getResourceById(subject, resourceId);
-        ResourceAvailability results = new ResourceAvailability(res, null);
+        ResourceAvailability results = new ResourceAvailability(res, AvailabilityType.UNKNOWN);
 
         try {
             Agent agent = res.getAgent();

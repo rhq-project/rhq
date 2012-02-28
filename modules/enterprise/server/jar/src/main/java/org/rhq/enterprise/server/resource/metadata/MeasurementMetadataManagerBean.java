@@ -58,7 +58,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         existingType = entityMgr.find(ResourceType.class, existingType.getId());
         Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
 
-        // if necessary insert the mandatory AvailabilityScanPeriod metric
+        // if necessary insert the mandatory AvailabilityType metric
         Set<MeasurementDefinition> newTypeMetricDefinitions = getMetricDefinitions(newType);
 
         if (existingDefinitions.isEmpty()) {
@@ -150,7 +150,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         // not needed see JBNADM-1639
     }
 
-    private Set<MeasurementDefinition> getMetricDefinitions(ResourceType newType) {
+    public static Set<MeasurementDefinition> getMetricDefinitions(ResourceType newType) {
         Set<MeasurementDefinition> result = newType.getMetricDefinitions();
         result = (null == result) ? new HashSet<MeasurementDefinition>(1) : result;
         long period;

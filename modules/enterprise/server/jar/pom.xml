@@ -709,19 +709,6 @@ Build-OS-Version=${os.version}
                     </configuration>
                 </execution>
 
-                <execution>
-                    <id>dbTestsOnly</id>
-                    <goals>
-                        <goal>test</goal>
-                    </goals>
-                    <configuration>
-                        <skipTests>${skipTests}</skipTests>
-                        <includes>
-                            <include>org/rhq/enterprise/server/db/**</include>
-                        </includes>
-                        <failIfNoTests>false</failIfNoTests>
-                    </configuration>
-                </execution>
             </executions>
          </plugin>
 
@@ -782,6 +769,59 @@ Build-OS-Version=${os.version}
    </build>
 
    <profiles>
+
+      <profile>
+         <!-- only if we are not running an individual set of tests via -Dtest do we do this -->
+         <id>no-individual-test</id>
+         <activation>
+            <property><name>!test</name></property>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <!-- Everything but the web service tests, this is the standard test execution -->
+                  <configuration>
+                     <skipTests>true</skipTests>
+                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                     <groups>${rhq.testng.includedGroups}</groups>
+                     <properties>
+                        <property>
+                           <name>listener</name>
+                           <value>org.rhq.test.testng.StdoutReporter</value>
+                        </property>
+                     </properties>
+                     <systemPropertyVariables>
+                        <embeddedDeployment>true</embeddedDeployment>
+                        <deploymentDirectory>target/classes</deploymentDirectory>
+                        <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                        <clean.db>${clean.db}</clean.db>
+                        <log4j.configDebug>false</log4j.configDebug>
+                     </systemPropertyVariables>
+                     <additionalClasspathElements>
+                     <!-- The below is required for tests to run against Oracle. -->
+                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar</additionalClasspathElement>
+                     </additionalClasspathElements>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>dbTestsOnly</id>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                        <configuration>
+                           <skipTests>${skipTests}</skipTests>
+                           <includes>
+                              <include>org/rhq/enterprise/server/db/**</include>
+                           </includes>
+                           <failIfNoTests>false</failIfNoTests>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
 
       <profile>
          <id>dev</id>

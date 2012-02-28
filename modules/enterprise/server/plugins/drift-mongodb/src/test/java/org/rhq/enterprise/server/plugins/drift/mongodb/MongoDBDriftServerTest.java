@@ -28,19 +28,23 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugins.drift.mongodb.dao.ChangeSetDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.dao.FileDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.util.List;
 import java.util.Random;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.IOUtils.write;
@@ -52,6 +56,7 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 public class MongoDBDriftServerTest extends MongoDBTest {
 
@@ -67,12 +72,28 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         random = new Random();
     }
     
+    @AfterClass
+    public void cleanUp() throws Exception {
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        File[] dirs = tmpDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.startsWith("changeset_content");
+            }
+        });
+        if (dirs != null) {
+            for (File dir : dirs) {
+                FileUtil.purge(dir, true);
+            }
+        }
+    }
+    
     @BeforeMethod
     public void initTest() {
         clearCollections("changesets", "fs.files", "fs.chunks");
 
         File basedir = getBaseDir();
-        basedir.delete();
+        FileUtil.purge(basedir, true);
         getBaseDir().mkdirs();
 
         driftServer = new TestMongoDBDriftServer();
@@ -319,7 +340,42 @@ public class MongoDBDriftServerTest extends MongoDBTest {
 
         assertPropertiesMatch("The change set summary is wrong", expectedSummary, actualSummary);
     }
+    
+    @Test
+    public void persistChangeSetFileContent() throws Exception {
+        int size = 1024;
+        File file1 = createRandomFile(getBaseDir(), size);
+        File file2 = createRandomFile(getBaseDir(), size);
 
+        driftServer.saveChangeSetFiles(null, createChangeSetContentZipFile(file1, file2));
+
+        assertFileContentPersisted(file1, file2);
+    }        
+    
+    private void assertFileContentPersisted(File... expectedFiles) throws Exception {
+        FileDAO fileDAO = new FileDAO(ds.getDB());
+        
+        for (File expectedFile : expectedFiles) {
+            InputStream inputStream = fileDAO.findOne(expectedFile.getName());
+            assertNotNull(inputStream, "Failed to find file in database with id " + expectedFile.getName());
+            File actualFile = new File(getBaseDir(), "actualContent");
+            actualFile.delete();
+            StreamUtil.copy(inputStream, new FileOutputStream(actualFile));
+            assertEquals(sha256(actualFile), sha256(expectedFile), "The SHA-256 hash in the database does not " +
+                "match that of " + expectedFile.getPath());
+        }
+    }
+
+    /**
+     * Generates a change set zip file. This zip file contains a single entry, the change
+     * set report or meta data. The file is named changeset.zip and is written to
+     * {@link #getBaseDir() basedir}.
+     * 
+     * @param headers The change set headers
+     * @param fileEntries The entries that will comprise this change set
+     * @return The zip file as a {@link File} object
+     * @throws Exception
+     */
     protected File createChangeSetZipFile(Headers headers, FileEntry... fileEntries) throws Exception {
         ChangeSetWriter writer = newChangeSetWriter(headers);
         for (FileEntry entry : fileEntries) {
@@ -329,6 +385,33 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         
         File zipFile = new File(getBaseDir(), "changeset.zip");
         ZipUtil.zipFileOrDirectory(getChangeSetFile(), zipFile);
+        
+        return zipFile;
+    }
+
+    /**
+     * Generates a change set content zip file. This zip file contains the bits of each of
+     * the specified file. The zip file is named changeset_content_&lt;timestamp&gt;.zip 
+     * and is written to {@link #getBaseDir() basedir}. 
+     * 
+     * @param files The files to include in the content zip file
+     * @return The zip file as a {@link File} object
+     * @throws Exception
+     */
+    protected File createChangeSetContentZipFile(File... files) throws Exception {
+        long timestamp = System.currentTimeMillis();
+        File contentDir = new File(getBaseDir(), "content_" + timestamp);
+        contentDir.mkdirs();
+
+        File zipFile = new File(getBaseDir(), "changeset_content_" + timestamp + ".zip");
+        ZipOutputStream zipStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile))); 
+        for (File file : files) {
+            FileInputStream fis = new FileInputStream(file);
+            zipStream.putNextEntry(new ZipEntry(file.getName()));
+            StreamUtil.copy(fis, zipStream, false);
+            fis.close();
+        }
+        zipStream.close();                                
         
         return zipFile;
     }
@@ -379,12 +462,49 @@ public class MongoDBDriftServerTest extends MongoDBTest {
     protected String sha256(String string) {
         return digestGenerator.calcDigestString(string);
     }
+    
+    protected String sha256(byte[] bytes) throws Exception {
+        return digestGenerator.calcDigestString(bytes);
+    }
+    
+    protected String sha256(File file) throws Exception {
+        return digestGenerator.calcDigestString(file);
+    }
 
+    /**
+     * Generates a file of random bytes.
+     * 
+     * @param dir The directory to which the file will be written
+     * @param fileName The name of the file to be created
+     * @param numBytes The size of the file in bytes
+     * @return The generated file as a {@link File} object
+     * @throws Exception
+     */
     protected File createRandomFile(File dir, String fileName, int numBytes) throws Exception {
         File file = new File(dir, fileName);
         FileOutputStream stream = new FileOutputStream(file);
         byte[] bytes = new byte[numBytes];
         random.nextBytes(bytes);
+        write(bytes, stream);
+        stream.close();
+
+        return file;
+    }
+
+    /**
+     * Generates a file of random bytes where the name of the file is the SHA-256 hash of
+     * those bytes.
+     * 
+     * @param dir The directory to which the file will be written
+     * @param numBytes The size of the file in bytes
+     * @return The generated file as a {@link File} object 
+     * @throws Exception
+     */
+    protected File createRandomFile(File dir, int numBytes) throws Exception {
+        byte[] bytes = new byte[numBytes];
+        random.nextBytes(bytes);
+        File file = new File(dir, sha256(bytes));
+        FileOutputStream stream = new FileOutputStream(file);        
         write(bytes, stream);
         stream.close();
 

@@ -3,6 +3,8 @@ package org.rhq.enterprise.server.resource.metadata;
 import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -10,6 +12,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -36,6 +40,7 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -168,12 +173,11 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         return getClass().getResource(dir + "/" + descriptor);
     }
 
-    @SuppressWarnings("unused")
-    private String getPluginWorkDir() throws Exception {
+    protected String getPluginWorkDir() throws Exception {
         return getCurrentWorkingDir() + "/work";
     }
 
-    private String getCurrentWorkingDir() throws Exception {
+    protected String getCurrentWorkingDir() throws Exception {
         return getClass().getResource(".").toURI().getPath();
     }
 
@@ -249,5 +253,68 @@ public class MetadataBeanTest extends AbstractEJB3Test {
             }
         }
         return false;
+    }
+
+    /**
+     * This actually creates a .jar file on the file system but doesn't register it.
+     * 
+     * @param jarName the name to be given to the new jar file
+     * @param descriptorXmlFilename where the descriptor XML can be found on the test classloader
+     * @return the location of the new jar file
+     * @throws Exception
+     */
+    protected File createPluginJarFile(String jarName, String descriptorXmlFilename) throws Exception {
+        FileOutputStream stream = null;
+        JarOutputStream out = null;
+        InputStream in = null;
+
+        try {
+            String pluginDirPath = getPluginWorkDir();
+            File pluginDir = new File(pluginDirPath);
+            pluginDir.mkdirs();
+            File jarFile = new File(pluginDir, jarName);
+            jarFile.delete(); // in case some older file is hanging around, get rid of it
+            stream = new FileOutputStream(jarFile);
+            out = new JarOutputStream(stream);
+
+            // Add archive entry for the descriptor
+            JarEntry jarAdd = new JarEntry("META-INF/rhq-plugin.xml");
+            jarAdd.setTime(System.currentTimeMillis());
+            out.putNextEntry(jarAdd);
+
+            // Write the descriptor - note that we assume the xml file is in the test classloader
+            URL descriptorURL = getDescriptorURL(descriptorXmlFilename);
+            in = descriptorURL.openStream();
+            StreamUtil.copy(in, out, false);
+
+            return jarFile;
+        } finally {
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.close();
+            }
+            if (stream != null) {
+                stream.close();
+            }
+        }
+    }
+
+    /**
+     * Tests can use this to let us know that a plugin has been deployed and needs to
+     * be cleaned up/removed at the end of the test.
+     *
+     * @param pluginName
+     */
+    protected void pluginDeployed(String pluginName) {
+        try {
+            PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+            Plugin plugin = pluginMgr.getPlugin(pluginName);
+            if (plugin != null) {
+                this.pluginIds.add(plugin.getId());
+            }
+        } catch (Exception ignore) {
+        }
     }
 }

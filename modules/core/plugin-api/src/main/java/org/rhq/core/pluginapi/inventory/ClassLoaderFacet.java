@@ -35,6 +35,7 @@ import java.util.List;
  * 
  * @param <T> the parent resource component type for those resources discovered by this discovery component
  *
+ * @since 1.3
  * @author John Mazzitelli
  */
 public interface ClassLoaderFacet<T extends ResourceComponent<?>> {

@@ -42,13 +42,14 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * reporting for the rest of the resources being managed within the system.
  * 
  * This class provides an implementation to help resource components that can't guarantee how fast its
- * availability checks will be. Some managed resources simply can't respond to avaiability checks fast enough. In this
+ * availability checks will be. Some managed resources simply can't respond to availability checks fast enough. In this
  * case, this class will provide an asynchronous method that will collect availability without a timeout being involved
  * (in other words, availability will be retrieved by waiting as long as it takes). In order to tell the plugin container
  * what the managed resource's current availability is, this class will provide a fast method to return the last known
  * availability of the resource. In other words, it will be able to return the last know availability that was last retrieved
  * by the asynchronous task - this retrieval of the last known availability will be very fast.
- * 
+ *
+ * @since 1.3
  * @author John Mazzitelli
  */
 public class AvailabilityCollectorRunnable implements Runnable {

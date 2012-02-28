@@ -29,6 +29,8 @@ package org.rhq.core.pluginapi.plugin;
  * a place to clean up those resources.
  *
  * @author John Mazzitelli
+ *
+ * @since 1.2
  */
 public interface PluginLifecycleListener {
     /**

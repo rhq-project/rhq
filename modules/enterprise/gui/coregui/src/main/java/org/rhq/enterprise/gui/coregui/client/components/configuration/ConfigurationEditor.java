@@ -1563,9 +1563,16 @@ public class ConfigurationEditor extends LocatableVLayout {
                     if (integerConstraint.getMinimum() != null) {
                         validator.setMin(integerConstraint.getMinimum().intValue());
                     }
+                    else {
+                        validator.setMin(Integer.MIN_VALUE);
+                    }
                     if (integerConstraint.getMaximum() != null) {
                         validator.setMax(integerConstraint.getMaximum().intValue());
                     }
+                    else {
+                        validator.setMax(Integer.MAX_VALUE);
+                    }
+
                     validators.add(validator);
                 } else if (constraint instanceof FloatRangeConstraint) {
                     FloatRangeConstraint floatConstraint = ((FloatRangeConstraint) constraint);

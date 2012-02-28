@@ -16,17 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.db.reset;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.db.DbUtil;
+import org.rhq.core.db.ExtendedSQLException;
 
 //import groovy.sql.Sql;
 
@@ -68,72 +69,90 @@ public class DBReset {
 
     public void performDBReset(String dbTypeMapping, String dbUrl, String dbName, String user, String adminUser,
         String adminPassword) throws Exception {
-        if (dbTypeMapping.equals("PostgreSQL")) {
-            System.out.println("PostgreSQL started!");
-            Connection connection = null;
-            Statement dropDB = null;
-            Statement createDB = null;
-
-            try {
-                connection = DbUtil.getConnection(dbUrl.replace(dbName, "postgres"), adminUser, adminPassword);
-
-                dropDB = connection.createStatement();
-                dropDB.execute("drop database if exists " + dbName);
-
-                createDB = connection.createStatement();
-                createDB.execute("create database " + dbName + " with owner " + user);
-
-                log.info("Dropped and created postgres database " + dbName + ".");
-            } finally {
-                if (dropDB != null) {
-                    dropDB.close();
+        try {
+            if (dbTypeMapping.equals("PostgreSQL")) {
+                System.out.println("PostgreSQL started!");
+                Connection connection = null;
+                Statement dropDB = null;
+                Statement createDB = null;
+    
+                try {
+                    connection = DbUtil.getConnection(dbUrl.replace(dbName, "postgres"), adminUser, adminPassword);
+    
+                    dropDB = connection.createStatement();
+                    String dropSql = "drop database if exists " + dbName;
+                    try {                    
+                        dropDB.execute(dropSql);
+                    } catch (SQLException e) {
+                        throw new ExtendedSQLException(e, dropSql);
+                    }
+    
+                    createDB = connection.createStatement();
+                    String createSql = "create database " + dbName + " with owner " + user;
+                    try {
+                        createDB.execute(createSql);
+                    } catch (SQLException e) {
+                        throw new ExtendedSQLException(e, createSql);
+                    }
+    
+                    log.info("Dropped and created postgres database " + dbName + ".");
+                } finally {
+                    if (dropDB != null) {
+                        dropDB.close();
+                    }
+                    if (createDB != null) {
+                        createDB.close();
+                    }
+                    if (connection != null) {
+                        connection.close();
+                    }
                 }
-                if (createDB != null) {
-                    createDB.close();
+            } else if (dbTypeMapping.equals("Oracle10g")) {
+                Connection connection = null;
+                PreparedStatement cleanUserStatement = null;
+    
+                try {
+                    connection = DbUtil.getConnection(dbUrl, adminUser, adminPassword);
+                    connection.setAutoCommit(false);
+    
+                    String plsql = "declare cursor all_objects_to_drop is\n"
+                        + "select *  from user_objects where object_type in ('TABLE', 'VIEW', 'FUNCTION', 'SEQUENCE');\n"
+                        + "begin\n"
+                        + "  for obj in all_objects_to_drop loop\n"
+                        + "    begin\n"
+                        + "      if obj.object_type = 'TABLE' then\n"
+                        + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name||' CASCADE CONSTRAINTS PURGE');\n"
+                        + "      else\n" 
+                        + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);\n"
+                        + "      end if;\n" 
+                        + "      exception when others then null;\n" 
+                        + "    end;\n" 
+                        + "  end loop;\n"
+                        + " end;\n";
+                    try {
+                        cleanUserStatement = connection.prepareStatement(plsql);
+                    } catch (SQLException e) {
+                        throw new ExtendedSQLException(e, plsql);
+                    }
+                    cleanUserStatement.execute();
+                    connection.commit();
+    
+                    log.info("Cleaned Oracle database " + dbName + ".");
+                } finally {
+                    if (cleanUserStatement != null) {
+                        cleanUserStatement.close();
+                    }
+                    if (connection != null) {
+                        connection.close();
+                    }
                 }
-                if (connection != null) {
-                    connection.close();
-                }
-
             }
-        } else if (dbTypeMapping.equals("Oracle10g")) {
-            Connection connection = null;
-            PreparedStatement cleanUserStatement = null;
-
-            try {
-                connection = DbUtil.getConnection(dbUrl, adminUser, adminPassword);
-                connection.setAutoCommit(false);
-
-                String plsql = "declare cursor all_objects_to_drop is\n"
-                    + "select *  from user_objects where object_type in ('TABLE', 'VIEW', 'FUNCTION', 'SEQUENCE');\n"
-                    + "begin\n"
-                    + "  for obj in all_objects_to_drop loop\n"
-                    + "    begin\n"
-                    + "      if obj.object_type = 'TABLE' then\n"
-                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name||' CASCADE CONSTRAINTS PURGE');\n"
-                    + "      else\n" 
-                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);\n"
-                    + "      end if;\n" 
-                    + "      exception when others then null;\n" 
-                    + "    end;\n" 
-                    + "  end loop;\n"
-                    + " end;\n";
-                cleanUserStatement = connection.prepareStatement(plsql);
-                cleanUserStatement.execute();
-                connection.commit();
-
-                log.info("Cleaned Oracle database " + dbName + ".");
-            } finally {
-                if (cleanUserStatement != null) {
-                    cleanUserStatement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
+            else {
+                throw new Exception("dbreset not supported for "+ dbTypeMapping +"!");
             }
-        }
-        else {
-            throw new Exception("dbreset not supported for "+ dbTypeMapping +"!");
+        } catch (SQLException e) {
+            log.error(DbUtil.getSQLExceptionString(e));
+            throw e;
         }
     }
 }

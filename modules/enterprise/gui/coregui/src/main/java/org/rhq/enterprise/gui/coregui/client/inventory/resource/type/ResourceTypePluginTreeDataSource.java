@@ -18,11 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -31,7 +26,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
-
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -41,6 +35,11 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 
 /**
  * @author Greg Hinkle
@@ -94,7 +93,6 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         if (parentIdString != null) {
             processResponse(request.getRequestId(), response);
         } else {
-
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
             criteria.fetchParentResourceTypes(true);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
@@ -117,6 +115,11 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
         HashMap<String, PluginTreeNode> pluginNodes = new HashMap<String, PluginTreeNode>();
 
         ArrayList<TreeNode> nodes = new ArrayList<TreeNode>();
+        // Add a dummy node so that if the user selects a plugin or resource type, he has
+        // the ability to undo the selection. This data source is used with a IPickTreeItem
+        // and that widget does not allow you to select the initial value once the user
+        // selects a value. See https://bugzilla.redhat.com/show_bug.cgi?id=749801.
+        nodes.add(new TreeNode(""));
         for (ResourceType type : result) {
             if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
 

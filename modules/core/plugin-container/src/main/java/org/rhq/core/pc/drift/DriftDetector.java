@@ -253,7 +253,9 @@ public class DriftDetector implements Runnable {
                         currentFullSnapshotReader = changeSetMgr.getChangeSetReader(currentFullSnapshot);
                         newVersion = currentFullSnapshotReader.getHeaders().getVersion() + 1;
                     } finally {
-                        currentFullSnapshotReader.close();
+                        if (null != currentFullSnapshotReader) {
+                            currentFullSnapshotReader.close();
+                        }
                     }
                 } else {
                     newVersion = snapshotReader.getHeaders().getVersion() + 1;
@@ -264,7 +266,9 @@ public class DriftDetector implements Runnable {
                     changedEntries, removedEntries, changedPinnedEntries);
 
             } finally {
-                snapshotReader.close();
+                if (null != snapshotReader) {
+                    snapshotReader.close();
+                }
             }
 
             // if necessary, re-write the pinned snapshot file because we've updated timestamp/filesize info, which
@@ -564,7 +568,9 @@ public class DriftDetector implements Runnable {
             }
             return newSnapshot;
         } finally {
-            newSnapshotWriter.close();
+            if (null != newSnapshotWriter) {
+                newSnapshotWriter.close();
+            }
         }
     }
 
@@ -584,7 +590,9 @@ public class DriftDetector implements Runnable {
             return pinnedSnapshot;
 
         } finally {
-            newSnapshotWriter.close();
+            if (null != newSnapshotWriter) {
+                newSnapshotWriter.close();
+            }
         }
     }
 

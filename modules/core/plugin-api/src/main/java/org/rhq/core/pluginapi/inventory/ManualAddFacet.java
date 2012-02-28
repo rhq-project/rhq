@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.Configuration;
  *
  * @param <T> the parent resource component type for those resources discovered by this discovery component
  *
+ * @since 3.0
  * @author Ian Springer
  */
 public interface ManualAddFacet<T extends ResourceComponent<?>> {

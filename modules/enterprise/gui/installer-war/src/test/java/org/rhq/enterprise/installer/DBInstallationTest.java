@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,21 +20,25 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.installer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
+import org.rhq.core.util.stream.StreamUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.db.reset.DBReset;
 import org.rhq.core.db.setup.DBSetup;
-import org.rhq.enterprise.installer.ServerInformation;
-import org.rhq.enterprise.installer.ServerProperties;
 
 /**
  * The tests in this class exercise the dbsetup/dbupgrade code that is run in the installer. The tests currently only
@@ -110,6 +114,18 @@ public class DBInstallationTest {
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
     }
 
+    @Test
+    public void overwriteJON300Schema() throws Exception {
+        installSchemaAndData("3.0.0");
+        installer.createNewDatabaseSchema(getInstallProperties());
+    }
+
+    @Test
+    public void upgradeJON300Schema() throws Exception {
+        installSchemaAndData("3.0.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
+
     private void initLogDirectory() {
         File logDir = new File(LOG_DIRECTORY);
         if (logDir.exists()) {
@@ -125,8 +141,10 @@ public class DBInstallationTest {
 
     private void installSchemaAndData(String jonVersion) throws Exception {
         DBSetup dbsetup = new DBSetup(DB_URL, USERNAME, PASSWORD);
-        dbsetup.setup(getSchemaFile(jonVersion).getAbsolutePath());
-        dbsetup.setup(getDataFile(jonVersion).getAbsolutePath());
+        File schemaFile = getSchemaFile(jonVersion);
+        dbsetup.setup(schemaFile.getAbsolutePath());
+        File dataFile = getDataFile(jonVersion);
+        dbsetup.setup(dataFile.getAbsolutePath());
     }
 
     private File getSchemaFile(String version) throws Exception {
@@ -136,7 +154,10 @@ public class DBInstallationTest {
             throw new RuntimeException("Failed to find schema file for version " + version);
         }
 
-        return new File(url.toURI().getPath());
+        File file = new File(url.toURI().getPath());
+        File filteredFile = filterXmlFile(file, getInstallProperties());
+
+        return filteredFile;
     }
 
     private File getDataFile(String version) throws Exception {
@@ -146,7 +167,10 @@ public class DBInstallationTest {
             throw new RuntimeException("Failed to find data file for version " + version);
         }
 
-        return new File(url.toURI().getPath());
+        File file = new File(url.toURI().getPath());
+        File filteredFile = filterXmlFile(file, getInstallProperties());
+
+        return filteredFile;
     }
 
     private Properties getInstallProperties() {
@@ -157,4 +181,40 @@ public class DBInstallationTest {
         dbProperties.put(ServerProperties.PROP_EMAIL_FROM_ADDRESS, "rhqadmin@localhost.com");
         return dbProperties;
     }
+    
+    private static File filterXmlFile(File xmlFile, Properties props) throws IOException {
+        // first slurp the file contents in memory
+        InputStream fileInStream = new FileInputStream(xmlFile);
+        ByteArrayOutputStream contentOutStream = new ByteArrayOutputStream();
+        StreamUtil.copy(fileInStream, contentOutStream);
+
+        // now replace their replacement strings with values from the properties
+        String content = contentOutStream.toString();
+        content = content.replaceAll("@@@LARGE_TABLESPACE_FOR_DATA@@@", "DEFAULT");
+        content = content.replaceAll("@@@LARGE_TABLESPACE_FOR_INDEX@@@", "DEFAULT");
+        content = content.replaceAll("@@@ADMINUSERNAME@@@", "rhqadmin");
+        content = content.replaceAll("@@@ADMINPASSWORD@@@", "x1XwrxKuPvYUILiOnOZTLg=="); // rhqadmin
+        content = content.replaceAll("@@@ADMINEMAIL@@@", props.getProperty(ServerProperties.PROP_EMAIL_FROM_ADDRESS));
+        content = content.replaceAll("@@@BASEURL@@@", "http://" + ServerProperties.getValidServerBindAddress(props)
+            + ":" + ServerProperties.getHttpPort(props) + "/");
+        content = content.replaceAll("@@@JAASPROVIDER@@@", "JDBC");
+        content = content.replaceAll("@@@LDAPURL@@@", "ldap://localhost/");
+        content = content.replaceAll("@@@LDAPPROTOCOL@@@", "");
+        content = content.replaceAll("@@@LDAPLOGINPROP@@@", "cn");
+        content = content.replaceAll("@@@LDAPBASEDN@@@", "o=JBoss,c=US");
+        content = content.replaceAll("@@@LDAPSEARCHFILTER@@@", "");
+        content = content.replaceAll("@@@LDAPBINDDN@@@", "");
+        content = content.replaceAll("@@@LDAPBINDPW@@@", "");
+        content = content.replaceAll("@@@MULTICAST_ADDR@@@", "");
+        content = content.replaceAll("@@@MULTICAST_PORT@@@", "");
+
+        // we now have the finished XML content - write out the file to the tmp directory
+        File filteredXmlFile = File.createTempFile("rhq", xmlFile.getName());
+        FileOutputStream xmlFileOutStream = new FileOutputStream(xmlFile);
+        ByteArrayInputStream contentInStream = new ByteArrayInputStream(content.getBytes());
+        StreamUtil.copy(contentInStream, xmlFileOutStream);
+
+        return xmlFile.getAbsoluteFile();
+    }
+    
 }

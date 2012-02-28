@@ -57,13 +57,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsService;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     private DiscoveryBossLocal discoveryBoss;
-    private ResourceManagerLocal resourceManager;
+
     private MBeanServer dummyJBossMBeanServer;
 
     private ResourceType platformType;

@@ -865,7 +865,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     static Resource createNewResource(DiscoveredResourceDetails details) {
-        Resource resource = new Resource();
+        // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
+        // (i.e. to avoid ConcurrentModificationExceptions).
+        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource resource = new Resource(childResources);
 
         resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceKey(details.getResourceKey());
@@ -878,10 +881,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
         ConfigurationUtility.normalizeConfiguration(details.getPluginConfiguration(), details.getResourceType()
             .getPluginConfigurationDefinition());
         resource.setPluginConfiguration(pluginConfiguration);
-
-        // Use a ConcurrentHashMap-based Set for childResources to allow the field to be concurrently accessed safely
-        // (i.e. to avoid ConcurrentModificationExceptions).
-        resource.setChildResources(Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>()));
 
         return resource;
     }

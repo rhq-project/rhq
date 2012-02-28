@@ -35,21 +35,23 @@ import javax.script.ScriptException;
  */
 public class ScriptAssertionException extends RuntimeException {
 
-//    public ScriptAssertionException() {
-//        super();
-//    }
-//
-//    public ScriptAssertionException(String message) {
-//        super(message);
-//    }
-//
-//    public ScriptAssertionException(String message, Throwable cause) {
-//        super(message, cause);
-//    }
-//
-//    public ScriptAssertionException(Throwable cause) {
-//        super(cause);
-//    }
+    private static final long serialVersionUID = 1L;
+
+    public ScriptAssertionException() {
+        super();
+    }
+
+    public ScriptAssertionException(String message) {
+        super(message);
+    }
+
+    public ScriptAssertionException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ScriptAssertionException(Throwable cause) {
+        super(cause);
+    }
 
     public ScriptAssertionException(AssertionError error) {
         super(new ScriptException(error.getMessage()));

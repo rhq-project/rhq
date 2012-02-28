@@ -23,16 +23,48 @@
 
 package org.rhq.bindings.util;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.script.ScriptEngine;
 
-import org.testng.Assert;
-
+/**
+ * This class provides the assertion functions to the scripts.
+ * It is heavily inspired by and in part copied from org.testng.Assert class.
+ * <p>
+ * We specifically do not use the TestNG class here so that we avoid a runtime
+ * dependency on TestNG.
+ */
 public class ScriptAssert {
 
     private ScriptEngine scriptEngine;
 
+    //borrowed from TestNG
+    private static String format(Object actual, Object expected, String message) {
+        String formatted = "";
+        if (null != message) {
+            formatted = message + " ";
+        }
+
+        return formatted + "expected:<" + expected + "> but was:<" + actual + ">";
+    }
+
+    private void failNotEquals(Object actual, Object expected, String message) {
+        fail(format(actual, expected, message));
+    }
+    
+    private void failAssertNoEqual(Object[] actual, Object[] expected, String message, String defaultMessage) {
+        if (message != null) {
+            fail(message);
+        } else {
+            fail(defaultMessage);
+        }
+    }
+    
     public ScriptAssert() {
         
     }
@@ -47,347 +79,226 @@ public class ScriptAssert {
     }
     
     public void assertTrue(boolean condition, String msg) {
-        try {
-            Assert.assertTrue(condition, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (!condition) {
+            failNotEquals(Boolean.valueOf(condition), Boolean.TRUE, msg);
         }
     }
 
     public void assertTrue(boolean condition) {
-        try {
-            Assert.assertTrue(condition);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertTrue(condition, null);
     }
 
     public void assertFalse(boolean condition, String msg) {
-        try {
-            Assert.assertFalse(condition, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (condition) {
+            failNotEquals(Boolean.valueOf(condition), Boolean.FALSE, msg);
         }
     }
 
     public void assertFalse(boolean condition) {
-        try {
-            Assert.assertFalse(condition);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertFalse(condition, null);
     }
 
     public void fail(String msg, Throwable throwable) {
-        try {
-            Assert.fail(msg, throwable);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        throw new ScriptAssertionException(msg, throwable);
     }
 
     public void fail(String msg) {
-        try {
-            Assert.fail(msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        throw new ScriptAssertionException(msg);
     }
 
     public void fail() {
-        throw new ScriptAssertionException(new AssertionError());
+        throw new ScriptAssertionException();
     }
 
     public void assertEquals(Object actual, Object expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if ((expected == null) && (actual == null)) {
+            return;
         }
+        if (expected != null) {
+            if (expected.getClass().isArray()) {
+                assertArrayEquals(actual, expected, msg);
+                return;
+            } else if (expected.equals(actual)) {
+                return;
+            }
+        }
+        failNotEquals(actual, expected, msg);
     }
+    
+    /**
+     * <b>COPIED FROM TESTNG</b>
+     * Asserts that two objects are equal. It they are not, an AssertionError,
+     * with given message, is thrown.
+     * @param actual the actual value
+     * @param expected the expected value (should be an non-null array value)
+     * @param message the assertion error message
+     */
+    private void assertArrayEquals(Object actual, Object expected, String message) {
+        //is called only when expected is an array
+        if (actual.getClass().isArray()) {
+            int expectedLength = Array.getLength(expected);
+            if (expectedLength == Array.getLength(actual)) {
+                for (int i = 0; i < expectedLength; i++) {
+                    Object _actual = Array.get(actual, i);
+                    Object _expected = Array.get(expected, i);
+                    try {
+                        assertEquals(_actual, _expected);
+                    } catch (AssertionError ae) {
+                        failNotEquals(actual, expected, message == null ? "" : message + " (values as index " + i
+                            + " are not the same)");
+                    }
+                }
+                //array values matched
+                return;
+            } else {
+                failNotEquals(Array.getLength(actual), expectedLength, message == null ? "" : message
+                    + " (Array lengths are not the same)");
+            }
+        }
+        failNotEquals(actual, expected, message);
+    }    
 
     public void assertEquals(Object actual, Object expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(String actual, String expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(String actual, String expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(double actual, double expected, double delta, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, delta, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(double actual, double expected, double delta) {
-        try {
-            Assert.assertEquals(actual, expected, delta);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(float actual, float expected, float delta, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, delta, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(float actual, float expected, float delta) {
-        try {
-            Assert.assertEquals(actual, expected, delta);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(long actual, long expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(long actual, long expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(boolean actual, boolean expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(boolean actual, boolean expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(byte actual, byte expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(byte actual, byte expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(char actual, char expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(char actual, char expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(short actual, short expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch(AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(short actual, short expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(int actual, int expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(int actual, int expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertEquals(actual, expected, null);
     }
 
     public void assertNotNull(Object object) {
-        try {
-            Assert.assertNotNull(object);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertNotNull(object, null);
     }
 
     public void assertNotNull(Object object, String msg) {
-        try {
-            Assert.assertNotNull(object, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (object == null) {
+            String message = "";
+            if (msg != null) {
+                message += msg + " ";
+            }
+            
+            message = "expected the object to not be null";
+            fail(message);
         }
     }
 
     public void assertNull(Object object) {
-        try {
-            Assert.assertNull(object);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertNull(object, null);
     }
 
     public void assertNull(Object object, String msg) {
-        try {
-            Assert.assertNull(object, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (object != null) {
+            failNotEquals(object, null, msg);
         }
     }
 
     public void assertSame(Object actual, Object expected, String msg) {
-        try {
-            Assert.assertSame(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (actual != expected) {
+            failNotEquals(actual, expected, msg);
         }
     }
 
     public void assertSame(Object actual, Object expected) {
-        try {
-            Assert.assertSame(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertSame(actual, expected, null);
     }
 
     public void assertNotSame(Object actual, Object expected, String msg) {
-        try {
-            Assert.assertNotSame(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (actual == expected) {
+            String formatted = "";
+            if (msg != null) {
+                formatted = msg + " ";
+            }
+            fail(formatted + "expected not same with:<" + expected + "> but was same:<" + actual + ">");
         }
     }
 
     public void assertNotSame(Object actual, Object expected) {
-        try {
-            Assert.assertNotSame(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertNotSame(actual, expected, null);
     }
 
-    public void assertEquals(Collection actual, Collection expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+    public void assertEquals(Collection<?> actual, Collection<?> expected) {
+        assertEquals(actual, expected, null);
     }
 
-    public void assertEquals(Collection actual, Collection expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+    public void assertEquals(Collection<?> actual, Collection<?> expected, String msg) {
+        if(actual == expected) {
+            return;
+          }
+
+          if (actual == null || expected == null) {
+            if (msg != null) {
+              fail(msg);
+            } else {
+              fail("Collections not equal: expected: " + expected + " and actual: " + actual);
+            }
+          }
+
+          assertEquals(actual.size(), expected.size(), msg + ": lists don't have the same size");
+
+          Iterator<?> actIt = actual.iterator();
+          Iterator<?> expIt = expected.iterator();
+          int i = -1;
+          while(actIt.hasNext() && expIt.hasNext()) {
+            i++;
+            Object e = expIt.next();
+            Object a = actIt.next();
+            String explanation = "Lists differ at element [" + i + "]: " + e + " != " + a;
+            String errorMessage = msg == null ? explanation : msg + ": " + explanation;
+
+            assertEquals(a, e, errorMessage);
+          }
     }
 
     public void assertEquals(Object[] actual, Object[] expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (actual == expected) {
+            return;
         }
+
+        if ((actual == null && expected != null) || (actual != null && expected == null)) {
+            if (msg != null) {
+                fail(msg);
+            } else {
+                fail("Arrays not equal: " + Arrays.toString(expected) + " and " + Arrays.toString(actual));
+            }
+        }
+        assertEquals(Arrays.asList(actual), Arrays.asList(expected), msg);
     }
 
     public void assertEqualsNoOrder(Object[] actual, Object[] expected, String msg) {
-        try {
-            Assert.assertEqualsNoOrder(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
+        if (actual == expected) {
+            return;
+        }
+
+        if ((actual == null && expected != null) || (actual != null && expected == null)) {
+            failAssertNoEqual(actual, expected,
+                "Arrays not equal: " + Arrays.toString(expected) + " and " + Arrays.toString(actual), msg);
+        }
+
+        if (actual.length != expected.length) {
+            failAssertNoEqual(actual, expected, "Arrays do not have the same size:" + actual.length + " != "
+                + expected.length, msg);
+        }
+
+        List<Object> actualCollection = new ArrayList<Object>();
+        for (Object a : actual) {
+            actualCollection.add(a);
+        }
+        for (Object o : expected) {
+            actualCollection.remove(o);
+        }
+        if (actualCollection.size() != 0) {
+            failAssertNoEqual(actual, expected,
+                "Arrays not equal: " + Arrays.toString(expected) + " and " + Arrays.toString(actual), msg);
         }
     }
 
     public void assertEquals(Object[] actual, Object[] expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertEquals(actual, expected, null);
     }
 
     public void assertEqualsNoOrder(Object[] actual, Object[] expected) {
-        try {
-            Assert.assertEqualsNoOrder(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(byte[] actual, byte[] expected) {
-        try {
-            Assert.assertEquals(actual, expected);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
-    }
-
-    public void assertEquals(byte[] actual, byte[] expected, String msg) {
-        try {
-            Assert.assertEquals(actual, expected, msg);
-        } catch (AssertionError e) {
-            throw new ScriptAssertionException(e);
-        }
+        assertEqualsNoOrder(actual, expected, null);
     }
 
     public void assertExists(String identifier) {
-        assertNotNull(scriptEngine.get(identifier), identifier + " is not defined");
+        Object value = scriptEngine.get(identifier);
+        assertNotNull(value, identifier + " is not defined");
     }
 
     /**
@@ -414,9 +325,12 @@ public class ScriptAssert {
      * @param actual The actual value
      * @param expected The expected value
      * @param msg A useful, meaningful error message
+     * 
+     * @deprecated - it is now possible to use assertEquals() with numbers from within javascript because we
+     * now only provide {@link #assertEquals(Object, Object)} to which the numbers convert to correctly.
      */
+    @Deprecated
     public void assertNumberEqualsJS(double actual, double expected, String msg) {
         assertEquals(actual, expected, msg);
     }
-
 }

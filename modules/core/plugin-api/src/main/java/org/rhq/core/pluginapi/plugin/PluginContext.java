@@ -8,6 +8,8 @@ import org.rhq.core.system.SystemInfo;
  * A global context containing information about a plugin.
  * 
  * @author John Mazzitelli
+ *
+ * @since 1.2
  */
 public class PluginContext {
     private final String pluginName;

@@ -119,8 +119,10 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private static Map<Children, ResourceTypeProcesses> PROCESSES_PER_PARENT_PER_RESOURCE_TYPE = new HashMap<Children, ResourceTypeProcesses>();
 
     /**
-     * Creates a new {@link ResourceContext} object. The plugin container is responsible for instantiating these
-     * objects; plugin writers should never have to actually create context objects.
+     * Creates a new {@link ResourceContext} object.
+     *
+     * <b>NOTE:</b> The plugin container is responsible for instantiating these objects; plugin writers should never
+     * have to actually create context objects.
      *
      * @param resource                   the resource whose {@link org.rhq.core.pluginapi.inventory.ResourceComponent}
      *                                   will be given this context object of the plugin
@@ -208,6 +210,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * The {@link Resource#getVersion() version} of the resource this context is associated with.
      *
      * @return the resource's version string
+     *
+     * @since 1.2
      */
     public String getVersion() {
         return this.version;
@@ -410,6 +414,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * See {@link PluginContainerDeployment} for more information on what the return value means.
      * 
      * @return indicator of where the plugin container is deployed and running
+     *
+     * @since 1.3
      */
     public PluginContainerDeployment getPluginContainerDeployment() {
         return pluginContainerDeployment;

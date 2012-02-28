@@ -972,12 +972,12 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Summary(index = 4)
     private ResourceType resourceType;
 
-    // do not cascade remove - would take forever to delete a full platform hierarchy
-    // we will manually delete the children ourselves
+    // do not cascade remove; it would take forever to delete a full platform hierarchy,
+    // so we will manually delete the children ourselves
     @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
     @OrderBy
     // primary key
-    private Set<Resource> childResources = new HashSet<Resource>();
+    private Set<Resource> childResources;
 
     // LAZY fetch otherwise this will recursively call all parents until null is found
     @JoinColumn(name = "PARENT_RESOURCE_ID", nullable = true)
@@ -1102,8 +1102,18 @@ public class Resource implements Comparable<Resource>, Serializable {
     private Set<DriftDefinition> driftDefinitions = null;
 
     public Resource() {
+        this(new HashSet<Resource>());
     }
 
+    /**
+     * Constructor that allows the caller to choose what Set impl is used for the {@link #childResources} field.
+     * 
+     * @param childResources the Set that will be used to hold this Resource's child Resources
+     */
+    public Resource(Set<Resource> childResources) {
+        setChildResources(childResources);
+    }
+    
     /**
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
@@ -1111,6 +1121,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * @param id the Resource's id
      */
     public Resource(int id) {
+        this();
         this.id = id;
     }
 
@@ -1118,6 +1129,7 @@ public class Resource implements Comparable<Resource>, Serializable {
         @NotNull String resourceKey, //
         String name, //
         @NotNull ResourceType type) {
+        this();
         this.resourceKey = resourceKey;
         this.name = name;
         this.resourceType = type;

@@ -44,8 +44,8 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
     }
 
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
 
         if (name.equals("start")) {
             return startServer(AS7Mode.DOMAIN);
@@ -54,58 +54,55 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
 
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
-            String domainHost = pluginConfiguration.getSimpleValue("domainHost","");
+            String domainHost = pluginConfiguration.getSimpleValue("domainHost", "");
             if (domainHost.isEmpty()) {
                 OperationResult result = new OperationResult();
                 result.setErrorMessage("No domain host found - can not continue");
                 return result;
             }
-            Operation op = new Operation("shutdown","host",domainHost);
+            Operation op = new Operation("shutdown", "host", domainHost);
             Result res = getASConnection().execute(op);
 
-            return postProcessResult(name,res);
-        }
-        else if (name.equals("installRhqUser")) {
+            return postProcessResult(name, res);
+        } else if (name.equals("installRhqUser")) {
             return installManagementUser(parameters, pluginConfiguration, AS7Mode.HOST);
         }
-
 
         // Defer other stuff to the base component for now
         return super.invokeOperation(name, parameters);
     }
 
-
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
 
         // If Content is to be deployed, call the deployContent method
-        if (report.getPackageDetails()!=null)
+        if (report.getPackageDetails() != null)
             return super.deployContent(report);
 
         // TODO check for types of children -- this is server group only at the moment.
         String name = report.getUserSpecifiedResourceName();
         Address address = new Address(path);
-        address.add("server-group",name);
-        Operation op = new Operation("add",address);
+        address.add("server-group", name);
+        Operation op = new Operation("add", address);
 
         Configuration rc = report.getResourceConfiguration();
-        String profile = rc.getSimpleValue("profile","");
+        String profile = rc.getSimpleValue("profile", "");
         if (profile.isEmpty()) {
             report.setErrorMessage("No profile given");
             report.setStatus(CreateResourceStatus.FAILURE);
             return report;
         }
-        op.addAdditionalProperty("profile",profile);
-        String socketBindingGroup = rc.getSimpleValue("socket-binding-group","");
+        op.addAdditionalProperty("profile", profile);
+        String socketBindingGroup = rc.getSimpleValue("socket-binding-group", "");
         if (socketBindingGroup.isEmpty()) {
             report.setErrorMessage("No socket-binding-group given");
             report.setStatus(CreateResourceStatus.FAILURE);
             return report;
         }
-        op.addAdditionalProperty("socket-binding-group",socketBindingGroup);
+        op.addAdditionalProperty("socket-binding-group", socketBindingGroup);
         PropertySimple offset = rc.getSimple("socket-binding-port-offset");
-        if (offset!=null && offset.getStringValue()!=null)
-            op.addAdditionalProperty("socket-binding-port-offset",offset.getIntegerValue());
+        if (offset != null && offset.getStringValue() != null)
+            op.addAdditionalProperty("socket-binding-port-offset", offset.getIntegerValue());
         // TODO add jvm info
 
         Result res = getASConnection().execute(op);
@@ -113,8 +110,7 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
             report.setResourceKey(address.getPath());
             report.setResourceName(name);
             report.setStatus(CreateResourceStatus.SUCCESS);
-        }
-        else {
+        } else {
             report.setErrorMessage(res.getFailureDescription());
             report.setStatus(CreateResourceStatus.FAILURE);
             report.setException(res.getRhqThrowable());

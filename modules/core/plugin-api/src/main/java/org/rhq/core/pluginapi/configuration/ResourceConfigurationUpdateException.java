@@ -39,6 +39,8 @@ package org.rhq.core.pluginapi.configuration;
  * <br/><br/>
  * With any other exception, the plugin container cannot reasonably assume that any errors were handled and as such
  * reports the entire stack trace back to the server to provide additional information for debugging if necessary.
+ *
+ * @since 3.0
  */
 public class ResourceConfigurationUpdateException extends RuntimeException {
 

@@ -776,11 +776,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
         PageList<Subject> subjects = queryRunner.execute();
-        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_USERS)) {
-            subjects.clear();
-            Subject attachedSubject = entityManager.find(Subject.class, subject.getId());
-            subjects.add(attachedSubject);
-            subjects.setTotalSize(1);
+        boolean canViewUsers = (authorizationManager.isSystemSuperuser(subject) || 
+            authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY) || 
+            authorizationManager.hasGlobalPermission(subject, Permission.VIEW_USERS));
+        if (!canViewUsers) {
+            if (subjects.contains(subject)) {
+                Subject attachedSubject = subjects.get(subjects.indexOf(subject));
+                subjects.clear();
+                subjects.add(attachedSubject);
+            } else {
+                subjects.clear();
+            }
+            subjects.setTotalSize(subjects.size());
         }
         return subjects;        
     }

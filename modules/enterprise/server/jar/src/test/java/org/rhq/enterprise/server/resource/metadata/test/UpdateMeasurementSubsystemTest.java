@@ -64,7 +64,8 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
             registerPlugin("update-v1_0.xml");
             ResourceType server1 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions1 = server1.getMetricDefinitions();
-            assert definitions1.size() == 4 : "There should be 4 metrics for v1";
+            // for metric counts, add one for the built in AvailabilityType metric
+            assert definitions1.size() == 5 : "There should be 5 metrics for v1";
             for (MeasurementDefinition def : definitions1) {
                 if (def.getDisplayName().equals("Three")) {
                     assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v1";
@@ -83,7 +84,8 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
 
             ResourceType server2 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions2 = server2.getMetricDefinitions();
-            assert definitions2.size() == 4 : "There should be four metrics in v2";
+            // for metric counts, add one for the built in AvailabilityType metric            
+            assert definitions2.size() == 5 : "There should be 5 metrics in v2";
             boolean foundFour = false;
 
             for (MeasurementDefinition def : definitions2) {
@@ -110,7 +112,8 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
             registerPlugin("update-v1_0.xml", "3.0");
             ResourceType server3 = getResourceType("testServer1");
             Set<MeasurementDefinition> definitions3 = server3.getMetricDefinitions();
-            assert definitions3.size() == 4 : "There should be 4 metrics for v3";
+            // for metric counts, add one for the built in AvailabilityType metric
+            assert definitions3.size() == 5 : "There should be 5 metrics for v3";
             for (MeasurementDefinition def : definitions3) {
                 if (def.getDisplayName().equals("Three")) {
                     assert def.getDisplayType() == DisplayType.DETAIL : "DisplayType for Three should be Detail in v3";
@@ -145,12 +148,14 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
         // Note, plugins are registered in new transactions. for tests, this means
         // you can't do everything in a trans and roll back at the end. You must clean up
         // manually.  
+
+        // for metric counts, add one for the built in AvailabilityType metric
         try {
             { // extra block for variable scoping purposes
                 registerPlugin("measurementDeletion-v1_0.xml");
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
-                assertEquals(4, def.size());
+                assertEquals(5, def.size());
             }
 
             { // extra block for variable scoping purposes
@@ -158,14 +163,14 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
 
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
-                assertEquals(0, def.size());
+                assertEquals(1, def.size());
             }
 
             { // extra block for variable scoping purposes
                 registerPlugin("measurementDeletion-v1_0.xml", "3.0");
                 ResourceType server = getResourceType("testServer1");
                 Set<MeasurementDefinition> def = server.getMetricDefinitions();
-                assertEquals(4, def.size());
+                assertEquals(5, def.size());
             }
         } finally {
             // clean up
@@ -206,7 +211,8 @@ public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase
                 getPluginId(entityManager);
 
                 Set<MeasurementDefinition> definitions1 = server.getMetricDefinitions();
-                assert definitions1.size() == 1;
+                // for metric counts, add one for the built in AvailabilityType metric
+                assert definitions1.size() == 2;
 
                 /*
                  * Create a Fake Resource and a MeasurementSchedule

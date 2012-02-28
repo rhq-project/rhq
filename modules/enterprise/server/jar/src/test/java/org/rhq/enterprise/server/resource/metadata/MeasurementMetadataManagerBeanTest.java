@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import static java.util.Arrays.asList;
+
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -12,45 +14,34 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.test.AssertUtils;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.EMPTY_LIST;
-
 public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
 
-    @Test(groups = {"plugin.metadata", "Metrics.NewPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" })
     void registerMetricsPlugin() throws Exception {
         createPlugin("metric-test-plugin", "1.0", "plugin_v1.xml");
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.NewPlugin"}, dependsOnMethods = {"registerMetricsPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "registerMetricsPlugin" })
     public void persistNewMetrics() throws Exception {
-        assertResourceTypeAssociationEquals(
-            "MetricServer1",
-            "MeasurementMetadataManagerBeanTestPlugin",
-            "metricDefinitions",
-            asList("metric1", "metric2", "metric3")
-        );
+        assertResourceTypeAssociationEquals("MetricServer1", "MeasurementMetadataManagerBeanTestPlugin",
+            "metricDefinitions", asList("metric1", "metric2", "metric3", "_AvailabilityType_"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.NewPlugin"}, dependsOnMethods = {"persistNewMetrics"})
+    @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
     public void persistNewTraitDefinitionProperties() {
         MeasurementDefinition traitDef = loadMeasurementDef("metric1", "MetricServer1");
 
-        MeasurementDefinition expected = new  MeasurementDefinition("metric1", MeasurementCategory.AVAILABILITY,
+        MeasurementDefinition expected = new MeasurementDefinition("metric1", MeasurementCategory.AVAILABILITY,
             MeasurementUnits.MILLISECONDS, DataType.TRAIT, NumericType.DYNAMIC, true, 30000, DisplayType.SUMMARY);
         expected.setDescription("Metric 1");
         expected.setDisplayName("metric1");
         expected.setDisplayOrder(1);
 
-        AssertUtils.assertPropertiesMatch(
-            "Failed to persist properties for a trait metric definition",
-            expected,
-            traitDef,
-            asList("id", "resourceType")
-        );
+        AssertUtils.assertPropertiesMatch("Failed to persist properties for a trait metric definition", expected,
+            traitDef, asList("id", "resourceType"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.NewPlugin"}, dependsOnMethods = {"persistNewMetrics"})
+    @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
     public void persistNewNumericMeasurementDef() {
         MeasurementDefinition measurementDef = loadMeasurementDef("metric2", "MetricServer1");
 
@@ -61,12 +52,8 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayName("metric2");
         expected.setDisplayOrder(2);
 
-        AssertUtils.assertPropertiesMatch(
-            "Failed to persist properties for numeric metric definition",
-            expected,
-            measurementDef,
-            asList("id", "resourceType")
-        );
+        AssertUtils.assertPropertiesMatch("Failed to persist properties for numeric metric definition", expected,
+            measurementDef, asList("id", "resourceType"));
 
         MeasurementDefinition perMinuteDef = loadMeasurementDef("metric2", "MetricServer1", "metric2 per Minute");
 
@@ -78,18 +65,15 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setRawNumericType(measurementDef.getNumericType());
 
         AssertUtils.assertPropertiesMatch(
-            "Failed to create and persist per minute metric definition for numeric metric definition",
-            expected,
-            perMinuteDef,
-            asList("id", "resourceType")
-        );
+            "Failed to create and persist per minute metric definition for numeric metric definition", expected,
+            perMinuteDef, asList("id", "resourceType"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.NewPlugin"}, dependsOnMethods = {"persistNewMetrics"})
+    @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
     public void persistNewCallTimeDef() {
         MeasurementDefinition calltimeDef = loadMeasurementDef("metric3", "MetricServer1");
 
-        MeasurementDefinition expected = new  MeasurementDefinition("metric3", MeasurementCategory.THROUGHPUT,
+        MeasurementDefinition expected = new MeasurementDefinition("metric3", MeasurementCategory.THROUGHPUT,
             MeasurementUnits.MILLISECONDS, DataType.CALLTIME, true, 30000, DisplayType.DETAIL);
         expected.setNumericType(NumericType.DYNAMIC);
         expected.setDestinationType("myMethod");
@@ -97,34 +81,26 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayName("metric3");
         expected.setDisplayOrder(4);
 
-        AssertUtils.assertPropertiesMatch(
-            "Failed to create calltime metric definition",
-            expected,
-            calltimeDef,
-            asList("id", "resourceType")
-        );
+        AssertUtils.assertPropertiesMatch("Failed to create calltime metric definition", expected, calltimeDef,
+            asList("id", "resourceType"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.UpgradePlugin"}, dependsOnGroups = {"Metrics.NewPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.UpgradePlugin" }, dependsOnGroups = { "Metrics.NewPlugin" })
     public void upgradeMetricsPlugin() throws Exception {
         createPlugin("metric-test-plugin", "2.0", "plugin_v2.xml");
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.UpradePlugin"}, dependsOnMethods = {"upgradeMetricsPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
     public void addNewMetricDef() throws Exception {
-        assertResourceTypeAssociationEquals(
-            "MetricServer2",
-            "MeasurementMetadataManagerBeanTestPlugin",
-            "metricDefinitions",
-            asList("metric1")
-        );
+        assertResourceTypeAssociationEquals("MetricServer2", "MeasurementMetadataManagerBeanTestPlugin",
+            "metricDefinitions", asList("metric1", "_AvailabilityType_"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.UpradePlugin"}, dependsOnMethods = {"upgradeMetricsPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
     public void changeTraitDefToMeasurementDef() {
         MeasurementDefinition measurementDef = loadMeasurementDef("metric1", "MetricServer3");
 
-        MeasurementDefinition expected = new  MeasurementDefinition("metric1", MeasurementCategory.PERFORMANCE,
+        MeasurementDefinition expected = new MeasurementDefinition("metric1", MeasurementCategory.PERFORMANCE,
             MeasurementUnits.MILLISECONDS, DataType.MEASUREMENT, NumericType.TRENDSUP, false, 30000, DisplayType.DETAIL);
         expected.setRawNumericType(null);
         expected.setDefaultInterval(30000);
@@ -132,12 +108,8 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setDisplayName("metric1");
         expected.setDisplayOrder(1);
 
-        AssertUtils.assertPropertiesMatch(
-           "Failed to change trait definition to a measurement defintion",
-            expected,
-            measurementDef,
-            asList("id", "resourceType")
-        );
+        AssertUtils.assertPropertiesMatch("Failed to change trait definition to a measurement defintion", expected,
+            measurementDef, asList("id", "resourceType"));
 
         MeasurementDefinition perMinuteDef = loadMeasurementDef("metric1", "MetricServer3", "metric1 per Minute");
         expected.setDisplayName("metric1 per Minute");
@@ -148,29 +120,21 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
         expected.setRawNumericType(measurementDef.getNumericType());
 
         AssertUtils.assertPropertiesMatch(
-            "Failed to create and persist per minute metric definition for updated metric definition",
-            expected,
-            perMinuteDef,
-            asList("id", "resourceType")
-        );
+            "Failed to create and persist per minute metric definition for updated metric definition", expected,
+            perMinuteDef, asList("id", "resourceType"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.UpradePlugin"}, dependsOnMethods = {"upgradeMetricsPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
     public void deleteMetricDefThatHasBeenRemovedFromResourceType() throws Exception {
-        assertResourceTypeAssociationEquals(
-            "MetricServer4",
-            "MeasurementMetadataManagerBeanTestPlugin",
-            "metricDefinitions",
-            EMPTY_LIST
-        );
+        assertResourceTypeAssociationEquals("MetricServer4", "MeasurementMetadataManagerBeanTestPlugin",
+            "metricDefinitions", asList("_AvailabilityType_"));
     }
 
-    @Test(groups = {"plugin.metadata", "Metrics.UpradePlugin"}, dependsOnMethods = {"upgradeMetricsPlugin"})
+    @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
     public void deleteMetricDefsForResourceTypeThatIsRemoved() {
-        List metricDefs = getEntityManager().createQuery(
-            "from  MeasurementDefinition m where m.name = :metric1Name or name = :metric2Name")
-            .setParameter("metric1Name", "MetricServer5.metric1")
-            .setParameter("metric2Name", "MetricServer5.metric3")
+        List metricDefs = getEntityManager()
+            .createQuery("from  MeasurementDefinition m where m.name = :metric1Name or name = :metric2Name")
+            .setParameter("metric1Name", "MetricServer5.metric1").setParameter("metric2Name", "MetricServer5.metric3")
             .getResultList();
 
         assertEquals("Failed to delete metric definitions", 0, metricDefs.size());
@@ -181,15 +145,11 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     MeasurementDefinition loadMeasurementDef(String name, String resourceType, String displayName) {
-        return (MeasurementDefinition) getEntityManager().createQuery(
-            "from  MeasurementDefinition m " +
-            "where m.name = :name and " +
-            "m.displayName = :displayName and " +
-            "m.resourceType.name = :resourceType")
-            .setParameter("name", name)
-            .setParameter("displayName", displayName)
-            .setParameter("resourceType", resourceType)
-            .getSingleResult();
+        return (MeasurementDefinition) getEntityManager()
+            .createQuery(
+                "from  MeasurementDefinition m " + "where m.name = :name and " + "m.displayName = :displayName and "
+                    + "m.resourceType.name = :resourceType").setParameter("name", name)
+            .setParameter("displayName", displayName).setParameter("resourceType", resourceType).getSingleResult();
     }
 
 }

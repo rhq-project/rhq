@@ -132,8 +132,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-support/1.4.11/powermock-api-support-1.4.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng-common/1.4.11/powermock-module-testng-common-1.4.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-module-testng/1.4.11/powermock-module-testng-1.4.11.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/liquibase/liquibase-core/2.0.3/liquibase-core-2.0.3.jar"/>   
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/liquibase/liquibase-core/2.0.3/liquibase-core-2.0.3.jar"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-mongodb/src/test/java"/>

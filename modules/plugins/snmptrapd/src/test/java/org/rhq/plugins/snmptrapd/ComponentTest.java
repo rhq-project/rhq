@@ -3,11 +3,14 @@ package org.rhq.plugins.snmptrapd;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -16,11 +19,13 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.operation.OperationContextImpl;
 import org.rhq.core.pc.upgrade.plugins.multi.base.NothingDiscoveringDiscoveryComponent;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
@@ -30,9 +35,6 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 
 /**
  * Base class for RHQ Component Testing.
@@ -91,12 +93,11 @@ public abstract class ComponentTest {
         EventContext eventContext = new EventContextImpl(resource);
         OperationContext operationContext = new OperationContextImpl(0);
         ContentContext contentContext = new ContentContextImpl(0);
-        Executor availCollectorThreadPool = Executors.newCachedThreadPool();
         PluginContainerDeployment pluginContainerDeployment = null;
+        AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
         ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
-                resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory,
-                pluginContainerName, eventContext, operationContext, contentContext,
-                availCollectorThreadPool, pluginContainerDeployment);
+            resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
+            eventContext, operationContext, contentContext, availContext, pluginContainerDeployment);
         Assert.assertNotNull(context.getEventContext());
         component.start(context);
     }

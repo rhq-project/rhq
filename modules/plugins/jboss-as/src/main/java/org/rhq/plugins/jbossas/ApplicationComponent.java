@@ -93,7 +93,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
     // ContentFacet Implementation  --------------------------------------------
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
         String fullFileName = pluginConfiguration.getSimpleValue(FILENAME_PLUGIN_CONFIG_PROP, null);
 
@@ -103,8 +102,9 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
             if (packageFile.isDirectory()) {
                 fileToSend = File.createTempFile("rhq", ".zip");
                 ZipUtil.zipFileOrDirectory(packageFile, fileToSend);
-            } else
+            } else {
                 fileToSend = packageFile;
+            }
             return new BufferedInputStream(new FileInputStream(fileToSend));
         } catch (IOException e) {
             throw new RuntimeException("Failed to retrieve package bits for " + packageDetails, e);
@@ -112,7 +112,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
     }
 
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
@@ -149,41 +148,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         }
 
         return packages;
-    }
-
-    private String getSHA256(File file) {
-
-        String sha256 = null;
-
-        try {
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(file, null, null);
-            sha256 = fileContentDelegate.getSHA(file);
-        } catch (Exception iex) {
-            //log exception but move on, discovery happens often. No reason to hold up anything.
-            if (log.isDebugEnabled()) {
-                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
-            }
-        }
-
-        return sha256;
-    }
-
-    private String getVersion(String sha256) {
-        return "[sha256=" + sha256 + "]";
-    }
-
-    /**
-     * Retrieve the display version for the component. The display version should be stored
-     * in the manifest of the application (implementation and/or specification version).
-     * It will attempt to retrieve the version for both archived or exploded deployments.
-     *
-     * @param file component file
-     * @return
-     */
-    private String getDisplayVersion(File file) {
-        //JarContentFileInfo extracts the version from archived and exploded deployments
-        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
-        return contentFileInfo.getVersion(null);
     }
 
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
@@ -252,7 +216,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         }
 
         // Deploy was successful!
-
         deleteBackupOfOriginalFile(backupOfOriginalFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
@@ -293,7 +256,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         } else {
             log.info("deleteResource: File [" + fullFileName + "] was not found - ignoring.");
         }
-
     }
 
     // MeasurementFacet Implementation  --------------------------------------------
@@ -355,7 +317,7 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         return pluginConfiguration.getSimple(FILENAME_PLUGIN_CONFIG_PROP).getStringValue();
     }
 
-    public JBossASServerComponent getParentResourceComponent() {
+    public JBossASServerComponent<?> getParentResourceComponent() {
         return getResourceContext().getParentResourceComponent();
     }
 
@@ -378,10 +340,10 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         }
 
         backup = new File(fileName + ".bak");
-
         if (!backup.exists()) {
             throw new FileNotFoundException("Backup file " + backup + " does not exist");
         }
+
         File directory = backup.getParentFile();
         if (!directory.canWrite()) {
             throw new IOException("Can not modify directory " + directory);
@@ -396,7 +358,6 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         }
 
         // Now that we have moved the original to a backup, try to move the real backup in
-
         good = backup.renameTo(file);
         if (!good) {
             // move backup in failed
@@ -409,8 +370,8 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
             // installing from backup worked
             FileUtils.purge(tmpBackup, true);
         }
-        getParentResourceComponent().deployFile(file);
 
+        getParentResourceComponent().deployFile(file);
     }
 
     /**
@@ -499,5 +460,39 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
             throw new Exception();
         }
         return tempFile;
+    }
+
+    private String getSHA256(File file) {
+        String sha256 = null;
+
+        try {
+            FileContentDelegate fileContentDelegate = new FileContentDelegate(file, null, null);
+            sha256 = fileContentDelegate.getSHA(file);
+        } catch (Exception iex) {
+            //log exception but move on, discovery happens often. No reason to hold up anything.
+            if (log.isDebugEnabled()) {
+                log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
+            }
+        }
+
+        return sha256;
+    }
+
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
+    }
+
+    /**
+     * Retrieve the display version for the component. The display version should be stored
+     * in the manifest of the application (implementation and/or specification version).
+     * It will attempt to retrieve the version for both archived or exploded deployments.
+     *
+     * @param file component file
+     * @return
+     */
+    private String getDisplayVersion(File file) {
+        //JarContentFileInfo extracts the version from archived and exploded deployments
+        ContentFileInfo contentFileInfo = new JarContentFileInfo(file);
+        return contentFileInfo.getVersion(null);
     }
 }

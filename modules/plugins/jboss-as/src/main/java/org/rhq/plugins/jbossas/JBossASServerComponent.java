@@ -924,6 +924,7 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             deployFile(path);
         } catch (MainDeployer.DeployerException e) {
             log.debug("Failed to deploy [" + path + "] - undeploying and deleting [" + path + "]...");
+            report.setStatus(CreateResourceStatus.FAILURE);
             try {
                 undeployFile(path);
                 FileUtils.purge(path, true);
@@ -950,7 +951,8 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             if (entry != null) {
                 is = jfile.getInputStream(entry);
                 SAXBuilder saxBuilder = new SAXBuilder();
-                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver.getDtdAndXsdSkippingInstance();
+                SelectiveSkippingEntityResolver entityResolver = SelectiveSkippingEntityResolver
+                    .getDtdAndXsdSkippingInstance();
                 saxBuilder.setEntityResolver(entityResolver);
 
                 Document doc = saxBuilder.build(is);

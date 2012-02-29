@@ -43,7 +43,7 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
 
     /**
      * @param operator
-     * @param operatorOption the duration, in minutes (as String)
+     * @param operatorOption the duration, in seconds (as String)
      * @param value
      * @param conditionTriggerId this is actually the alertConditionId, renamed here.
      */
@@ -106,7 +106,8 @@ public final class AvailabilityDurationCacheElement extends AbstractEnumCacheEle
         String operator = cacheElement.getAlertConditionOperator().name();
         String triggerName = operator + "-" + resource.getId();
         String duration = (String) cacheElement.getAlertConditionOperatorOption();
-        Date jobTime = new Date(System.currentTimeMillis() + (Long.valueOf(duration).longValue() * 60 * 1000));
+        // convert from seconds to milliseconds
+        Date jobTime = new Date(System.currentTimeMillis() + (Long.valueOf(duration).longValue() * 1000));
 
         if (log.isDebugEnabled()) {
             log.debug("Scheduling availability duration job for [" + DateFormat.getDateTimeInstance().format(jobTime)

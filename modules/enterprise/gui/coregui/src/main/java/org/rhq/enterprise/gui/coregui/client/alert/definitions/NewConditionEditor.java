@@ -346,7 +346,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
                 newCondition.setName(getValueAsString(AVAILABILITY_DURATION_ITEMNAME));
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
-                newCondition.setOption(getValueAsString(AVAILABILITY_DURATION_VAL_ITEMNAME));
+                // user enters value in minutes but the value is stored in seconds
+                int duration = 60 * Integer.valueOf(getValueAsString(AVAILABILITY_DURATION_VAL_ITEMNAME));
+                newCondition.setOption(String.valueOf(duration));
                 newCondition.setMeasurementDefinition(null);
                 break;
             }

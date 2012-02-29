@@ -93,7 +93,8 @@ public class AlertFormatUtility {
             }
             str.append(" For ");
 
-            String value = condition.getOption();
+            // value is stored in seconds but should be presented in minutes
+            String value = String.valueOf(Integer.valueOf(condition.getOption()) * 60);
             String formatted = MeasurementConverterClient.format(value, MeasurementUnits.MINUTES);
             str.append(formatted);
             str.append("]");

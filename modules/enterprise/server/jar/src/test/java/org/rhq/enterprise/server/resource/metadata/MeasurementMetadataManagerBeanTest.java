@@ -24,7 +24,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "registerMetricsPlugin" })
     public void persistNewMetrics() throws Exception {
         assertResourceTypeAssociationEquals("MetricServer1", "MeasurementMetadataManagerBeanTestPlugin",
-            "metricDefinitions", asList("metric1", "metric2", "metric3", "_AvailabilityType_"));
+            "metricDefinitions", asList("metric1", "metric2", "metric3", "rhq.availability"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
@@ -93,7 +93,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
     public void addNewMetricDef() throws Exception {
         assertResourceTypeAssociationEquals("MetricServer2", "MeasurementMetadataManagerBeanTestPlugin",
-            "metricDefinitions", asList("metric1", "_AvailabilityType_"));
+            "metricDefinitions", asList("metric1", "rhq.availability"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
@@ -127,7 +127,7 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
     public void deleteMetricDefThatHasBeenRemovedFromResourceType() throws Exception {
         assertResourceTypeAssociationEquals("MetricServer4", "MeasurementMetadataManagerBeanTestPlugin",
-            "metricDefinitions", asList("_AvailabilityType_"));
+            "metricDefinitions", asList("rhq.availability"));
     }
 
     @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })

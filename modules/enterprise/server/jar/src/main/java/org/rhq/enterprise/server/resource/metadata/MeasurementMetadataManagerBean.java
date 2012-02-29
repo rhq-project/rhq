@@ -168,7 +168,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         MeasurementDefinition availabilityScanPeriod = new MeasurementDefinition(newType,
             MeasurementDefinition.AVAILABILITY_TYPE_NAME);
         // TODO I18N for this?
-        availabilityScanPeriod.setDisplayName("Availability Type");
+        availabilityScanPeriod.setDisplayName("Availability");
         availabilityScanPeriod.setCategory(MeasurementCategory.AVAILABILITY);
         availabilityScanPeriod
             .setDescription("The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.");

@@ -142,7 +142,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })
     public void persistMeasurementDefinitions() throws Exception {
         assertResourceTypeAssociationEquals("ServerA", "TestPlugin", "metricDefinitions",
-            asList("metric1", "metric2", "_AvailabilityType_"));
+            asList("metric1", "metric2", "rhq.availability"));
     }
 
     @Test(dependsOnMethods = { "persistNewTypes" }, groups = { "plugin.metadata", "NewPlugin" })

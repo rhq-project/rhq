@@ -111,7 +111,7 @@ public class MeasurementDefinition implements Serializable {
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
     public static final String FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME = "MeasurementDefinition.findRawOrPerMinuteByNameAndResourceTypeName";
 
-    public static final String AVAILABILITY_TYPE_NAME = "_AvailabilityType_";
+    public static final String AVAILABILITY_TYPE_NAME = "rhq.availability";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")

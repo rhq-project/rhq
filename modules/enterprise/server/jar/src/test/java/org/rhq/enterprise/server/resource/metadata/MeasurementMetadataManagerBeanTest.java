@@ -85,6 +85,47 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
             asList("id", "resourceType"));
     }
 
+    @Test(groups = { "plugin.metadata", "Metrics.NewPlugin" }, dependsOnMethods = { "persistNewMetrics" })
+    public void availabilityDefaultTest() {
+        MeasurementDefinition serverAvailDef = loadMeasurementDef("rhq.availability", "MetricServer1",
+            MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+
+        MeasurementDefinition expected = new MeasurementDefinition("rhq.availability",
+            MeasurementCategory.AVAILABILITY, MeasurementUnits.NONE, DataType.AVAILABILITY, true, 60000,
+            DisplayType.DETAIL);
+        expected.setNumericType(NumericType.DYNAMIC);
+        expected.setDisplayName(MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+        expected.setDescription(MeasurementMetadataManagerBean.AVAILABILITY_DESCRIPTION);
+
+        AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serverAvailDef,
+            asList("id", "resourceType", "destinationType", "displayOrder"));
+
+        MeasurementDefinition serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService1",
+            MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+
+        expected = new MeasurementDefinition("rhq.availability", MeasurementCategory.AVAILABILITY,
+            MeasurementUnits.NONE, DataType.AVAILABILITY, false, 120000, DisplayType.DETAIL);
+        expected.setNumericType(NumericType.DYNAMIC);
+        expected.setDisplayName(MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+        expected.setDescription(MeasurementMetadataManagerBean.AVAILABILITY_DESCRIPTION);
+
+        AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
+            asList("id", "resourceType", "destinationType", "displayOrder"));
+
+        serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService2",
+            MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+
+        expected = new MeasurementDefinition("rhq.availability", MeasurementCategory.AVAILABILITY,
+            MeasurementUnits.NONE, DataType.AVAILABILITY, true, 300000, DisplayType.DETAIL);
+        expected.setNumericType(NumericType.DYNAMIC);
+        expected.setDisplayName(MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+        expected.setDescription(MeasurementMetadataManagerBean.AVAILABILITY_DESCRIPTION);
+
+        AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
+            asList("id", "resourceType", "destinationType", "displayOrder"));
+
+    }
+
     @Test(groups = { "plugin.metadata", "Metrics.UpgradePlugin" }, dependsOnGroups = { "Metrics.NewPlugin" })
     public void upgradeMetricsPlugin() throws Exception {
         createPlugin("metric-test-plugin", "2.0", "plugin_v2.xml");
@@ -138,6 +179,47 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
             .getResultList();
 
         assertEquals("Failed to delete metric definitions", 0, metricDefs.size());
+    }
+
+    @Test(groups = { "plugin.metadata", "Metrics.UpradePlugin" }, dependsOnMethods = { "upgradeMetricsPlugin" })
+    public void availabilityOverrideTest() {
+        MeasurementDefinition serverAvailDef = loadMeasurementDef("rhq.availability", "MetricServer1",
+            MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+
+        MeasurementDefinition expected = new MeasurementDefinition("rhq.availability",
+            MeasurementCategory.AVAILABILITY, MeasurementUnits.NONE, DataType.AVAILABILITY, true, 120000,
+            DisplayType.DETAIL);
+        expected.setNumericType(NumericType.DYNAMIC);
+        expected.setDisplayName(MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+        expected.setDescription(MeasurementMetadataManagerBean.AVAILABILITY_DESCRIPTION);
+
+        AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serverAvailDef,
+            asList("id", "resourceType", "destinationType", "displayOrder"));
+
+        MeasurementDefinition serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService1",
+            MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+
+        // interval can not be changed by new plugin version if not at the category default
+        expected = new MeasurementDefinition("rhq.availability", MeasurementCategory.AVAILABILITY,
+            MeasurementUnits.NONE, DataType.AVAILABILITY, true, 120000, DisplayType.DETAIL);
+        expected.setNumericType(NumericType.DYNAMIC);
+        expected.setDisplayName(MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+        expected.setDescription(MeasurementMetadataManagerBean.AVAILABILITY_DESCRIPTION);
+
+        AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
+            asList("id", "resourceType", "destinationType", "displayOrder"));
+
+        serviceAvailDef = loadMeasurementDef("rhq.availability", "MetricService2",
+            MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+
+        expected = new MeasurementDefinition("rhq.availability", MeasurementCategory.AVAILABILITY,
+            MeasurementUnits.NONE, DataType.AVAILABILITY, true, 480000, DisplayType.DETAIL);
+        expected.setNumericType(NumericType.DYNAMIC);
+        expected.setDisplayName(MeasurementMetadataManagerBean.AVAILABILITY_DISPLAY_NAME);
+        expected.setDescription(MeasurementMetadataManagerBean.AVAILABILITY_DESCRIPTION);
+
+        AssertUtils.assertPropertiesMatch("Failed to create avail metric definition", expected, serviceAvailDef,
+            asList("id", "resourceType", "destinationType", "displayOrder"));
     }
 
     MeasurementDefinition loadMeasurementDef(String name, String resourceType) {

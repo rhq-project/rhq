@@ -67,8 +67,8 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  */
 public class ApplicationComponent extends MBeanResourceComponent<JBossASServerComponent<?>> implements ContentFacet,
     DeleteResourceFacet, OperationFacet {
-    private static final String BACKUP_FILE_EXTENSION = ".rej";
-    public static final String RHQ_SHA256 = "RHQ-Sha256";
+
+    private static final String BACKUP_FILE_SUFFIX = ".rej";
 
     /**
      * Name of the backing package type that will be used when discovering packages. This corresponds to the name
@@ -83,8 +83,7 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
      */
     private static final String ARCHITECTURE = "noarch";
 
-    protected static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
-
+    private static final String FILENAME_PLUGIN_CONFIG_PROP = "filename";
     private static final String APPLICATION_PATH_TRAIT = "Application.path";
     private static final String APPLICATION_EXPLODED_TRAIT = "Application.exploded";
 
@@ -188,23 +187,36 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
                 packageDetails);
         }
 
+        //Before the backup find out if the current deployment is exploded or not.
+        //Do not do this after the backup because the original files are no longer
+        //on disk and thus .isDirectory() always returns false.
+        boolean isExploded = appFile.isDirectory();
+
         // Backup the existing app file/dir to <filename>.rej.
-        File backupOfOriginalFile = new File(appFile.getPath() + BACKUP_FILE_EXTENSION);
+        File backupOfOriginalFile = new File(appFile.getPath() + BACKUP_FILE_SUFFIX);
         appFile.renameTo(backupOfOriginalFile);
 
         // Write the new bits for the application
-        moveTempFileToDeployLocation(tempFile, appFile);
+        moveTempFileToDeployLocation(tempFile, appFile, isExploded);
 
         // The file has been written successfully to the deploy dir. Now try to actually deploy it.
         MainDeployer mainDeployer = getParentResourceComponent().getMainDeployer();
         try {
             mainDeployer.redeploy(appFile);
+
+            // Deploy was successful, delete the backup
+            try {
+                FileUtils.purge(backupOfOriginalFile, true);
+            } catch (Exception e) {
+                log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
+            }
         } catch (Exception e) {
             // Deploy failed - rollback to the original app file...
             String errorMessage = ThrowableUtil.getAllMessages(e);
             try {
                 FileUtils.purge(appFile, true);
                 backupOfOriginalFile.renameTo(appFile);
+
                 // Need to redeploy the original file - this generally should succeed.
                 mainDeployer.redeploy(appFile);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
@@ -212,11 +224,9 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
+
             return failApplicationDeployment(errorMessage, packageDetails);
         }
-
-        // Deploy was successful!
-        deleteBackupOfOriginalFile(backupOfOriginalFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -394,24 +404,15 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
         return response;
     }
 
-    private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
-        try {
-            FileUtils.purge(backupOfOriginalFile, true);
-        } catch (Exception e) {
-            // not critical.
-            log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
-        }
-    }
-
-    private void moveTempFileToDeployLocation(File tempFile, File appFile) {
+    private void moveTempFileToDeployLocation(File newApplication, File appFile, boolean isExploded) {
         InputStream tempIs = null;
         try {
-            if (appFile.isDirectory()) {
-                tempIs = new BufferedInputStream(new FileInputStream(tempFile));
-                appFile.mkdir();
+            if (isExploded) {
+                tempIs = new BufferedInputStream(new FileInputStream(newApplication));
+                appFile.mkdirs();
                 ZipUtil.unzipFile(tempIs, appFile);
             } else {
-                tempFile.renameTo(appFile);
+                newApplication.renameTo(appFile);
             }
         } catch (IOException e) {
             log.error("Error writing updated package bits to the existing application location: " + appFile, e);

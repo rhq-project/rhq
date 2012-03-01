@@ -2,7 +2,6 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.List;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
@@ -45,13 +44,10 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
     private SubjectManagerLocal subjectMgr;
     private ResourceTypeManagerLocal resourceTypeMgr;
 
-    @BeforeMethod
-    public void beforeMethod() {
+    public void testRegisterPlugins() throws Exception {
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
-    }
 
-    public void testRegisterPlugins() throws Exception {
         registerParentPluginV1(); // create an initial type (called the parent)
         registerChild1PluginV1(); // using plugin extension mechanism, create child #1 type that extends that parent type
         registerChild2PluginV1(); // using plugin extension mechanism, create child #2 type that extends that parent type

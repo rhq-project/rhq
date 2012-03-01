@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
@@ -114,13 +113,10 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
     private SubjectManagerLocal subjectMgr;
     private ResourceTypeManagerLocal resourceTypeMgr;
 
-    @BeforeMethod
-    public void beforeMethod() {
+    public void testRegisterPlugins() throws Exception {
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
-    }
 
-    public void testRegisterPlugins() throws Exception {
         registerParentPluginV1(); // create an initial type (called the parent)
         registerChildPluginV1(); // using plugin extension mechanism, create a child type that extends that parent type
         registerParentPluginV2(); // update the parent type

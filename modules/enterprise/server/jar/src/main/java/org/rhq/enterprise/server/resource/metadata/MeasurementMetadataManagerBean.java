@@ -24,6 +24,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -35,8 +36,10 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
     private final Log log = LogFactory.getLog(MeasurementMetadataManagerBean.class);
 
-    private static final Long AVAILABILITY_DEFAULT_PERIOD_SERVER = 60L * 1000; // 1 minute in ms
-    private static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 5; // 5 minutes in ms
+    static final Long AVAILABILITY_DEFAULT_PERIOD_SERVER = 60L * 1000; // 1 minute in ms
+    static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 5; // 5 minutes in ms
+    static final String AVAILABILITY_DESCRIPTION = "The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.";
+    static final String AVAILABILITY_DISPLAY_NAME = "Availability";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
@@ -92,7 +95,19 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                             log.debug("Updating existing metric definition: " + existingDefinition);
                         }
 
-                        existingDefinition.update(newDefinition, false);
+                        // We normally protect the user's interval settings. But the Availability metric is
+                        // a bit special. It's built-in and we know the resource category default values.  If the 
+                        // existing setting is the default, we'll allow it to be changed by the plugin. It's possible 
+                        // the user wants it the old way, and can set it back, but given that avail collection is
+                        // critical to agent perf, we'll assume plugin knows best in this case. This only happens
+                        // if the interval is at the default, a non-default value set by an earlier rev of the
+                        // plugin will not be updated.  
+                        boolean isAvail = MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(newDefinition.getName());
+                        long defaultInterval = (ResourceCategory.SERVER == existingDefinition.getResourceType()
+                            .getCategory()) ? AVAILABILITY_DEFAULT_PERIOD_SERVER : AVAILABILITY_DEFAULT_PERIOD_SERVICE;
+                        boolean updateInterval = (isAvail && (defaultInterval == existingDefinition
+                            .getDefaultInterval()));
+                        existingDefinition.update(newDefinition, updateInterval);
 
                         // we normally do not want to touch interval in case a user changed it,
                         // but we cannot allow too-short of an interval, so override it if necessary
@@ -165,22 +180,39 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
             period = AVAILABILITY_DEFAULT_PERIOD_SERVICE;
         }
 
-        MeasurementDefinition availabilityScanPeriod = new MeasurementDefinition(newType,
+        MeasurementDefinition rhqAvailability = new MeasurementDefinition(newType,
             MeasurementDefinition.AVAILABILITY_TYPE_NAME);
-        // TODO I18N for this?
-        availabilityScanPeriod.setDisplayName("Availability");
-        availabilityScanPeriod.setCategory(MeasurementCategory.AVAILABILITY);
-        availabilityScanPeriod
-            .setDescription("The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.");
-        availabilityScanPeriod.setDefaultInterval(period);
-        availabilityScanPeriod.setDataType(DataType.AVAILABILITY);
-        availabilityScanPeriod.setDefaultOn(true);
-        availabilityScanPeriod.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
-        availabilityScanPeriod.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
-        availabilityScanPeriod.setDisplayType(DisplayType.DETAIL); // n/a protects against non-null
+        rhqAvailability.setDefaultInterval(period);
+        rhqAvailability.setDefaultOn(true);
+        rhqAvailability.setCategory(MeasurementCategory.AVAILABILITY);
+        rhqAvailability.setDisplayName(AVAILABILITY_DISPLAY_NAME);
+        rhqAvailability.setDescription(AVAILABILITY_DESCRIPTION);
+        rhqAvailability.setDataType(DataType.AVAILABILITY);
+        rhqAvailability.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
+        rhqAvailability.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
+        rhqAvailability.setDisplayType(DisplayType.DETAIL); // n/a protects against non-null
 
-        if (!result.contains(availabilityScanPeriod)) {
-            result.add(availabilityScanPeriod);
+        // Add the built in metric if it is not defined. Otherwise, override only allowed fields
+        if (!result.contains(rhqAvailability)) {
+            result.add(rhqAvailability);
+
+        } else {
+            MeasurementDefinition override = null;
+            for (Iterator<MeasurementDefinition> i = result.iterator(); i.hasNext();) {
+                override = i.next();
+                if (override.equals(rhqAvailability)) {
+                    break;
+                }
+            }
+
+            // don't let the override muck with fixed field values, only defaultOn and defaultInterval
+            override.setCategory(MeasurementCategory.AVAILABILITY);
+            override.setDisplayName(AVAILABILITY_DISPLAY_NAME);
+            override.setDescription(AVAILABILITY_DESCRIPTION);
+            override.setDataType(DataType.AVAILABILITY);
+            override.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
+            override.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
+            override.setDisplayType(DisplayType.DETAIL); // n/a protects against non-null                        
         }
 
         return result;

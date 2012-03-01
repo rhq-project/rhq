@@ -60,7 +60,7 @@ public class MultiplePluginExtensionSinglePluginDescriptorMetadataTest extends M
     }
 
     private void registerChildPluginV1() throws Exception {
-        createPlugin("child1-plugin.jar", "1.0", "child_plugin_v1.xml");
+        createPlugin("child-plugin.jar", "1.0", "child_plugin_v1.xml");
         afterRegisterChild1PluginV1();
         afterRegisterChild2PluginV1();
     }

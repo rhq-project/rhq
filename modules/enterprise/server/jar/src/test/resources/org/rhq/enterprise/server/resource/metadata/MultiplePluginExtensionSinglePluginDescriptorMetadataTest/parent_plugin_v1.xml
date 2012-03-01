@@ -13,6 +13,10 @@
 
         <operation name="A-op" timeout="123456" description="a op"></operation>
 
+        <service name="InnerServiceA">
+           <metric property="inner-A-metric" />
+        </service>
+
     </server>
 
 </plugin>

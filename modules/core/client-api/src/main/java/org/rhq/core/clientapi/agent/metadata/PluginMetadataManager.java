@@ -166,9 +166,9 @@ public class PluginMetadataManager {
     public ResourceType getType(String resourceTypeName, String pluginName) {
         ResourceType searchType = new ResourceType(resourceTypeName, pluginName, null, null);
         synchronized (this.typesLock) {
-            for (ResourceType t : types) {
-                if (t.equals(searchType)) {
-                    return t;
+            for (ResourceType type : types) {
+                if (type.equals(searchType)) {
+                    return type;
                 }
             }
         }

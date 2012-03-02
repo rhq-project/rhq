@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -410,7 +410,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     //check that session is valid. RHQ auth has already occurred. Security check required to initiate following
                     //spinder BZ:682755: 3/10/11: can't use isValidSessionId() as it also compares subject.id which is changing during case insensitive
                     // and new registration. This worked before because HTTP get took longer to invalidate sessions.
-                    Subject sessionSubject = null;
+                    Subject sessionSubject;
                     try {
                         sessionSubject = sessionManager.getSubject(subject.getSessionId());
                     } catch (SessionNotFoundException e) {
@@ -466,24 +466,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             logout(subject.getSessionId().intValue());
                             subject = login(subject.getName(), subjectPassword);
 
-                            Map<String, String> ldapUserDetails = ldapManager.findLdapUserDetails(subject.getName());
-                            //now prepopulate UI fields if they exist
-                            for (String key : ldapUserDetails.keySet()) {
-                                String value;
-                                if (key.equalsIgnoreCase("givenName")) {//aka first name
-                                    value = ldapUserDetails.get(key);
-                                    subject.setFirstName(value);
-                                } else if (key.equalsIgnoreCase("sn")) {//aka Surname
-                                    value = ldapUserDetails.get(key);
-                                    subject.setLastName(value);
-                                } else if (key.equalsIgnoreCase("telephoneNumber")) {
-                                    value = ldapUserDetails.get(key);
-                                    subject.setPhoneNumber(value);
-                                } else if (key.equalsIgnoreCase("mail")) {
-                                    value = ldapUserDetails.get(key);
-                                    subject.setEmailAddress(value);
-                                }
-                            }
+                            prepopulateLdapFields(subject);
 
                             //insert empty configuration to start
                             Configuration newUserConfig = new Configuration();
@@ -665,9 +648,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     resourceGroupManager.deleteResourceGroups(subject, ownedGroupIds);
                 } catch (Throwable t) {
                     if (log.isDebugEnabled()) {
-                        log.error("Error deleting owned group " + ownedGroupIds, t);
+                        log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds), t);
                     } else {
-                        log.error("Error deleting owned group " + ownedGroupIds + ": " + t.getMessage());
+                        log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds) + ": " + t.getMessage());
                     }
                 }
             }
@@ -832,6 +815,31 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
         return ((groupFilter != null) && (groupFilter.trim().length() > 0))
             || ((groupMember != null) && (groupMember.trim().length() > 0));
+    }
+
+    private void prepopulateLdapFields(Subject subject) {
+        Map<String, String> ldapUserAttributes = ldapManager.findLdapUserDetails(subject.getName());
+
+        String givenName = (ldapUserAttributes.get("givenName") != null) ?
+            ldapUserAttributes.get("givenName") : ldapUserAttributes.get("gn");
+        subject.setFirstName(givenName);
+
+        String surname = (ldapUserAttributes.get("sn") != null) ?
+            ldapUserAttributes.get("sn") : ldapUserAttributes.get("surname");
+        subject.setLastName(surname);
+
+        String telephoneNumber = ldapUserAttributes.get("telephoneNumber");
+        subject.setPhoneNumber(telephoneNumber);
+
+        String mail = (ldapUserAttributes.get("mail") != null) ?
+            ldapUserAttributes.get("mail") : ldapUserAttributes.get("rfc822Mailbox");
+        subject.setEmailAddress(mail);
+
+        String organizationalUnit = (ldapUserAttributes.get("ou") != null) ?
+            ldapUserAttributes.get("ou") : ldapUserAttributes.get("organizationalUnitName");
+        subject.setDepartment(organizationalUnit);
+
+        return;
     }
 
 }

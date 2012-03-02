@@ -103,10 +103,9 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
 public class ApacheServerComponent implements AugeasRHQComponent, ResourceComponent<PlatformComponent>,
     MeasurementFacet, OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
 
-    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE =
-        "Configuration and child resource creation/deletion support for Apache is optional. "
-            + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
-            + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
+    public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration and child resource creation/deletion support for Apache is optional. "
+        + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
+        + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -132,12 +131,12 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
-    
+
     public static final String PLUGIN_CONFIG_CUSTOM_MODULE_NAMES = "customModuleNames";
     public static final String PLUGIN_CONFIG_MODULE_MAPPING = "moduleMapping";
     public static final String PLUGIN_CONFIG_MODULE_NAME = "moduleName";
     public static final String PLUGIN_CONFIG_MODULE_SOURCE_FILE = "moduleSourceFile";
-    
+
     public static final String AUXILIARY_INDEX_PROP = "_index";
 
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
@@ -160,9 +159,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
-    
+
     private Map<String, String> moduleNames;
-    
+
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
@@ -173,7 +172,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
-        
+
         try {
             boolean configured = false;
 
@@ -227,28 +226,29 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 this.resourceContext.getSystemInformation());
 
             //init the module names with the defaults
-            moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo.getVersion()));
-            
+            moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo
+                .getVersion()));
+
             //and add the user-provided overrides/additions
             PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_CUSTOM_MODULE_NAMES);
-            
+
             if (list != null) {
                 for (Property p : list.getList()) {
                     PropertyMap map = (PropertyMap) p;
                     String sourceFile = map.getSimpleValue(PLUGIN_CONFIG_MODULE_SOURCE_FILE, null);
                     String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
-    
+
                     if (sourceFile == null || moduleName == null) {
                         log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
                             + "). Check your module mappings in the plugin configuration for the server: "
                             + resourceContext.getResourceKey());
                         continue;
                     }
-    
+
                     moduleNames.put(sourceFile, moduleName);
                 }
             }
-            
+
             startEventPollers();
         } catch (Exception e) {
             if (this.snmpClient != null) {
@@ -429,7 +429,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             report.setErrorMessage(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             return report;
         }
-        
+
         if (ApacheVirtualHostServiceComponent.RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
             Configuration vhostResourceConfig = report.getResourceConfiguration();
             ConfigurationDefinition vhostResourceConfigDef = report.getResourceType()
@@ -821,19 +821,19 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             file.delete();
         }
     }
-    
+
     public Map<String, String> getModuleNames() {
         return moduleNames;
     }
-    
+
     public ProcessInfo getCurrentProcessInfo() {
         return resourceContext.getNativeProcess();
     }
-    
+
     public ApacheBinaryInfo getCurrentBinaryInfo() {
         return binaryInfo;
     }
-    
+
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -971,10 +971,11 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
     public ApacheDirectiveTree parseRuntimeConfiguration(boolean suppressUnknownModuleWarnings) {
         String httpdConfPath = getHttpdConfFile().getAbsolutePath();
         ProcessInfo processInfo = resourceContext.getNativeProcess();
-        
-        return ApacheServerDiscoveryComponent.parseRuntimeConfiguration(httpdConfPath, processInfo, binaryInfo, getModuleNames(), suppressUnknownModuleWarnings);
+
+        return ApacheServerDiscoveryComponent.parseRuntimeConfiguration(httpdConfPath, processInfo, binaryInfo,
+            getModuleNames(), suppressUnknownModuleWarnings);
     }
-    
+
     public boolean isAugeasEnabled() {
 
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
@@ -1002,7 +1003,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 }
             }
             String version = getVersion();
-            
+
             if (!version.startsWith("2.")) {
                 log.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
@@ -1012,18 +1013,22 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             return false;
         }
     }
-    
+
     private String getVersion() {
         String ret = resourceContext.getVersion();
         if (ret == null) {
             //strange, but this happens sometimes when 
             //the resource is synced with the server for the first
             //time after data purge on the agent side
-            
+
             //let's determine the version from the binary info
             ret = binaryInfo.getVersion();
         }
-        
+
         return ret;
+    }
+
+    ResourceContext getResourceContext() {
+        return this.resourceContext;
     }
 }

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -86,20 +87,11 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
 
         final ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-        toolStrip.setExtraSpace(10);
+        //toolStrip.setExtraSpace(10);
         toolStrip.setMembersMargin(5);
         toolStrip.setLayoutMargin(5);
+        toolStrip.setAlign(Alignment.RIGHT);
 
-        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                save();
-                if (ResourceGroupMembershipView.this.saveButtonHandler != null) {
-                    ResourceGroupMembershipView.this.saveButtonHandler.onClick(clickEvent);
-                }
-            }
-        });
-        toolStrip.addMember(saveButton);
 
         IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
         cancelButton.addClickHandler(new ClickHandler() {
@@ -111,6 +103,17 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
             }
         });
         toolStrip.addMember(cancelButton);
+
+        IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
+        saveButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                save();
+                if (ResourceGroupMembershipView.this.saveButtonHandler != null) {
+                    ResourceGroupMembershipView.this.saveButtonHandler.onClick(clickEvent);
+                }
+            }
+        });
+        toolStrip.addMember(saveButton);
 
         ResourceGroupCriteria c = new ResourceGroupCriteria();
         c.addFilterId(this.resourceGroupId);

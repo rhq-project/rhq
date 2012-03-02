@@ -83,6 +83,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
+    public static final String DYNA_GROUP_VIEW = "Inventory/Groups/DynagroupDefinitions";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -352,8 +353,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
 
     private void updateInventoryTab(Set<ResourceTypeFacet> facets) {
         // Inventory tab is always visible and enabled.
-        final boolean canModifyMembers = (!isAutoGroup() && !isAutoCluster() && globalPermissions
+        final boolean canModifyMembers = (!isDynaGroup() && !isAutoGroup() && !isAutoCluster() && globalPermissions
             .contains(Permission.MANAGE_INVENTORY));
+
         updateSubTab(this.inventoryTab, this.inventoryMembers, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
@@ -534,6 +536,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     }
                 }
             });
+    }
+
+    private boolean isDynaGroup() {
+        return groupComposite.getResourceGroup().getGroupDefinition() != null;
     }
 
     private boolean isAutoGroup() {

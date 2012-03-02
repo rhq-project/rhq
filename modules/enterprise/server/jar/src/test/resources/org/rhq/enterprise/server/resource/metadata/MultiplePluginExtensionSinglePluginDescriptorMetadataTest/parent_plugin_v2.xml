@@ -13,9 +13,11 @@
 
         <operation name="A-op-NEW" timeout="987654" description="a new op"></operation>
 
+        <!-- BZ 789420 - if that bug isn't fixed and you uncomment this, the child plugin will fail to register properly
         <service name="InnerServiceA">
            <metric property="inner-A-metric" />
         </service>
+        -->
 
     </server>
 

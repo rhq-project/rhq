@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -50,6 +51,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -431,7 +433,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                         subjectCriteria.fetchRoles(false);
                         subjectCriteria.fetchConfiguration(false);
                         subjectCriteria.addFilterName(subject.getName());
-                        PageList<Subject> subjectsLocated = findSubjectsByCriteria(subject, subjectCriteria);
+                        //BZ-798465: spinder 3/1/12 we now need to pass in overlord because of BZ-786159
+                        // We've verified that this user has valid session, and is using ldap. Safe to elevate search here.
+                        PageList<Subject> subjectsLocated = findSubjectsByCriteria(getOverlord(), subjectCriteria);
                         //if subject variants located then take the first one with a principal otherwise do nothing
                         //To defend against the case where they create an account with the same name but not 
                         //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
@@ -454,14 +458,38 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             // create the subject, but don't add a principal since LDAP will handle authentication
                             log.debug("registering new LDAP-authenticated subject [" + subject.getName() + "]");
                             createSubject(superuser, subject);
+                            subject.setFactive(true);
 
                             // nuke the temporary session and establish a new
                             // one for this subject.. must be done before pulling the
                             // new subject in order to do it with his own credentials
                             logout(subject.getSessionId().intValue());
                             subject = login(subject.getName(), subjectPassword);
+
+                            Map<String, String> ldapUserDetails = ldapManager.findLdapUserDetails(subject.getName());
+                            //now prepopulate UI fields if they exist
+                            for (String key : ldapUserDetails.keySet()) {
+                                String value;
+                                if (key.equalsIgnoreCase("givenName")) {//aka first name
+                                    value = ldapUserDetails.get(key);
+                                    subject.setFirstName(value);
+                                } else if (key.equalsIgnoreCase("sn")) {//aka Surname
+                                    value = ldapUserDetails.get(key);
+                                    subject.setLastName(value);
+                                } else if (key.equalsIgnoreCase("telephoneNumber")) {
+                                    value = ldapUserDetails.get(key);
+                                    subject.setPhoneNumber(value);
+                                } else if (key.equalsIgnoreCase("mail")) {
+                                    value = ldapUserDetails.get(key);
+                                    subject.setEmailAddress(value);
+                                }
+                            }
+
                             //insert empty configuration to start
                             Configuration newUserConfig = new Configuration();
+                            //set flag on user so that we know registration is still required.
+                            PropertySimple simple = new PropertySimple("isNewUser", true);
+                            newUserConfig.put(simple);
                             subject.setUserConfiguration(newUserConfig);
                         }
                     }
@@ -776,9 +804,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
         PageList<Subject> subjects = queryRunner.execute();
-        boolean canViewUsers = (authorizationManager.isSystemSuperuser(subject) || 
-            authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY) || 
-            authorizationManager.hasGlobalPermission(subject, Permission.VIEW_USERS));
+        boolean canViewUsers = (authorizationManager.isSystemSuperuser(subject)
+            || authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY) || authorizationManager
+            .hasGlobalPermission(subject, Permission.VIEW_USERS));
         if (!canViewUsers) {
             if (subjects.contains(subject)) {
                 Subject attachedSubject = subjects.get(subjects.indexOf(subject));
@@ -789,7 +817,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             }
             subjects.setTotalSize(subjects.size());
         }
-        return subjects;        
+        return subjects;
     }
 
     private boolean isLdapAuthenticationEnabled() {

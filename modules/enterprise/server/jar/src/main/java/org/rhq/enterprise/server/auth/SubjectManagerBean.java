@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -50,6 +51,7 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -408,7 +410,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     //check that session is valid. RHQ auth has already occurred. Security check required to initiate following
                     //spinder BZ:682755: 3/10/11: can't use isValidSessionId() as it also compares subject.id which is changing during case insensitive
                     // and new registration. This worked before because HTTP get took longer to invalidate sessions.
-                    Subject sessionSubject = null;
+                    Subject sessionSubject;
                     try {
                         sessionSubject = sessionManager.getSubject(subject.getSessionId());
                     } catch (SessionNotFoundException e) {
@@ -431,7 +433,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                         subjectCriteria.fetchRoles(false);
                         subjectCriteria.fetchConfiguration(false);
                         subjectCriteria.addFilterName(subject.getName());
-                        PageList<Subject> subjectsLocated = findSubjectsByCriteria(subject, subjectCriteria);
+                        //BZ-798465: spinder 3/1/12 we now need to pass in overlord because of BZ-786159
+                        // We've verified that this user has valid session, and is using ldap. Safe to elevate search here.
+                        PageList<Subject> subjectsLocated = findSubjectsByCriteria(getOverlord(), subjectCriteria);
                         //if subject variants located then take the first one with a principal otherwise do nothing
                         //To defend against the case where they create an account with the same name but not 
                         //case as an rhq sysadmin or higher perms, then make them relogin with same creds entered.
@@ -454,14 +458,21 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             // create the subject, but don't add a principal since LDAP will handle authentication
                             log.debug("registering new LDAP-authenticated subject [" + subject.getName() + "]");
                             createSubject(superuser, subject);
+                            subject.setFactive(true);
 
                             // nuke the temporary session and establish a new
                             // one for this subject.. must be done before pulling the
                             // new subject in order to do it with his own credentials
                             logout(subject.getSessionId().intValue());
                             subject = login(subject.getName(), subjectPassword);
+
+                            prepopulateLdapFields(subject);
+
                             //insert empty configuration to start
                             Configuration newUserConfig = new Configuration();
+                            //set flag on user so that we know registration is still required.
+                            PropertySimple simple = new PropertySimple("isNewUser", true);
+                            newUserConfig.put(simple);
                             subject.setUserConfiguration(newUserConfig);
                         }
                     }
@@ -637,9 +648,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                     resourceGroupManager.deleteResourceGroups(subject, ownedGroupIds);
                 } catch (Throwable t) {
                     if (log.isDebugEnabled()) {
-                        log.error("Error deleting owned group " + ownedGroupIds, t);
+                        log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds), t);
                     } else {
-                        log.error("Error deleting owned group " + ownedGroupIds + ": " + t.getMessage());
+                        log.error("Error deleting owned group " + Arrays.toString(ownedGroupIds) + ": " + t.getMessage());
                     }
                 }
             }
@@ -776,9 +787,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
         PageList<Subject> subjects = queryRunner.execute();
-        boolean canViewUsers = (authorizationManager.isSystemSuperuser(subject) || 
-            authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY) || 
-            authorizationManager.hasGlobalPermission(subject, Permission.VIEW_USERS));
+        boolean canViewUsers = (authorizationManager.isSystemSuperuser(subject)
+            || authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SECURITY) || authorizationManager
+            .hasGlobalPermission(subject, Permission.VIEW_USERS));
         if (!canViewUsers) {
             if (subjects.contains(subject)) {
                 Subject attachedSubject = subjects.get(subjects.indexOf(subject));
@@ -789,7 +800,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             }
             subjects.setTotalSize(subjects.size());
         }
-        return subjects;        
+        return subjects;
     }
 
     private boolean isLdapAuthenticationEnabled() {
@@ -804,6 +815,31 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         String groupMember = systemSettings.get(SystemSetting.LDAP_GROUP_MEMBER);
         return ((groupFilter != null) && (groupFilter.trim().length() > 0))
             || ((groupMember != null) && (groupMember.trim().length() > 0));
+    }
+
+    private void prepopulateLdapFields(Subject subject) {
+        Map<String, String> ldapUserAttributes = ldapManager.findLdapUserDetails(subject.getName());
+
+        String givenName = (ldapUserAttributes.get("givenName") != null) ?
+            ldapUserAttributes.get("givenName") : ldapUserAttributes.get("gn");
+        subject.setFirstName(givenName);
+
+        String surname = (ldapUserAttributes.get("sn") != null) ?
+            ldapUserAttributes.get("sn") : ldapUserAttributes.get("surname");
+        subject.setLastName(surname);
+
+        String telephoneNumber = ldapUserAttributes.get("telephoneNumber");
+        subject.setPhoneNumber(telephoneNumber);
+
+        String mail = (ldapUserAttributes.get("mail") != null) ?
+            ldapUserAttributes.get("mail") : ldapUserAttributes.get("rfc822Mailbox");
+        subject.setEmailAddress(mail);
+
+        String organizationalUnit = (ldapUserAttributes.get("ou") != null) ?
+            ldapUserAttributes.get("ou") : ldapUserAttributes.get("organizationalUnitName");
+        subject.setDepartment(organizationalUnit);
+
+        return;
     }
 
 }

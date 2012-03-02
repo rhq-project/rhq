@@ -33,6 +33,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
@@ -93,6 +94,8 @@ public class ASConnection {
         verbose = Boolean.getBoolean("as7plugin.verbose");
 
         mapper = new ObjectMapper();
+        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     }
 
     /**
@@ -264,11 +267,11 @@ public class ASConnection {
     }
 
     /** This operation purges the Operation passed in of EAP/EDG prefixes in the
-     *  Address portion and in the AdditionalProperties section. The returned 
-     *  operation should be identical in every other way and should be used 
+     *  Address portion and in the AdditionalProperties section. The returned
+     *  operation should be identical in every other way and should be used
      *  instead of the unpurged operation which will cause unrecognized property
      *  errors.
-     * 
+     *
      * @param operation to be purged.
      * @return The same operation minus the prefixes.
      */
@@ -278,8 +281,8 @@ public class ASConnection {
             boolean prefixLocated = false;
 
             //Ex.
-            //Operation{operation='remove', address=Address{path: host=master,server-config=EAP server-six}, 
-            //additionalProperties={socket-binding-port-offset=0, name=EAP server-six, auto-start=false, group=, 
+            //Operation{operation='remove', address=Address{path: host=master,server-config=EAP server-six},
+            //additionalProperties={socket-binding-port-offset=0, name=EAP server-six, auto-start=false, group=,
             //socket-binding-group=}}
 
             //ADDRESS parsing
@@ -382,8 +385,8 @@ public class ASConnection {
                 return failure;
             }
             //spinder 2/22/12: if unparsable JSON detected remove it. TODO: see if fixed with later version of jackson
-            //This needs to be in place until i)Jackson version where this is fixed or 
-            //                                ii) fix for https://issues.jboss.org/browse/JBPAPP-8233 
+            //This needs to be in place until i)Jackson version where this is fixed or
+            //                                ii) fix for https://issues.jboss.org/browse/JBPAPP-8233
             if (as7ResultSerialization.indexOf(UNPARSABLE_JSON) > -1) {
                 if (verbose) {
                     log.warn("------ Detected unparsable JSON <" + as7ResultSerialization + ">.");

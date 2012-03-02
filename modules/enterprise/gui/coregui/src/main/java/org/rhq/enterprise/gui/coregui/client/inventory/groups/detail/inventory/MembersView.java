@@ -31,6 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
@@ -55,9 +56,10 @@ public class MembersView extends ResourceSearchView {
     protected void configureTable() {
         super.configureTable();
 
-        addTableAction(extendLocatorId("Members"), MSG.view_groupInventoryMembers_button_updateMembership() + "...",
-            new AbstractTableAction((this.canModifyMembers) ? TableActionEnablement.ALWAYS
-                : TableActionEnablement.NEVER) {
+        Log.debug("MembersView canModifyMembers: "+ canModifyMembers);
+        if(canModifyMembers){
+        addTableAction(extendLocatorId("Members"), MSG.view_groupInventoryMembers_button_updateMembership(),
+            new AbstractTableAction( TableActionEnablement.ALWAYS ) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembersWindow"));
@@ -80,10 +82,10 @@ public class MembersView extends ResourceSearchView {
                         }
                     });
 
-                    ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(MembersView.this
-                        .extendLocatorId("View"), MembersView.this.groupId);
+                        ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(MembersView.this
+                                .extendLocatorId("View"), MembersView.this.groupId);
 
-                    membershipView.setSaveButtonHandler(new ClickHandler() {
+                        membershipView.setSaveButtonHandler(new ClickHandler() {
 
                         public void onClick(ClickEvent event) {
                             winModal.markForDestroy();
@@ -92,7 +94,7 @@ public class MembersView extends ResourceSearchView {
                         }
                     });
 
-                    membershipView.setCancelButtonHandler(new ClickHandler() {
+                        membershipView.setCancelButtonHandler(new ClickHandler() {
 
                         public void onClick(ClickEvent event) {
                             winModal.destroy();
@@ -104,6 +106,7 @@ public class MembersView extends ResourceSearchView {
                     winModal.show();
                 }
             });
+        }
     }
 
 }

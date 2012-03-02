@@ -26,7 +26,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -147,25 +146,20 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     }
 
     private void discoverForResourceRecursive(Resource parent, InventoryReport report) throws PluginContainerException {
-        Set<Resource> children = parent.getChildResources();
-        if (!children.isEmpty()) {
-            Set<Resource> childrenCopy = new HashSet<Resource>(children); // prevent concurrent mod
-            for (Resource child : childrenCopy) {
-                // See if the child has new children itself. Then we check those children to see if there are grandchildren.
-                // Note that if the child has already been added to the report, there is no need to process it again, so skip it.
-                boolean alreadyProcessed = report.getAddedRoots().contains(child);
-                if (!alreadyProcessed) {
-                    discoverForResource(child, report, alreadyProcessed);
-                    // We need to recurse here even though discoverForResource recurses over child, too.
-                    // This is because that discovery above only goes over newly discovered resources.
-                    // It is possible this child has already existing children (e.g. previously manually added)
-                    // that they themselves might have additional new children that need discovering.
-                    discoverForResourceRecursive(child, report);
-                }
+        for (Resource child : parent.getChildResources()) {
+            // See if the child has new children itself. Then we check those children to see if there are grandchildren.
+            // Note that if the child has already been added to the report, there is no need to process it again, so skip it.
+            boolean alreadyProcessed = report.getAddedRoots().contains(child);
+            if (!alreadyProcessed) {
+                discoverForResource(child, report, alreadyProcessed);
+                // We need to recurse here even though discoverForResource recurses over child, too.
+                // This is because that discovery above only goes over newly discovered resources.
+                // It is possible this child has already existing children (e.g. previously manually added)
+                // that they themselves might have additional new children that need discovering.
+                discoverForResourceRecursive(child, report);
             }
-            childrenCopy.clear(); // help GC
-            childrenCopy = null;
         }
+
         return;
     }
 
@@ -180,7 +174,9 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
     private void discoverForResource(Resource parent, InventoryReport report, boolean parentReported)
         throws PluginContainerException {
         // TODO GH: If resource.isRuntimeDiscoveryEnabled
-        // TODO GH: If resoure.isInventoryStatusCommitted
+        // TODO GH: If resource.isInventoryStatusCommitted
+
+        log.debug("Discovering child Resources for " + parent + "...");
 
         ResourceContainer parentContainer = this.inventoryManager.getResourceContainer(parent);
         if (parentContainer == null) {
@@ -199,7 +195,7 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         if (parent.getInventoryStatus() != InventoryStatus.COMMITTED) {
             if (log.isDebugEnabled()) {
-                log.debug("Parent [" + parent + "] must be imported/commited before service scan can run.");
+                log.debug("Parent [" + parent + "] must be imported/committed before service scan can run.");
             }
             return;
         }
@@ -236,7 +232,8 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
 
         // For each child resource type of the server, do a discovery for resources of that type
         PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
-        for (ResourceType childResourceType : parent.getResourceType().getChildResourceTypes()) {
+        Set<ResourceType> childResourceTypes = parent.getResourceType().getChildResourceTypes();
+        for (ResourceType childResourceType : childResourceTypes) {
             try {
                 // Make sure we have a discovery component for that type, otherwise there is nothing to do
                 ResourceDiscoveryComponent discoveryComponent = null;

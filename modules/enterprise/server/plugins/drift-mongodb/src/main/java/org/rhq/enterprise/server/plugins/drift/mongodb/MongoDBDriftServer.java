@@ -283,27 +283,39 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     @Override
     public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
         DriftChangeSetCriteria criteria) {
+        Mapper mapper = new Mapper();
         List<MongoDBChangeSet> changeSets = changeSetDAO.findByChangeSetCritiera(criteria);
         PageList<DriftChangeSetDTO> results = new PageList<DriftChangeSetDTO>();
+        
         for (MongoDBChangeSet changeSet : changeSets) {
-            DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
-            Set<DriftDTO> entries = new HashSet<DriftDTO>();
-            for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
-                entries.add(toDTO(entry, changeSetDTO));
+            DriftChangeSetDTO changeSetDTO = mapper.toDTO(changeSet);
+            if (criteria.isFetchDrifts()) {
+                Set<DriftDTO> entries = new HashSet<DriftDTO>();
+                for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
+                    DriftDTO driftDTO = mapper.toDTO(entry);
+                    driftDTO.setChangeSet(changeSetDTO);
+                    entries.add(driftDTO);
+                }
+                changeSetDTO.setDrifts(entries);
             }
-            changeSetDTO.setDrifts(entries);
             results.add(changeSetDTO);
         }
-
+        
         return results;
     }
 
     @Override
     public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+        Mapper mapper = new Mapper();
         List<MongoDBChangeSetEntry> entries = changeSetDAO.findEntries(criteria);
         PageList<DriftDTO> results = new PageList<DriftDTO>();
+
         for (MongoDBChangeSetEntry entry : entries) {
-            results.add(toDTO(entry, toDTO(entry.getChangeSet())));
+            DriftDTO driftDTO = mapper.toDTO(entry);
+            if (criteria.isFetchChangeSet()) {
+                driftDTO.setChangeSet(mapper.toDTO(entry.getChangeSet()));
+            }
+            results.add(driftDTO);
         }
 
         return results;
@@ -311,16 +323,20 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
-        List<MongoDBChangeSet> changeSets = changeSetDAO.findByDriftCriteria(criteria);
+        Mapper mapper = new Mapper();
+        List<MongoDBChangeSetEntry> entries = changeSetDAO.findEntries(criteria);
         Map<Integer, Resource> resources = loadResourceMap(subject, criteria.getFilterResourceIds());
         PageList<DriftComposite> results = new PageList<DriftComposite>();
 
-        for (MongoDBChangeSet changeSet : changeSets) {
-            DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
-            for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
-                results.add(new DriftComposite(toDTO(entry, changeSetDTO), resources.get(changeSet.getResourceId()),
-                        changeSet.getDriftDefinitionName()));
+        for (MongoDBChangeSetEntry entry : entries) {
+            MongoDBChangeSet changeSet = entry.getChangeSet();
+            DriftDTO driftDTO = mapper.toDTO(entry);
+            if (criteria.isFetchChangeSet()) {
+                DriftChangeSetDTO changeSetDTO = mapper.toDTO(changeSet);
+                driftDTO.setChangeSet(changeSetDTO);
             }
+            results.add(new DriftComposite(driftDTO, resources.get(changeSet.getResourceId()),
+                    changeSet.getDriftDefinitionName()));
         }
 
         return results;
@@ -370,43 +386,6 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         return map;
     }
 
-    DriftChangeSetDTO toDTO(MongoDBChangeSet changeSet) {
-        DriftChangeSetDTO dto = new DriftChangeSetDTO();
-        dto.setId(changeSet.getId());
-        // TODO copy resource id
-        dto.setDriftDefinitionId(changeSet.getDriftDefinitionId());
-        dto.setVersion(changeSet.getVersion());
-        dto.setCtime(changeSet.getCtime());
-        dto.setCategory(changeSet.getCategory());
-
-        return dto;
-    }
-
-    DriftDTO toDTO(MongoDBChangeSetEntry entry, DriftChangeSetDTO changeSetDTO) {
-        DriftDTO dto = new DriftDTO();
-        dto.setChangeSet(changeSetDTO);
-        dto.setId(entry.getId());
-        dto.setCtime(entry.getCtime());
-        dto.setPath(entry.getPath());
-        dto.setDirectory(entry.getDirectory());
-        dto.setCategory(entry.getCategory());
-
-        switch (entry.getCategory()) {
-            case FILE_ADDED:
-                dto.setNewDriftFile(newDriftFile(entry.getNewFileHash()));
-                break;
-            case FILE_CHANGED:
-                dto.setNewDriftFile(newDriftFile(entry.getNewFileHash()));
-                dto.setOldDriftFile(newDriftFile(entry.getOldFileHash()));
-                break;
-            default:  // FILE_REMOVED
-                dto.setOldDriftFile(newDriftFile(entry.getOldFileHash()));
-        }
-        
-        return dto;
-    }
-
-    @Override
     public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
         // if this is a resource level change set we need to fetch the definition so that
         // we can persist the definition name; otherwise, we will not be able to delete

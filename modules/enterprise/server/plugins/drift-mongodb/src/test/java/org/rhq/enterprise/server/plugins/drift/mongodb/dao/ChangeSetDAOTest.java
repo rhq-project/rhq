@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
+import org.bson.types.ObjectId;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;

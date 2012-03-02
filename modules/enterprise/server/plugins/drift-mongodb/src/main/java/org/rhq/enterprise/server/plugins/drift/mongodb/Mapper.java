@@ -53,7 +53,7 @@ public class Mapper {
             dto.setOldDriftFile(newDriftFileDTO(entry.getOldFileHash()));
         }
 
-        return null;
+        return dto;
     }
 
     private DriftFileDTO newDriftFileDTO(String hash) {

@@ -24,10 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.code.morphia.annotations.Embedded;
-import com.google.code.morphia.annotations.Entity;
-import com.google.code.morphia.annotations.Id;
-import com.google.code.morphia.annotations.PostLoad;
+import com.google.code.morphia.annotations.*;
 
 import org.bson.types.ObjectId;
 
@@ -46,10 +43,10 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     private static final long serialVersionUID = 1L;
 
     /**
-     * The database primary key. This is auto-generated.
+     * The database primary key.
      */
     @Id
-    private ObjectId id;
+    private ObjectId id = new ObjectId();
 
     /**
      * The time that the change set was created.
@@ -170,7 +167,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     public MongoDBChangeSet add(MongoDBChangeSetEntry entry) {
         entries.add(entry);
-        entry.setId(entries.size() - 1);
+        entry.setIndex(entries.size() - 1);
         entry.setChangeSet(this);
         return this;
     }
@@ -188,4 +185,5 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
             entry.setChangeSet(this);
         }
     }
+
 }

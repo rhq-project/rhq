@@ -27,6 +27,7 @@ import java.util.Properties;
 import javax.management.MBeanRegistration;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.ldap.InitialLdapContext;
@@ -141,13 +142,24 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                 configOptions = getLdapOptions(conf);
                 try {
                     validateLdapOptions(configOptions);
-                    ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
-                        AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                    this.log.info("Enabling RHQ LDAP JAAS Provider");
-                    configEntries.add(ace);
                 } catch (NamingException e) {
-                    this.log.info("Disabling RHQ LDAP JAAS Provider: " + e.getMessage(), e);
+                    String descriptiveMessage = null;
+                    if (e instanceof AuthenticationException) {
+                        descriptiveMessage = "The LDAP integration cannot function because the LDAP Bind credentials"
+                            + " for RHQ integration are incorrect. Contact the Administrator:" + e;
+                    } else {
+                        descriptiveMessage = "Problems encountered when communicating with LDAP server."
+                            + " Contact the Administrator:" + e;
+                    }
+                    this.log.error(descriptiveMessage, e);
                 }
+
+                //if the ldap properties are set correctly enable the LDAP module anyway
+                ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
+                    AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
+                this.log.info("Enabling RHQ JDBC-2 LDAP JAAS Provider...");
+                configEntries.add(ace);
+
             }
 
             AppConfigurationEntry[] config = configEntries.toArray(new AppConfigurationEntry[0]);
@@ -221,8 +233,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         }
 
-        log.debug("Validating LDAP with environment=" + env);
-        new InitialLdapContext(env, null);
+        log.debug("Validating LDAP with environment=" + env + "...");
+        new InitialLdapContext(env, null).close();
 
         return;
     }

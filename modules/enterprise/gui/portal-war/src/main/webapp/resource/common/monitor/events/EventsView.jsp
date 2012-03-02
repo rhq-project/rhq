@@ -145,11 +145,21 @@ function onLoad() {
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z",Locale.US);
 
         for (Availability avail : availabilities) {
-
+            String color;
+            AvailabilityType availType = avail.getAvailabilityType();
+            if ( availType == AvailabilityType.UP )
+                color = "#B0FFC5";
+            else if ( availType == AvailabilityType.DOWN )
+                color = "#F7A6A8";
+            else if ( availType == AvailabilityType.DISABLED )
+                color = "#FA7100";
+            else
+                color = "#656465";
+            
             out.write(", new Timeline.SpanHighlightDecorator({\n" +
 "                startDate:  \"" + sdf.format(avail.getStartTime()) + "\",\n" +
 "                endDate:    \"" + sdf.format(avail.getEndTime() == null ? new Date() : avail.getEndTime()) + "\",\n" +
-"                color:      \"" + (avail.getAvailabilityType() == AvailabilityType.UP ? "#B0FFC5":"#F7A6A8") +  "\",\n" +
+"                color:      \"" + color +  "\",\n" +
 "                opacity:    20,\n" +
 "                startLabel: \"\",\n" +
 "                endLabel:   \"\"\n" +

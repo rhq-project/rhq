@@ -231,8 +231,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         // if no avail check is scheduled or we're forcing the check, schedule the next check. Note that a forcedCheck
         // is "off-schedule" so we need to push out the next check.  
         if ((null == availabilityScheduleTime) || forceCheck) {
-            // if there is no availability schedule for the resource (not yet set, or maybe it's a platform) then
-            // always perform the avail check (note, platforms always return UP anyway).
+            // if there is no availability schedule (platform) then just perform the avail check
+            // (note, platforms always return UP anyway).
             if (null == availScheduleRequest) {
                 // System.out.println("------> (1) setting checkAvail true: no schedule request for " + res(resource));
                 checkAvail = true;

@@ -52,6 +52,8 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.util.FacetLockType;
@@ -223,6 +225,27 @@ public class ResourceContainer implements Serializable {
     }
 
     public MeasurementScheduleRequest getAvailabilitySchedule() {
+        // platforms don't have a schedule but other types should. If one has not yet been set (this can
+        // happen in various upgrade scenarios) set one, using a default interval. 
+        if (null == availabilitySchedule) {
+            MeasurementScheduleRequest request = null;
+            switch (this.resource.getResourceType().getCategory()) {
+            case PLATFORM:
+                break;
+            case SERVER:
+                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_TYPE_NAME,
+                    MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER, true, DataType.AVAILABILITY);
+                break;
+            case SERVICE:
+                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_TYPE_NAME,
+                    MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE, true, DataType.AVAILABILITY);
+                break;
+            }
+            if (null != request) {
+                setAvailabilitySchedule(request);
+            }
+        }
+
         return availabilitySchedule;
     }
 

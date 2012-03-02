@@ -36,11 +36,6 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
     private final Log log = LogFactory.getLog(MeasurementMetadataManagerBean.class);
 
-    static final Long AVAILABILITY_DEFAULT_PERIOD_SERVER = 60L * 1000; // 1 minute in ms
-    static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 5; // 5 minutes in ms
-    static final String AVAILABILITY_DESCRIPTION = "The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.";
-    static final String AVAILABILITY_DISPLAY_NAME = "Availability";
-
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityMgr;
 
@@ -104,7 +99,8 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                         // plugin will not be updated.  
                         boolean isAvail = MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(newDefinition.getName());
                         long defaultInterval = (ResourceCategory.SERVER == existingDefinition.getResourceType()
-                            .getCategory()) ? AVAILABILITY_DEFAULT_PERIOD_SERVER : AVAILABILITY_DEFAULT_PERIOD_SERVICE;
+                            .getCategory()) ? MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER
+                            : MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE;
                         boolean updateInterval = (isAvail && (defaultInterval == existingDefinition
                             .getDefaultInterval()));
                         existingDefinition.update(newDefinition, updateInterval);
@@ -174,10 +170,10 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         case PLATFORM:
             return result;
         case SERVER:
-            period = AVAILABILITY_DEFAULT_PERIOD_SERVER;
+            period = MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER;
             break;
         default:
-            period = AVAILABILITY_DEFAULT_PERIOD_SERVICE;
+            period = MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE;
         }
 
         MeasurementDefinition rhqAvailability = new MeasurementDefinition(newType,
@@ -185,8 +181,8 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         rhqAvailability.setDefaultInterval(period);
         rhqAvailability.setDefaultOn(true);
         rhqAvailability.setCategory(MeasurementCategory.AVAILABILITY);
-        rhqAvailability.setDisplayName(AVAILABILITY_DISPLAY_NAME);
-        rhqAvailability.setDescription(AVAILABILITY_DESCRIPTION);
+        rhqAvailability.setDisplayName(MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
+        rhqAvailability.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
         rhqAvailability.setDataType(DataType.AVAILABILITY);
         rhqAvailability.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
         rhqAvailability.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
@@ -207,8 +203,8 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
             // don't let the override muck with fixed field values, only defaultOn and defaultInterval
             override.setCategory(MeasurementCategory.AVAILABILITY);
-            override.setDisplayName(AVAILABILITY_DISPLAY_NAME);
-            override.setDescription(AVAILABILITY_DESCRIPTION);
+            override.setDisplayName(MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
+            override.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
             override.setDataType(DataType.AVAILABILITY);
             override.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
             override.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null

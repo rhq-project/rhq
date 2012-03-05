@@ -182,9 +182,9 @@ public class ProcessInfo {
         } catch (Exception e) {
             throw new SystemInfoException(e);
         }
-        if (log.isDebugEnabled()) {
+        if (log.isTraceEnabled()) {
             long elapsedTime = System.currentTimeMillis() - startTime;
-            log.debug("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms.");
+            log.trace("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms.");
         }
     }
 

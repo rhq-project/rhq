@@ -417,10 +417,6 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
-    // TODO: This method signature is flawed, because it only takes metric names. TRENDSUP/TRENDSDOWN metrics have two
-    //       corresponding metric defs - one for the raw value and one for the derived per-minute value. There's no
-    //       way to tell which value the caller wants. For now, it assumes the caller wants the raw value.
-    //      (ips, 09/05/08)
     // spinder 12/16/11. BZ 760139. Modified to return empty sets instead of 'null' even for erroneous conditions.
     //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues 
     //         won't have to additionally check for null values now. This is a safe and better pattern.       
@@ -452,8 +448,15 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementReport report = new MeasurementReport();
         Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementDataRequest dataRequest : requests) {
-            allMeasurements
-                .add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true, dataRequest.getType()));
+            // A non-zero schedule id is specified when the requested measurement
+            // is TRENDSUP or TRENDSDOWN.
+            if (dataRequest.getScheduleId() != 0) {
+                allMeasurements.add(new MeasurementScheduleRequest(dataRequest.getScheduleId(), dataRequest.getName(),
+                        0, true, dataRequest.getType(), dataRequest.getRawNumericType()));
+            } else {
+                allMeasurements.add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true,
+                        dataRequest.getType()));
+            }
         }
 
         try {
@@ -461,6 +464,19 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         } catch (Throwable t) {
             LOG.error("Could not get measurement values", t);
             return Collections.emptySet();
+        }
+
+        Iterator<MeasurementDataNumeric> iterator = report.getNumericData().iterator();
+        while (iterator.hasNext()) {
+            MeasurementDataNumeric numeric = iterator.next();
+            if (numeric.isPerMinuteCollection()) {
+                CachedValue currentValue = perMinuteCache.get(numeric.getScheduleId());
+                if (currentValue == null) {
+                    iterator.remove();
+                } else {
+                    numeric.setValue(calculatePerMinuteValue(numeric, currentValue));
+                }
+            }
         }
 
         Set<MeasurementData> values = new HashSet<MeasurementData>();
@@ -532,10 +548,14 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private Double updatePerMinuteMetric(MeasurementDataNumeric numeric) {
         CachedValue previousValue = this.perMinuteCache.get(numeric.getScheduleId());
         this.perMinuteCache.put(numeric.getScheduleId(), new CachedValue(numeric.getTimestamp(), numeric.getValue()));
+        return calculatePerMinuteValue(numeric, previousValue);
+    }
+
+    private Double calculatePerMinuteValue(MeasurementDataNumeric numeric, CachedValue currentValue) {
         Double perMinuteValue = null;
-        if (previousValue != null) {
-            long timeDifference = numeric.getTimestamp() - previousValue.timestamp;
-            perMinuteValue = (60000D / timeDifference) * (numeric.getValue() - previousValue.value);
+        if (currentValue != null) {
+            long timeDifference = numeric.getTimestamp() - currentValue.timestamp;
+            perMinuteValue = (60000D / timeDifference) * (numeric.getValue() - currentValue.value);
             if (numeric.getRawNumericType() == NumericType.TRENDSDOWN)
                 perMinuteValue *= -1D; // Multiply by -1, so per-minute value is positive.
             if (perMinuteValue < 0)

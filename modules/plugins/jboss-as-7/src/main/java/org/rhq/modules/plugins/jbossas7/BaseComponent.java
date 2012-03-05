@@ -52,7 +52,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -79,6 +78,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     private static final int INTERNAL_SIZE = INTERNAL.length();
     private static final String LOCALHOST = "localhost";
     private static final String DEFAULT_HTTP_MANAGEMENT_PORT = "9990";
+    private static final String MANAGED_SERVER = "Managed Server";
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
@@ -268,8 +268,16 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     public void deleteResource() throws Exception {
 
         log.info("delete resource: " + path + " ...");
+        if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
+            // We need to do two steps because of AS7-4032
+            Operation stop = new Operation("stop",getAddress());
+            Result res = getASConnection().execute(stop);
+            if (!res.isSuccess()) {
+                throw new IllegalStateException("Managed server @ " + path + " is still running and can't be stopped. Can't remove it");
+            }
+        }
         Operation op = new Remove(address);
-        ComplexResult res = connection.executeComplex(op);
+        Result res = connection.execute(op);
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         if (path.contains("server-group")) {
@@ -481,7 +489,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             operation = new Operation(op,theAddress);
             operation.addAdditionalProperty("profile",profile);
         } else if (what.equals("server")) {
-            if (context.getResourceType().getName().equals("JBossAS7 Managed Server")) {
+            if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
                 String host = pluginConfiguration.getSimpleValue("domainHost","local");
                 theAddress.add("host", host);
                 theAddress.add("server-config", myServerName);
@@ -490,6 +498,11 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             else if (context.getResourceType().getName().equals("Host")) {
                 theAddress.add(address);
                 String serverName = parameters.getSimpleValue("name",null);
+                if (serverName==null || serverName.trim().contains(" ")) {
+                    OperationResult badServerName = new OperationResult();
+                    badServerName.setErrorMessage("Server name must not be null or contain spaces");
+                    return badServerName;
+                }
                 theAddress.add("server-config", serverName);
                 Map<String,Object> props = new HashMap<String, Object>();
                 String serverGroup = parameters.getSimpleValue("group",null);

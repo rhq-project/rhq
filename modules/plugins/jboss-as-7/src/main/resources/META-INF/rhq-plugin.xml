@@ -294,14 +294,6 @@
                     <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
                 </results>
             </operation>
-            <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
-                <parameters>
-                    <c:simple-property name="name" description="Name of the server to be removed" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
-                </results>
-            </operation>
 
             <resource-configuration>
                 <c:group name="children:system-property:name+" displayName="System-properties">
@@ -332,6 +324,7 @@
         <server name="Managed Server"
                 discovery="ManagedASDiscovery"
                 class="ManagedASComponent"
+                createDeletePolicy="delete-only"
                 >
             <plugin-configuration>
                 <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>

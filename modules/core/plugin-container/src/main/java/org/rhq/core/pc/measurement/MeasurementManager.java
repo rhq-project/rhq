@@ -23,12 +23,10 @@
 package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -48,7 +46,6 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -420,7 +417,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     // spinder 12/16/11. BZ 760139. Modified to return empty sets instead of 'null' even for erroneous conditions.
     //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues 
     //         won't have to additionally check for null values now. This is a safe and better pattern.       
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
         if (requests.size() == 0) {
             // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
             return Collections.emptySet();
@@ -446,21 +443,12 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
 
         MeasurementReport report = new MeasurementReport();
-        Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
-        for (MeasurementDataRequest dataRequest : requests) {
-            // A non-zero schedule id is specified when the requested measurement
-            // is TRENDSUP or TRENDSDOWN.
-            if (dataRequest.getScheduleId() != 0) {
-                allMeasurements.add(new MeasurementScheduleRequest(dataRequest.getScheduleId(), dataRequest.getName(),
-                        0, true, dataRequest.getType(), dataRequest.getRawNumericType()));
-            } else {
-                allMeasurements.add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true,
-                        dataRequest.getType()));
-            }
+        for (MeasurementScheduleRequest request : requests) {
+            request.setEnabled(true);
         }
 
         try {
-            measurementFacet.getValues(report, allMeasurements);
+            measurementFacet.getValues(report, requests);
         } catch (Throwable t) {
             LOG.error("Could not get measurement values", t);
             return Collections.emptySet();
@@ -612,8 +600,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         String traitValue = getCachedTraitValue(traitScheduleId.intValue());
         if (traitValue == null) {
             // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
-            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
-            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
+            Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
+            requests.add(new MeasurementScheduleRequest(MeasurementScheduleRequest.NO_SCHEDULE_ID, traitName, 0,
+                true, DataType.TRAIT));
             Set<MeasurementData> dataset = getRealTimeMeasurementValue(container.getResource().getId(), requests);
             if (dataset != null && dataset.size() == 1) {
                 Object value = dataset.iterator().next().getValue();

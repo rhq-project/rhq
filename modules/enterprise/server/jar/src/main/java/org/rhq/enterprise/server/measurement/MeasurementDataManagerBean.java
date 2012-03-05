@@ -63,11 +63,11 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.Agent;
@@ -790,9 +790,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         query.setParameter("resourceIds", Arrays.asList(resourceId));
         List<MeasurementSchedule> schedules = query.getResultList();
 
+        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>(schedules.size());
+        for (MeasurementSchedule schedule : schedules) {
+            requests.add(new MeasurementScheduleRequest(schedule));
+        }
+
         AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
-            createRequests(schedules));
+        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,requests);
         //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
         //            Global UI Exceptions when attempting to serialize null responses.
         if (values == null) {
@@ -831,15 +835,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
 
         return result;
-    }
-
-    private List<MeasurementDataRequest> createRequests(List<MeasurementSchedule> schedules) {
-        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
-        for (MeasurementSchedule schedule : schedules) {
-            requests.add(new MeasurementDataRequest(schedule.getId(), schedule.getDefinition().getName(),
-                    schedule.getDefinition().getDataType(), schedule.getDefinition().getRawNumericType()));
-        }
-        return requests;
     }
 
     /**

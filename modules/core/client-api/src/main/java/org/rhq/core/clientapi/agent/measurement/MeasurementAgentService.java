@@ -22,13 +22,11 @@
  */
 package org.rhq.core.clientapi.agent.measurement;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 
 /**
@@ -68,13 +66,15 @@ public interface MeasurementAgentService {
      * not even scheduled for collection.
      *
      * <p>Measurement data collected via this call will have its non-persistent "name" field set the name of the
-     * measurement, but will not have scheduleIds set.</p>
+     * measurement, but will not have scheduleIds set except for per minute metrics. Requests for per minute
+     * metrics must specify the schedule id. This is because of the way a per minute metric is calculated which
+     * involved the previously collected value. That value is obtained from a cache which is keyed by schedule id.</p>
      *
      * @param resourceId id of resource to collect from
      * @param requests Each request specifies a metric to be collected along with its corresponding data type
      * @return the set of collected measurements with their data values collected
      */
-    Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests);
+    Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests);
 
     Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId);
 }

@@ -18,11 +18,14 @@
  */
 package org.rhq.core.pc;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -38,8 +41,8 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -657,9 +660,10 @@ public class StandaloneContainer {
         String[] metricNames = new String[tokens.length - 2];
         System.arraycopy(tokens, 2, metricNames, 0, tokens.length - 2);
 
-        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
         for (String metric : metricNames) {
-            requests.add(new MeasurementDataRequest(metric, dataType));
+            requests.add(new MeasurementScheduleRequest(MeasurementScheduleRequest.NO_SCHEDULE_ID, metric, 0, true,
+                dataType));
         }
 
         Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(resourceId, requests);

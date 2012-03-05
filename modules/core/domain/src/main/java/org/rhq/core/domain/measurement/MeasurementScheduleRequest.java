@@ -34,6 +34,12 @@ import java.io.Serializable;
 public class MeasurementScheduleRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * This constant can be used with requests to obtain live metric data. A valid schedule
+     * id is only needed for live metric data when then metric is TRENDSUP or TRENDSDOWN
+     */
+    public static final int NO_SCHEDULE_ID = 1;
+
     private int scheduleId;
     private String name;
     private long interval;

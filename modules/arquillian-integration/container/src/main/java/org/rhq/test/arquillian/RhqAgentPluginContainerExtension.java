@@ -22,6 +22,10 @@ package org.rhq.test.arquillian;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.core.spi.LoadableExtension;
 import org.jboss.arquillian.test.spi.TestEnricher;
+import org.jboss.arquillian.test.spi.enricher.resource.ResourceProvider;
+
+import org.rhq.test.arquillian.util.PluginContainerClassEnhancer;
+import org.rhq.test.arquillian.util.PluginContainerLookup;
 
 /**
  * 
@@ -30,9 +34,18 @@ import org.jboss.arquillian.test.spi.TestEnricher;
  */
 public class RhqAgentPluginContainerExtension implements LoadableExtension {
 
+    //do this as the first thing... we need to enhance the PluginContainer
+    //class before it gets referenced by any other classes in this extension
+    static {
+        PluginContainerClassEnhancer.init();
+    }
+
     @Override
-    public void register(ExtensionBuilder builder) {
+    public void register(ExtensionBuilder builder) {       
+        builder.observer(PluginContainerLookup.class);
+        
         builder.service(DeployableContainer.class, RhqAgentPluginContainer.class)
-        .service(TestEnricher.class, RhqAgentPluginContainerTestEnricher.class);
+        .service(TestEnricher.class, RhqAgentPluginContainerTestEnricher.class)
+        .service(ResourceProvider.class, PluginContainerProvider.class);
     }
 }

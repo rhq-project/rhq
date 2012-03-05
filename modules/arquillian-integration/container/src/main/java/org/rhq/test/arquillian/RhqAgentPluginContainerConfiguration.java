@@ -14,20 +14,39 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 public class RhqAgentPluginContainerConfiguration extends PluginContainerConfiguration implements
 		ContainerConfiguration  {
 
-    private String deploymentName; 
+    private String serverServicesImplementationClassName;
     
-    /**
-     * @return the deploymentName
-     */
-    public String getDeploymentName() {
-        return deploymentName;
+    public RhqAgentPluginContainerConfiguration() {
+        //hardcode some defaults
+        setAvailabilityScanInitialDelay(Long.MAX_VALUE);
+        setAvailabilityScanPeriod(Long.MAX_VALUE);
+        setConfigurationDiscoveryInitialDelay(Long.MAX_VALUE);
+        setConfigurationDiscoveryPeriod(Long.MAX_VALUE);
+        setContentDiscoveryInitialDelay(Long.MAX_VALUE);
+        setContentDiscoveryPeriod(Long.MAX_VALUE);
+        setDriftDetectionInitialDelay(Long.MAX_VALUE);
+        setDriftDetectionPeriod(Long.MAX_VALUE);
+        setEventSenderInitialDelay(Long.MAX_VALUE);
+        setEventSenderPeriod(Long.MAX_VALUE);
+        setMeasurementCollectionInitialDelay(Long.MAX_VALUE);
+        setServerDiscoveryInitialDelay(Long.MAX_VALUE);
+        setServerDiscoveryPeriod(Long.MAX_VALUE);
+        setServiceDiscoveryInitialDelay(Long.MAX_VALUE);
+        setServiceDiscoveryPeriod(Long.MAX_VALUE);  
     }
     
     /**
-     * @param deploymentName the deploymentName to set
+     * @return the serverServicesImplementationClassName
      */
-    public void setDeploymentName(String deploymentName) {
-        this.deploymentName = deploymentName;
+    public String getServerServicesImplementationClassName() {
+        return serverServicesImplementationClassName;
+    }
+    
+    /**
+     * @param value the serverServicesImplementationClassName to set
+     */
+    public void setServerServicesImplementationClassName(String value) {
+        this.serverServicesImplementationClassName = value;
     }
     
     @Override

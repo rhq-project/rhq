@@ -3,10 +3,15 @@ package org.rhq.test.arquillian;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
+import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -24,6 +29,7 @@ import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 /**
  * @author Lukas Krejci
  */
+@RunDiscovery(discoverServers = true)
 public class RhqAgentPluginContainerTest extends Arquillian {
 
     @Deployment(name = "simplePlugin")
@@ -40,8 +46,8 @@ public class RhqAgentPluginContainerTest extends Arquillian {
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
             .setPluginDescriptor("test-dependent-rhq-plugin.xml")
             .withRequiredPluginsFrom(
-                DependencyResolvers.use(MavenDependencyResolver.class).loadMetadataFromPom("pom.xml")
-                    .includeDependenciesFromPom("pom.xml").resolveAs(JavaArchive.class, new ScopeFilter("test")));
+                DependencyResolvers.use(MavenDependencyResolver.class).includeDependenciesFromPom("pom.xml")
+                    .resolveAs(JavaArchive.class, new ScopeFilter("test")));
 
     }
 
@@ -49,20 +55,23 @@ public class RhqAgentPluginContainerTest extends Arquillian {
     public static RhqAgentPluginArchive getManualPlugin() {
         return ShrinkWrap.create(RhqAgentPluginArchive.class, "test-manual-plugin-1.0.0.jar")
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
-            .setPluginDescriptor("test-manual-rhq-plugin.xml");        
+            .setPluginDescriptor("test-manual-rhq-plugin.xml");
     }
-    
-    @PluginContainerInstance(discoverServers = true)
+
+    @ArquillianResource
     private PluginContainer pluginContainer;
 
     @DiscoveredResources(plugin = "testPlugin", resourceType = "TestServer")
     private Set<Resource> testResources;
-    
+
     @DiscoveredResources(plugin = "testDependentPlugin", resourceType = "TestServer")
     private Set<Resource> testDependentResources;
-    
+
     @ResourceComponentInstances(plugin = "testDependentPlugin", resourceType = "TestServer")
     private Set<TestResourceComponent> dependentComponents;
+    
+    @ArquillianResource
+    private ContainerController pcController;
     
     @ArquillianResource
     private Deployer pluginDeployer;
@@ -82,37 +91,40 @@ public class RhqAgentPluginContainerTest extends Arquillian {
         Assert.assertEquals(testResources.size(), 1, "There should be one resource with the test type");
     }
 
-    @Test 
+    @Test
     public void testRequiredPluginsFoundAndDeployed() {
         Assert.assertEquals(testDependentResources.size(), 1,
             "The dependent plugin should have been loaded and its single resource discovered.");
     }
-    
+
     @Test
     public void testResourceComponentInstancesAssigned() {
-        Assert.assertEquals(dependentComponents.size(), 1, "There should be 1 resource component available");        
+        Assert.assertEquals(dependentComponents.size(), 1, "There should be 1 resource component available");
     }
-    
+
     @Test
     public void manualDeployment() {
         pluginDeployer.deploy("manuallyDeployed");
-        
+
         pluginContainer.getInventoryManager().executeServerScanImmediately();
-        
-        ResourceType expectedResourceType = new ResourceType("TestServer", "testManualPlugin", ResourceCategory.SERVER, null);
-        
+
+        ResourceType expectedResourceType =
+            new ResourceType("TestServer", "testManualPlugin", ResourceCategory.SERVER, null);
+
         Set<Resource> resources = pluginContainer.getInventoryManager().getResourcesWithType(expectedResourceType);
-        
+
         //make the deployment look as original again so that other tests still work
         pluginDeployer.undeploy("manuallyDeployed");
-        
-        Assert.assertEquals(resources.size(), 1, "There should be a newly discovered resource of a manually deployed plugin");
+
+        Assert.assertEquals(resources.size(), 1,
+            "There should be a newly discovered resource of a manually deployed plugin");
 
         //now try again, we should no longer see the resource
         pluginContainer.getInventoryManager().executeServerScanImmediately();
-        
+
         resources = pluginContainer.getInventoryManager().getResourcesWithType(expectedResourceType);
-        
-        Assert.assertEquals(resources.size(), 0, "There should no longer be any resource from the manually deployed plugin after undeployment.");
+
+        Assert.assertEquals(resources.size(), 0,
+            "There should no longer be any resource from the manually deployed plugin after undeployment.");
     }
 }

@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * 
  * Additionally, all login checks go through checkLoginStatus where the following happens
  *
- *  1)HTTP Get request sent to portal.war SessionAccessServlet which when logged in:
+ *  1)HTTP POST request sent to portal.war SessionAccessServlet, which, when logged in:
  *    yes)logged in returns (Subject.id):(Server side session id):(Last Accessed time)
  *    no )empty text and Login screen displayed
  *

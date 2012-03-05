@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
@@ -238,11 +239,13 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
         return null;
     }
 
+    @NotNull
     @Override
     public InventoryReport executeServerScanImmediately() throws PluginContainerException {
         return null;
     }
 
+    @NotNull
     @Override
     public InventoryReport executeServiceScanImmediately() throws PluginContainerException {
         return null;

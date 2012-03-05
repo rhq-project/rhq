@@ -633,7 +633,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             // if this user was authenticated via JDBC and thus has a principal, remove it
             if (isUserWithPrincipal(doomedSubject.getName())) {
-                deletePrincipal(subject, doomedSubject);
+                deletePrincipal(doomedSubject);
             }
 
             // one more thing, delete any owned groups
@@ -655,7 +655,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 }
             }
 
-            deleteSubject(subject, doomedSubject);
+            deleteSubject(doomedSubject);
         }
 
         return;
@@ -672,12 +672,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /**
      * Deletes the given {@link Subject} from the database.
      *
-     * @param  whoami        the person requesting the deletion
+     *
      * @param  doomedSubject identifies the subject to delete
      *
      * @throws PermissionException if caller tried to delete a system superuser
      */
-    private void deleteSubject(Subject whoami, Subject doomedSubject) throws PermissionException {
+    private void deleteSubject(Subject doomedSubject) throws PermissionException {
         if (authorizationManager.isSystemSuperuser(doomedSubject)) {
             throw new PermissionException("You cannot delete a system root user - they must always exist");
         }
@@ -693,12 +693,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     /**
      * Delete a user's principal from the internal database.
      *
-     * @param  whoami  The subject of the currently logged in user
+     *
      * @param  subject The user whose principal is to be deleted
      *
      * @throws PermissionException if the caller tried to delete a system superuser
      */
-    private void deletePrincipal(Subject whoami, Subject subject) throws PermissionException {
+    private void deletePrincipal(Subject subject) throws PermissionException {
         if (authorizationManager.isSystemSuperuser(subject)) {
             throw new PermissionException("You cannot delete the principal for the root user [" + subject.getName()
                 + "]");
@@ -818,6 +818,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     private void prepopulateLdapFields(Subject subject) {
+        // Note: A schema defining the standard LDAP attributes can be found here:
+        //       http://www.openldap.org/devel/gitweb.cgi?p=openldap.git;a=blob;f=servers/slapd/schema/core.ldif
         Map<String, String> ldapUserAttributes = ldapManager.findLdapUserDetails(subject.getName());
 
         String givenName = (ldapUserAttributes.get("givenName") != null) ?

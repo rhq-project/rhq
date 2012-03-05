@@ -547,6 +547,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @NotNull
     public InventoryReport executeServerScanImmediately() {
         try {
             return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serverScanExecutor).get();
@@ -558,6 +559,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @NotNull
     public InventoryReport executeServiceScanImmediately() {
         try {
             return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor).get();

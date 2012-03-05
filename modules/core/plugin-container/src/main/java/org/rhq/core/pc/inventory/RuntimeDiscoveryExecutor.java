@@ -33,6 +33,7 @@ import java.util.concurrent.Callable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -87,12 +88,13 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
         call();
     }
 
+    @NotNull
     public InventoryReport call() {
-        try {
-            String target = (resource != null) ? this.resource.toString() : "platform";
-            log.info("Running runtime discovery scan rooted at [" + target + "]");
+        String target = (resource != null) ? this.resource.toString() : "platform";
+        log.info("Executing runtime discovery scan rooted at [" + target + "]...");
+        InventoryReport report = new InventoryReport(inventoryManager.getAgent());
 
-            InventoryReport report = new InventoryReport(inventoryManager.getAgent());
+        try {
             report.setRuntimeReport(true);
             report.setStartTime(System.currentTimeMillis());
             runtimeDiscover(report);
@@ -117,12 +119,12 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
             }
 
             this.inventoryManager.handleReport(report);
-
-            return report;
         } catch (Exception e) {
-            log.error("Error running runtime report", e);
-            return null;
+            log.warn("Exception caught while executing runtime discovery scan rooted at [" + target + "].", e);
+            report.addError(new ExceptionPackage(Severity.Warning, e));
         }
+
+        return report;
     }
 
     private void runtimeDiscover(InventoryReport report) throws PluginContainerException {

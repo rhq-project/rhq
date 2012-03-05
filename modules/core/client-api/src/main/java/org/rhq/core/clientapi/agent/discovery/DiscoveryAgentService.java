@@ -75,16 +75,18 @@ public interface DiscoveryAgentService {
      *
      * @throws PluginContainerException if the server scan fails
      */
+    @NotNull
     InventoryReport executeServerScanImmediately() throws PluginContainerException;
 
     /**
-     * Executes an immediate plugin discovery scan for services and non-top-level servers. This looks for servers and
-     * services that are children of servers and services already in inventory.
+     * Executes an immediate plugin discovery scan for services and non-top-level servers. This looks for platform
+     * services and for servers and services that are children of servers or services already in inventory.
      *
      * @return the inventory report
      *
      * @throws PluginContainerException if the service scan fails
      */
+    @NotNull
     InventoryReport executeServiceScanImmediately() throws PluginContainerException;
 
     /**

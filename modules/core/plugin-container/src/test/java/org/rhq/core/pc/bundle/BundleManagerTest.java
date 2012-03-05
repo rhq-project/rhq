@@ -55,7 +55,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -460,13 +459,11 @@ public class BundleManagerTest {
 
     private class MockMeasurementManager extends MeasurementManager {
         @Override
-        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId,
+            Set<MeasurementScheduleRequest> requests) {
             // anytime this method gets called, it means our tests are asking for the test trait value. It will
             // always be the same value for all tests.
-            MeasurementDataRequest dataRequest = requests.iterator().next();
-            MeasurementScheduleRequest request = new MeasurementScheduleRequest(0, dataRequest.getName(), 0, true,
-                DataType.TRAIT);
-            MeasurementDataTrait data = new MeasurementDataTrait(request,
+            MeasurementDataTrait data = new MeasurementDataTrait(requests.iterator().next(),
                 MockInventoryManager.BUNDLE_CONFIG_LOCATION_MT);
             Set<MeasurementData> values = new HashSet<MeasurementData>();
             values.add(data);

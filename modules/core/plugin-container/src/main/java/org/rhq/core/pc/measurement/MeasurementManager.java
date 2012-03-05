@@ -23,12 +23,10 @@
 package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -48,7 +46,6 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -417,14 +414,10 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
-    // TODO: This method signature is flawed, because it only takes metric names. TRENDSUP/TRENDSDOWN metrics have two
-    //       corresponding metric defs - one for the raw value and one for the derived per-minute value. There's no
-    //       way to tell which value the caller wants. For now, it assumes the caller wants the raw value.
-    //      (ips, 09/05/08)
     // spinder 12/16/11. BZ 760139. Modified to return empty sets instead of 'null' even for erroneous conditions.
     //         Server side logging or erroneous runtime conditions still occurs, but callers to getRealTimeMeasurementValues 
     //         won't have to additionally check for null values now. This is a safe and better pattern.       
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
         if (requests.size() == 0) {
             // There's no need to even call getValues() on the ResourceComponent if the list of metric names is empty.
             return Collections.emptySet();
@@ -450,17 +443,28 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
 
         MeasurementReport report = new MeasurementReport();
-        Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
-        for (MeasurementDataRequest dataRequest : requests) {
-            allMeasurements
-                .add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true, dataRequest.getType()));
+        for (MeasurementScheduleRequest request : requests) {
+            request.setEnabled(true);
         }
 
         try {
-            measurementFacet.getValues(report, allMeasurements);
+            measurementFacet.getValues(report, requests);
         } catch (Throwable t) {
             LOG.error("Could not get measurement values", t);
             return Collections.emptySet();
+        }
+
+        Iterator<MeasurementDataNumeric> iterator = report.getNumericData().iterator();
+        while (iterator.hasNext()) {
+            MeasurementDataNumeric numeric = iterator.next();
+            if (numeric.isPerMinuteCollection()) {
+                CachedValue currentValue = perMinuteCache.get(numeric.getScheduleId());
+                if (currentValue == null) {
+                    iterator.remove();
+                } else {
+                    numeric.setValue(calculatePerMinuteValue(numeric, currentValue));
+                }
+            }
         }
 
         Set<MeasurementData> values = new HashSet<MeasurementData>();
@@ -532,10 +536,14 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     private Double updatePerMinuteMetric(MeasurementDataNumeric numeric) {
         CachedValue previousValue = this.perMinuteCache.get(numeric.getScheduleId());
         this.perMinuteCache.put(numeric.getScheduleId(), new CachedValue(numeric.getTimestamp(), numeric.getValue()));
+        return calculatePerMinuteValue(numeric, previousValue);
+    }
+
+    private Double calculatePerMinuteValue(MeasurementDataNumeric numeric, CachedValue currentValue) {
         Double perMinuteValue = null;
-        if (previousValue != null) {
-            long timeDifference = numeric.getTimestamp() - previousValue.timestamp;
-            perMinuteValue = (60000D / timeDifference) * (numeric.getValue() - previousValue.value);
+        if (currentValue != null) {
+            long timeDifference = numeric.getTimestamp() - currentValue.timestamp;
+            perMinuteValue = (60000D / timeDifference) * (numeric.getValue() - currentValue.value);
             if (numeric.getRawNumericType() == NumericType.TRENDSDOWN)
                 perMinuteValue *= -1D; // Multiply by -1, so per-minute value is positive.
             if (perMinuteValue < 0)
@@ -592,8 +600,9 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         String traitValue = getCachedTraitValue(traitScheduleId.intValue());
         if (traitValue == null) {
             // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
-            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
-            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
+            Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>();
+            requests.add(new MeasurementScheduleRequest(MeasurementScheduleRequest.NO_SCHEDULE_ID, traitName, 0,
+                true, DataType.TRAIT));
             Set<MeasurementData> dataset = getRealTimeMeasurementValue(container.getResource().getId(), requests);
             if (dataset != null && dataset.size() == 1) {
                 Object value = dataset.iterator().next().getValue();

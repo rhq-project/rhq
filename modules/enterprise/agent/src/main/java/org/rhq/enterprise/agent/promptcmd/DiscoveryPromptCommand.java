@@ -199,6 +199,10 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
         }
 
         if (full) {
+            if (!agent.getClientCommandSender().isSending()) {
+                out.println(MSG.getMsg(AgentI18NResourceKeys.DISCOVERY_AGENT_NOT_CONNECTED_TO_SERVER));
+            }
+
             // do a full discovery - we ignore the -p and -r and -i options and do everything
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             HashSet<ResourceType> blacklist = inventoryManager.getDiscoveryComponentProxyFactory()

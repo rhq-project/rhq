@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.mongodb.Mongo;
@@ -27,9 +30,6 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.test.JMockTest;
 import org.testng.annotations.BeforeClass;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;

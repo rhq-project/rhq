@@ -18,13 +18,35 @@
  */
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.jmock.Expectations;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
+import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
@@ -40,12 +62,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.*;
-import java.util.List;
-import java.util.Random;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.IOUtils.write;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
@@ -54,6 +70,7 @@ import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.normal;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode.plannedChanges;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -65,6 +82,8 @@ public class MongoDBDriftServerTest extends MongoDBTest {
     private Random random;
 
     private TestMongoDBDriftServer driftServer;
+    
+    private ChangeSetDAO changeSetDAO;
     
     @BeforeClass
     public void initClass() throws Exception {
@@ -96,11 +115,13 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         FileUtil.purge(basedir, true);
         getBaseDir().mkdirs();
 
+        changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
+
         driftServer = new TestMongoDBDriftServer();
         driftServer.setConnection(connection);
         driftServer.setMorphia(morphia);
         driftServer.setDatastore(ds);
-        driftServer.setChangeSetDAO(new ChangeSetDAO(morphia, connection, "rhqtest"));
+        driftServer.setChangeSetDAO(changeSetDAO);
         driftServer.setFileDAO(new FileDAO(ds.getDB()));
     }
 
@@ -141,8 +162,7 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         // use the subject argument.
         DriftChangeSetSummary actualSummary = driftServer.saveChangeSet(null, resourceId, changeSetZip);
 
-        // verify that the change set was persisted
-        ChangeSetDAO changeSetDAO = new ChangeSetDAO(morphia, connection, "rhqtest");
+        // verify that the change set was persisted        
         List<MongoDBChangeSet> changeSets = changeSetDAO.find().asList();
 
         assertEquals(changeSets.size(), 1, "Expected to find one change set in the database.");
@@ -349,23 +369,210 @@ public class MongoDBDriftServerTest extends MongoDBTest {
 
         driftServer.saveChangeSetFiles(null, createChangeSetContentZipFile(file1, file2));
 
-        assertFileContentPersisted(file1, file2);
-    }        
-    
-    private void assertFileContentPersisted(File... expectedFiles) throws Exception {
         FileDAO fileDAO = new FileDAO(ds.getDB());
-        
-        for (File expectedFile : expectedFiles) {
+
+        for (File expectedFile : asList(file1, file2)) {
             InputStream inputStream = fileDAO.findOne(expectedFile.getName());
             assertNotNull(inputStream, "Failed to find file in database with id " + expectedFile.getName());
             File actualFile = new File(getBaseDir(), "actualContent");
             actualFile.delete();
             StreamUtil.copy(inputStream, new FileOutputStream(actualFile));
             assertEquals(sha256(actualFile), sha256(expectedFile), "The SHA-256 hash in the database does not " +
-                "match that of " + expectedFile.getPath());
+                    "match that of " + expectedFile.getPath());
         }
     }
+    
+    @Test
+    public void persistNewInitialChangeSetForPinnedDriftDef() throws Exception {
+        DriftDefinition driftDef = new DriftDefinition(new Configuration());
+        driftDef.setId(1);
+        driftDef.setName("testdef");
 
+        // This is essentially a test hook. MongoDBDriftServer.persistChangeSet has to call
+        // back into DriftManagerBean to look up the drift definition to get the definition
+        // name. Setting the driftDef property here allows us to avoid introducing EJB into
+        // the test.
+        driftServer.driftDef = driftDef;
+                        
+        int resourceId = 1;
+
+        // First create the change set from which the pinned change set will be created
+        DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
+        changeSetDTO.setResourceId(resourceId);
+        changeSetDTO.setDriftDefinitionId(driftDef.getId());
+        changeSetDTO.setDriftHandlingMode(plannedChanges);
+        changeSetDTO.setCategory(COVERAGE);
+        changeSetDTO.setCtime(new Date().getTime());
+        changeSetDTO.setVersion(0);
+        
+        Set<DriftDTO> driftDTOs = new HashSet<DriftDTO>();
+        DriftDTO drift1DTO = new DriftDTO();
+        drift1DTO.setChangeSet(changeSetDTO);
+        drift1DTO.setCategory(FILE_ADDED);
+        drift1DTO.setPath("./1.bin");
+        drift1DTO.setDirectory(".");
+        drift1DTO.setCtime(new Date().getTime());
+        drift1DTO.setNewDriftFile(newDriftFile(sha256("./1.bin")));
+        driftDTOs.add(drift1DTO);
+        
+        DriftDTO drift2DTO = new DriftDTO();
+        drift2DTO.setChangeSet(changeSetDTO);
+        drift2DTO.setCategory(FILE_ADDED);
+        drift2DTO.setPath("./2.bin");
+        drift2DTO.setDirectory(".");
+        drift2DTO.setCtime(new Date().getTime());
+        drift2DTO.setNewDriftFile(newDriftFile(sha256("./2.bin")));
+        driftDTOs.add(drift2DTO);
+
+        changeSetDTO.setDrifts(driftDTOs);
+
+        driftServer.persistChangeSet(null, changeSetDTO);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(driftDef.getId());
+        criteria.fetchDrifts(true);
+        
+        List<MongoDBChangeSet> changeSets = changeSetDAO.findByChangeSetCritiera(criteria);
+        assertEquals(changeSets.size(), 1, "There should only be one change set for drift definition id " +
+                driftDef.getId());
+
+        Mapper mapper = new Mapper();
+        DriftChangeSetDTO actualChangeSet = mapper.toDTO(changeSets.get(0));
+        Set<DriftDTO> actualDrifts = new HashSet<DriftDTO>();
+        for (MongoDBChangeSetEntry entry : changeSets.get(0).getDrifts()) {
+            actualDrifts.add(mapper.toDTO(entry));
+        }
+
+        assertChangeSetMatches("Failed to persist change set", changeSetDTO, actualChangeSet);
+        assertDriftMatches("The drift should have been persisted in the change set", drift1DTO,
+                find(actualDrifts, "./1.bin"));
+        assertDriftFileMatches("Failed to persist the drift file data", drift1DTO.getNewDriftFile(),
+                find(actualDrifts, "./1.bin").getNewDriftFile());
+        assertDriftMatches("The drift should have been persisted in the change set", drift2DTO,
+                find(actualDrifts, "./2.bin"));
+        assertDriftFileMatches("Failed to persist the drift file data", drift2DTO.getNewDriftFile(),
+                find(actualDrifts, "./2.bin").getNewDriftFile());
+    }
+    
+    @Test
+    public void persistNewChangeSetForPinnedTemplate() throws Exception {
+        // First create the change set from which the pinned change set will be created
+        DriftChangeSetDTO changeSetDTO = new DriftChangeSetDTO();
+        changeSetDTO.setDriftHandlingMode(plannedChanges);
+        changeSetDTO.setCategory(COVERAGE);
+        changeSetDTO.setCtime(new Date().getTime());
+        changeSetDTO.setVersion(0);
+
+        Set<DriftDTO> driftDTOs = new HashSet<DriftDTO>();
+        DriftDTO drift1DTO = new DriftDTO();
+        drift1DTO.setChangeSet(changeSetDTO);
+        drift1DTO.setCategory(FILE_ADDED);
+        drift1DTO.setPath("./1.bin");
+        drift1DTO.setDirectory(".");
+        drift1DTO.setCtime(new Date().getTime());
+        drift1DTO.setNewDriftFile(newDriftFile(sha256("./1.bin")));
+        driftDTOs.add(drift1DTO);
+
+        DriftDTO drift2DTO = new DriftDTO();
+        drift2DTO.setChangeSet(changeSetDTO);
+        drift2DTO.setCategory(FILE_ADDED);
+        drift2DTO.setPath("./2.bin");
+        drift2DTO.setDirectory(".");
+        drift2DTO.setCtime(new Date().getTime());
+        drift2DTO.setNewDriftFile(newDriftFile(sha256("./2.bin")));
+        driftDTOs.add(drift2DTO);
+
+        changeSetDTO.setDrifts(driftDTOs);
+
+        driftServer.persistChangeSet(null, changeSetDTO);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.fetchDrifts(true);
+
+        List<MongoDBChangeSet> changeSets = changeSetDAO.findByChangeSetCritiera(criteria);
+        assertEquals(changeSets.size(), 1, "There should only be one change set.");
+
+        Mapper mapper = new Mapper();
+        DriftChangeSetDTO actualChangeSet = mapper.toDTO(changeSets.get(0));
+        Set<DriftDTO> actualDrifts = new HashSet<DriftDTO>();
+        for (MongoDBChangeSetEntry entry : changeSets.get(0).getDrifts()) {
+            actualDrifts.add(mapper.toDTO(entry));
+        }
+
+        assertChangeSetMatches("Failed to persist change set", changeSetDTO, actualChangeSet);
+        assertDriftMatches("The drift should have been persisted in the change set", drift1DTO,
+                find(actualDrifts, "./1.bin"));
+        assertDriftFileMatches("Failed to persist the drift file data", drift1DTO.getNewDriftFile(),
+                find(actualDrifts, "./1.bin").getNewDriftFile());
+        assertDriftMatches("The drift should have been persisted in the change set", drift2DTO,
+                find(actualDrifts, "./2.bin"));
+        assertDriftFileMatches("Failed to persist the drift file data", drift2DTO.getNewDriftFile(),
+                find(actualDrifts, "./2.bin").getNewDriftFile());
+    }
+
+    /**
+     * Performs a property-wise comparison of the change set DTOs. The id, ctime, and drift
+     * properties are excluded from comparison.
+     * 
+     * @param msg An error message
+     * @param expected 
+     * @param actual 
+     */
+    private void assertChangeSetMatches(String msg, DriftChangeSetDTO expected, DriftChangeSetDTO actual) {
+        assertPropertiesMatch(msg + ": " + DriftChangeSetDTO.class.getSimpleName() + " objects do not match.",
+                expected, actual, "id", "ctime", "drifts");
+    }
+
+    /**
+     * Performs a property-wise comparison of the drift DTOs. The id, ctime, changeSet,
+     * oldDriftFile, and newDriftFile properties are excluded from comparison. The 
+     * changeSet, oldDriftFile, and newDriftFile properties should be verified using the
+     * {@link #assertChangeSetMatches(String, DriftChangeSetDTO, DriftChangeSetDTO)} and
+     * the {@link #assertDriftFileMatches(String, DriftFileDTO, DriftFileDTO)} methods
+     * respectively.
+     * 
+     * @param msg
+     * @param expected
+     * @param actual
+     */
+    private void assertDriftMatches(String msg, DriftDTO expected, DriftDTO actual) {
+        assertPropertiesMatch(msg + ": " + DriftDTO.class.getSimpleName() + " objects do not match.",
+                expected, actual, "id", "ctime", "changeSet", "oldDriftFile", "newDriftFile");
+    }
+
+    /**
+     * Performs a property-wise comparison of the drift file DTOs.
+     * 
+     * @param msg
+     * @param expected
+     * @param actual
+     */
+    private void assertDriftFileMatches(String msg, DriftFileDTO expected, DriftFileDTO actual) {
+        assertPropertiesMatch(msg + ": " + DriftFileDTO.class.getSimpleName() + " objects do not match.", expected,
+                actual);    
+    }
+
+    /**
+     * Searches the collection of drifts for one with a matching path. The first match
+     * found is returned. An assertion error is thrown if no match is found.
+     *
+     * @param drifts
+     * @param path
+     * @param <D>
+     * @return
+     */
+    private <D extends Drift<?, ?>> D find(Collection<D> drifts, String path) {
+        D match = null;
+        for (D drift : drifts) {
+            if (path.equals(drift.getPath())) {
+                match = drift;
+                break;
+            }
+        }
+        assertNotNull(match, "Failed to find drift with path [" + path + "]");
+        return match;
+    }
+    
     /**
      * Generates a change set zip file. This zip file contains a single entry, the change
      * set report or meta data. The file is named changeset.zip and is written to
@@ -511,9 +718,17 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         return file;
     }
 
+    private DriftFileDTO newDriftFile(String hash) {
+        DriftFileDTO file = new DriftFileDTO();
+        file.setHashId(hash);
+        return file;
+    }
+
     private static class TestMongoDBDriftServer extends MongoDBDriftServer {
         
         public DriftAgentService driftAgentService;
+        
+        public DriftDefinition driftDef;
         
         @Override
         public DriftAgentService getDriftAgentService(int resourceId) {
@@ -522,6 +737,11 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         
         public void setDriftAgentService(DriftAgentService driftAgentService) {
             this.driftAgentService = driftAgentService;
+        }
+
+        @Override
+        protected DriftDefinition getDriftDef(Subject subject, int id) {
+            return driftDef;
         }
     }
 

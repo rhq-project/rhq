@@ -32,15 +32,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.google.code.morphia.Datastore;
-import com.google.code.morphia.Key;
 import com.google.code.morphia.Morphia;
-import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 import com.mongodb.gridfs.GridFSDBFile;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bson.types.ObjectId;
+
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.FileEntry;
@@ -463,7 +461,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         return StreamUtil.slurp(file.getInputStream());
     }
     
-    private DriftDefinition getDriftDef(Subject subject, int id) {
+    protected DriftDefinition getDriftDef(Subject subject, int id) {
         DriftManagerLocal driftMgr = LookupUtil.getDriftManager();
         return driftMgr.getDriftDefinition(subject, id);
     }

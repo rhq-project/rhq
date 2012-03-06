@@ -3,15 +3,11 @@ package org.rhq.test.arquillian;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.TargetsContainer;
-import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -24,6 +20,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**
@@ -70,6 +67,9 @@ public class RhqAgentPluginContainerTest extends Arquillian {
     @ResourceComponentInstances(plugin = "testDependentPlugin", resourceType = "TestServer")
     private Set<TestResourceComponent> dependentComponents;
     
+    @ResourceContainers(plugin = "testDependentPlugin", resourceType = "TestServer")
+    private Set<ResourceContainer> dependentResourceContainers;
+    
     @ArquillianResource
     private ContainerController pcController;
     
@@ -102,6 +102,10 @@ public class RhqAgentPluginContainerTest extends Arquillian {
         Assert.assertEquals(dependentComponents.size(), 1, "There should be 1 resource component available");
     }
 
+    @Test
+    public void testResourceContainersAssigned() {
+        Assert.assertEquals(dependentResourceContainers.size(), 1, "There should be one resource container available");
+    }
     @Test
     public void manualDeployment() {
         pluginDeployer.deploy("manuallyDeployed");

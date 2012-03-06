@@ -37,6 +37,10 @@ public class NavigationItem {
         this(name, name.getIcon().getIcon16x16Path(), viewFactory, true);
     }
 
+    public NavigationItem(ViewName name, String icon, ViewFactory viewFactory) {
+        this(name, icon, viewFactory, true);
+    }
+
     public NavigationItem(ViewName name,  ViewFactory viewFactory, boolean enabled) {
         this.icon = name.getIcon().getIcon16x16Path();
         this.viewName = name;

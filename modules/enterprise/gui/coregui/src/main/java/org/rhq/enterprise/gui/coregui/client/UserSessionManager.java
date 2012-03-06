@@ -144,7 +144,7 @@ public class UserSessionManager {
     public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
         //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
         //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        final RequestBuilder b = createSessionAccessRequestBuilder();
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -364,7 +364,7 @@ public class UserSessionManager {
      * @param loggedInSubject Subject with updated session
      */
     private static void scheduleWebUserUpdate(final Subject loggedInSubject) {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        final RequestBuilder b = createSessionAccessRequestBuilder();
         //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
         b.setHeader(HEADER_WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
         try {
@@ -596,12 +596,10 @@ public class UserSessionManager {
     }
 
     private static void refreshHttpSession() {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
-
+        final RequestBuilder b = createSessionAccessRequestBuilder();
         // add header to signal SessionAccessServlet to refresh the http lastAccess time (basically a no-op as the
         // request will make that happen).
         b.setHeader(HEADER_LAST_ACCESS_UPDATE, "dummy");
-
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -619,6 +617,12 @@ public class UserSessionManager {
         } finally {
             httpSessionTimer.schedule(SESSION_ACCESS_REFRESH);
         }
+    }
+
+    private static RequestBuilder createSessionAccessRequestBuilder() {
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        b.setHeader("Accept", "text/plain");
+        return b;
     }
 
 }

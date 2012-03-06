@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,9 +23,9 @@
 package org.rhq.enterprise.gui.authentication;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -48,10 +48,9 @@ public class SessionAccessServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpServletResponse response = (HttpServletResponse) resp;
-        HttpServletRequest request = (HttpServletRequest) req;
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+    {
+        response.setContentType("text/plain");
         response.addHeader("Pragma", "no-cache");
         response.addHeader("Cache-Control", "no-cache");
         // Stronger according to blog comment below that references HTTP spec
@@ -63,7 +62,8 @@ public class SessionAccessServlet extends HttpServlet {
         //if a session does not already exist this call will create one
         HttpSession session = request.getSession();
 
-        //check for web user update request from coregui. This is usually only set during ldap logins(case insensitive or registration.)
+        // check for web user update request from coregui. This is usually only set during ldap logins (case insensitive
+        // or registration.)
         String sessionWebUserUpdate = request.getHeader("rhq_webuser_update");
 
         // check for HTTP session lastAccess update request from coregui. This "ping" happens at regular intervals
@@ -74,8 +74,8 @@ public class SessionAccessServlet extends HttpServlet {
         // If this is an HTTP session update request just return success. The access time has been updated already,
         // just due to this request being sent.
         if (sessionLastAccessUpdate != null) {
-            ServletOutputStream out = response.getOutputStream();
-            out.write("success".getBytes());
+            PrintWriter writer = response.getWriter();
+            writer.print("success");
             return;
         }
 
@@ -87,15 +87,16 @@ public class SessionAccessServlet extends HttpServlet {
 
         if (webUser != null && webUser.getSubject() != null) {
 
-            //if sessionWebUserUpdate header sent then request for WebUser to be updated
+            // if sessionWebUserUpdate header sent then request for WebUser to be updated
             if ((sessionWebUserUpdate != null) && (!sessionWebUserUpdate.trim().isEmpty())) {
-                //if webUser.getSubject.getName is same as user with session id passed in
+                // if webUser.getSubject.getName is same as user with session id passed in
                 try {
-                    //attempt to retrieve Subject for the requested session update
+                    // attempt to retrieve Subject for the requested session update
                     Subject currentSubject = SessionManager.getInstance().getSubject(
                         Integer.valueOf(sessionWebUserUpdate));
                     if (currentSubject != null) {//located associated subject
-                        //if userNames match(case insensitive) then update webUser appropriately and re-associate in session
+                        // if userNames match (case insensitive) then update webUser appropriately and re-associate in
+                        // session
                         if (webUser.getSubject().getName().equalsIgnoreCase(currentSubject.getName())) {
                             webUser = new WebUser(currentSubject);
                             SessionUtils.setWebUser(session, webUser);
@@ -113,18 +114,17 @@ public class SessionAccessServlet extends HttpServlet {
                 SessionManager.getInstance().getSubject(subject.getSessionId());
                 long lastAccess = SessionManager.getInstance().getlastAccess(subject.getSessionId());
 
-                ServletOutputStream out = response.getOutputStream();
+                PrintWriter writer = response.getWriter();
                 String output = subject.getId() + ":" + webUser.getSessionId() + ":" + lastAccess;
-                out.write(output.getBytes());
+                writer.print(output);
             } catch (SessionNotFoundException snfe) {
                 session.removeAttribute(ParamConstants.USER_PARAM);
                 SessionUtils.setWebUser(session, null);
-                webUser = null;
             } catch (SessionTimeoutException ste) {
                 session.removeAttribute(ParamConstants.USER_PARAM);
                 SessionUtils.setWebUser(session, null);
-                webUser = null;
             }
         }
     }
+
 }

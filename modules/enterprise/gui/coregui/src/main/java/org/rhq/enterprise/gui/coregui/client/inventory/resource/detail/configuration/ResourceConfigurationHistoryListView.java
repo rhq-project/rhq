@@ -34,14 +34,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author John Mazzitelli
  */
 public class ResourceConfigurationHistoryListView extends AbstractConfigurationHistoryListView<ResourceConfigurationHistoryDataSource> {
-    public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView", MSG
-        .view_configurationHistoryList_title());
+    public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView",
+            MSG.view_configurationHistoryList_title(), "subsystems/configure/Configure_16.png");
 
     /**
      * Use this constructor to view config histories for all viewable Resources.
      */
     public ResourceConfigurationHistoryListView(String locatorId, boolean hasWritePerm) {
-        super(locatorId, VIEW_ID.getTitle(), hasWritePerm);
+        super(locatorId, null, hasWritePerm);
         ResourceConfigurationHistoryDataSource datasource = new ResourceConfigurationHistoryDataSource();
         setDataSource(datasource);
     }

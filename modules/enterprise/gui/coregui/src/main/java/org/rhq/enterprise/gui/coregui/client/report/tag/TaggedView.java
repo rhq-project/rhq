@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class TaggedView extends LocatableVLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags());
+    public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags(), "global/Tag_24.png");
 
     private TagCloudView tagCloudView;
     private LocatableTabSet container;
@@ -77,9 +77,9 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
     protected void onInit() {
         super.onInit();
 
-        TitleBar titleBar = new TitleBar(this, TaggedView.VIEW_ID.getTitle(), "global/Tag_24.png");
-        titleBar.setExtraSpace(10);
-        addMember(titleBar);
+//        TitleBar titleBar = new TitleBar(this, TaggedView.VIEW_ID.getTitle(), "global/Tag_24.png");
+//        titleBar.setExtraSpace(10);
+//        addMember(titleBar);
 
         tagCloudView = new TagCloudView(extendLocatorId("TagCloud"));
         tagCloudView.setAutoHeight();

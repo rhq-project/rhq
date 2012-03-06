@@ -119,13 +119,15 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     }
 
     public void initialize() {
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        try {
-            server.registerMBean(this, new ObjectName(OBJECT_NAME));
-        } catch (JMException e) {
-            LOG.error("Unable to register MeasurementManagerMBean", e);
+        if (configuration.isStartManagementBean()) {
+            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+            try {
+                server.registerMBean(this, new ObjectName(OBJECT_NAME));
+            } catch (JMException e) {
+                LOG.error("Unable to register MeasurementManagerMBean", e);
+            }
         }
-
+        
         this.inventoryManager = PluginContainer.getInstance().getInventoryManager();
 
         int threadPoolSize = configuration.getMeasurementCollectionThreadPoolSize();
@@ -279,11 +281,13 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             this.senderThreadPool.shutdownNow();
         }
 
-        MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        try {
-            server.unregisterMBean(new ObjectName(OBJECT_NAME));
-        } catch (JMException e) {
-            LOG.warn("Unable to unregister MeasurementManagerMBean", e);
+        if (configuration.isStartManagementBean()) {
+            MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+            try {
+                server.unregisterMBean(new ObjectName(OBJECT_NAME));
+            } catch (JMException e) {
+                LOG.warn("Unable to unregister MeasurementManagerMBean", e);
+            }
         }
     }
 

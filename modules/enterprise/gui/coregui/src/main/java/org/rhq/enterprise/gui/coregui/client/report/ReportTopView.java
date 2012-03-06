@@ -101,9 +101,11 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSubsystemsSection() {
         NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID, "global/Tag_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName()));
+                return decorateWithTitleBar(TaggedView.VIEW_ID.getName(), TaggedView.VIEW_ID,
+                        new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName())));
             }
         });
+
 
         NavigationItem suspectMetricsItem = new NavigationItem(MeasurementOOBView.VIEW_ID,
             "subsystems/monitor/Monitor_failed_16.png", new ViewFactory() {
@@ -115,42 +117,49 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentConfigurationChangesItem = new NavigationItem(
             ResourceConfigurationHistoryListView.VIEW_ID, "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(
-                        extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()), getGlobalPermissions()
-                            .contains(Permission.MANAGE_INVENTORY));
+                    return decorateWithTitleBar(ResourceConfigurationHistoryListView.VIEW_ID.getName(), ResourceConfigurationHistoryListView.VIEW_ID,
+                            new ResourceConfigurationHistoryListView(
+                                    extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()), getGlobalPermissions()
+                                    .contains(Permission.MANAGE_INVENTORY)));
+
                 }
             });
 
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
-                        .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                    return decorateWithTitleBar(OperationHistoryView.SUBSYSTEM_VIEW_ID.getName(), OperationHistoryView.SUBSYSTEM_VIEW_ID,
+                            new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
+                                    .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY)));
                 }
             });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemResourceAlertView(
-                        extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
-                            Permission.MANAGE_INVENTORY));
+                    return decorateWithTitleBar(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName(), AlertHistoryView.SUBSYSTEM_VIEW_ID,
+                            new SubsystemResourceAlertView(
+                                    extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
+                                    Permission.MANAGE_INVENTORY)));
                 }
             });
 
         NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
             .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
+
+                return decorateWithTitleBar(AlertDefinitionReportView.VIEW_ID.getName(), AlertDefinitionReportView.VIEW_ID,
+                        new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName())));
             }
         });
 
         NavigationItem recentDriftsItem = new NavigationItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/drift/Drift_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemResourceDriftView(
-                        extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
-                            Permission.MANAGE_INVENTORY));
+                    return decorateWithTitleBar(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName(), DriftHistoryView.SUBSYSTEM_VIEW_ID,
+                            new SubsystemResourceDriftView(
+                                    extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
+                                    Permission.MANAGE_INVENTORY)));
                 }
             });
 
@@ -177,7 +186,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
             .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {
             public Canvas createView() {
-                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
+                return decorateWithTitleBar(PlatformSummaryPortlet.VIEW_ID.getName(), PlatformSummaryPortlet.VIEW_ID,
+                        new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName())));
             }
         });
 
@@ -190,6 +200,17 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
         return new NavigationSection(SECTION_INVENTORY_VIEW_ID, inventorySummaryItem, platformSystemInfoItem,
             driftComplianceItem);
+    }
+
+
+    private LocatableVLayout decorateWithTitleBar(String layoutName, ViewName viewName, Canvas pageBody){
+        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId(layoutName));
+        vLayout.setWidth100();
+        vLayout.setHeight100();
+        vLayout.addMember( new TitleBar(vLayout,viewName.getTitle(), viewName.getIconPath()));
+        vLayout.addMember(pageBody);
+        return vLayout;
+        
     }
 
 }

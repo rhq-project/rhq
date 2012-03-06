@@ -1,0 +1,4 @@
+#we want the group to be the default started configuration
+#Arquillian currently doesn't support specifying the group as the default
+#in the XML file, so we need to do it this way.
+pcs

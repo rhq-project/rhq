@@ -47,6 +47,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -64,7 +65,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
  */
 public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
 
-    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms());
+    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(),
+            ImageManager.getResourceIcon(ResourceCategory.PLATFORM));
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";

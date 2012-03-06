@@ -259,9 +259,11 @@ public class PluginContainer implements ContainerService {
 
                 purgeTmpDirectoryContents();
 
-                mbean = new PluginContainerMBeanImpl(this);
-                mbean.register();
-
+                if (configuration.isStartManagementBean()) {
+                    mbean = new PluginContainerMBeanImpl(this);
+                    mbean.register();
+                }
+                
                 ResourceContainer.initialize();
 
                 pluginManager = new PluginManager();

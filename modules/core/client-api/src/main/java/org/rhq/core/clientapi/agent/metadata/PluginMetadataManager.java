@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.resource.ClassLoaderType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -47,7 +48,10 @@ import org.rhq.core.domain.resource.ResourceType;
 public class PluginMetadataManager {
     public static final ResourceType TEST_PLATFORM_TYPE = new ResourceType("Anonymous", "test",
         ResourceCategory.PLATFORM, null);
-
+    static {
+        TEST_PLATFORM_TYPE.setClassLoaderType(ClassLoaderType.SHARED);
+    }
+    
     private Log log = LogFactory.getLog(PluginMetadataManager.class);
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();

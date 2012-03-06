@@ -42,12 +42,15 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -74,6 +77,8 @@ import static org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandli
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 public class MongoDBDriftServerTest extends MongoDBTest {
 
@@ -383,6 +388,290 @@ public class MongoDBDriftServerTest extends MongoDBTest {
     }
     
     @Test
+    public void findChangeSetsByCriteriaAndDoNotFetchDrifts() throws Exception {
+        String driftDefName = "testdef";
+        int driftDefId = 1;
+        int resourceId1 = 1;
+        int resourceId2 = 2;
+        
+        MongoDBChangeSet changeSet1 = new MongoDBChangeSet();
+        changeSet1.setDriftDefinitionId(driftDefId);
+        changeSet1.setDriftDefinitionName(driftDefName);
+        changeSet1.setResourceId(resourceId1);
+        changeSet1.setCategory(COVERAGE);
+        changeSet1.setVersion(0);
+
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("./1.bin", FILE_ADDED);
+        entry1.setNewFileHash("./1.bin");
+        changeSet1.add(entry1);
+
+        changeSetDAO.save(changeSet1);
+        
+        MongoDBChangeSet changeSet2 = new MongoDBChangeSet();
+        changeSet2.setDriftDefinitionId(driftDefId);
+        changeSet2.setDriftDefinitionName(driftDefName);
+        changeSet2.setResourceId(resourceId1);
+        changeSet2.setCategory(DRIFT);
+        changeSet2.setVersion(1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("./1.bin", FILE_CHANGED);
+        entry2.setNewFileHash(sha256("./1.bin.new"));
+        entry2.setOldFileHash(sha256("./1.bin"));
+        changeSet2.add(entry2);
+        
+        MongoDBChangeSetEntry entry3 = new MongoDBChangeSetEntry("./2.bin", FILE_ADDED);
+        entry3.setNewFileHash("./2.bin");
+        changeSet2.add(entry3);
+        
+        changeSetDAO.save(changeSet2);
+        
+
+        MongoDBChangeSet changeSet3 = new MongoDBChangeSet();
+        changeSet3.setDriftDefinitionId(driftDefId);
+        changeSet3.setDriftDefinitionName(driftDefName);
+        changeSet3.setResourceId(resourceId2);
+        changeSet3.setCategory(COVERAGE);
+        changeSet3.setVersion(0);
+        
+        MongoDBChangeSetEntry entry4 = new MongoDBChangeSetEntry("./3.bin", FILE_ADDED);
+        entry4.setNewFileHash(sha256("./3.bin"));
+        changeSet3.add(entry4);
+        changeSetDAO.save(changeSet3);
+        
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(driftDefId);
+        criteria.addFilterResourceId(resourceId1);
+        criteria.addFilterVersion("1");
+
+        Mapper mapper = new Mapper();
+        DriftChangeSetDTO expected = mapper.toDTO(changeSet2);
+        
+        PageList<? extends DriftChangeSet<?>> actualChangeSets = driftServer.findDriftChangeSetsByCriteria(null, 
+                criteria);
+        
+        assertEquals(actualChangeSets.size(), 1, "Expected to get back one change set.");
+        DriftChangeSetDTO actual = (DriftChangeSetDTO) actualChangeSets.get(0);
+
+        assertChangeSetMatches("Failed to return change set DTO", expected, actual);
+        assertTrue(actual.getDrifts().isEmpty(), "Drifts should not have been returned since criteria did not " +
+                "specify to fetch drifts");
+    }
+
+    @Test
+    public void findChangeSetsByCriteriaAndFetchDrifts() throws Exception {
+        String driftDefName = "testdef";
+        int driftDefId = 1;
+        int resourceId1 = 1;
+        int resourceId2 = 2;
+
+        MongoDBChangeSet changeSet1 = new MongoDBChangeSet();
+        changeSet1.setDriftDefinitionId(driftDefId);
+        changeSet1.setDriftDefinitionName(driftDefName);
+        changeSet1.setResourceId(resourceId1);
+        changeSet1.setCategory(COVERAGE);
+        changeSet1.setVersion(0);
+
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("./1.bin", FILE_ADDED);
+        entry1.setNewFileHash("./1.bin");
+        changeSet1.add(entry1);
+
+        changeSetDAO.save(changeSet1);
+
+        MongoDBChangeSet changeSet2 = new MongoDBChangeSet();
+        changeSet2.setDriftDefinitionId(driftDefId);
+        changeSet2.setDriftDefinitionName(driftDefName);
+        changeSet2.setResourceId(resourceId1);
+        changeSet2.setCategory(DRIFT);
+        changeSet2.setVersion(1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("./1.bin", FILE_CHANGED);
+        entry2.setNewFileHash(sha256("./1.bin.new"));
+        entry2.setOldFileHash(sha256("./1.bin"));
+        changeSet2.add(entry2);
+
+        MongoDBChangeSetEntry entry3 = new MongoDBChangeSetEntry("./2.bin", FILE_ADDED);
+        entry3.setNewFileHash("./2.bin");
+        changeSet2.add(entry3);
+
+        changeSetDAO.save(changeSet2);
+
+
+        MongoDBChangeSet changeSet3 = new MongoDBChangeSet();
+        changeSet3.setDriftDefinitionId(driftDefId);
+        changeSet3.setDriftDefinitionName(driftDefName);
+        changeSet3.setResourceId(resourceId2);
+        changeSet3.setCategory(COVERAGE);
+        changeSet3.setVersion(0);
+
+        MongoDBChangeSetEntry entry4 = new MongoDBChangeSetEntry("./3.bin", FILE_ADDED);
+        entry4.setNewFileHash(sha256("./3.bin"));
+        changeSet3.add(entry4);
+        changeSetDAO.save(changeSet3);
+
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftDefinitionId(driftDefId);
+        criteria.addFilterResourceId(resourceId1);
+        criteria.addFilterVersion("1");
+        criteria.fetchDrifts(true);
+
+        Mapper mapper = new Mapper();
+        DriftChangeSetDTO expected = mapper.toDTO(changeSet2);
+
+
+        PageList<? extends DriftChangeSet<?>> actualChangeSets = driftServer.findDriftChangeSetsByCriteria(null,
+                criteria);
+
+        assertEquals(actualChangeSets.size(), 1, "Expected to get back one change set.");
+        DriftChangeSetDTO actual = (DriftChangeSetDTO) actualChangeSets.get(0);
+
+        assertChangeSetMatches("Failed to return change set DTO", expected, actual);
+        assertEquals(actual.getDrifts().size(), 2, "Expected change set to contain two drifts");
+
+        assertDriftMatches("The drift should have been included in the change set", mapper.toDTO(entry2),
+                find(actual.getDrifts(), "./1.bin"));
+        assertDriftMatches("The drift should have been included in the change set", mapper.toDTO(entry3),
+                find(actual.getDrifts(), "./2.bin"));
+    }
+    
+    @Test
+    public void findDriftsByCriteriaAndDoNotFetchChangeSets() {
+        String driftDefName = "testdef";
+        int driftDefId = 1;
+        int resourceId1 = 1;
+        int resourceId2 = 2;
+
+        MongoDBChangeSet changeSet1 = new MongoDBChangeSet();
+        changeSet1.setDriftDefinitionId(driftDefId);
+        changeSet1.setDriftDefinitionName(driftDefName);
+        changeSet1.setResourceId(resourceId1);
+        changeSet1.setCategory(COVERAGE);
+        changeSet1.setVersion(0);
+
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("./1.bin", FILE_ADDED);
+        entry1.setNewFileHash("./1.bin");
+        changeSet1.add(entry1);
+
+        changeSetDAO.save(changeSet1);
+
+        MongoDBChangeSet changeSet2 = new MongoDBChangeSet();
+        changeSet2.setDriftDefinitionId(driftDefId);
+        changeSet2.setDriftDefinitionName(driftDefName);
+        changeSet2.setResourceId(resourceId1);
+        changeSet2.setCategory(DRIFT);
+        changeSet2.setVersion(1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("./1.bin", FILE_CHANGED);
+        entry2.setNewFileHash(sha256("./1.bin.new"));
+        entry2.setOldFileHash(sha256("./1.bin"));
+        changeSet2.add(entry2);
+
+        MongoDBChangeSetEntry entry3 = new MongoDBChangeSetEntry("./2.bin", FILE_ADDED);
+        entry3.setNewFileHash("./2.bin");
+        changeSet2.add(entry3);
+
+        changeSetDAO.save(changeSet2);
+
+
+        MongoDBChangeSet changeSet3 = new MongoDBChangeSet();
+        changeSet3.setDriftDefinitionId(driftDefId);
+        changeSet3.setDriftDefinitionName(driftDefName);
+        changeSet3.setResourceId(resourceId2);
+        changeSet3.setCategory(COVERAGE);
+        changeSet3.setVersion(0);
+
+        MongoDBChangeSetEntry entry4 = new MongoDBChangeSetEntry("./3.bin", FILE_ADDED);
+        entry4.setNewFileHash(sha256("./3.bin"));
+        changeSet3.add(entry4);
+        changeSetDAO.save(changeSet3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterResourceIds(resourceId1);
+        criteria.addFilterDriftDefinitionId(driftDefId);
+        criteria.addFilterCategories(FILE_CHANGED);
+        criteria.addFilterChangeSetStartVersion(1);
+
+        PageList<? extends Drift<?, ?>> actualDrifts = driftServer.findDriftsByCriteria(null, criteria);
+        assertEquals(actualDrifts.size(), 1, "Expected to get back one drift");
+        DriftDTO actual = (DriftDTO) actualDrifts.get(0);
+        
+        Mapper mapper = new Mapper();
+        DriftDTO expected = mapper.toDTO(entry2);
+        
+        assertDriftMatches("Failed to return drift DTO", expected, actual);
+        assertNull(actual.getChangeSet(), "The change set should not have been included with the returned drift");
+    }
+
+    @Test
+    public void findDriftsByCriteriaAndFetchChangeSets() {
+        String driftDefName = "testdef";
+        int driftDefId = 1;
+        int resourceId1 = 1;
+        int resourceId2 = 2;
+
+        MongoDBChangeSet changeSet1 = new MongoDBChangeSet();
+        changeSet1.setDriftDefinitionId(driftDefId);
+        changeSet1.setDriftDefinitionName(driftDefName);
+        changeSet1.setResourceId(resourceId1);
+        changeSet1.setCategory(COVERAGE);
+        changeSet1.setVersion(0);
+
+        MongoDBChangeSetEntry entry1 = new MongoDBChangeSetEntry("./1.bin", FILE_ADDED);
+        entry1.setNewFileHash("./1.bin");
+        changeSet1.add(entry1);
+
+        changeSetDAO.save(changeSet1);
+
+        MongoDBChangeSet changeSet2 = new MongoDBChangeSet();
+        changeSet2.setDriftDefinitionId(driftDefId);
+        changeSet2.setDriftDefinitionName(driftDefName);
+        changeSet2.setResourceId(resourceId1);
+        changeSet2.setCategory(DRIFT);
+        changeSet2.setVersion(1);
+
+        MongoDBChangeSetEntry entry2 = new MongoDBChangeSetEntry("./1.bin", FILE_CHANGED);
+        entry2.setNewFileHash(sha256("./1.bin.new"));
+        entry2.setOldFileHash(sha256("./1.bin"));
+        changeSet2.add(entry2);
+
+        MongoDBChangeSetEntry entry3 = new MongoDBChangeSetEntry("./2.bin", FILE_ADDED);
+        entry3.setNewFileHash("./2.bin");
+        changeSet2.add(entry3);
+
+        changeSetDAO.save(changeSet2);
+
+
+        MongoDBChangeSet changeSet3 = new MongoDBChangeSet();
+        changeSet3.setDriftDefinitionId(driftDefId);
+        changeSet3.setDriftDefinitionName(driftDefName);
+        changeSet3.setResourceId(resourceId2);
+        changeSet3.setCategory(COVERAGE);
+        changeSet3.setVersion(0);
+
+        MongoDBChangeSetEntry entry4 = new MongoDBChangeSetEntry("./3.bin", FILE_ADDED);
+        entry4.setNewFileHash(sha256("./3.bin"));
+        changeSet3.add(entry4);
+        changeSetDAO.save(changeSet3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterResourceIds(resourceId1);
+        criteria.addFilterDriftDefinitionId(driftDefId);
+        criteria.addFilterCategories(FILE_CHANGED);
+        criteria.addFilterChangeSetStartVersion(1);
+        criteria.fetchChangeSet(true);
+
+        PageList<? extends Drift<?, ?>> actualDrifts = driftServer.findDriftsByCriteria(null, criteria);
+        assertEquals(actualDrifts.size(), 1, "Expected to get back one drift");
+        DriftDTO actual = (DriftDTO) actualDrifts.get(0);
+
+        Mapper mapper = new Mapper();
+        DriftDTO expected = mapper.toDTO(entry2);
+
+        assertDriftMatches("Failed to return drift DTO", expected, actual);
+        assertChangeSetMatches("The change set should have been fetched", mapper.toDTO(changeSet2),
+                actual.getChangeSet());
+    }
+    
+    @Test
     public void persistNewInitialChangeSetForPinnedDriftDef() throws Exception {
         DriftDefinition driftDef = new DriftDefinition(new Configuration());
         driftDef.setId(1);
@@ -509,6 +798,8 @@ public class MongoDBDriftServerTest extends MongoDBTest {
         assertDriftFileMatches("Failed to persist the drift file data", drift2DTO.getNewDriftFile(),
                 find(actualDrifts, "./2.bin").getNewDriftFile());
     }
+
+
 
     /**
      * Performs a property-wise comparison of the change set DTOs. The id, ctime, and drift

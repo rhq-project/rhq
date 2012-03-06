@@ -60,10 +60,9 @@ public class FileContentDelegate {
 
     private final Log log = LogFactory.getLog(FileContentDelegate.class);
 
-    protected File directory;
-
     private final String fileEnding;
     private final String packageTypeName;
+    private final File directory;
 
     public FileContentDelegate(File directory, String fileEnding, String packageTypeName) {
         this.directory = directory;
@@ -90,41 +89,22 @@ public class FileContentDelegate {
      * @param  details  describes the package being created
      * @param  content  content to be written for the package. NOTE this Stream will be closed by this method.
      * @param  unzip    if <code>true</code>, the content stream will be treated like a ZIP file and be unzipped as
-    *                  it is written, using the package name as the base directory; if <code>false</code> the
+     *                  it is written, using the package name as the base directory; if <code>false</code> the
      * @param createBackup If <code>true</code>, the original file will be backed up to file.bak
      */
-    public void createContent(PackageDetails details, InputStream content, boolean unzip, boolean createBackup) {
-        File contentFile = getPath(details);
+    public void createContent(PackageDetails details, InputStream content, boolean unzip) {
+        File destination = getPath(details);
         try {
-            if (createBackup) {
-                moveToBackup(contentFile, ".bak");
-            }
             if (unzip) {
-                ZipUtil.unzipFile(content, contentFile);
+                ZipUtil.unzipFile(content, destination);
+                String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(content);
+                writeSHAToManifest(destination, sha);
             } else {
-                FileUtil.writeFile(content, contentFile);
+                FileUtil.writeFile(content, destination);
             }
-            details.setFileName(contentFile.getPath());
+            details.setFileName(destination.getPath());
         } catch (IOException e) {
-            throw new RuntimeException("Error creating artifact from details: " + contentFile, e);
-        }
-    }
-
-    /**
-     * Try to move the passed contentFile to a backup named contentFile + suffix
-     * @param contentFile File object pointing to the original file
-     * @param suffix the suffix to tack on
-     */
-    private void moveToBackup(File contentFile, String suffix) {
-
-        File backupFile = new File(contentFile.getAbsolutePath() + suffix);
-        if (backupFile.exists()) {
-            // remove
-            if (!backupFile.delete())
-                log.warn("Removing of old backup file " + backupFile + " failed ");
-        }
-        if (!contentFile.renameTo(backupFile)) {
-            log.warn("Moving " + contentFile + " to backup " + backupFile + " failed");
+            throw new RuntimeException("Error creating artifact from details: " + destination, e);
         }
     }
 

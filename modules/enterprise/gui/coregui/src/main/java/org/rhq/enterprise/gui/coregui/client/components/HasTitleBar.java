@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,22 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import com.smartgwt.client.widgets.HTMLFlow;
-
 /**
- * @author Greg Hinkle
+ * Interface indicates existence of a TitleBar component.
+ *
+ * @author Mike Thompson
  */
-@Deprecated
-public class HeaderLabel extends HTMLFlow {
+public interface HasTitleBar {
+   
+    TitleBar getTitleBar();
+    void setTitleBar(TitleBar titleBar);
 
-    public HeaderLabel(String icon, String contents) {
-        this("<img src=\"" + getImgURL(icon) + "\" style=\"vertical-align: middle;\"/> " + contents);
-    }
-
-    public HeaderLabel(String contents) {
-        super(contents);
-        setHeight(50);
-        setStylePrimaryName("HeaderLabel");
-        setStyleName("HeaderLabel");
-    }
 }

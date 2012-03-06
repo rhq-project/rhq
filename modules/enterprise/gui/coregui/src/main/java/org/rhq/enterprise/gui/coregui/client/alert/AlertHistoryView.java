@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class AlertHistoryView extends TableSection<AlertDataSource> {
 
-    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts());
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(),"subsystems/alert/Alert_LOW_16.png" );
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);

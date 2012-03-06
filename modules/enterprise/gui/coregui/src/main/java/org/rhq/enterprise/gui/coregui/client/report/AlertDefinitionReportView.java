@@ -71,7 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.DataSource> {
 
-    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions());
+    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(), "subsystems/alert/Alerts_16.png");
 
     public AlertDefinitionReportView(String locatorId) {
         super(locatorId);

@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class DriftComplianceReport extends LocatableVLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("DriftCompliance", MSG.view_reports_driftCompliance());
+    public static final ViewName VIEW_ID = new ViewName("DriftCompliance", MSG.view_reports_driftCompliance(), ImageManager.getDriftIcon());
 
     private ResourceSearchView resourceList;
 

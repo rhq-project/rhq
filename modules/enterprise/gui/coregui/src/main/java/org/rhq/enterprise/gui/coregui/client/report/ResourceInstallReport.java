@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -62,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary());
+    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(), "subsystems/inventory/Inventory_16.png");
 
     private ResourceSearchView resourceList;
 
@@ -94,6 +95,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     protected void onInit() {
         super.onInit();
 
+        addMember(new TitleBar(this, VIEW_ID.getTitle(),VIEW_ID.getIconPath()));
         addMember(new ResourceInstallReportTable(extendLocatorId("table")));
     }
 
@@ -129,7 +131,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     class ResourceInstallReportTable extends Table<ResourceInstallReportTable.DataSource> {
 
         public ResourceInstallReportTable(String locatorId) {
-            super(locatorId, VIEW_ID.getTitle());
+            super(locatorId);
             setDataSource(new DataSource());
         }
 

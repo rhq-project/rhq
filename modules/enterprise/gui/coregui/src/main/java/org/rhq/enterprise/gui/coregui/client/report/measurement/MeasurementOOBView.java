@@ -35,10 +35,10 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  */
 public class MeasurementOOBView extends Table<MeasurementOOBDataSource> {
 
-    public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title());
+    public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), "subsystems/monitor/Monitor_failed_16.png");
 
     public MeasurementOOBView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle());
+        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIconPath());
 
         setDataSource(new MeasurementOOBDataSource());
     }
@@ -51,16 +51,7 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> {
         super.configureTable();
     }
 
-    /*        
-            ListGrid grid = getListGrid();
-            grid.setAlternateRecordStyles(false);
-            grid.getField("resourceName").setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
-                }
-            });
-        }
-        */
+
 
     @Override
     protected SelectionStyle getDefaultSelectionStyle() {

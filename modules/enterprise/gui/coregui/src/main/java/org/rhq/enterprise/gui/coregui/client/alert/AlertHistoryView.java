@@ -38,12 +38,14 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -61,9 +63,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Heiko W. Rupp
  * @author John Mazzitelli
  */
-public class AlertHistoryView extends TableSection<AlertDataSource> {
+public class AlertHistoryView extends TableSection<AlertDataSource> implements HasViewName {
 
-    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(),"subsystems/alert/Alert_LOW_16.png" );
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentAlerts", MSG.common_title_recent_alerts(), IconEnum.RECENT_ALERTS);
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
@@ -277,4 +279,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         return context;
     }
 
+    @Override
+    public ViewName getViewName() {
+        return SUBSYSTEM_VIEW_ID;
+    }
 }

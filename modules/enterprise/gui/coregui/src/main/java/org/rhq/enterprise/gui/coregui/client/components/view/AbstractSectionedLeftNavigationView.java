@@ -297,7 +297,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         vLayout.setHeight100();
         // default to 24x24 otherwise use 16x16
         String iconPath = (viewName.getIcon().getIcon24x24Path() != null) ? viewName.getIcon().getIcon24x24Path() : viewName.getIcon().getIcon16x16Path();
-        vLayout.addMember( new TitleBar(vLayout,viewName.getTitle(), viewName.getIcon().getIcon16x16Path()));
+        vLayout.addMember( new TitleBar(vLayout,viewName.getTitle(), iconPath));
         vLayout.addMember(pageBody);
         return vLayout;
 

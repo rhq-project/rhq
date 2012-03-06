@@ -38,28 +38,28 @@ public enum IconEnum {
     // Inventory Tab
     /////////////////////////////
 
-    DISCOVERY_QUEUE("global/AutoDiscovery_16.png"),
+    DISCOVERY_QUEUE("global/AutoDiscovery_16.png","global/AutoDiscovery_24.png"),
     ALL_RESOURCES("resources/all_resources.png"),
-    PLATFORMS("types/Platform_up_16.png"),
-    SERVERS("types/Server_up_16.png"),
-    SERVICES("types/Service_up_16.png"),
-    UNAVAILABLE_SERVERS("types/Server_down_16.png"),
+    PLATFORMS("types/Platform_up_16.png","types/Platform_up_24.png"),
+    SERVERS("types/Server_up_16.png", "types/Server_up_24.png"),
+    SERVICES("types/Service_up_16.png", "types/Service_up_24.png"),
+    UNAVAILABLE_SERVERS("types/Server_down_16.png", "types/Server_down_24.png"),
     // Groups Section
-    DYNAGROUPS("types/GroupDefinition_16.png"),
-    ALL_GROUPS("types/Group_up_16.png"),
-    COMPATIBLE_GROUPS("types/Cluster_up_16.png"),
-    MIXED_GROUPS("types/Group_up_16.png"),
-    PROBLEM_GROUPS("types/Group_down_16.png"),
+    DYNAGROUPS("types/GroupDefinition_16.png", "types/GroupDefinition_24.png"),
+    ALL_GROUPS("types/Group_up_16.png", "types/Group_up_24.png"),
+    COMPATIBLE_GROUPS("types/Cluster_up_16.png", "types/Cluster_up_24.png"),
+    MIXED_GROUPS("types/Group_up_16.png", "types/Group_up_24.png"),
+    PROBLEM_GROUPS("types/Group_down_16.png", "types/Group_down_24.png"),
 
     /////////////////////////////
     // Reports Tab
     /////////////////////////////
-    TAGS("global/Tag_16.png"),
+    TAGS("global/Tag_16.png","global/Tag_24.png" ),
     SUSPECT_METRICS("subsystems/monitor/Monitor_failed_16.png","subsystems/monitor/Monitor_failed_24.png"),
     CONFIGURATION_HISTORY("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),
     RECENT_OPERATIONS("subsystems/control/Operation_16.png","subsystems/control/Operation_24.png"),
-    RECENT_ALERTS("subsystems/alert/Alert_LOW_16.png", "subsystems/alert/Alert_LOW_24.png"),
-    ALERT_DEFINITIONS("subsystems/alert/Alerts_16.png", "subsystems/alert/Alerts_24.png"),
+    RECENT_ALERTS("subsystems/alert/Alert_LOW_16.png"),
+    ALERT_DEFINITIONS("subsystems/alert/Alerts_16.png"),
     RECENT_DRIFT("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png"),
     // Inventory Section
     INVENTORY_SUMMARY("subsystems/inventory/Inventory_16.png", "subsystems/inventory/Inventory_24.png"),

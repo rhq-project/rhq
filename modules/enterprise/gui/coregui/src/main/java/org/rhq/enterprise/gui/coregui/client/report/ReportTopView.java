@@ -196,7 +196,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem driftComplianceItem = new NavigationItem(DriftComplianceReport.VIEW_ID,
                 new ViewFactory() {
             public Canvas createView() {
-                return new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName()));
+                return decorateWithTitleBar(DriftComplianceReport.VIEW_ID,
+                new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName())));
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 

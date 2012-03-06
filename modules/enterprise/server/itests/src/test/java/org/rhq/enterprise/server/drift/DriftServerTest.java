@@ -85,7 +85,9 @@ public class DriftServerTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
-        File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-4.4.0-SNAPSHOT.jar");
+        String projectVersion = System.getProperty("projectVersion");
+
+        File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-" + projectVersion + ".jar");
         assertTrue("Drift server plugin JAR file not found at" + jpaDriftPlugin.getPath(), jpaDriftPlugin.exists());
         FileUtils.copyFileToDirectory(jpaDriftPlugin, driftServerPluginService.masterConfig.getPluginDirectory());
 

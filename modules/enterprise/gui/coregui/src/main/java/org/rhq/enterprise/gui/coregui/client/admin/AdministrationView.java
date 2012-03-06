@@ -18,13 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
-
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -37,12 +33,11 @@ import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeV
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
-import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.components.view.*;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The Administration top-level view.
@@ -115,15 +110,17 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildSecuritySection() {
-        NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID, "global/User_16.png", new ViewFactory() {
+        NavigationItem usersItem = new NavigationItem(UsersView.VIEW_ID,  new ViewFactory() {
             public Canvas createView() {
-                return new UsersView(extendLocatorId("Users"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
+                return decorateWithTitleBar(UsersView.VIEW_ID,
+                    new UsersView(extendLocatorId("Users"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY)));
             }
         });
 
-        NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, "global/Role_16.png", new ViewFactory() {
+        NavigationItem rolesItem = new NavigationItem(RolesView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new RolesView(extendLocatorId("Roles"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY));
+                return decorateWithTitleBar(RolesView.VIEW_ID,
+                    new RolesView(extendLocatorId("Roles"), getGlobalPermissions().contains(Permission.MANAGE_SECURITY)));
             }
         });
 

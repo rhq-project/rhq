@@ -64,7 +64,12 @@ public enum IconEnum {
     // Inventory Section
     INVENTORY_SUMMARY("subsystems/inventory/Inventory_16.png", "subsystems/inventory/Inventory_24.png"),
     PLATFORM_UTILIZATION("types/Platform_up_16.png", "types/Platform_up_24.png"),
-    DRIFT_COMPLIANCE("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png");
+    DRIFT_COMPLIANCE("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png"),
+    /////////////////////////////
+    //  Administration Tab
+    /////////////////////////////
+    USERS("global/User_16.png", "global/User_24.png"),
+    ROLES("global/Role_16.png", "global/Role_24.png");
 
     IconEnum(String icon16x16Path ){
         this.icon16x16Path = icon16x16Path;

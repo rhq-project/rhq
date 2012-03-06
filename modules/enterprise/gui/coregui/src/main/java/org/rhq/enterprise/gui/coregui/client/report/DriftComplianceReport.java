@@ -22,9 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -33,12 +30,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
+import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.gui.coregui.client.*;
@@ -51,6 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSour
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * A tweaked version of the InventorySummary report that narrows the relevant types to those that support Drift
@@ -133,7 +128,7 @@ public class DriftComplianceReport extends LocatableVLayout implements Bookmarka
     class DriftComplianceReportTable extends Table<DriftComplianceReportTable.DataSource> {
 
         public DriftComplianceReportTable(String locatorId) {
-            super(locatorId, VIEW_ID.getTitle());
+            super(locatorId, null);
             setDataSource(new DataSource());
         }
 

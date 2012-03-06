@@ -28,6 +28,7 @@ package org.rhq.enterprise.gui.coregui.client;
  * and understand the full ramifications of changing an image.
  * By having the IconEnum represent the icon, we can defer the determination of the
  * size of the icon to the implementation while still defining an icon.
+ * It is also very easy for a method signature to become ambiguous if the string is null.
  *
  * @author  Mike Thompson
  */

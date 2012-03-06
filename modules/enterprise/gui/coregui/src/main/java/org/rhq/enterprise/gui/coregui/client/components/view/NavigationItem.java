@@ -19,7 +19,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.view;
 
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
 
 /**
  * @author Ian Springer
@@ -37,6 +36,7 @@ public class NavigationItem {
         this(name, name.getIcon().getIcon16x16Path(), viewFactory, true);
     }
 
+    @Deprecated
     public NavigationItem(ViewName name, String icon, ViewFactory viewFactory) {
         this(name, icon, viewFactory, true);
     }

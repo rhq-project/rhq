@@ -102,7 +102,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildSubsystemsSection() {
         NavigationItem tagItem = new NavigationItem(TaggedView.VIEW_ID,  new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(TaggedView.VIEW_ID.getName(), TaggedView.VIEW_ID,
+                return decorateWithTitleBar(TaggedView.VIEW_ID,
                         new TaggedView(extendLocatorId(TaggedView.VIEW_ID.getName())));
             }
         });
@@ -118,7 +118,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentConfigurationChangesItem = new NavigationItem(
             ResourceConfigurationHistoryListView.VIEW_ID,  new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(ResourceConfigurationHistoryListView.VIEW_ID.getName(), ResourceConfigurationHistoryListView.VIEW_ID,
+                    return decorateWithTitleBar(ResourceConfigurationHistoryListView.VIEW_ID,
                             new ResourceConfigurationHistoryListView(
                                     extendLocatorId(ResourceConfigurationHistoryListView.VIEW_ID.getName()), getGlobalPermissions()
                                     .contains(Permission.MANAGE_INVENTORY)));
@@ -129,7 +129,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(OperationHistoryView.SUBSYSTEM_VIEW_ID.getName(), OperationHistoryView.SUBSYSTEM_VIEW_ID,
+                    return decorateWithTitleBar(OperationHistoryView.SUBSYSTEM_VIEW_ID,
                             new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
                                     .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY)));
                 }
@@ -138,7 +138,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName(), AlertHistoryView.SUBSYSTEM_VIEW_ID,
+                    return decorateWithTitleBar( AlertHistoryView.SUBSYSTEM_VIEW_ID,
                             new SubsystemResourceAlertView(
                                     extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
                                     Permission.MANAGE_INVENTORY)));
@@ -149,7 +149,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                  new ViewFactory() {
             public Canvas createView() {
 
-                return decorateWithTitleBar(AlertDefinitionReportView.VIEW_ID.getName(), AlertDefinitionReportView.VIEW_ID,
+                return decorateWithTitleBar(AlertDefinitionReportView.VIEW_ID,
                         new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName())));
             }
         });
@@ -157,7 +157,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentDriftsItem = new NavigationItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName(), DriftHistoryView.SUBSYSTEM_VIEW_ID,
+                    return decorateWithTitleBar(DriftHistoryView.SUBSYSTEM_VIEW_ID,
                             new SubsystemResourceDriftView(
                                     extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
                                     Permission.MANAGE_INVENTORY)));
@@ -180,7 +180,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(ResourceInstallReport.VIEW_ID.getName(), ResourceInstallReport.VIEW_ID,
+                    return decorateWithTitleBar( ResourceInstallReport.VIEW_ID,
                     new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName())));
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
@@ -188,7 +188,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
              new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(PlatformSummaryPortlet.VIEW_ID.getName(), PlatformSummaryPortlet.VIEW_ID,
+                return decorateWithTitleBar(PlatformSummaryPortlet.VIEW_ID,
                         new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName())));
             }
         });
@@ -205,14 +205,6 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
     }
 
 
-    private LocatableVLayout decorateWithTitleBar(String layoutName, ViewName viewName, Canvas pageBody){
-        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId(layoutName));
-        vLayout.setWidth100();
-        vLayout.setHeight100();
-        vLayout.addMember( new TitleBar(vLayout,viewName.getTitle(), viewName.getIcon().getIcon16x16Path()));
-        vLayout.addMember(pageBody);
-        return vLayout;
-        
-    }
+
 
 }

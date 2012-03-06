@@ -309,6 +309,12 @@
                       <deploymentDirectory>target/test-classes</deploymentDirectory>
                       <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
                    </systemPropertyVariables>
+                   <systemProperties>
+                      <property>
+                         <name>projectVersion</name>
+                         <value>${project.version}</value>
+                      </property>
+                   </systemProperties>
                    <argLine>-Djava.security.manager -Djava.security.policy==${basedir}/target/test-classes/security.policy</argLine>
                    <additionalClasspathElements>
                       <!-- The below is required for tests to run against Oracle. -->

@@ -41,12 +41,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -61,9 +59,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * 
  * @author John Mazzitelli
  */
-public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView {
+public class ResourceInstallReport extends LocatableVLayout implements BookmarkableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(), "subsystems/inventory/Inventory_16.png");
+    public static final ViewName VIEW_ID = new ViewName("InventorySummary", MSG.common_title_inventorySummary(), IconEnum.INVENTORY_SUMMARY);
 
     private ResourceSearchView resourceList;
 
@@ -95,7 +93,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
     protected void onInit() {
         super.onInit();
 
-        addMember(new TitleBar(this, VIEW_ID.getTitle(),VIEW_ID.getIconPath()));
+        //addMember(new TitleBar(this, VIEW_ID.getTitle(),VIEW_ID.getIconPath()));
         addMember(new ResourceInstallReportTable(extendLocatorId("table")));
     }
 
@@ -126,6 +124,11 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             resourceList = null;
         }
         markForRedraw();
+    }
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 
     class ResourceInstallReportTable extends Table<ResourceInstallReportTable.DataSource> {

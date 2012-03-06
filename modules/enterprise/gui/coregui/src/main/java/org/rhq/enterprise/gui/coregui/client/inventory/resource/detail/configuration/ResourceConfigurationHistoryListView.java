@@ -22,6 +22,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -33,9 +35,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class ResourceConfigurationHistoryListView extends AbstractConfigurationHistoryListView<ResourceConfigurationHistoryDataSource> {
+public class ResourceConfigurationHistoryListView extends AbstractConfigurationHistoryListView<ResourceConfigurationHistoryDataSource>
+    implements HasViewName {
     public static final ViewName VIEW_ID = new ViewName("ConfigurationHistoryView",
-            MSG.view_configurationHistoryList_title(), "subsystems/configure/Configure_16.png");
+            MSG.view_configurationHistoryList_title(), IconEnum.CONFIGURATION_HISTORY);
 
     /**
      * Use this constructor to view config histories for all viewable Resources.
@@ -97,5 +100,11 @@ public class ResourceConfigurationHistoryListView extends AbstractConfigurationH
                     CoreGUI.getErrorHandler().handleError(MSG.view_configurationHistoryList_delete_failure(), caught);
                 }
             });
+    }
+
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 }

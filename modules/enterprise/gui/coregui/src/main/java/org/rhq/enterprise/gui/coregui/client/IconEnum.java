@@ -39,16 +39,16 @@ public enum IconEnum {
 
     DISCOVERY_QUEUE("global/AutoDiscovery_16.png"),
     ALL_RESOURCES("resources/all_resources.png"),
-    PLATFORMS("abc"),
-    SERVERS("abc"),
-    SERVICES("abc"),
-    UNAVAILABLE_SERVERS("abc"),
+    PLATFORMS("types/Platform_up_16.png"),
+    SERVERS("types/Server_up_16.png"),
+    SERVICES("types/Service_up_16.png"),
+    UNAVAILABLE_SERVERS("types/Server_down_16.png"),
     // Groups Section
     DYNAGROUPS("types/GroupDefinition_16.png"),
-    ALL_GROUPS("abc"),
-    COMPATIBLE_GROUPS("abc"),
-    MIXED_GROUPS("abc"),
-    PROBLEM_GROUPS("abc"),
+    ALL_GROUPS("types/Group_up_16.png"),
+    COMPATIBLE_GROUPS("types/Cluster_up_16.png"),
+    MIXED_GROUPS("types/Group_up_16.png"),
+    PROBLEM_GROUPS("types/Group_down_16.png"),
 
     /////////////////////////////
     // Reports Tab

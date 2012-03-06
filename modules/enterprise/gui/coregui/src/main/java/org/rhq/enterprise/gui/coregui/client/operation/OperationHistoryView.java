@@ -37,11 +37,13 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
@@ -54,10 +56,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  (
  * @author Jay Shaughnessy
  */
-public class OperationHistoryView extends TableSection<OperationHistoryDataSource> {
+public class OperationHistoryView extends TableSection<OperationHistoryDataSource> implements HasViewName {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentOperations",
-        MSG.common_title_recent_operations(), "subsystems/control/Operation_16.png");
+        MSG.common_title_recent_operations(), IconEnum.RECENT_OPERATIONS);
 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
@@ -238,4 +240,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         return OperationHistoryDataSource.Field.OPERATION_NAME;
     }
 
+    @Override
+    public ViewName getViewName() {
+        return  SUBSYSTEM_VIEW_ID;
+    }
 }

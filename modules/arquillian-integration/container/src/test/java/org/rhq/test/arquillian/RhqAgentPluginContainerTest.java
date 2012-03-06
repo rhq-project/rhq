@@ -37,7 +37,7 @@ public class RhqAgentPluginContainerTest extends Arquillian {
     }
 
     @Deployment(name = "dependentPlugin")
-    public static RhqAgentPluginArchive getDendendingTestPlugin() {
+    public static RhqAgentPluginArchive getDependentTestPlugin() {
         return ShrinkWrap
             .create(RhqAgentPluginArchive.class, "test-dependent-plugin-1.0.0.jar")
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)

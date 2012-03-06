@@ -1,7 +1,6 @@
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.impl;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashSet;
@@ -9,7 +8,6 @@ import java.util.Set;
 
 import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.annotation.Inject;
-import org.jboss.arquillian.test.spi.TestEnricher;
 import org.jboss.arquillian.test.spi.annotation.TestScoped;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -18,8 +16,11 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.test.arquillian.DiscoveredResources;
+import org.rhq.test.arquillian.ResourceComponentInstances;
+import org.rhq.test.arquillian.spi.PostPrepareEnricher;
 
-public class RhqAgentPluginContainerTestEnricher implements TestEnricher {
+public class RhqAgentPluginContainerTestEnricher implements PostPrepareEnricher {
 
     @Inject
     @TestScoped
@@ -44,11 +45,6 @@ public class RhqAgentPluginContainerTestEnricher implements TestEnricher {
         }
     }
 
-    @Override
-    public Object[] resolve(Method method) {        
-        return new Object[method.getParameterTypes().length];
-    }
-    
     private PluginContainer getPluginContainer() {
         return pluginContainer.get();
     }

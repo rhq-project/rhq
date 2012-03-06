@@ -11,7 +11,7 @@
         </configuration>
      </container>
          
-     <container qualifier="manual-pc">
+     <container qualifier="connected-pc">
         <configuration>
             <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>
             <property name="insideAgent">true</property>

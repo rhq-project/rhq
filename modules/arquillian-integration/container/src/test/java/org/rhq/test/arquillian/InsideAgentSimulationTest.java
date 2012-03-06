@@ -19,6 +19,11 @@
 
 package org.rhq.test.arquillian;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Set;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -28,6 +33,9 @@ import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
@@ -39,19 +47,42 @@ import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
  */
 public class InsideAgentSimulationTest extends Arquillian {
 
-    @Deployment(name = "simplePlugin")
-    @TargetsContainer("manual-pc")
+    @Deployment
+    @TargetsContainer("connected-pc")
     public static RhqAgentPluginArchive getTestPlugin() {
-        return ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin2-1.0.0.jar")
+        return ShrinkWrap.create(RhqAgentPluginArchive.class, "test-deep-plugin-1.0.0.jar")
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
-            .setPluginDescriptor("test-rhq-plugin.xml");
+            .setPluginDescriptor("test-deep-rhq-plugin.xml");
     }
 
     @ArquillianResource
     private PluginContainer pc;
     
+    @ArquillianResource
+    private MockingServerServices serverServices;
+
+    @DiscoveredResources(plugin = "testDeepPlugin", resourceType = "TestServer")
+    private Set<Resource> discoveredServers;
+
+    @DiscoveredResources(plugin = "testDeepPlugin", resourceType = "TestService")
+    private Set<Resource> discoveredServices;
+
+    private FakeServerInventory fakeServerInventory;
+
+    @BeforeDiscovery
+    public void resetServerServices() throws Exception {
+        serverServices.resetMocks();
+        fakeServerInventory = new FakeServerInventory();
+
+        //autoimport everything
+        when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
+            fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+    }
+    
     @Test
-    public void notNull() {
-        Assert.assertNotNull(pc);
+    @RunDiscovery(discoverServers = true, discoverServices = true)
+    public void testDeepDiscovery() throws Exception {
+        Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
+        Assert.assertEquals(discoveredServices.size(), 1, "There should be 1 service discovered");
     }
 }

@@ -1,1 +1,1 @@
-org.rhq.test.arquillian.RhqAgentPluginContainerTestEnricher
+org.rhq.test.arquillian.impl.RhqAgentPluginContainerTestEnricher

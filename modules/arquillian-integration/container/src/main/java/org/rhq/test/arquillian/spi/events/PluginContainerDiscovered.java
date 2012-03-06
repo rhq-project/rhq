@@ -17,34 +17,22 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.spi.events;
 
-import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 
-import org.jboss.arquillian.core.api.Instance;
-import org.jboss.arquillian.core.api.annotation.Inject;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.arquillian.test.spi.enricher.resource.ResourceProvider;
+import org.jboss.arquillian.test.spi.event.suite.TestEvent;
 
-import org.rhq.core.pc.PluginContainer;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class PluginContainerProvider implements ResourceProvider {
+public class PluginContainerDiscovered extends TestEvent {
 
-    @Inject
-    private Instance<PluginContainer> pluginContainer;
-    
-    @Override
-    public boolean canProvide(Class<?> type) {
-        return PluginContainer.class.equals(type);
+    public PluginContainerDiscovered(Object testInstance, Method testMethod) {
+        super(testInstance, testMethod);
     }
 
-    @Override
-    public Object lookup(ArquillianResource resource, Annotation... qualifiers) { 
-        return pluginContainer.get();
-    }
 }

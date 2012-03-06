@@ -53,4 +53,17 @@ public class MockingServerServices extends ServerServices {
         setOperationServerService(Mockito.mock(OperationServerService.class));
         setResourceFactoryServerService(Mockito.mock(ResourceFactoryServerService.class));
     }
+    
+    public void resetMocks() {
+        Mockito.reset(getBundleServerService());
+        Mockito.reset(getConfigurationServerService());
+        Mockito.reset(getContentServerService());
+        Mockito.reset(getCoreServerService());
+        Mockito.reset(getDiscoveryServerService());
+        Mockito.reset(getDriftServerService());
+        Mockito.reset(getEventServerService());
+        Mockito.reset(getMeasurementServerService());
+        Mockito.reset(getOperationServerService());
+        Mockito.reset(getResourceFactoryServerService());
+    }
 }

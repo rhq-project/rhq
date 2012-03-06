@@ -17,23 +17,29 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.impl;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.jboss.arquillian.core.api.Instance;
+import org.jboss.arquillian.core.api.annotation.Inject;
+import org.jboss.arquillian.core.api.annotation.Observes;
+import org.jboss.arquillian.core.spi.ServiceLoader;
+
+import org.rhq.test.arquillian.spi.PostPrepareEnricher;
+import org.rhq.test.arquillian.spi.events.PluginContainerOperationsExecuted;
 
 /**
- * Instructs to run discovery before a test method is executed.
+ * 
  *
  * @author Lukas Krejci
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface RunDiscovery {
-    boolean discoverServers() default false;
-    boolean discoverServices() default false;
+public class PostPrepareEnricherExecutor {
+
+    @Inject
+    private Instance<ServiceLoader> serviceLoader;
     
-    int numberOfTimes() default 1;
+    public void run(@Observes PluginContainerOperationsExecuted event) {
+        for(PostPrepareEnricher enricher : serviceLoader.get().all(PostPrepareEnricher.class)) {
+            enricher.enrich(event.getTestInstance());
+        }
+    }
 }

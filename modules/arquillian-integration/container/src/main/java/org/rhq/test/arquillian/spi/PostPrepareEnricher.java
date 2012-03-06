@@ -17,23 +17,21 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.spi;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.jboss.arquillian.test.spi.TestEnricher;
 
 /**
- * Instructs to run discovery before a test method is executed.
- *
+ * Implementations of this interface have similar purpose as the {@link TestEnricher}s.
+ * The difference is that the {@link PostPrepareEnricher}s are executed only after
+ * the plugin container has been fully prepared, that is all the {@link PluginContainerPreparator}s
+ * and {@link PluginContainerOperation}s have run on the current plugin container.
+ * <p>
+ * This is useful if you want to inject something into the test class that is only available
+ * after the discovery has run.
  * @author Lukas Krejci
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface RunDiscovery {
-    boolean discoverServers() default false;
-    boolean discoverServices() default false;
-    
-    int numberOfTimes() default 1;
+public interface PostPrepareEnricher {
+
+    void enrich(Object testInstance);
 }

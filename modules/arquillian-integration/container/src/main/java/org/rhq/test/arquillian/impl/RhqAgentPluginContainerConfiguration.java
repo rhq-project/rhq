@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.impl;
 
 import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
@@ -32,7 +32,7 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         setServerDiscoveryInitialDelay(Long.MAX_VALUE);
         setServerDiscoveryPeriod(Long.MAX_VALUE);
         setServiceDiscoveryInitialDelay(Long.MAX_VALUE);
-        setServiceDiscoveryPeriod(Long.MAX_VALUE);  
+        setServiceDiscoveryPeriod(Long.MAX_VALUE);
     }
     
     /**

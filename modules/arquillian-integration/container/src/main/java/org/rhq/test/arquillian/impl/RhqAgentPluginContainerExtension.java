@@ -17,15 +17,17 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.impl;
 
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.core.spi.LoadableExtension;
-import org.jboss.arquillian.test.spi.TestEnricher;
 import org.jboss.arquillian.test.spi.enricher.resource.ResourceProvider;
 
-import org.rhq.test.arquillian.util.PluginContainerClassEnhancer;
-import org.rhq.test.arquillian.util.PluginContainerLookup;
+import org.rhq.test.arquillian.impl.util.EnrichmentHook;
+import org.rhq.test.arquillian.impl.util.PluginContainerClassEnhancer;
+import org.rhq.test.arquillian.spi.PluginContainerOperation;
+import org.rhq.test.arquillian.spi.PluginContainerPreparator;
+import org.rhq.test.arquillian.spi.PostPrepareEnricher;
 
 /**
  * 
@@ -42,10 +44,16 @@ public class RhqAgentPluginContainerExtension implements LoadableExtension {
 
     @Override
     public void register(ExtensionBuilder builder) {       
-        builder.observer(PluginContainerLookup.class);
+        builder.observer(EnrichmentHook.class)
+        .observer(PluginContainerPreparatorExecutor.class)
+        .observer(PluginContainerOperationExecutor.class)
+        .observer(PostPrepareEnricherExecutor.class);
         
         builder.service(DeployableContainer.class, RhqAgentPluginContainer.class)
-        .service(TestEnricher.class, RhqAgentPluginContainerTestEnricher.class)
-        .service(ResourceProvider.class, PluginContainerProvider.class);
+        .service(ResourceProvider.class, PluginContainerProvider.class)
+        .service(ResourceProvider.class, ServerServicesProvider.class)
+        .service(PostPrepareEnricher.class, RhqAgentPluginContainerTestEnricher.class)
+        .service(PluginContainerOperation.class, RunDiscoveryExecutor.class)
+        .service(PluginContainerPreparator.class, BeforeDiscoveryPreparator.class);
     }
 }

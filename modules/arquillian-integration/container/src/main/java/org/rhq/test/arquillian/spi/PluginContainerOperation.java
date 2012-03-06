@@ -17,23 +17,24 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.spi;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.jboss.arquillian.test.spi.event.suite.TestEvent;
+
+import org.rhq.core.pc.PluginContainer;
 
 /**
- * Instructs to run discovery before a test method is executed.
+ * PluginContainer operations are executed after the plugin container has been prepared
+ * for the current test, but before the test is actually executed.
  *
  * @author Lukas Krejci
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface RunDiscovery {
-    boolean discoverServers() default false;
-    boolean discoverServices() default false;
-    
-    int numberOfTimes() default 1;
+public interface PluginContainerOperation {
+
+    /**
+     * 
+     * @param pluginContainer
+     * @param event
+     */
+    void execute(PluginContainer pluginContainer, TestEvent event);
 }

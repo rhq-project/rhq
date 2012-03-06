@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.rhq.test.arquillian;
+package org.rhq.test.arquillian.impl;
 
 import java.io.File;
 import java.io.IOException;
@@ -207,6 +207,10 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         throw new UnsupportedOperationException();
     }
 
+    public RhqAgentPluginContainerConfiguration getConfiguration() {
+        return configuration;
+    }
+    
     private File getDeploymentPath(Archive<?> plugin) {
         return new File(configuration.getPluginDirectory(), plugin.getName());
     }

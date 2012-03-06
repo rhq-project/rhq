@@ -17,14 +17,14 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian.util;
+package org.rhq.test.arquillian.impl.util;
 
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
 
-import org.rhq.test.arquillian.RhqAgentPluginContainer;
+import org.rhq.test.arquillian.impl.RhqAgentPluginContainer;
 
 /**
  * 

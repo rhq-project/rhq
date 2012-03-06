@@ -17,10 +17,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian.util;
+package org.rhq.test.arquillian.impl.util;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,23 +31,25 @@ import org.jboss.arquillian.container.spi.client.deployment.DeploymentTargetDesc
 import org.jboss.arquillian.container.spi.client.deployment.TargetDescription;
 import org.jboss.arquillian.container.spi.context.DeploymentContext;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
+import org.jboss.arquillian.core.api.Event;
 import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.InstanceProducer;
 import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.core.api.annotation.Observes;
+import org.jboss.arquillian.core.spi.EventContext;
 import org.jboss.arquillian.test.spi.annotation.TestScoped;
 import org.jboss.arquillian.test.spi.event.suite.Before;
 
 import org.rhq.core.pc.PluginContainer;
-import org.rhq.test.arquillian.RhqAgentPluginContainer;
-import org.rhq.test.arquillian.RunDiscovery;
+import org.rhq.test.arquillian.impl.RhqAgentPluginContainer;
+import org.rhq.test.arquillian.spi.events.PluginContainerDiscovered;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class PluginContainerLookup {
+public class EnrichmentHook {
     
     @Inject
     private Instance<DeploymentContext> deploymentContext;
@@ -63,19 +64,24 @@ public class PluginContainerLookup {
     @TestScoped
     private InstanceProducer<PluginContainer> pluginContainer;
     
-    //the precedence is kind of a hack to make sure that this method runs
-    //before any other observers of the Before event - i.e. the enrichers
-    //and resource providers
-    public void hookUp(@Observes(precedence = 1000) Before event) {
-        PluginContainer pc = lookup(event.getTestMethod().getAnnotations());
-        configurePc(pc, event.getTestMethod());
-        pluginContainer.set(pc);
+    @Inject
+    @TestScoped
+    private InstanceProducer<RhqAgentPluginContainer> rhqAgentPluginContainer;
+    
+    @Inject
+    private Event<PluginContainerDiscovered> pluginContainerDiscovered;
+    
+    public void hookUp(@Observes EventContext<Before> ctx) {
+        Before event = ctx.getEvent();
+        lookup(event.getTestMethod().getAnnotations());
+        ctx.proceed();
+        pluginContainerDiscovered.fire(new PluginContainerDiscovered(event.getTestInstance(), event.getTestMethod()));
     }
     
-    private PluginContainer lookup(Annotation... qualifiers) {
+    private void lookup(Annotation... qualifiers) {
         DeploymentScenario scenario = deploymentScenario.get();
         if (scenario == null) {
-            return null;
+            return;
         }
         
         boolean contextActivated = false;
@@ -93,9 +99,7 @@ public class PluginContainerLookup {
         
         try {            
             TargetDescription target = specificDeployment == null ? checkAndGetCommonTarget(scenario.deployments()) : specificDeployment.getDescription().getTarget();
-            PluginContainer pc = lookupPluginContainer(target);
-            pluginContainer.set(pc);
-            return pc;
+            lookupAndSetPluginContainer(target);
         } finally {
             if (contextActivated) {
                 deploymentContext.get().deactivate();
@@ -120,10 +124,10 @@ public class PluginContainerLookup {
         return target;
     }
     
-    private PluginContainer lookupPluginContainer(TargetDescription target) {
+    private void lookupAndSetPluginContainer(TargetDescription target) {
         ContainerRegistry registry = containerRegistry.get();
         if (registry == null) {
-            return null;
+            return;
         }
         
         Container container = null;
@@ -138,7 +142,12 @@ public class PluginContainerLookup {
         }
         
         try {
-            return RhqAgentPluginContainer.getPluginContainer(container.getName());
+            PluginContainer pc = RhqAgentPluginContainer.getPluginContainer(container.getName());
+            pluginContainer.set(pc);
+                        
+            if (container.getDeployableContainer() instanceof RhqAgentPluginContainer) {
+                rhqAgentPluginContainer.set((RhqAgentPluginContainer)container.getDeployableContainer());
+            }
         } catch (Exception e) {
             throw new IllegalStateException("Could not switch to the PluginContainer '" + container.getName() + "'.", e);
         }
@@ -152,21 +161,5 @@ public class PluginContainerLookup {
         }
         
         return null;
-    }
-    
-    private void configurePc(PluginContainer pc, Method testMethod) {
-        RunDiscovery runDiscovery = testMethod.getAnnotation(RunDiscovery.class);
-        if (runDiscovery == null) {
-            runDiscovery = testMethod.getDeclaringClass().getAnnotation(RunDiscovery.class);
-        }
-        
-        if (runDiscovery != null) {
-            if (runDiscovery.discoverServers()) {
-                pc.getInventoryManager().executeServerScanImmediately();
-            }
-            if (runDiscovery.discoverServices()) {
-                pc.getInventoryManager().executeServiceScanImmediately();
-            }
-        }
-    }
+    }    
 }

@@ -25,15 +25,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Instructs to run discovery before a test method is executed.
+ * Marks a method as to be run before the discovery is executed
+ * on a test method.
  *
  * @author Lukas Krejci
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface RunDiscovery {
-    boolean discoverServers() default false;
-    boolean discoverServices() default false;
-    
-    int numberOfTimes() default 1;
+@Target(ElementType.METHOD)
+public @interface BeforeDiscovery {
+
 }

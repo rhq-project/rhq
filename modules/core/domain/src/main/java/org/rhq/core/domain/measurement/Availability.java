@@ -89,7 +89,7 @@ import org.rhq.core.domain.resource.Resource;
         + "  FROM Availability av " //
         + " WHERE av.resource.agent.id = :agentId " //
         + "   AND av.resource.parentResource IS NOT NULL " //        
-        + "   AND ((av.availabilityType <> :availabilityType AND :availabilityType IS NOT NULL) " //
+        + "   AND ((av.availabilityType <> :availabilityType AND av.availabilityType <> :disabled AND :availabilityType IS NOT NULL) " //
         + "        OR (av.availabilityType IS NOT NULL AND :availabilityType IS NULL) " //
         + "        OR (av.availabilityType IS NULL AND :availabilityType IS NOT NULL)) " //
         + "   AND av.endTime IS NULL"), //

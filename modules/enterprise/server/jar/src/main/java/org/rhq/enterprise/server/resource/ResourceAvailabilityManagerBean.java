@@ -86,6 +86,9 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
         }
     }
 
+    // TODO: I'm not sure this call is useful anymore, now that we get an entry in RHQ_RESOURCE_AVAIL when
+    // the resource is persisted. -Jay
+    //
     public void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds) {
         // Hibernate didn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so we had to go native.
         Connection conn = null;
@@ -183,6 +186,9 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
             : ResourceAvailability.UPDATE_CHILD_BY_AGENT_ID);
         query.setParameter("availabilityType", availabilityType);
         query.setParameter("agentId", agentId);
+        if (!isPlatform) {
+            query.setParameter("disabled", AvailabilityType.DISABLED);
+        }
         query.executeUpdate();
     }
 

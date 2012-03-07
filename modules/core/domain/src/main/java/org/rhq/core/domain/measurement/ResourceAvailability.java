@@ -59,12 +59,13 @@ import org.rhq.core.domain.resource.Resource;
         + "                          WHERE res.agent.id = :agentId " //
         + "                            AND res.parentResource IS NULL )"),
     @NamedQuery(name = ResourceAvailability.UPDATE_CHILD_BY_AGENT_ID, query = "" //
-        + "  UPDATE ResourceAvailability " //
+        + "  UPDATE ResourceAvailability ra" //
         + "     SET availabilityType = :availabilityType " //
         + "   WHERE resourceId IN ( SELECT res.id " //
         + "                           FROM Resource res " //
         + "                          WHERE res.agent.id = :agentId " //
-        + "                            AND res.parentResource IS NOT NULL )"),
+        + "                            AND res.parentResource IS NOT NULL ) " //
+        + "     AND ra.availabilityType <> :disabled "),
     /*
      * Platform plugins always return up for availability.  Platforms are
      * only down if the check-suspect-agent's backfiller sets them down.

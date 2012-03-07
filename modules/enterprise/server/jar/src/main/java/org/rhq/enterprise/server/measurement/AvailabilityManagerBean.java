@@ -219,7 +219,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // Check if the availabilities obtained cover the beginning of the whole data range.
         // If not, we need to provide a "surrogate" for the beginning interval. The availabilities
         // obtained from the db are sorted in ascending order of time. So we can insert one
-        // pseudo-availability in front of the list if needed.
+        // pseudo-availability in front of the list if needed. Note that due to avail purging
+        // we can end up with periods without avail data.
         if (availabilities.size() > 0) {
             Availability earliestAvailability = availabilities.get(0);
             if (earliestAvailability.getStartTime().getTime() > fullRangeBeginDate.getTime()) {
@@ -313,7 +314,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         break;
                     }
 
-                    // if the period has been all green then set it to UP, otherwise, be pessimistic if there is any
+                    // if the period has been all green,  then set it to UP, otherwise, be pessimistic if there is any
                     // mix of avail types
                     if (timeUpInDataPoint == perPointMillis) {
                         availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
@@ -472,8 +473,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     entityManager.clear();
                 }
 
-                // availability reports only tell us the current state at the start time - end time is 
-                // ignored/must be null
+                // availability reports only tell us the current state at the start time; end time is ignored/must be null
                 reported.setEndTime(null);
 
                 try {
@@ -523,9 +523,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         askForFullReport = true;
                     }
                 } catch (NoResultException nre) {
+                    // This condition should never happen. An initial, unknown, Availability/ResourceAvailability
+                    // are created at resource persist time. But, just in case, handle it...
+                    log.warn("Resource [" + reported.getResource() + "] has no availability without an endtime ["
+                        + nre.getMessage() + "] - will attempt to create one\n" + report.toString(false));
+
                     entityManager.persist(reported);
                     updateResourceAvailability(reported);
                     numInserted++;
+
                 } catch (NonUniqueResultException nure) {
                     // This condition should never happen.  In my world of la-la land, I've done everything
                     // correctly so this never happens.  But, due to the asynchronous nature of things,
@@ -634,11 +640,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // should be 0 or 1 entry
         List<ResourceIdWithAvailabilityComposite> platformResourcesWithStatus = query.getResultList();
 
-        // get the platform resource as well as all child resources not already at childAvailType (since these are the
-        // ones we need to change)
+        // get the platform resource as well as all child resources not disabled and not already at childAvailType
+        // (since these are the ones we need to change)
         query = entityManager.createNamedQuery(Availability.FIND_CHILD_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
         query.setParameter("agentId", agentId);
         query.setParameter("availabilityType", childAvailType);
+        query.setParameter("disabled", AvailabilityType.DISABLED);
         List<ResourceIdWithAvailabilityComposite> resourcesWithStatus = query.getResultList();
 
         // The above queries only return resources if they have at least one row in Availability.
@@ -754,7 +761,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         try {
             existing = (Availability) query.getSingleResult();
+
         } catch (NoResultException nre) {
+            // this should never happen since we create an initial Availability when the resource is persisted.
+            log.warn("Resource [" + toInsert.getResource()
+                + "] has no Availabilities, this should not happen.  Correcting situation by adding an Availability.");
+
             // we are inserting this as the very first interval
             query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE);
             query.setParameter("resourceId", toInsert.getResource().getId());
@@ -773,29 +785,46 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         // If we are inserting the same availability type, the first one can just continue
-        // and there is nothing to do!  But if we are inserting a different availability
-        // type as that of the existing interval, the existing interval ends at the newly
-        // inserted interval start.
-        // Because we are runlength-encoded, we are assured the next interval
-        // is the same type as the newly inserted one.  So we just have to move
-        // the start time of the next interval back to the start of the newly inserted
-        // interval.
-        // If the new start time is the same as the existing, then we assume this latest report
-        // contains a more up-to-date status so we just move back the next interval
-        // all the way back to the existing start and we delete the existing interval.
+        // and there is nothing to do!
         if (existing.getAvailabilityType() != toInsert.getAvailabilityType()) {
-            // note: we are assured this query will return something; semantics of this
-            // method is that it is never called if we are inserting in the last interval
+
+            // get the afterExisting availability. note: we are assured this query will return something;
+            // semantics of this method is that it is never called if we are inserting in the last interval
             query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE_AND_DATE);
             query.setParameter("resourceId", toInsert.getResource().getId());
             query.setParameter("aTime", existing.getEndTime().getTime() + 1);
             Availability afterExisting = (Availability) query.getSingleResult();
-            afterExisting.setStartTime(toInsert.getStartTime()); // move back the next interval
 
-            if (existing.getEndTime().getTime() == toInsert.getStartTime().getTime()) {
-                entityManager.remove(existing);
+            if (toInsert.getAvailabilityType() == afterExisting.getAvailabilityType()) {
+                // the inserted avail type is the same as the following avail type, we don't need to
+                // insert a new avail record, just adjust the start/end times of the existing records.
+
+                if (existing.getStartTime().getTime() == toInsert.getStartTime().getTime()) {
+                    // Edge Case: If the insertTo start time equals the existing start time
+                    // just remove the existing record and let afterExisting cover the interval.
+                    entityManager.remove(existing);
+                } else {
+                    existing.setEndTime(toInsert.getStartTime());
+                }
+
+                // stretch next interval to cover the inserted interval
+                afterExisting.setStartTime(toInsert.getStartTime());
+
             } else {
-                existing.setEndTime(toInsert.getStartTime());
+                // the inserted avail type is NOT the same as the following avail type, we likely need to
+                // insert a new avail record.
+
+                if (existing.getStartTime().getTime() == toInsert.getStartTime().getTime()) {
+                    // Edge Case: If the insertTo start time equals the existing end time
+                    // just update the existing avail type to be the new avail type and keep the same boundary.                    
+                    existing.setAvailabilityType(toInsert.getAvailabilityType());
+
+                } else {
+                    // insert the new avail type interval, witch is different than existing and afterExisting. 
+                    existing.setEndTime(toInsert.getStartTime());
+                    toInsert.setEndTime(afterExisting.getStartTime());
+                    entityManager.persist(toInsert);
+                }
             }
         }
 

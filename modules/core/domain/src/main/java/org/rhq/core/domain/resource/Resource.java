@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1059,7 +1060,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
 
     //bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
-    @OneToMany(mappedBy = "resource")
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.PERSIST })
     @OrderBy("startTime")
     private List<Availability> availability;
 
@@ -1113,7 +1114,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     public Resource(Set<Resource> childResources) {
         setChildResources(childResources);
     }
-    
+
     /**
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
@@ -1880,7 +1881,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     // this should only ever be called once, during initial persistence
     public void initCurrentAvailability() {
         if (this.currentAvailability == null) {
+            // initialize avail to be one big unknown period, starting at epoch. 
             this.currentAvailability = new ResourceAvailability(this, AvailabilityType.UNKNOWN);
+            this.availability = new ArrayList<Availability>(1);
+            this.availability.add(new Availability(this, new Date(0), AvailabilityType.UNKNOWN));
         }
     }
 }

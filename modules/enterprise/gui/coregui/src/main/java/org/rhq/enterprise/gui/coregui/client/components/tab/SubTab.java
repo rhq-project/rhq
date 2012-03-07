@@ -38,6 +38,9 @@ public class SubTab implements Locatable {
     private ViewFactory viewFactory;
     private LocatableButton button;
 
+    private SubTab actualNext;
+    private SubTab visibleNext;
+
     public SubTab(String locatorId, ViewName viewName, Canvas canvas) {
         this.locatorId = locatorId;
         this.viewName = viewName;
@@ -94,6 +97,48 @@ public class SubTab implements Locatable {
 
     public String getTitle() {
         return viewName.getTitle();
+    }
+
+    /**
+     * This is the successor or tab immediately to the right of this tab when all tabs
+     * are visible. The tab to which actualNext refers does not change whereas the tab to
+     * which {@link #getVisibleNext visibleNext} refers can change.
+     *
+     * @return The successor or tab immediately to the right of this tab when all tabs are
+     * visible.
+     */
+    public SubTab getActualNext() {
+        return actualNext;
+    }
+
+    /**
+     * @param actualNext The successor or tab immediately to the right of this tab when all
+     * tabs are visible. The tab to which actualNext refers does not change whereas the tab
+     * to which {@link #getVisibleNext visibleNext} refers can change.
+     */
+    public void setActualNext(SubTab actualNext) {
+        this.actualNext = actualNext;
+    }
+
+    /**
+     * The successor or tab immediately to the right of this tab among the set of visible
+     * tabs. The tab to which visibleNext refers can change whereas the tab to which
+     * {@link #getActualNext actualNext} refers will not change.
+     *
+     * @return The successor or tab immediately to the right of this tab among the set of
+     * visible tabs.
+     */
+    public SubTab getVisibleNext() {
+        return visibleNext;
+    }
+
+    /**
+     * @param visibleNext The successor or tab immediately to the right of this tab among
+     * the set of visible tabs. The tab to which visibleNext refers can change whereas the
+     * tab to which {@link #getActualNext actualNext} refers will not change.
+     */
+    public void setVisibleNext(SubTab visibleNext) {
+        this.visibleNext = visibleNext;
     }
 
     public void destroyButton() {

@@ -37,9 +37,9 @@ import org.testng.annotations.ObjectFactory;
 
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.pluginapi.content.FileContentDelegate;
 import org.rhq.plugins.jbossas5.AbstractManagedDeploymentComponent;
 import org.rhq.plugins.jbossas5.StandaloneManagedDeploymentComponent;
-import org.rhq.plugins.jbossas5.util.FileContentDelegate;
 
 @PrepareForTest({ StandaloneManagedDeploymentComponent.class })
 public class StandaloneManagedDeploymentComponentTest {

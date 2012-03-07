@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.plugins.jbossas5.util;
+package org.rhq.core.pluginapi.content;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -92,7 +92,7 @@ public class FileContentDelegate {
      *                  it is written, using the package name as the base directory; if <code>false</code> the
      * @param createBackup If <code>true</code>, the original file will be backed up to file.bak
      */
-    public void createContent(PackageDetails details, InputStream content, boolean unzip) {
+    public void createContent(PackageDetails details, File content, boolean unzip) {
         File destination = getPath(details);
         try {
             if (unzip) {
@@ -100,7 +100,7 @@ public class FileContentDelegate {
                 String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(content);
                 writeSHAToManifest(destination, sha);
             } else {
-                FileUtil.writeFile(content, destination);
+                FileUtil.copyFile(content, destination);
             }
             details.setFileName(destination.getPath());
         } catch (IOException e) {

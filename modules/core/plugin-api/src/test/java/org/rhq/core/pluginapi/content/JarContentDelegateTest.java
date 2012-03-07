@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.jbossas5.test;
+package org.rhq.core.pluginapi.content;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -38,7 +38,6 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.plugins.jbossas5.util.JarContentDelegate;
 
 @PrepareForTest({ JarContentDelegate.class })
 public class JarContentDelegateTest {

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.jbossas5.test;
+package org.rhq.core.pluginapi.content;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,7 +33,6 @@ import org.rhq.core.domain.content.PackageDetails;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.ZipUtil;
-import org.rhq.plugins.jbossas5.util.FileContentDelegate;
 
 public class FileContentDelegateTest {
 
@@ -56,7 +55,7 @@ public class FileContentDelegateTest {
         when(mockPackageDetailsKey.getName()).thenReturn("deploymentFile");
 
         //run code under test
-        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithManifestWar), true);
+        objectUnderTest.createContent(mockPackageDetails, sampleWithManifestWar, true);
         String actualShaReturned = objectUnderTest.getSHA(new File(deploymentDirectory, "/deploymentFile"));
 
         //verify the results (Assert and mock verification)
@@ -69,8 +68,8 @@ public class FileContentDelegateTest {
         String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
         manifestStream.close();
 
-        Assert.assertEquals(actualSha256Attribute, "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
-        Assert.assertEquals(actualShaReturned, "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
+        Assert.assertEquals(actualSha256Attribute, "89b33caa5bf4cfd235f060c396cb1a5acb2734a1366db325676f48c5f5ed92e5");
+        Assert.assertEquals(actualShaReturned, "89b33caa5bf4cfd235f060c396cb1a5acb2734a1366db325676f48c5f5ed92e5");
 
         //cleanup resources created for this test
         deleteRecursive(deploymentDirectory);
@@ -129,7 +128,7 @@ public class FileContentDelegateTest {
         when(mockPackageDetailsKey.getName()).thenReturn("deploymentFile");
 
         //run code under test
-        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithoutManifestWar), true);
+        objectUnderTest.createContent(mockPackageDetails, sampleWithoutManifestWar, true);
         String actualShaReturned = objectUnderTest.getSHA(new File(deploymentDirectory, "/deploymentFile"));
 
         //verify the results (Assert and mock verification)
@@ -142,8 +141,8 @@ public class FileContentDelegateTest {
         String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
         manifestStream.close();
 
-        Assert.assertEquals(actualSha256Attribute, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
-        Assert.assertEquals(actualShaReturned, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
+        Assert.assertEquals(actualSha256Attribute, "73383d395fee72ebe2950b2373fccfd2aa4e61d871c31472030189162676d51a");
+        Assert.assertEquals(actualShaReturned, "73383d395fee72ebe2950b2373fccfd2aa4e61d871c31472030189162676d51a");
 
         deleteRecursive(deploymentDirectory);
     }
@@ -204,7 +203,7 @@ public class FileContentDelegateTest {
         when(mockPackageDetailsKey.getName()).thenReturn(sampleWithoutManifestWar.getName());
 
         //run code under test
-        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithoutManifestWar), false);
+        objectUnderTest.createContent(mockPackageDetails, sampleWithoutManifestWar, false);
         String actualShaReturned = objectUnderTest.getSHA(sampleWithoutManifestWar);
 
         //verify the results (Assert and mock verification)

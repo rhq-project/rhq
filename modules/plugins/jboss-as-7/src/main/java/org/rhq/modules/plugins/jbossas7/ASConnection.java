@@ -59,7 +59,6 @@ public class ASConnection {
     private String host;
     private int port;
     private String FAILURE_DESCRIPTION = "\"failure-description\"";
-    private String UNPARSABLE_JSON = ",\"server-groups\":null";
     private static String EAP_PREFIX = AbstractBaseDiscovery.EAP_PREFIX;
     private static String EDG_PREFIX = AbstractBaseDiscovery.EDG_PREFIX;
     private static String NAME = "name";
@@ -383,21 +382,6 @@ public class ASConnection {
                 failMessage = as7ResultSerialization.substring(failIndex + FAILURE_DESCRIPTION.length() + 1);
                 failure.setFailureDescription("Operation <" + op + "> returned <" + failMessage + ">");
                 return failure;
-            }
-            //spinder 2/22/12: if unparsable JSON detected remove it. TODO: see if fixed with later version of jackson
-            //This needs to be in place until i)Jackson version where this is fixed or
-            //                                ii) fix for https://issues.jboss.org/browse/JBPAPP-8233
-            if (as7ResultSerialization.indexOf(UNPARSABLE_JSON) > -1) {
-                if (verbose) {
-                    log.warn("------ Detected unparsable JSON <" + as7ResultSerialization + ">.");
-                }
-                String trimExtraJson = "";
-                int index = as7ResultSerialization.indexOf(UNPARSABLE_JSON);
-                trimExtraJson = as7ResultSerialization.substring(0, index)
-                    + as7ResultSerialization.substring(index + UNPARSABLE_JSON.length());
-                res = (isComplex) ? mapper.readValue(trimExtraJson, ComplexResult.class) : mapper.readValue(
-                    trimExtraJson, Result.class);
-                return res;
             }
 
             if (isComplex) {

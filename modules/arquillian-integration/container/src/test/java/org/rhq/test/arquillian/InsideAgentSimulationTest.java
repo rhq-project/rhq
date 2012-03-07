@@ -82,14 +82,14 @@ public class InsideAgentSimulationTest extends Arquillian {
     //the difference between this test and the deep discovery one is that for this test
     //the mocks should not be set up and hence only a top server discovery should occur
     @Test
-    @RunDiscovery(discoverServers = true, discoverServices = true)
+    @RunDiscovery
     public void testShallowDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
         Assert.assertEquals(discoveredServices.size(), 0, "There should be no service discovered");
     }
     
     @Test
-    @RunDiscovery(discoverServers = true, discoverServices = true)
+    @RunDiscovery
     public void testDeepDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
         Assert.assertEquals(discoveredServices.size(), 1, "There should be 1 service discovered");

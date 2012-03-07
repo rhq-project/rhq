@@ -52,6 +52,7 @@ import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -208,7 +209,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             q = em.createQuery("SELECT r FROM Resource r WHERE r.resourceType.id <= 4 ORDER BY r.id DESC");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
-                em.remove(em.getReference(Resource.class, ((Resource) removeMe).getId()));
+                Resource res = em.getReference(Resource.class, ((Resource) removeMe).getId());
+                for (Availability avail : res.getAvailability()) {
+                    em.remove(avail);
+                }
+                em.remove(res);
             }
             em.flush();
             getTransactionManager().commit();

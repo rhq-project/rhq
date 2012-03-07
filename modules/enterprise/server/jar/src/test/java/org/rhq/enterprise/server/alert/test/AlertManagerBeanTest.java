@@ -58,14 +58,14 @@ public class AlertManagerBeanTest {
 
     public void testPrettyPrintAVAILABILITY_DURATION() {
         AlertCondition condition = createCondition(AlertConditionCategory.AVAIL_DURATION,
-            AlertConditionOperator.AVAIL_DURATION_DOWN.name(), null, null, "2", null);
+            AlertConditionOperator.AVAIL_DURATION_DOWN.name(), null, null, "120", null);
         pretty = getPrettyAlertConditionString(condition);
         assert "Availability stays DOWN [2m]".equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
         assert "Avail stays DOWN [2m]".equals(pretty) : pretty;
 
         condition = createCondition(AlertConditionCategory.AVAIL_DURATION,
-            AlertConditionOperator.AVAIL_DURATION_NOT_UP.name(), null, null, "2", null);
+            AlertConditionOperator.AVAIL_DURATION_NOT_UP.name(), null, null, "120", null);
         pretty = getPrettyAlertConditionString(condition);
         assert "Availability stays NOT UP [2m]".equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);

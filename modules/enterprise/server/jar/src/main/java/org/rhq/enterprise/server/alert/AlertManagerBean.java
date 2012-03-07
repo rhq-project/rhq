@@ -872,7 +872,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             str.append(" [");
 
             // stored in seconds but present in minutes
-            String value = String.valueOf(Integer.valueOf(condition.getOption()) * 60);
+            String value = String.valueOf(Integer.valueOf(condition.getOption()) / 60);
             String formatted = MeasurementConverter.format(value, MeasurementUnits.MINUTES);
             str.append(formatted);
             str.append("]");

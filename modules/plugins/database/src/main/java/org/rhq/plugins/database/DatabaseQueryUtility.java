@@ -27,8 +27,11 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * @author Greg Hinkle
@@ -146,6 +149,9 @@ public class DatabaseQueryUtility {
                     map.put(resultSet.getString(1), resultSet.getDouble(2));
                 } catch (SQLException e) {
                     // Ignore columns that can't be read as doubles
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("A query column value is not a double, ignoring:" + ThrowableUtil.getAllMessages(e));
+                    }
                 }
             }
 

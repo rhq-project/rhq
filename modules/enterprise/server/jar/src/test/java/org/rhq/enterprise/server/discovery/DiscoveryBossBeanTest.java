@@ -52,7 +52,6 @@ import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
-import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -60,6 +59,7 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsService;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     private DiscoveryBossLocal discoveryBoss;
@@ -210,10 +210,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 Resource res = em.getReference(Resource.class, ((Resource) removeMe).getId());
-                for (Availability avail : res.getAvailability()) {
-                    em.remove(avail);
-                }
-                em.remove(res);
+                ResourceTreeHelper.deleteResource(em, res);
             }
             em.flush();
             getTransactionManager().commit();

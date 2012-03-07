@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 /**
  * Test some measurement subsystem functionality
@@ -116,10 +117,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
             for (MeasurementSchedule sched : resource2.getSchedules()) {
                 em.remove(sched);
             }
-            for (Availability avail : resource2.getAvailability()) {
-                em.remove(avail);
-            }
-            em.remove(resource2);
+            ResourceTreeHelper.deleteResource(em, resource2);
 
             definitionCt1 = em.merge(definitionCt1);
             em.remove(definitionCt1);

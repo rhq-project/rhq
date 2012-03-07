@@ -1136,7 +1136,11 @@
       <profile>
          <id>check-java-api</id>
          <activation>
-            <jdk>[1.7,)</jdk>
+            <!-- JDK activation appears to broken, so for the time being, comment this and use property activation instead. --> 
+            <!--<jdk>[1.7,)</jdk>-->
+            <property>
+               <name>java6.home</name>
+            </property>
          </activation>
 
          <properties>

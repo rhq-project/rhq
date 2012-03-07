@@ -251,9 +251,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void removeResourceType(Subject subject, ResourceType existingType) {
         log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
 
-        // Remove all Resources that are of the type.
+        // Remove all Resources that are of the type (regardless of invenentory status).
         ResourceCriteria c = new ResourceCriteria();
         c.addFilterResourceTypeId(existingType.getId());
+        c.addFilterInventoryStatus(null);
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
         if (resources != null) {
             Iterator<Resource> resIter = resources.iterator();

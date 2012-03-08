@@ -105,11 +105,11 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                     .getStartTime())));
             }
 
-            // TODO this is always zero for embedded because we don't populate the report
-            log.info("Scanned [" + report.getAddedRoots().size() + "] servers and found ["
-                + (report.getResourceCount() - report.getAddedRoots().size()) + "] total descendant Resources.");
+            // TODO: This is always zero for embedded because we don't populate the report.
+            log.info("Scanned platform and " + report.getAddedRoots().size() + " server(s) and discovered "
+                + (report.getResourceCount() - report.getAddedRoots().size()) + " new descendant Resource(s).");
 
-            // TODO GH: This is principally valuable only until we work out the last of the data transfer situations
+            // TODO GH: This is principally valuable only until we work out the last of the data transfer situations.
             if (log.isTraceEnabled()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
                 ObjectOutputStream oos = new ObjectOutputStream(baos);

@@ -245,7 +245,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(GROUPS_SECTION_VIEW_ID, dynagroupDefinitionsItem, allGroupsItem,
+        return new NavigationSection(GROUPS_SECTION_VIEW_ID, allGroupsItem, dynagroupDefinitionsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);
     }
 }

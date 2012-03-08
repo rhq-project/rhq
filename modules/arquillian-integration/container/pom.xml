@@ -19,12 +19,6 @@
     <name>Arquillian Container With Embedded RHQ Agent Plugin Container</name>
     <description>RHQ Embedded Agent Plugin Container integration for Arquillian</description>
 
-    <properties>
-        <arquillian.version>1.0.0.CR7</arquillian.version>
-        <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
-        <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
-    </properties>
-
     <!-- Dependencies -->
     <dependencies>
 

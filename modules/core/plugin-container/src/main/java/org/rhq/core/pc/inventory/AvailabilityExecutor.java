@@ -24,8 +24,11 @@ package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
-import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,7 +53,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 /**
  * Runs a periodic scan for resource availability.
  *
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  * @author John Mazzitelli
  * @author Ian Springer
  */
@@ -81,14 +84,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     private InventoryManager inventoryManager;
     private AtomicBoolean sendChangesOnlyReport;
     private final Object lock = new Object();
-
-    // TODO: remove these 
-    int totalResources;
-    int numAvailChecks;
-    int numRandomSched;
-    int numPushed;
-    int numAvailChanges;
-    int numDeferToParent;
+    private int scanHistorySize = 1;
+    private LinkedList<Scan> scanHistory = new LinkedList<Scan>();
 
     public AvailabilityExecutor(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
@@ -98,9 +95,6 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     public void run() {
         try {
             synchronized (lock) {
-                System.out.println("\n------------------> JOB KICKING OFF AVAIL SCAN at "
-                    + DateFormat.getTimeInstance().format(new Date(System.currentTimeMillis())));
-
                 AvailabilityReport report = call();
                 inventoryManager.handleReport(report);
             }
@@ -126,8 +120,6 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
      * @throws Exception if failed to create and prepare the report
      */
     public AvailabilityReport call() throws Exception {
-        log.debug("Running Availability Scan...");
-
         AvailabilityReport availabilityReport;
 
         synchronized (lock) {
@@ -144,29 +136,22 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             }
 
             long start = System.currentTimeMillis();
+            Scan scan = new Scan(start, !changesOnly);
 
             if (log.isDebugEnabled()) {
-                System.out.println("------> (0) NEW AVAIL SCAN (" + (changesOnly ? "Changes Only" : "Full") + " at "
-                    + DateFormat.getTimeInstance().format(new Date(start)));
-
-                totalResources = 0;
-                numAvailChecks = 0;
-                numRandomSched = 0;
-                numPushed = 0;
-                numAvailChanges = 0;
-                numDeferToParent = 0;
+                log.debug("Scan Starting: " + new Date(start));
             }
 
-            checkInventory(inventoryManager.getPlatform(), availabilityReport, changesOnly, true, AvailabilityType.UP,
-                start, false);
+            checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
 
+            scan.setEndTime(System.currentTimeMillis());
+
+            // Is this too much logging?
             if (log.isDebugEnabled()) {
-
-                System.out.println("------> (0) DONE (total=" + totalResources + ", numReported="
-                    + availabilityReport.getResourceAvailability().size() + ", numChecks=" + numAvailChecks
-                    + ", numChanges=" + numAvailChanges + ", numDefer=" + numDeferToParent + ", numRandom="
-                    + numRandomSched + ", numPushed=" + numPushed);
+                log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
             }
+
+            addScanHistory(scan);
 
             if (log.isDebugEnabled()) {
                 long end = System.currentTimeMillis();
@@ -188,12 +173,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         return availabilityReport;
     }
 
-    private String res(Resource res) {
-        return "[" + res.getId() + ", " + res.getName() + "]";
-    }
-
-    protected void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
-        boolean checkChildren, AvailabilityType parentAvailType, long checkInventoryTime, boolean forceCheck) {
+    protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
+        AvailabilityType parentAvailType, boolean isForced, Scan scan) {
 
         // Only report avail for committed Resources - that's all the Server cares about.
         if (resource.getId() == 0 || resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
@@ -220,7 +201,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             return;
         }
 
-        ++totalResources;
+        ++scan.numResources;
 
         // See if this resource is scheduled for an avail check
         boolean checkAvail = false;
@@ -230,11 +211,10 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         // if no avail check is scheduled or we're forcing the check, schedule the next check. Note that a forcedCheck
         // is "off-schedule" so we need to push out the next check.  
-        if ((null == availabilityScheduleTime) || forceCheck) {
+        if ((null == availabilityScheduleTime) || isForced) {
             // if there is no availability schedule (platform) then just perform the avail check
             // (note, platforms always return UP anyway).
             if (null == availScheduleRequest) {
-                // System.out.println("------> (1) setting checkAvail true: no schedule request for " + res(resource));
                 checkAvail = true;
 
             } else {
@@ -244,31 +224,24 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     // doing this random assignment for the first scheduled collection, we'll spread out the actual
                     // check times going forward. Do not check it on this pass (unless we're forced)
                     int interval = (int) availScheduleRequest.getInterval(); // intervals are short enough for safe cast
-                    availabilityScheduleTime = checkInventoryTime + RANDOM.nextInt(interval + 1);
+                    availabilityScheduleTime = scan.startTime + RANDOM.nextInt(interval + 1);
                     resourceContainer.setAvailabilityScheduleTime(availabilityScheduleTime);
 
-                    ++numRandomSched;
-                    //System.out.println("------> (2) scheduled avail check at "
-                    //    + DateFormat.getTimeInstance().format(new Date(availabilityScheduleTime)) + " for "
-                    //    + res(resource));
+                    ++scan.numScheduledRandomly;
 
                 } else {
                     deferToParent = true;
-                    ++numDeferToParent;
+                    ++scan.numDeferToParent;
                 }
             }
         } else {
             // check avail if this resource scheduled time has been reached
-            checkAvail = checkInventoryTime >= availabilityScheduleTime;
+            checkAvail = scan.startTime >= availabilityScheduleTime;
 
             if (checkAvail) {
                 long interval = availScheduleRequest.getInterval(); // intervals are short enough for safe cast
-                resourceContainer.setAvailabilityScheduleTime(checkInventoryTime + interval);
-                ++numPushed;
-                //System.out.println("------> (4) setting checkAvail true, moving check from "
-                //    + DateFormat.getTimeInstance().format(new Date(availabilityScheduleTime)) + " to "
-                //    + DateFormat.getTimeInstance().format(new Date(checkInventoryTime + interval)) + " for "
-                //    + res(resource));
+                resourceContainer.setAvailabilityScheduleTime(scan.startTime + interval);
+                ++scan.numPushedByInterval;
             }
         }
 
@@ -278,11 +251,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         // regardless of whether the avail schedule is met, we still must check avail if forceCheck is true or if
         // it's a full report and we don't yet have an avail for the resource.
-        if (!checkAvail && (forceCheck || (!reportChangesOnly && null == previous))) {
+        if (!checkAvail && (isForced || (scan.isFull && null == previous))) {
             checkAvail = true;
-
-            //System.out.println("------> (5) setting checkAvail true forceCheck=" + forceCheck + ", fullReport="
-            //    + !reportChangesOnly + ", previous=" + previous + " for " + res(resource));
         }
 
         if (checkAvail) {
@@ -295,7 +265,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             } else {
                 current = null;
                 try {
-                    ++numAvailChecks;
+                    ++scan.numGetAvailabilityCalls;
 
                     // if the component is started, ask what its current availability is as of right now;
                     // if it's not started, then assume it's down, and the next time we check,
@@ -314,7 +284,6 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK,
                         t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                     this.inventoryManager.sendResourceErrorToServer(resourceError);
-                    // TODO GH: Put errors in report, rather than sending them to the Server separately.
                     if (log.isDebugEnabled()) {
                         if (t instanceof TimeoutException) {
                             // no need to log the stack trace for timeouts...
@@ -334,23 +303,19 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         // Update the resource container only if the avail has changed.
         boolean availChanged = (previous == null) || (previous.getAvailabilityType() != current);
 
-        if (availChanged || !reportChangesOnly) {
+        if (availChanged || scan.isFull) {
             Availability availability = null;
 
             if (availChanged) {
-                ++numAvailChanges;
-                // System.out.println("------> (6) injecting new avail=" + current + " for " + res(resource));
+                ++scan.numAvailabilityChanges;
 
                 availability = this.inventoryManager.updateAvailability(resource, current);
 
                 // if the resource avail changed to UP then we must perform avail checks for all
                 // children, to ensure their avails are up to date. Note that if it changed to NOT UP
                 // then the children will just get the parent avail type and there is no avail check anyway.
-
-                if (!forceCheck && (AvailabilityType.UP == current)) {
-                    forceCheck = true;
-
-                    //System.out.println("------> (7) setting forceCheck=true for " + res(resource));
+                if (!isForced && (AvailabilityType.UP == current)) {
+                    isForced = true;
                 }
             } else {
                 // avoid the overhead of updating the resource container, the avail type did not change
@@ -361,11 +326,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             availabilityReport.addAvailability(availability);
         }
 
-        if (checkChildren) {
-            for (Resource child : resource.getChildResources()) {
-                checkInventory(child, availabilityReport, reportChangesOnly, true, current, checkInventoryTime,
-                    forceCheck);
-            }
+        for (Resource child : resource.getChildResources()) {
+            checkInventory(child, availabilityReport, current, isForced, scan);
         }
 
         return;
@@ -378,8 +340,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     void sendFullReportNextTime() {
         this.sendChangesOnlyReport.set(false);
 
-        if (log.isDebugEnabled()) {
-            System.out.println("\nFull report requested by: " + getSmallStackTrace(new Throwable()));
+        if (log.isTraceEnabled()) {
+            log.trace("\nFull report requested by: " + getSmallStackTrace(new Throwable()));
         }
     }
 
@@ -404,5 +366,117 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
      */
     void sendChangesOnlyReportNextTime() {
         this.sendChangesOnlyReport.set(true);
+    }
+
+    public void addScanHistory(Scan scan) {
+        synchronized (scanHistory) {
+            if (scanHistory.size() == scanHistorySize) {
+                scanHistory.removeLast();
+            }
+            scanHistory.push(scan);
+        }
+    }
+
+    public List<Scan> getScanHistory() {
+        synchronized (scanHistory) {
+            List<Scan> result = new ArrayList<Scan>(scanHistory.size());
+            Collections.copy(result, scanHistory);
+            return result;
+        }
+    }
+
+    public void setScanHistorySize(int scanHistorySize) {
+        synchronized (scanHistory) {
+            if (scanHistorySize < 1) {
+                return;
+            }
+            while (scanHistory.size() > scanHistorySize) {
+                scanHistory.removeLast();
+            }
+            this.scanHistorySize = scanHistorySize;
+        }
+    }
+
+    public static class Scan {
+        private long startTime;
+        private long endTime;
+        private long runtime;
+
+        private boolean isFull = false;
+        private boolean isForced = false;
+
+        int numResources = 0;
+        int numGetAvailabilityCalls = 0;
+        int numScheduledRandomly = 0;
+        int numPushedByInterval = 0;
+        int numAvailabilityChanges = 0;
+        int numDeferToParent = 0;
+
+        public Scan(long startTime, boolean isFull) {
+            this.startTime = startTime;
+            this.isFull = isFull;
+        }
+
+        public long getStartTime() {
+            return startTime;
+        }
+
+        public long getEndTime() {
+            return endTime;
+        }
+
+        public void setEndTime(long endTime) {
+            this.endTime = endTime;
+            this.runtime = endTime - startTime;
+        }
+
+        public long getRuntime() {
+            return runtime;
+        }
+
+        public boolean isFull() {
+            return isFull;
+        }
+
+        public boolean isForced() {
+            return isForced;
+        }
+
+        public void setForced(boolean isForced) {
+            this.isForced = isForced;
+        }
+
+        public int getNumResources() {
+            return numResources;
+        }
+
+        public int getNumGetAvailabilityCalls() {
+            return numGetAvailabilityCalls;
+        }
+
+        public int getNumScheduledRandomly() {
+            return numScheduledRandomly;
+        }
+
+        public int getNumPushedByInterval() {
+            return numPushedByInterval;
+        }
+
+        public int getNumAvailabilityChanges() {
+            return numAvailabilityChanges;
+        }
+
+        public int getNumDeferToParent() {
+            return numDeferToParent;
+        }
+
+        @Override
+        public String toString() {
+            return "Scan [startTime=" + startTime + ", endTime=" + endTime + ", runtime=" + runtime + ", isFull="
+                + isFull + ", isForced=" + isForced + ", numResources=" + numResources + ", numGetAvailabilityCalls="
+                + numGetAvailabilityCalls + ", numScheduledRandomly=" + numScheduledRandomly + ", numPushedByInterval="
+                + numPushedByInterval + ", numAvailabilityChanges=" + numAvailabilityChanges + ", numDeferToParent="
+                + numDeferToParent + "]";
+        }
     }
 }

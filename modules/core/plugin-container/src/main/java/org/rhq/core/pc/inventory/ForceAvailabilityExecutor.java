@@ -36,10 +36,10 @@ public class ForceAvailabilityExecutor extends AvailabilityExecutor {
     }
 
     @Override
-    protected void checkInventory(Resource resource, AvailabilityReport availabilityReport, boolean reportChangesOnly,
-        boolean checkChildren, AvailabilityType parentAvailType, long checkInventoryTime, boolean forceCheck) {
+    protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
+        AvailabilityType parentAvailType, boolean forceCheck, Scan scan) {
 
-        super.checkInventory(resource, availabilityReport, reportChangesOnly, checkChildren, parentAvailType,
-            checkInventoryTime, true);
+        scan.setForced(true);
+        super.checkInventory(resource, availabilityReport, parentAvailType, true, scan);
     }
 }

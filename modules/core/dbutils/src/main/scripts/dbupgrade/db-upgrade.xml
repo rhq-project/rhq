@@ -3942,7 +3942,7 @@
             
             <schemaSpec version="2.117">
                 <!-- Remove an obsolete drift table that may be hanging around -->
-                <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" />
+                <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" ignoreError="true" />
                 
                 <!-- Remove an unwanted null constraint -->
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_DEFINITION_ID" nullable="TRUE" />                

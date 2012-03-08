@@ -25,7 +25,6 @@ package org.rhq.core.pc.inventory;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -249,7 +248,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
         AvailabilityType current = (null == previous) ? null : previous.getAvailabilityType();
 
-        // regardless of whether the avail schedule is met, we still must check avail if forceCheck is true or if
+        // regardless of whether the avail schedule is met, we still must check avail if isForce is true or if
         // it's a full report and we don't yet have an avail for the resource.
         if (!checkAvail && (isForced || (scan.isFull && null == previous))) {
             checkAvail = true;
@@ -380,8 +379,14 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     public List<Scan> getScanHistory() {
         synchronized (scanHistory) {
             List<Scan> result = new ArrayList<Scan>(scanHistory.size());
-            Collections.copy(result, scanHistory);
+            result.addAll(scanHistory);
             return result;
+        }
+    }
+
+    public Scan getMostRecentScanHistory() {
+        synchronized (scanHistory) {
+            return scanHistory.isEmpty() ? null : scanHistory.get(0);
         }
     }
 

@@ -49,6 +49,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Ian Springer
  */
+@Test(groups = "arquillian", enabled = false)
 @SuppressWarnings("UnusedDeclaration")
 public class InventoryManagerTest extends Arquillian {
 
@@ -88,7 +89,6 @@ public class InventoryManagerTest extends Arquillian {
      *
      * @throws Exception if an error occurs
      */
-    @Test
     @RunDiscovery
     public void testSyncUnknownResources() throws Exception {
         validatePluginContainerInventory();

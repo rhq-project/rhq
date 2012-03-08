@@ -69,7 +69,15 @@ public enum IconEnum {
     //  Administration Tab
     /////////////////////////////
     USERS("global/User_16.png", "global/User_24.png"),
-    ROLES("global/Role_16.png", "global/Role_24.png");
+    ROLES("global/Role_16.png", "global/Role_24.png"),
+    CONFIGURE("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),
+    DOWNLOAD("global/Download_16.png", "global/Download_24.png"),
+    EVENTS("subsystems/event/Events_16.png", "subsystems/event/Events_24.png"),
+    AGENT("global/Agent_16.png", "global/Agent_24.png"),
+    METRIC("subsystems/monitor/Edit_Metric.png", "subsystems/monitor/Edit_Metric.png"),
+    PLUGIN("global/Plugin_16.png", "global/Plugin_24.png"),
+    ALERT_FLAG_BLUE("subsystems/alert/Flag_blue_16.png", "subsystems/alert/Flag_blue_24.png"),
+    CONTENT("subsystems/content/Content_16.png", "subsystems/content/Content_24.png");
 
     IconEnum(String icon16x16Path ){
         this.icon16x16Path = icon16x16Path;

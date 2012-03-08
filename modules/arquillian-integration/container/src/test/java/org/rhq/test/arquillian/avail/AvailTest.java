@@ -25,8 +25,6 @@ import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.ResourceComponentInstances;
 import org.rhq.test.arquillian.ResourceContainers;
 import org.rhq.test.arquillian.RunDiscovery;
-import org.rhq.test.arquillian.TestDiscoveryComponent;
-import org.rhq.test.arquillian.TestResourceComponent;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 public class AvailTest extends Arquillian {
@@ -34,9 +32,8 @@ public class AvailTest extends Arquillian {
     @Deployment(name = "availPlugin")
     @TargetsContainer("connected-pc")
     public static RhqAgentPluginArchive getTestPlugin() {
-        return ShrinkWrap.create(RhqAgentPluginArchive.class, "avail-plugin-1.0.jar")
-            .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
-            .setPluginDescriptor("avail-rhq-plugin.xml");
+        return ShrinkWrap.create(RhqAgentPluginArchive.class, "avail-plugin-1.0.jar").setPluginDescriptor(
+            "avail-rhq-plugin.xml");
     }
 
     @ArquillianResource

@@ -24,9 +24,12 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.jar.Manifest;
+import java.util.Properties;
+import java.util.UUID;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.content.PackageDetails;
@@ -36,18 +39,36 @@ import org.rhq.core.util.ZipUtil;
 
 public class FileContentDelegateTest {
 
+    private File deploymentDirectory;
+    private File dataDirectory;
+    private String resourceUuid;
+
+    @BeforeMethod
+    public void initTest() throws Exception {
+        deploymentDirectory = new File(this.getClass().getResource("/").getFile() + "deploymentDirectory");
+        deleteRecursive(deploymentDirectory);
+
+        dataDirectory = new File(this.getClass().getResource("/").getFile() + "dataDirectory");
+        deleteRecursive(dataDirectory);
+
+        resourceUuid = UUID.randomUUID().toString();
+    }
+
+    @AfterMethod
+    public void cleanTest() throws Exception {
+        deleteRecursive(deploymentDirectory);
+        deleteRecursive(dataDirectory);
+    }
+
     @Test
     public void testDeployExplodedWithManifestInArchive() throws Exception {
         //tell the method story as it happens: mock or create dependencies and configure
         //those dependencies to get the method under test to completion.
-        File deploymentDirectory = new File(this.getClass().getResource("/").getFile() + "deploymentDirectory");
-        deleteRecursive(deploymentDirectory);
-
         File sampleWithManifestWar = new File(this.getClass().getResource("/sampleWithManifest.war").getFile());
         Assert.assertTrue(sampleWithManifestWar.exists());
 
         //create object to test and inject required dependencies
-        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, "", null);
+        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, "");
 
         PackageDetails mockPackageDetails = mock(PackageDetails.class);
         PackageDetailsKey mockPackageDetailsKey = mock(PackageDetailsKey.class);
@@ -56,95 +77,26 @@ public class FileContentDelegateTest {
 
         //run code under test
         objectUnderTest.createContent(mockPackageDetails, sampleWithManifestWar, true);
-        String actualShaReturned = objectUnderTest.getSHA(new File(deploymentDirectory, "/deploymentFile"));
+        String actualShaSaved = objectUnderTest.saveDeploymentSHA(sampleWithManifestWar, deploymentDirectory,
+            resourceUuid, dataDirectory);
+        String actualShaRetrieved = objectUnderTest.retrieveDeploymentSHA(deploymentDirectory, resourceUuid,
+            dataDirectory);
 
         //verify the results (Assert and mock verification)
-        File manifestFile = new File(deploymentDirectory.getAbsolutePath() + "/deploymentFile/META-INF/MANIFEST.MF");
-        Assert.assertTrue(manifestFile.exists(), "Manifest file not created properly!");
-        Assert.assertNotEquals(manifestFile.length(), 0, "Empty manifest!!");
+        File sha256File = new File(dataDirectory, resourceUuid + ".sha");
+        Assert.assertTrue(sha256File.exists());
+        Assert.assertNotEquals(sha256File.length(), 0, "Empty SHA256 file!!");
 
-        InputStream manifestStream = new FileInputStream(manifestFile);
-        Manifest manifest = new Manifest(manifestStream);
-        String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
-        manifestStream.close();
+        InputStream propertiesFileInputStream = new FileInputStream(sha256File);
+        Properties prop = new Properties();
+        prop.load(propertiesFileInputStream);
+        String storedSha256Attribute = prop.getProperty("RHQ-Sha256");
+        propertiesFileInputStream.close();
 
-        Assert.assertEquals(actualSha256Attribute, "89b33caa5bf4cfd235f060c396cb1a5acb2734a1366db325676f48c5f5ed92e5");
-        Assert.assertEquals(actualShaReturned, "89b33caa5bf4cfd235f060c396cb1a5acb2734a1366db325676f48c5f5ed92e5");
-
-        //cleanup resources created for this test
-        deleteRecursive(deploymentDirectory);
-    }
-
-    @Test
-    public void testGetShaExplodedWithManifest() throws Exception {
-        //tell the method story as it happens: mock or create dependencies and configure
-        //those dependencies to get the method under test to completion.
-        File deploymentDirectory = new File(this.getClass().getResource("/").getFile() + "deploymentDirectory");
-        deleteRecursive(deploymentDirectory);
-
-        File sampleWithManifestWar = new File(this.getClass().getResource("/sampleWithManifest.war").getFile());
-        Assert.assertTrue(sampleWithManifestWar.exists());
-
-        ZipUtil.unzipFile(sampleWithManifestWar, deploymentDirectory);
-
-        //create object to test and inject required dependencies
-        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, null, null);
-
-        //run code under test
-        String actualShaReturned = objectUnderTest.getSHA(deploymentDirectory);
-
-        //verify the results (Assert and mock verification)
-        File manifestFile = new File(deploymentDirectory.getAbsolutePath() + "/META-INF/MANIFEST.MF");
-        Assert.assertTrue(manifestFile.exists(), "Manifest file not created properly!");
-        Assert.assertNotEquals(manifestFile.length(), 0, "Empty manifest!!");
-
-        InputStream manifestStream = new FileInputStream(manifestFile);
-        Manifest manifest = new Manifest(manifestStream);
-        String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
-        manifestStream.close();
-
-        Assert.assertEquals(actualSha256Attribute, "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
-        Assert.assertEquals(actualShaReturned, "a30a576b5ee15c709469517e9f529989f9ae85bddde131c014a799ca9d7c1c0f");
-
-        deleteRecursive(deploymentDirectory);
-    }
-
-    @Test
-    public void testDeployExplodedWithoutManifestInArchive() throws Exception {
-        //tell the method story as it happens: mock dependencies and configure
-        //those dependencies to get the method under test to completion.
-        File deploymentDirectory = new File(this.getClass().getResource("/").getFile() + "deploymentDirectory");
-        deleteRecursive(deploymentDirectory);
-
-        File sampleWithoutManifestWar = new File(this.getClass().getResource("/sampleWithoutManifest.war").getFile());
-        Assert.assertTrue(sampleWithoutManifestWar.exists());
-
-        //create object to test and inject required dependencies
-        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, "", null);
-
-        PackageDetails mockPackageDetails = mock(PackageDetails.class);
-        PackageDetailsKey mockPackageDetailsKey = mock(PackageDetailsKey.class);
-        when(mockPackageDetails.getKey()).thenReturn(mockPackageDetailsKey);
-        when(mockPackageDetailsKey.getName()).thenReturn("deploymentFile");
-
-        //run code under test
-        objectUnderTest.createContent(mockPackageDetails, sampleWithoutManifestWar, true);
-        String actualShaReturned = objectUnderTest.getSHA(new File(deploymentDirectory, "/deploymentFile"));
-
-        //verify the results (Assert and mock verification)
-        File manifestFile = new File(deploymentDirectory.getAbsolutePath() + "/deploymentFile/META-INF/MANIFEST.MF");
-        Assert.assertTrue(manifestFile.exists(), "Manifest file not created properly!");
-        Assert.assertNotEquals(manifestFile.length(), 0, "Empty manifest!!");
-
-        InputStream manifestStream = new FileInputStream(manifestFile);
-        Manifest manifest = new Manifest(manifestStream);
-        String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
-        manifestStream.close();
-
-        Assert.assertEquals(actualSha256Attribute, "73383d395fee72ebe2950b2373fccfd2aa4e61d871c31472030189162676d51a");
-        Assert.assertEquals(actualShaReturned, "73383d395fee72ebe2950b2373fccfd2aa4e61d871c31472030189162676d51a");
-
-        deleteRecursive(deploymentDirectory);
+        String expectedSHA256 = "89b33caa5bf4cfd235f060c396cb1a5acb2734a1366db325676f48c5f5ed92e5";
+        Assert.assertEquals(storedSha256Attribute, expectedSHA256);
+        Assert.assertEquals(actualShaRetrieved, expectedSHA256);
+        Assert.assertEquals(actualShaSaved, expectedSHA256);
     }
 
     @Test
@@ -161,24 +113,23 @@ public class FileContentDelegateTest {
         ZipUtil.unzipFile(sampleWithoutManifestWar, deploymentDirectory);
 
         //run code under test
-        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, null, null);
-        String actualShaReturned = objectUnderTest.getSHA(deploymentDirectory);
+        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, null);
+        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(deploymentDirectory, resourceUuid,
+            dataDirectory);
 
         //verify the results (Assert and mock verification)
-        File manifestFile = new File(deploymentDirectory.getAbsolutePath() + "/META-INF/MANIFEST.MF");
-        Assert.assertTrue(manifestFile.exists(), "Manifest file not created properly!");
-        Assert.assertNotEquals(manifestFile.length(), 0, "Empty manifest!!");
+        File sha256File = new File(dataDirectory, resourceUuid + ".sha");
+        Assert.assertTrue(sha256File.exists());
+        Assert.assertNotEquals(sha256File.length(), 0, "Empty SHA256 file!!");
 
-        InputStream manifestStream = new FileInputStream(manifestFile);
-        Manifest manifest = new Manifest(manifestStream);
-        String actualSha256Attribute = manifest.getMainAttributes().getValue("RHQ-Sha256");
-        manifestStream.close();
+        InputStream propertiesFileInputStream = new FileInputStream(sha256File);
+        Properties prop = new Properties();
+        prop.load(propertiesFileInputStream);
+        String storedSha256Attribute = prop.getProperty("RHQ-Sha256");
+        propertiesFileInputStream.close();
 
-        Assert.assertEquals(actualSha256Attribute, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
+        Assert.assertEquals(storedSha256Attribute, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
         Assert.assertEquals(actualShaReturned, "bff7f7d63ae8e4f1efebb54fa727effe1b1a8246492ad9c36779d79a9771fb2b");
-
-        //cleanup resources created for this test
-        deleteRecursive(deploymentDirectory);
     }
 
     @Test
@@ -195,7 +146,7 @@ public class FileContentDelegateTest {
         File deploymentFile = new File(deploymentDirectory, sampleWithoutManifestWar.getName());
 
         //create object to test and inject required dependencies
-        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, "", null);
+        FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, "");
 
         PackageDetails mockPackageDetails = mock(PackageDetails.class);
         PackageDetailsKey mockPackageDetailsKey = mock(PackageDetailsKey.class);
@@ -204,12 +155,15 @@ public class FileContentDelegateTest {
 
         //run code under test
         objectUnderTest.createContent(mockPackageDetails, sampleWithoutManifestWar, false);
-        String actualShaReturned = objectUnderTest.getSHA(sampleWithoutManifestWar);
+        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(deploymentFile, resourceUuid, dataDirectory);
 
         //verify the results (Assert and mock verification)
         Assert.assertTrue(deploymentDirectory.exists(), "Deployment did not happen.");
         Assert.assertTrue(deploymentDirectory.isDirectory(), "Deployment directory is no longer a directory!!");
         Assert.assertFalse(deploymentFile.isDirectory(), "Deployment was exploded when it should not have been.");
+
+        File sha256File = new File(dataDirectory, resourceUuid + ".sha");
+        Assert.assertFalse(sha256File.exists(), "SHA256 properties files was wrongly created for zipped deployment.");
 
         MessageDigestGenerator digest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
         String expectedSHA256 = digest.calcDigestString(sampleWithoutManifestWar);
@@ -217,9 +171,6 @@ public class FileContentDelegateTest {
 
         Assert.assertEquals(actualSHA256OfDeployment, expectedSHA256);
         Assert.assertEquals(actualShaReturned, expectedSHA256);
-
-        //cleanup resources created for this test
-        deleteRecursive(deploymentFile);
     }
 
     @Test
@@ -230,10 +181,11 @@ public class FileContentDelegateTest {
         Assert.assertTrue(sampleWithoutManifestWar.exists());
 
         //create object to test and inject required dependencies
-        FileContentDelegate objectUnderTest = new FileContentDelegate(sampleWithoutManifestWar, null, null);
+        FileContentDelegate objectUnderTest = new FileContentDelegate(sampleWithoutManifestWar, null);
 
         //run code under test
-        String actualShaReturned = objectUnderTest.getSHA(sampleWithoutManifestWar);
+        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(sampleWithoutManifestWar, resourceUuid,
+            dataDirectory);
 
         //verify the results (Assert and mock verification)
         MessageDigestGenerator digest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);

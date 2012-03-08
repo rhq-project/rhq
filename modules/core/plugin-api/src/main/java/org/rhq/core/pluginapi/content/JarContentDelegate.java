@@ -47,8 +47,16 @@ import org.rhq.core.util.file.JarContentFileInfo;
 public class JarContentDelegate extends FileContentDelegate {
     private static final String MIME_TYPE_JAR = "application/java-archive";
 
-    public JarContentDelegate(File directory, String typeName) {
-        super(directory, ".jar", typeName);
+    private final String packageTypeName;
+
+    public JarContentDelegate(File directory, String packageTypeName) {
+        super(directory, ".jar");
+
+        this.packageTypeName = packageTypeName;
+    }
+
+    public String getPackageTypeName() {
+        return packageTypeName;
     }
 
     @Override

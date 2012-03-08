@@ -31,16 +31,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.content.PackageDetails;
-import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -56,26 +54,23 @@ import org.rhq.core.util.file.FileUtil;
 public class FileContentDelegate {
 
     private static final String RHQ_SHA_256 = "RHQ-Sha256";
-    private static final String MANIFEST_RELATIVE_PATH = "META-INF/MANIFEST.MF";
 
     private final Log log = LogFactory.getLog(FileContentDelegate.class);
-
     private final String fileEnding;
-    private final String packageTypeName;
     private final File directory;
 
-    public FileContentDelegate(File directory, String fileEnding, String packageTypeName) {
+    public FileContentDelegate() {
+        this.fileEnding = null;
+        this.directory = null;
+    }
+
+    public FileContentDelegate(File directory, String fileEnding) {
         this.directory = directory;
         this.fileEnding = fileEnding;
-        this.packageTypeName = packageTypeName;
     }
 
     public String getFileEnding() {
         return fileEnding;
-    }
-
-    public String getPackageTypeName() {
-        return packageTypeName;
     }
 
     public File getDirectory() {
@@ -97,8 +92,6 @@ public class FileContentDelegate {
         try {
             if (unzip) {
                 ZipUtil.unzipFile(content, destination);
-                String sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(content);
-                writeSHAToManifest(destination, sha);
             } else {
                 FileUtil.copyFile(content, destination);
             }
@@ -106,66 +99,6 @@ public class FileContentDelegate {
         } catch (IOException e) {
             throw new RuntimeException("Error creating artifact from details: " + destination, e);
         }
-    }
-
-    public File getPath(PackageDetails details) {
-        /* JBNADM-2022 - It still needs to be determined if it is the responsibility of the plugin container or the
-         *               plugin to be concerned with path information in the package name. For now, it's the plugin's
-         *               responsibility. We strip out the path information to keep control of where the JARs are
-         *               deployed to. Note: when we add support for more package types, we'll need to refactor this
-         *               out on a package type basis.
-         *
-         * jdobies, Sep 20, 2007
-         */
-        PackageDetailsKey key = details.getKey();
-        String fileName = key.getName();
-        int lastPathStart = fileName.lastIndexOf(File.separatorChar);
-        if (lastPathStart > -1) {
-            fileName = fileName.substring(lastPathStart + 1);
-        }
-
-        if (!fileName.endsWith(fileEnding)) {
-            fileName = fileName + fileEnding;
-        }
-        return new File(this.directory, fileName);
-    }
-
-    /**
-     * Retrieves the SHA256 for a deployed application.
-     * 1) If the app is exploded then return RHQ-Sha256 manifest attribute.
-     *   1.1) If RHQ-Sha256 is missing then compute it, save it and return the result.
-     * 2) If the app is an archive then compute SHA256 on fly and return it.
-     *
-     * @param deploymentFile deployment file
-     * @return
-     */
-    public String getSHA(File deploymentFile) {
-        String sha = null;
-        try {
-            if (deploymentFile.isDirectory()) {
-                File manifestFile = new File(deploymentFile.getAbsolutePath(), MANIFEST_RELATIVE_PATH);
-                if (manifestFile.exists()) {
-                    InputStream manifestStream = new FileInputStream(manifestFile);
-                    Manifest manifest = null;
-                    try {
-                        manifest = new Manifest(manifestStream);
-                        sha = manifest.getMainAttributes().getValue(RHQ_SHA_256);
-                    } finally {
-                        manifestStream.close();
-                    }
-                }
-
-                if (sha == null || sha.trim().isEmpty()) {
-                    sha = computeAndSaveSHA(deploymentFile);
-                }
-            } else {
-                sha = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(deploymentFile);
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException("Problem calculating digest of package [" + deploymentFile.getPath() + "].", ex);
-        }
-
-        return sha;
     }
 
     /**
@@ -202,12 +135,114 @@ public class FileContentDelegate {
         }
     }
 
+    /**
+     * This is a stub implementation, you need to implement a
+     * discovery for artifacts of your particular content type.
+     * 
+     * @return
+     */
     public Set<ResourcePackageDetails> discoverDeployedPackages() {
-        /*
-         * This is a stub implementation, you need to implement a
-         * discovery for artifacts of your particular content type
-         */
-        return null;
+        throw new UnsupportedOperationException("This method is not implemented!");
+    }
+
+    /**
+     * Retrieves SHA256 for the deployment. If this is an exploded deployment
+     * and SHA256 is missing from the data directory then compute the SHA256 
+     * and save in the data directory. 
+     * 
+     * @param deployment deployment location
+     * @param resourceId resource id
+     * @param dataDirectory data directory
+     * @return SHA256 of the package
+     */
+    public String retrieveDeploymentSHA(File deployment, String resourceId, File dataDirectory) {
+        String sha = null;
+
+        if (deployment.isDirectory()) {
+            File propertiesFile = new File(dataDirectory, resourceId + ".sha");
+
+            if (propertiesFile.exists()) {
+                FileInputStream propertiesInputStream = null;
+                try {
+                    propertiesInputStream = new FileInputStream(propertiesFile);
+                    Properties prop = new Properties();
+                    prop.load(propertiesInputStream);
+                    sha = prop.getProperty(RHQ_SHA_256);
+                } catch (IOException e) {
+                    throw new RuntimeException("Error retrieving artifact's SHA256.", e);
+                } finally {
+                    if (propertiesInputStream != null) {
+                        try {
+                            propertiesInputStream.close();
+                        } catch (IOException e) {
+                            log.error("Failed to close input stream.", e);
+                        }
+                    }
+                }
+            }
+
+            if (sha == null) {
+                sha = this.saveDeploymentSHA(deployment, resourceId, dataDirectory);
+            }
+        } else {
+            sha = this.computeSHAForArchivedContent(deployment);
+        }
+
+        return sha;
+    }
+
+    public String saveDeploymentSHA(File originalArchive, File deployment, String resourceId, File dataDirectory) {
+        String sha = null;
+
+        if (deployment.isDirectory()) {
+            sha = this.computeSHAForArchivedContent(originalArchive);
+            this.saveDeploymentSHA(sha, resourceId, dataDirectory);
+        } else {
+            sha = this.computeSHAForArchivedContent(deployment);
+        }
+
+        return sha;
+    }
+
+    public String saveDeploymentSHA(File deployment, String resourceId, File dataDirectory) {
+        String sha = null;
+
+        if (deployment.isDirectory()) {
+            sha = this.computeSHAForExplodedContent(deployment);
+            this.saveDeploymentSHA(sha, resourceId, dataDirectory);
+        } else {
+            sha = this.computeSHAForArchivedContent(deployment);
+        }
+
+        return sha;
+    }
+
+    private void saveDeploymentSHA(String sha, String resourceId, File dataDirectory) {
+        Properties prop = new Properties();
+        prop.setProperty(RHQ_SHA_256, sha);
+
+        if (!dataDirectory.exists()) {
+            dataDirectory.mkdirs();
+        }
+
+        File propertiesFile = new File(dataDirectory, resourceId + ".sha");
+        FileOutputStream propertiesOutputStream = null;
+        try {
+            propertiesOutputStream = new FileOutputStream(propertiesFile);
+            prop.store(propertiesOutputStream, null);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Error saving artifact's SHA256.", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Error saving artifact's SHA256.", e);
+        } finally {
+            if (propertiesOutputStream != null) {
+                try {
+                    propertiesOutputStream.close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Error saving artifact's SHA256.", e);
+                }
+            }
+        }
     }
 
     /**
@@ -216,7 +251,7 @@ public class FileContentDelegate {
      * @param contentFile content archive
      * @return SHA256 of the archive
      */
-    public String computeSHAForArchive(File contentFile) {
+    private String computeSHAForArchivedContent(File contentFile) {
         if (!contentFile.isDirectory()) {
             try {
                 MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
@@ -229,16 +264,9 @@ public class FileContentDelegate {
         return null;
     }
 
-    /**
-     * Compute SHA256 for the content of an exploded war deployment. This method should be used to
-     * compute the SHA256 for content deployed outside RHQ or for the initial content delivered
-     * with the server.
-     *
-     * @param deploymentDirectory app deployment folder
-     * @return
-     */
-    private String computeAndSaveSHA(File deploymentDirectory) {
+    private String computeSHAForExplodedContent(File deploymentDirectory) {
         String sha = null;
+
         try {
             if (deploymentDirectory.isDirectory()) {
                 MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
@@ -277,7 +305,6 @@ public class FileContentDelegate {
                 }
 
                 sha = messageDigest.getDigestString();
-                writeSHAToManifest(deploymentDirectory, sha);
             }
         } catch (IOException e) {
             throw new RuntimeException("Error creating artifact for contentFile: " + deploymentDirectory, e);
@@ -287,44 +314,25 @@ public class FileContentDelegate {
     }
 
     /**
-     * Write the SHA256 to the manifest using the RHQ-Sha256 attribute tag.
-     *
-     * @param deploymentFolder app deployment folder
-     * @param sha SHA256
-     * @throws IOException
+     * JBNADM-2022 - It still needs to be determined if it is the responsibility of the plugin container or the
+     *             plugin to be concerned with path information in the package name. For now, it's the plugin's
+     *             responsibility. We strip out the path information to keep control of where the JARs are
+     *             deployed to. Note: when we add support for more package types, we'll need to refactor this
+     *             out on a package type basis.
+     * @param details package details
+     * @return destination path
      */
-    public void writeSHAToManifest(File deploymentFolder, String sha) throws IOException {
-        File manifestFile = new File(deploymentFolder, MANIFEST_RELATIVE_PATH);
-        Manifest manifest;
-        if (manifestFile.exists()) {
-            FileInputStream inputStream = new FileInputStream(manifestFile);
-            try {
-                manifest = new Manifest(inputStream);
-            } finally {
-                inputStream.close();
-            }
-        } else {
-            manifest = new Manifest();
-            manifestFile.getParentFile().mkdirs();
-            manifestFile.createNewFile();
+    private File getPath(PackageDetails details) {
+        String fileName = details.getKey().getName();
+        int lastPathStart = fileName.lastIndexOf(File.separatorChar);
+        if (lastPathStart > -1) {
+            fileName = fileName.substring(lastPathStart + 1);
         }
 
-        Attributes attribs = manifest.getMainAttributes();
-
-        //The main section of the manifest file does not get saved if both of
-        //these two attributes are missing. Please see Attributes implementation.
-        if (!attribs.containsKey(Attributes.Name.MANIFEST_VERSION.toString())
-            && !attribs.containsKey(Attributes.Name.SIGNATURE_VERSION.toString())) {
-            attribs.putValue(Attributes.Name.MANIFEST_VERSION.toString(), "1.0");
+        if (this.fileEnding != null && !fileName.endsWith(this.fileEnding)) {
+            fileName = fileName + this.fileEnding;
         }
 
-        attribs.putValue(RHQ_SHA_256, sha);
-
-        FileOutputStream outputStream = new FileOutputStream(manifestFile);
-        try {
-            manifest.write(outputStream);
-        } finally {
-            outputStream.close();
-        }
+        return new File(this.directory, fileName);
     }
 }

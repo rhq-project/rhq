@@ -69,6 +69,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
+    private final String resourceUuid;
     private final T parentResourceComponent;
     private final ResourceContext<?> parentResourceContext;
     private final Configuration pluginConfiguration;
@@ -159,6 +160,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
         this.version = resource.getVersion();
+        this.resourceUuid = resource.getUuid();
         this.parentResourceComponent = parentResourceComponent;
         this.parentResourceContext = parentResourceContext;
         this.resourceDiscoveryComponent = resourceDiscoveryComponent;
@@ -215,6 +217,15 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      */
     public String getVersion() {
         return this.version;
+    }
+
+    /**
+     * The {@link Resource#getUuid() uuid} of the resource this context is associated with.
+     *
+     * @return the resource's uuid string
+     */
+    public String getResourceUuid() {
+        return this.resourceUuid;
     }
 
     /**

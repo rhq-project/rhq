@@ -177,8 +177,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         String sha256 = null;
 
         try {
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(file, null, null);
-            sha256 = fileContentDelegate.getSHA(file);
+            FileContentDelegate fileContentDelegate = new FileContentDelegate();
+            sha256 = fileContentDelegate.retrieveDeploymentSHA(file, this.getResourceContext().getResourceUuid(), this
+                .getResourceContext().getDataDirectory());
         } catch (Exception iex) {
             if (log.isDebugEnabled()) {
                 log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
@@ -238,11 +239,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         log.debug("Writing new EAR/WAR bits to temporary file...");
         File tempFile;
-        String sha = null;
         try {
             tempFile = writeNewAppBitsToTempFile(contentServices, packageDetails);
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(null, null, null);
-            sha = fileContentDelegate.computeSHAForArchive(tempFile);
         } catch (Exception e) {
             return failApplicationDeployment("Error writing new application bits to temporary file - cause: " + e,
                 packageDetails);
@@ -324,16 +322,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         deleteBackupOfOriginalFile(backupOfOriginalFile);
 
         if (this.deploymentFile.isDirectory()) {
-            FileContentDelegate fileContentDelegate = new FileContentDelegate(deploymentFile, null, null);
-            try {
-                //This is a simulation of create content from FileContentDelegate split across
-                //this deployment method because JBoss AS5 is using a different deployment model.
-                //The SHA256 was pre-computed earlier (at the time the temp content file was created).
-                //The only thing left at this point is to store it in the manifest file.
-                fileContentDelegate.writeSHAToManifest(deploymentFile, sha);
-            } catch (IOException e) {
-                log.error("Unable to save SHA to manifest file for " + this.deploymentFile.getPath() + ".", e);
-            }
+            FileContentDelegate fileContentDelegate = new FileContentDelegate();
+            fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile,
+                this.getResourceContext().getResourceUuid(), this.getResourceContext().getDataDirectory());
         }
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);

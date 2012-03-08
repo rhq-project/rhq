@@ -158,7 +158,12 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         }
 
         // make sure the uninstall worked
-        assert !dbtype.checkTableExists(conn, "TEST_SMALL");
+        try {
+            boolean result = dbtype.checkTableExists(conn, "TEST_SMALL");
+            assert false : "Should have thrown an IllegalStateException";
+        } catch (IllegalStateException e) {
+            // expected
+        }
     }
 
     /**
@@ -247,7 +252,12 @@ public class DatabaseTest extends AbstractDatabaseTestUtil {
         }
 
         // make sure the uninstall worked
-        assert !dbtype.checkTableExists(conn, "TEST_SMALL");
+        try {
+            boolean result = dbtype.checkTableExists(conn, "TEST_SMALL");
+            assert false : "Should have thrown an IllegalStateException";
+        } catch (IllegalStateException e) {
+            // expected
+        }
     }
 
     /**

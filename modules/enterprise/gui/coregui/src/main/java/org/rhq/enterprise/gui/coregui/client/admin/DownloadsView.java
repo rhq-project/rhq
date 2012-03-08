@@ -19,9 +19,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
@@ -30,16 +27,18 @@ import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
-
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A simple page to view the downloads the server provides (like
@@ -49,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class DownloadsView extends LocatableVLayout {
 
-    public static final ViewName VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads());
+    public static final ViewName VIEW_ID = new ViewName("Downloads", MSG.view_adminConfig_downloads(), IconEnum.DOWNLOAD);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
@@ -69,9 +68,6 @@ public class DownloadsView extends LocatableVLayout {
 
         setHeight100();
         setWidth100();
-
-        TitleBar titleBar = new TitleBar(this, MSG.view_adminConfig_downloads(), "global/Download_24.png");
-        addMember(titleBar);
 
         sectionStack = new LocatableSectionStack(extendLocatorId("stack"));
         sectionStack.setShowResizeBar(true);

@@ -37,13 +37,13 @@ public class RhqAgentPluginContainerTest extends Arquillian {
     }
 
     @Deployment(name = "dependentPlugin")
-    public static RhqAgentPluginArchive getDendendingTestPlugin() {
+    public static RhqAgentPluginArchive getDependentTestPlugin() {
         return ShrinkWrap
             .create(RhqAgentPluginArchive.class, "test-dependent-plugin-1.0.0.jar")
             .addClasses(TestDiscoveryComponent.class, TestResourceComponent.class)
             .setPluginDescriptor("test-dependent-rhq-plugin.xml")
             .withRequiredPluginsFrom(
-                DependencyResolvers.use(MavenDependencyResolver.class).includeDependenciesFromPom("pom.xml")
+                DependencyResolvers.use(MavenDependencyResolver.class).loadEffectivePom("pom.xml").importAllDependencies()
                     .resolveAs(JavaArchive.class, new ScopeFilter("test")));
 
     }

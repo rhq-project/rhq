@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -40,12 +36,12 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AgentPluginTableView.AgentPluginDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
@@ -60,12 +56,16 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 /**
  * @author John Mazzitelli
  */
 public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
 
-    public static final ViewName VIEW_ID = new ViewName("AgentPlugins", MSG.view_adminConfig_agentPlugins());
+    public static final ViewName VIEW_ID = new ViewName("AgentPlugins", MSG.view_adminConfig_agentPlugins(), IconEnum.PLUGIN);
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_CONFIGURATION_VIEW_ID + "/" + VIEW_ID;
 
@@ -80,10 +80,9 @@ public class AgentPluginTableView extends TableSection<AgentPluginDataSource> {
     private boolean showDeleted = false;
 
     public AgentPluginTableView(String locatorId) {
-        super(locatorId, MSG.view_adminConfig_agentPlugins());
+        super(locatorId, null);
         setHeight100();
         setWidth100();
-        setHeaderIcon("global/Plugin_24.png");
         setDataSource(new AgentPluginDataSource());
     }
 

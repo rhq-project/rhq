@@ -48,8 +48,12 @@ import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
@@ -66,10 +70,9 @@ import java.util.List;
 /**
  * @author Greg Hinkle
  */
-public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView {
+public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView, HasViewName {
 
-    private static final String TITLE = MSG.view_autoDiscoveryQ_title();
-    private static final String HEADER_ICON = "global/AutoDiscovery_24.png";
+    public static final ViewName VIEW_ID = new ViewName("AutodiscoveryQueue", MSG.view_inventory_adq(), IconEnum.DISCOVERY_QUEUE);
 
     private boolean simple;
     private TreeGrid treeGrid;
@@ -102,27 +105,6 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
     @Override
     protected void onInit() {
         super.onInit();
-
-        if (!simple) {
-            Img img = new Img(HEADER_ICON, 24, 24);
-            img.setPadding(4);
-
-            HTMLFlow title = new HTMLFlow();
-            title.setWidth100();
-            title.setHeight(35);
-            title.setContents(TITLE);
-            title.setPadding(4);
-            title.setStyleName("HeaderLabel");
-
-            HLayout titleLayout = new HLayout();
-            titleLayout.setAutoHeight();
-            titleLayout.setAlign(VerticalAlignment.BOTTOM);
-
-            titleLayout.addMember(img);
-            titleLayout.addMember(title);
-
-            addMember(titleLayout);
-        }
 
         treeGrid = new LocatableTreeGrid(this.getLocatorId());
 
@@ -465,4 +447,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         return treeGrid;
     }
 
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
+    }
 }

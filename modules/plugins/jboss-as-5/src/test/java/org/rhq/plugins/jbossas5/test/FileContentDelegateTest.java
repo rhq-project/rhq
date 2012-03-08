@@ -56,7 +56,7 @@ public class FileContentDelegateTest {
         when(mockPackageDetailsKey.getName()).thenReturn("deploymentFile");
 
         //run code under test
-        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithManifestWar), true, false);
+        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithManifestWar), true);
         String actualShaReturned = objectUnderTest.getSHA(new File(deploymentDirectory, "/deploymentFile"));
 
         //verify the results (Assert and mock verification)
@@ -129,7 +129,7 @@ public class FileContentDelegateTest {
         when(mockPackageDetailsKey.getName()).thenReturn("deploymentFile");
 
         //run code under test
-        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithoutManifestWar), true, false);
+        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithoutManifestWar), true);
         String actualShaReturned = objectUnderTest.getSHA(new File(deploymentDirectory, "/deploymentFile"));
 
         //verify the results (Assert and mock verification)
@@ -204,7 +204,7 @@ public class FileContentDelegateTest {
         when(mockPackageDetailsKey.getName()).thenReturn(sampleWithoutManifestWar.getName());
 
         //run code under test
-        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithoutManifestWar), false, false);
+        objectUnderTest.createContent(mockPackageDetails, new FileInputStream(sampleWithoutManifestWar), false);
         String actualShaReturned = objectUnderTest.getSHA(sampleWithoutManifestWar);
 
         //verify the results (Assert and mock verification)

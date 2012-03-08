@@ -9,7 +9,7 @@
 
     <!-- !!! REMOVED FROM CONTENT-SCHEMA !!!! -->
     
-     <table name="RHQ_DRIFT_TEMPLATE_MAP">
+     <table name="RHQ_DRIFT_TEMPLATE_MAP" obsolete="true">
          <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
          <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
      </table>

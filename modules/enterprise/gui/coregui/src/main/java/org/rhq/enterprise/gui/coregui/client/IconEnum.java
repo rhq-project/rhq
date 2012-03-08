@@ -28,6 +28,7 @@ package org.rhq.enterprise.gui.coregui.client;
  * and understand the full ramifications of changing an image.
  * By having the IconEnum represent the icon, we can defer the determination of the
  * size of the icon to the implementation while still defining an icon.
+ * It is also very easy for a method signature to become ambiguous if the string is null.
  *
  * @author  Mike Thompson
  */
@@ -37,33 +38,46 @@ public enum IconEnum {
     // Inventory Tab
     /////////////////////////////
 
-    DISCOVERY_QUEUE("global/AutoDiscovery_16.png"),
+    DISCOVERY_QUEUE("global/AutoDiscovery_16.png","global/AutoDiscovery_24.png"),
     ALL_RESOURCES("resources/all_resources.png"),
-    PLATFORMS("abc"),
-    SERVERS("abc"),
-    SERVICES("abc"),
-    UNAVAILABLE_SERVERS("abc"),
+    PLATFORMS("types/Platform_up_16.png","types/Platform_up_24.png"),
+    SERVERS("types/Server_up_16.png", "types/Server_up_24.png"),
+    SERVICES("types/Service_up_16.png", "types/Service_up_24.png"),
+    UNAVAILABLE_SERVERS("types/Server_down_16.png", "types/Server_down_24.png"),
     // Groups Section
-    DYNAGROUPS("types/GroupDefinition_16.png"),
-    ALL_GROUPS("abc"),
-    COMPATIBLE_GROUPS("abc"),
-    MIXED_GROUPS("abc"),
-    PROBLEM_GROUPS("abc"),
+    DYNAGROUPS("types/GroupDefinition_16.png", "types/GroupDefinition_24.png"),
+    ALL_GROUPS("types/Group_up_16.png", "types/Group_up_24.png"),
+    COMPATIBLE_GROUPS("types/Cluster_up_16.png", "types/Cluster_up_24.png"),
+    MIXED_GROUPS("types/Group_up_16.png", "types/Group_up_24.png"),
+    PROBLEM_GROUPS("types/Group_down_16.png", "types/Group_down_24.png"),
 
     /////////////////////////////
     // Reports Tab
     /////////////////////////////
-    TAGS("global/Tag_16.png"),
+    TAGS("global/Tag_16.png","global/Tag_24.png" ),
     SUSPECT_METRICS("subsystems/monitor/Monitor_failed_16.png","subsystems/monitor/Monitor_failed_24.png"),
     CONFIGURATION_HISTORY("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),
     RECENT_OPERATIONS("subsystems/control/Operation_16.png","subsystems/control/Operation_24.png"),
-    RECENT_ALERTS("subsystems/alert/Alert_LOW_16.png", "subsystems/alert/Alert_LOW_24.png"),
-    ALERT_DEFINITIONS("subsystems/alert/Alerts_16.png", "subsystems/alert/Alerts_24.png"),
+    RECENT_ALERTS("subsystems/alert/Alert_LOW_16.png"),
+    ALERT_DEFINITIONS("subsystems/alert/Alerts_16.png"),
     RECENT_DRIFT("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png"),
     // Inventory Section
     INVENTORY_SUMMARY("subsystems/inventory/Inventory_16.png", "subsystems/inventory/Inventory_24.png"),
     PLATFORM_UTILIZATION("types/Platform_up_16.png", "types/Platform_up_24.png"),
-    DRIFT_COMPLIANCE("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png");
+    DRIFT_COMPLIANCE("subsystems/drift/Drift_16.png", "subsystems/drift/Drift_24.png"),
+    /////////////////////////////
+    //  Administration Tab
+    /////////////////////////////
+    USERS("global/User_16.png", "global/User_24.png"),
+    ROLES("global/Role_16.png", "global/Role_24.png"),
+    CONFIGURE("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),
+    DOWNLOAD("global/Download_16.png", "global/Download_24.png"),
+    EVENTS("subsystems/event/Events_16.png", "subsystems/event/Events_24.png"),
+    AGENT("global/Agent_16.png", "global/Agent_24.png"),
+    METRIC("subsystems/monitor/Edit_Metric.png", "subsystems/monitor/Edit_Metric.png"),
+    PLUGIN("global/Plugin_16.png", "global/Plugin_24.png"),
+    ALERT_FLAG_BLUE("subsystems/alert/Flag_blue_16.png", "subsystems/alert/Flag_blue_24.png"),
+    CONTENT("subsystems/content/Content_16.png", "subsystems/content/Content_24.png");
 
     IconEnum(String icon16x16Path ){
         this.icon16x16Path = icon16x16Path;

@@ -1131,16 +1131,22 @@
          </properties>
       </profile>
 
-      <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used.
-           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are
-           used. -->
+      <!-- If JDK7 or later is being used to compile, enforce that only Java6 API's are used in our code by setting 
+           javac's boot classpath to the JRE6 core jars. -->
       <profile>
          <id>check-java-api</id>
          <activation>
+            <!--<jdk>[1.7,)</jdk>-->
             <property>
                <name>java6.home</name>
             </property>
          </activation>
+
+         <properties>
+            <!-- A JRE6 installation directory (e.g. /usr/java/jdk1.6.0_30); the default "/usr/lib/jvm/jre-1.6.0" will
+                 work on Fedora systems. On other operating systems, override the property in ~/.m2/settings.xml. -->
+            <java6.home>/usr/lib/jvm/jre-1.6.0</java6.home>
+         </properties>
 
          <build>
            <plugins>

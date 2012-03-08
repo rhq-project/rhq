@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
@@ -28,17 +25,21 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -49,23 +50,22 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class UsersView extends TableSection<UsersDataSource> {
+public class UsersView extends TableSection<UsersDataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("Users", MSG.common_title_users());
+    public static final ViewName VIEW_ID = new ViewName("Users", MSG.common_title_users(), IconEnum.USERS);
+
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
-    private static final String HEADER_ICON = "global/User_24.png";
 
     private boolean hasManageSecurity;
 
     public UsersView(String locatorId, boolean hasManageSecurity) {
-        super(locatorId, MSG.common_title_users());
+        super(locatorId, null);
 
         final UsersDataSource dataSource = UsersDataSource.getInstance();
 
         setDataSource(dataSource);
-        setHeaderIcon(HEADER_ICON);
         setEscapeHtmlInDetailsLinkColumn(true);
        
         this.hasManageSecurity = hasManageSecurity;
@@ -236,4 +236,8 @@ public class UsersView extends TableSection<UsersDataSource> {
         return MSG.common_label_users();
     }
 
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
+    }
 }

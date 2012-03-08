@@ -20,13 +20,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
-import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -34,15 +27,10 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
-
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.drift.DriftDefinitionTemplatesView;
@@ -50,13 +38,16 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+import java.util.*;
+
 /**
  * @author Jay Shaughnessy
  *
  */
 public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
 
-    public static final ViewName VIEW_ID = new ViewName("DriftDefTemplates", MSG.view_adminConfig_driftDefTemplates());
+    public static final ViewName VIEW_ID = new ViewName("DriftDefTemplates", MSG.view_adminConfig_driftDefTemplates(),
+            IconEnum.DRIFT_COMPLIANCE);
     public static final String VIEW_PATH = ResourceTypeTreeView.VIEW_PATH + VIEW_ID;
 
     public static final String ATTR_PLUGIN_TEMPLATES = "pluginTemplates";

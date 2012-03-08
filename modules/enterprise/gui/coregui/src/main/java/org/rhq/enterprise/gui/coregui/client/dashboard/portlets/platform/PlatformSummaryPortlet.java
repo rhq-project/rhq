@@ -47,8 +47,10 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -63,10 +65,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 /**
  * @author Greg Hinkle
  */
-public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
+public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(),
-            ImageManager.getResourceIcon(ResourceCategory.PLATFORM));
+    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(), IconEnum.PLATFORM_UTILIZATION);
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";
@@ -323,6 +324,11 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
             return null;
         }
 
+    }
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 
     private enum MemoryMetric {

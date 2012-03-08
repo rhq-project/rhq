@@ -43,10 +43,6 @@ import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hyperic.sigar.NetConnection;
-import org.hyperic.sigar.NetFlags;
-import org.hyperic.sigar.Sigar;
-import org.hyperic.sigar.SigarException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
@@ -63,7 +59,6 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.util.ConnectionProviderFactory;
 import org.rhq.plugins.jmx.util.JvmResourceKey;
 import org.rhq.plugins.jmx.util.JvmUtility;
-import org.rhq.plugins.jmx.util.Socket;
 
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -75,11 +70,12 @@ import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
  * This component will discover JVM processes that appear to be long-running (i.e. "servers"). Specifically, it will
  * discover java processes that:
  * <ul>
- *  <li>have enabled JMX Remoting (JSR-160) via com.sun.management.jmxremote* system properties on their command lines, or</li>
+ *  <li>have enabled JMX Remoting (JSR-160) via com.sun.management.jmxremote* system properties on their command lines,
+ *      or</li>
  *  <li>are Sun/Oracle-compatible java processes accessible via the com.sun.tools.attach API AND specify the
  *      org.rhq.resourceKey system property on their command lines (e.g. -Dorg.rhq.resourceKey=FOO); the attach API uses IPC
- *      under the covers, so for a process to be accessible, it either must be running as the same user as the RHQ Agent,
- *      or the Agent must be running as root<li>
+ *      under the covers, so for a process to be accessible, it must be running as the same user as the RHQ Agent; even
+ *      if the Agent is running as root, processes running as other users cannot be accessed via the attach API</li>
  * </ul>
  * Some other java processes that do not meet these criteria can be manually added if they expose JMX remotely in
  * another supported form (WebLogic, WebSphere, etc.).
@@ -90,17 +86,6 @@ import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
 public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet, ResourceUpgradeFacet { //, ClassLoaderFacet {
 
     private static final Log log = LogFactory.getLog(JMXDiscoveryComponent.class);
-
-    // our own private SIGAR
-    // TODO (ips, 01/05/12): enhance native-system API, then use that instead of using SIGAR directly
-    private static Sigar SIGAR;
-    static {
-        try {
-            SIGAR = new Sigar();
-        } catch (RuntimeException re) {
-            SIGAR = null;
-        }
-    }
 
     public static final String COMMAND_LINE_CONFIG_PROPERTY = "commandLine";
 
@@ -120,11 +105,16 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
     private static final String SYSPROP_JAVA_VERSION = "java.version";
 
     /*
-     * Ignore certain processes that are managed by their own plugin. For example, the Tomcat plugin will
-     * handle Tomcat processes configured for JMX management.
+     * Ignore certain java processes that are managed by their own plugin. For example, the Tomcat plugin will handle
+     * Tomcat processes configured for JMX management.
      */
-    private static final String[] DEFAULT_PROCESS_EXCLUDES = new String[]{"org.jboss.Main", "catalina.startup.Bootstrap"};
+    private static final String[] DEFAULT_PROCESS_EXCLUDES = new String[] {
+        "org.rhq.enterprise.agent.AgentMain", // RHQ Agent
+        "org.jboss.Main",                     // JBoss AS
+        "catalina.startup.Bootstrap"          // Tomcat
+    };
 
+    @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();        
         Map<String, List<DiscoveredResourceDetails>> duplicatesByKey = new LinkedHashMap<String, List<DiscoveredResourceDetails>>();
@@ -177,11 +167,6 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         List<ProcessScanResult> nonExcludedJavaProcesses = new ArrayList<ProcessScanResult>();
         Set<String> processExcludes = getProcessExcludes();
         for (ProcessScanResult javaProcess : javaProcesses) {
-            if (javaProcess.getProcessInfo().equals(context.getSystemInformation().getThisProcess())) {
-                // If the process is our own process (i.e. the RHQ Agent JVM), then skip it, since the rhq-agent
-                // plugin will handle discovering that.
-                continue;
-            }
             String[] args = javaProcess.getProcessInfo().getCommandLine();
             StringBuilder buffer = new StringBuilder();
             for (String arg : args) {
@@ -221,6 +206,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
     }
 
     // MANUAL ADD
+    @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
                                                       ResourceDiscoveryContext discoveryContext)
             throws InvalidPluginConfigurationException {
@@ -365,8 +351,7 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
 
     protected DiscoveredResourceDetails discoverResourceDetails(ResourceDiscoveryContext context, ProcessInfo process) {
         Integer jmxRemotingPort = getJmxRemotingPort(process);
-        JMXServiceURL jmxServiceURL;
-        Set<Socket> serverSockets;
+        JMXServiceURL jmxServiceURL = null;
         if (jmxRemotingPort != null) {
             // Use JMX Remoting when possible, since it doesn't require the RHQ Agent to have OS-level permissions to
             // communicate with the remote JVM via IPC.
@@ -378,47 +363,40 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         } else {
             // If JMX Remoting is not enabled, it's required that a Resource key is explicitly specified via the org.rhq.resourceKey sysprop.
             String keyString = getSystemPropertyValue(process, SYSPROP_RHQ_RESOURCE_KEY);
-            if (keyString == null || keyString.equals("")) {
-                serverSockets = getServerSockets(process);
-                if (!serverSockets.isEmpty()) {
-                    log.info("Server JVM process [" + process.getPid() + "] with command line ["
-                        + Arrays.asList(process.getCommandLine())
-                        + "] cannot be discovered, because it does not specify either of the following system properties: -D"
-                        + SYSPROP_JMXREMOTE_PORT + "=JMX_REMOTING_PORT, -D" + SYSPROP_RHQ_RESOURCE_KEY + "=UNIQUE_KEY");
+            if (keyString != null && !keyString.equals("")) {
+                // Start up a JMX agent within the JVM via the Sun Attach API, and return a URL that can be used to connect
+                // to that agent.
+                // Note, this will only work if the remote JVM is Java 6 or later, and maybe some 64 bit Java 5 - see
+                // JBNADM-3332. Also, the RHQ Agent will have to be running on a JDK, not a JRE, so that we can access
+                // the JDK's tools.jar, which contains the Sun JVM Attach API classes.
+                jmxServiceURL = JvmUtility.extractJMXServiceURL(process);
+                if (jmxServiceURL == null) {
                     return null;
                 }
             }
-
-            // Start up a JMX agent within the JVM via the Sun Attach API, and return a URL that can be used to connect
-            // to that agent.
-            // Note, this will only work if the remote JVM is Java 6 or later, and maybe some 64 bit Java 5 - see
-            // JBNADM-3332. Also, the RHQ Agent will have to be running on a JDK, not a JRE, so that we can access
-            // the JDK's tools.jar, which contains the Sun JVM Attach API classes.
-            jmxServiceURL = JvmUtility.extractJMXServiceURL(process.getPid());
         }
+        log.debug("JMX service URL for java process [" + process + "] is [" + jmxServiceURL + "].");
 
-        if (jmxServiceURL != null) {
-            log.debug("JMX service URL for process [" + process + "] is [" + jmxServiceURL + "].");
-            return buildResourceDetails(context, process, jmxServiceURL, jmxRemotingPort);
-        } else {
-            return null;
-        }
+        return buildResourceDetails(context, process, jmxServiceURL, jmxRemotingPort);
     }
 
     protected DiscoveredResourceDetails buildResourceDetails(ResourceDiscoveryContext context, ProcessInfo process,
                                                              JMXServiceURL jmxServiceURL, Integer jmxRemotingPort) {
         JvmResourceKey key;                        
         String mainClassName = getJavaMainClassName(process);
-        String value = getSystemPropertyValue(process, SYSPROP_RHQ_RESOURCE_KEY);
-        if (value != null && !value.equals("")) {
-            log.debug("Using explicitly specified Resource key: [" + value + "]...");
-            key = JvmResourceKey.fromExplicitValue(mainClassName, value);
+        String keyString = getSystemPropertyValue(process, SYSPROP_RHQ_RESOURCE_KEY);
+        if (keyString != null && !keyString.equals("")) {
+            log.debug("Using explicitly specified Resource key: [" + keyString + "]...");
+            key = JvmResourceKey.fromExplicitValue(mainClassName, keyString);
         } else {
             if (jmxRemotingPort != null) {
                 log.debug("Using JMX remoting port [" + jmxRemotingPort + "] as Resource key...");
                 key = JvmResourceKey.fromJmxRemotingPort(mainClassName, jmxRemotingPort);
             } else {
-                log.info("Process [" + process.getPid() + "] with command line [" + Arrays.asList(process.getCommandLine()) + "] cannot be discovered, because it does not specify either of the following system properties: -Dcom.sun.management.jmxremote, -D" + SYSPROP_RHQ_RESOURCE_KEY + "=UNIQUE_KEY");
+                log.debug("Process [" + process.getPid() + "] with command line ["
+                    + Arrays.asList(process.getCommandLine())
+                    + "] cannot be discovered, because it does not specify either of the following system properties: "
+                    + "-D" + SYSPROP_JMXREMOTE_PORT + "=12345, -D" + SYSPROP_RHQ_RESOURCE_KEY + "=UNIQUE_KEY");
                 return null;
             }
         }
@@ -433,10 +411,11 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
                 ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBean.class);
             version = runtimeMXBean.getSystemProperties().get(SYSPROP_JAVA_VERSION);
             if (version == null) {
-                throw new IllegalStateException("System property " + SYSPROP_JAVA_VERSION + " is not defined.");
+                throw new IllegalStateException("System property [" + SYSPROP_JAVA_VERSION + "] is not defined.");
             }
         } catch (Exception e) {
-            log.error("Failed to determine JVM version.", e);
+            log.error("Failed to determine JVM version for process [" + process.getPid() + "] with command line [" +
+                Arrays.asList(process.getCommandLine()) + "].", e);
             version = null;
         }
 
@@ -474,37 +453,6 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         }
 
         return name.toString();
-    }
-
-    private Set<Socket> getServerSockets(ProcessInfo process) {
-        Set<Socket> serverSockets = new HashSet<Socket>();
-        if (SIGAR != null) {
-            // Only request the type of connections we are interested in - TCP and UDP listen sockets.
-            int netFlags = (NetFlags.CONN_TCP | NetFlags.CONN_UDP | NetFlags.CONN_SERVER);
-            NetConnection[] connections;
-            try {
-                connections = SIGAR.getNetConnectionList(netFlags);
-            } catch (SigarException e) {
-                log.debug("Failed to get net connections.", e);
-                connections = new NetConnection[0];
-            }
-            for (NetConnection connection : connections) {
-                if (connection.getState() == NetFlags.TCP_LISTEN) {
-                    try {
-                        long pid = SIGAR.getProcPort(connection.getType(), connection.getLocalPort());
-                        if (pid == process.getPid()) {
-                            Socket.Protocol protocol = (connection.getType() == NetFlags.CONN_UDP) ?
-                                Socket.Protocol.UDP : Socket.Protocol.TCP;
-                            serverSockets.add(new Socket(protocol, connection.getLocalAddress(),
-                                connection.getLocalPort()));
-                        }
-                    } catch (SigarException e) {
-                        log.debug("Failed to get pid for connection [" + connection + "].", e);
-                    }
-                }
-            }
-        }
-        return serverSockets;
     }
 
     protected String getJavaMainClassName(ProcessInfo process) {
@@ -545,6 +493,5 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
         }
         return null;
     }
-
 
 }

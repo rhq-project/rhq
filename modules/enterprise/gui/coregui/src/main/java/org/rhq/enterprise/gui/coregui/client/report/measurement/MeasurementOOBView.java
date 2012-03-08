@@ -27,18 +27,20 @@ import java.util.ArrayList;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.ListGridField;
 
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
  * @author Greg Hinkle
  */
-public class MeasurementOOBView extends Table<MeasurementOOBDataSource> {
+public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), "subsystems/monitor/Monitor_failed_16.png");
+    public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), IconEnum.SUSPECT_METRICS);
 
     public MeasurementOOBView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIconPath());
+        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIcon().getIcon16x16Path());
 
         setDataSource(new MeasurementOOBDataSource());
     }
@@ -56,5 +58,11 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> {
     @Override
     protected SelectionStyle getDefaultSelectionStyle() {
         return SelectionStyle.NONE;
+    }
+
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 }

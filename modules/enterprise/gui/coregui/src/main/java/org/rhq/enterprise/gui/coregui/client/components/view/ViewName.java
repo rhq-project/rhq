@@ -17,7 +17,7 @@ public class ViewName {
     /**
      * As part of the UXD changes icons will be shown the header titles.
      */
-    private String iconPath;
+    private IconEnum icon;
 
     public ViewName(String name) {
         this(name, null);
@@ -29,14 +29,13 @@ public class ViewName {
         this.title = buildTitle(name, title);
     }
 
-    @Deprecated
-    public ViewName(String name, String title, String iconPath) {
+
+    public ViewName(String name, String title, IconEnum icon) {
         super();
         this.name = name;
         this.title = buildTitle(name, title);
-        this.iconPath = iconPath;
+        this.icon = icon;
     }
-
 
 
     private static String buildTitle(String name, String title) {
@@ -51,8 +50,8 @@ public class ViewName {
         return title;
     }
 
-    public String getIconPath() {
-        return iconPath;
+    public IconEnum getIcon() {
+        return icon;
     }
 
     /*

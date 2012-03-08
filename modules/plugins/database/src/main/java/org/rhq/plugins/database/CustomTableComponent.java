@@ -79,15 +79,17 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
         String query = conf.getSimpleValue("metricQuery", null);
 
         if (query == null) {
-            ResourceType type = this.context.getResourceType();
-            String resourceKey = this.context.getResourceKey();
-            log.info("Resource "
-                + resourceKey
-                + " ("
-                + type.getName()
-                + ", plugin "
-                + type.getPlugin()
-                + "): The plugin configuration doesn't specify 'metricQuery' property. Ignoring the measurement request.");
+            if (log.isTraceEnabled()) {
+                ResourceType type = this.context.getResourceType();
+                String resourceKey = this.context.getResourceKey();
+                log.trace("Resource "
+                    + resourceKey
+                    + " ("
+                    + type.getName()
+                    + ", plugin "
+                    + type.getPlugin()
+                    + "): The plugin configuration doesn't specify 'metricQuery' property. Ignoring the measurement request.");
+            }
             return;
         }
 
@@ -95,10 +97,24 @@ public class CustomTableComponent implements DatabaseComponent<DatabaseComponent
 
         Map<String, Double> values = DatabaseQueryUtility.getNumericQueryValueMap(this, query);
 
+        // this is a for loop because the name of each column can be the name of the metric
         for (MeasurementScheduleRequest request : metrics) {
-            Double value = values.get(request.getName());
+            String columnName = request.getName();
+
+            Double value = values.get(columnName);
+
+            // the db might be returning the column name in a different case than we expect, try all lower and all upper just in case
+            if (value == null) {
+                value = values.get(columnName.toLowerCase());
+                if (value == null) {
+                    value = values.get(columnName.toUpperCase());
+                }
+            }
+
             if (value != null) {
                 report.addData(new MeasurementDataNumeric(request, value));
+            } else {
+                log.debug("Missing column in query results - metric not collected: " + columnName);
             }
         }
     }

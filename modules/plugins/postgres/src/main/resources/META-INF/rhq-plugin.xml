@@ -549,13 +549,13 @@
                    supportsManualAdd="true">
 
               <plugin-configuration>
-                  <c:simple-property name="table" description="The table to discover"/>
-                  <c:simple-property name="name"/>
-                  <c:simple-property name="description"/>
-                  <c:simple-property name="metricQuery" description="The query that will gather metric data"/>
+                  <c:simple-property name="table" description="The table to discover and to be queried on for metric data"/>
+                  <c:simple-property name="name" required="false" description="Initial name of the resource when manually added. This is also part of the resource key - make this unique if you want two Query resources based on the same table."/>
+                  <c:simple-property name="description" required="false" description="Initial description of resource when manually added"/>
+                  <c:simple-property name="metricQuery" required="false" description="The query that will gather metric data. This must return two columns, a string column whose value is 'metricColumn' and then a numeric column whose value is the metric to be collected."/>
               </plugin-configuration>
 
-              <metric property="metricColumn" displayType="summary"/>
+              <metric property="metricColumn" displayName="Metric Value" displayType="summary" description="The metric value for this Query. If Metric Query is not specified, this is not collected."/>
 
           </service>
 

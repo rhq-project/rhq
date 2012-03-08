@@ -39,9 +39,7 @@ public class TwoLevelTab extends NamedTab {
     }
 
     public void registerSubTabs(SubTab... subTabs) {
-        for (SubTab subTab : subTabs) {
-            layout.registerSubTab(subTab);
-        }
+        layout.registerSubTabs(subTabs);
     }
 
     public void setVisible(SubTab subTab, boolean visible) {

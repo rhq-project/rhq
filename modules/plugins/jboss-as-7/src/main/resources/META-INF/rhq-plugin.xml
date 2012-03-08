@@ -138,20 +138,6 @@
                 <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
             </results>
         </operation>
-        <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
-            <parameters>
-                <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
-                    <c:option-source target="resource" expression="type=Managed Server"/>
-                </c:simple-property>
-                <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
-                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
-                </c:simple-property>
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult" description="Outcome of the remove server operation"/>
-            </results>
-
-        </operation>
 
         <operation name="start" description="Start this Host-/Domaincontroller" displayName="Start this host controller">
             <results>
@@ -294,14 +280,6 @@
                     <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
                 </results>
             </operation>
-            <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
-                <parameters>
-                    <c:simple-property name="name" description="Name of the server to be removed" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
-                </results>
-            </operation>
 
             <resource-configuration>
                 <c:group name="children:system-property:name+" displayName="System-properties">
@@ -332,6 +310,7 @@
         <server name="Managed Server"
                 discovery="ManagedASDiscovery"
                 class="ManagedASComponent"
+                createDeletePolicy="delete-only"
                 >
             <plugin-configuration>
                 <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
@@ -2078,6 +2057,63 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     </server>
 
+    <server name="JGroups"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=jgroups"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="default-stack" description="Default stack to use"/>
+        </resource-configuration>
+    </server>
+
+    <server name="Remoting"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=remoting"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="worker-read-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="1"
+                               description="The number of read threads to create for the remoting worker."/>
+            <c:simple-property name="worker-task-max-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="16"
+                               description="The maximum number of threads for the remoting worker task thread pool."/>
+            <c:simple-property name="worker-task-limit" required="false" type="integer" readOnly="false"
+                               defaultValue="16384"
+                               description="The maximum number of remoting worker tasks to allow before rejecting."/>
+            <c:simple-property name="worker-task-core-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="4"
+                               description="The number of core threads for the remoting worker task thread pool."/>
+            <c:simple-property name="worker-write-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="1"
+                               description="The number of write threads to create for the remoting worker."/>
+            <c:simple-property name="worker-task-keepalive" required="false" type="integer" readOnly="false"
+                               defaultValue="60"
+                               description="The number of milliseconds to keep non-core remoting worker task threads alive."/>
+        </resource-configuration>
+
+    </server>
 
     <server name="Threads"
         discovery="SubsystemDiscovery"

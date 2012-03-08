@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,16 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.components;
+package org.rhq.enterprise.gui.coregui.client.components.view;
 
 /**
- * Interface indicates existence of a TitleBar component.
+ * HasViewName establishes the contract of ViewName.
  *
  * @author Mike Thompson
  */
-public interface HasTitleBar {
-   
-    TitleBar getTitleBar();
-    void setTitleBar(TitleBar titleBar);
+public interface HasViewName {
+
+    ViewName getViewName();
 
 }

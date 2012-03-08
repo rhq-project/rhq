@@ -34,4 +34,18 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface BeforeDiscovery {
 
+    /**
+     * This list of test methods the method annotated with this annotation applies to. 
+     * <p>
+     * By default the {@code @BeforeDiscovery} method applies to all test methods.
+     */
+    String[] testMethods() default {};
+
+    /**
+     * If order of the {@code @BeforeDiscovery} methods is significant, you can order them
+     * by using this parameter.
+     * <p>
+     * Zero or negative value means no significant order required.
+     */
+    int order() default 0;
 }

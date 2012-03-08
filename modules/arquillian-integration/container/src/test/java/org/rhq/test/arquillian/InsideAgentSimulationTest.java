@@ -36,7 +36,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**
@@ -56,9 +55,6 @@ public class InsideAgentSimulationTest extends Arquillian {
     }
 
     @ArquillianResource
-    private PluginContainer pc;
-    
-    @ArquillianResource
     private MockingServerServices serverServices;
 
     @DiscoveredResources(plugin = "testDeepPlugin", resourceType = "TestServer")
@@ -69,18 +65,30 @@ public class InsideAgentSimulationTest extends Arquillian {
 
     private FakeServerInventory fakeServerInventory;
 
-    @BeforeDiscovery
-    public void resetServerServices() throws Exception {
+    @BeforeDiscovery(order = 1)
+    public void resetServerServices() {
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
-
+    }
+    
+    @BeforeDiscovery(testMethods = "testDeepDiscovery", order = 2)
+    public void setupDiscoveryMocks() throws Exception {
         //autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
     }
     
+    //the difference between this test and the deep discovery one is that for this test
+    //the mocks should not be set up and hence only a top server discovery should occur
     @Test
-    @RunDiscovery(discoverServers = true, discoverServices = true)
+    @RunDiscovery
+    public void testShallowDiscovery() throws Exception {
+        Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
+        Assert.assertEquals(discoveredServices.size(), 0, "There should be no service discovered");
+    }
+    
+    @Test
+    @RunDiscovery
     public void testDeepDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
         Assert.assertEquals(discoveredServices.size(), 1, "There should be 1 service discovered");

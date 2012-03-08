@@ -52,10 +52,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -69,9 +71,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * 
  * @author John Mazzitelli
  */
-public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.DataSource> {
+public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.DataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(), "subsystems/alert/Alerts_16.png");
+    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(), IconEnum.ALERT_DEFINITIONS);
 
     public AlertDefinitionReportView(String locatorId) {
         super(locatorId);
@@ -98,6 +100,11 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                 }
             }
         });
+    }
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 
     class DataSource extends AbstractAlertDefinitionsDataSource {

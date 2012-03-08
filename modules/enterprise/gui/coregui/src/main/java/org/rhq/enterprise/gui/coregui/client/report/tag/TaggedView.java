@@ -33,17 +33,13 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
@@ -57,9 +53,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class TaggedView extends LocatableVLayout implements BookmarkableView {
+public class TaggedView extends LocatableVLayout implements BookmarkableView, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags(), "global/Tag_24.png");
+    public static final ViewName VIEW_ID = new ViewName("Tags", MSG.view_tags_tags(), IconEnum.TAGS);
 
     private TagCloudView tagCloudView;
     private LocatableTabSet container;
@@ -199,4 +195,9 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
         }
     }
 
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
+    }
 }

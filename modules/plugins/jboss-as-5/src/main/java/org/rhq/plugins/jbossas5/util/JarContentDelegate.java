@@ -45,41 +45,17 @@ import org.rhq.core.util.file.JarContentFileInfo;
  * @author Greg Hinkle
  */
 public class JarContentDelegate extends FileContentDelegate {
-    public static final String MIME_TYPE_JAR = "application/java-archive";
+    private static final String MIME_TYPE_JAR = "application/java-archive";
 
     public JarContentDelegate(File directory, String typeName) {
         super(directory, ".jar", typeName);
     }
 
-    /*
-     * public InputStream getContent(ArtifactDetails artifactDetails) {   File contentFile = new File(this.directory,
-     * artifactDetails.getArtifactKey());   try   {      return new BufferedInputStream(new
-     * FileInputStream(contentFile));   }   catch (FileNotFoundException e)   {      throw new
-     * RuntimeException("Artifact content not found for artifact " + artifactDetails, e);   } }
-     *
-     */
-    /*
-     * public void deleteContent(ArtifactDetails artifactDetails) {   File contentFile = new File(this.directory,
-     * artifactDetails.getArtifactKey());
-     *
-     * if (!contentFile.exists())      return;
-     *
-     * // If the artifact is a directory, its contents need to be deleted first   if (contentFile.isDirectory())   {
-     *  TomcatFileUtils.deleteDirectoryContents(contentFile.listFiles());   }
-     *
-     * boolean deleteResult = contentFile.delete();
-     *
-     * if (deleteResult==false)   {      throw new RuntimeException("Artifact content not succesfully deleted: " +
-     * artifactDetails);   }
-     *
-     * }
-     */
-
     @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages() {
         Set<ResourcePackageDetails> packages = new HashSet<ResourcePackageDetails>();
 
-        File[] files = this.directory.listFiles(new FileFilter() {
+        File[] files = this.getDirectory().listFiles(new FileFilter() {
             public boolean accept(File pathname) {
                 return pathname.getName().endsWith(getFileEnding()) && pathname.isFile();
             }

@@ -51,6 +51,7 @@ public class RhqAgentPluginContainerExtension implements LoadableExtension {
         
         builder.service(DeployableContainer.class, RhqAgentPluginContainer.class)
         .service(ResourceProvider.class, PluginContainerProvider.class)
+        .service(ResourceProvider.class, PluginContainerConfigurationProvider.class)
         .service(ResourceProvider.class, ServerServicesProvider.class)
         .service(PostPrepareEnricher.class, DiscoveryResultsTestEnricher.class)
         .service(PluginContainerOperation.class, RunDiscoveryExecutor.class)

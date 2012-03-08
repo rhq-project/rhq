@@ -138,20 +138,6 @@
                 <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
             </results>
         </operation>
-        <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
-            <parameters>
-                <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
-                    <c:option-source target="resource" expression="type=Managed Server"/>
-                </c:simple-property>
-                <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
-                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
-                </c:simple-property>
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult" description="Outcome of the remove server operation"/>
-            </results>
-
-        </operation>
 
         <operation name="start" description="Start this Host-/Domaincontroller" displayName="Start this host controller">
             <results>

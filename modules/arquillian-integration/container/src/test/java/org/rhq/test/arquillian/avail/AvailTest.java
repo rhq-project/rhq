@@ -3,6 +3,7 @@ package org.rhq.test.arquillian.avail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -16,8 +17,12 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.inventory.AvailabilityExecutor;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -116,10 +121,22 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(grandchildComponents2.size(), 8, "missing grandchild2");
     }
 
-    /*
     @Test(dependsOnMethods = "testConfirmInitialInventory")
-    public void testSomethingElse() {
+    public void testAvailReport() throws Exception {
+        AvailabilityExecutor executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
 
+        // do an avail check again - nothing changed, so we should have an empty report
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
     }
-    */
 }

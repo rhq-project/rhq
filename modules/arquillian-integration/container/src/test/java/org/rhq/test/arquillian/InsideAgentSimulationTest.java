@@ -36,7 +36,6 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
 /**

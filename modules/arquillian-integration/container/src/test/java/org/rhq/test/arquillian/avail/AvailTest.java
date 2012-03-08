@@ -138,5 +138,17 @@ public class AvailTest extends Arquillian {
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
         Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
+
+        // make one of the top parents down and see all other children are down
+        AvailResourceComponent downParent = this.parentComponents1.iterator().next();
+        downParent.setNextAvailability(AvailabilityType.DOWN);
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "report should have been changes-only");
+        availData = report.getResourceAvailability();
+        Assert.assertEquals(availData.size(), 7, "Should have 1 parent, its 2 children and 4 grandchildren");
+        for (Datum datum : availData) {
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.DOWN);
+        }
     }
 }

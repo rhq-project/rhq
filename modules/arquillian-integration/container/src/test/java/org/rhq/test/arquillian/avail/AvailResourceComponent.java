@@ -26,14 +26,26 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 public class AvailResourceComponent implements ResourceComponent<ResourceComponent<?>> {
 
+    private AvailabilityType avail = AvailabilityType.UP;
+    private ResourceContext<ResourceComponent<?>> context;
+
+    public void setNextAvailability(AvailabilityType avail) {
+        this.avail = avail;
+    }
+
+    public ResourceContext<ResourceComponent<?>> getResourceContext() {
+        return this.context;
+    }
+
     @Override
     public AvailabilityType getAvailability() {
-        return AvailabilityType.UP;
+        return this.avail;
     }
 
     @Override
     public void start(ResourceContext<ResourceComponent<?>> context) throws InvalidPluginConfigurationException,
         Exception {
+        this.context = context;
     }
 
     @Override

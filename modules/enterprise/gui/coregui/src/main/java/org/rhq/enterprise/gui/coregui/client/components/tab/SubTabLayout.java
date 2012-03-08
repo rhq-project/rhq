@@ -53,6 +53,10 @@ public class SubTabLayout extends LocatableVLayout {
     private String currentlySelected;
     private ToolStrip buttonBar;
 
+    private SubTab head;
+
+    private SubTab tail;
+
     public SubTabLayout(String locatorId) {
         super(locatorId);
         setOverflow(Overflow.AUTO);
@@ -100,7 +104,33 @@ public class SubTabLayout extends LocatableVLayout {
         LocatableButton button = subTab.getButton();
         if (null == button) {
             button = createSubTabButton(subTab);
-            buttonBar.addMember(button);
+
+            if (head == null && tail == null) {
+                head = subTab;
+                tail = subTab;
+                buttonBar.addMember(button);
+            } else {
+                SubTab successor = findClosestVisibleSuccessor(subTab);
+                // if successor is null then that means we are updating the tail
+                if (successor == null) {
+                    tail.setVisibleNext(subTab);
+                    subTab.setVisibleNext(null);
+                    tail = subTab;
+                    buttonBar.addMember(button);
+                } else {
+                    SubTab previous = findClosestVisiblePredecessor(successor);
+                    // if previous is null then that means we are updating the head
+                    if (previous == null) {
+                        subTab.setVisibleNext(head);
+                        head = subTab;
+                        buttonBar.addMember(button, 0);
+                    } else {
+                        subTab.setVisibleNext(previous.getVisibleNext());
+                        previous.setVisibleNext(subTab);
+                        buttonBar.addMember(button, buttonBar.getMemberNumber(previous.getButton().getID()) + 1);
+                    }
+                }
+            }
             subTab.setButton(button);
         }
         button.show();
@@ -112,6 +142,19 @@ public class SubTabLayout extends LocatableVLayout {
      * @param subTab not null
      */
     public void hideSubTab(SubTab subTab) {
+        SubTab previous = findClosestVisiblePredecessor(subTab);
+        if (previous == null) {
+            head = subTab.getVisibleNext();
+        } else {
+            previous.setVisibleNext(subTab.getVisibleNext());
+            // check to see if the tail needs to be updated. If the
+            // following check is true, then that means visiblePrevious is
+            // now the tail.
+            if (previous.getVisibleNext() == null) {
+                tail = previous;
+            }
+        }
+        subTab.setVisibleNext(null);
         subTab.destroyButton();
     }
 
@@ -172,10 +215,85 @@ public class SubTabLayout extends LocatableVLayout {
         return (!isSubTabVisible(subTab) || subTab.getButton().getDisabled());
     }
 
-    public void registerSubTab(SubTab subTab) {
-        String locatorId = subTab.getLocatorId();
+    public void registerSubTabs(SubTab... tabs) {
+        for (SubTab subTab : tabs) {
+            String locatorId = subTab.getLocatorId();
+            subTabs.put(locatorId, subTab);
+        }
+        buildSubTabList(tabs);
+    }
 
-        subTabs.put(locatorId, subTab);
+    private void buildSubTabList(SubTab[] tabs) {
+//        head = tabs[0];
+//        tail = tabs[tabs.length - 1];
+        SubTab current = tabs[0];
+        for (int i = 1; i < tabs.length; ++i) {
+            current.setActualNext(tabs[i]);
+            //current.setVisibleNext(tabs[i]);
+            current = tabs[i];
+        }
+    }
+
+
+//    public void registerSubTab(SubTab subTab) {
+//        String locatorId = subTab.getLocatorId();
+//
+//        subTabs.put(locatorId, subTab);
+//    }
+
+    /**
+     * Walks the list of visible tabs to find the closest, visible predecessor. Because it
+     * is assumed that the tab argument is visible, one of the following must hold:
+     * <ul>
+     *   <li>The tab is the head so it has no predecessor or</li>
+     *   <li>head is null which means the list has not yet been initialized or</li>
+     *   <li>A predecessor is reached which may be the tail</li>
+     * </ul>
+     *
+     * @param tab A {@link SubTab tab} that is currently visible
+     * @return The closest, visible predecessor or null if the tab is the head or if the
+     * list is not fully initialized. i.e., head and tail are null
+     */
+    private SubTab findClosestVisiblePredecessor(SubTab tab) {
+        // head could be null if the list is not yet initialized. The head and
+        // tail are null until a node is added to the list.
+        if (tab == head || head == null) {
+            return null;
+        }
+
+        SubTab current = head;
+        while (current != tab) {
+            // if we have reached the visible tail or the immediate predecessor
+            // of the tab, then return it.
+            if (current.getVisibleNext() == null || current.getVisibleNext() == tab) {
+                return current;
+            }
+            current = current.getVisibleNext();
+        }
+        // Not sure that we should ever reach the following statement.
+        return null;
+    }
+
+    /**
+     * Walks the list to find the closest, visible successor. It is assumed that the tab
+     * argument is not visible.
+     *
+     * @param tab A {@link SubTab tab} that is currently hidden
+     * @return The closest, visisble successor or null if the insertion point
+     * is the tail.
+     */
+    private SubTab findClosestVisibleSuccessor(SubTab tab) {
+        SubTab current = tab;
+        while (current != null) {
+            // Walk the list of tabs until we reach a visible successor or the tail
+            if (current.getVisibleNext() == null && current != tail) {
+                current = current.getActualNext();
+            } else {
+                return current;
+            }
+        }
+        // if we reach this point then that means we will be inserting at the tail
+        return null;
     }
 
     public SubTab getDefaultSubTab() {

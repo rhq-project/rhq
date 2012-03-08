@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -190,11 +191,13 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
             return null;
         }
 
+        @NotNull
         @Override
         public InventoryReport executeServerScanImmediately() throws PluginContainerException {
             return null;
         }
 
+        @NotNull
         @Override
         public InventoryReport executeServiceScanImmediately() throws PluginContainerException {
             return null;

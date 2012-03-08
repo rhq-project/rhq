@@ -1857,7 +1857,9 @@ public class Resource implements Comparable<Resource>, Serializable {
         StringBuilder buffer = new StringBuilder();
         buffer.append("Resource").append("[");
         buffer.append("id=").append(this.id);
-        String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<null>";
+        buffer.append(", uuid=").append(this.uuid);
+        String typeName = (this.resourceType != null) ?
+            '{' + this.resourceType.getPlugin() + '}' + this.resourceType.getName() : "<null>";
         buffer.append(", type=").append(typeName);
         buffer.append(", key=").append(this.resourceKey);
         buffer.append(", name=").append(this.name);

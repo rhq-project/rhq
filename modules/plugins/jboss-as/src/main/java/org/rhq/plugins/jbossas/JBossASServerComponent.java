@@ -109,7 +109,6 @@ import org.rhq.plugins.jbossas.util.FileContentDelegate;
 import org.rhq.plugins.jbossas.util.FileNameUtility;
 import org.rhq.plugins.jbossas.util.JBossASContentFacetDelegate;
 import org.rhq.plugins.jbossas.util.JBossASSnapshotReport;
-import org.rhq.plugins.jbossas.util.JarContentDelegate;
 import org.rhq.plugins.jbossas.util.XMLConfigurationEditor;
 import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
@@ -567,23 +566,6 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
         return this.mainDeployer;
     }
 
-    // Private  --------------------------------------------
-
-    private FileContentDelegate getContentDelegate(PackageType type) {
-        FileContentDelegate contentDelegate = contentDelegates.get(type);
-        if (contentDelegate == null) {
-            if (type.getName().equals("library")) {
-                File configurationPath = getConfigurationPath();
-                File deployLib = new File(configurationPath, "lib");
-                contentDelegate = new JarContentDelegate(deployLib, type.getName());
-            }
-
-            contentDelegates.put(type, contentDelegate);
-        }
-
-        return contentDelegate;
-    }
-
     // Here we do any validation that couldn't be achieved via the metadata-based constraints.
     private void validatePluginConfiguration() {
         validateJBossHomeDirProperty();
@@ -925,6 +907,7 @@ public class JBossASServerComponent<T extends ResourceComponent<?>> implements M
             deployFile(path);
         } catch (MainDeployer.DeployerException e) {
             log.debug("Failed to deploy [" + path + "] - undeploying and deleting [" + path + "]...");
+            report.setStatus(CreateResourceStatus.FAILURE);
             try {
                 undeployFile(path);
                 FileUtils.purge(path, true);

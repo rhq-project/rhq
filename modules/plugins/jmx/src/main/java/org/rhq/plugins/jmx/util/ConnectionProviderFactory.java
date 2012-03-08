@@ -152,7 +152,7 @@ public class ConnectionProviderFactory {
             if (process == null) {
                 throw new Exception("Could not find java process for JVM.");
             }
-            JMXServiceURL jmxServiceURL = JvmUtility.extractJMXServiceURL(process.getPid());
+            JMXServiceURL jmxServiceURL = JvmUtility.extractJMXServiceURL(process);
             if (jmxServiceURL == null) {
                 throw new Exception("Could not obtain JMX service URL via Attach API for JVM [" + process + "].");
             }

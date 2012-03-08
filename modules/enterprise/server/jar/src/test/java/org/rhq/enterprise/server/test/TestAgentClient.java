@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
@@ -63,7 +64,7 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -144,7 +145,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     // provide no-ops for all agent services
 
     @Override
-    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+    public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
         return null;
     }
 
@@ -238,11 +239,13 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
         return null;
     }
 
+    @NotNull
     @Override
     public InventoryReport executeServerScanImmediately() throws PluginContainerException {
         return null;
     }
 
+    @NotNull
     @Override
     public InventoryReport executeServiceScanImmediately() throws PluginContainerException {
         return null;

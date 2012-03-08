@@ -35,6 +35,7 @@ import java.util.concurrent.Callable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.AutoDiscoveryRequest;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -92,6 +93,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
         call();
     }
 
+    @NotNull
     public InventoryReport call() {
         log.info("Executing server discovery scan...");
         InventoryReport report = new InventoryReport(inventoryManager.getAgent());
@@ -105,6 +107,7 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             }
             report.setEndTime(System.currentTimeMillis());
 
+            log.info("Found " + report.getAddedRoots().size() + " servers.");
             if (log.isDebugEnabled()) {
                 log.debug("Server discovery scan took [" + (report.getEndTime() - report.getStartTime()) + "] ms.");
             }
@@ -120,11 +123,10 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
 
             inventoryManager.handleReport(report);
         } catch (Exception e) {
-            log.warn("Exception caught while running server discovery", e);
+            log.warn("Exception caught while executing server discovery scan.", e);
             report.addError(new ExceptionPackage(Severity.Warning, e));
         }
 
-        log.info("Found " + report.getAddedRoots().size() + " servers.");
         return report;
     }
 

@@ -23,6 +23,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 /**
  * @author Greg Hinkle
  */
+@Deprecated
 public class HeaderLabel extends HTMLFlow {
 
     public HeaderLabel(String icon, String contents) {

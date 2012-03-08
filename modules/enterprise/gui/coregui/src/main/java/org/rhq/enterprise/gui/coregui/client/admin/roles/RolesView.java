@@ -18,22 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
-
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -42,22 +42,21 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class RolesView extends TableSection<RolesDataSource> {
+public class RolesView extends TableSection<RolesDataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.common_title_roles());
+    public static final ViewName VIEW_ID = new ViewName("Roles", MSG.common_title_roles(), IconEnum.ROLES);
+
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
-    private static final String HEADER_ICON = "global/Role_24.png";
 
     private boolean hasManageSecurity;
 
     public RolesView(String locatorId, boolean hasManageSecurity) {
-        super(locatorId, MSG.common_title_roles());
+        super(locatorId, null);
 
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
-        setHeaderIcon(HEADER_ICON);
         setEscapeHtmlInDetailsLinkColumn(true);
         
         this.hasManageSecurity = hasManageSecurity;
@@ -171,4 +170,8 @@ public class RolesView extends TableSection<RolesDataSource> {
         return MSG.common_label_roles();
     }
 
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
+    }
 }

@@ -102,7 +102,7 @@ public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryCompone
         boolean pre42 = jbossWebDir.getName().startsWith(EMBEDDED_TOMCAT_PRE42_DIR);
         String jarFileName = (pre42) ? "catalina.jar" : "jbossweb.jar";
         File jarFile = new File(jbossWebDir, jarFileName);
-        ClassLoader classLoader = new URLClassLoader(new URL[] { jarFile.toURL() });
+        ClassLoader classLoader = new URLClassLoader(new URL[] { jarFile.toURI().toURL() });
         InputStream stream = classLoader.getResourceAsStream(SERVER_INFO_PROPERTIES_RESOURCE);
         String version = null;
         if (stream != null) {

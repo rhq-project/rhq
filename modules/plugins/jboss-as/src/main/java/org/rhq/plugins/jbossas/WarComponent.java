@@ -84,7 +84,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
     private static final String SESSION_NAME_BASE_TEMPLATE = "jboss.web:host=%HOST%,type=Manager,path=%PATH%";
 
-    // WebModule=//localhost/test-simple,service=ClusterManager
+    //WebModule=//localhost/test-simple,service=ClusterManager
     private static final String CLUSTER_SESSION_NAME_BASE_TEMPLATE = "jboss.web:service=ClusterManager,WebModule=//%HOST%%PATH%";
     private static final String SESSION_PREFIX = "Session.";
     private static final String VHOST_PREFIX = "Vhost";
@@ -94,16 +94,17 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private EmsBean jbossWebMBean;
-    private ResponseTimeLogParser logParser;
-    String vhost;
-    private String contextRoot;
     // Mapping non-clustered names -> attribute name in the cluster manager
     private final String[] CLUSTER_SESSION_ATTRIBUTE_NAMES = { "maxInactiveInterval", "MaxInactiveInterval",
         "activeSessions", "ActiveSessionCount", "sessionCounter", "CreatedSessionCount", "sessionAverageAliveTime", "",
         "processingTime", "ProcessingTime", "maxActive", "MaxActiveSessionCount", "maxActiveSessions",
         "MaxActiveAllowed", "expiredSessions", "ExpiredSessionCount", "rejectedSessions", "RejectedSessionCount",
         "sessionIdLength", "SessionIdLength" };
+
+    private EmsBean jbossWebMBean;
+    private ResponseTimeLogParser logParser;
+    private String vhost;
+    private String contextRoot;
 
     @Override
     public AvailabilityType getAvailability() {
@@ -138,13 +139,13 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         this.vhost = pluginConfig.getSimple(VHOST_CONFIG_PROP).getStringValue();
         this.contextRoot = pluginConfig.getSimple(CONTEXT_ROOT_CONFIG_PROP).getStringValue();
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
+
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
             this.logParser = new ResponseTimeLogParser(logFile);
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }
-
     }
 
     @Override
@@ -218,7 +219,6 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
             mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
             if (mBeans.size() > 0)
                 isClustered = true;
-
         }
 
         String property = metricName.substring(SESSION_PREFIX.length());
@@ -258,13 +258,10 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     }
 
     private Double getServletMetric(String metricName) {
-
-        EmsConnection jmxConnection = getEmsConnection();
-
         String servletMBeanNames = SERVLET_NAME_BASE_TEMPLATE + ",WebModule=//" + this.vhost
             + WarDiscoveryHelper.getContextPath(this.contextRoot);
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
-        List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
+        List<EmsBean> mBeans = getEmsConnection().queryBeans(queryUtility.getTranslatedQuery());
 
         long min = Long.MAX_VALUE;
         long max = 0;
@@ -334,7 +331,6 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         }
 
         if (operation == WarOperation.REVERT) {
-            // Lets see if we have a backup of ouselves. If so, install it.
 
             try {
                 revertFromBackupFile();
@@ -345,8 +341,8 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         }
 
         // The following are MBean operations.
-
         EmsOperation mbeanOperation = this.jbossWebMBean.getOperation(name, new Class[0]);
+
         if (mbeanOperation == null) {
             throw new IllegalStateException("Operation [" + name + "] not found on bean ["
                 + this.jbossWebMBean.getBeanName() + "]");

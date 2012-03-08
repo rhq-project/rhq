@@ -49,7 +49,8 @@ public class PluginContainerConfiguration {
     private static final String DISABLED_PLUGINS = PROP_PREFIX + "disabled-plugins";
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
     private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
-
+    private static final String START_MANAGEMENT_BEAN_PROP = PROP_PREFIX + "start-management-bean";
+    
     // The following configuration settings have hardcoded default values. These defaults are publicly
     // accessible so the entity that embeds the plugin container can know what its default values are.
 
@@ -291,6 +292,29 @@ public class PluginContainerConfiguration {
         configuration.put(CREATE_RESOURCE_CLASSLOADERS, Boolean.valueOf(flag));
     }
 
+    /**
+     * @return True if the management bean of the plugin container should be started (the default).
+     * Note that it is only useful to switch this off in tests (and that only on rare occasions).
+     */
+    public boolean isStartManagementBean() {
+        Object val = configuration.get(START_MANAGEMENT_BEAN_PROP);
+        if (val == null) {
+            return true;
+        } else {
+            return ((Boolean)val).booleanValue();
+        }
+    }
+    
+    /**
+     * Sets the flag to indicate whether to start the management bean of the plugin container or not.
+     * 
+     * @see #isStartManagementBean()
+     * @param value
+     */
+    public void setStartManagementBean(boolean value) {
+        configuration.put(START_MANAGEMENT_BEAN_PROP, Boolean.valueOf(value));
+    }
+    
     /**
      * Returns the length of time, in seconds, before resource availability scans are started.
      *

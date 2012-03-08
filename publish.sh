@@ -341,8 +341,8 @@ build_from_source()
 #========================================================================================
 publish_external_maven_repository()
 {
-   mvn -Ddbsetup-do-not-check-schema=true -Dmaven.test.skip=true -P publish $MAVEN_RELEASE_PERFORM_GOAL
-   [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+   #mvn -Ddbsetup-do-not-check-schema=true -Dmaven.test.skip=true -P publish $MAVEN_RELEASE_PERFORM_GOAL
+   #[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 }
 
 

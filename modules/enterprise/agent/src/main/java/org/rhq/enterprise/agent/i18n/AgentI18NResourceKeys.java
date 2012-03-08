@@ -1941,9 +1941,9 @@ public interface AgentI18NResourceKeys {
     String DISCOVERY_RESOURCE_ID_INVALID = "PromptCommand.discovery.resource-id-invalid";
 
     @I18NMessage("=== {0} Inventory Report ===\\n\\\n" //
-        + "Start Time:     {1,date,medium} {1,time,medium}\\n\\\n" //
-        + "Finish Time:    {2,date,medium} {2,time,medium}\\n\\\n" //
-        + "Resource Count: {3}\\n\\\n")
+        + "Start Time:         {1,date,medium} {1,time,medium}\\n\\\n" //
+        + "Finish Time:        {2,date,medium} {2,time,medium}\\n\\\n" //
+        + "New Resource Count: {3}\\n\\\n")
     String DISCOVERY_INVENTORY_REPORT_SUMMARY = "PromptCommand.discovery.inventory-report-summary";
 
     @I18NMessage("Resource: {0}")
@@ -1960,6 +1960,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("You must first start the plugin container before attempting discovery.")
     String DISCOVERY_PC_NOT_STARTED = "PromptCommand.discovery.pc-not-started";
+
+    @I18NMessage("NOTE: The Agent is not currently connected to the Server, so the discovery reports will not be sent to the Server.")
+    String DISCOVERY_AGENT_NOT_CONNECTED_TO_SERVER = "PromptCommand.discovery.agent-not-connected-to-server";
 
     @I18NMessage("An error occurred running the discovery. Cause: {0}")
     String DISCOVERY_ERROR = "PromptCommand.discovery.error";

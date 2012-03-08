@@ -49,7 +49,7 @@ import org.rhq.plugins.jmx.util.ConnectionProviderFactory;
  */
 public class JMXServerComponent<T extends ResourceComponent<?>> implements JMXComponent<T> {
 
-    private static Log log = LogFactory.getLog(JMXServerComponent.class);
+    private static final Log log = LogFactory.getLog(JMXServerComponent.class);
 
     private EmsConnection connection;
     private ConnectionProvider connectionProvider;

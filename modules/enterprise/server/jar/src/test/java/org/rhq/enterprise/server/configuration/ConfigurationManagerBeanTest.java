@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.persistence.EntityManager;
 
+import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -1060,10 +1061,12 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         public void enableServiceScans(int serverResourceId, Configuration config) {
         }
 
+        @NotNull
         public InventoryReport executeServerScanImmediately() throws PluginContainerException {
             return null;
         }
 
+        @NotNull
         public InventoryReport executeServiceScanImmediately() throws PluginContainerException {
             return null;
         }

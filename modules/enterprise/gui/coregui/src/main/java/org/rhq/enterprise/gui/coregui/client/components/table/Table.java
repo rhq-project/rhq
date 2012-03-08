@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
@@ -45,7 +44,6 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -65,7 +63,6 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.menu.IMenuButton;
@@ -76,6 +73,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -115,8 +113,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     private HTMLFlow titleCanvas;
 
-    private HLayout titleLayout;
-    private Canvas titleComponent;
+    private LocatableVLayout titleLayout;
+
+    private TitleBar titleBar;
+    private String titleIcon;
 
     private TableFilter filterForm;
     private ListGrid listGrid;
@@ -157,6 +157,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public Table(String locatorId, String tableTitle) {
         this(locatorId, tableTitle, null, null, null, true);
+    }
+    public Table(String locatorId, String tableTitle, String icon) {
+        this(locatorId, tableTitle, null, null, null, true);
+        setTitleIcon(icon);
+    }
+
+    public Table(String locatorId, String tableTitle, Criteria criteria, String icon) {
+        this(locatorId, tableTitle, criteria, null, null, (criteria == null));
+        setTitleIcon(icon);
     }
 
     public Table(String locatorId, String tableTitle, Criteria criteria) {
@@ -345,7 +354,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             updateTitleCanvas(this.titleString);
 
             if (showHeader) {
-                titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
+                // titleLayout not really needed now as TitleBar has a LocatableVLayout
+                titleLayout = new LocatableVLayout(contents.extendLocatorId("Title"));
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
@@ -458,19 +468,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         super.destroy();
     }
 
+
     private void drawHeader() {
-        for (String headerIcon : headerIcons) {
-            Img img = new Img(headerIcon, 24, 24);
-            img.setPadding(4);
-            titleLayout.addMember(img);
+        // just use the first icon (not sure use case for multiple icons in title)
+        titleBar = new TitleBar(titleLayout, titleString);
+        if(titleIcon != null){
+            titleBar.setIcon(titleIcon);
         }
-
-        titleLayout.addMember(titleCanvas);
-
-        if (titleComponent != null) {
-            titleLayout.addMember(new LayoutSpacer());
-            titleLayout.addMember(titleComponent);
-        }
+        titleLayout.addMember(titleBar);
     }
 
     private void drawFooter() {
@@ -635,6 +640,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
+    public void setTitleIcon(String titleIcon){
+        this.titleIcon = titleIcon;
+    }
+
     public Canvas getTitleCanvas() {
         return this.titleCanvas;
     }
@@ -647,19 +656,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     public void updateTitleCanvas(String titleString) {
         if (titleString == null) {
             titleString = "";
-        }
-        if (titleString.length() > 0) {
-            titleCanvas.setWidth100();
-            titleCanvas.setHeight(35);
-            titleCanvas.setContents(titleString);
-            titleCanvas.setPadding(4);
-            titleCanvas.setStyleName("HeaderLabel");
-        } else {
-            titleCanvas.setWidth100();
-            titleCanvas.setHeight(0);
-            titleCanvas.setContents(null);
-            titleCanvas.setPadding(0);
-            titleCanvas.setStyleName("normal");
         }
 
         titleCanvas.markForRedraw();
@@ -883,8 +879,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
-    public void setTitleComponent(Canvas canvas) {
-        this.titleComponent = canvas;
+
+    public void setTitleBar(TitleBar titleBar1){
+        this.titleBar = titleBar1;
+
     }
 
     /**

@@ -113,7 +113,7 @@ public class MeasurementDefinition implements Serializable {
 
     public static final String AVAILABILITY_TYPE_NAME = "rhq.availability";
     public static final Long AVAILABILITY_DEFAULT_PERIOD_SERVER = 60L * 1000; // 1 minute in ms
-    public static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 5; // 5 minutes in ms
+    public static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 10; // 10 minutes in ms
     public static final String AVAILABILITY_DESCRIPTION = "The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.";
     public static final String AVAILABILITY_DISPLAY_NAME = "Availability";
 

@@ -23,6 +23,7 @@
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1921,7 +1922,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private void persistToDisk() {
         try {
             deactivateResource(this.platform);
-            File file = new File(this.configuration.getDataDirectory(), "inventory.dat");
+            File dataDir = this.configuration.getDataDirectory();
+            if (!dataDir.exists()) {
+                if (!dataDir.mkdirs()) {
+                    throw new RuntimeException("Failed to create data directory [" + dataDir + "].");
+                }
+            }
+            File file = new File(dataDir, "inventory.dat");
             InventoryFile inventoryFile = new InventoryFile(file);
             inventoryFile.storeInventory(this.platform, this.resourceContainers);
         } catch (Exception e) {

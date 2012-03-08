@@ -50,6 +50,7 @@ import org.rhq.core.util.file.FileUtil;
 *
 * @author Greg Hinkle
 * @author Jason Dobies
+* @author Stefan Negrea
 */
 public class FileContentDelegate {
 
@@ -59,6 +60,9 @@ public class FileContentDelegate {
     private final String fileEnding;
     private final File directory;
 
+    /**
+     * Default constructor.
+     */
     public FileContentDelegate() {
         this.fileEnding = null;
         this.directory = null;
@@ -191,6 +195,17 @@ public class FileContentDelegate {
         return sha;
     }
 
+    /**
+     * Save the SHA256 for a deployment with knowledge of the original archived content.
+     * If the deployment is archived, do not save anything. Just return the SHA256
+     * of the content.
+     *
+     * @param originalArchive
+     * @param deployment
+     * @param resourceId
+     * @param dataDirectory
+     * @return
+     */
     public String saveDeploymentSHA(File originalArchive, File deployment, String resourceId, File dataDirectory) {
         String sha = null;
 
@@ -204,6 +219,16 @@ public class FileContentDelegate {
         return sha;
     }
 
+    /**
+     * Save the SHA256 for a deployment without knowing its original archived content.
+     * If the deployment is archived, do not save anything. Just return the SHA256
+     * of the content.
+     *
+     * @param deployment deployment
+     * @param resourceId resource id
+     * @param dataDirectory data directory
+     * @return the saved SHA256
+     */
     public String saveDeploymentSHA(File deployment, String resourceId, File dataDirectory) {
         String sha = null;
 
@@ -217,6 +242,14 @@ public class FileContentDelegate {
         return sha;
     }
 
+    /**
+     * Persist the SHA256 value in data directory in a properties file.
+     * File name format is  "[Uuid of Resource].sha"
+     *
+     * @param sha SHA256 of the content
+     * @param resourceId resource Uuid
+     * @param dataDirectory data directory
+     */
     private void saveDeploymentSHA(String sha, String resourceId, File dataDirectory) {
         Properties prop = new Properties();
         prop.setProperty(RHQ_SHA_256, sha);
@@ -246,7 +279,7 @@ public class FileContentDelegate {
     }
 
     /**
-     * Computes SHA256 for an archive.
+     * Computes SHA256 for an archived content.
      *
      * @param contentFile content archive
      * @return SHA256 of the archive
@@ -264,9 +297,14 @@ public class FileContentDelegate {
         return null;
     }
 
+    /**
+     * Computes SHA256 for exploded content as the aggregate SHA256
+     * of all the files in the deployment
+     *
+     * @param deploymentDirectory deployment directory
+     * @return SHA256 of the content
+     */
     private String computeSHAForExplodedContent(File deploymentDirectory) {
-        String sha = null;
-
         try {
             if (deploymentDirectory.isDirectory()) {
                 MessageDigestGenerator messageDigest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
@@ -304,13 +342,13 @@ public class FileContentDelegate {
                     }
                 }
 
-                sha = messageDigest.getDigestString();
+                return messageDigest.getDigestString();
             }
         } catch (IOException e) {
             throw new RuntimeException("Error creating artifact for contentFile: " + deploymentDirectory, e);
         }
 
-        return sha;
+        return null;
     }
 
     /**

@@ -432,21 +432,32 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <systemPropertyVariables>
-             <rhq.version>${project.version}</rhq.version>
-          </systemPropertyVariables>
-
-          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-          <!-- need to point the library path to the location of the native libraries -->
-          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
-          <!--
-          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
-           -->
+            <skipTests>true</skipTests>
         </configuration>
+        <executions>
+            <execution>
+                <id>allExceptArquillian</id>
+                <goals>
+                    <goal>test</goal>
+                </goals>
+                <configuration>
+                    <skipTests>${skipTests}</skipTests>
+                    <systemPropertyVariables>
+                       <rhq.version>${project.version}</rhq.version>
+                    </systemPropertyVariables>
+
+                    <excludedGroups>arquillian,${rhq.testng.excludedGroups}</excludedGroups>
+                    <!-- need to point the library path to the location of the native libraries -->
+                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
+                    <!--
+                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
+                     -->
+                </configuration>
+            </execution>
+        </executions>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
@@ -457,10 +468,39 @@
           </execution>
         </executions>
       </plugin>
+
     </plugins>
   </build>
 
    <profiles>
+
+       <profile>
+          <!-- only if we are not running an individual set of tests via -Dtest do we do this -->
+          <id>arquillian</id>
+          <activation>
+             <property><name>!test</name></property>
+          </activation>
+          <build>
+             <plugins>
+                <plugin>
+                   <artifactId>maven-surefire-plugin</artifactId>
+                   <executions>
+                      <execution>
+                         <id>arquillianTestsOnly</id>
+                         <goals>
+                            <goal>test</goal>
+                         </goals>
+                         <configuration>
+                            <skipTests>${skipTests}</skipTests>
+                            <groups>arquillian</groups>
+                         </configuration>
+                      </execution>
+                   </executions>
+                </plugin>
+             </plugins>
+          </build>
+       </profile>
+
      <profile>
       <id>cobertura</id>
       <activation>

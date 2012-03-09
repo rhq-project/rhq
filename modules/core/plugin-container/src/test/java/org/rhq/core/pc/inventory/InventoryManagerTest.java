@@ -49,8 +49,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Ian Springer
  */
-@Test(groups = "arquillian", enabled = false)
-@SuppressWarnings("UnusedDeclaration")
+@Test(groups = "arquillian")
 public class InventoryManagerTest extends Arquillian {
 
     @Deployment(name = "test")
@@ -94,8 +93,10 @@ public class InventoryManagerTest extends Arquillian {
         validatePluginContainerInventory();
 
         // Blow away the data dir, then restart the inventory manager with a fresh slate.
+        System.out.println("Purging data directory...");
         File dataDir = pluginContainerConfiguration.getDataDirectory();
         FileUtil.purge(dataDir, true);
+        System.out.println("Restarting PC...");
         pluginContainer.getInventoryManager().shutdown();
         // Note, initialize() will perform a Server->Agent sync.
         pluginContainer.getInventoryManager().initialize();
@@ -104,6 +105,7 @@ public class InventoryManagerTest extends Arquillian {
         validatePluginContainerInventory();
 
         // Now execute a full discovery.
+        System.out.println("Executing full discovery...");
         pluginContainer.getInventoryManager().executeServerScanImmediately();
         pluginContainer.getInventoryManager().executeServiceScanImmediately();
 
@@ -112,6 +114,8 @@ public class InventoryManagerTest extends Arquillian {
     }
 
     private void validatePluginContainerInventory() {
+        System.out.println("Validating PC inventory...");
+
         Resource platform = pluginContainer.getInventoryManager().getPlatform();
         Assert.assertNotNull(platform);
         Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);

@@ -120,25 +120,6 @@
         <operation name="domain:shutdown" displayName="Shutdown Domain" description="Shut this Host-/Domaincontroller down with all managed servers.">
         </operation>
 -->
-
-        <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
-            <parameters>
-                <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
-                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true">
-                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
-                </c:simple-property>
-                <c:simple-property name="server-group" displayName="Server group to add to" required="true">
-                    <c:option-source target="resource" expression="type=ServerGroup"/>
-                </c:simple-property>
-                <c:simple-property name="socket-bindings" displayName="Socket bindings to base upon" default="standard-sockets" description="Socket bindings to base upon"/>
-                <c:simple-property name="port-offset" displayName="Port offset" default="0" type="integer" />
-                <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
-            </results>
-        </operation>
-
         <operation name="start" description="Start this Host-/Domaincontroller" displayName="Start this host controller">
             <results>
                 <c:simple-property name="operationResult" description="Outcome of the start operation"/>
@@ -251,7 +232,7 @@
                     <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
                 </c:simple-property>
                 <c:simple-property name="socket-binding-group" readOnly="false" required="true">
-                    <c:option-source target="resource" expression="type=SocketBindingGroupDomain"/>
+                    <c:option-source target="resource" expression="type=SocketBindingGroup"/>
                 </c:simple-property>
                 <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
                                    description="The default offset to be added to the port values given by the socket binding group."/>
@@ -267,19 +248,6 @@
             <plugin-configuration>
                 <c:simple-property name="path" default="host" readOnly="true"/>
             </plugin-configuration>
-
-            <operation name="server:add" displayName="Create server" description="Add a new server to this host.">
-                <parameters>
-                    <c:simple-property name="name" description="Name of this new server" required="true"/>
-                    <c:simple-property name="group" displayName="Server Group" description="Server group to put this sever in" default="" required="true">
-                        <c:option-source target="resource" expression="type=ServerGroup"/>
-                    </c:simple-property>
-                    <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
-                </results>
-            </operation>
 
             <resource-configuration>
                 <c:group name="children:system-property:name+" displayName="System-properties">
@@ -310,31 +278,27 @@
         <server name="Managed Server"
                 discovery="ManagedASDiscovery"
                 class="ManagedASComponent"
-                createDeletePolicy="delete-only"
+                createDeletePolicy="both"
                 >
             <plugin-configuration>
                 <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
                 <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
-                <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
-                <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
-                <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="false"/>
-                <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
                 <c:simple-property name="path" readOnly="true" />
 
                 &logSources;
             </plugin-configuration>
 
-            <operation name="server:start" description="Start this server instance." displayName="Start">
+            <operation name="start" description="Start this server instance." displayName="Start">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
             </operation>
-            <operation name="server:stop" description="Stop this server instance." displayName="Stop">
+            <operation name="stop" description="Stop this server instance." displayName="Stop">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
             </operation>
-            <operation name="server:restart" description="Restart this server instance." displayName="Restart">
+            <operation name="restart" description="Restart this server instance." displayName="Restart">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
@@ -345,6 +309,22 @@
             <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
             <event name="logEntry" description="an entry in a log file"/>
+
+            <resource-configuration>
+                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
+                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
+                </c:simple-property>
+                <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to.">
+                    <c:option-source target="resource" expression="type=ServerGroup"/>
+                </c:simple-property>
+                <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="true" default="standard-sockets">
+                    <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+                </c:simple-property>
+                <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
+
+                <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
+
+            </resource-configuration>
 
         </server>
 
@@ -2308,12 +2288,13 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
     </service>
 
-    <service name="SocketBindingGroupStandalone"
+    <service name="SocketBindingGroup"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="SocketBindingGroupComponent"
             >
         <runs-inside>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
         </runs-inside>
 
 
@@ -2329,7 +2310,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             </c:simple-property>
             <!-- note: at domain level there is no port-offset -->
             <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
-                               description="Offset from standard ports for this group."
+                               description="Offset from standard ports for this group. This is only available in standalone mode"
                                required="false"/>
             <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
             <c:list-property name="*" displayName="Bindings">
@@ -2339,18 +2320,18 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                                        required="false">
                         <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
                     </c:simple-property>
-                    <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
+                    <c:simple-property name="port" description="Number of the port to which the socket should be bound."/>
                     <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
                                        type="boolean" defaultValue="false"/>
                     <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
-                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer" required="false"/>
+                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." required="false"/>
                 </c:map-property>
             </c:list-property>
             </c:group>
         </resource-configuration>
 
     </service>
-    <service name="SocketBindingGroupDomain"
+ <!--   <service name="SocketBindingGroupDomain"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
             >
@@ -2369,7 +2350,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                                required="true">
                 <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
             </c:simple-property>
-            <c:list-property name="includes" required="false" readOnly="true"> <!-- read-only until AS7-1467 is fixed -->
+            <c:list-property name="includes" required="false" readOnly="true"> &lt;!&ndash; read-only until AS7-1467 is fixed &ndash;&gt;
                 <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
             </c:list-property>
             <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
@@ -2392,6 +2373,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </resource-configuration>
 
     </service>
+-->
 
     <service name="Deployment"
              class="DeploymentComponent"
@@ -2444,10 +2426,12 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <!--<c:simple-property name="default" readOnly="false" required="true" description="Scanner policy to use"/>-->
-            <c:group name="children:scanner:name" displayName="Available scanners">
-                <c:list-property name="*" description="List of scanners" >
+            <c:group name="children:scanner" displayName="Available scanners">
+                <c:list-property name="*" displayName="Scanners" description="List of scanners" >
                     <c:map-property name="scanner">
+<!--
                         <c:simple-property name="name" required="true" type="string" readOnly="true" description="The name of the scanner"/>
+-->
                         <c:simple-property name="path" required="true" type="string" readOnly="false"
                                            description="The actual filesystem path to be scanned. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
                         <c:simple-property name="relative-to" required="false" type="string" readOnly="false"

@@ -19,11 +19,6 @@
 	<name>RHQ Agent Plugin Archive</name>
 	<description>RHQ Agent Plugin Archive Extension for Shrinkwrap</description>
 
-        <properties>
-            <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
-            <shrinkwrap.resolver.version>1.0.0-beta-6</shrinkwrap.resolver.version>
-        </properties>
-        
 	<!-- Dependencies -->
 	<dependencies>
 

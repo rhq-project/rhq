@@ -78,7 +78,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     private static final int INTERNAL_SIZE = INTERNAL.length();
     private static final String LOCALHOST = "localhost";
     private static final String DEFAULT_HTTP_MANAGEMENT_PORT = "9990";
-    private static final String MANAGED_SERVER = "Managed Server";
+    public static final String MANAGED_SERVER = "Managed Server";
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
@@ -488,37 +488,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 
             operation = new Operation(op,theAddress);
             operation.addAdditionalProperty("profile",profile);
-        } else if (what.equals("server")) {
-            if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
-                String host = pluginConfiguration.getSimpleValue("domainHost","local");
-                theAddress.add("host", host);
-                theAddress.add("server-config", myServerName);
-                operation = new Operation(op,theAddress);
-            }
-            else if (context.getResourceType().getName().equals("Host")) {
-                theAddress.add(address);
-                String serverName = parameters.getSimpleValue("name",null);
-                if (serverName==null || serverName.trim().contains(" ")) {
-                    OperationResult badServerName = new OperationResult();
-                    badServerName.setErrorMessage("Server name must not be null or contain spaces");
-                    return badServerName;
-                }
-                theAddress.add("server-config", serverName);
-                Map<String,Object> props = new HashMap<String, Object>();
-                String serverGroup = parameters.getSimpleValue("group",null);
-                props.put("group",serverGroup);
-                if (op.equals("add")) {
-                    props.put("name",serverName);
-                    boolean autoStart = parameters.getSimple("auto-start").getBooleanValue();
-                    props.put("auto-start",autoStart);
-                    // TODO put more properties in
-                }
-
-                operation = new Operation(op,theAddress,props);
-            }
-            else {
-                operation = new Operation(op,theAddress);
-            }
         } else if (what.equals("destination")) {
             theAddress.add(address);
             String newName = parameters.getSimpleValue("name","");
@@ -550,26 +519,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             }
 
 
-        } else if (what.equals("managed-server")) {
-            String chost = parameters.getSimpleValue("hostname","");
-            String serverName = parameters.getSimpleValue("servername","");
-            String serverGroup = parameters.getSimpleValue("server-group","");
-            String socketBindings = parameters.getSimpleValue("socket-bindings","");
-            String portS = parameters.getSimpleValue("port-offset","0");
-            int port = Integer.parseInt(portS);
-            String autostartS = parameters.getSimpleValue("auto-start","false");
-            boolean autoStart = Boolean.getBoolean(autostartS);
-
-            theAddress.add("host", chost);
-            theAddress.add("server-config", serverName);
-            Map<String,Object> props = new HashMap<String, Object>();
-            props.put("name",serverName);
-            props.put("group",serverGroup);
-            props.put("socket-binding-group",socketBindings);
-            props.put("socket-binding-port-offset",port);
-            props.put("auto-start",autoStart);
-
-            operation = new Operation(op,theAddress,props);
         } else if (what.equals("domain")) {
             operation = new Operation(op,new Address());
         } else if (what.equals("domain-deployment")) {

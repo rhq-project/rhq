@@ -260,7 +260,7 @@ public class RhqAgentPluginArchiveImpl extends ContainerBase<RhqAgentPluginArchi
                 }
             });
             
-            XMLEvent e = null;
+            XMLEvent e;
             while ((e = rdr.nextEvent()) != null) {
                 if (e.getEventType() == XMLEvent.END_DOCUMENT) {
                     break;
@@ -312,14 +312,21 @@ public class RhqAgentPluginArchiveImpl extends ContainerBase<RhqAgentPluginArchi
         try {
             rdr = XMLInputFactory.newInstance().createXMLEventReader(is);
 
-            XMLEvent e = rdr.nextTag();
-            
-            String tagName = e.asStartElement().getName().getLocalPart();
+            XMLEvent event = null;
+            while (rdr.hasNext()) {
+                event = rdr.nextEvent();
+                if (event.getEventType() == XMLEvent.START_ELEMENT) {
+                    break;
+                }
+            }
+
+            StartElement startElement = event.asStartElement();
+            String tagName = startElement.getName().getLocalPart();
             if (!"plugin".equals(tagName)) {
                 throw new IllegalArgumentException("Illegal start tag found in the plugin descriptor. Expected 'plugin' but found '" + tagName + "' in the plugin '" + archive + "'.");
             }
             
-            Attribute nameAttr = e.asStartElement().getAttributeByName(new QName("name"));
+            Attribute nameAttr = startElement.getAttributeByName(new QName("name"));
             
             if (nameAttr == null) {
                 throw new IllegalArgumentException("Couldn't find the name attribute on the plugin tag in the plugin descriptor of plugin '" + archive + "'.");

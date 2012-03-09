@@ -41,9 +41,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.enterprise.gui.coregui.client.*;
-import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -131,7 +133,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
         return VIEW_ID;
     }
 
-    class ResourceInstallReportTable extends Table<ResourceInstallReportTable.DataSource> {
+    class ResourceInstallReportTable extends ReportTable<ResourceInstallReportTable.DataSource> {
 
         public ResourceInstallReportTable(String locatorId) {
             super(locatorId);
@@ -140,6 +142,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
         @Override
         protected void configureTable() {
+            super.configureTable();
+
             ListGridField fieldTypeName = new ListGridField(DataSource.Field.TYPENAME, MSG.common_title_resource_type());
             ListGridField fieldPlugin = new ListGridField(DataSource.Field.TYPEPLUGIN, MSG.common_title_plugin());
             ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());

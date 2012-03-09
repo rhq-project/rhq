@@ -18,7 +18,7 @@
  */
 package org.rhq.core.pc.inventory;
 
-/*import java.io.File;
+import java.io.File;
 
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -42,9 +42,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;*/
-
-import org.testng.annotations.Test;
+import static org.mockito.Mockito.when;
 
 /**
  * A unit test for the {@link InventoryManager}.
@@ -52,9 +50,8 @@ import org.testng.annotations.Test;
  * @author Ian Springer
  */
 @Test(groups = "arquillian")
-public class InventoryManagerTest /*extends Arquillian*/ {
+public class InventoryManagerTest extends Arquillian {
 
-/*
     @Deployment(name = "test")
     public static RhqAgentPluginArchive getTestPlugin() {
         return ShrinkWrap.create(RhqAgentPluginArchive.class, "test-plugin.jar")
@@ -85,14 +82,12 @@ public class InventoryManagerTest /*extends Arquillian*/ {
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
     }
 
-    */
-/**
+    /**
      * Tests that Resources are properly synchronized after the plugin container is restarted with a clean data
      * directory.
      *
      * @throws Exception if an error occurs
-     *//*
-
+     */
     @RunDiscovery
     public void testSyncUnknownResources() throws Exception {
         validatePluginContainerInventory();
@@ -133,6 +128,5 @@ public class InventoryManagerTest /*extends Arquillian*/ {
         Assert.assertNotNull(service);
         Assert.assertEquals(service.getInventoryStatus(), InventoryStatus.COMMITTED);
     }
-*/
 
 }

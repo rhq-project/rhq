@@ -79,18 +79,6 @@ public class DBInstallationTest {
     }
 
     @Test
-    public void overwriteJON231Schema() throws Exception {
-        installSchemaAndData("2.3.1");
-        installer.createNewDatabaseSchema(getInstallProperties());
-    }
-
-    @Test
-    public void upgradeJON231Schema() throws Exception {
-        installSchemaAndData("2.3.1");
-        installer.upgradeExistingDatabaseSchema(getInstallProperties());
-    }
-
-    @Test
     public void overwriteJON240Schema() throws Exception {
         installSchemaAndData("2.4.0");
         installer.createNewDatabaseSchema(getInstallProperties());

@@ -127,6 +127,22 @@ public class AvailTest extends Arquillian {
                 c.updateAvailability(null);
             }
         }
+
+        List<Set<AvailResourceComponent>> componentSets = new ArrayList<Set<AvailResourceComponent>>();
+        componentSets.add(parentComponents1);
+        componentSets.add(parentComponents2);
+        componentSets.add(childComponents1);
+        componentSets.add(childComponents2);
+        componentSets.add(grandchildComponents1);
+        componentSets.add(grandchildComponents2);
+
+        // scrub res containers of avail state
+        for (Set<AvailResourceComponent> cs : componentSets) {
+            for (AvailResourceComponent c : cs) {
+                c.setNextAvailability(AvailabilityType.UP);
+            }
+        }
+
     }
 
     @Test
@@ -200,6 +216,59 @@ public class AvailTest extends Arquillian {
         scan = executor.getMostRecentScanHistory();
         // Children shoud defer to newly down parent.
         assertScan(scan, true, false, 29, 7, 23, 28, 0, 6);
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    public void testScheduling() throws Exception {
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+
+        // Servers should have been scheduled within 1 minute
+        long scanTime = scan.getStartTime();
+        long maxServerSched = scanTime + 60000L + 1;
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(parentContainers2);
+
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                Long schedTime = c.getAvailabilityScheduleTime();
+                Assert.assertTrue(schedTime > scanTime && schedTime < maxServerSched);
+            }
+        }
+
+        long maxServiceSched = scanTime + (10 * 60000L) + 1;
+        boolean[] buckets = new boolean[10];
+        int numBuckets = 0;
+
+        containerSets.clear();
+        containerSets.add(childContainers1);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(grandchildContainers2);
+
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                Long schedTime = c.getAvailabilityScheduleTime();
+                Assert.assertTrue(schedTime > scanTime && schedTime < maxServiceSched);
+                long slice = (maxServiceSched - scanTime) / 10L;
+                int i = (int) ((schedTime - scanTime) / slice);
+                if (!buckets[i]) {
+                    buckets[i] = true;
+                    ++numBuckets;
+                }
+            }
+        }
+        Assert.assertTrue(numBuckets >= 3, "Random distribution seems wrong, buckets hit= " + numBuckets);
     }
 
     private void assertScan(Scan scan, boolean isForced, boolean isFull, int numResources, int numChanges,

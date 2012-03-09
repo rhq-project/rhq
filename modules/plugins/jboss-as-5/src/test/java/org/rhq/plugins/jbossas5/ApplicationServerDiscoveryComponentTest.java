@@ -31,6 +31,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.util.maven.MavenArtifactNotFoundException;
 import org.rhq.core.util.maven.MavenArtifactProperties;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.DiscoveredResources;
@@ -56,15 +57,26 @@ import static org.mockito.Mockito.when;
 @Test(groups = "arquillian")
 public class ApplicationServerDiscoveryComponentTest extends Arquillian {
 
+    @Deployment(name = "platform")
+    public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
+        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:" + getRhqVersion();
+        Collection<RhqAgentPluginArchive> plugins = mavenDependencyResolver.loadEffectivePom("pom.xml")
+                .artifact(platformPluginArtifact)
+                .resolveAs(RhqAgentPluginArchive.class);
+        return plugins.iterator().next();
+    }
+
     @Deployment(name = "jboss-as-5")
     public static RhqAgentPluginArchive getJBossAS5Plugin() throws Exception {
-        MavenArtifactProperties jmxPluginPom = MavenArtifactProperties.getInstance("org.rhq", "rhq-jmx-plugin");
-        String rhqVersion = jmxPluginPom.getVersion();
-        System.out.println("version: " + rhqVersion);
-        File pluginJarFile = new File("target/jopr-jboss-as-5-plugin-" + rhqVersion + ".jar");
+        // This is the jar that was just built during the Maven package phase, just prior to this test getting run
+        // during the Maven integration-test phase. This is exactly what we want, because it's the real Maven-produced
+        // jar, freshly assembled from the classes being tested.
+        File pluginJarFile = new File("target/jopr-jboss-as-5-plugin-" + getRhqVersion() + ".jar");
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
-        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver.loadEffectivePom("pom.xml")
-                .artifact("org.rhq:rhq-jmx-plugin:jar:" + rhqVersion).resolveAs(RhqAgentPluginArchive.class);
+        // Pull in any required plugins from our pom's dependencies.
+        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver.loadEffectivePom("pom.xml").importAllDependencies()
+                .resolveAs(RhqAgentPluginArchive.class);
         return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName())
             .importFrom(pluginJarFile)
             .as(RhqAgentPluginArchive.class)
@@ -88,9 +100,13 @@ public class ApplicationServerDiscoveryComponentTest extends Arquillian {
     @DiscoveredResources(plugin = "JBossAS5", resourceType = "JBossAS Server")
     private Set<Resource> discoveredServers;
 
+    /**
+     * Set up our fake server discovery ServerService, which will auto-import all Resources in reports it receives.
+     *
+     * @throws Exception if an error occurs
+     */
     @BeforeDiscovery
     public void resetServerServices() throws Exception {
-        // Set up our fake server discovery ServerService, which will auto-import all Resources in reports it receives.
         this.serverServices.resetMocks();
         this.fakeServerInventory = new FakeServerInventory();
         when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
@@ -109,6 +125,12 @@ public class ApplicationServerDiscoveryComponentTest extends Arquillian {
                 Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         Assert.assertEquals(this.discoveredServers.size(), 0);
+    }
+
+    private static String getRhqVersion() throws MavenArtifactNotFoundException {
+        MavenArtifactProperties rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq",
+                "rhq-core-plugin-container");
+        return rhqPluginContainerPom.getVersion();
     }
 
 }

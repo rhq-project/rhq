@@ -416,9 +416,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step2.getOperation().equals("write-attribute");
         assert step3.getOperation().equals("remove");
 
-        assert step1.getAdditionalProperties().get("name").equals("hulla");
         assert step1.getAdditionalProperties().get("value").equals("hopp");
-        assert step2.getAdditionalProperties().get("name").equals("value"); // This is the name of the property
         assert step2.getAdditionalProperties().get("value").equals("42!");
         assert step3.getAdditionalProperties().isEmpty();
 
@@ -483,10 +481,8 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step3.getOperation().equals("add");
         assert step4.getOperation().equals("remove");
 
-        assert step1.getAdditionalProperties().get("name").equals("hulla");
         assert step1.getAdditionalProperties().get("value").equals("hopp");
         assert step2.getAdditionalProperties().isEmpty();
-        assert step3.getAdditionalProperties().get("name").equals("bar"); // This is the name of the property
         assert step3.getAdditionalProperties().get("value").equals("42!");
         assert step4.getAdditionalProperties().isEmpty();
 

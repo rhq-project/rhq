@@ -53,6 +53,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
     private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
+    String nameFromPathProperty;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -114,8 +115,16 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         else if (groupName.startsWith("children:")) {
             String type = groupName.substring("children:".length());
             if (type.contains(":")) {
-                // We only need the type for reading
+
+                // If the third part ends with a ?, we fill this config prop with the resource name from the path
+                String tmp = type.substring(type.indexOf(":")+1);
+                if (tmp.endsWith("+-")) {
+                    nameFromPathProperty = tmp.substring(0,tmp.length()-2);
+                }
+
+                // We need the type for reading
                 type = type.substring(0,type.indexOf(":"));
+
             }
             operation = new ReadChildrenResources(address,type);
             operation.addAdditionalProperty("recursive", "true");
@@ -184,6 +193,12 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                     String key = entry.getKey();
 
                     PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val, key);
+
+                    if (nameFromPathProperty!=null) {
+                        // We need to fill that property as well
+                        PropertySimple ps = new PropertySimple(nameFromPathProperty,key);
+                        propertyMap.put(ps);
+                    }
 
                     if (propertyMap!=null)
                         list.add(propertyMap);

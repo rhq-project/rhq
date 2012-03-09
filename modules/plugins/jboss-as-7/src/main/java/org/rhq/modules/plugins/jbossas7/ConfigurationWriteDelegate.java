@@ -249,39 +249,39 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         String key= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
 
 
+        Operation operation;
         Address addr = new Address(address);
         addr.add(type,key);
-        for (Map.Entry<String,Object> entry : results.entrySet()) {
 
-            if (entry.getValue().equals(key))
-                continue; // skip TODO always or only in the case of degenerated props?
+        if (!addNewChildren || existingPropNames.contains(key)) {
+            // update existing entry
+            if (addDeleteModifiedChildren) {
 
-
-            Operation operation;
-            if (!addNewChildren || existingPropNames.contains(key)) {
-                // update existing entry
-                if (addDeleteModifiedChildren) {
-                    operation = new Remove(addr);
-                    cop.addStep(operation);
-                    operation = new Operation("add",addr);
-                    operation.addAdditionalProperty("name",key);
-                    operation.addAdditionalProperty("value",entry.getValue());
-
-                }
-                else {
-                    operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
-                }
-            }
-            else {
-                // write new child ( :name+ case )
+                operation = new Remove(addr);
+                cop.addStep(operation);
 
                 operation = new Operation("add",addr);
-                operation.addAdditionalProperty("name",key);
-                operation.addAdditionalProperty("value",entry.getValue());
+                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                    operation.addAdditionalProperty(entry.getKey(),entry.getValue());
+                }
+                cop.addStep(operation);
             }
-            cop.addStep(operation);
-        }
+            else {
+                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                    operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
+                    cop.addStep(operation);
+                }
+            }
 
+        }
+        else {
+            // write new child ( :name+ case )
+            operation = new Operation("add",addr);
+            for (Map.Entry<String,Object> entry : results.entrySet()) {
+                operation.addAdditionalProperty(entry.getKey(),entry.getValue());
+            }
+                cop.addStep(operation);
+        }
     }
 
     private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef,

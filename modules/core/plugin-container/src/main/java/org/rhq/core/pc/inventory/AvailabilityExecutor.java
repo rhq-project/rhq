@@ -137,17 +137,21 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             long start = System.currentTimeMillis();
             Scan scan = new Scan(start, !changesOnly);
 
+            // TODO back to debug
+            log.info("Scan Starting: " + new Date(start));
             if (log.isDebugEnabled()) {
-                log.debug("Scan Starting: " + new Date(start));
+                //log.debug("Scan Starting: " + new Date(start));
             }
 
             checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
 
             scan.setEndTime(System.currentTimeMillis());
 
+            // TODO back to debug
+            log.info("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
             // Is this too much logging?
             if (log.isDebugEnabled()) {
-                log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
+                //log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
             }
 
             addScanHistory(scan);
@@ -230,7 +234,6 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
                 } else {
                     deferToParent = true;
-                    ++scan.numDeferToParent;
                 }
             }
         } else {
@@ -260,6 +263,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 // descendants, must also be of the parent avail type, so there's no need to even ask the resource component
                 // for its current availability - its current avail is set to the parent avail type and that's that.
                 current = parentAvailType;
+                ++scan.numDeferToParent;
 
             } else {
                 current = null;

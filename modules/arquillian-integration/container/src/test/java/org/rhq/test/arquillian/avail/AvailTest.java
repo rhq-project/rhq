@@ -3,10 +3,12 @@ package org.rhq.test.arquillian.avail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -23,6 +25,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.AvailabilityExecutor;
+import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
+import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
@@ -93,14 +97,48 @@ public class AvailTest extends Arquillian {
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
 
-        //autoimport everything
+        // autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
     }
 
+    @BeforeMethod
+    public void beforeMethod() {
+        System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! BEFORE METHOD (" + Thread.currentThread().getName() + ")");
+        scrub();
+    }
+
+    private void scrub() {
+        if (null == parentContainers1)
+            return;
+
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers1);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(grandchildContainers2);
+
+        // scrub res containers of avail state
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(null);
+                c.updateAvailability(null);
+            }
+        }
+    }
+
     @Test
     @RunDiscovery
-    public void testConfirmInitialInventory() throws Exception {
+    public void testDiscovery() throws Exception {
+        // TODO remove this wait after changes to discovery/commit stuff in framework
+        System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! SLEEPING THREAD (" + Thread.currentThread().getName()
+            + ") for 10 seconds");
+        Thread.sleep(10000);
+        System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! DONE SLEEPING   (" + Thread.currentThread().getName()
+            + ") for 10 seconds");
+
         Assert.assertNotNull(pluginContainer);
         Assert.assertTrue(pluginContainer.isStarted());
 
@@ -121,10 +159,12 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(grandchildComponents2.size(), 8, "missing grandchild2");
     }
 
-    @Test(dependsOnMethods = "testConfirmInitialInventory")
+    @Test(dependsOnMethods = "testDiscovery")
     public void testAvailReport() throws Exception {
-        AvailabilityExecutor executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        dumpContainers("START OF TEST");
         AvailabilityReport report = executor.call();
+        dumpContainers("AFTER FIRST AVAIL CHECK");
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
         List<Datum> availData = report.getResourceAvailability();
@@ -132,17 +172,24 @@ public class AvailTest extends Arquillian {
             assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
         }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
 
-        // do an avail check again - nothing changed, so we should have an empty report
+        // do a forced avail check again - nothing changed, so we should have an empty report
         report = executor.call();
+        dumpContainers("AFTER SECOND AVAIL CHECK");
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
         Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, false, 29, 0, 29, 28, 0, 0);
 
-        // make one of the top parents down and see all other children are down
+        // make one of the top parents down and see all other children are down, force a scan of all to make sure we pick
+        // up the changed resource.
         AvailResourceComponent downParent = this.parentComponents1.iterator().next();
         downParent.setNextAvailability(AvailabilityType.DOWN);
         report = executor.call();
+        dumpContainers("AFTER THIRD AVAIL CHECK");
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), true, "report should have been changes-only");
         availData = report.getResourceAvailability();
@@ -150,5 +197,49 @@ public class AvailTest extends Arquillian {
         for (Datum datum : availData) {
             Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.DOWN);
         }
+        scan = executor.getMostRecentScanHistory();
+        // Children shoud defer to newly down parent.
+        assertScan(scan, true, false, 29, 7, 23, 28, 0, 6);
+    }
+
+    private void assertScan(Scan scan, boolean isForced, boolean isFull, int numResources, int numChanges,
+        int numCalls, int numSched, int numPushed, int numDeferred) {
+        Assert.assertEquals(scan.isForced(), isForced, "Unexpected isForced");
+        Assert.assertEquals(scan.isFull(), isFull, "Unexpected isFull");
+        Assert.assertEquals(scan.getNumResources(), numResources,
+            "Unexpected numResources, remember to include the implied platform?");
+        Assert.assertEquals(scan.getNumAvailabilityChanges(), numChanges,
+            "Unexpected numChanges, remember to omit the implied platform");
+        Assert.assertEquals(scan.getNumGetAvailabilityCalls(), numCalls,
+            "Unexpected numGetAvailCalls, remember to include the implied platform");
+        Assert.assertEquals(scan.getNumScheduledRandomly(), numSched,
+            "Unexpected numSched, remember to omit the implied platform");
+        Assert.assertEquals(scan.getNumPushedByInterval(), numPushed, "Unexpected numPushed");
+        Assert.assertEquals(scan.getNumDeferToParent(), numDeferred,
+            "Unexpected numDeferred, remember to include disabled and implied (when parent goes NOT UP)");
+    }
+
+    private void dumpContainers(String title) {
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers1);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(grandchildContainers2);
+
+        System.out.println("---------> " + title);
+
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                String name = c.getResource().getName();
+                AvailabilityType availType = c.getAvailability().getAvailabilityType();
+                String avail = (null == availType) ? null : availType.name();
+                Long time = c.getAvailabilityScheduleTime();
+                System.out.println("----------> " + name + " " + avail + " " + time);
+            }
+        }
+
+        System.out.println("---------------------------------> ");
     }
 }

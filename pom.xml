@@ -105,6 +105,9 @@
     <resteasy.version>2.3.2.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
+    <arquillian.version>1.0.0.CR7</arquillian.version>
+    <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
+    <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>

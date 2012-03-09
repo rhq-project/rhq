@@ -110,7 +110,94 @@
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <version>1.4</version>
-    </dependency>
+      </dependency>
+
+<!--
+       <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-arquillian-agent-plugin-container-embedded</artifactId>
+           <version>${project.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-module-testng</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.powermock</groupId>
+           <artifactId>powermock-api-mockito</artifactId>
+           <version>${powermock.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.arquillian.container</groupId>
+           <artifactId>arquillian-container-spi</artifactId>
+           <version>${arquillian.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.arquillian.core</groupId>
+           <artifactId>arquillian-core-spi</artifactId>
+           <version>${arquillian.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.arquillian.container</groupId>
+           <artifactId>arquillian-container-test-api</artifactId>
+           <version>${arquillian.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.arquillian.test</groupId>
+           <artifactId>arquillian-test-spi</artifactId>
+           <version>${arquillian.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.arquillian.testng</groupId>
+           <artifactId>arquillian-testng-container</artifactId>
+           <version>${arquillian.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.shrinkwrap</groupId>
+           <artifactId>shrinkwrap-impl-base</artifactId>
+           <version>${shrinkwrap.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.shrinkwrap.resolver</groupId>
+           <artifactId>shrinkwrap-resolver-api</artifactId>
+           <version>${shrinkwrap.resolver.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.shrinkwrap.resolver</groupId>
+           <artifactId>shrinkwrap-resolver-api-maven</artifactId>
+           <version>${shrinkwrap.resolver.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.shrinkwrap.resolver</groupId>
+           <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+           <version>${shrinkwrap.resolver.version}</version>
+           <scope>test</scope>
+       </dependency>
+-->
+
    </dependencies>
 
   <build>
@@ -344,21 +431,32 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <systemPropertyVariables>
-             <rhq.version>${project.version}</rhq.version>
-          </systemPropertyVariables>
-
-          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-          <!-- need to point the library path to the location of the native libraries -->
-          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
-          <!--
-          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
-           -->
+            <skipTests>true</skipTests>
         </configuration>
+        <executions>
+            <execution>
+                <id>allExceptArquillian</id>
+                <goals>
+                    <goal>test</goal>
+                </goals>
+                <configuration>
+                    <skipTests>${skipTests}</skipTests>
+                    <systemPropertyVariables>
+                       <rhq.version>${project.version}</rhq.version>
+                    </systemPropertyVariables>
+
+                    <excludedGroups>arquillian,${rhq.testng.excludedGroups}</excludedGroups>
+                    <!-- need to point the library path to the location of the native libraries -->
+                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
+                    <!--
+                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
+                     -->
+                </configuration>
+            </execution>
+        </executions>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
@@ -369,10 +467,40 @@
           </execution>
         </executions>
       </plugin>
+
     </plugins>
   </build>
 
    <profiles>
+
+<!--
+       <profile>
+          <id>arquillian</id>
+          <activation>
+             <property><name>!test</name></property>
+          </activation>
+          <build>
+             <plugins>
+                <plugin>
+                   <artifactId>maven-surefire-plugin</artifactId>
+                   <executions>
+                      <execution>
+                         <id>arquillianTestsOnly</id>
+                         <goals>
+                            <goal>test</goal>
+                         </goals>
+                         <configuration>
+                            <skipTests>${skipTests}</skipTests>
+                            <groups>arquillian</groups>
+                         </configuration>
+                      </execution>
+                   </executions>
+                </plugin>
+             </plugins>
+          </build>
+       </profile>
+-->
+
      <profile>
       <id>cobertura</id>
       <activation>

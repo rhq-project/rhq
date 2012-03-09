@@ -79,36 +79,83 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
         if (report.getPackageDetails() != null)
             return super.deployContent(report);
 
-        // TODO check for types of children -- this is server group only at the moment.
-        String name = report.getUserSpecifiedResourceName();
-        Address address = new Address(path);
-        address.add("server-group", name);
-        Operation op = new Operation("add", address);
+        String targetTypeName = report.getResourceType().getName();
+        Operation op;
 
+        String resourceName = report.getUserSpecifiedResourceName();
         Configuration rc = report.getResourceConfiguration();
-        String profile = rc.getSimpleValue("profile", "");
-        if (profile.isEmpty()) {
-            report.setErrorMessage("No profile given");
-            report.setStatus(CreateResourceStatus.FAILURE);
-            return report;
-        }
-        op.addAdditionalProperty("profile", profile);
-        String socketBindingGroup = rc.getSimpleValue("socket-binding-group", "");
-        if (socketBindingGroup.isEmpty()) {
-            report.setErrorMessage("No socket-binding-group given");
-            report.setStatus(CreateResourceStatus.FAILURE);
-            return report;
-        }
-        op.addAdditionalProperty("socket-binding-group", socketBindingGroup);
-        PropertySimple offset = rc.getSimple("socket-binding-port-offset");
-        if (offset != null && offset.getStringValue() != null)
-            op.addAdditionalProperty("socket-binding-port-offset", offset.getIntegerValue());
-        // TODO add jvm info
+        Address targetAddress ;
 
+        // Dispatch according to child type
+        if (targetTypeName.equals("ServerGroup")) {
+            targetAddress = new Address(); // Server groups are at / level
+            targetAddress.add("server-group", resourceName);
+            op = new Operation("add", targetAddress);
+
+
+            String profile = rc.getSimpleValue("profile", "");
+            if (profile.isEmpty()) {
+                report.setErrorMessage("No profile given");
+                report.setStatus(CreateResourceStatus.FAILURE);
+                return report;
+            }
+            op.addAdditionalProperty("profile", profile);
+            String socketBindingGroup = rc.getSimpleValue("socket-binding-group", "");
+            if (socketBindingGroup.isEmpty()) {
+                report.setErrorMessage("No socket-binding-group given");
+                report.setStatus(CreateResourceStatus.FAILURE);
+                return report;
+            }
+            op.addAdditionalProperty("socket-binding-group", socketBindingGroup);
+            PropertySimple offset = rc.getSimple("socket-binding-port-offset");
+            if (offset != null && offset.getStringValue() != null)
+                op.addAdditionalProperty("socket-binding-port-offset", offset.getIntegerValue());
+            // TODO add jvm info
+        }
+        else if (targetTypeName.equals(BaseComponent.MANAGED_SERVER)) {
+
+            String targetHost = rc.getSimpleValue("hostname",null);
+            if (targetHost==null) {
+                report.setErrorMessage("No domain host given");
+                report.setStatus(CreateResourceStatus.FAILURE);
+                return report;
+            }
+
+            targetAddress = new Address("host",targetHost);
+            targetAddress.add("server-config", resourceName);
+            op = new Operation("add", targetAddress);
+            String socketBindingGroup = rc.getSimpleValue("socket-binding-group", "");
+            if (socketBindingGroup.isEmpty()) {
+                report.setErrorMessage("No socket-binding-group given");
+                report.setStatus(CreateResourceStatus.FAILURE);
+                return report;
+            }
+            op.addAdditionalProperty("socket-binding-group", socketBindingGroup);
+            String autostartS = rc.getSimpleValue("auto-start","false");
+            boolean autoStart = Boolean.valueOf(autostartS);
+            op.addAdditionalProperty("auto-start",autoStart);
+
+            String portS = rc.getSimpleValue("socket-binding-port-offset","0");
+            int portOffset = Integer.parseInt(portS);
+            op.addAdditionalProperty("socket-binding-port-offset",portOffset);
+
+            String serverGroup = rc.getSimpleValue("group",null);
+            if (serverGroup==null) {
+                report.setErrorMessage("No server group given");
+                report.setStatus(CreateResourceStatus.FAILURE);
+                return report;
+            }
+            op.addAdditionalProperty("group",serverGroup);
+
+
+        }
+        else {
+            throw new IllegalArgumentException("Don't know yet how to create instances of " + targetTypeName);
+        }
         Result res = getASConnection().execute(op);
         if (res.isSuccess()) {
-            report.setResourceKey(address.getPath());
-            report.setResourceName(name);
+            report.setResourceKey(targetAddress.getPath());
+            report.setResourceName(resourceName);
             report.setStatus(CreateResourceStatus.SUCCESS);
         } else {
             report.setErrorMessage(res.getFailureDescription());

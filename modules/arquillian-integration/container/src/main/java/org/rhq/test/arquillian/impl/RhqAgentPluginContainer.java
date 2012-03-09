@@ -106,7 +106,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
             //just try it out early
             switchPcInstance();
         } catch (Exception e) {
-            throw new IllegalStateException("Could not instantiate an modified PluginContainer");
+            throw new IllegalStateException("Could not instantiate a modified PluginContainer");
         }        
     }
 

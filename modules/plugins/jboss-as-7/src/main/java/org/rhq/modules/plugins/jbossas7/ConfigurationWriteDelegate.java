@@ -200,7 +200,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     PropertyMap propMap2 = (PropertyMap) prop2;
                     String itemName = propMap2.getSimple(namePropLocator).getStringValue();
                     if (itemName==null) {
-                        throw new IllegalArgumentException("Map contains no entry with name '" + namePropLocator + "'");
+                        throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator + "]");
                     }
                     if (itemName.equals(existingName)) {
                         found=true;

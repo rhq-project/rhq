@@ -107,7 +107,14 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
             }
             report.setEndTime(System.currentTimeMillis());
 
-            log.info("Found " + report.getAddedRoots().size() + " servers.");
+            if (report.getAddedRoots().size() == 1 &&
+                report.getAddedRoots().iterator().next().getResourceType().getCategory() == ResourceCategory.PLATFORM) {
+                Resource platform = report.getAddedRoots().iterator().next();
+                log.info("Discovered new platform with " + platform.getChildResources().size() + " child server(s).");
+            } else {
+                log.info("Discovered " + report.getAddedRoots().size() + " new server(s).");
+            }
+            
             if (log.isDebugEnabled()) {
                 log.debug("Server discovery scan took [" + (report.getEndTime() - report.getStartTime()) + "] ms.");
             }

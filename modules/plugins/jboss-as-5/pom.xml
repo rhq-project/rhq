@@ -376,6 +376,14 @@ we now use the following method. -->
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+       <groupId>${rhq.groupId}</groupId>
+       <artifactId>rhq-core-plugin-test-api</artifactId>
+       <version>${project.version}</version>
+       <type>pom</type>
+       <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <build>
@@ -431,8 +439,22 @@ we now use the following method. -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <skip>true</skip>
+          <skipTests>true</skipTests>
         </configuration>
+
+        <executions>
+          <execution>
+            <id>arquillianTests</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skipTests>${skipTests}</skipTests>
+              <groups>arquillian</groups>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
     </plugins>

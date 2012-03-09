@@ -10,6 +10,7 @@
         <column name="NAME" type="VARCHAR2" required="true" size="100"/>
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="250"/>
         <column name="VERSION" type="VARCHAR2" required="false" size="50"/>
+        <column name="CONFIG_FORMAT" type="VARCHAR2" required="false" size="32"/>
     </table>
 
     <table name="RHQ_CONFIG_PROP_GRP_DEF">
@@ -23,7 +24,7 @@
 
     <table name="RHQ_CONFIG_PROP_DEF">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
-        <column name="NAME" type="VARCHAR2" required="false" size="100"/>
+        <column name="NAME" type="VARCHAR2" required="false" size="255"/>
         <column name="DISPLAY_NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="1000"/>
         <column name="DEFAULT_VALUE" type="VARCHAR2" required="false" size="2000"/>
@@ -43,14 +44,26 @@
 
         <!-- only simple properties (not lists and maps) have this -->
         <column name="UNITS" type="SMALLINT" required="false"/>
+
+        <!-- only dynamic properties (not simple) have this -->
+        <column name="DYNAMIC_TYPE" type="VARCHAR2" size="20" required="false"/>
+        <column name="DYNAMIC_KEY" type="VARCHAR2" size="128" required="false"/>
     </table>
 
     <table name="RHQ_CONF_PROP_DEF_ENUM">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="STRING_VALUE" type="VARCHAR2" required="false" size="500"/>
         <column name="ORDER_INDEX" type="INTEGER" required="false"/>
-        <column name="IS_DEFAULT" type="BOOLEAN" required="false"/>
         <column name="NAME" type="VARCHAR2" required="false" size="100"/>
+        <column name="PROPERTY_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROP_DEF"/>
+    </table>
+
+    <table name="RHQ_CONFIG_PD_OSRC">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="LINK_TO_TARGET" type="BOOLEAN" required="false"/>
+        <column name="FILTER" type="VARCHAR2" required="false" size="40"/>
+        <column name="EXPRESSION" type="VARCHAR2" required="true" size="400"/>
+        <column name="TARGET_TYPE" type="VARCHAR2" required="true" size="20"/>
         <column name="PROPERTY_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROP_DEF"/>
     </table>
 
@@ -78,7 +91,7 @@
         <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG" ondelete="cascade"/>
         <column name="STRING_VALUE" type="VARCHAR2" required="false" size="2000"/>
         <column name="OVERRIDE" type="BOOLEAN" required="false"/>
-        <column name="NAME" type="VARCHAR2" required="true" size="100"/>
+        <column name="NAME" type="VARCHAR2" required="true" size="255"/>
         <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
         <!-- Recursive cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
              http://support.microsoft.com/kb/321843 -->
@@ -107,6 +120,16 @@
         <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
         <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF"/>
         <column name="IS_DEFAULT" type="BOOLEAN" required="false"/>
+    </table>
+
+    <table name="RHQ_RAW_CONFIG">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG(ID)"/>
+        <column name="PATH" type="VARCHAR2" required="false" size="512"/>
+        <column name="CONTENTS" type="CLOB" required="true"/>
+        <column name="SHA256" type="VARCHAR2" size="64" required="true"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
     </table>
 
 <!-- END: config-schema.xml -->
@@ -171,7 +194,7 @@
     <table name="RHQ_PARTITION_EVENT">
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
-        <column name="SUBJECT_NAME" required="true" size="255" type="VARCHAR2"/>
+        <column name="SUBJECT_NAME" required="true" size="100" type="VARCHAR2"/>
         <column name="CTIME" required="true" type="LONG"/>
         <column name="EVENT_TYPE" required="true" size="50" type="VARCHAR2"/>
         <column name="EVENT_DETAIL" required="false" size="512" type="VARCHAR2"/>
@@ -203,6 +226,43 @@
     </table>
 
 <!-- END: cluster-schema.xml -->
+<!-- BEGIN: auth-schema.xml -->
+
+
+    <table name="RHQ_PRINCIPAL">
+
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="PRINCIPAL" required="true" type="VARCHAR2" size="100"/>
+        <column name="PASSWORD" required="true" type="VARCHAR2" size="64"/>
+
+        <!-- ensure that principals are unique -->
+        <index name="RHQ_PRINCIPAL_PRINCIPAL_KEY" unique="true">
+            <field ref="PRINCIPAL"/>
+        </index>
+
+    </table>
+    
+    <table name="RHQ_SUBJECT">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
+        <column name="FIRST_NAME" required="false" size="100" type="VARCHAR2"/>
+        <column name="LAST_NAME" required="false" size="100" type="VARCHAR2"/>
+        <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>
+        <column name="SMS_ADDRESS" size="100" type="VARCHAR2"/>
+        <column name="PHONE_NUMBER" size="100" type="VARCHAR2"/>
+        <column name="DEPARTMENT" size="100" type="VARCHAR2"/>
+        <column name="FACTIVE" required="true" type="BOOLEAN" default="true"/>
+        <column name="FSYSTEM" required="true" type="BOOLEAN" default="false"/>
+
+        <index name="RHQ_SUBJECT_AUTH_KEY" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>    
+
+<!-- END: auth-schema.xml -->
 <!-- BEGIN: inventory-schema.xml -->
 
 
@@ -220,6 +280,7 @@
         <column name="PLUGIN" type="VARCHAR2" size="100"/>
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
+        <column name="DELETED" type="BOOLEAN" default="FALSE" required="TRUE"/>
         <column name="SUBCATEGORY_ID" type="INTEGER"/>
         <!--
         TODO add support to DB setup for tables with circular dependencies and then add back this RI
@@ -227,8 +288,9 @@
         -->
         <column name="PLUGIN_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
         <column name="RES_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF(ID)"/>
+        <column name="BUNDLE_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG"/>
 
-        <index name="RHQ_RES_TYPE_IDX_PLG_NAME">
+        <index name="RHQ_RES_TYPE_IDX_PLG_NAME" unique="true">
             <field ref="NAME"/>
             <field ref="PLUGIN"/>
         </index>
@@ -277,7 +339,7 @@
 
     <table name="RHQ_PRD_VER">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="VERSION" type="VARCHAR2" size="50" required="true"/>
+        <column name="VERSION" type="VARCHAR2" size="100" required="true"/>
         <column name="RES_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
     </table>
 
@@ -287,18 +349,20 @@
         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
         <column name="UUID" type="CHAR" size="36" required="true"/>
         <column name="NAME" type="VARCHAR2" size="500"/>
+        <!--  ancestry holds the full parental ancestry, used for disambiguation -->
+        <column name="ANCESTRY" type="VARCHAR2" required="false" size="4000"/>         
         <column name="RESOURCE_KEY" type="VARCHAR2" required="true" size="500"/>
         <column name="AGENT_ID" required="false" type="INTEGER" references="RHQ_AGENT(id)"/>
         <column name="INVENTORY_STATUS" type="VARCHAR2" size="20"/>
         <column name="CONNECTED" type="BOOLEAN"/>
         <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-        <column name="VERSION" type="VARCHAR2" size="50"/>
+        <column name="VERSION" type="VARCHAR2" size="100"/>
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
         <column name="ITIME" type="LONG"/>
         <column name="RES_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
         <column name="PLUGIN_CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
-        <column name="MODIFIED_BY" required="false" type="INTEGER"/>
+        <column name="MODIFIED_BY" required="false" size="100" type="VARCHAR2"/>
         <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
         <column name="PRODUCT_VERSION_ID" type="INTEGER" references="RHQ_PRD_VER"/>
@@ -358,13 +422,11 @@
         <!-- Max bytes for Oracle Varchar2 to accommodate large cluster keys -->
         <column name="NAME" required="true" size="4000" type="VARCHAR2"/>
         <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
-        <column name="LOCATION" required="false" size="100" type="VARCHAR2"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE"/>
         <!-- Compatible groups only -->
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
-        <column name="MODIFIED_BY" required="false" type="INTEGER"/>
-        <!-- TODO: Reorder to allow this references="RHQ_SUBJECT" -->
+        <column name="MODIFIED_BY" required="false" size="100" type="VARCHAR2"/>
         <column name="RECURSIVE" type="BOOLEAN"/>
 
         <column name="GROUP_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_GROUP_DEF"/>
@@ -372,10 +434,15 @@
 
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>
 
+        <!--  This is only set if this is a subject-owned group (like an autogroup) -->
+        <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT"/>
+
+        <!--  These two only set if this is a backing group for a resource auto-cluster -->
         <column name="CLUSTER_KEY" type="VARCHAR2" size="4000" required="false"/>
-        
-        <!--  These two only set if this is a backing group for a resource cluster -->
         <column name="CLUSTER_RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP"/>
+
+        <!--  This is only set if this is a backing group for a resource auto-group -->
+        <column name="AUTO_GROUP_PARENT_RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE"/>
 
         <column name="VISIBLE" type="BOOLEAN"/>
         
@@ -439,25 +506,37 @@
         <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
     </table>
 
-<!-- END: inventory-schema.xml -->
-<!-- BEGIN: auth-schema.xml -->
 
-
-    <table name="RHQ_PRINCIPAL">
-
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="PRINCIPAL" required="true" type="VARCHAR2" size="100"/>
-        <column name="PASSWORD" required="true" type="VARCHAR2" size="64"/>
-
-        <!-- ensure that principals are unique -->
-        <index name="RHQ_PRINCIPAL_PRINCIPAL_KEY" unique="true">
-            <field ref="PRINCIPAL"/>
-        </index>
-
+    <table name="RHQ_TAGGING">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+        <column name="NAMESPACE" type="VARCHAR2" required="false" size="20"/>
+        <column name="SEMANTIC" type="VARCHAR2" required="false" size="50"/>
+        <column name="NAME" type="VARCHAR2" required="true" size="100"/>
     </table>
 
-<!-- END: auth-schema.xml -->
+    <table name="RHQ_TAGGING_RESOURCE_MAP">
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_RESOURCE_MAP_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_TAGGING_RES_GROUP_MAP">
+        <column name="RESOURCE_GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_RES_GROUP_MAP_KEY">
+            <primaryKey>
+                <field ref="RESOURCE_GROUP_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+<!-- END: inventory-schema.xml -->
 <!-- BEGIN: authz-schema.xml -->
 
 
@@ -485,6 +564,18 @@
         </constraint>
     </table>
 
+    <table name="RHQ_ROLE_LDAP_GROUP">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
+        <column name="LDAP_GROUP_NAME" size="128" required="true" type="VARCHAR2"/>
+
+        <index name="RHQ_ROLE_LDAP_GROUP_IDX" unique="true">
+            <field ref="ROLE_ID"/>
+            <field ref="LDAP_GROUP_NAME"/>
+        </index>
+    </table>
+
     <table name="RHQ_PERMISSION">
         <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE" required="true"/>
         <column name="OPERATION" type="INTEGER" required="true"/>
@@ -494,25 +585,6 @@
                 <field ref="OPERATION"/>
             </primaryKey>
         </constraint>
-    </table>
-
-    <table name="RHQ_SUBJECT">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
-        <column name="CONFIGURATION_ID" type="INTEGER" references="RHQ_CONFIG"/>
-        <column name="FIRST_NAME" required="false" size="100" type="VARCHAR2"/>
-        <column name="LAST_NAME" required="false" size="100" type="VARCHAR2"/>
-        <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>
-        <column name="SMS_ADDRESS" size="100" type="VARCHAR2"/>
-        <column name="PHONE_NUMBER" size="100" type="VARCHAR2"/>
-        <column name="DEPARTMENT" size="100" type="VARCHAR2"/>
-        <column name="FACTIVE" required="true" type="BOOLEAN" default="true"/>
-        <column name="FSYSTEM" required="true" type="BOOLEAN" default="false"/>
-
-        <index name="RHQ_SUBJECT_AUTH_KEY" unique="true">
-            <field ref="NAME"/>
-        </index>
     </table>
 
     <table name="RHQ_SUBJECT_ROLE_MAP">
@@ -527,7 +599,64 @@
         </constraint>
     </table>
 
+    <table name="RHQ_SUBJECT_ROLE_LDAP_MAP">
+        <column name="SUBJECT_ID" required="true" type="INTEGER" references="RHQ_SUBJECT"/>
+        <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
+        <constraint name="RHQ_SUBJECT_ROLE_LDAP_MAP_PK">
+            <primaryKey>
+                <field ref="SUBJECT_ID" />
+                <field ref="ROLE_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
 <!-- END: authz-schema.xml -->
+<!-- BEGIN: search-schema.xml -->
+
+
+    <table name="RHQ_SAVED_SEARCH">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CONTEXT" type="VARCHAR2" size="25" required="true"/>
+        
+        <column name="NAME" type="VARCHAR2" size="200" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="500" required="false"/>
+        <column name="PATTERN" type="VARCHAR2" size="1000" required="true"/>
+        
+        <column name="LAST_COMPUTE_TIME" type="LONG" required="true"/>
+        <column name="RESULT_COUNT" type="LONG" required="false"/>
+        
+        <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT" required="true"/>
+        <column name="GLOBAL" type="BOOLEAN" required="true"/>
+    </table>
+
+<!-- END: search-schema.xml -->
+<!-- BEGIN: dashboard-schema.xml -->
+
+
+
+    <table name="RHQ_DASHBOARD">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="200" required="true"/>
+        <column name="SUBJECT_ID" type="INTEGER" required="true" references="RHQ_SUBJECT"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>        
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                
+        <column name="SHARED" type="BOOLEAN" required="true"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+    </table>
+
+
+    <table name="RHQ_DASHBOARD_PORTLET">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" type="VARCHAR2" size="200" required="true"/>
+        <column name="PORTLET_KEY" type="VARCHAR2" size="200" required="true"/>
+        <column name="COL" type="INTEGER" required="true"/>
+        <column name="COL_INDEX" type="INTEGER" required="true"/>
+        <column name="HEIGHT" type="INTEGER" required="true"/>
+        <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG"/>
+        <column name="DASHBOARD_ID" type="INTEGER" required="false" references="RHQ_DASHBOARD"/>
+    </table>
+
+<!-- END: dashboard-schema.xml -->
 <!-- BEGIN: operation-schema.xml -->
 
 
@@ -600,6 +729,8 @@
     code special conditions into the session bean, we'll allow a short-lived NULL next fire time row.
     -->
     <table name="RHQ_OPERATION_SCHEDULE">
+        <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
+
         <column name="JOB_NAME" type="VARCHAR2" required="true" size="100"/>
         <column name="JOB_GROUP" type="VARCHAR2" required="true" size="100"/>
         <column name="DTYPE" type="VARCHAR2" required="true" size="8"/>
@@ -612,19 +743,199 @@
         <column name="GROUP_ID" type="INTEGER" required="false" references="RHQ_RESOURCE_GROUP"/>
 
         <!--
-        Note that this is the same primary key that Quartz uses for its schedules (RHQ_qrtz_job_details).
-        We do not need to add DTYPE to the key, because we ensure the name/group are unique
-        across resource/group schedules
+        Note, this is the same as the primary key that Quartz uses for its schedules (RHQ_QRTZ_JOB_DETAILS).
+        We do not need to add DTYPE to the key, because we ensure the name/group are unique across resource/group
+        schedules
         -->
-        <constraint name="RHQ_OPERATION_SCHEDULE_KEY">
-            <primaryKey>
-                <field ref="JOB_NAME"/>
-                <field ref="JOB_GROUP"/>
-            </primaryKey>
-        </constraint>
+        <!-- === business key (JOB_NAME + JOB_GROUP) === -->
+        <index name="RHQ_OPERATION_SCHEDULE_KEY_IDX" unique="true">
+            <field ref="JOB_NAME"/>
+            <field ref="JOB_GROUP"/>
+        </index>
     </table>
 
 <!-- END: operation-schema.xml -->
+<!-- BEGIN: event-schema.xml -->
+
+
+    <!-- metadata -->
+
+    <table name="RHQ_EVENT_DEF">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
+
+        <column name="NAME" type="VARCHAR2" size="100" required="true"/>
+        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
+
+        <index name="RHQ_EVENT_DEF_IDX" unique="true">
+            <field ref="RESOURCE_TYPE_ID"/>
+            <field ref="NAME"/>
+        </index>
+    </table>
+
+    <!-- instance data -->
+
+    <table name="RHQ_EVENT_SOURCE">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="EVENT_DEF_ID" type="INTEGER" required="true" references="RHQ_EVENT_DEF(ID)"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
+
+        <column name="LOCATION" required="true" size="2000" type="VARCHAR2"/>
+
+        <index name="RHQ_EVENT_SOURCE_IDX" unique="true">
+            <field ref="EVENT_DEF_ID"/>
+            <field ref="RESOURCE_ID"/>
+            <field ref="LOCATION"/>
+        </index>
+    </table>
+
+    <table name="RHQ_EVENT">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="EVENT_SOURCE_ID" type="INTEGER" required="true" references="RHQ_EVENT_SOURCE(ID)"/>
+
+        <column name="TIMESTAMP" required="true" type="LONG"/>
+        <column name="SEVERITY" required="true" size="20" type="VARCHAR2"/>
+        <column name="DETAIL" required="true" size="4000" type="VARCHAR2"/>
+        <index name="RHQ_EVENT_IDX" unique="false">
+            <field ref="EVENT_SOURCE_ID"/>
+            <field ref="TIMESTAMP"/>
+        </index>
+    </table>
+
+<!-- END: event-schema.xml -->
+<!-- BEGIN: alert-schema.xml -->
+
+
+    <table name="RHQ_ALERT_DEFINITION">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="PARENT_ID" type="INTEGER" required="false"/>
+        <column name="GROUP_ALERT_DEF_ID" type="INTEGER" required="false"/>
+        <column name="DESCRIPTION" required="false" size="250" type="VARCHAR2"/>
+        <column name="PRIORITY" type="VARCHAR2" size="15" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
+        <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="false"/>
+        <column name="RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP" required="false"/>
+        <column name="ENABLED" required="true" default="TRUE" type="BOOLEAN"/>
+
+        <column name="REQUIRED" required="true" type="SMALLINT"/>
+
+        <column name="RECOVERY_ID" type="INTEGER" required="true"/>
+        <!-- required, but 0 effectively means null -->
+        <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
+        <column name="NOTIFY_FILTERED" required="true" default="false" type="BOOLEAN"/>
+        <column name="CONTROL_FILTERED" required="true" default="FALSE" type="BOOLEAN"/>
+
+        <column name="DELETED" required="true" default="FALSE" type="BOOLEAN"/>
+        <column name="READ_ONLY" required="true" default="FALSE" type="BOOLEAN"/>
+
+        <column name="DAMPENING_CATEGORY" type="SMALLINT" required="true"/>
+        <column name="DAMPENING_VALUE" type="INTEGER"/>
+        <column name="DAMPENING_VALUE_UNITS" type="SMALLINT"/>
+        <column name="DAMPENING_PERIOD" type="INTEGER"/>
+        <column name="DAMPENING_PERIOD_UNITS" type="SMALLINT"/>
+    </table>
+
+    <table name="RHQ_ALERT_DAMPEN_EVENT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="EVENT_TYPE" required="true" type="SMALLINT"/>
+        <column name="EVENT_TIMESTAMP" required="true" type="LONG"/>
+
+        <index name="RHQ_DAMPENING_EVENT_TYPE_IDX">
+            <field ref="EVENT_TYPE"/>
+        </index>
+        <index name="RHQ_DAMPENING_EVENT_TS_IDX">
+            <field ref="EVENT_TIMESTAMP"/>
+        </index>
+    </table>
+
+    <table name="RHQ_ALERT_CONDITION">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="TYPE" required="true" type="VARCHAR2" size="15"/>
+        <!--
+           <column name="REQUIRED" required="true"  type="BOOLEAN"/>
+        -->
+        <column name="MEASUREMENT_DEFINITION_ID" required="false" type="INTEGER"/>
+        <column name="NAME" required="false" size="100" type="VARCHAR2"/>
+        <column name="COMPARATOR" required="false" size="2" type="VARCHAR2"/>
+        <column name="THRESHOLD" required="false" type="DOUBLE"/>
+        <!-- event-based conditions use OPTION_STATUS for the string match, so should be a decent length -->
+        <column name="OPTION_STATUS" required="false" size="256" type="VARCHAR2"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="TRIGGER_ID" required="false" type="INTEGER"/>
+    </table>
+
+    <table name="RHQ_ALERT" tablespace="DEFAULT"
+           storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="RECOVERY_ID" type="INTEGER" required="true"/>
+        <!-- required, but 0 effectively means null -->
+        <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
+        <column name="ACK_TIME" required="false" type="LONG"/>
+        <column name="ACK_SUBJECT" required="false" size="100" type="VARCHAR2"/>
+        <index name="RHQ_ALERT_IDX_TIME" unique="false">
+            <field ref="CTIME"/>
+        </index>
+        <index name="RHQ_ALERT_IDX_ALERTDEF" unique="false">
+            <field ref="ALERT_DEFINITION_ID"/>
+        </index>
+    </table>
+
+    <table name="RHQ_ALERT_NOTIF_LOG" tablespace="DEFAULT"
+           storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ALERT_ID" required="true" type="INTEGER" references="RHQ_ALERT(ID)"/>
+        <index name="RHQ_ALERT_IDX_ALERT" unique="false">
+            <field ref="ALERT_ID"/>
+        </index>
+        <column name="SENDER" required="false" size="100" type="VARCHAR2"/>
+        <column name="RESULT_STATE" required="false" size="20" type="VARCHAR2"/>
+        <column name="MESSAGE" required="false" size="4000" type="VARCHAR2"/>
+    </table>
+
+    <table name="RHQ_ALERT_CONDITION_LOG" tablespace="DEFAULT"
+           storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="CTIME" required="true" type="LONG"/>
+        <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
+        <column name="CONDITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_CONDITION(ID)"/>
+        <column name="VALUE" required="true" size="250" type="VARCHAR2"/>
+        <index name="RHQ_ALERT_COND_LOG_IDX_TIME">
+            <field ref="CTIME" />
+        </index>
+        <index name="RHQ_ALERT_COND_LOG_IDX_ALERT">
+            <field ref="ALERT_ID"/>
+        </index>
+        <index name="RHQ_ALERT_COND_LOG_COND_IDX">
+            <field ref="CONDITION_ID"/>
+        </index>
+    </table>
+
+    <table name="RHQ_ALERT_NOTIFICATION" tablespace="DEFAULT"
+           storage-options="freelists 5" cache="true" logging="false">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
+        <column name="SENDER_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
+        <column name="EXTRA_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
+        <column name="SENDER_NAME" required="true" size="100" type="VARCHAR2" />
+    </table>
+
+<!-- END: alert-schema.xml -->
 <!-- BEGIN: sysconfig-schema.xml -->
 
 
@@ -916,23 +1227,29 @@
 <!-- BEGIN: amps-schema.xml -->
 
 
-
     <table name="RHQ_PLUGIN">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DISPLAY_NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
         <column name="VERSION" size="200" type="VARCHAR2" required="false"/>
+        <column name="AMPS_VERSION" size="16" type="VARCHAR2" required="false"/>
         <column name="ENABLED" type="BOOLEAN" required="true"/>
+        <column name="STATUS" size="16" type="VARCHAR2" required="true"/>
         <column name="HELP" type="CLOB" required="false"/>
         <column name="PATH" size="500" type="VARCHAR2" required="true"/>
         <column name="MD5" size="100" type="VARCHAR2" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="MTIME" type="LONG" required="true"/>
+        <column name="DEPLOYMENT" size="8" type="VARCHAR2" required="true"/>
+        <column name="PTYPE" size="200" type="VARCHAR2" required="false"/>
+        <column name="PLUGIN_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
+        <column name="JOBS_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
         <column name="CONTENT" type="BLOB" required="false"/>
 
-        <index name="RHQ_PLUGIN_NAME_IDX" unique="true">
+        <index name="RHQ_PLUGIN_NAME_DEPLOY_IDX" unique="true">
             <field ref="NAME"/>
+            <field ref="DEPLOYMENT"/>
         </index>
     </table>
 
@@ -971,6 +1288,9 @@
          <field ref="NAME"/>
          <field ref="RAW_NUMERIC_TYPE"/>
       </index>
+      <index name="RHQ_METRIC_DEF_NT_IDX">
+          <field ref="NUMERIC_TYPE"/>
+      </index>
    </table>
 
 
@@ -987,6 +1307,9 @@
          <field ref="RESOURCE_ID"/>
          <field ref="DEFINITION"/>
       </index>
+       <index name="RHQ_MEAS_SCHED_RESID_IDX">
+          <field ref="RESOURCE_ID"/>
+       </index>
    </table>
 
 
@@ -1023,7 +1346,7 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
-      
+
       <index name="RHQ_MEAS_DATA_1H_TIME_IDX">
          <field ref="TIME_STAMP"/>
       </index>
@@ -1045,7 +1368,7 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
-      
+
       <index name="RHQ_MEAS_DATA_6H_TIME_IDX">
          <field ref="TIME_STAMP"/>
       </index>
@@ -1067,6 +1390,10 @@
             <field ref="TIME_STAMP"/>
          </primaryKey>
       </constraint>
+
+      <index name="RHQ_MEAS_DATA_1D_TIME_IDX">
+         <field ref="TIME_STAMP" />
+      </index>
    </table>
 
 
@@ -1103,6 +1430,9 @@
       <column name="MAXIMUM" type="DOUBLE" required="true"/>
       <column name="TOTAL" type="DOUBLE" required="true"/>
       <column name="COUNT" type="LONG" required="true"/>
+      <index name="RHQ_CT_DA_VA_END_TIM_IDX">
+          <field ref="END_TIME"/>
+      </index>
    </table>
 
 
@@ -1129,19 +1459,6 @@
       <column name="AVAILABILITY_TYPE" type="SMALLINT" required="false" />
       <index name="RHQ_RESOURCE_AVAIL_IDX">
          <field ref="RESOURCE_ID" />
-      </index>
-   </table>
-
-   <!-- !!!!! REMOVED !!!!! -->
-   <table name="RHQ_MEASUREMENT_OOB" obsolete="true">
-      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
-      <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
-      <column name="OCCURRED" type="LONG" required="true"/>
-      <column name="DIFF" type="DOUBLE" required="true"/>
-
-      <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
-         <field ref="SCHEDULE_ID" />
-         <field ref="OCCURRED" />
       </index>
    </table>
 
@@ -1385,7 +1702,7 @@
 
 <!-- END: measurement-schema.xml -->
 <!-- BEGIN: content-schema.xml -->
-        
+
 
     <table name="RHQ_ARCHITECTURE">
         <column name="ID" default="sequence-only" initial="100" primarykey="true" required="true" type="INTEGER"/>
@@ -1394,6 +1711,27 @@
             <field ref="NAME"/>
         </index>
     </table>
+
+    <table name="RHQ_REPO_GROUP_TYPE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
+
+
+    <table name="RHQ_REPO_GROUP">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+
+        <column name="REPO_GROUP_TYPE_ID" type="INTEGER" references="RHQ_REPO_GROUP_TYPE" required="true"/>
+
+        <index name="RHQ_REPO_GROUP_IDX" unique="true">
+            <field ref="NAME"/>
+            <field ref="REPO_GROUP_TYPE_ID"/>
+        </index>
+    </table>
+
 
     <table name="RHQ_CONTENT_SOURCE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
@@ -1435,17 +1773,37 @@
         </index>
     </table>
 
-    <table name="RHQ_CHANNEL">
+    <table name="RHQ_REPO">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
         <column name="CREATION_TIME" type="LONG" required="true"/>
         <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
-
-        <index name="RHQ_CHANNEL_IDX" unique="true">
+        <column name="IS_CANDIDATE" type="BOOLEAN" required="true"/>
+        <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
+        <column name="OWNER_ID" type="INTEGER" required="false" references="RHQ_SUBJECT" />
+        <column name="IS_PRIVATE" type="BOOLEAN" required="true" />
+        
+        <index name="RHQ_REPO_IDX" unique="true">
             <field ref="NAME"/>
         </index>
     </table>
+
+
+    <table name="RHQ_REPO_RELATION_TYPE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
+
+
+    <table name="RHQ_REPO_RELATION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="RELATED_REPO_ID" type="INTEGER" references="RHQ_REPO" required="true"/>
+        <column name="REPO_RELATION_TYPE_ID" type="INTEGER" references="RHQ_REPO_RELATION_TYPE" required="true"/>
+    </table>
+
+
 
     <table name="RHQ_PACKAGE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
@@ -1457,7 +1815,7 @@
         <column name="IS_CREATION_DATA" type="BOOLEAN" required="true"/>
         <column name="SUPPORTS_ARCHITECTURE" type="BOOLEAN" required="true"/>
 
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
         <column name="DEPLOYMENT_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
         <column name="PACKAGE_EXTRA_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
 
@@ -1483,7 +1841,7 @@
 
     <table name="RHQ_PACKAGE_BITS">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="BITS" type="BLOB" required="false"/>
+        <column name="BITS" type="LARGEOBJECT" required="false"/>
     </table>
 
     <table name="RHQ_PACKAGE_VERSION">
@@ -1554,9 +1912,19 @@
         <column name="START_TIME" type="LONG" required="true"/>
         <column name="END_TIME" type="LONG" required="false"/>
         <column name="RESULTS" type="LONGVARCHAR" required="false"/>
-
         <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
     </table>
+
+   <table name="RHQ_REPO_SYNC">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="STATUS" type="VARCHAR2" size="16" required="true"/>
+        <column name="START_TIME" type="LONG" required="true"/>
+        <column name="END_TIME" type="LONG" required="false"/>
+        <column name="RESULTS" type="LONGVARCHAR" required="false"/>
+        <column name="PERCENT_COMPLETE" type="LONG" required="false"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+    </table>
+
 
     <table name="RHQ_PACKAGE_INST_STEP">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
@@ -1569,43 +1937,73 @@
         <column name="INSTALLED_PKG_HIST_ID" type="INTEGER" references="RHQ_INSTALLED_PKG_HIST"/>
     </table>
 
-    <table name="RHQ_CHANNEL_RESOURCE_MAP">
-        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+    <table name="RHQ_REPO_RESOURCE_MAP">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
         <column name="CTIME" type="LONG" required="true"/>
 
-        <constraint name="RHQ_CHANNEL_RESOURCE_MAP_KEY">
+        <constraint name="RHQ_REPO_RESOURCE_MAP_KEY">
             <primaryKey>
-                <field ref="CHANNEL_ID"/>
+                <field ref="REPO_ID"/>
                 <field ref="RESOURCE_ID"/>
             </primaryKey>
         </constraint>
     </table>
 
-    <table name="RHQ_CHANNEL_CONTENT_SRC_MAP">
-        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+    <table name="RHQ_REPO_CONTENT_SRC_MAP">                                                               1
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
         <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
         <column name="CTIME" type="LONG" required="true"/>
 
-        <constraint name="RHQ_CHAN_CONTENT_SRC_MAP_KEY">
+        <constraint name="RHQ_REPO_CONTENT_SRC_MAP_KEY">
             <primaryKey>
-                <field ref="CHANNEL_ID"/>
+                <field ref="REPO_ID"/>
                 <field ref="CONTENT_SRC_ID"/>
             </primaryKey>
         </constraint>
     </table>
 
-    <table name="RHQ_CHANNEL_PKG_VERSION_MAP">
-        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+    <table name="RHQ_REPO_REPO_GROUP_MAP">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="REPO_GROUP_ID" type="INTEGER" required="true" references="RHQ_REPO_GROUP"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <constraint name="RHQ_REPO_REPO_GROUP_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="REPO_GROUP_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_REPO_REPO_RELATION_MAP">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="REPO_RELATION_ID" type="INTEGER" required="true" references="RHQ_REPO_RELATION"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <constraint name="RHQ_REPO_REPO_RELATION_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="REPO_RELATION_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+    <table name="RHQ_REPO_PKG_VERSION_MAP">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
         <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
         <column name="CTIME" type="LONG" required="true"/>
 
-        <constraint name="RHQ_CHANNEL_PKG_VER_MAP_KEY">
+        <constraint name="RHQ_REPO_PKG_VER_MAP_KEY">
             <primaryKey>
-                <field ref="CHANNEL_ID"/>
+                <field ref="REPO_ID"/>
                 <field ref="PACKAGE_VERSION_ID"/>
             </primaryKey>
         </constraint>
+        <index name="RHQ_REPO_PKG_VER_MAP_IDX" unique="false">
+            <field ref="PACKAGE_VERSION_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_PKG_VER_CONTENT_SRC_MAP">
@@ -1633,6 +2031,416 @@
         </constraint>
 
     </table>
+
+    <table name="RHQ_DISTRIBUTION_TYPE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+
+    </table>
+
+    <table name="RHQ_DISTRIBUTION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DISTRIBUTION_TYPE_ID" type="INTEGER"  required="true" references="RHQ_DISTRIBUTION_TYPE"/>
+        <column name="LABEL" size="64" type="VARCHAR2" required="true"/>
+        <column name="BASE_PATH" size="256" type="VARCHAR2" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <index name="RHQ_DISTRIBUTION_IDX" unique="true">
+            <field ref="LABEL"/>
+            <field ref="BASE_PATH"/>
+        </index>
+
+    </table>
+
+    <table name="RHQ_REPO_DISTRIBUTION">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="DISTRIBUTION_ID" type="INTEGER" required="true" references="RHQ_DISTRIBUTION"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <constraint name="RHQ_REPO_DIST_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="DISTRIBUTION_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+
+    <table name="RHQ_DISTRIBUTION_FILE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DISTRIBUTION_ID" type="INTEGER" required="true" references="RHQ_DISTRIBUTION"/>
+        <column name="RELATIVE_FILENAME" size="256" type="VARCHAR2" required="true"/>
+        <!--<column name="FILE_SIZE" type="NUMBER" required="true"/>-->
+        <column name="MD5SUM" size="64" type="VARCHAR2" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        <!--<column name="CTIME" type="LONG" required="true"/>-->
+
+        <index name="RHQ_DISTRIBUTION_FILE_IDX" unique="true">
+            <field ref="DISTRIBUTION_ID"/>
+            <field ref="RELATIVE_FILENAME"/>
+        </index>
+    </table>
+
+
+
+
+    <table name="RHQ_ADVISORY">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="ADVISORY" size="64" type="VARCHAR2" required="true"/>
+        <column name="ADVISORY_TYPE" size="64" type="VARCHAR2"  required="true" />
+        <column name="ADVISORY_REL" size="64" type="VARCHAR2" required="false"/>
+        <column name="ADVISORY_NAME" size="64" type="VARCHAR2" required="false"/>
+        <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
+        <column name="SYNOPSIS" size="4000" type="VARCHAR2" required="true"/>
+        <column name="TOPIC" size="4000" type="VARCHAR2" required="false"/>
+        <column name="SOLUTION" size="4000" type="VARCHAR2" required="false"/>
+        <column name="SEVERITY" size="64" type="VARCHAR2"  required="false"/>
+        <column name="ISSUE_DATE" type="LONG" required="false"/>
+        <column name="UPDATE_DATE" type="LONG" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <index name="RHQ_ADVISORY_NAME_UQ" unique="true">
+            <field ref="ADVISORY_NAME"/>
+        </index>
+
+        <index name="RHQ_ADVISORY_UQ" unique="true">
+            <field ref="ADVISORY"/>
+        </index>
+
+        <index name="RHQ_ADVISORY_UDATE_IDX" unique="false">
+            <field ref="UPDATE_DATE"/>
+        </index>
+    </table>
+
+    <table name="RHQ_ADVISORY_PACKAGE">
+    	  <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
+        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <index name="RHQ_ADVISORY_PKG_IDX" unique="true">
+                <field ref="ADVISORY_ID"/>
+                <field ref="PACKAGE_VERSION_ID"/>
+        </index>
+    </table>
+
+    <table name="RHQ_CVE">
+        <column name="ID" default="sequence-only" initial="101" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="64" type="VARCHAR2" required="true"/>
+    </table>
+
+    <table name="RHQ_ADVISORY_CVE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
+        <column name="CVE_ID" type="INTEGER" required="true" references="RHQ_CVE"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <index name="RHQ_ADVISORY_CVE_IDX" unique="true">
+                <field ref="ADVISORY_ID"/>
+                <field ref="CVE_ID"/>
+        </index>
+
+    </table>
+
+    <table name="RHQ_ADVISORY_BUGLIST">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
+        <column name="BUG_ID" size="256" type="VARCHAR2" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <index name="RHQ_ADVISORY_BUG_IDX" unique="true">
+                <field ref="ADVISORY_ID"/>
+                <field ref="BUG_ID"/>
+        </index>
+    </table>
+
+
+    <table name="RHQ_REPO_ADVISORY">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+
+        <constraint name="RHQ_REPO_ADV_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="ADVISORY_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <!-- BUNDLE_TYPE is things like "Cobbler profile" or "file-based bundle" or "puppet recipe" -->
+    <table name="RHQ_BUNDLE_TYPE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+
+        <!--  This index is for constraint, not performance -->
+        <index name="RHQ_BUNDLE_TYPE_UNIQUE" unique="true">
+            <field ref="NAME"/>
+        </index>
+    </table>
+
+    <!-- BUNDLE is a named piece of content that can be versioned and installed somewhere -->
+    <table name="RHQ_BUNDLE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="BUNDLE_TYPE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_TYPE"/>
+        <column name="PACKAGE_TYPE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_TYPE"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>        
+
+        <!--  This index is for constraint, not performance -->
+        <index name="RHQ_BUNDLE_UNIQUE" unique="true">
+            <field ref="BUNDLE_TYPE_ID"/>
+            <field ref="NAME"/>
+        </index>
+    </table>
+
+    <!-- BUNDLE_VERSION represents an actual piece of content that needs to be installed somewhere -->
+    <table name="RHQ_BUNDLE_VERSION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
+        <column name="VERSION_ORDER" type="INTEGER" required="true"/>
+        <column name="ACTION" type="CLOB" required="true"/>
+        <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
+        <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
+
+        <!--  This index is for constraint, not performance -->
+        <index name="RHQ_BUNDLE_VERSION_UNIQUE" unique="true">
+            <field ref="BUNDLE_ID"/>
+            <field ref="NAME"/>
+            <field ref="VERSION"/>
+        </index>
+    </table>
+
+    <!-- Many-to-many table that links many repos to a particular bundle version. destination platforms -->
+    <!-- would be required to have associations to the specified repos (to access required content -->
+    <table name="RHQ_BUNDLE_VERSION_REPO">
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+
+        <constraint name="RHQ_BUNDLE_VERSION_REPO_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_VERSION_ID"/>
+                <field ref="REPO_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <!-- BUNDLE_FILE represents a file that is associated with (possibly bundled inside) a bundle version -->
+    <table name="RHQ_BUNDLE_FILE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
+        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+    </table>
+
+    <!-- A logical destination for a bundle deployment. Defines the platforms and directory on those targets.  -->    
+    <table name="RHQ_BUNDLE_DESTINATION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>        
+        <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>        
+        <column name="DEPLOY_DIR" size="256" type="VARCHAR2" required="true"/>
+        <column name="DEST_BASE_DIR_NAME" size="200" type="VARCHAR2" required="true"/>
+
+        <!--  This index is for constraint, not performance -->
+        <index name="RHQ_BUNDLE_DESTINATION_UNIQUE" unique="true">
+            <field ref="BUNDLE_ID"/>            
+            <field ref="GROUP_ID"/>            
+            <field ref="DEPLOY_DIR"/>
+        </index>
+    </table>
+
+    <!-- An actual deployment of a bundle version to a destination, with a specific config. Bundle deployments
+         can differ only on ctime, which is assumed to be different -->    
+    <table name="RHQ_BUNDLE_DEPLOYMENT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="MTIME" type="LONG" required="true"/>
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
+        <column name="BUNDLE_DESTINATION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DESTINATION"/>        
+        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />        
+        <column name="SUBJECT_NAME" type="VARCHAR2" required="false" size="255"/>
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>
+        <column name="ERROR_MESSAGE" type="LONGVARCHAR" required="false"/>        
+        <column name="IS_LIVE" type="BOOLEAN" required="true"/>        
+        <column name="REPLACED_BUNDLE_DEPLOYMENT_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_DEPLOYMENT"/>        
+    </table>
+
+    <!-- Represents a bundle version that is deployed on a platform resource -->
+    <table name="RHQ_BUNDLE_RES_DEPLOY">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>    
+        <column name="BUNDLE_DEPLOYMENT_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOYMENT" />
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+        <column name="STATUS" type="VARCHAR2" required="true" size="16"/>        
+        <column name="CTIME" type="LONG" required="true"/>
+        
+        <index name="RHQ_BUNDLE_RES_DEPLOY_IDX" unique="true">
+            <field ref="BUNDLE_DEPLOYMENT_ID"/>
+            <field ref="RESOURCE_ID"/>
+        </index>
+    </table>
+
+    <table name="RHQ_BUNDLE_RES_DEP_HIST">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="BUNDLE_RES_DEPLOY_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_RES_DEPLOY" />        
+        <column name="SUBJECT_NAME" required="false" size="255" type="VARCHAR2"/>
+        <column name="AUDIT_TIME" required="true" type="LONG"/>
+        <column name="ACTION" required="true" size="128" type="VARCHAR2"/>
+        <column name="INFO" required="true" size="512" type="VARCHAR2"/>        
+        <column name="CATEGORY" required="false" size="32" type="VARCHAR2"/>        
+        <column name="STATUS" required="true" type="VARCHAR2" size="16"/>        
+        <column name="MESSAGE" required="false" type="LONGVARCHAR"/>
+        <column name="ATTACHMENT" required="false" type="LONGVARCHAR"/>        
+    </table>
+
+    <table name="RHQ_TAGGING_BUNDLE_MAP">
+        <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_BUNDLE_MAP_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_TAGGING_BUNDLE_VERSION_MAP">
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_BUNDLE_VER_MAP_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_VERSION_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <table name="RHQ_TAGGING_BUNDLE_DEPLOY_MAP">
+        <column name="BUNDLE_DEPLOYMENT_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DEPLOYMENT"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_BUNDLE_DEP_MAP_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_DEPLOYMENT_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+    
+    <table name="RHQ_TAGGING_BUNDLE_DEST_MAP">
+        <column name="BUNDLE_DESTINATION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_DESTINATION"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAGGING"/>
+        <constraint name="RHQ_TAGGING_BUNDLE_DES_MAP_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_DESTINATION_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <!--  Drift Management Tables -->
+    <table name="RHQ_DRIFT_DEF_TEMPLATE">
+        <column name="ID" default="sequence-only" initial="1001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="NAME" type="VARCHAR2" size="128" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="512" required="false"/>
+        <!-- true if defined by user, false if provided by plugin -->
+        <column name="IS_USER_DEFINED" type="BOOLEAN" required="true"/>        
+        <!--
+          Change sets are managed by the drift server plugins; therefore, we cannot maintain
+          a FK constraint on the change set id. And the type cannot be integer because
+          other back ends like MongoDB use other types that are basically variants of a
+          UUID
+
+          jsanda
+        -->
+        <column name="DRIFT_CHANGE_SET_ID" type="VARCHAR2" size="64" required="false"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <index name="RHQ_DRIFT_DEF_TEMPLATE_UNIQUE" unique="true">
+            <field ref="RESOURCE_TYPE_ID"/>
+            <field ref="NAME"/>
+        </index>
+    </table>
+
+    <!--  Content of a file being managed for drift. Used for diff and/or remediation -->
+    <table name="RHQ_DRIFT_FILE">
+        <column name="HASH_ID" type="VARCHAR2" size="64" primarykey="true" required="true"/>        
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="DATA" type="LARGEOBJECT" required="false"/>
+        <column name="DATA_SIZE" type="LONG" required="false"/>
+        <column name="STATUS" type="VARCHAR2" size="20" required="true"/>
+    </table>
+    
+    <!--  A single drift definition defining file tracking
+          Note: A resource or group (todo: group, other?) can have zero or more drift configurations.    
+          Note: The name, interval and is_enabled values are also stored withing the referenced config.
+                This allows us to use the config editor to manipulate all fields.
+          Note: Name is read-only
+          Note: Interval unit is millis 
+    -->
+    <table name="RHQ_DRIFT_DEFINITION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="DRIFT_DEF_TEMPLATE_ID" type="INTEGER" required="false" references="RHQ_DRIFT_DEF_TEMPLATE"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="NAME" type="VARCHAR2" size="512" required="true"/>
+        <column name="DESCRIPTION" type="VARCHAR2" size="512" required="false"/>
+        <column name="INTERVAL" type="LONG" required="true"/>
+        <column name="IS_ENABLED" type="BOOLEAN" required="true"/>        
+        <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>
+        <column name="IS_PINNED" type="BOOLEAN" required="true"/>
+        <column name="IS_ATTACHED" type="BOOLEAN" required="true"/>
+        <column name="COMPLIANCE_STATUS" type="INTEGER" required="true"/>
+    </table>
+
+    <!--  A set of drift records (note, this is for the JPA server plugin impl only) -->
+    <table name="RHQ_DRIFT_SET">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+    </table>
+
+    <!--  A drift change-set report for a resource (note, this is for the JPA server plugin impl only) -->
+    <table name="RHQ_DRIFT_CHANGE_SET">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DRIFT_SET_ID" type="INTEGER" required="false" references="RHQ_DRIFT_SET"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <!-- Version 0 is initial change-set -->
+        <column name="VERSION" type="INTEGER" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                         
+        <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
+        <column name="DRIFT_DEFINITION_ID" type="INTEGER" required="false" references="RHQ_DRIFT_DEFINITION"/>
+        <!--  the drift handling mode at changeset creation time -->
+        <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>        
+    </table>
+    
+    <!--  A single occurence of drift for a resource (note, this is for the JPA server plugin impl only) -->
+    <table name="RHQ_DRIFT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>        
+        <column name="DRIFT_SET_ID" type="INTEGER" required="false" references="RHQ_DRIFT_SET"/>
+        <column name="DRIFT_CHANGE_SET_ID" type="INTEGER" required="true" references="RHQ_DRIFT_CHANGE_SET"/>
+        <!-- the file path not including the base directory -->        
+        <column name="PATH" type="VARCHAR2" size="1024" required="true"/>
+        <!-- the same as PATH less [/]filename.ext. Redundant storage for the purpose of strict directory search.
+             this field can be considered transient for serialization purposes -->
+        <column name="PATH_DIRECTORY" type="VARCHAR2" size="1024" required="true"/>        
+        <column name="OLD_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
+        <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
+    </table>
+
 
 <!-- END: content-schema.xml -->
 <!-- BEGIN: resource-request-schema.xml -->
@@ -1730,187 +2538,112 @@
     </table>
 
 <!-- END: jms-schema.xml -->
-<!-- BEGIN: alert-schema.xml -->
+<!-- BEGIN: obsolete-schema.xml -->
+        
+    
+    <!-- NOTE: The tables will be dropped in the *** REVERSE ORDER *** as listed in this file! -->
+    <!-- NOTE: So, put the table you want dropped first at the bottom, and so on... -->
 
 
-    <table name="RHQ_ALERT_DEFINITION">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" required="true" size="100" type="VARCHAR2"/>
-        <column name="CTIME" type="LONG" required="true"/>
-        <column name="MTIME" type="LONG" required="true"/>
-        <column name="PARENT_ID" type="INTEGER" required="false"/>
-        <column name="GROUP_ALERT_DEF_ID" type="INTEGER" required="false"/>
-        <column name="DESCRIPTION" required="false" size="250" type="VARCHAR2"/>
-        <column name="PRIORITY" type="VARCHAR2" size="15" required="true"/>
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
-        <column name="RESOURCE_ID" type="INTEGER" references="RHQ_RESOURCE" required="false"/>
-        <column name="RESOURCE_GROUP_ID" type="INTEGER" references="RHQ_RESOURCE_GROUP" required="false"/>
-        <column name="ENABLED" required="true" default="TRUE" type="BOOLEAN"/>
-
-        <column name="REQUIRED" required="true" type="SMALLINT"/>
-
-        <column name="RECOVERY_ID" type="INTEGER" required="true"/>
-        <!-- required, but 0 effectively means null -->
-        <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
-        <column name="NOTIFY_FILTERED" required="true" default="false" type="BOOLEAN"/>
-        <column name="CONTROL_FILTERED" required="true" default="FALSE" type="BOOLEAN"/>
-
-        <column name="DELETED" required="true" default="FALSE" type="BOOLEAN"/>
-        <column name="READ_ONLY" required="true" default="FALSE" type="BOOLEAN"/>
-
-        <column name="DAMPENING_CATEGORY" type="SMALLINT" required="true"/>
-        <column name="DAMPENING_VALUE" type="INTEGER"/>
-        <column name="DAMPENING_VALUE_UNITS" type="SMALLINT"/>
-        <column name="DAMPENING_PERIOD" type="INTEGER"/>
-        <column name="DAMPENING_PERIOD_UNITS" type="SMALLINT"/>
-
-        <column name="OPERATION_DEF_ID" type="INTEGER" references="RHQ_OPERATION_DEF(ID)"/>
-    </table>
-
-    <table name="RHQ_ALERT_DAMPEN_EVENT">
+    <!-- !!! REMOVED FROM CONTENT-SCHEMA !!!! -->
+    
+     <table name="RHQ_DRIFT_TEMPLATE_MAP">
+         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+         <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
+     </table>
+    
+    <table name="RHQ_BUNDLE_CONFIG" obsolete="true">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
-        <column name="EVENT_TYPE" required="true" type="SMALLINT"/>
-        <column name="EVENT_TIMESTAMP" required="true" type="LONG"/>
-
-        <index name="RHQ_DAMPENING_EVENT_TYPE_IDX">
-            <field ref="EVENT_TYPE"/>
-        </index>
-        <index name="RHQ_DAMPENING_EVENT_TS_IDX">
-            <field ref="EVENT_TIMESTAMP"/>
-        </index>
+        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />
+        <!-- this probably needs a DTYPE discriminator so we know if its a bundle or a specific bundle version -->
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_VERSION"/>
+        <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
     </table>
 
-    <table name="RHQ_ALERT_CONDITION">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="TYPE" required="true" type="VARCHAR2" size="15"/>
-        <!--
-           <column name="REQUIRED" required="true"  type="BOOLEAN"/>
-        -->
-        <column name="MEASUREMENT_DEFINITION_ID" required="false" type="INTEGER"/>
-        <column name="NAME" required="false" size="100" type="VARCHAR2"/>
-        <column name="COMPARATOR" required="false" size="2" type="VARCHAR2"/>
-        <column name="THRESHOLD" required="false" type="DOUBLE"/>
-        <!-- event-based conditions use OPTION_STATUS for the string match, so should be a decent length -->
-        <column name="OPTION_STATUS" required="false" size="256" type="VARCHAR2"/>
-        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
-        <column name="TRIGGER_ID" required="false" type="INTEGER"/>
-    </table>
+    <table name="RHQ_CHANNEL" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+        <column name="CREATION_TIME" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
 
-    <table name="RHQ_ALERT" tablespace="DEFAULT"
-           storage-options="freelists 5" cache="true" logging="false">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
-        <column name="CTIME" required="true" type="LONG"/>
-        <column name="TRIGGERED_OPERATION" required="false" type="VARCHAR2" size="255"/>
-        <column name="RECOVERY_ID" type="INTEGER" required="true"/>
-        <!-- required, but 0 effectively means null -->
-        <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
-        <index name="RHQ_ALERT_IDX_TIME" unique="false">
-            <field ref="CTIME"/>
-        </index>
-        <index name="RHQ_ALERT_IDX_ALERTDEF" unique="false">
-            <field ref="ALERT_DEFINITION_ID"/>
-        </index>
-    </table>
-
-    <table name="RHQ_ALERT_NOTIF_LOG" tablespace="DEFAULT"
-           storage-options="freelists 5" cache="true" logging="false">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="ALERT_ID" required="true" type="INTEGER" references="RHQ_ALERT(ID)"/>
-        <index name="RHQ_ALERT_IDX_ALERT" unique="true">
-            <field ref="ALERT_ID"/>
-        </index>
-        <column name="ROLES" required="false" size="200" type="VARCHAR2"/>
-        <column name="SUBJECTS" required="false" size="200" type="VARCHAR2"/>
-        <column name="EMAILS" required="false" size="200" type="VARCHAR2"/>
-    </table>
-
-    <table name="RHQ_ALERT_CONDITION_LOG" tablespace="DEFAULT"
-           storage-options="freelists 5" cache="true" logging="false">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="CTIME" required="true" type="LONG"/>
-        <column name="ALERT_ID" required="false" type="INTEGER" references="RHQ_ALERT(ID)"/>
-        <column name="CONDITION_ID" required="true" type="INTEGER" references="RHQ_ALERT_CONDITION(ID)"/>
-        <column name="VALUE" required="false" size="250" type="VARCHAR2"/>
-        <index name="RHQ_ALERT_COND_LOG_IDX_TIME">
-            <field ref="CTIME" />
-        </index>
-        <index name="RHQ_ALERT_COND_LOG_IDX_ALERT">
-            <field ref="ALERT_ID"/>
-        </index>
-    </table>
-
-    <table name="RHQ_ALERT_NOTIFICATION" tablespace="DEFAULT"
-           storage-options="freelists 5" cache="true" logging="false">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="NOTIFICATION_TYPE" required="true" size="20" type="VARCHAR2"/>
-        <column name="ALERT_DEFINITION_ID" required="false" type="INTEGER" references="RHQ_ALERT_DEFINITION(ID)"/>
-        <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE(ID)"/>
-        <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT(ID)"/>
-        <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>
-        <column name="SNMP_HOST" size="100" type="VARCHAR2"/>
-        <column name="SNMP_PORT" type="INTEGER"/>
-        <column name="SNMP_OID" size="250" type="VARCHAR2"/>
-    </table>
-
-<!-- END: alert-schema.xml -->
-<!-- BEGIN: event-schema.xml -->
-
-
-    <!-- metadata -->
-
-    <table name="RHQ_EVENT_DEF">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE(ID)"/>
-
-        <column name="NAME" type="VARCHAR2" size="100" required="true"/>
-        <column name="DISPLAY_NAME" type="VARCHAR2" size="100"/>
-        <column name="DESCRIPTION" type="VARCHAR2" size="1000"/>
-
-        <index name="RHQ_EVENT_DEF_IDX" unique="true">
-            <field ref="RESOURCE_TYPE_ID"/>
+        <index name="RHQ_CHANNEL_IDX" unique="true">
             <field ref="NAME"/>
         </index>
     </table>
 
-    <!-- instance data -->
+    <table name="RHQ_CHANNEL_RESOURCE_MAP" obsolete="true">
+        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="CTIME" type="LONG" required="true"/>
 
-    <table name="RHQ_EVENT_SOURCE">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="EVENT_DEF_ID" type="INTEGER" required="true" references="RHQ_EVENT_DEF(ID)"/>
-        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE(ID)"/>
-
-        <column name="LOCATION" required="true" size="2000" type="VARCHAR2"/>
-
-        <index name="RHQ_EVENT_SOURCE_IDX" unique="true">
-            <field ref="EVENT_DEF_ID"/>
-            <field ref="RESOURCE_ID"/>
-            <field ref="LOCATION"/>
-        </index>
+        <constraint name="RHQ_CHANNEL_RESOURCE_MAP_KEY">
+            <primaryKey>
+                <field ref="CHANNEL_ID"/>
+                <field ref="RESOURCE_ID"/>
+            </primaryKey>
+        </constraint>
     </table>
 
-    <table name="RHQ_EVENT">
-        <column name="ID" default="sequence-only" initial="10001"
-                primarykey="true" required="true" type="INTEGER"/>
-        <column name="EVENT_SOURCE_ID" type="INTEGER" required="true" references="RHQ_EVENT_SOURCE(ID)"/>
+    <table name="RHQ_CHANNEL_CONTENT_SRC_MAP" obsolete="true">
+        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+        <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
+        <column name="CTIME" type="LONG" required="true"/>
 
-        <column name="TIMESTAMP" required="true" type="LONG"/>
-        <column name="SEVERITY" required="true" size="20" type="VARCHAR2"/>
-        <column name="DETAIL" required="true" size="4000" type="VARCHAR2"/>
-        <index name="RHQ_EVENT_IDX" unique="false">
-            <field ref="EVENT_SOURCE_ID"/>
-            <field ref="TIMESTAMP"/>
-        </index>
+        <constraint name="RHQ_CHAN_CONTENT_SRC_MAP_KEY">
+            <primaryKey>
+                <field ref="CHANNEL_ID"/>
+                <field ref="CONTENT_SRC_ID"/>
+            </primaryKey>
+        </constraint>
     </table>
 
-<!-- END: event-schema.xml -->
+    <table name="RHQ_CHANNEL_PKG_VERSION_MAP" obsolete="true">
+        <column name="CHANNEL_ID" type="INTEGER" required="true" references="RHQ_CHANNEL"/>
+        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
+        <column name="CTIME" type="LONG" required="true"/>
+
+        <constraint name="RHQ_CHANNEL_PKG_VER_MAP_KEY">
+            <primaryKey>
+                <field ref="CHANNEL_ID"/>
+                <field ref="PACKAGE_VERSION_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+   <!-- !!! REMOVED FROM MEASUREMENT-SCHEMA !!!! -->
+
+   <table name="RHQ_MEASUREMENT_OOB" obsolete="true">
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+      <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
+      <column name="OCCURRED" type="LONG" required="true"/>
+      <column name="DIFF" type="DOUBLE" required="true"/>
+
+      <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
+         <field ref="SCHEDULE_ID" />
+         <field ref="OCCURRED" />
+      </index>
+   </table>
+
+
+     <table name="RHQ_TAG" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
+
+     <table name="RHQ_REPO_TAG_MAP" obsolete="true">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAG"/>
+
+        <constraint name="RHQ_REPO_TAG_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+
+<!-- END: obsolete-schema.xml -->
 </dbsetup>

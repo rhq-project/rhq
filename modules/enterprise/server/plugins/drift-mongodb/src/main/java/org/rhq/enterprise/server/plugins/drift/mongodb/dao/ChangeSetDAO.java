@@ -162,6 +162,8 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     }
 
     public List<MongoDBChangeSetEntry> findEntries(DriftCriteria criteria) {
+        // TODO Add support for driftHandlingModes filter
+
         if (criteria.getFilterId() != null) {
             String[] ids = criteria.getFilterId().split(":");
             ObjectId changeSetId = new ObjectId(ids[0]);
@@ -176,6 +178,21 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
 
         if (criteria.getFilterResourceIds().length > 0) {
             query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
+            changeSetsFiltered = true;
+        }
+        
+        if (criteria.getFilterDriftDefinitionId() != null) {
+            query.field("driftDefId").equal(criteria.getFilterDriftDefinitionId());
+            changeSetsFiltered = true;
+        }
+
+        if (criteria.getFilterChangeSetStartVersion() != null) {
+            query.field("version").greaterThanOrEq(criteria.getFilterChangeSetStartVersion());
+            changeSetsFiltered = true;
+        }
+
+        if (criteria.getFilterChangeSetEndVersion() != null) {
+            query.field("version").lessThanOrEq(criteria.getFilterChangeSetEndVersion());
             changeSetsFiltered = true;
         }
 
@@ -201,6 +218,12 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
             query.field("files.path").equal(criteria.getFilterPath());
             entriesFiltered = true;
             filters.add(new PathFilter(criteria.getFilterPath()));
+        }
+        
+        if (criteria.getFilterDirectory() != null) {
+            query.field("files.directory").equal(criteria.getFilterDirectory());
+            entriesFiltered = true;
+            filters.add(new DirectoryFilter(criteria.getFilterDirectory()));
         }
 
         List<MongoDBChangeSetEntry> entries = new ArrayList<MongoDBChangeSetEntry>();

@@ -69,7 +69,6 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
-    private final String resourceUuid;
     private final T parentResourceComponent;
     private final ResourceContext<?> parentResourceContext;
     private final Configuration pluginConfiguration;
@@ -77,6 +76,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
+    private final File resourceDataDirectory;
     private final String pluginContainerName;
     private final EventContext eventContext;
     private final OperationContext operationContext;
@@ -160,13 +160,13 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
         this.version = resource.getVersion();
-        this.resourceUuid = resource.getUuid();
         this.parentResourceComponent = parentResourceComponent;
         this.parentResourceContext = parentResourceContext;
         this.resourceDiscoveryComponent = resourceDiscoveryComponent;
         this.systemInformation = systemInfo;
         this.pluginConfiguration = resource.getPluginConfiguration();
         this.dataDirectory = dataDirectory;
+        this.resourceDataDirectory = new File(dataDirectory, resource.getUuid());
         this.pluginContainerName = pluginContainerName;
         this.pluginContainerDeployment = pluginContainerDeployment;
         if (temporaryDirectory == null) {
@@ -224,8 +224,12 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *
      * @return the resource's uuid string
      */
-    public String getResourceUuid() {
-        return this.resourceUuid;
+    public File getResourceDataDirectory() {
+        if (!resourceDataDirectory.exists()) {
+            resourceDataDirectory.mkdirs();
+        }
+
+        return this.resourceDataDirectory;
     }
 
     /**

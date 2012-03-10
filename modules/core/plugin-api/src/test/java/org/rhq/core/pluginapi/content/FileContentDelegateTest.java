@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.UUID;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -40,24 +39,22 @@ import org.rhq.core.util.ZipUtil;
 public class FileContentDelegateTest {
 
     private File deploymentDirectory;
-    private File dataDirectory;
-    private String resourceUuid;
+    private File resourceDataDirectory;
 
     @BeforeMethod
     public void initTest() throws Exception {
         deploymentDirectory = new File(this.getClass().getResource("/").getFile() + "deploymentDirectory");
         deleteRecursive(deploymentDirectory);
 
-        dataDirectory = new File(this.getClass().getResource("/").getFile() + "dataDirectory");
-        deleteRecursive(dataDirectory);
-
-        resourceUuid = UUID.randomUUID().toString();
+        resourceDataDirectory = new File(this.getClass().getResource("/").getFile() + "resourceDataDirectory");
+        deleteRecursive(resourceDataDirectory);
+        resourceDataDirectory.mkdirs();
     }
 
     @AfterMethod
     public void cleanTest() throws Exception {
         deleteRecursive(deploymentDirectory);
-        deleteRecursive(dataDirectory);
+        deleteRecursive(resourceDataDirectory);
     }
 
     @Test
@@ -78,12 +75,11 @@ public class FileContentDelegateTest {
         //run code under test
         objectUnderTest.createContent(mockPackageDetails, sampleWithManifestWar, true);
         String actualShaSaved = objectUnderTest.saveDeploymentSHA(sampleWithManifestWar, deploymentDirectory,
-            resourceUuid, dataDirectory);
-        String actualShaRetrieved = objectUnderTest.retrieveDeploymentSHA(deploymentDirectory, resourceUuid,
-            dataDirectory);
+            resourceDataDirectory);
+        String actualShaRetrieved = objectUnderTest.retrieveDeploymentSHA(deploymentDirectory, resourceDataDirectory);
 
         //verify the results (Assert and mock verification)
-        File sha256File = new File(dataDirectory, resourceUuid + ".sha");
+        File sha256File = new File(resourceDataDirectory, "application.sha256");
         Assert.assertTrue(sha256File.exists());
         Assert.assertNotEquals(sha256File.length(), 0, "Empty SHA256 file!!");
 
@@ -114,11 +110,10 @@ public class FileContentDelegateTest {
 
         //run code under test
         FileContentDelegate objectUnderTest = new FileContentDelegate(deploymentDirectory, null);
-        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(deploymentDirectory, resourceUuid,
-            dataDirectory);
+        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(deploymentDirectory, resourceDataDirectory);
 
         //verify the results (Assert and mock verification)
-        File sha256File = new File(dataDirectory, resourceUuid + ".sha");
+        File sha256File = new File(resourceDataDirectory, "application.sha256");
         Assert.assertTrue(sha256File.exists());
         Assert.assertNotEquals(sha256File.length(), 0, "Empty SHA256 file!!");
 
@@ -155,14 +150,14 @@ public class FileContentDelegateTest {
 
         //run code under test
         objectUnderTest.createContent(mockPackageDetails, sampleWithoutManifestWar, false);
-        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(deploymentFile, resourceUuid, dataDirectory);
+        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(deploymentFile, resourceDataDirectory);
 
         //verify the results (Assert and mock verification)
         Assert.assertTrue(deploymentDirectory.exists(), "Deployment did not happen.");
         Assert.assertTrue(deploymentDirectory.isDirectory(), "Deployment directory is no longer a directory!!");
         Assert.assertFalse(deploymentFile.isDirectory(), "Deployment was exploded when it should not have been.");
 
-        File sha256File = new File(dataDirectory, resourceUuid + ".sha");
+        File sha256File = new File(resourceDataDirectory, "application.sha256");
         Assert.assertFalse(sha256File.exists(), "SHA256 properties files was wrongly created for zipped deployment.");
 
         MessageDigestGenerator digest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
@@ -184,8 +179,8 @@ public class FileContentDelegateTest {
         FileContentDelegate objectUnderTest = new FileContentDelegate(sampleWithoutManifestWar, null);
 
         //run code under test
-        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(sampleWithoutManifestWar, resourceUuid,
-            dataDirectory);
+        String actualShaReturned = objectUnderTest.retrieveDeploymentSHA(sampleWithoutManifestWar,
+            resourceDataDirectory);
 
         //verify the results (Assert and mock verification)
         MessageDigestGenerator digest = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);

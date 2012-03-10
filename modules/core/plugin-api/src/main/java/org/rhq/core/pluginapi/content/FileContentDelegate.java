@@ -55,6 +55,7 @@ import org.rhq.core.util.file.FileUtil;
 public class FileContentDelegate {
 
     private static final String RHQ_SHA_256 = "RHQ-Sha256";
+    private static final String SHA256_FILE = "application.sha256";
 
     private final Log log = LogFactory.getLog(FileContentDelegate.class);
     private final String fileEnding;
@@ -159,11 +160,11 @@ public class FileContentDelegate {
      * @param dataDirectory data directory
      * @return SHA256 of the package
      */
-    public String retrieveDeploymentSHA(File deployment, String resourceId, File dataDirectory) {
+    public String retrieveDeploymentSHA(File deployment, File resourceDataDirectory) {
         String sha = null;
 
         if (deployment.isDirectory()) {
-            File propertiesFile = new File(dataDirectory, resourceId + ".sha");
+            File propertiesFile = new File(resourceDataDirectory, SHA256_FILE);
 
             if (propertiesFile.exists()) {
                 FileInputStream propertiesInputStream = null;
@@ -186,7 +187,7 @@ public class FileContentDelegate {
             }
 
             if (sha == null) {
-                sha = this.saveDeploymentSHA(deployment, resourceId, dataDirectory);
+                sha = this.saveDeploymentSHA(deployment, resourceDataDirectory);
             }
         } else {
             sha = this.computeSHAForArchivedContent(deployment);
@@ -206,12 +207,12 @@ public class FileContentDelegate {
      * @param dataDirectory
      * @return
      */
-    public String saveDeploymentSHA(File originalArchive, File deployment, String resourceId, File dataDirectory) {
+    public String saveDeploymentSHA(File originalArchive, File deployment, File resourceDataDirectory) {
         String sha = null;
 
         if (deployment.isDirectory()) {
             sha = this.computeSHAForArchivedContent(originalArchive);
-            this.saveDeploymentSHA(sha, resourceId, dataDirectory);
+            this.saveDeploymentSHA(sha, resourceDataDirectory);
         } else {
             sha = this.computeSHAForArchivedContent(deployment);
         }
@@ -229,12 +230,12 @@ public class FileContentDelegate {
      * @param dataDirectory data directory
      * @return the saved SHA256
      */
-    public String saveDeploymentSHA(File deployment, String resourceId, File dataDirectory) {
+    public String saveDeploymentSHA(File deployment, File resourceDataDirectory) {
         String sha = null;
 
         if (deployment.isDirectory()) {
             sha = this.computeSHAForExplodedContent(deployment);
-            this.saveDeploymentSHA(sha, resourceId, dataDirectory);
+            this.saveDeploymentSHA(sha, resourceDataDirectory);
         } else {
             sha = this.computeSHAForArchivedContent(deployment);
         }
@@ -250,15 +251,11 @@ public class FileContentDelegate {
      * @param resourceId resource Uuid
      * @param dataDirectory data directory
      */
-    private void saveDeploymentSHA(String sha, String resourceId, File dataDirectory) {
+    private void saveDeploymentSHA(String sha, File resourceDataDirectory) {
         Properties prop = new Properties();
         prop.setProperty(RHQ_SHA_256, sha);
 
-        if (!dataDirectory.exists()) {
-            dataDirectory.mkdirs();
-        }
-
-        File propertiesFile = new File(dataDirectory, resourceId + ".sha");
+        File propertiesFile = new File(resourceDataDirectory, SHA256_FILE);
         FileOutputStream propertiesOutputStream = null;
         try {
             propertiesOutputStream = new FileOutputStream(propertiesFile);

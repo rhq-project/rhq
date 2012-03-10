@@ -62,9 +62,8 @@ public class StandaloneManagedDeploymentComponentTest {
         FileContentDelegate mockFileContentDelegate = mock(FileContentDelegate.class);
         PowerMockito.whenNew(FileContentDelegate.class).withArguments(any(File.class), isNull())
             .thenReturn(mockFileContentDelegate);
-        when(
-            mockFileContentDelegate.saveDeploymentSHA(any(File.class), any(File.class), any(String.class),
-                any(File.class))).thenReturn("abcd1234");
+        when(mockFileContentDelegate.saveDeploymentSHA(any(File.class), any(File.class), any(File.class))).thenReturn(
+            "abcd1234");
 
         //create object to test and inject required dependencies
         StandaloneManagedDeploymentComponent objectUnderTest = new StandaloneManagedDeploymentComponent();
@@ -89,7 +88,6 @@ public class StandaloneManagedDeploymentComponentTest {
         Assert.assertEquals(resultPackageDetails.getSHA256(), "abcd1234");
         Assert.assertEquals(resultPackageDetails.getVersion(), "[sha256=abcd1234]");
 
-        verify(mockFileContentDelegate).saveDeploymentSHA(any(File.class), any(File.class), any(String.class),
-            any(File.class));
+        verify(mockFileContentDelegate).saveDeploymentSHA(any(File.class), any(File.class), any(File.class));
     }
 }

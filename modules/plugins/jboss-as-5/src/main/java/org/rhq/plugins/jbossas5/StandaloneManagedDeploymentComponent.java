@@ -178,8 +178,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         try {
             FileContentDelegate fileContentDelegate = new FileContentDelegate();
-            sha256 = fileContentDelegate.retrieveDeploymentSHA(file, this.getResourceContext().getResourceUuid(), this
-                .getResourceContext().getDataDirectory());
+            sha256 = fileContentDelegate.retrieveDeploymentSHA(file, this.getResourceContext()
+                .getResourceDataDirectory());
         } catch (Exception iex) {
             if (log.isDebugEnabled()) {
                 log.debug("Problem calculating digest of package [" + file.getPath() + "]." + iex.getMessage());
@@ -323,8 +323,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         if (this.deploymentFile.isDirectory()) {
             FileContentDelegate fileContentDelegate = new FileContentDelegate();
-            fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile,
-                this.getResourceContext().getResourceUuid(), this.getResourceContext().getDataDirectory());
+            fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile, this.getResourceContext()
+                .getResourceDataDirectory());
         }
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);

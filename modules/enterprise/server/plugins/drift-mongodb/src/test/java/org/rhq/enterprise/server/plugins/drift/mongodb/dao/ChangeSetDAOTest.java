@@ -759,6 +759,25 @@ public class ChangeSetDAOTest extends MongoDBTest {
     }
 
     @Test(enabled = ENABLED)
+    public void findEntriesWithChangeSetIdFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 1, 2, 1);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c2.add(e2);
+        dao.save(c2);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterChangeSetId(c2.getId());
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with change set id filter", asList(e2), entries);
+    }
+
+    @Test(enabled = ENABLED)
     public void findEntriesWithResourceIdFilters() throws Exception {
         MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
         MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
@@ -863,6 +882,58 @@ public class ChangeSetDAOTest extends MongoDBTest {
         List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
         assertEntriesMatch("Failed to find change set entries with resource id and end time filters", asList(e1),
             entries);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findEntriesWithChangeSetStartVersionFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 2, 1, 1);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c2.add(e2);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = createChangeSet(DRIFT, 3, 1, 1);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        c3.add(e3);
+        dao.save(c3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterChangeSetStartVersion(2);
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with change set start version filter", asList(e2, e3),
+                entries);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findEntriesWithChangeSetEndVersionFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry e1 = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(e1);
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(COVERAGE, 2, 1, 1);
+        MongoDBChangeSetEntry e2 = new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED);
+        c2.add(e2);
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = createChangeSet(DRIFT, 3, 1, 1);
+        MongoDBChangeSetEntry e3 = new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED);
+        c3.add(e3);
+        dao.save(c3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterDriftDefinitionId(1);
+        criteria.addFilterChangeSetEndVersion(2);
+
+        List<MongoDBChangeSetEntry> entries = dao.findEntries(criteria);
+        assertEntriesMatch("Failed to find change set entries with change set end version filter", asList(e1, e2),
+                entries);
     }
 
     @Test(enabled = ENABLED)

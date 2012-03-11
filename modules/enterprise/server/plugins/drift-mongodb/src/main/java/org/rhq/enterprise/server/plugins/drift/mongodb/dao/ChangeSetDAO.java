@@ -175,6 +175,11 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         boolean entriesFiltered = false;
 
         ChangeSetEntryFilters filters = new ChangeSetEntryFilters();
+        
+        if (criteria.getFilterChangeSetId() != null) {
+            query.field("id").equal(new ObjectId(criteria.getFilterChangeSetId()));
+            changeSetsFiltered = true;
+        }
 
         if (criteria.getFilterResourceIds().length > 0) {
             query.field("resourceId").in(asList(criteria.getFilterResourceIds()));

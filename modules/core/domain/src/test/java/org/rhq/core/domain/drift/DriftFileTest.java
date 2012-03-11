@@ -122,10 +122,9 @@ public class DriftFileTest extends DriftDataAccessTest {
         int numDriftFiles = 2;
         final List<String> driftFileHashIds = new ArrayList<String>();
 
-        for (int i = 0; i < numDriftFiles; ++i) {
+        for (int driftFileNum = 0; driftFileNum < numDriftFiles; ++driftFileNum) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
             final JPADriftFileBits driftFile = new JPADriftFileBits();
-            final int driftFileNum = i;
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
             driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
@@ -139,10 +138,14 @@ public class DriftFileTest extends DriftDataAccessTest {
                         driftFileHashIds.add(driftFile.getHashId());
                     }
                 });
-            } catch (Exception e) {
-                // expected for file 2 or higher
-                if (driftFileNum == 0) {
+                if (driftFileNum >= 1) {
                     fail("Should not be able to store JPADriftFile with same hashId more than once.");
+                }
+
+            } catch (Exception e) {
+                // expected for second file
+                if (driftFileNum == 0) {
+                    fail("Should be able to store JPADriftFile with unique hashId - cause: " + e);
                 }
             }
         }

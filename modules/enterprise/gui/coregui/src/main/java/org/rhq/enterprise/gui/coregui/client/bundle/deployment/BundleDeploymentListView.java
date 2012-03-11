@@ -147,7 +147,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length == 1) {
                         String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
                         String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);

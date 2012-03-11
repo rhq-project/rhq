@@ -18,13 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.rpc;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle

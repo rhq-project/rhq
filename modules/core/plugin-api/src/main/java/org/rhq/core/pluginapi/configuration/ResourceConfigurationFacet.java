@@ -28,6 +28,9 @@ import org.rhq.core.domain.configuration.RawConfiguration;
 
 import java.util.Set;
 
+/**
+ * @since 3.0
+ */
 public interface ResourceConfigurationFacet {
 
     Configuration loadStructuredConfiguration();

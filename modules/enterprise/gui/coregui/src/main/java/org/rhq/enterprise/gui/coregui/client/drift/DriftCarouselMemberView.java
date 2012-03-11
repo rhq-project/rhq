@@ -98,7 +98,7 @@ public class DriftCarouselMemberView extends DriftHistoryView implements Carouse
             @Override
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     ListGridRecord record = selectedRows[0];
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);

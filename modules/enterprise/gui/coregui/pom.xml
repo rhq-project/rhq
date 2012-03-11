@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.4.0-SNAPSHOT</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
@@ -18,8 +18,8 @@
 
     <properties>
         <!-- dependency versions -->
-        <gwt.version>2.0.4</gwt.version>
-        <smartgwt.version>2.4</smartgwt.version>
+        <gwt.version>2.4.0</gwt.version>
+        <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
@@ -37,27 +37,30 @@
          specify the gwt.userAgent property on the mvn command line (e.g. -Dgwt.userAgent=gecko1_8)
          or in your ~/.m2/settings.xml
 
-         As of GWT 2.0.4, the recognized agents (defined in
+         As of GWT 2.4.0, the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
-           ie6: IE6/IE7
-           ie8: IE8 and later
+           ie9: IE9 (although for smartgwt we fallback to IE8)
+           ie8: IE8
            gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
            gecko1_8: FF2 and later
            safari: Safari/Chrome
            opera: Opera
 
-         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=EmulateIE7" HTTP header in CoreGUI.html, IE8 and later
-                 will emulate IE7, and so in order to run on IE8 and later, "ie6" must be specified, rather than "ie8".
-
+         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=IE8" HTTP header in CoreGUI.html, IE9 and later
+                 will emulate IE8.
          Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
          value below.
         -->
-        <gwt.userAgent>ie6,ie8,gecko1_8,safari,opera</gwt.userAgent>
+        <gwt.userAgent>ie8,ie9,gecko1_8,safari,opera</gwt.userAgent>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
+
+        <!-- Change this to "false" via the mvn command line or your ~/.m2/settings.xml to speed
+             up gwt compilation and reduce memory consumption by avoiding report generation. -->
+        <gwt.soyc>true</gwt.soyc>
 
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
@@ -122,25 +125,13 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--<dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-incubator</artifactId>
-            <scope>provided</scope>
-            <version>2.0</version>
-        </dependency>-->
 
         <dependency>
             <groupId>com.smartgwt</groupId>
             <artifactId>smartgwt</artifactId>
             <version>${smartgwt.version}</version>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>com.smartgwt</groupId>
-            <artifactId>smartgwt-skins</artifactId>
-            <version>${smartgwt.version}</version>
-        </dependency>
-        -->
+
 
         <!-- the GWT graphing library (note, this provides jquery 1.3.2. If we get rid of GFlot we will need
              to provide jquery explcitly for jquery.sparkline support. See CoreGUI.gwt.xml for the jquery.sparkline
@@ -151,11 +142,6 @@
             <version>1.0.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.code.gwt-log</groupId>
-            <artifactId>gwt-log</artifactId>
-            <version>3.0.4</version>
-        </dependency>
 
         <!-- for file uploads -->
         <dependency>
@@ -264,7 +250,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>gwt-maven-plugin</artifactId>
-                <version>1.2</version>
+                <version>2.4.0</version>
                 <configuration>
                     <noServer>true</noServer>
                     <inplace>false</inplace>
@@ -274,6 +260,7 @@
                     <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
                     <localWorkers>${gwt-plugin.localWorkers}</localWorkers>
                     <draftCompile>${gwt.draftCompile}</draftCompile>
+                    <soyc>${gwt.soyc}</soyc>                    
                     <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
                     <hostedWebapp>target/hostedWar</hostedWebapp>
                     <debugSuspend>false</debugSuspend>
@@ -281,7 +268,8 @@
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
                     <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
                     <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
-                    <style>DETAILED</style>
+                    <style>OBF</style>
+                    <strict>true</strict>
                 </configuration>
 
                 <executions>

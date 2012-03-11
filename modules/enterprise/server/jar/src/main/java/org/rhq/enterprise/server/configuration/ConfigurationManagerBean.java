@@ -758,19 +758,22 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         countQuery.setParameter("groupId", compatibleGroup.getId());
         countQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
         long count = (Long) countQuery.getSingleResult();
-        if (count != 0) {
+        if (count > 0) {
             Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
             query.setParameter("groupId", compatibleGroup.getId());
             query.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
-            List<Resource> resources = query.getResultList();
-            List<String> names = new ArrayList<String>();
-            for (Resource resource : resources) {
-                names.add(resource.getName());
+            List<PluginConfigurationUpdate> pluginConfigUpdates = query.getResultList();
+            if (!pluginConfigUpdates.isEmpty()) {
+                List<Integer> resourceIds = new ArrayList(pluginConfigUpdates.size());
+                for (PluginConfigurationUpdate pluginConfigUpdate : pluginConfigUpdates) {
+                    resourceIds.add(pluginConfigUpdate.getResource().getId());
+                }
+                throw new ConfigurationUpdateStillInProgressException("Current group plugin configuration for "
+                    + compatibleGroup
+                    + " cannot be calculated, because plugin configuration updates are currently in progress for the"
+                    + " member Resources with the following ID's (please wait for these updates to complete): "
+                    + resourceIds);
             }
-            throw new ConfigurationUpdateStillInProgressException("Current group plugin configuration for "
-                + compatibleGroup
-                + " cannot be calculated, because plugin configuration updates are currently in progress for the"
-                + " following Resources (please wait for these updates to complete): " + names);
         }
     }
 
@@ -1435,13 +1438,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         resource.addResourceConfigurationUpdates(newUpdateRequest);
 
-        resource.getChildResources().size();
-
-        // agent field is LAZY - force it to load because the caller will need it.
-        Agent agent = resource.getAgent();
-        if (agent != null) {
-            agent.getName();
-        }
+        // agent and childResources fields are LAZY - force them to load, because the caller will need them.
+        Hibernate.initialize(resource.getChildResources());
+        Hibernate.initialize(resource.getAgent());
 
         return newUpdateRequest;
     }

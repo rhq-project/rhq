@@ -106,19 +106,19 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         try {
             ManagerComponent managerResourceComponent = context.getParentResourceComponent();
+            ManagedComponent bindingManager = managerResourceComponent.getBindingManager();
             
             Configuration updatedConfiguration = report.getConfiguration();
 
             managerResourceComponent.checkValidity(updatedConfiguration);
             
-            MetaType bindingSetValueMetaType = context.getParentResourceComponent().getBindingSetValueMetaType();
+            MetaType bindingSetValueMetaType = managerResourceComponent.getBindingSetValueMetaType(bindingManager);
 
             CompositeValue currentBindingSet = Util.getBindingSetFromConfiguration(bindingSetValueMetaType,
                 updatedConfiguration);
 
             //ok, now we can update the bindingSets property with the update set of binding sets
-            ManagedComponent bindingManagerComponent = managerResourceComponent.getBindingManager();
-            ManagedProperty bindingSetsProperty = bindingManagerComponent.getProperty(Util.BINDING_SETS_PROPERTY);
+            ManagedProperty bindingSetsProperty = bindingManager.getProperty(Util.BINDING_SETS_PROPERTY);
             String thisBindingSetName = managerResourceComponent.getBindingSetNameFromResourceKey(context.getResourceKey());
 
             //create new set of binding sets
@@ -130,7 +130,7 @@ public class SetComponent implements ResourceComponent<ManagerComponent>, Config
 
             bindingSetsProperty.setValue(newBindingSetsValue);
 
-            context.getParentResourceComponent().updateBindingManager(bindingManagerComponent);
+            context.getParentResourceComponent().updateBindingManager(bindingManager);
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (Exception e) {

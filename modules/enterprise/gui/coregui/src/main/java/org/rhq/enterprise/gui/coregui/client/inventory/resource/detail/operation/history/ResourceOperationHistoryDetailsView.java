@@ -51,6 +51,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
     private String disambiguatedResourceName;
     private boolean showResourceField;
+    @SuppressWarnings("unused")
     private ResourceComposite resourceComposite;
 
     public ResourceOperationHistoryDetailsView(String locatorId) {
@@ -83,7 +84,8 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         if (groupOperationHistory != null) {
             StaticTextItem groupOperationHistoryItem = new StaticTextItem(
                 ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
-            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup(), groupOperationHistory.getId());
+            String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(
+                groupOperationHistory.getGroup(), groupOperationHistory.getId());
             String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId()
                 + "</a> (on group '" + groupOperationHistory.getGroup().getName() + "')";
             groupOperationHistoryItem.setValue(value);
@@ -115,8 +117,8 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                     if (showResourceField) {
                         Resource resource = resourceOperationHistory.getResource();
                         String url = LinkManager.getResourceLink(resource.getId());
-                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(), String
-                            .valueOf(resource.getId()));
+                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(),
+                            String.valueOf(resource.getId()));
                     }
 
                     displayDetails(resourceOperationHistory);
@@ -139,8 +141,8 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                 .getResultsConfigurationDefinition();
             if (resultsConfigurationDefinition != null
                 && !resultsConfigurationDefinition.getPropertyDefinitions().isEmpty()) {
-                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"), operationDefinition
-                    .getResultsConfigurationDefinition(), operationHistory.getResults());
+                ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("results"),
+                    operationDefinition.getResultsConfigurationDefinition(), operationHistory.getResults());
                 editor.setReadOnly(true);
                 resultsSection.addMember(editor);
             } else {

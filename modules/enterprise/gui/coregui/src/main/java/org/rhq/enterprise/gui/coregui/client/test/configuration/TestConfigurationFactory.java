@@ -155,10 +155,18 @@ public abstract class TestConfigurationFactory {
 
         PropertyDefinitionMap mapInReadOnlyListPropDef =
             new PropertyDefinitionMap("MapOfSimplesInReadOnlyList", "a map of simples in a list", false);
-        mapInReadOnlyListPropDef.put(createStringPropDef1());
-        mapInReadOnlyListPropDef.put(createStringPropDef2());
-        mapInReadOnlyListPropDef.put(createBooleanPropDef());
-        mapInReadOnlyListPropDef.put(createIntegerPropDef());
+        PropertyDefinitionSimple propDef = createStringPropDef1();
+        propDef.setReadOnly(true);
+        mapInReadOnlyListPropDef.put(propDef);
+        propDef = createStringPropDef2();
+        propDef.setReadOnly(true);
+        mapInReadOnlyListPropDef.put(propDef);
+        propDef = createBooleanPropDef();
+        propDef.setReadOnly(true);
+        mapInReadOnlyListPropDef.put(propDef);
+        propDef = createIntegerPropDef();
+        propDef.setReadOnly(true);
+        mapInReadOnlyListPropDef.put(propDef);
         mapInReadOnlyListPropDef.setDisplayName(mapInReadOnlyListPropDef.getName());
 
         PropertyDefinitionList readOnlyListPropDef = new PropertyDefinitionList("ReadOnlyListOfMaps",

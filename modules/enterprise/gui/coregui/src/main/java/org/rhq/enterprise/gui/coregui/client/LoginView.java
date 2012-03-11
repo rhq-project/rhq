@@ -24,8 +24,8 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.logging.Logger;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -60,10 +60,11 @@ import com.smartgwt.client.widgets.layout.HStack;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -77,6 +78,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class LoginView extends LocatableCanvas {
 
+    private static final Logger log = Logger.getLogger("");
     private static boolean loginShowing = false;
 
     private LocatableWindow window;
@@ -215,13 +217,13 @@ public class LoginView extends LocatableCanvas {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
                         productInfo = null;
-                        Log.trace("ProductInfo could not be retrieved for some reason. Proceeding anyway.");
+                        Log.warn("ProductInfo could not be retrieved for some reason. Proceeding anyway.");
                         buildRegistrationWindow(user, sessionId, password, callback);
                     }
 
                     public void onSuccess(ProductInfo result) {
                         productInfo = result;
-                        Log.trace("ProductInfo has been retrieved for LDAP registration.");
+                        Log.info("ProductInfo has been retrieved for LDAP registration.");
                         buildRegistrationWindow(user, sessionId, password, callback);
                     }
                 });
@@ -342,39 +344,14 @@ public class LoginView extends LocatableCanvas {
 
         });
         row.addMember(okButton);
-        //send request to LDAP server to grab user details for this user. Already sure ldap user exists
-        GWTServiceLookup.getLdapService().getLdapDetailsFor(user, new AsyncCallback<Map<String, String>>() {
-            public void onSuccess(final Map<String, String> ldapUserDetails) {
-                //now prepopulate UI fields if they exist
-                for (String key : ldapUserDetails.keySet()) {
-                    String value;
-                    if (key.equalsIgnoreCase("givenName")) {//aka first name
-                        value = ldapUserDetails.get(key);
-                        first.setValue(value);
-                    } else if (key.equalsIgnoreCase("sn")) {//aka Surname
-                        value = ldapUserDetails.get(key);
-                        if ((value != null) && (!value.isEmpty())) {
-                            last.setValue(value);
-                        }
-                    } else if (key.equalsIgnoreCase("telephoneNumber")) {
-                        value = ldapUserDetails.get(key);
-                        if ((value != null) && (!value.isEmpty())) {
-                            phone.setValue(value);
-                        }
-                    } else if (key.equalsIgnoreCase("mail")) {
-                        value = ldapUserDetails.get(key);
-                        if ((value != null) && (!value.isEmpty())) {
-                            email.setValue(value);
-                        }
-                    }
-                }
-            }
 
-            public void onFailure(Throwable caught) {
-                inputForm.setFieldErrors(FIRST, MSG.view_login_noLdap(), true);
-                Log.debug("Optional LDAP detail retrieval did not succeed. Registration prepopulation will not occur.");
-            }
-        });
+        //prepopulate form from user details returned.
+        Subject subject = UserSessionManager.getSessionSubject();
+        first.setValue(subject.getFirstName());
+        last.setValue(subject.getLastName());
+        email.setValue(subject.getEmailAddress());
+        phone.setValue(subject.getPhoneNumber());
+        department.setValue(subject.getDepartment());
 
         IButton resetButton = new LocatableIButton(inputForm.extendLocatorId("Reset"), MSG.common_button_reset());
         resetButton.addClickHandler(new ClickHandler() {
@@ -449,11 +426,10 @@ public class LoginView extends LocatableCanvas {
      * @param populatedForm - validated data
      * @param callback
      */
-    protected void registerLdapUser(final String locatorId, DynamicForm populatedForm,
+    protected void registerLdapUser(final String locatorId, final DynamicForm populatedForm,
         final AsyncCallback<Subject> callback) {
 
-        final Subject newSubject = new Subject();
-        newSubject.setId(0);//enforce registration element for LDAP processing
+        final Subject newSubject = UserSessionManager.getSessionSubject();
 
         //insert some required data checking
         boolean proceed = true;
@@ -472,7 +448,6 @@ public class LoginView extends LocatableCanvas {
 
         newSubject.setName(populatedForm.getValueAsString(USERNAME));
         newSubject.setSessionId(Integer.valueOf(populatedForm.getValueAsString(SESSIONID)));
-        String password = populatedForm.getValueAsString(PASSWORD);
 
         //don't load null values not set or returned from ldap server
         retrieved = populatedForm.getValueAsString(FIRST);
@@ -496,32 +471,35 @@ public class LoginView extends LocatableCanvas {
 
         //        newSubject.setSmsAddress(populatedForm.getValueAsString("sms"));
         newSubject.setFactive(true);
-        newSubject.setFsystem(false);
 
         if (proceed) {
             Log.trace("New LDAP user registration details valid for user '" + newSubject.getName() + "'.");
             //proceed with LDAP processing request.
-            GWTServiceLookup.getSubjectService().processSubjectForLdap(newSubject, password,
-                new AsyncCallback<Subject>() {
-                    public void onFailure(Throwable caught) {
-                        Log.debug("Failed to register LDAP subject '" + newSubject.getName() + "' "
-                            + caught.getMessage());
-                        //TODO: pass in warning message to Login Dialog.
-                        new LoginView(locatorId).showLoginDialog();
-                    }
+            //clear out 'isNewUser' flag.
+            if (newSubject.getUserConfiguration() != null) {
+                PropertySimple simple = new PropertySimple("isNewUser", null);
+                newSubject.getUserConfiguration().put(simple);
+            }
+            GWTServiceLookup.getSubjectService().updateSubject(newSubject, new AsyncCallback<Subject>() {
+                public void onFailure(Throwable caught) {
+                    Log.error("Failed to register LDAP subject '" + newSubject.getName() + "' " + caught.getMessage(),
+                        caught);
+                    //TODO: pass in warning message to Login Dialog.
+                    new LoginView(locatorId).showLoginDialog();
+                }
 
-                    public void onSuccess(Subject checked) {
-                        Log.trace("Successfully registered LDAP subject '" + checked + "'.");
+                public void onSuccess(Subject checked) {
+                    Log.info("Successfully registered LDAP subject '" + checked + "'.");
+                    checked.setSessionId(Integer.valueOf(populatedForm.getValueAsString(SESSIONID)));
 
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_login_registerLdapSuccess(), Message.Severity.Info));
-                        Log.trace("Successfully registered the new ldap Subject.");
-                        window.destroy();
-                        loginShowing = false;
-                        //indicate to login callback success
-                        callback.onSuccess(checked);
-                    }
-                });
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_login_registerLdapSuccess(), Message.Severity.Info));
+                    window.destroy();
+                    loginShowing = false;
+                    //indicate to login callback success
+                    callback.onSuccess(checked);
+                }
+            });
 
         } else {//log them out then reload LoginView
             Log.warn("Failed to locate required components to create LDAP subject.");
@@ -550,7 +528,6 @@ public class LoginView extends LocatableCanvas {
     }
 
     private void login(final String username, final String password) {
-        BrowserUtility.forceIe6Hacks();
 
         loginButton.setDisabled(true);
 
@@ -559,8 +536,8 @@ public class LoginView extends LocatableCanvas {
             requestBuilder.setHeader("Content-Type", "application/x-www-form-urlencoded");
             // URL-encode the username and password in case they contain URL special characters ('?', '&', '%', '+',
             // etc.), which would corrupt the request if not encoded.
-            String encodedUsername = URL.encodeComponent(username);
-            String encodedPassword = URL.encodeComponent(password);
+            String encodedUsername = URL.encodeQueryString(username);
+            String encodedPassword = URL.encodeQueryString(password);
             String requestData = "j_username=" + encodedUsername + "&j_password=" + encodedPassword;
             requestBuilder.setRequestData(requestData);
             requestBuilder.setCallback(new RequestCallback() {
@@ -582,8 +559,6 @@ public class LoginView extends LocatableCanvas {
             requestBuilder.send();
         } catch (Exception e) {
             handleError(0);
-        } finally {
-            BrowserUtility.unforceIe6Hacks();
         }
     }
 

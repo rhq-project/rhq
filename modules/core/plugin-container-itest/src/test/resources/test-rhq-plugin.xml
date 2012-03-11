@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="test"
+        displayName="Test"
+        description="a test plugin"
+        package="org.rhq.core.pc.inventory.testplugin"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Test Server"
+           discovery="TestResourceDiscoveryComponent"
+           class="TestResourceComponent">
+
+           <service name="Test Service"
+                discovery="TestResourceDiscoveryComponent"
+                class="TestResourceComponent" />
+
+   </server>
+
+</plugin>

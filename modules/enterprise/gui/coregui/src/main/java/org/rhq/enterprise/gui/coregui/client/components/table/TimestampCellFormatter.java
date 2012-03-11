@@ -3,6 +3,7 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 import java.util.Date;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -15,10 +16,14 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
  */
 public class TimestampCellFormatter implements CellFormatter {
 
-    public static final DateTimeFormat DATE_TIME_FORMAT_FULL = DateTimeFormat.getFullDateTimeFormat();
-    public static final DateTimeFormat DATE_TIME_FORMAT_LONG = DateTimeFormat.getLongDateTimeFormat();
-    public static final DateTimeFormat DATE_TIME_FORMAT_MEDIUM = DateTimeFormat.getMediumDateTimeFormat();
-    public static final DateTimeFormat DATE_TIME_FORMAT_SHORT = DateTimeFormat.getShortDateTimeFormat();
+    public static final DateTimeFormat DATE_TIME_FORMAT_FULL = DateTimeFormat
+        .getFormat(PredefinedFormat.DATE_TIME_FULL);
+    public static final DateTimeFormat DATE_TIME_FORMAT_LONG = DateTimeFormat
+        .getFormat(PredefinedFormat.DATE_TIME_LONG);
+    public static final DateTimeFormat DATE_TIME_FORMAT_MEDIUM = DateTimeFormat
+        .getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
+    public static final DateTimeFormat DATE_TIME_FORMAT_SHORT = DateTimeFormat
+        .getFormat(PredefinedFormat.DATE_TIME_SHORT);
 
     private DateTimeFormat dateTimeFormat;
 

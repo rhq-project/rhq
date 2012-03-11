@@ -24,7 +24,6 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;

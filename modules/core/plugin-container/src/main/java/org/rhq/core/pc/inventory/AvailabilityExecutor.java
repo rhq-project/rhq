@@ -232,9 +232,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         }
 
         if (checkChildren) {
-            // Wrap in a fresh HashSet to avoid ConcurrentModificationExceptions.
-            Set<Resource> children = new HashSet<Resource>(resource.getChildResources());
-            for (Resource child : children) {
+            for (Resource child : resource.getChildResources()) {
                 checkInventory(child, availabilityReport, reportChangesOnly, true, current == AvailabilityType.DOWN);
             }
         }

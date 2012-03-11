@@ -6,18 +6,37 @@ import java.util.List;
 
 import javax.ejb.EJBException;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class PluginManagerBeanTest extends MetadataBeanTest {
 
     SubjectManagerLocal subjectMgr;
-
     PluginManagerLocal pluginMgr;
+
+    // Our test class wants to deploy plugins that other test methods use.
+    // We need to keep intact our plugin scanner throughout our methods
+    // so we keep our own copy here.
+    private PluginDeploymentScanner pluginScanner;
+
+    @AfterClass
+    public void afterClass() {
+        this.pluginScanner = null;
+    }
+
+    @Override
+    public void preparePluginScannerService() {
+        if (this.pluginScanner == null) {
+            this.pluginScanner = new PluginDeploymentScanner();
+        }
+        super.preparePluginScannerService(this.pluginScanner);
+    }
 
     @Test(groups = { "plugin.metadata", "PluginManagerBean" })
     public void registerPlugins() throws Exception {

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="availPlugin"
+        displayName="Plugin For Availability Test"
+        description="This will help test the availability collection functionality in the PC"
+        package="org.rhq.test.arquillian.avail"
+        version="1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="AvailParentServer1"
+           description="2"
+           discovery="AvailDiscoveryComponent"
+           class="AvailResourceComponent">
+
+      <service name="AvailChildService1"
+               description="2"
+               discovery="AvailDiscoveryComponent"
+               class="AvailResourceComponent">
+
+         <service name="AvailGrandchildService1"
+                  description="2"
+                  discovery="AvailDiscoveryComponent"
+                  class="AvailResourceComponent">
+         </service>
+      </service>
+   </server>
+
+   <server name="AvailParentServer2"
+           description="2"
+           discovery="AvailDiscoveryComponent"
+           class="AvailResourceComponent">
+
+      <service name="AvailChildService2"
+               description="2"
+               discovery="AvailDiscoveryComponent"
+               class="AvailResourceComponent">
+
+         <service name="AvailGrandchildService2"
+                  description="2"
+                  discovery="AvailDiscoveryComponent"
+                  class="AvailResourceComponent">
+         </service>
+      </service>
+   </server>
+
+</plugin>
+        

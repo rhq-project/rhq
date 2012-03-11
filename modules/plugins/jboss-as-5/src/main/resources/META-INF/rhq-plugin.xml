@@ -7,6 +7,13 @@
             dataType="trait" category="performance"/>
 '>
 
+<!ENTITY datasourceAndConnectionFactoryMetrics '
+    <!-- Traits -->
+    <metric property="custom.connectionAvailable" displayType="summary" displayName="Connection Available?"
+            dataType="trait" category="availability" defaultInterval="900000"
+            description="could a connection to the underlying data provider be obtained?"/>
+'>
+
 <!ENTITY datasourceAndConnectionFactoryOperations '
     <operation name="flush" displayName="Flush"
                description="Flush the connections in the pool"/>
@@ -997,6 +1004,16 @@
                          </c:constraint>
                      </c:simple-property>
 
+                     <c:simple-property name="serviceAvailabilityRefreshInterval" units="minutes" required="false"
+                                        default="15" type="integer"
+                                        description="The amount of time, in minutes, that can elapse for service resource
+                                        (e.g., EJBs, data sources) availability checks without having to refresh the
+                                        managed object from the JBoss server. The information used to perform availability
+                                        checks is cached. This property determines how frequently that data needs to be
+                                        reloaded from the JBoss server. Any time the managed object is loaded from the
+                                        server, like for collecting metrics, the availability information is updated and
+                                        the interval is reset."/>
+
                      <c:simple-property name="childJmxServerName" displayName="JBoss AS JVM Name" default="JVM" 
                                         readOnly="true" required="false" 
                                         description="The name of the JBoss AS JVM resource."/>
@@ -1220,6 +1237,10 @@
                       category="utilization" displayType="summary"
                       description="the number of threads for this connector that currently exist"/>
 
+              <metric property="ThreadPool|maxThreads"
+                      displayName="Maximum Threads"
+                      category="utilization" displayType="summary" dataType="trait"
+                      description="Maximum number of threads that can be allocated for the thread pool of this connector"/>
            </service>
 
            <service name="Virtual Host"
@@ -1247,7 +1268,7 @@
         <!-- =================================== ManagedComponent Resource types =================================== -->
 
         <service name="No Tx Datasource"
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
                  subCategory="Datasources"
@@ -1269,6 +1290,7 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -1296,7 +1318,7 @@
         </service>
 
         <service name="Local Tx Datasource"
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
                  subCategory="Datasources"
@@ -1318,6 +1340,7 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -1346,7 +1369,7 @@
         </service>
 
         <service name="XA Datasource"
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  discovery="ManagedComponentDiscoveryComponent"
                  createDeletePolicy="both"
                  subCategory="Datasources"
@@ -1368,6 +1391,7 @@
             &datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &datasourceMetrics;
 
             <resource-configuration>
@@ -1448,7 +1472,7 @@
 
         <service name="No Tx ConnectionFactory"
                  description="A ConnectionFactory that does not take part in JTA transactions."
-                 class="ManagedComponentComponent"
+                 class="DatasourceOrConnectionFactoryComponent"
                  createDeletePolicy="both"
                  subCategory="Connection Factories"
                  discovery="ManagedComponentDiscoveryComponent">
@@ -1478,6 +1502,7 @@
  			&datasourceAndConnectionFactoryOperations;
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &connectionFactoryMetrics;
 
             <resource-configuration>
@@ -1531,6 +1556,7 @@
                     dataType="trait" category="performance"/>
 
             &managedObjectMetrics;
+            &datasourceAndConnectionFactoryMetrics;
             &connectionFactoryMetrics;
 
             <resource-configuration>

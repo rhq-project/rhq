@@ -40,6 +40,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -101,7 +102,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
 
             public void onSuccess(PageList<MeasurementDataTrait> result) {
                 long fetchDuration = System.currentTimeMillis() - startTime;
-                com.allen_sauer.gwt.log.client.Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
+                Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
 
                 dataRetrieved(result, response, request);
             }

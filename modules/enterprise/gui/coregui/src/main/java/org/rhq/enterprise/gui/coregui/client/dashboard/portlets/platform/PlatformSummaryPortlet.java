@@ -47,7 +47,10 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -62,9 +65,9 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 /**
  * @author Greg Hinkle
  */
-public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet {
+public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms());
+    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(), IconEnum.PLATFORM_UTILIZATION);
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";
@@ -91,6 +94,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setAutoFitData(Autofit.VERTICAL);
         setOverflow(Overflow.AUTO);
         setAutoFetchData(false);
+        setShowEmptyMessage(false);
 
         setDataSource(new PlatformMetricDataSource(this));
     }
@@ -98,8 +102,8 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     protected void onDraw() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(5);
 
-        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
-            .common_title_name());
+        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(),
+            MSG.common_title_name());
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
@@ -108,8 +112,8 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         });
         fields.add(nameField);
 
-        ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(), MSG
-            .common_title_version());
+        ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(),
+            MSG.common_title_version());
         fields.add(versionField);
 
         ListGridField cpuField = new ListGridField("cpu", MSG.dataSource_platforms_field_cpu());
@@ -152,6 +156,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                 setTypes(result);
                 fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
                     .name()));
+                setShowEmptyMessage(true);
             }
         });
     }
@@ -167,7 +172,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     record.setAttribute(FIELD_SWAP, MSG.common_val_na());
 
                     setSortField(1);
-                    refreshFields();
                     markForRedraw();
                 }
 
@@ -179,7 +183,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     }
 
                     setSortField(1);
-                    refreshFields();
                     markForRedraw();
                 }
             });
@@ -321,6 +324,11 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
             return null;
         }
 
+    }
+
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
     }
 
     private enum MemoryMetric {

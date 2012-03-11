@@ -125,6 +125,7 @@ public class DurationItem extends CanvasItem {
             valueItem.setValue(getValue());
             IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
             integerRangeValidator.setMin(1);
+            integerRangeValidator.setMax(Integer.MAX_VALUE);
             valueItem.setValidators(integerRangeValidator);
             valueItem.setValidateOnChange(true);
 

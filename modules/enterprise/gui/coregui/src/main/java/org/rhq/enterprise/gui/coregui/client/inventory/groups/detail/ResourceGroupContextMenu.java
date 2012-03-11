@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -64,6 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceD
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
@@ -428,7 +429,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                                                             final Response response) {
                                                             Log
                                                                 .trace("Successfully submitted request to add graph to view:"
-                                                                    + url);
+                                                                        + url);
 
                                                             //kick off a page reload.
                                                             String currentViewPath = History.getToken();

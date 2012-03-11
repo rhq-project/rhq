@@ -1,5 +1,5 @@
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0//EN"
-    "http://google-web-toolkit.googlecode.com/svn/releases/2.0/distro-source/core/src/gwt-module.dtd">
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.4.0//EN"
+    "http://google-web-toolkit.googlecode.com/svn/tags/2.4.0/distro-source/core/src/gwt-module.dtd">
 
 <module>
 
@@ -7,11 +7,12 @@
 
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.
-         As of GWT 2.0.4, the recognized agents (defined in
+         As of GWT 2.4.0, the recognized agents (defined in
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
            ie6: IE6/IE7
            ie8: IE8
+           ie9: IE9 (support as of GWT 2.3.0+)
            gecko: FF2
            gecko1_8: FF3
            safari: Safari/Chrome
@@ -21,7 +22,7 @@
 
          The gwt.userAgent property is substituted by the Maven resources plugin
          during the resources phase. The default value (defined in coregui/pom.xml)
-         is "ie6,ie8,gecko,gecko1_8,safari,opera" (i.e. all supported browsers).
+         is "ie6,ie8,ie9,gecko,gecko1_8,safari,opera" (i.e. all supported browsers).
          To override this value, specify the user.agent property on the mvn
          command line (e.g. -Duser.agent=gecko1_8) or in your ~/.m2/settings.xml.
     -->

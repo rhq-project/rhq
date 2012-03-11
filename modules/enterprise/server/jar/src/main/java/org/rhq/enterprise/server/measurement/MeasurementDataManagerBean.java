@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,11 +63,11 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.Agent;
@@ -784,13 +785,18 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         Resource resource = entityManager.find(Resource.class, resourceId);
         Agent agent = resource.getAgent();
 
-        Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_IDS);
-        q.setParameter("ids", ArrayUtils.wrapInList(definitionIds));
-        List<MeasurementDefinition> definitions = q.getResultList();
+        Query query = entityManager.createNamedQuery(MeasurementSchedule.FIND_BY_RESOURCE_IDS_AND_DEFINITION_IDS);
+        query.setParameter("definitionIds", ArrayUtils.wrapInList(definitionIds));
+        query.setParameter("resourceIds", Arrays.asList(resourceId));
+        List<MeasurementSchedule> schedules = query.getResultList();
+
+        Set<MeasurementScheduleRequest> requests = new HashSet<MeasurementScheduleRequest>(schedules.size());
+        for (MeasurementSchedule schedule : schedules) {
+            requests.add(new MeasurementScheduleRequest(schedule));
+        }
 
         AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
-            createRequests(definitions));
+        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,requests);
         //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
         //            Global UI Exceptions when attempting to serialize null responses.
         if (values == null) {
@@ -829,14 +835,6 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
 
         return result;
-    }
-
-    private List<MeasurementDataRequest> createRequests(List<MeasurementDefinition> definitions) {
-        List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
-        for (MeasurementDefinition definition : definitions) {
-            requests.add(new MeasurementDataRequest(definition));
-        }
-        return requests;
     }
 
     /**

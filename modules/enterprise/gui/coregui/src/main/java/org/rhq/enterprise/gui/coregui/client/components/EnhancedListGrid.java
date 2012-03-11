@@ -18,20 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.layout.VStack;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 /**
  * @author Greg Hinkle
  */
 public class EnhancedListGrid extends VLayout {
-
 
     ListGrid grid;
     ToolStrip footer;
@@ -43,7 +37,6 @@ public class EnhancedListGrid extends VLayout {
         addMember(grid);
         addMember(footer);
     }
-
 
     public ListGrid getGrid() {
         return grid;

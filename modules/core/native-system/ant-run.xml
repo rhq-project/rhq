@@ -12,10 +12,11 @@ Ant Script that builds a test jar to run SIGAR bug replication code.
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="3.0.0-SNAPSHOT"/>
    <property name="sigar.version" value="1.6.5.132"/>
+   <property name="log4j.version" value="1.2.16"/>
 
    <fileset dir="${settings.localRepository}" id="jar.fileset">
       <include name="i18nlog/i18nlog/1.0.10/i18nlog-1.0.10.jar" />
-      <include name="log4j/log4j/1.2.14/log4j-1.2.14.jar" />
+      <include name="log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" />
       <include name="org/testng/testng/5.1/testng-5.1-jdk15.jar" />
       <include name="commons-logging/commons-logging/1.1/commons-logging-1.1.jar" />
       <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />

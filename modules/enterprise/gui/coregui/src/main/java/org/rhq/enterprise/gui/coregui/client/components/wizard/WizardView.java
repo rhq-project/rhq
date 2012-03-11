@@ -18,31 +18,21 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.wizard;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
-import com.smartgwt.client.widgets.events.DrawEvent;
-import com.smartgwt.client.widgets.events.DrawHandler;
+import com.smartgwt.client.widgets.*;
+import com.smartgwt.client.widgets.events.*;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -314,7 +304,7 @@ public class WizardView extends LocatableVLayout {
         wizardWindow.setShowResizer(true);
         wizardWindow.centerInPage();
         wizardWindow.addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClientEvent closeClientEvent) {
+            public void onCloseClick(CloseClickEvent closeClickEvent) {
                 wizard.cancel();
                 closeDialog();
             }

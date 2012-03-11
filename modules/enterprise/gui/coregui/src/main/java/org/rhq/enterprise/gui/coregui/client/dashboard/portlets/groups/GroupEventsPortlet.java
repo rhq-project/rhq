@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -238,7 +239,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                 public void onFailure(Throwable caught) {
                     Log
                         .debug("Error retrieving recent event counts for group [" + groupId + "]:"
-                            + caught.getMessage());
+                                + caught.getMessage());
                     setCurrentlyRefreshing(false);
                 }
 

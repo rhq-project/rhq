@@ -25,6 +25,7 @@ package org.rhq.core.clientapi.agent.metadata;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.core.domain.resource.ClassLoaderType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -42,12 +46,23 @@ import org.rhq.core.domain.resource.ResourceType;
  * metadata for the rest of the services in the form of the domain object classes and the jaxb version of the
  * descriptors.
  *
+ * This object can also be used to separately store plugin descriptors without converting them into types (i.e.
+ * the descriptor staging area).
+ * The thinking here is the server has the ability to get all the plugin descriptors early on and in any order;
+ * only later does it load/register those plugins (because it needs to order them via the proper dependency graph.
+ * There may be times when we need a plugin's descriptor but before that plugin has been loaded/registered. This
+ * manager lets us stage those descriptors prior to converting them into types.
+ *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class PluginMetadataManager {
     public static final ResourceType TEST_PLATFORM_TYPE = new ResourceType("Anonymous", "test",
         ResourceCategory.PLATFORM, null);
-
+    static {
+        TEST_PLATFORM_TYPE.setClassLoaderType(ClassLoaderType.SHARED);
+    }
+    
     private Log log = LogFactory.getLog(PluginMetadataManager.class);
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();
@@ -55,8 +70,42 @@ public class PluginMetadataManager {
     private Object typesLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
-    
+
+    private Map<String, PluginDescriptor> descriptorsByPlugin = new HashMap<String, PluginDescriptor>();
+
     public PluginMetadataManager() {
+    }
+
+    /**
+     * This will simply squirrel away the given plugin descriptor for later retrieval
+     * via {@link #getPluginDescriptor(String)}. Use this as a simple storage
+     * mechanism for descriptors. Nothing is done with descriptor other than store it
+     * in memory for later retrieval.
+     * @param descriptor the descriptor to store
+     */
+    public void storePluginDescriptor(PluginDescriptor descriptor) {
+        this.descriptorsByPlugin.put(descriptor.getName(), descriptor);
+    }
+
+    /**
+     * Get the plugin descriptor for the named plugin. If the descriptor was previously staged
+     * via {@link #storePluginDescriptor(PluginDescriptor)}, it will be used. If a new descriptor
+     * hasn't been staged, but a previous descriptor was loaded and converted into types,
+     * via {@link #loadPlugin(PluginDescriptor)}, it will be used.
+     * If the descriptor cannot be found anywhere, returns null.
+     *
+     * @param pluginName name of the plugin whose descriptor is to be returned.
+     * @return the descriptor or null if not available
+     */
+    public PluginDescriptor getPluginDescriptor(String pluginName) {
+        PluginDescriptor descriptor = this.descriptorsByPlugin.get(pluginName);
+        if (descriptor == null) {
+            PluginMetadataParser parser = this.parsersByPlugin.get(pluginName);
+            if (parser != null) {
+                descriptor = parser.getDescriptor();
+            }
+        }
+        return descriptor;
     }
 
     private void addType(ResourceType type) {
@@ -121,6 +170,7 @@ public class PluginMetadataManager {
             }
 
             this.parsersByPlugin.put(pluginDescriptor.getName(), parser);
+            this.descriptorsByPlugin.remove(pluginDescriptor.getName()); // don't need it here anymore if its there
 
             synchronized (this.typesLock) {
                 for (ResourceType resourceType : parser.getAllTypes()) {
@@ -166,9 +216,9 @@ public class PluginMetadataManager {
     public ResourceType getType(String resourceTypeName, String pluginName) {
         ResourceType searchType = new ResourceType(resourceTypeName, pluginName, null, null);
         synchronized (this.typesLock) {
-            for (ResourceType t : types) {
-                if (t.equals(searchType)) {
-                    return t;
+            for (ResourceType type : types) {
+                if (type.equals(searchType)) {
+                    return type;
                 }
             }
         }
@@ -216,13 +266,98 @@ public class PluginMetadataManager {
         return this.parsersByPlugin.keySet();
     }
 
+    /**
+     * Builds the dependency graph using all known descriptors.
+     * 
+     * @return dependency graph
+     */
     public PluginDependencyGraph buildDependencyGraph() {
         PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
-        for (String pluginName : getPluginNames()) {
-            PluginDescriptor descriptor = this.parsersByPlugin.get(pluginName).getDescriptor();
+        for (PluginDescriptor descriptor : getAllKnownPluginDescriptors().values()) {
             AgentPluginDescriptorUtil.addPluginToDependencyGraph(dependencyGraph, descriptor);
         }
         return dependencyGraph;
     }
 
+    /**
+     * Returns a map of plugins and their descriptors where those plugins are child extensions of the given
+     * parent plugin. The child extensions are those that used the "embedded" plugin extension model (that is,
+     * those whose types used sourcePlugin attribute in their type metedata).
+     *
+     * Note that this will examine all known descriptors, those that were {@link #loadPlugin(PluginDescriptor) loaded}
+     * and those that were merely {@link #storePluginDescriptor(PluginDescriptor) stored}.
+     *
+     * @param parentPlugin the parent plugin
+     * @return a map of child plugin info where the children are those that extended the given parent plugin.
+     *         If the given parent plugin was not extended by any other plugin, the map will be empty.
+     */
+    public Map<String, PluginDescriptor> getEmbeddedExtensions(String parentPlugin) {
+        // get all the descriptors we are going to look at
+        Map<String, PluginDescriptor> allDescriptors = getAllKnownPluginDescriptors();
+
+        // look at all the descriptors
+        Map<String, PluginDescriptor> map = new HashMap<String, PluginDescriptor>();
+        for (PluginDescriptor descriptor : allDescriptors.values()) {
+            String pluginName = descriptor.getName();
+
+            if (parentPlugin.equals(pluginName)) {
+                continue; // ignore itself, go on to the next
+            }
+
+            // let's see if any servers extend the parent plugin...
+            if (doServersExtendParent(descriptor.getServers(), parentPlugin)) {
+                map.put(pluginName, descriptor);
+                continue; // no need to keep checking this plugin, go on to the next
+            }
+
+            // if no servers extended the parent plugin, let's check to see if any services do...
+            if (!map.containsKey(pluginName)) {
+                if (doServicesExtendParent(descriptor.getServices(), parentPlugin)) {
+                    map.put(pluginName, descriptor);
+                    continue; // no need to keep checking this plugin, go on to the next
+                }
+            }
+        }
+        return map;
+    }
+
+    private Map<String, PluginDescriptor> getAllKnownPluginDescriptors() {
+        Map<String, PluginDescriptor> allDescriptors = new HashMap<String, PluginDescriptor>();
+        allDescriptors.putAll(descriptorsByPlugin);
+        for (PluginMetadataParser parser : parsersByPlugin.values()) {
+            allDescriptors.put(parser.getDescriptor().getName(), parser.getDescriptor());
+        }
+        return allDescriptors;
+    }
+
+    private boolean doServersExtendParent(List<ServerDescriptor> servers, String parentPlugin) {
+        if (servers != null && !servers.isEmpty()) {
+            for (ServerDescriptor serverDescriptor : servers) {
+                if (doServersExtendParent(serverDescriptor.getServers(), parentPlugin)) {
+                    return true;
+                }
+                if (doServicesExtendParent(serverDescriptor.getServices(), parentPlugin)) {
+                    return true;
+                }
+                if (parentPlugin.equals(serverDescriptor.getSourcePlugin())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean doServicesExtendParent(List<ServiceDescriptor> services, String parentPlugin) {
+        if (services != null && !services.isEmpty()) {
+            for (ServiceDescriptor serviceDescriptor : services) {
+                if (doServicesExtendParent(serviceDescriptor.getServices(), parentPlugin)) {
+                    return true;
+                }
+                if (parentPlugin.equals(serviceDescriptor.getSourcePlugin())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

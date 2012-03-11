@@ -22,7 +22,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -37,7 +36,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
@@ -54,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * 
  * Additionally, all login checks go through checkLoginStatus where the following happens
  *
- *  1)HTTP Get request sent to portal.war SessionAccessServlet which when logged in:
+ *  1)HTTP POST request sent to portal.war SessionAccessServlet, which, when logged in:
  *    yes)logged in returns (Subject.id):(Server side session id):(Last Accessed time)
  *    no )empty text and Login screen displayed
  *
@@ -143,10 +142,9 @@ public class UserSessionManager {
     }
 
     public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
-        BrowserUtility.forceIe6Hacks();
         //initiate request to portal.war(SessionAccessServlet) to retrieve existing session info if exists
         //session has valid user then <subjectId>:<sessionId>:<lastAccess> else ""
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        final RequestBuilder b = createSessionAccessRequestBuilder();
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -241,82 +239,59 @@ public class UserSessionManager {
                         final Subject subject = new Subject();
                         subject.setId(subjectId);
                         subject.setSessionId(Integer.valueOf(sessionId));
-                        sessionSubject = subject;
-
                         // populate the username for the subject for isUserWithPrincipal check in ldap processing
                         subject.setName(user);
+                        sessionSubject = subject;
 
                         if (subject.getId() == 0) {//either i)ldap new user registration ii)ldap case sensitive match
                             if ((subject.getName() == null) || (subject.getName().trim().isEmpty())) {
                                 //we've lost crucial information, probably in a browser refresh. Send them back through login
-                                Log
-                                    .trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
+                                Log.trace("Unable to locate information critical to ldap registration/account lookup. Log back in.");
                                 sessionState = State.IS_LOGGED_OUT;
                                 new LoginView(LOCATOR_ID).showLoginDialog();
                                 return;
                             }
-                            // BZ-586435: insert case insensitivity for usernames with ldap auth
-                            // locate first matching subject and attach.
-                            SubjectCriteria subjectCriteria = new SubjectCriteria();
-                            subjectCriteria.setCaseSensitive(false);
-                            subjectCriteria.setStrict(true);
-                            subjectCriteria.fetchRoles(false);
-                            subjectCriteria.fetchConfiguration(false);
-                            subjectCriteria.addFilterName(subject.getName());
 
-                            //check for case insensitive matches.
-                            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(subjectCriteria,
-                                new AsyncCallback<PageList<Subject>>() {
-
-                                    public void onFailure(Throwable caught) {//none found, launch registration
-                                        //TODO: log to Login.error
-                                        Log.warn("Problem querying subjects by criteria during loginStatus check."
+                            Log.trace("Proceeding with case insensitive login of ldap user '" + user + "'.");
+                            GWTServiceLookup.getSubjectService().processSubjectForLdap(subject, password,
+                                new AsyncCallback<Subject>() {
+                                    public void onFailure(Throwable caught) {
+                                        // this means either: a) we mapped the username to a previously registered LDAP
+                                        // user but login via LDAP failed, or b) we were not able to map the username
+                                        // to any LDAP users, previously registered or not.
+                                        Log.debug("Failed to complete ldap processing for subject: "
                                             + caught.getMessage());
+                                        //TODO: pass message to login dialog.
+                                        new LoginView(LOCATOR_ID).showLoginDialog();
                                         return;
                                     }
 
-                                    //pipe through method to handle case insensitive
-                                    public void onSuccess(PageList<Subject> subjects) {
-                                        //no case insensitive matches found, launch registration
-                                        if (subjects.size() == 0) {
+                                    public void onSuccess(final Subject processedSubject) {
+                                        //Then found case insensitive and returned that logged in user
+                                        //Figure out of this is new user registration
+                                        boolean isNewUser = false;
+                                        if (processedSubject.getUserConfiguration() != null) {
+                                            isNewUser = Boolean.valueOf(processedSubject.getUserConfiguration()
+                                                .getSimpleValue("isNewUser", "false"));
+                                        }
+                                        if (!isNewUser) {
+                                            // otherwise, we successfully logged in as an existing LDAP user case insensitively.
+                                            Log.trace("Logged in case insensitively as ldap user '"
+                                                + processedSubject.getName() + "'");
+                                            callback.onSuccess(processedSubject);
+                                        } else {// if account is still active assume new LDAP user registration.
                                             Log.trace("Proceeding with registration for ldap user '" + user + "'.");
                                             sessionState = State.IS_REGISTERING;
+                                            sessionSubject = processedSubject;
+
                                             new LoginView(LOCATOR_ID).showRegistrationDialog(subject.getName(),
-                                                sessionId, password, callback);
-                                            return;
-                                        } else {//launch case sensitive code handling
-                                            final Subject locatedSubject = subjects.get(0);
-                                            Log
-                                                .trace("Checked credentials and determined that ldap case insensitive login '"
-                                                    + locatedSubject.getName()
-                                                    + "' should be used instead of '"
-                                                    + user
-                                                    + "'");
-                                            //use the original username to pass session check.
-                                            subject.setName(user);
+                                                String.valueOf(processedSubject.getSessionId()), password, callback);
+                                        }
 
-                                            GWTServiceLookup.getSubjectService().processSubjectForLdap(subject,
-                                                password, new AsyncCallback<Subject>() {
-                                                    public void onFailure(Throwable caught) {
-                                                        Log.debug("Failed to complete ldap processing for subject:"
-                                                            + caught.getMessage());
-                                                        //TODO: pass message to login dialog.
-                                                        new LoginView(LOCATOR_ID).showLoginDialog();
-                                                        return;
-                                                    }
-
-                                                    public void onSuccess(final Subject checked) {
-                                                        Log.trace("Proceeding with case sensitive login of ldap user '"
-                                                            + user + "'.");
-                                                        callback.onSuccess(checked);
-                                                        return;
-                                                    }
-
-                                                });//end processSubjectForLdap call
-                                        }//end of case insensitive processing
+                                        return;
                                     }
-                                });//end findSubjectsByCriteria
 
+                                });//end processSubjectForLdap call
                         } else {//else send through regular session check 
                             SubjectCriteria criteria = new SubjectCriteria();
                             criteria.fetchConfiguration(true);
@@ -378,8 +353,6 @@ public class UserSessionManager {
             b.send();
         } catch (RequestException e) {
             callback.onFailure(e);
-        } finally {
-            BrowserUtility.unforceIe6Hacks();
         }
     }
 
@@ -391,7 +364,7 @@ public class UserSessionManager {
      * @param loggedInSubject Subject with updated session
      */
     private static void scheduleWebUserUpdate(final Subject loggedInSubject) {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        final RequestBuilder b = createSessionAccessRequestBuilder();
         //add header to signal SessionAccessServlet to update the WebUser for the successfully logged in user
         b.setHeader(HEADER_WEB_USER_UPDATE, String.valueOf(loggedInSubject.getSessionId()));
         try {
@@ -623,12 +596,10 @@ public class UserSessionManager {
     }
 
     private static void refreshHttpSession() {
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
-
+        final RequestBuilder b = createSessionAccessRequestBuilder();
         // add header to signal SessionAccessServlet to refresh the http lastAccess time (basically a no-op as the
         // request will make that happen).
         b.setHeader(HEADER_LAST_ACCESS_UPDATE, "dummy");
-
         try {
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(final Request request, final Response response) {
@@ -646,6 +617,12 @@ public class UserSessionManager {
         } finally {
             httpSessionTimer.schedule(SESSION_ACCESS_REFRESH);
         }
+    }
+
+    private static RequestBuilder createSessionAccessRequestBuilder() {
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/sessionAccess");
+        b.setHeader("Accept", "text/plain");
+        return b;
     }
 
 }

@@ -12,7 +12,8 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
  */
 public class BooleanCellFormatter implements CellFormatter {
 
-    private static String ICON_URL_NULL = ImageManager.getFullImagePath("subsystems/availability/availability_grey_16.png");
+    private static String ICON_URL_NULL = ImageManager
+        .getFullImagePath("subsystems/availability/availability_grey_16.png");
     private static String ICON_URL_TRUE = ImageManager.getFullImagePath("global/permission_enabled_11.png");
     private static String ICON_URL_FALSE = ImageManager.getFullImagePath("global/permission_disabled_11.png");
 
@@ -25,7 +26,6 @@ public class BooleanCellFormatter implements CellFormatter {
         } else {
             throw new IllegalArgumentException("value parameter is not a Boolean.");
         }
-        @SuppressWarnings({"UnnecessaryLocalVariable"})
         String result = "<img src=\"" + imageUrl + "\" width=\"11\" height=\"11\"/>";
         return result;
     }

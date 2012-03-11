@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -62,6 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisti
 import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -154,7 +155,14 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
-                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+                if (e instanceof ViewChangedException) {
+                    ViewChangedException viewChangedException = (ViewChangedException) e;
+                    String obsoleteView = viewChangedException.getObsoleteView();
+                    Log.debug("User navigated to view [" + currentView + "] before view [" + obsoleteView
+                        + "] was done rendering - rendering of view [" + obsoleteView + "] has been aborted.");
+                } else {
+                    getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+                }
             }
         });
 
@@ -344,7 +352,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
+        currentView = URL.decodeQueryString(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
 
         currentViewPath = new ViewPath(currentView);

@@ -19,18 +19,12 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -43,6 +37,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Views a resource's measurements in a tabular view.
@@ -192,7 +191,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
         liveDataWindow.centerInPage();
         liveDataWindow.addCloseClickHandler(new CloseClickHandler() {
             @Override
-            public void onCloseClick(CloseClientEvent event) {
+            public void onCloseClick(CloseClickEvent event) {
                 liveDataWindow.destroy();
                 refreshTableInfo();
             }

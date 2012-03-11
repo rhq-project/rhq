@@ -120,39 +120,6 @@
         <operation name="domain:shutdown" displayName="Shutdown Domain" description="Shut this Host-/Domaincontroller down with all managed servers.">
         </operation>
 -->
-
-        <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
-            <parameters>
-                <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
-                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true">
-                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
-                </c:simple-property>
-                <c:simple-property name="server-group" displayName="Server group to add to" required="true">
-                    <c:option-source target="resource" expression="type=ServerGroup"/>
-                </c:simple-property>
-                <c:simple-property name="socket-bindings" displayName="Socket bindings to base upon" default="standard-sockets" description="Socket bindings to base upon"/>
-                <c:simple-property name="port-offset" displayName="Port offset" default="0" type="integer" />
-                <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
-            </results>
-        </operation>
-        <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
-            <parameters>
-                <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
-                    <c:option-source target="resource" expression="type=Managed Server"/>
-                </c:simple-property>
-                <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
-                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
-                </c:simple-property>
-            </parameters>
-            <results>
-                <c:simple-property name="operationResult" description="Outcome of the remove server operation"/>
-            </results>
-
-        </operation>
-
         <operation name="start" description="Start this Host-/Domaincontroller" displayName="Start this host controller">
             <results>
                 <c:simple-property name="operationResult" description="Outcome of the start operation"/>
@@ -265,7 +232,7 @@
                     <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
                 </c:simple-property>
                 <c:simple-property name="socket-binding-group" readOnly="false" required="true">
-                    <c:option-source target="resource" expression="type=SocketBindingGroupDomain"/>
+                    <c:option-source target="resource" expression="type=SocketBindingGroup"/>
                 </c:simple-property>
                 <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
                                    description="The default offset to be added to the port values given by the socket binding group."/>
@@ -281,27 +248,6 @@
             <plugin-configuration>
                 <c:simple-property name="path" default="host" readOnly="true"/>
             </plugin-configuration>
-
-            <operation name="server:add" displayName="Create server" description="Add a new server to this host.">
-                <parameters>
-                    <c:simple-property name="name" description="Name of this new server" required="true"/>
-                    <c:simple-property name="group" displayName="Server Group" description="Server group to put this sever in" default="" required="true">
-                        <c:option-source target="resource" expression="type=ServerGroup"/>
-                    </c:simple-property>
-                    <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
-                </results>
-            </operation>
-            <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
-                <parameters>
-                    <c:simple-property name="name" description="Name of the server to be removed" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
-                </results>
-            </operation>
 
             <resource-configuration>
                 <c:group name="children:system-property:name+" displayName="System-properties">
@@ -332,30 +278,27 @@
         <server name="Managed Server"
                 discovery="ManagedASDiscovery"
                 class="ManagedASComponent"
+                createDeletePolicy="both"
                 >
             <plugin-configuration>
                 <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
                 <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
-                <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
-                <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
-                <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="false"/>
-                <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
                 <c:simple-property name="path" readOnly="true" />
 
                 &logSources;
             </plugin-configuration>
 
-            <operation name="server:start" description="Start this server instance." displayName="Start">
+            <operation name="start" description="Start this server instance." displayName="Start">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
             </operation>
-            <operation name="server:stop" description="Stop this server instance." displayName="Stop">
+            <operation name="stop" description="Stop this server instance." displayName="Stop">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
             </operation>
-            <operation name="server:restart" description="Restart this server instance." displayName="Restart">
+            <operation name="restart" description="Restart this server instance." displayName="Restart">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
@@ -366,6 +309,22 @@
             <metric property="startTime" dataType="trait" displayName="Start time of the server" defaultOn="true"/>
 
             <event name="logEntry" description="an entry in a log file"/>
+
+            <resource-configuration>
+                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
+                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
+                </c:simple-property>
+                <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to.">
+                    <c:option-source target="resource" expression="type=ServerGroup"/>
+                </c:simple-property>
+                <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use" required="true" default="standard-sockets">
+                    <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+                </c:simple-property>
+                <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
+
+                <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
+
+            </resource-configuration>
 
         </server>
 
@@ -988,6 +947,64 @@
 
     </server>
 
+    <server name="Transactions Subsystem"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            description="The transactions subsystem."
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=transactions"/>
+        </plugin-configuration>
+
+       <metric property="number-of-nested-transactions" description="The total number of nested (sub) transactions created."
+             measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+       <metric property="number-of-timed-out-transactions" description="The number of transactions that have rolled back due to timeout."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+       <metric property="number-of-committed-transactions" description="The number of committed transactions."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+       <metric property="number-of-transactions" description="The total number of transactions (top-level and nested) created"
+               measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+       <metric property="number-of-heuristics" description="The number of transactions which have terminated with heuristic outcomes."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+       <metric property="number-of-aborted-transactions" description="The number of aborted (i.e. rolledback) transactions."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+       <metric property="number-of-inflight-transactions" description="The number of transactions that have begun but not yet terminated."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="false"/>
+       <metric property="number-of-application-rollbacks" description="The number of transactions that have been rolled back by application request. This includes those that timeout, since the timeout behaviour is considered an attribute of the application configuration."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+       <metric property="number-of-resource-rollbacks" description="The number of transactions that rolled back due to resource (participant) failure."
+               measurementType="trendsup" defaultInterval="300000" defaultOn="true"/>
+
+       <resource-configuration>
+          <c:simple-property name="relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
+                   description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
+          <c:simple-property name="process-id-uuid" required="false" type="boolean" readOnly="false" description="Indicates whether the transaction manager should use a UUID based process id."/>
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the recovery environment."/>
+          <c:simple-property name="jts" required="false" type="boolean" readOnly="false" defaultValue="false" description="If true this enables the Java Transaction Service"/>
+          <c:simple-property name="object-store-path" required="false" type="string" readOnly="false" defaultValue="tx-object-store"
+                   description="Denotes a relative or absolute filesystem path denoting where the transaction manager object store should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
+          <c:simple-property name="path" required="false" type="string" readOnly="false" defaultValue="var" description="Denotes a relative or absolute filesystem path denoting where the transaction manager core should store data. By default the value is treated as relative to the path denoted by the 'relative-to' attribute."/>
+          <c:simple-property name="process-id-socket-binding" required="false" type="string" readOnly="false" description="The name of the socket binding configuration to use if the transaction manager should use a socket-based process id. Will be 'undefined' if 'process-id-uuid' is 'true'; otherwise must be set."/>
+          <c:simple-property name="default-timeout" required="false" type="integer" readOnly="false" defaultValue="300" description="The default timeout."/>
+          <c:simple-property name="process-id-socket-max-ports" required="false" type="integer" readOnly="false" defaultValue="10" description="The maximum number of ports to search for an open port if the transaction manager should use a socket-based process id. If the port specified by the socket binding referenced in 'process-id-socket-binding' is occupied, the next higher port will be tried until an open port is found or the number of ports specified by this attribute have been tried. Will be 'undefined' if 'process-id-uuid' is 'true'."/>
+          <c:simple-property name="recovery-listener" required="false" type="boolean" readOnly="false" defaultValue="false" description="Used to specify if the recovery system should listen on a network socket or not."/>
+          <c:simple-property name="status-socket-binding" required="false" type="string" readOnly="false" description="Used to reference the correct socket binding to use for the transaction status manager."/>
+          <c:simple-property name="node-identifier" required="false" type="string" readOnly="false" defaultValue="1" description="Used to set the node identifier on the core environment."/>
+          <c:simple-property name="enable-tsm-status" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether the transaction status manager (TSM) service, needed for out of process recovery, should be provided or not.."/>
+          <c:simple-property name="object-store-relative-to" required="false" type="string" readOnly="false" defaultValue="jboss.server.data.dir"
+                   description="References a global path configuration in the domain model, defaulting to the JBoss Application Server data directory (jboss.server.data.dir). The value of the 'path' attribute will treated as relative to this path. Use an empty string to disable the default behavior and force the value of the 'path' attribute to be treated as an absolute path."/>
+          <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether statistics should be enabled."/>
+       </resource-configuration>
+
+    </server>
+
     <server name="Datasources"
             discovery="SubsystemDiscovery"
             class="DatasourceComponent"
@@ -1358,11 +1375,11 @@
                 <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
 
 
-                <c:group name="children:xa-datasource-properties:key+" displayName="XA Datasource Properties">
-                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="true">
-                        <c:map-property name="*:key" displayName="Name" readOnly="true">
-                            <c:simple-property name="key" displayName="Property-Name" readOnly="true"/>
-                            <c:simple-property name="value" displayName="Value" readOnly="true"/>
+                <c:group name="children:xa-datasource-properties:key+-" displayName="XA Datasource Properties">
+                    <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+                        <c:map-property name="*:key" displayName="Name" readOnly="false">
+                            <c:simple-property name="key" displayName="Property-Name" readOnly="false"/>
+                            <c:simple-property name="value" displayName="Value" readOnly="false"/>
                         </c:map-property>
                     </c:list-property>
                 </c:group>
@@ -1815,7 +1832,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     <server name="Infinispan"
         discovery="SubsystemDiscovery"
-        class="BaseComponent"
+        class="IspnComponent"
         singleton="true"
     >
         <runs-inside>
@@ -1827,36 +1844,254 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=infinispan"/>
         </plugin-configuration>
 
-        <resource-configuration>
-                <c:simple-property name="default-cache-container" readOnly="true"/>
-        </resource-configuration>
+        <metric property="default-cache-container" displayType="summary" dataType="trait" defaultInterval="120000"/>
 
         <service name="Cache Container"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="IspnCContainerComponent"
+            createDeletePolicy="both"
+            creationDataType="configuration"
             >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="cache-container"/>
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="default-cache" readOnly="true"/>
-                <c:list-property name="cache" readOnly="true">
-                    <c:map-property name="*">
-                        <c:simple-property name="name" />
-                        <c:simple-property name="mode" />
-<!--
-                        <c:map-property name="eviction">
-                            <c:simple-property name="strategy"/>
-                            <c:simple-property name="max-entries" required="false"/>
-                        </c:map-property>
--->
-                        <c:simple-property name="eviction" required="false" readOnly="true"/>
-                        <c:simple-property name="expiration" required="false" readOnly="true"/>
-                    </c:map-property>
+                <c:simple-property name="default-cache" required="false" type="string" readOnly="false" description="The default infinispan cache"/> <!-- TODO select from child cache services -->
+                <c:list-property name="aliases" description="The list of aliases for this cache container" >
+                    <c:simple-property name="aliases" />
                 </c:list-property>
+                <c:simple-property name="jndi-name" required="false" type="string" readOnly="false" description="The jndi name to which to bind this cache container"/>
+                <c:simple-property name="start" required="false" type="string" readOnly="false"
+                                   defaultValue="LAZY" description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+                    <c:property-options>
+                        <c:option value="LAZY"/>
+                        <c:option value="EAGER"/>
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="listener-executor" required="false" type="string" readOnly="false" description="The executor used for the replication queue"/>
+                <c:simple-property name="eviction-executor" required="false" type="string" readOnly="false" description="The scheduled executor used for eviction"/>
+                <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="false" description="The executor used for asynchronous cache operations"/>
+            </resource-configuration>
+
+            <service name="Cache"
+                     discovery="SubsystemDiscovery"
+                     class="IspnCacheComponent"
+                     createDeletePolicy="both"
+                     creationDataType="configuration"
+                     >
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="distributed-cache|local-cache|invalidation-cache|replicated-cache"/>
+                </plugin-configuration>
+
+                <resource-configuration>
+                    <c:simple-property name="_flavor" displayName="Kind of cache" required="true" readOnly="true" default="local-cache" description="What special kind of cache is this.">
+                        <c:property-options>
+                            <c:option value="local-cache" />
+                            <c:option value="invalidation-cache"/>
+                            <c:option value="distributed-cache" />
+                            <c:option value="replicated-cache"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="start" required="false" type="string" readOnly="false" default="LAZY"
+                                       description="The cache start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+                        <c:property-options>
+                            <c:option value="LAZY"/>
+                            <c:option value="EAGER"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="batching" required="false" type="boolean" readOnly="false"
+                                       default="false"
+                                       description="If enabled, the invocation batching API will be made available for this cache."/>
+                    <c:simple-property name="indexing" required="false" type="string" readOnly="false"
+                                       default="NONE"
+                                       description="If enabled, entries will be indexed when they are added to the cache. Indexes will be updated as entries change or are removed.">
+                        <c:property-options>
+                            <c:option value="NONE"/>
+                            <c:option value="LOCAL"/>
+                            <c:option value="ALL"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="jndi-name" required="false" type="string" readOnly="false"
+                                       description="The jndi-name to which to bind this cache instance."/>
+                    <c:simple-property name="mode" required="false" type="string" readOnly="true" default="SYNC"
+                                       description="Sets the clustered cache mode, ASYNC for asynchronous operation, or SYNC for synchronous operation.">
+                        <c:property-options>
+                            <c:option value="SYNC"/>
+                            <c:option value="ASYNC"/>
+                        </c:property-options>
+                    </c:simple-property>
+                    <c:simple-property name="queue-size" required="false" type="integer" readOnly="false"
+                                       default="0"
+                                       description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
+                    <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false"
+                                       default="10"
+                                       description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
+                    <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false"
+                                       default="17500"
+                                       description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+                </resource-configuration>
+
+            </service>
+        </service>
+
+    </server>
+    <server name="Datagrid Endpoints"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=endpoint"/>
+        </plugin-configuration>
+
+
+        <service name="Hotrod Connector"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent"
+                createDeletePolicy="both"
+                creationDataType="configuration"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="hotrod-connector"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <!--<c:simple-property name="name" required="false" type="string" readOnly="true" description="The name to give to this connector"/>-->
+                <c:simple-property name="cache-container" required="true" type="string" readOnly="true" description="The cache container to use">
+                    <c:option-source target="resource" expression="type='^Cache Container$'" />
+                </c:simple-property>
+                <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The socket binding to use for this connector">
+                    <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/> <!-- TODO different for Domain vs standalone -->
+                </c:simple-property>
+                <c:simple-property name="worker-threads" required="false" type="integer" readOnly="true" description="The number of worker threads to use for this connector"/>
+                <c:simple-property name="idle-timeout" required="false" type="long" readOnly="true" description="The timeout for idle connections"/>
+                <c:simple-property name="tcp-nodelay" required="false" type="boolean" readOnly="true" description="Whether to use TCP NO_DELAY"/>
+                <c:simple-property name="receive-buffer-size" required="false" type="long" readOnly="true" description="Size of the receive buffer"/>
+                <c:simple-property name="send-buffer-size" required="false" type="long" readOnly="true" description="Size of the send buffer"/>
+                <!-- TODO add topology state transfer -->
+            </resource-configuration>
+
+        </service>
+
+        <service name="Memcached Connector"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent"
+                createDeletePolicy="both"
+                creationDataType="configuration"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="memcached-connector"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <!--<c:simple-property name="name" required="false" type="string" readOnly="true" description="The name to give to this connector"/>-->
+                <c:simple-property name="cache-container" required="true" type="string" readOnly="true" description="The cache container to use">
+                    <c:option-source target="resource" expression="type='^Cache Container$'" />
+                </c:simple-property>
+                <c:simple-property name="socket-binding" required="true" type="string" readOnly="true" description="The socket binding to use for this connector">
+                    <c:option-source target="resource" expression="socket-binding=name:type=SocketBindingGroup"/> <!-- TODO different for Domain vs standalone -->
+                </c:simple-property>
+                <c:simple-property name="worker-threads" required="false" type="integer" readOnly="true" description="The number of worker threads to use for this connector"/>
+                <c:simple-property name="idle-timeout" required="false" type="long" readOnly="true" description="The timeout for idle connections"/>
+                <c:simple-property name="tcp-nodelay" required="false" type="boolean" readOnly="true" description="Whether to use TCP NO_DELAY"/>
+                <c:simple-property name="receive-buffer-size" required="false" type="long" readOnly="true" description="Size of the receive buffer"/>
+                <c:simple-property name="send-buffer-size" required="false" type="long" readOnly="true" description="Size of the send buffer"/>
+                <!-- TODO add topology state transfer -->
+            </resource-configuration>
+
+        </service>
+
+        <service name="REST Connector"
+                discovery="SubsystemDiscovery"
+                class="BaseComponent"
+                createDeletePolicy="both"
+                creationDataType="configuration"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="rest-connector"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <!--<c:simple-property name="name" required="false" type="string" readOnly="true" description="The name to give to this connector"/>-->
+                <c:simple-property name="cache-container" required="true" type="string" readOnly="true" description="The cache container to use">
+                    <c:option-source target="resource" expression="type='^Cache Container'" />
+                </c:simple-property>
+                <c:simple-property name="virtual-server" required="false" type="string" readOnly="true" description="The virtual server on which the REST connector should be published">
+                    <c:option-source target="resource" expression="type=VHost"/>
+                </c:simple-property>
+                <c:simple-property name="context-path" required="false" type="string" readOnly="true" description="The context path on which the REST connector should be published"/>
             </resource-configuration>
         </service>
+
+
+    </server>
+
+    <server name="JGroups"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=jgroups"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="default-stack" description="Default stack to use"/>
+        </resource-configuration>
+    </server>
+
+    <server name="Remoting"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=remoting"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="worker-read-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="1"
+                               description="The number of read threads to create for the remoting worker."/>
+            <c:simple-property name="worker-task-max-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="16"
+                               description="The maximum number of threads for the remoting worker task thread pool."/>
+            <c:simple-property name="worker-task-limit" required="false" type="integer" readOnly="false"
+                               defaultValue="16384"
+                               description="The maximum number of remoting worker tasks to allow before rejecting."/>
+            <c:simple-property name="worker-task-core-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="4"
+                               description="The number of core threads for the remoting worker task thread pool."/>
+            <c:simple-property name="worker-write-threads" required="false" type="integer" readOnly="false"
+                               defaultValue="1"
+                               description="The number of write threads to create for the remoting worker."/>
+            <c:simple-property name="worker-task-keepalive" required="false" type="integer" readOnly="false"
+                               defaultValue="60"
+                               description="The number of milliseconds to keep non-core remoting worker task threads alive."/>
+        </resource-configuration>
 
     </server>
 
@@ -2037,7 +2272,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
     </server>
 
 
-    <service name="NetworkInterface"
+    <service name="Network Interface"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
@@ -2053,12 +2288,13 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
     </service>
 
-    <service name="SocketBindingGroupStandalone"
+    <service name="SocketBindingGroup"
              discovery="SubsystemDiscovery"
-             class="BaseComponent"
+             class="SocketBindingGroupComponent"
             >
         <runs-inside>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
         </runs-inside>
 
 
@@ -2068,13 +2304,13 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
-                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               description="Default Interface for these bindings. See Network Interfaces for its definition"
                                required="true">
-                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
             </c:simple-property>
             <!-- note: at domain level there is no port-offset -->
             <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
-                               description="Offset from standard ports for this group."
+                               description="Offset from standard ports for this group. This is only available in standalone mode"
                                required="false"/>
             <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
             <c:list-property name="*" displayName="Bindings">
@@ -2082,20 +2318,20 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
                     <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
                                        required="false">
-                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                        <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
                     </c:simple-property>
-                    <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
+                    <c:simple-property name="port" description="Number of the port to which the socket should be bound."/>
                     <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
                                        type="boolean" defaultValue="false"/>
                     <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
-                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer" required="false"/>
+                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." required="false"/>
                 </c:map-property>
             </c:list-property>
             </c:group>
         </resource-configuration>
 
     </service>
-    <service name="SocketBindingGroupDomain"
+ <!--   <service name="SocketBindingGroupDomain"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
             >
@@ -2110,11 +2346,11 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
-                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               description="Default Interface for these bindings. See Network Interfaces for its definition"
                                required="true">
-                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
             </c:simple-property>
-            <c:list-property name="includes" required="false" readOnly="true"> <!-- read-only until AS7-1467 is fixed -->
+            <c:list-property name="includes" required="false" readOnly="true"> &lt;!&ndash; read-only until AS7-1467 is fixed &ndash;&gt;
                 <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
             </c:list-property>
             <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
@@ -2123,7 +2359,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
                     <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
                                        required="false">
-                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                        <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
                     </c:simple-property>
 
                     <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
@@ -2137,6 +2373,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </resource-configuration>
 
     </service>
+-->
 
     <service name="Deployment"
              class="DeploymentComponent"
@@ -2189,10 +2426,12 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         <resource-configuration>
             <!--<c:simple-property name="default" readOnly="false" required="true" description="Scanner policy to use"/>-->
-            <c:group name="children:scanner:name" displayName="Available scanners">
-                <c:list-property name="*" description="List of scanners" >
+            <c:group name="children:scanner" displayName="Available scanners">
+                <c:list-property name="*" displayName="Scanners" description="List of scanners" >
                     <c:map-property name="scanner">
+<!--
                         <c:simple-property name="name" required="true" type="string" readOnly="true" description="The name of the scanner"/>
+-->
                         <c:simple-property name="path" required="true" type="string" readOnly="false"
                                            description="The actual filesystem path to be scanned. Treated as an absolute path, unless the 'relative-to' attribute is specified, in which case the value is treated as relative to that path."/>
                         <c:simple-property name="relative-to" required="false" type="string" readOnly="false"

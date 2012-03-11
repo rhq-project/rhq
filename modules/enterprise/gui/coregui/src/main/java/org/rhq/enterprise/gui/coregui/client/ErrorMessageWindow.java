@@ -24,9 +24,8 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
-
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
@@ -69,7 +68,7 @@ public class ErrorMessageWindow extends LocatableWindow {
         centerInPage();
         addCloseClickHandler(new CloseClickHandler() {
             @Override
-            public void onCloseClick(CloseClientEvent event) {
+            public void onCloseClick(CloseClickEvent event) {
                 markForDestroy();
             }
         });

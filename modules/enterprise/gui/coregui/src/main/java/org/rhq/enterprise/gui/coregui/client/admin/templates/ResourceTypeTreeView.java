@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -39,7 +35,6 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
-
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -50,11 +45,11 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 
 /**
  * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
@@ -215,6 +210,7 @@ public abstract class ResourceTypeTreeView extends LocatableVLayout implements B
                 .common_title_edit());
             editField.setType(ListGridFieldType.IMAGE);
             editField.setAlign(Alignment.CENTER);
+            editField.setCanGroupBy(false);
             editField.addRecordClickHandler(new RecordClickHandler() {
 
                 public void onRecordClick(RecordClickEvent event) {

@@ -275,7 +275,7 @@ public class SimpleEditableFormItem extends CanvasItem {
     @Override
     public void setValue(String value) {
         if (this.staticItem instanceof StaticTextItem) {
-            ((StaticTextItem) this.staticItem).setOutputAsHTML(!(null == value || value.isEmpty()));
+            ((StaticTextItem) this.staticItem).setEscapeHTML(!(null == value || value.isEmpty()));
         }
 
         this.staticItem.setValue(value);

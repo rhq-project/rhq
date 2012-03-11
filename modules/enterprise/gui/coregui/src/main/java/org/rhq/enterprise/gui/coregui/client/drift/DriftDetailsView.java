@@ -24,12 +24,10 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -175,8 +173,8 @@ public class DriftDetailsView extends LocatableVLayout {
                 category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
                 oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
                 oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(), driftDetails
-                    .getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion(), driftDetails
-                    .getOldFileStatus());
+                    .getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion(),
+                    driftDetails.getOldFileStatus());
                 newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
                 newFileLink = createViewFileLink(driftDetails.getDrift().getNewDriftFile().getHashId(), driftDetails
                     .getDrift().getPath(), driftDetails.getChangeSet().getVersion(), driftDetails.getNewFileStatus());
@@ -213,8 +211,8 @@ public class DriftDetailsView extends LocatableVLayout {
         changeSetCategory.setValue(changeSet.getCategory().name());
         StaticTextItem changeSetVersion = new StaticTextItem("changeSetVersion", MSG.common_title_version());
         changeSetVersion.setValue(changeSet.getVersion());
-        StaticTextItem changeSetDriftHandling = new StaticTextItem("changeSetDriftHandling", MSG
-            .view_drift_table_driftHandlingMode());
+        StaticTextItem changeSetDriftHandling = new StaticTextItem("changeSetDriftHandling",
+            MSG.view_drift_table_driftHandlingMode());
         changeSetDriftHandling.setValue(DriftDefinitionDataSource.getDriftHandlingModeDisplayName(changeSet
             .getDriftHandlingMode()));
 

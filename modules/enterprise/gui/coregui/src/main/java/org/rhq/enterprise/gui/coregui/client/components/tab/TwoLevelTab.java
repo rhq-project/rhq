@@ -23,11 +23,14 @@ import com.smartgwt.client.widgets.Canvas;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 
 /**
- * @author Greg Hinkle
+ * @author John Sanda
  * @author Jay Shaughnessy
  */
 public class TwoLevelTab extends NamedTab {
     private SubTabLayout layout;
+    
+    private TwoLevelTab actualNext;
+    private TwoLevelTab visibleNext;
 
     public TwoLevelTab(String locatorId, ViewName viewName, String icon) {
         super(locatorId, viewName, icon);
@@ -36,9 +39,7 @@ public class TwoLevelTab extends NamedTab {
     }
 
     public void registerSubTabs(SubTab... subTabs) {
-        for (SubTab subTab : subTabs) {
-            layout.registerSubTab(subTab);
-        }
+        layout.registerSubTabs(subTabs);
     }
 
     public void setVisible(SubTab subTab, boolean visible) {
@@ -76,6 +77,48 @@ public class TwoLevelTab extends NamedTab {
     @Override
     public Canvas getPane() {
         return layout;
+    }
+
+    /**
+     * This is the successor or tab immediately to the right of this tab when all tabs
+     * are visible. The tab to which actualNext refers does not change whereas the tab to
+     * which {@link #getVisibleNext visibleNext} refers can change.
+     *
+     * @return The successor or tab immediately to the right of this tab when all tabs are
+     * visible.
+     */
+    public TwoLevelTab getActualNext() {
+        return actualNext;
+    }
+
+    /**
+     * @param actualNext The successor or tab immediately to the right of this tab when all
+     * tabs are visible. The tab to which actualNext refers does not change whereas the tab
+     * to which {@link #getVisibleNext visibleNext} refers can change.
+     */
+    public void setActualNext(TwoLevelTab actualNext) {
+        this.actualNext = actualNext;
+    }
+
+    /**
+     * The successor or tab immediately to the right of this tab among the set of visible
+     * tabs. The tab to which visibleNext refers can change whereas the tab to which
+     * {@link #getActualNext actualNext} refers will not change.
+     * 
+     * @return The successor or tab immediately to the right of this tab among the set of
+     * visible tabs.
+     */
+    public TwoLevelTab getVisibleNext() {
+        return visibleNext;
+    }
+
+    /**
+     * @param visibleNext The successor or tab immediately to the right of this tab among
+     * the set of visible tabs. The tab to which visibleNext refers can change whereas the
+     * tab to which {@link #getActualNext actualNext} refers will not change.
+     */
+    public void setVisibleNext(TwoLevelTab visibleNext) {
+        this.visibleNext = visibleNext;
     }
 
     @Override

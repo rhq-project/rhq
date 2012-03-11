@@ -18,15 +18,15 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Generate properties, metrics and operation templates for the
@@ -64,7 +64,7 @@ public class Domain2Descriptor {
         do {
             arg = args[pos];
             if (arg.startsWith("-")) {
-                if (args[0].equals("-m"))
+                if (arg.equals("-m"))
                     mode = D2DMode.METRICS;
                 else if (arg.equals("-p"))
                     mode = D2DMode.PROPERTIES;
@@ -295,7 +295,7 @@ public class Domain2Descriptor {
 
             description = description.replace("<","&lt;");
             description = description.replace(">","&gt;");
-            description = description.replace("\"","\\\"");
+            description = description.replace("\"","\'");
 
             builder.append(description);
             builder.append('"');

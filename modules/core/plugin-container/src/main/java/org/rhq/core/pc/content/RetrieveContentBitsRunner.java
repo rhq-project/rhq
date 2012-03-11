@@ -24,6 +24,9 @@ package org.rhq.core.pc.content;
 
 import java.io.InputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
 import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
@@ -37,6 +40,8 @@ import org.rhq.core.util.MessageDigestGenerator;
 * @author Jason Dobies
 */
 public class RetrieveContentBitsRunner implements Runnable {
+    private final Log log = LogFactory.getLog(RetrieveContentBitsRunner.class);
+
     // Attributes  --------------------------------------------
 
     private ContentManager contentManager;
@@ -93,7 +98,8 @@ public class RetrieveContentBitsRunner implements Runnable {
                     is.close();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("Error calculating SHA256 [" + request.getRequestId() + "][" + request.getPackageDetails()
+                    + "]", e);
             }
         }
         if ((pkgDetails != null) && ((pkgDetails.getMD5() == null) || (pkgDetails.getMD5().trim().length() == 0))) {
@@ -106,7 +112,8 @@ public class RetrieveContentBitsRunner implements Runnable {
                     is.close();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("Error calculating MD5 [" + request.getRequestId() + "][" + request.getPackageDetails()
+                    + "]", e);
             }
         }
     }

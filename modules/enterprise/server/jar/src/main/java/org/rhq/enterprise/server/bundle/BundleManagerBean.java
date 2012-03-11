@@ -78,6 +78,7 @@ import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -99,6 +100,7 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginManager;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
@@ -146,6 +148,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private ResourceManagerLocal resourceManager;
 
     @Override
     public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
@@ -1160,6 +1165,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + resourceDeploymentId + "].");
         }
         BundleResourceDeployment resourceDeployment = resourceDeployments.get(0);
+
+        ResourceCriteria rc = new ResourceCriteria();
+        rc.addFilterId(resourceDeployment.getResource().getId());
+        rc.fetchTags(true);
+        Resource resource = resourceManager.findResourcesByCriteria(subject, rc).get(0);
+        resourceDeployment.setResource(resource);
 
         // make sure the deployment contains the info required by the schedule service
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();

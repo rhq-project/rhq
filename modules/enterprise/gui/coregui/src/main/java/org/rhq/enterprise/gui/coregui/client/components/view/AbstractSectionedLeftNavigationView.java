@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -46,10 +46,13 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The base class for the various top-level views which have a sectioned navigation menu on the left side and a content
@@ -286,6 +289,18 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
 
     public Set<Permission> getGlobalPermissions() {
         return globalPermissions;
+    }
+
+    protected LocatableVLayout decorateWithTitleBar(ViewName viewName, Canvas pageBody){
+        LocatableVLayout vLayout = new LocatableVLayout(extendLocatorId(viewName.getName()));
+        vLayout.setWidth100();
+        vLayout.setHeight100();
+        // default to 24x24 otherwise use 16x16
+        String iconPath = (viewName.getIcon().getIcon24x24Path() != null) ? viewName.getIcon().getIcon24x24Path() : viewName.getIcon().getIcon16x16Path();
+        vLayout.addMember( new TitleBar(vLayout,viewName.getTitle(), iconPath));
+        vLayout.addMember(pageBody);
+        return vLayout;
+
     }
 
 }

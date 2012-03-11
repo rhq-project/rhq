@@ -37,10 +37,13 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
@@ -53,13 +56,13 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  (
  * @author Jay Shaughnessy
  */
-public class OperationHistoryView extends TableSection<OperationHistoryDataSource> {
+public class OperationHistoryView extends TableSection<OperationHistoryDataSource> implements HasViewName {
 
-    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentOperations", MSG
-        .common_title_recent_operations());
+    public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentOperations",
+        MSG.common_title_recent_operations(), IconEnum.RECENT_OPERATIONS);
+
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
-    private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
     private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
         OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
@@ -117,17 +120,17 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         statusValues.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
         statusValues.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
         LinkedHashMap<String, String> statusIcons = new LinkedHashMap<String, String>(3);
-        statusIcons.put(OperationRequestStatus.SUCCESS.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.SUCCESS));
-        statusIcons.put(OperationRequestStatus.INPROGRESS.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.INPROGRESS));
-        statusIcons.put(OperationRequestStatus.CANCELED.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.CANCELED));
-        statusIcons.put(OperationRequestStatus.FAILURE.name(), ImageManager
-            .getOperationResultsIcon(OperationRequestStatus.FAILURE));
+        statusIcons.put(OperationRequestStatus.SUCCESS.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.SUCCESS));
+        statusIcons.put(OperationRequestStatus.INPROGRESS.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.INPROGRESS));
+        statusIcons.put(OperationRequestStatus.CANCELED.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.CANCELED));
+        statusIcons.put(OperationRequestStatus.FAILURE.name(),
+            ImageManager.getOperationResultsIcon(OperationRequestStatus.FAILURE));
 
-        SelectItem statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS, MSG
-            .common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
+        SelectItem statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS,
+            MSG.common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
         statusFilter.setWidth(325);
 
         if (isShowFilterForm()) {
@@ -180,7 +183,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     protected void deleteSelectedRecords(DSRequest requestProperties) {
-        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelection();
+        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelectedRecords();
         final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
         Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
         boolean force = ((forceValue != null) && forceValue);
@@ -237,4 +240,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         return OperationHistoryDataSource.Field.OPERATION_NAME;
     }
 
+    @Override
+    public ViewName getViewName() {
+        return  SUBSYSTEM_VIEW_ID;
+    }
 }

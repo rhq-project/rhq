@@ -24,10 +24,8 @@
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
-      if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
-         echo "rhq-agent.sh: $1"
-      fi
+   if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+      echo "rhq-agent.sh: $1"
    fi
 }
 
@@ -37,16 +35,16 @@ debug_msg ()
 
 set_java_home ()
 {
-   if [ "x$JAVA_HOME" = "x" ]; then
+   if [ -z "$JAVA_HOME" ]; then
       _WHICH_JAVA=`which java 2>/dev/null`
-      if [ "x$_WHICH_JAVA" != "x" ]; then
+      if [ -n "$_WHICH_JAVA" ]; then
          _WHICH_JAVA_BIN_DIR=`dirname "$_WHICH_JAVA"`
          JAVA_HOME=`dirname "$_WHICH_JAVA_BIN_DIR"`
          debug_msg "JAVA_HOME determined by which: ${JAVA_HOME}"
-      elif [ "x$_DARWIN" != "x" ]; then
+      elif [ -n "$_DARWIN" ]; then
          JAVA_HOME=/usr
          debug_msg "Running on Mac OS X, setting JAVA_HOME to ${JAVA_HOME}"
-      elif [ "x$_LINUX" != "x" ]; then
+      elif [ -n "$_LINUX" ]; then
          JAVA_HOME=/usr/lib/jvm/jre
          debug_msg "Running on Linux, setting JAVA_HOME to ${JAVA_HOME}"
       fi
@@ -83,7 +81,7 @@ esac
 # place as this script.
 # ----------------------------------------------------------------------
 
-if [ "x${_LINUX}${_SOLARIS}${_CYGWIN}" != "x" ]; then
+if [ -n "${_LINUX}${_SOLARIS}${_CYGWIN}" ]; then
    # only certain platforms support the -e argument for readlink
    _READLINK_ARG="-e"
 fi
@@ -98,7 +96,7 @@ else
    debug_msg "No environment script found at: ${RHQ_AGENT_BIN_DIR_PATH}/rhq-agent-env.sh"
 fi
 
-if [ "x$RHQ_AGENT_HOME" = "x" ]; then
+if [ -z "$RHQ_AGENT_HOME" ]; then
    cd "${RHQ_AGENT_BIN_DIR_PATH}/.."
 else
    cd "${RHQ_AGENT_HOME}" || {
@@ -115,11 +113,12 @@ debug_msg "RHQ_AGENT_HOME: $RHQ_AGENT_HOME"
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_AGENT_JAVA_EXE_FILE_PATH" = "x" ]; then
-   if [ "x$RHQ_AGENT_JAVA_HOME" = "x" ]; then
+if [ -z "$RHQ_AGENT_JAVA_EXE_FILE_PATH" ]; then
+   if [ -z "$RHQ_AGENT_JAVA_HOME" ]; then
       RHQ_AGENT_JAVA_HOME="${RHQ_AGENT_HOME}/jre"
-      debug_msg "Using the embedded JRE"
-      if [ ! -d "$RHQ_AGENT_JAVA_HOME" ]; then
+      if [ -d "$RHQ_AGENT_JAVA_HOME" ]; then
+         debug_msg "Using the embedded JRE"
+      else
          set_java_home
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
          RHQ_AGENT_JAVA_HOME="$JAVA_HOME"
@@ -148,7 +147,7 @@ fi
 _JAR_FILES=`cd "${RHQ_AGENT_HOME}/lib";ls -1 *.jar`
 for _JAR in $_JAR_FILES ; do
    _JAR="${RHQ_AGENT_HOME}/lib/${_JAR}"
-   if [ "x$CLASSPATH" = "x" ]; then
+   if [ -z "$CLASSPATH" ]; then
       CLASSPATH="${_JAR}"
    else
       CLASSPATH="${CLASSPATH}:${_JAR}"
@@ -167,7 +166,7 @@ done
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_AGENT_JAVA_OPTS" = "x" ]; then
+if [ -z "$RHQ_AGENT_JAVA_OPTS" ]; then
    RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
 fi
 debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
@@ -175,12 +174,12 @@ debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
 if [ "$RHQ_AGENT_JAVA_ENDORSED_DIRS" = "none" ]; then
    debug_msg "Not explicitly setting java.endorsed.dirs"
 else
-   if [ "x$RHQ_AGENT_JAVA_ENDORSED_DIRS" = "x" ]; then
+   if [ -z "$RHQ_AGENT_JAVA_ENDORSED_DIRS" ]; then
       RHQ_AGENT_JAVA_ENDORSED_DIRS="${RHQ_AGENT_HOME}/lib/endorsed"
    fi
 
    # convert the path if on Windows
-   if [ "x$_CYGWIN" != "x" ]; then
+   if [ -n "$_CYGWIN" ]; then
       RHQ_AGENT_JAVA_ENDORSED_DIRS=`cygpath --windows --path "$RHQ_AGENT_JAVA_ENDORSED_DIRS"`
    fi
    debug_msg "RHQ_AGENT_JAVA_ENDORSED_DIRS: $RHQ_AGENT_JAVA_ENDORSED_DIRS"
@@ -190,12 +189,12 @@ fi
 if [ "$RHQ_AGENT_JAVA_LIBRARY_PATH" = "none" ]; then
    debug_msg "Not explicitly setting java.library.path"
 else
-   if [ "x$RHQ_AGENT_JAVA_LIBRARY_PATH" = "x" ]; then
+   if [ -z "$RHQ_AGENT_JAVA_LIBRARY_PATH" ]; then
       RHQ_AGENT_JAVA_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib"
    fi
 
    # convert the path if on Windows
-   if [ "x$_CYGWIN" != "x" ]; then
+   if [ -n "$_CYGWIN" ]; then
       RHQ_AGENT_JAVA_LIBRARY_PATH=`cygpath --windows --path "$RHQ_AGENT_JAVA_LIBRARY_PATH"`
    fi
    debug_msg "RHQ_AGENT_JAVA_LIBRARY_PATH: $RHQ_AGENT_JAVA_LIBRARY_PATH"
@@ -207,7 +206,7 @@ debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
 # ----------------------------------------------------------------------
 # Prepare the command line arguments passed to the RHQ Agent
 # ----------------------------------------------------------------------
-if [ "x$RHQ_AGENT_CMDLINE_OPTS" = "x" ]; then
+if [ -z "$RHQ_AGENT_CMDLINE_OPTS" ]; then
    RHQ_AGENT_CMDLINE_OPTS=$*
 fi
 debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
@@ -216,15 +215,15 @@ debug_msg "RHQ_AGENT_CMDLINE_OPTS: $RHQ_AGENT_CMDLINE_OPTS"
 # Prepare LD_LIBRARY_PATH to include libraries shipped with the agent
 # ----------------------------------------------------------------------
 
-if [ "x$_LINUX" != "x" ]; then
-   if [ "x$LD_LIBRARY_PATH" = "x" ]; then
-      if [ "x$_X86_64"  != "x" ]; then
+if [ -n "$_LINUX" ]; then
+   if [ -z "$LD_LIBRARY_PATH" ]; then
+      if [ -n "$_X86_64" ]; then
          LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib64"
       else
          LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib"
       fi
    else
-      if [ "x$_X86_64"  != "x" ]; then
+      if [ -n "$_X86_64" ]; then
          LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib64:${LD_LIBRARY_PATH}"
       else
          LD_LIBRARY_PATH="${RHQ_AGENT_HOME}/lib/augeas/lib:${LD_LIBRARY_PATH}"
@@ -241,17 +240,13 @@ fi
 _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 
 # if debug is enabled, the log configuration is different
-if [ "x$RHQ_AGENT_DEBUG" != "x" ]; then
-   if [ "$RHQ_AGENT_DEBUG" != "false" ]; then
-      _LOG_CONFIG="-Dlog4j.configuration=log4j-debug.xml -Di18nlog.dump-stack-traces=true"
-   fi
+if [ -n "$RHQ_AGENT_DEBUG" ] && [ "$RHQ_AGENT_DEBUG" != "false" ]; then
+   _LOG_CONFIG="-Dlog4j.configuration=log4j-debug.xml -Di18nlog.dump-stack-traces=true"
 fi
 
 # if sigar debug is enabled, the log configuration is different - sigar debugging is noisy, so it has its own debug var
-if [ "x$RHQ_AGENT_SIGAR_DEBUG" != "x" ]; then
-   if [ "$RHQ_AGENT_SIGAR_DEBUG" != "false" ]; then
-      _LOG_CONFIG="$_LOG_CONFIG -Dsigar.nativeLogging=true"
-   fi
+if [ -n "$RHQ_AGENT_SIGAR_DEBUG" ] && [ "$RHQ_AGENT_SIGAR_DEBUG" != "false" ]; then
+   _LOG_CONFIG="$_LOG_CONFIG -Dsigar.nativeLogging=true"
 fi
 
 # create the logs directory
@@ -260,12 +255,12 @@ if [ ! -d "${RHQ_AGENT_HOME}/logs" ]; then
 fi
 
 # convert some of the paths if we are on Windows
-if [ "x$_CYGWIN" != "x" ]; then
+if [ -n "$_CYGWIN" ]; then
    CLASSPATH=`cygpath --windows --path "$CLASSPATH"`
 fi
 
 # to support other agents/plugin containers, allow the caller to override the main classname
-if [ "x$RHQ_AGENT_MAINCLASS" = "x" ]; then
+if [ -z "$RHQ_AGENT_MAINCLASS" ]; then
    RHQ_AGENT_MAINCLASS="org.rhq.enterprise.agent.AgentMain"
 fi
 
@@ -276,7 +271,7 @@ debug_msg "Executing the agent with this command line:"
 debug_msg "$CMD"
 
 # Run the VM - put it in background if the caller wants it to be
-if [ "x$RHQ_AGENT_IN_BACKGROUND" = "x" ]; then
+if [ -z "$RHQ_AGENT_IN_BACKGROUND" ]; then
    eval "$CMD"
 else
    eval "$CMD &"

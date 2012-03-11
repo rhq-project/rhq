@@ -19,23 +19,7 @@
 
 package org.rhq.enterprise.server.drift;
 
-import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
-
-import java.io.File;
-import java.lang.reflect.Method;
-import java.util.List;
-
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-
 import org.apache.commons.io.FileUtils;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftDefinition;
@@ -49,6 +33,20 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.test.TransactionCallback;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.List;
+
+import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 @Test(groups = "drift")
 public class DriftServerTest extends AbstractEJB3Test {
@@ -87,7 +85,9 @@ public class DriftServerTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
-        File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-4.3.0-SNAPSHOT.jar");
+        String projectVersion = System.getProperty("projectVersion");
+
+        File jpaDriftPlugin = new File("../plugins/drift-rhq/target/rhq-serverplugin-drift-" + projectVersion + ".jar");
         assertTrue("Drift server plugin JAR file not found at" + jpaDriftPlugin.getPath(), jpaDriftPlugin.exists());
         FileUtils.copyFileToDirectory(jpaDriftPlugin, driftServerPluginService.masterConfig.getPluginDirectory());
 

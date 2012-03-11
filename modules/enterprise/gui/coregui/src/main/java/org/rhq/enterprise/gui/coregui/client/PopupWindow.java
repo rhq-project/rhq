@@ -20,9 +20,8 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
-
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
@@ -52,7 +51,7 @@ public class PopupWindow extends LocatableWindow {
         setCanDragResize(true);
         centerInPage();
         addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClientEvent event) {
+            public void onCloseClick(CloseClickEvent event) {
                 markForDestroy();
             }
         });

@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.io.File;
@@ -44,8 +44,8 @@ import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
@@ -55,12 +55,12 @@ import org.rhq.plugins.jbossas.util.WarDeploymentInformation;
 import org.rhq.plugins.jbossas.util.WarDiscoveryHelper;
 import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
- /**
- * A resource component for managing a web application (WAR) deployed to a JBossAS server.
- *
- * @author Ian Springer
- * @author Heiko W. Rupp
- */
+/**
+* A resource component for managing a web application (WAR) deployed to a JBossAS server.
+*
+* @author Ian Springer
+* @author Heiko W. Rupp
+*/
 public class WarComponent extends ApplicationComponent implements OperationFacet, DeleteResourceFacet {
     private static final String SERVLET_PREFIX = "Servlet.";
     public static final String CONTEXT_ROOT_CONFIG_PROP = "contextRoot";
@@ -84,7 +84,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
     private static final String SESSION_NAME_BASE_TEMPLATE = "jboss.web:host=%HOST%,type=Manager,path=%PATH%";
 
-    // WebModule=//localhost/test-simple,service=ClusterManager
+    //WebModule=//localhost/test-simple,service=ClusterManager
     private static final String CLUSTER_SESSION_NAME_BASE_TEMPLATE = "jboss.web:service=ClusterManager,WebModule=//%HOST%%PATH%";
     private static final String SESSION_PREFIX = "Session.";
     private static final String VHOST_PREFIX = "Vhost";
@@ -94,24 +94,17 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
     private final Log log = LogFactory.getLog(this.getClass());
 
+    //Mapping non-clustered names -> attribute name in the cluster manager
+    private final String[] CLUSTER_SESSION_ATTRIBUTE_NAMES = { "maxInactiveInterval", "MaxInactiveInterval",
+        "activeSessions", "ActiveSessionCount", "sessionCounter", "CreatedSessionCount", "sessionAverageAliveTime", "",
+        "processingTime", "ProcessingTime", "maxActive", "MaxActiveSessionCount", "maxActiveSessions",
+        "MaxActiveAllowed", "expiredSessions", "ExpiredSessionCount", "rejectedSessions", "RejectedSessionCount",
+        "sessionIdLength", "SessionIdLength" };
+
     private EmsBean jbossWebMBean;
     private ResponseTimeLogParser logParser;
-    String vhost;
+    private String vhost;
     private String contextRoot;
-    // Mapping non-clustered names -> attribute name in the cluster manager
-    private final String[] CLUSTER_SESSION_ATTRIBUTE_NAMES = {
-            "maxInactiveInterval","MaxInactiveInterval",
-            "activeSessions","ActiveSessionCount",
-            "sessionCounter","CreatedSessionCount",
-            "sessionAverageAliveTime","",
-            "processingTime","ProcessingTime",
-            "maxActive","MaxActiveSessionCount",
-            "maxActiveSessions","MaxActiveAllowed",
-            "expiredSessions","ExpiredSessionCount",
-            "rejectedSessions","RejectedSessionCount",
-            "sessionIdLength","SessionIdLength"
-    };
-
 
     @Override
     public AvailabilityType getAvailability() {
@@ -146,13 +139,13 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         this.vhost = pluginConfig.getSimple(VHOST_CONFIG_PROP).getStringValue();
         this.contextRoot = pluginConfig.getSimple(CONTEXT_ROOT_CONFIG_PROP).getStringValue();
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
+
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
             this.logParser = new ResponseTimeLogParser(logFile);
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }
-
     }
 
     @Override
@@ -212,21 +205,20 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
         EmsConnection jmxConnection = getEmsConnection();
         String servletMBeanNames = SESSION_NAME_BASE_TEMPLATE.replace("%PATH%",
-                WarDiscoveryHelper.getContextPath(this.contextRoot));
+            WarDiscoveryHelper.getContextPath(this.contextRoot));
         servletMBeanNames = servletMBeanNames.replace("%HOST%", vhost);
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
         List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
 
-        if (mBeans.size()==0) {
+        if (mBeans.size() == 0) {
             // retry with the cluster manager TODO select the local vs cluster mode on discovery
             servletMBeanNames = CLUSTER_SESSION_NAME_BASE_TEMPLATE.replace("%PATH%",
-                    WarDiscoveryHelper.getContextPath(this.contextRoot));
+                WarDiscoveryHelper.getContextPath(this.contextRoot));
             servletMBeanNames = servletMBeanNames.replace("%HOST%", vhost);
             queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
             mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
-            if (mBeans.size()>0)
+            if (mBeans.size() > 0)
                 isClustered = true;
-
         }
 
         String property = metricName.substring(SESSION_PREFIX.length());
@@ -247,8 +239,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
                 if (o instanceof Long) {
                     Long l = (Long) o;
                     ret = Double.valueOf(l);
-                }
-                else {
+                } else {
                     Integer i = (Integer) o;
                     ret = Double.valueOf(i);
                 }
@@ -259,21 +250,18 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
     }
 
     private String lookupClusteredAttributeName(String property) {
-        for (int i = 0; i < CLUSTER_SESSION_ATTRIBUTE_NAMES.length ; i+=2) {
+        for (int i = 0; i < CLUSTER_SESSION_ATTRIBUTE_NAMES.length; i += 2) {
             if (CLUSTER_SESSION_ATTRIBUTE_NAMES[i].equals(property))
-                return CLUSTER_SESSION_ATTRIBUTE_NAMES[i+1];
+                return CLUSTER_SESSION_ATTRIBUTE_NAMES[i + 1];
         }
         return property;
     }
 
     private Double getServletMetric(String metricName) {
-
-        EmsConnection jmxConnection = getEmsConnection();
-
         String servletMBeanNames = SERVLET_NAME_BASE_TEMPLATE + ",WebModule=//" + this.vhost
-                + WarDiscoveryHelper.getContextPath(this.contextRoot);
+            + WarDiscoveryHelper.getContextPath(this.contextRoot);
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(servletMBeanNames);
-        List<EmsBean> mBeans = jmxConnection.queryBeans(queryUtility.getTranslatedQuery());
+        List<EmsBean> mBeans = getEmsConnection().queryBeans(queryUtility.getTranslatedQuery());
 
         long min = Long.MAX_VALUE;
         long max = 0;
@@ -342,21 +330,16 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
             throw new IllegalStateException("Could not find jboss.web MBean for WAR '" + getApplicationName() + "'.");
         }
 
-        if (operation==WarOperation.REVERT) {
-            // Lets see if we have a backup of ouselves. If so, install it.
-
+        if (operation == WarOperation.REVERT) {
             try {
                 revertFromBackupFile();
                 return new OperationResult("Successfully reverted from backup");
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException("Error reverting from Backup: " + e.getMessage());
             }
         }
 
-
         // The following are MBean operations.
-
         EmsOperation mbeanOperation = this.jbossWebMBean.getOperation(name);
         if (mbeanOperation == null) {
             throw new IllegalStateException("Operation [" + name + "] not found on bean ["
@@ -472,8 +455,6 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         }
         return deploymentInformation;
     }
-
-
 
     private enum WarOperation {
         START, STOP, RELOAD, REVERT

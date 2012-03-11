@@ -120,8 +120,6 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
         String lensesPath = lensesPathProperty.getStringValue();
         String rootPath = rootPathProperty.getStringValue();
 
-        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
-
         // Find out where to look for sshd configuration files
         PropertySimple sshdPathProperty = pluginConfiguration.getSimple("config-path");
 
@@ -137,6 +135,16 @@ public class OpenSSHDComponent implements ResourceComponent, ConfigurationFacet,
             sshdPath += "/";
         }
 
+        Augeas augeas = new Augeas(rootPath, lensesPath, Augeas.NONE);
+        try {
+            return getConfig(resourceConfigurationDefinition, sshdPath, augeas);
+        } finally {
+            augeas.close();
+        }
+    }
+
+    protected Configuration getConfig(ConfigurationDefinition resourceConfigurationDefinition,
+            String sshdPath, Augeas augeas) throws Exception {
         List<String> matches = augeas.match(sshdPath + "*");
         if (matches.size() == 0) {
             throw new Exception("Unable to load sshd_config data from augeas");

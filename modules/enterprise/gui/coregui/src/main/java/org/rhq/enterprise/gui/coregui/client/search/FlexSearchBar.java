@@ -20,7 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.search;
 
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -55,6 +55,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid;
 import org.rhq.enterprise.gui.coregui.client.search.favorites.SavedSearchGrid.SavedSearchSelectionHandler;
 import org.rhq.enterprise.gui.coregui.client.search.suggest.SuggestTextBox_v3;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -370,7 +371,7 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     class PatternNameFieldEventHandler implements KeyPressHandler, ClickHandler, BlurHandler {
         public void onKeyPress(KeyPressEvent event) {
-            if (event.getCharCode() == KeyCodes.KEY_ENTER) {
+            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
                 Log.debug("key press pattern name field");
                 turnNameFieldIntoLabel(true);
             }
@@ -561,7 +562,7 @@ public class FlexSearchBar extends AbstractSearchBar {
     }
 
     public String getValue() {
-        return autoCompletePatternField.getValue();
+        return autoCompletePatternField.getText();
     }
 
 }

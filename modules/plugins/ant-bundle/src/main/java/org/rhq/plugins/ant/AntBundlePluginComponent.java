@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,6 +50,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
@@ -319,11 +321,24 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         antProps.setProperty(DeployPropertyNames.DEPLOY_REVERT, String.valueOf(request.isRevert()));
         antProps.setProperty(DeployPropertyNames.DEPLOY_CLEAN, String.valueOf(request.isCleanDeployment()));
 
+        // add the resource tags
+        Set<Tag> tags = resourceDeployment.getResource().getTags();
+        if (tags != null) {
+            for (Tag tag : tags) {
+                String tagPropName = getTagPropertyName(tag);
+                if (tagPropName != null) {
+                    antProps.setProperty(tagPropName, tag.getName());
+                }
+            }
+        }
+
+        // add the system info "facts"
         Map<String, String> sysFacts = SystemInfoFactory.fetchTemplateEngine().getTokens();
         for (Map.Entry<String, String> fact : sysFacts.entrySet()) {
             antProps.setProperty(fact.getKey(), fact.getValue());
         }
 
+        // add the deployment parameter properties
         Configuration config = bundleDeployment.getConfiguration();
         if (config != null) {
             Map<String, Property> allProperties = config.getAllProperties();
@@ -343,6 +358,22 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             }
         }
         return antProps;
+    }
+
+    private String getTagPropertyName(Tag tag) {
+        String namespace = tag.getNamespace();
+        String semantic = tag.getSemantic();
+
+        if (semantic == null) {
+            return null; // we are ignoring tags that are not qualified with a semantic
+        }
+
+        if (namespace == null) {
+            return DeployPropertyNames.DEPLOY_TAG_PREFIX + semantic;
+        } else {
+            // note: ':' not allowed in tokens, so this is replaced with '.'
+            return DeployPropertyNames.DEPLOY_TAG_PREFIX + namespace + '.' + semantic;
+        }
     }
 
     private String formatDiff(DeployDifferences diffs) {

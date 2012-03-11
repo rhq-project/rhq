@@ -70,7 +70,7 @@ class ConstraintImpl_PK implements ConstraintImpl {
     }
 
     private String listItems(List<String> list) {
-        StringBuffer ret_items = new StringBuffer();
+        StringBuilder ret_items = new StringBuilder();
 
         if (list != null) {
             for (String string : list) {

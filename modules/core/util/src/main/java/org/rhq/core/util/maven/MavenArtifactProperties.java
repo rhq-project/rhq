@@ -24,7 +24,7 @@ package org.rhq.core.util.maven;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,7 +90,7 @@ public class MavenArtifactProperties {
      * @throws MavenArtifactNotFoundException if a pom.properties file for the artifact could not be found in the context
      *         class loader or in our class loader
      */
-    @Nullable
+    @NotNull
     public static MavenArtifactProperties getInstance(String groupId, String artifactId)
             throws MavenArtifactNotFoundException {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -117,7 +117,7 @@ public class MavenArtifactProperties {
      * @throws MavenArtifactNotFoundException if a pom.properties file for the artifact could not be found in the
      *         specified class loader
      */
-    @Nullable
+    @NotNull
     public static MavenArtifactProperties getInstance(String groupId, String artifactId, ClassLoader classLoader)
             throws MavenArtifactNotFoundException {
         String cacheKey = groupId + ":" + artifactId;

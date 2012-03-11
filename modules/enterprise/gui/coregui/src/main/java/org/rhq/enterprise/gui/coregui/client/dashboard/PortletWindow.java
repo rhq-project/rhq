@@ -22,23 +22,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import java.util.Set;
-
 import com.smartgwt.client.types.DragAppearance;
 import com.smartgwt.client.types.HeaderControls;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HeaderControl;
 import com.smartgwt.client.widgets.HeaderControl.HeaderIcon;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
-import com.smartgwt.client.widgets.events.DragResizeStopEvent;
-import com.smartgwt.client.widgets.events.DragResizeStopHandler;
-import com.smartgwt.client.widgets.events.MouseOverEvent;
-import com.smartgwt.client.widgets.events.MouseOverHandler;
-
+import com.smartgwt.client.widgets.events.*;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -46,6 +36,8 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import java.util.Set;
 
 /**
  * @author Greg Hinkle
@@ -196,7 +188,7 @@ public class PortletWindow extends LocatableWindow {
         });
 
         addCloseClickHandler(new CloseClickHandler() {
-            public void onCloseClick(CloseClientEvent closeClientEvent) {
+            public void onCloseClick(CloseClickEvent closeClientEvent) {
                 PortletWindow.this.dashboardView.removePortlet(PortletWindow.this.storedPortlet);
                 destroy();
             }

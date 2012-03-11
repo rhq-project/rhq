@@ -17,10 +17,8 @@
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ "x$RHQ_CLI_DEBUG" != "x" ]; then
-      if [ "$RHQ_CLI_DEBUG" != "false" ]; then
-         echo "rhq-cli.sh: $1"
-      fi
+   if [ -n "$RHQ_CLI_DEBUG" ] && [ "$RHQ_CLI_DEBUG" != "false" ]; then
+      echo "rhq-cli.sh: $1"
    fi
 }
 
@@ -51,11 +49,11 @@ else
    debug_msg "No environment script found at: ${RHQ_CLI_BIN_DIR_PATH}/rhq-cli-env.sh"
 fi
 
-if [ "x$RHQ_CLI_HOME" = "x" ]; then
+if [ -z "$RHQ_CLI_HOME" ]; then
    cd "${RHQ_CLI_BIN_DIR_PATH}/.."
 else
    cd "${RHQ_CLI_HOME}" || {
-      echo Cannot go to the RHQ_CLI_HOME directory: ${RHQ_CLI_HOME}
+      echo "Cannot go to the RHQ_CLI_HOME directory: ${RHQ_CLI_HOME}"
       exit 1
       }
 fi
@@ -68,8 +66,8 @@ debug_msg "RHQ_CLI_HOME: $RHQ_CLI_HOME"
 # If we are on a Mac and JAVA_HOME is not set, then set it to /usr
 # as this is the default location.
 # ----------------------------------------------------------------------
-if [ "x$JAVA_HOME" = "x" ]; then
-   if [ "x$_DARWIN" != "x" ]; then
+if [ -z "$JAVA_HOME" ]; then
+   if [ -n "$_DARWIN" ]; then
      debug_msg "Running on Mac OS X, setting JAVA_HOME to /usr"
      JAVA_HOME=/usr
    fi
@@ -79,11 +77,12 @@ fi
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_CLI_JAVA_EXE_FILE_PATH" = "x" ]; then
-   if [ "x$RHQ_CLI_JAVA_HOME" = "x" ]; then
+if [ -z "$RHQ_CLI_JAVA_EXE_FILE_PATH" ]; then
+   if [ -z "$RHQ_CLI_JAVA_HOME" ]; then
       RHQ_CLI_JAVA_HOME="${RHQ_CLI_HOME}/jre"
-      debug_msg "Using the embedded JRE"
-      if [ ! -d "$RHQ_CLI_JAVA_HOME" ]; then
+      if [ -d "$RHQ_CLI_JAVA_HOME" ]; then
+         debug_msg "Using the embedded JRE"
+      else
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
          RHQ_CLI_JAVA_HOME="$JAVA_HOME"
       fi
@@ -94,8 +93,8 @@ fi
 debug_msg "RHQ_CLI_JAVA_EXE_FILE_PATH: $RHQ_CLI_JAVA_EXE_FILE_PATH"
 
 if [ ! -f "$RHQ_CLI_JAVA_EXE_FILE_PATH" ]; then
-   echo There is no JVM available.
-   echo Please set RHQ_CLI_JAVA_HOME or RHQ_CLI_JAVA_EXE_FILE_PATH appropriately.
+   echo "There is no JVM available."
+   echo "Please set RHQ_CLI_JAVA_HOME or RHQ_CLI_JAVA_EXE_FILE_PATH appropriately."
    exit 1
 fi
 
@@ -107,7 +106,7 @@ CLASSPATH="${RHQ_CLI_HOME}/conf"
 _JAR_FILES=`cd "${RHQ_CLI_HOME}/lib";ls -1 *.jar`
 for _JAR in $_JAR_FILES ; do
    _JAR="${RHQ_CLI_HOME}/lib/${_JAR}"
-   if [ "x$CLASSPATH" = "x" ]; then
+   if [ -z "$CLASSPATH" ]; then
       CLASSPATH="${_JAR}"
    else
       CLASSPATH="${CLASSPATH}:${_JAR}"
@@ -122,7 +121,7 @@ debug_msg "CLASSPATH entry: $_JAR"
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------
 
-if [ "x$RHQ_CLI_JAVA_OPTS" = "x" ]; then
+if [ -z "$RHQ_CLI_JAVA_OPTS" ]; then
    RHQ_CLI_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
 fi
 debug_msg "RHQ_CLI_JAVA_OPTS: $RHQ_CLI_JAVA_OPTS"
@@ -130,12 +129,12 @@ debug_msg "RHQ_CLI_JAVA_OPTS: $RHQ_CLI_JAVA_OPTS"
 if [ "$RHQ_CLI_JAVA_ENDORSED_DIRS" = "none" ]; then
    debug_msg "Not explicitly setting java.endorsed.dirs"
 else
-   if [ "x$RHQ_CLI_JAVA_ENDORSED_DIRS" = "x" ]; then
+   if [ -z "$RHQ_CLI_JAVA_ENDORSED_DIRS" ]; then
       RHQ_CLI_JAVA_ENDORSED_DIRS="${RHQ_CLI_HOME}/lib/endorsed"
    fi
 
    # convert the path if on Windows
-   if [ "x$_CYGWIN" != "x" ]; then
+   if [ -n "$_CYGWIN" ]; then
       RHQ_CLI_JAVA_ENDORSED_DIRS=`cygpath --windows --path "$RHQ_CLI_JAVA_ENDORSED_DIRS"`
    fi
    debug_msg "RHQ_CLI_JAVA_ENDORSED_DIRS: $RHQ_CLI_JAVA_ENDORSED_DIRS"
@@ -145,12 +144,12 @@ fi
 if [ "$RHQ_CLI_JAVA_LIBRARY_PATH" = "none" ]; then
    debug_msg "Not explicitly setting java.library.path"
 else
-   if [ "x$RHQ_CLI_JAVA_LIBRARY_PATH" = "x" ]; then
+   if [ -z "$RHQ_CLI_JAVA_LIBRARY_PATH" ]; then
       RHQ_CLI_JAVA_LIBRARY_PATH="${RHQ_CLI_HOME}/lib"
    fi
 
    # convert the path if on Windows
-   if [ "x$_CYGWIN" != "x" ]; then
+   if [ -n "$_CYGWIN" ]; then
       RHQ_CLI_JAVA_LIBRARY_PATH=`cygpath --windows --path "$RHQ_CLI_JAVA_LIBRARY_PATH"`
    fi
    debug_msg "RHQ_CLI_JAVA_LIBRARY_PATH: $RHQ_CLI_JAVA_LIBRARY_PATH"
@@ -166,7 +165,7 @@ debug_msg "RHQ_CLI_ADDITIONAL_JAVA_OPTS: $RHQ_CLI_ADDITIONAL_JAVA_OPTS"
 _LOG_CONFIG=-Dlog4j.configuration=log4j.xml
 
 # if debug is enabled, the log configuration is different
-if [ "x$RHQ_CLI_DEBUG" != "x" ]; then
+if [ -n "$RHQ_CLI_DEBUG" ]; then
    if [ "$RHQ_CLI_DEBUG" != "false" ]; then
       _LOG_CONFIG="-Dlog4j.configuration=log4j-debug.xml"
    fi
@@ -178,7 +177,7 @@ if [ ! -d "${RHQ_CLI_HOME}/logs" ]; then
 fi
 
 # convert some of the paths if we are on Windows
-if [ "x$_CYGWIN" != "x" ]; then
+if [ -n "$_CYGWIN" ]; then
    CLASSPATH=`cygpath --windows --path "$CLASSPATH"`
 fi
 
@@ -190,7 +189,7 @@ fi
 # would be already expanded and we'd therefore loose the ability to pass in
 # quoted args.
 debug_msg "Executing the CLI with this command line:"
-if [ "x$RHQ_CLI_CMDLINE_OPTS" = "x" ]; then
+if [ -z "$RHQ_CLI_CMDLINE_OPTS" ]; then
     debug_msg "${RHQ_CLI_JAVA_EXE_FILE_PATH} ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp ${CLASSPATH} org.rhq.enterprise.client.ClientMain $@"
     "${RHQ_CLI_JAVA_EXE_FILE_PATH}" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${RHQ_CLI_JAVA_OPTS} ${RHQ_CLI_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp "${CLASSPATH}" org.rhq.enterprise.client.ClientMain "$@"
 else

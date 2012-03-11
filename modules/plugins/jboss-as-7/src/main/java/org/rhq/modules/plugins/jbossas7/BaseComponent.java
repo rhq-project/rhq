@@ -52,7 +52,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -79,6 +78,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     private static final int INTERNAL_SIZE = INTERNAL.length();
     private static final String LOCALHOST = "localhost";
     private static final String DEFAULT_HTTP_MANAGEMENT_PORT = "9990";
+    public static final String MANAGED_SERVER = "Managed Server";
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
@@ -182,7 +182,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this
                         try {
-                            Double d = Double.parseDouble((String)val);
+                            Double d = Double.parseDouble(getStringValue(val));
                             MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
                             report.addData(data);
                         } catch (NumberFormatException e) {
@@ -191,17 +191,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     }
                 } else if (req.getDataType()== DataType.TRAIT) {
 
-                    String realVal;
-                    if (val instanceof String)
-                        realVal = (String)val;
-                    else
-                        realVal = String.valueOf(val);
+                    String realVal = getStringValue(val);
 
                     MeasurementDataTrait data = new MeasurementDataTrait(req,realVal);
                     report.addData(data);
                 }
             }
         }
+    }
+
+    private String getStringValue(Object val) {
+        String realVal;
+        if (val instanceof String)
+            realVal = (String)val;
+        else
+            realVal = String.valueOf(val);
+        return realVal;
     }
 
     /**
@@ -263,8 +268,16 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
     public void deleteResource() throws Exception {
 
         log.info("delete resource: " + path + " ...");
+        if (context.getResourceType().getName().equals(MANAGED_SERVER)) {
+            // We need to do two steps because of AS7-4032
+            Operation stop = new Operation("stop",getAddress());
+            Result res = getASConnection().execute(stop);
+            if (!res.isSuccess()) {
+                throw new IllegalStateException("Managed server @ " + path + " is still running and can't be stopped. Can't remove it");
+            }
+        }
         Operation op = new Remove(address);
-        ComplexResult res = connection.executeComplex(op);
+        Result res = connection.execute(op);
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         if (path.contains("server-group")) {
@@ -475,32 +488,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 
             operation = new Operation(op,theAddress);
             operation.addAdditionalProperty("profile",profile);
-        } else if (what.equals("server")) {
-            if (context.getResourceType().getName().equals("JBossAS7 Managed Server")) {
-                String host = pluginConfiguration.getSimpleValue("domainHost","local");
-                theAddress.add("host", host);
-                theAddress.add("server-config", myServerName);
-                operation = new Operation(op,theAddress);
-            }
-            else if (context.getResourceType().getName().equals("Host")) {
-                theAddress.add(address);
-                String serverName = parameters.getSimpleValue("name",null);
-                theAddress.add("server-config", serverName);
-                Map<String,Object> props = new HashMap<String, Object>();
-                String serverGroup = parameters.getSimpleValue("group",null);
-                props.put("group",serverGroup);
-                if (op.equals("add")) {
-                    props.put("name",serverName);
-                    boolean autoStart = parameters.getSimple("auto-start").getBooleanValue();
-                    props.put("auto-start",autoStart);
-                    // TODO put more properties in
-                }
-
-                operation = new Operation(op,theAddress,props);
-            }
-            else {
-                operation = new Operation(op,theAddress);
-            }
         } else if (what.equals("destination")) {
             theAddress.add(address);
             String newName = parameters.getSimpleValue("name","");
@@ -532,26 +519,6 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             }
 
 
-        } else if (what.equals("managed-server")) {
-            String chost = parameters.getSimpleValue("hostname","");
-            String serverName = parameters.getSimpleValue("servername","");
-            String serverGroup = parameters.getSimpleValue("server-group","");
-            String socketBindings = parameters.getSimpleValue("socket-bindings","");
-            String portS = parameters.getSimpleValue("port-offset","0");
-            int port = Integer.parseInt(portS);
-            String autostartS = parameters.getSimpleValue("auto-start","false");
-            boolean autoStart = Boolean.getBoolean(autostartS);
-
-            theAddress.add("host", chost);
-            theAddress.add("server-config", serverName);
-            Map<String,Object> props = new HashMap<String, Object>();
-            props.put("name",serverName);
-            props.put("group",serverGroup);
-            props.put("socket-binding-group",socketBindings);
-            props.put("socket-binding-port-offset",port);
-            props.put("auto-start",autoStart);
-
-            operation = new Operation(op,theAddress,props);
         } else if (what.equals("domain")) {
             operation = new Operation(op,new Address());
         } else if (what.equals("domain-deployment")) {

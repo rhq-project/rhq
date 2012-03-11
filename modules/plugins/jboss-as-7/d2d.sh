@@ -1,2 +1,7 @@
-#!/bin/sh
-java -cp target/rhq-jboss-as-7-plugin-4.3.0-SNAPSHOT.jar:/im/rhq/modules/enterprise/agent/target/rhq-agent/lib/commons-logging-1.1.0.jboss.jar:/Users/hrupp/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar:/Users/hrupp/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar org.rhq.modules.plugins.jbossas7.Domain2Descriptor $*
+#!/bin/sh 
+
+RHQ_DEV_HOME=${HOME}/im/rhq
+M2_REPO=${HOME}/.m2/repository
+RHQ_VERSION='4.4.0-SNAPSHOT'
+
+java -cp target/rhq-jboss-as-7-plugin-${RHQ_VERSION}.jar:${M2_REPO}/commons-logging/commons-logging-api/1.1/commons-logging-api-1.1.jar:${M2_REPO}/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar:${M2_REPO}/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar:${M2_REPO}/org/rhq/rhq-core-plugin-api/${RHQ_VERSION}/rhq-core-plugin-api-${RHQ_VERSION}.jar org.rhq.modules.plugins.jbossas7.Domain2Descriptor $*

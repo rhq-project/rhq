@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,17 +41,19 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
  *
  * @author Ian Springer
  */
-public class TxConnectionFactoryComponent extends ManagedComponentComponent {
+public class TxConnectionFactoryComponent extends DatasourceOrConnectionFactoryComponent {
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ManagedComponent mc = getManagedComponent(true);
+        ManagedComponent managedComponent = getManagedComponent();
+
         Set<MeasurementScheduleRequest> uncollectedMetrics = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementScheduleRequest request : metrics) {
             try {
                 if (request.getName().equals("custom.transactionType")) {
-                    ManagedProperty xaTransactionProp = mc.getProperty("xa-transaction");
+                    ManagedProperty xaTransactionProp = managedComponent.getProperty("xa-transaction");
                     SimpleValue xaTransactionMetaValue = (SimpleValue) xaTransactionProp.getValue();
                     Boolean xaTransactionValue = (xaTransactionMetaValue != null) ? (Boolean) xaTransactionMetaValue
                         .getValue() : null;
@@ -65,6 +67,8 @@ public class TxConnectionFactoryComponent extends ManagedComponentComponent {
                 log.error("Failed to collect metric for " + request, e);
             }
         }
-        super.getValues(report, uncollectedMetrics);
+
+        super.getValues(managedComponent, report, uncollectedMetrics);
     }
+
 }

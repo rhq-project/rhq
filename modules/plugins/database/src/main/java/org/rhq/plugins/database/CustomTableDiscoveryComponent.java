@@ -39,24 +39,26 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent<?>>, ResourceDiscoveryComponent<DatabaseComponent<?>> {
+public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent<?>>,
+    ResourceDiscoveryComponent<DatabaseComponent<?>> {
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
-            throws InvalidPluginConfigurationException, Exception {
+        ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
         Statement statement = null;
         try {
             Connection conn = resourceDiscoveryContext.getParentResourceComponent().getConnection();
 
             Configuration config = resourceDiscoveryContext.getDefaultPluginConfiguration();
             String table = config.getSimpleValue("table", null);
-            String resourceName = config.getSimpleValue("name", null);
+            String resourceName = config.getSimpleValue("name", table);
             String resourceDescription = config.getSimpleValue("description", null);
 
             statement = conn.createStatement();
             statement.executeQuery("SELECT COUNT(*) FROM " + table);
 
-            DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext
-                    .getResourceType(), table, resourceName, null, resourceDescription, config, null);
+            DiscoveredResourceDetails details = new DiscoveredResourceDetails(
+                resourceDiscoveryContext.getResourceType(), table + resourceName, resourceName, null,
+                resourceDescription, config, null);
 
             return Collections.singleton(details);
         } catch (SQLException e) {
@@ -65,34 +67,25 @@ public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseCom
             JDBCUtil.safeClose(statement);
         }
 
-
         if (!resourceDiscoveryContext.getPluginConfigurations().isEmpty()) {
-            return Collections.singleton(discoverResource(resourceDiscoveryContext.getPluginConfigurations().get(0),resourceDiscoveryContext));
+            return Collections.singleton(discoverResource(resourceDiscoveryContext.getPluginConfigurations().get(0),
+                resourceDiscoveryContext));
         }
-
-
 
         return Collections.emptySet();
     }
 
-    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration, ResourceDiscoveryContext<DatabaseComponent<?>> discoveryContext)
-            throws InvalidPluginConfigurationException {
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+        ResourceDiscoveryContext<DatabaseComponent<?>> discoveryContext) throws InvalidPluginConfigurationException {
 
         Configuration config = pluginConfiguration;
 
         String table = config.getSimpleValue("table", null);
-        String resourceName = config.getSimpleValue("name", null);
+        String resourceName = config.getSimpleValue("name", table);
         String resourceDescription = config.getSimpleValue("description", null);
 
-        DiscoveredResourceDetails details =
-                new DiscoveredResourceDetails(
-                        discoveryContext.getResourceType(),
-                        table + resourceName,
-                        resourceName,
-                        null,
-                        resourceDescription,
-                        config,
-                        null);
+        DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(), table
+            + resourceName, resourceName, null, resourceDescription, config, null);
 
         return details;
     }

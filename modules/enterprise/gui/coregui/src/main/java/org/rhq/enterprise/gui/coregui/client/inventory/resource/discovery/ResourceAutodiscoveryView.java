@@ -18,10 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DataSource;
@@ -50,11 +46,14 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
-
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
@@ -64,13 +63,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 /**
  * @author Greg Hinkle
  */
-public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView {
+public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView, HasViewName {
 
-    private static final String TITLE = MSG.view_autoDiscoveryQ_title();
-    private static final String HEADER_ICON = "global/AutoDiscovery_24.png";
+    public static final ViewName VIEW_ID = new ViewName("AutodiscoveryQueue", MSG.view_inventory_adq(), IconEnum.DISCOVERY_QUEUE);
 
     private boolean simple;
     private TreeGrid treeGrid;
@@ -103,27 +105,6 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
     @Override
     protected void onInit() {
         super.onInit();
-
-        if (!simple) {
-            Img img = new Img(HEADER_ICON, 24, 24);
-            img.setPadding(4);
-
-            HTMLFlow title = new HTMLFlow();
-            title.setWidth100();
-            title.setHeight(35);
-            title.setContents(TITLE);
-            title.setPadding(4);
-            title.setStyleName("HeaderLabel");
-
-            HLayout titleLayout = new HLayout();
-            titleLayout.setAutoHeight();
-            titleLayout.setAlign(VerticalAlignment.BOTTOM);
-
-            titleLayout.addMember(img);
-            titleLayout.addMember(title);
-
-            addMember(titleLayout);
-        }
 
         treeGrid = new LocatableTreeGrid(this.getLocatorId());
 
@@ -220,7 +201,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                 }
                 selectionChangedHandlerDisabled = true;
 
-                final TreeNode selectedNode = (TreeNode) selectionEvent.getRecord();
+                final TreeNode selectedNode = treeGrid.getTree().findById(selectionEvent.getRecord().getAttribute("id"));
                 TreeNode parentNode = treeGrid.getTree().getParent(selectedNode);
                 boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
                 boolean isCheckboxMarked = treeGrid.isSelected(selectedNode);
@@ -390,7 +371,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
     private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton, IButton importButton,
         IButton ignoreButton, IButton unignoreButton) {
-        if (treeGrid.getSelection().length == 0) {
+        if (treeGrid.getSelectedRecords().length == 0) {
             selectAllButton.setDisabled(false);
             deselectAllButton.setDisabled(true);
             importButton.setDisabled(true);
@@ -400,7 +381,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
             return;
         }
 
-        boolean allSelected = (treeGrid.getSelection().length == treeGrid.getRecords().length);
+        boolean allSelected = (treeGrid.getSelectedRecords().length == treeGrid.getRecords().length);
         selectAllButton.setDisabled(allSelected);
         deselectAllButton.setDisabled(false);
 
@@ -408,8 +389,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         boolean ignoreOk = false;
         boolean unignoreOk = false;
 
-        for (ListGridRecord listGridRecord : treeGrid.getSelection()) {
-            TreeNode node = (TreeNode) listGridRecord;
+        for (ListGridRecord listGridRecord : treeGrid.getSelectedRecords()) {
+            TreeNode node = treeGrid.getTree().findById(listGridRecord.getAttribute("id"));
             String status = node.getAttributeAsString("status");
             TreeNode parentNode = treeGrid.getTree().getParent(node);
             boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
@@ -439,7 +420,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
     private int[] getSelectedIds() {
         List<Integer> selected = new ArrayList<Integer>();
-        for (ListGridRecord node : treeGrid.getSelection()) {
+        for (ListGridRecord node : treeGrid.getSelectedRecords()) {
             if (!InventoryStatus.COMMITTED.name().equals(node.getAttributeAsString("status"))) {
                 selected.add(Integer.parseInt(node.getAttributeAsString("id")));
             }
@@ -466,4 +447,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
         return treeGrid;
     }
 
+    @Override
+    public ViewName getViewName() {
+        return VIEW_ID;
+    }
 }

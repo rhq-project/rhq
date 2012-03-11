@@ -28,8 +28,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -52,6 +54,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
@@ -94,8 +97,8 @@ public class AntBundlePluginComponentTest {
         this.plugin = new AntBundlePluginComponent();
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
-        @SuppressWarnings("unchecked")
-        ResourceContext<?> context = new ResourceContext(resource, null, null,
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        ResourceContext<?> context = new ResourceContext(resource, null, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);
         this.plugin.start(context);
     }
@@ -159,7 +162,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
         request.setAbsoluteDestinationDirectory(this.destDir);
         request.setRevert(true);
@@ -209,7 +212,7 @@ public class AntBundlePluginComponentTest {
         DeploymentProperties currentProps = metadata.getCurrentDeploymentProperties();
         assert deploymentProps.equals(currentProps);
 
-        // check the backup directory - note, clean flag is irrelevent when determining what should be backed up 
+        // check the backup directory - note, clean flag is irrelevent when determining what should be backed up
         File backupDir = metadata.getDeploymentBackupDirectory(deployment.getId());
         File ignoredBackupFile = new File(backupDir, "ignore/ignore-file.txt");
         assert ignoredBackupFile.isFile() : "old recipe didn't ignore these, should be backed up";
@@ -300,7 +303,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
         request.setAbsoluteDestinationDirectory(this.destDir);
 
@@ -386,7 +389,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
         request.setAbsoluteDestinationDirectory(this.destDir);
 
@@ -403,6 +406,76 @@ public class AntBundlePluginComponentTest {
         Properties notrealizedProps = new Properties();
         loadProperties(notrealizedProps, new FileInputStream(new File(this.destDir, "config/noreplace.properties")));
         assert "@@custom.prop1@@".equals(notrealizedProps.getProperty("custom.prop1")) : "replaced prop when it shouldn't";
+    }
+
+    /**
+     * Test realizing of replacement tokens of resource tags.
+     */
+    @Test(enabled = true)
+    public void testTags() throws Exception {
+        ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
+        BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
+        Repo repo = new Repo("testSimpleBundle");
+        PackageType packageType = new PackageType("testSimpleBundle", resourceType);
+        Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
+        BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
+            getRecipeFromFile("test-bundle.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle", new ResourceGroup(
+            "testSimpleBundle"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
+
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setName("test bundle deployment name");
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setDestination(destination);
+
+        // create test file that will have @@ tokens for all our tags
+        // note that only tags that have semantics specified will be replaced
+        // our createNewBundleDeployment creates our test tags
+        File file1 = new File(this.bundleFilesDir, "test.properties");
+        Properties props = new Properties();
+        props.setProperty("rhq.tag.ns1.sem1", "@@rhq.tag.ns1.sem1@@"); // tag is "ns1:sem1=tag1"
+        props.setProperty("rhq.tag.sem2", "@@rhq.tag.sem2@@"); // tag is "sem2=tag2"
+        props.setProperty("rhq.tag.ns3.null", "@@rhq.tag.ns3.null@@"); // tag is "ns3:tag3"
+        props.setProperty("rhq.tag.null", "@@rhq.tag.null@@"); // tag is "tag4"
+        FileOutputStream outputStream = new FileOutputStream(file1);
+        props.store(outputStream, "replace");
+        outputStream.close();
+
+        // create noreplace test file
+        File noreplacefile = new File(this.bundleFilesDir, "noreplace.properties");
+        outputStream = new FileOutputStream(noreplacefile);
+        props.store(outputStream, "noreplace");
+        outputStream.close();
+
+        // create foo test file
+        File foofile = new File(this.bundleFilesDir, "foo.properties");
+        outputStream = new FileOutputStream(foofile);
+        props.store(outputStream, "foo");
+        outputStream.close();
+
+        BundleDeployRequest request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
+
+        BundleDeployResult results = plugin.deployBundle(request);
+
+        assertResultsSuccess(results);
+
+        // test that the prop was replaced in test.properties
+        Properties realizedProps = new Properties();
+        loadProperties(realizedProps, new FileInputStream(new File(this.destDir, "config/test.properties")));
+        assert "tag1".equals(realizedProps.getProperty("rhq.tag.ns1.sem1")) : "didn't replace prop 1";
+        assert "tag2".equals(realizedProps.getProperty("rhq.tag.sem2")) : "didn't replace prop 2";
+        assert "@@rhq.tag.ns3.null@@".equals(realizedProps.getProperty("rhq.tag.ns3.null")) : "this tag should have been ignored 3";
+        assert "@@rhq.tag.null@@".equals(realizedProps.getProperty("rhq.tag.null")) : "this tag should have been ignored 4";
+
+        // test that the prop was not replaced in noreplace.properties
+        Properties notrealizedProps = new Properties();
+        loadProperties(notrealizedProps, new FileInputStream(new File(this.destDir, "config/noreplace.properties")));
+        assert "@@rhq.tag.ns1.sem1@@".equals(notrealizedProps.getProperty("rhq.tag.ns1.sem1")) : "replaced prop 1 when it shouldn't";
+        assert "@@rhq.tag.sem2@@".equals(notrealizedProps.getProperty("rhq.tag.sem2")) : "replaced prop 2 when it shouldn't";
     }
 
     /**
@@ -470,7 +543,7 @@ public class AntBundlePluginComponentTest {
         // deploy the bundle
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
         request.setAbsoluteDestinationDirectory(this.destDir);
 
@@ -500,7 +573,7 @@ public class AntBundlePluginComponentTest {
 
         // now purge the bundle - this should only purge those files that were laid down by the bundle plus the metadata directory
         BundlePurgeRequest purgeRequest = new BundlePurgeRequest();
-        purgeRequest.setLiveResourceDeployment(new BundleResourceDeployment(deployment, null));
+        purgeRequest.setLiveResourceDeployment(createNewBundleDeployment(deployment));
         purgeRequest.setBundleManagerProvider(new MockBundleManagerProvider());
         purgeRequest.setAbsoluteDestinationDirectory(this.destDir);
 
@@ -591,7 +664,7 @@ public class AntBundlePluginComponentTest {
         // deploy the bundle
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
         request.setAbsoluteDestinationDirectory(this.destDir);
 
@@ -628,7 +701,7 @@ public class AntBundlePluginComponentTest {
 
         // now purge the bundle - this should purge everything in the deploy dir because we are fully managing it
         BundlePurgeRequest purgeRequest = new BundlePurgeRequest();
-        purgeRequest.setLiveResourceDeployment(new BundleResourceDeployment(deployment, null));
+        purgeRequest.setLiveResourceDeployment(createNewBundleDeployment(deployment));
         purgeRequest.setBundleManagerProvider(new MockBundleManagerProvider());
         purgeRequest.setAbsoluteDestinationDirectory(this.destDir);
 
@@ -705,7 +778,7 @@ public class AntBundlePluginComponentTest {
 
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
-        request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
         request.setAbsoluteDestinationDirectory(this.destDir);
         request.setCleanDeployment(clean);
@@ -796,6 +869,17 @@ public class AntBundlePluginComponentTest {
         } finally {
             fileInputStream.close();
         }
+    }
+
+    private BundleResourceDeployment createNewBundleDeployment(BundleDeployment deployment) {
+        Resource resource = new Resource(1);
+        Set<Tag> tags = new HashSet<Tag>();
+        tags.add(new Tag("ns1:sem1=tag1")); // we can use @@rhq.tag.ns1.sem1@@
+        tags.add(new Tag("sem2=tag2")); // we can use @@rhq.tag.sem2@@
+        tags.add(new Tag("ns3:tag3")); // no semantic is specified, bundle deployments will not see this
+        tags.add(new Tag("tag4")); // no semantic is specified, bundle deployments will not see this
+        resource.setTags(tags);
+        return new BundleResourceDeployment(deployment, resource);
     }
 
     private class MockBundleManagerProvider implements BundleManagerProvider {

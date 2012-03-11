@@ -24,7 +24,8 @@ package org.rhq.core.pluginapi.bundle;
 
 /**
  * Facet that exposes a component's capabilities to process a bundle.
- * 
+ *
+ * @since 3.0
  * @author John Mazzitelli
  */
 public interface BundleFacet {

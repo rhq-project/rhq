@@ -28,13 +28,16 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -51,9 +54,10 @@ public class ASConnection {
     String urlString;
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
-    Authenticator passwordAuthenticator ;
+    Authenticator passwordAuthenticator;
     private String host;
     private int port;
+    private String FAILURE_DESCRIPTION = "\"failure-description\"";
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -75,13 +79,15 @@ public class ASConnection {
             throw new IllegalArgumentException(e.getMessage());
         }
 
-        passwordAuthenticator = new AS7Authenticator(user,password);
+        passwordAuthenticator = new AS7Authenticator(user, password);
         Authenticator.setDefault(passwordAuthenticator);
 
         // read system property "as7plugin.verbose"
         verbose = Boolean.getBoolean("as7plugin.verbose");
 
         mapper = new ObjectMapper();
+        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     }
 
     /**
@@ -101,26 +107,45 @@ public class ASConnection {
         InputStream inputStream = null;
         BufferedReader br = null;
         InputStream es = null;
-        HttpURLConnection conn=null;
+        HttpURLConnection conn = null;
         long t1 = System.currentTimeMillis();
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
-            conn.addRequestProperty("Accept","application/json");
+            conn.addRequestProperty("Accept", "application/json");
             conn.setConnectTimeout(10 * 1000); // 10s
             conn.setReadTimeout(10 * 1000); // 10s
 
-            if (conn.getReadTimeout()!=10*1000)
+            if (conn.getReadTimeout() != 10 * 1000)
                 log.warn("JRE uses a broken timeout mechanism - nothing we can do");
 
             OutputStream out = conn.getOutputStream();
 
             String json_to_send = mapper.writeValueAsString(operation);
+
+            //check for spaces in the path which the AS7 server will reject. Log verbose error and
+            // generate failure indicator.
+            if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
+                if (containsSpaces(operation.getAddress().getPath())) {
+                    Result noResult = new Result();
+                    String outcome = "- Path '" + operation.getAddress().getPath()
+                        + "' in invalid as it cannot contain spaces -";
+                    if (verbose) {
+                        log.error(outcome);
+                    }
+                    noResult.setFailureDescription(outcome);
+                    noResult.setOutcome("failure");
+                    JsonNode invalidPathResult = mapper.valueToTree(noResult);
+                    return invalidPathResult;
+                }
+            }
+
             if (verbose) {
                 log.info("Json to send: " + json_to_send);
             }
+
             mapper.writeValue(out, operation);
 
             out.flush();
@@ -163,6 +188,11 @@ public class ASConnection {
                 return operationResult;
             } else {
                 log.error("IS was null and code was " + responseCode);
+                //if not properly authorized sends plugin exception for visual indicator in the ui.
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    throw new InvalidPluginConfigurationException(
+                        "Credentials for plugin to communicate with are invalid. Update Connection Settings with valid credentials.");
+                }
             }
         } catch (IllegalArgumentException iae) {
             log.error("Illegal argument " + iae);
@@ -230,6 +260,20 @@ public class ASConnection {
         return null;
     }
 
+    /** Method parses Operation.getAddress().getPath() for invalid spaces in the path passed in.
+     * 
+     * @param path Operation.getAddress().getPath() value.
+     * @return boolean indicating invalid spaces found.
+     */
+    private boolean containsSpaces(String path) {
+        boolean includesSpaces = false;
+        StringTokenizer components = new StringTokenizer(path, " ");
+        if (components.countTokens() > 1) {
+            includesSpaces = true;
+        }
+        return includesSpaces;
+    }
+
     /**
      * Execute the passed Operation and return its Result. This is a shortcut of
      * #execute(Operation, false)
@@ -262,22 +306,48 @@ public class ASConnection {
     public Result execute(Operation op, boolean isComplex) {
         JsonNode node = executeRaw(op);
 
-        if (node==null) {
+        if (node == null) {
             log.warn("Operation [" + op + "] returned null");
             Result failure = new Result();
             failure.setFailureDescription("Operation [" + op + "] returned null");
             return failure;
         }
+        Result res;
         try {
-            Result res;
-            if (isComplex)
+
+            //check for failure-description indicator, otherwise ObjectMapper will try to deserialize as json. Ex.
+            // {"outcome":"failed","failure-description":"JBAS014792: Unknown attribute number-of-timed-out-transactions","rolled-back":true}
+            String as7ResultSerialization = node.toString();
+
+            if (as7ResultSerialization.indexOf(FAILURE_DESCRIPTION) > -1) {
+                if (verbose) {
+                    log.warn("------ Detected 'failure-description' when communicating with server."
+                        + as7ResultSerialization);
+                }
+                Result failure = new Result();
+                int failIndex = as7ResultSerialization.indexOf(FAILURE_DESCRIPTION);
+                String failMessage = "";
+                failMessage = as7ResultSerialization.substring(failIndex + FAILURE_DESCRIPTION.length() + 1);
+                failure.setFailureDescription("Operation <" + op + "> returned <" + failMessage + ">");
+                return failure;
+            }
+
+            if (isComplex) {
                 res = mapper.readValue(node, ComplexResult.class);
-            else
+            } else {
                 res = mapper.readValue(node, Result.class);
+            }
             return res;
         } catch (IOException e) {
             log.error(e.getMessage());
-            return null;
+            if (verbose) {
+                log.error("----------- Operation execution unparsable. Request " + ":[" + op + "] Response:<" + node
+                    + ">");
+            }
+            Result failure = new Result();
+            failure.setFailureDescription("Operation <" + op + "> returned unparsable JSON, <" + node + ">.");
+            return failure;
+            //don't return null.
         }
     }
 

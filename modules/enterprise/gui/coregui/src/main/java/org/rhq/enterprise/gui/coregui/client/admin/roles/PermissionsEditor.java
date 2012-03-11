@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -158,7 +158,7 @@ public class PermissionsEditor extends LocatableVStack {
         descriptionField.setWrap(true);
 
         final ListGridField authorizedField = createAuthorizedField("authorized",
-            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid);
+            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid, false);
 
         grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
 
@@ -166,14 +166,17 @@ public class PermissionsEditor extends LocatableVStack {
         ListGridRecord record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSecurity(),
             "global/Locked", Permission.MANAGE_SECURITY, MSG.view_adminRoles_permissions_permDesc_manageSecurity());
         records.add(record);
+
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageInventory(),
             "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY,
             MSG.view_adminRoles_permissions_permDesc_manageInventory());
         records.add(record);
+
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSettings(),
             "subsystems/configure/Configure", Permission.MANAGE_SETTINGS,
             MSG.view_adminRoles_permissions_permDesc_manageSettings(productInfo.getShortName()));
         records.add(record);
+
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundles(),
             "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
             MSG.view_adminRoles_permissions_permDesc_manageBundles());
@@ -182,6 +185,11 @@ public class PermissionsEditor extends LocatableVStack {
         record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
             "subsystems/content/Content", Permission.MANAGE_REPOSITORIES,
             MSG.view_adminRoles_permissions_permDesc_manageRepositories());
+        records.add(record);
+
+        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(),
+            "global/User", Permission.VIEW_USERS,
+            MSG.view_adminRoles_permissions_permDesc_viewUsers());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
@@ -201,9 +209,9 @@ public class PermissionsEditor extends LocatableVStack {
         descriptionField.setWrap(true);
 
         ListGridField readField = createAuthorizedField("readAuthorized", MSG.view_adminRoles_permissions_isRead(),
-            "readName", grid);
+            "readName", grid, true);
         ListGridField writeField = createAuthorizedField("writeAuthorized", MSG.view_adminRoles_permissions_isWrite(),
-            "writeName", grid);
+            "writeName", grid, false);
 
         grid.setFields(iconField, displayNameField, readField, writeField, descriptionField);
 
@@ -296,22 +304,30 @@ public class PermissionsEditor extends LocatableVStack {
         return grid;
     }
 
-    private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid) {
+    private ListGridField createAuthorizedField(String name, String title, final String nameField, final ListGrid grid, boolean  readOnlyColumn) {
         final ListGridField authorizedField = new ListGridField(name, title, 65);
 
         // Show images rather than true/false.
         authorizedField.setType(ListGridFieldType.IMAGE);
         authorizedField.setImageSize(11);
+
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>(2);
-        valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
-        valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        // set the proper images different for read-only column
+        if(readOnlyColumn){
+            valueMap.put(Boolean.TRUE.toString(), "global/permission_checked_disabled_11.png");
+            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        }else {
+            valueMap.put(Boolean.TRUE.toString(), "global/permission_enabled_11.png");
+            valueMap.put(Boolean.FALSE.toString(), "global/permission_disabled_11.png");
+        }
         authorizedField.setValueMap(valueMap);
+        authorizedField.setCanEdit(true);
+
+        CheckboxItem editor = new CheckboxItem();
+        authorizedField.setEditorType(editor);
 
         if (!this.isReadOnly) {
-            authorizedField.setCanEdit(true);
             grid.setEditEvent(ListGridEditEvent.CLICK);
-            CheckboxItem editor = new CheckboxItem();
-            authorizedField.setEditorType(editor);
             final Record[] recordBeingEdited = { null };
             authorizedField.addRecordClickHandler(new RecordClickHandler() {
                 public void onRecordClick(RecordClickEvent event) {

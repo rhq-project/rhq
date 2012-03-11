@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import com.allen_sauer.gwt.log.client.Log;
+import java.util.logging.Logger;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * This lookup service retrieves each RPC service and sets a

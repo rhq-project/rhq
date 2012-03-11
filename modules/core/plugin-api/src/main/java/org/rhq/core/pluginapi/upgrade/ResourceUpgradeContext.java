@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.core.pluginapi.upgrade;
 
 import java.io.File;
@@ -41,7 +40,8 @@ import org.rhq.core.system.SystemInfo;
  * Represents a resource during the resource upgrade phase of discovery.
  * 
  * @see ResourceUpgradeFacet
- * 
+ *
+ * @since 3.0
  * @author Lukas Krejci
  */
 public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends ResourceContext<T> {
@@ -49,10 +49,11 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
     private final Configuration resourceConfiguration;
     private final String name;
     private final String description;
-    private ResourceContext<?> parentResourceContext;
 
     /**
-     * @see ResourceContext#ResourceContext(Resource, ResourceComponent, ResourceDiscoveryComponent, SystemInfo, File, File, String, EventContext, OperationContext, ContentContext, Executor, PluginContainerDeployment)
+     * @see ResourceContext#ResourceContext(org.rhq.core.domain.resource.Resource, org.rhq.core.pluginapi.inventory.ResourceComponent, org.rhq.core.pluginapi.inventory.ResourceContext, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, org.rhq.core.system.SystemInfo, java.io.File, java.io.File, String, org.rhq.core.pluginapi.event.EventContext, org.rhq.core.pluginapi.operation.OperationContext, org.rhq.core.pluginapi.content.ContentContext, java.util.concurrent.Executor, org.rhq.core.pluginapi.inventory.PluginContainerDeployment)
+     *
+     * @since 4.0
      */
     public ResourceUpgradeContext(Resource resource, ResourceContext<?> parentResourceContext,
         T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
@@ -60,18 +61,25 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
         OperationContext operationContext, ContentContext contentContext, Executor availCollectorThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
 
-        super(resource, parentResourceComponent, resourceDiscoveryComponent, systemInfo, temporaryDirectory,
+        super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo, temporaryDirectory,
             dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
             availCollectorThreadPool, pluginContainerDeployment);
 
-        this.parentResourceContext = parentResourceContext;
         this.resourceConfiguration = resource.getResourceConfiguration();
         this.name = resource.getName();
         this.description = resource.getDescription();
     }
 
+    /**
+     * Returns the context of the Resource component's parent Resource component.
+     *
+     * @return the context of the Resource component's parent Resource component
+     *
+     * @since 4.0
+     */
+    @Override
     public ResourceContext<?> getParentResourceContext() {
-        return parentResourceContext;
+        return super.getParentResourceContext();
     }
 
     public Configuration getResourceConfiguration() {
@@ -85,4 +93,5 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
     public String getDescription() {
         return description;
     }
+
 }

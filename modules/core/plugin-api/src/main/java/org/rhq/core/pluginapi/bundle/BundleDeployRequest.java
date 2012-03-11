@@ -30,6 +30,7 @@ import org.rhq.core.domain.content.PackageVersion;
 /**
  * A request to deploy a bundle.
  *
+ * @since 3.0
  * @author John Mazzitelli
  */
 public class BundleDeployRequest implements Serializable {

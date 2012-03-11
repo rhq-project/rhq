@@ -338,8 +338,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 while (keys.hasMore()) {
                     String key = keys.next();
                     Attribute value = si.getAttributes().get(key);
-                    if (value != null) {
-                        userDetails.put(key, value.get() + "");
+                    if ((value != null) && (value.get() != null)) {
+                        userDetails.put(key, value.get().toString());
                     }
                 }
                 return userDetails;

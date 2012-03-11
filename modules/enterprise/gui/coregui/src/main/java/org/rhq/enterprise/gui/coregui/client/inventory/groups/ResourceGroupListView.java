@@ -18,29 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_CHILDREN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_DESCENDANTS;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
-
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-
+import com.smartgwt.client.widgets.events.*;
+import com.smartgwt.client.widgets.grid.*;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -48,10 +30,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.*;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
@@ -59,6 +38,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.*;
 
 /**
  * @author Greg Hinkle
@@ -93,6 +74,13 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         setDataSource(datasource);
     }
 
+    public ResourceGroupListView(String locatorId, Criteria criteria ){
+        super(locatorId, null, criteria);
+
+        final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
+        setDataSource(datasource);
+    }
+
     public void setShowDeleteButton(boolean showDeleteButton) {
         this.showDeleteButton = showDeleteButton;
     }
@@ -106,9 +94,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
         idField.setWidth(50);
 
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryField.setWidth(25);
-        categoryField.setAlign(Alignment.CENTER);
+        IconField categoryField = new IconField(CATEGORY.propertyName());
         categoryField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String categoryName = (String) value;
@@ -124,14 +110,14 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 GroupCategory category = GroupCategory.valueOf(categoryName);
                 String displayName;
                 switch (category) {
-                    case COMPATIBLE:
-                        displayName = MSG.view_group_summary_compatible();
-                        break;
-                    case MIXED:
-                        displayName = MSG.view_group_summary_mixed();
-                        break;
-                    default:
-                        throw new IllegalStateException("Unknown group category: " + category);
+                case COMPATIBLE:
+                    displayName = MSG.view_group_summary_compatible();
+                    break;
+                case MIXED:
+                    displayName = MSG.view_group_summary_mixed();
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown group category: " + category);
                 }
                 return displayName;
             }
@@ -188,13 +174,13 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                         resourceGroupManager.deleteResourceGroups(groupIds, new AsyncCallback<Void>() {
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_deleteFailed(), caught);
+                                refreshTableInfo();
                             }
 
                             public void onSuccess(Void result) {
                                 CoreGUI.getMessageCenter().notify(
                                     new Message(MSG.view_inventory_groups_deleteSuccessful(), Severity.Info));
-
-                                ResourceGroupListView.this.refresh();
+                                refresh(true);
                             }
                         });
                     }
@@ -228,7 +214,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                         winModal.setWidth(700);
                         winModal.setHeight(450);
                         winModal.addCloseClickHandler(new CloseClickHandler() {
-                            public void onCloseClick(CloseClientEvent event) {
+                            public void onCloseClick(CloseClickEvent event) {
                                 refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
                             }
                         });
@@ -249,7 +235,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             public void onDoubleClick(DoubleClickEvent event) {
                 ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelection();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute("id");
                     CoreGUI.goToView(LinkManager.getResourceGroupLink(Integer.valueOf(selectedId)));

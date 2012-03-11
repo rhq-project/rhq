@@ -47,7 +47,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.Agent;
@@ -80,6 +80,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     @AfterClass
     public void afterClass() throws Exception {
         cleanupTest();
+        unpreparePluginScannerService();
     }
 
     @BeforeMethod
@@ -88,6 +89,12 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         prepareMockAgentServiceContainer();
 
         prepareScheduler();
+        try {
+            unpreparePluginScannerService(true);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        preparePluginScannerService();
 
         try {
             pluginMgr = LookupUtil.getPluginManager();
@@ -275,7 +282,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     public class MockMeasurementAgentService implements MeasurementAgentService {
 
         @Override
-        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
             return null;
         }
 

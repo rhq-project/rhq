@@ -34,6 +34,28 @@ public class DeployPropertyNames {
      */
     public static final String DEPLOY_DRY_RUN = "rhq.deploy.dryRun";
 
+    /**
+     * Prefix which is appended to Ant properties.
+     * Tags of a resource are available as Ant properties during content bundle deployment.
+     * Tags have the format "[<namespace>:][<semantic>=]name" such as:
+     *
+     *    it:group=dev
+     *    org=hr
+     *    qa:test1
+     *    test
+     *
+     * For those tags that have a semantic specified, they will be converted to property
+     * names that bundle recipe authors can use as replacement tokens.
+     * "@@rhq.tag.[<namespace>.]<semantic>@@" will be substituted with "<name>" when realized.
+     * Following the same examples above:
+     *
+     *    @@rhq.tag.it.group@@ will be replaced with dev
+     *    @@rhq.tag.org@@ will be replaced with hr
+     *
+     * namespace:name tags and name-only tags, such as "qa:test1" and "test", will be ignored.
+     */
+    public static final String DEPLOY_TAG_PREFIX = "rhq.tag.";
+
     private DeployPropertyNames() {
     }
 }

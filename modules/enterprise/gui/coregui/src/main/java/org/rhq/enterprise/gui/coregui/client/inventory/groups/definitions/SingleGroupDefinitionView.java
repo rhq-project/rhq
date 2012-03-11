@@ -24,9 +24,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.TYPE;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -85,6 +83,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+
 /**
  * @author Joseph Marques
  */
@@ -132,7 +131,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         name.setValue(groupDefinition.getName());
         recursive.setValue(groupDefinition.isRecursive());
         description.setValue(groupDefinition.getDescription());
-        recalculationInterval.setValue(groupDefinition.getRecalculationInterval());
+        recalculationInterval.setValue(groupDefinition.getRecalculationInterval() /(60 * 1000));
         expression.setValue(groupDefinition.getExpression());
 
         final LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("GroupDefinitionForm"));
@@ -150,7 +149,6 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
 
         // button setup
         IButton saveButton = new LocatableIButton(this.extendLocatorId("save"), MSG.common_button_save());
-        //saveButton.addClickHandler(new SaveOrUpdateClickHandler(form, operationType, dynaGroupChildrenView));
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 saveForm(form, dynaGroupChildrenView, false);
@@ -193,11 +191,29 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             form.saveData(new DSCallback() {
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
+                    boolean hasDuplicateNameError = false;
                     if (form.isNewRecord()) {
                         Record[] results = response.getData();
                         if (results.length != 1) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
+
+                            // handle the special case for name already exists error
+                            for (Object entryObject : response.getErrors().entrySet()) {
+                                Map.Entry thisEntry = (Map.Entry) entryObject;
+                                String fieldKey = (String) thisEntry.getKey();
+                                // the duplicate name error will be keyed by 'name' in the errorMap
+                                if (fieldKey.equals("name")) {
+                                    String errorValue = (String) thisEntry.getValue();
+                                    CoreGUI.getErrorHandler().handleError(errorValue);
+                                    hasDuplicateNameError = true;
+                                }
+                            }
+
+                            if(!hasDuplicateNameError){
+                                CoreGUI.getErrorHandler().handleError(
+                                    MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
+                            }
+
+
                         } else {
                             Record newRecord = results[0];
                             GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance().copyValues(
@@ -300,7 +316,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid listGrid = (ListGrid) event.getSource();
-                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                     if (selectedRows != null && selectedRows.length == 1) {
                         String groupUrl = LinkManager.getResourceGroupLink(selectedRows[0].getAttributeAsInt("id"));
                         CoreGUI.goToView(groupUrl);
@@ -394,10 +410,10 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         });
 
         recalculationInterval = new SpinnerItem("recalculationInterval", MSG.view_dynagroup_recalculationInterval());
-        //recalculationInterval.setWrapTitle(false); // do not set this - it causes the form to grow abnormally width-wise for some reason
         recalculationInterval.setMin(0);
+        recalculationInterval.setMax(60 * 24 * 7 ); // max set to 1 week
         recalculationInterval.setDefaultValue(0);
-        recalculationInterval.setStep(60000); // the recalc interval is in milliseconds, step up one minute at a time
+        recalculationInterval.setStep(1); // the recalc interval is in milliseconds, step up one minute at a time
     }
 
     public static LinkedHashMap<String, String> getTemplates() {

@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.view;
 
+
 /**
  * @author Ian Springer
  */
@@ -30,10 +31,24 @@ public class NavigationItem {
 
     private boolean refreshRequired = false;
 
+
+    public NavigationItem(ViewName name,  ViewFactory viewFactory) {
+        this(name, name.getIcon().getIcon16x16Path(), viewFactory, true);
+    }
+
+    @Deprecated
     public NavigationItem(ViewName name, String icon, ViewFactory viewFactory) {
         this(name, icon, viewFactory, true);
     }
 
+    public NavigationItem(ViewName name,  ViewFactory viewFactory, boolean enabled) {
+        this.icon = name.getIcon().getIcon16x16Path();
+        this.viewName = name;
+        this.viewFactory = viewFactory;
+        this.enabled = enabled;
+    }
+
+    @Deprecated
     public NavigationItem(ViewName name, String icon, ViewFactory viewFactory, boolean enabled) {
         this.icon = icon;
         this.viewName = name;

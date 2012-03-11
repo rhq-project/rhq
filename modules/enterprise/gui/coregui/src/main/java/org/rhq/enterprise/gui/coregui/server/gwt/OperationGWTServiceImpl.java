@@ -104,7 +104,6 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     public void invokeResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout) throws RuntimeException {
         try {
-            @SuppressWarnings("unused")
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
                 resourceId, operationName, 0, 0, 0, 0, parameters, description);
         } catch (Throwable t) {
@@ -117,7 +116,6 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         try {
             CronTrigger cronTrigger = new CronTrigger("resource " + resourceId + "_" + operationName, "group",
                 cronString);
-            @SuppressWarnings("unused")
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),
                 resourceId, operationName, parameters, cronTrigger, description);
         } catch (Throwable t) {

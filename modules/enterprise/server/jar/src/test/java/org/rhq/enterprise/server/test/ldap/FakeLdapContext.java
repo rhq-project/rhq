@@ -107,9 +107,9 @@ public class FakeLdapContext implements LdapContext {
 
     public FakeLdapContext() throws NamingException {
         super();
-        System.out.println("------------------------------------------------");
-        System.out.println(FakeLdapContext.class.getCanonicalName() + " initialized");
-        System.out.println("------------------------------------------------");
+        //System.out.println("------------------------------------------------");
+        //System.out.println(FakeLdapContext.class.getCanonicalName() + " initialized");
+        //System.out.println("------------------------------------------------");
     }
 
     @Override

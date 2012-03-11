@@ -44,6 +44,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
+import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
@@ -57,6 +58,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     private String namePropLocator;
     private String type;
     private boolean addNewChildren;
+    private boolean addDeleteModifiedChildren;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -123,6 +125,11 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     if (namePropLocator.endsWith("+")) { // ending in +  -> we need to :add new entries
                         namePropLocator=namePropLocator.substring(0,namePropLocator.length()-1);
                         addNewChildren = true;
+                    }
+                    else if (namePropLocator.endsWith("+-")) { // ending in +-  -> we need to :add new entries and remove/add to modify
+                        namePropLocator=namePropLocator.substring(0,namePropLocator.length()-2);
+                        addNewChildren = true;
+                        addDeleteModifiedChildren = true;
                     }
                     else {
                         addNewChildren = false;
@@ -193,7 +200,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
                     PropertyMap propMap2 = (PropertyMap) prop2;
                     String itemName = propMap2.getSimple(namePropLocator).getStringValue();
                     if (itemName==null) {
-                        throw new IllegalArgumentException("Map contains no entry with name '" + namePropLocator + "'");
+                        throw new IllegalArgumentException("Map contains no entry with name [" + namePropLocator + "]");
                     }
                     if (itemName.equals(existingName)) {
                         found=true;
@@ -239,25 +246,36 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (prop.get(namePropLocator)==null) {
             throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
         }
-        String addrVal= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
+        String key= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
 
-
-        // determine key from map as propDefName
-        String key = prop.getSimpleValue(namePropLocator, null);
-        if (key==null) {
-            throw new IllegalArgumentException("Map contains no entry with name '" + namePropLocator + "'");
-        }
 
         Address addr = new Address(address);
-        addr.add(type,addrVal);
+        addr.add(type,key);
         for (Map.Entry<String,Object> entry : results.entrySet()) {
+
+            if (entry.getValue().equals(key))
+                continue; // skip TODO always or only in the case of degenerated props?
+
+
             Operation operation;
-            if (!addNewChildren || existingPropNames.contains(key))
-                operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
+            if (!addNewChildren || existingPropNames.contains(key)) {
+                // update existing entry
+                if (addDeleteModifiedChildren) {
+                    operation = new Remove(addr);
+                    cop.addStep(operation);
+                    operation = new Operation("add",addr);
+                    operation.addAdditionalProperty("name",key);
+                    operation.addAdditionalProperty("value",entry.getValue());
+
+                }
+                else {
+                    operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
+                }
+            }
             else {
-                Address tmpAddr = new Address(address);
-                tmpAddr.add(type, key);
-                operation = new Operation("add",tmpAddr);
+                // write new child ( :name+ case )
+
+                operation = new Operation("add",addr);
                 operation.addAdditionalProperty("name",key);
                 operation.addAdditionalProperty("value",entry.getValue());
             }

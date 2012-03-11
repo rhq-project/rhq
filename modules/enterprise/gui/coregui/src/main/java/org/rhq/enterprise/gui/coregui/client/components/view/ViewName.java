@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.view;
 
 import org.rhq.core.domain.util.StringUtils;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 
 /**
  * A simple class that ties a private name to a displayed title.  The title may very well change with locale but
@@ -13,6 +14,11 @@ public class ViewName {
     private String name;
     private String title;
 
+    /**
+     * As part of the UXD changes icons will be shown the header titles.
+     */
+    private IconEnum icon;
+
     public ViewName(String name) {
         this(name, null);
     }
@@ -20,7 +26,20 @@ public class ViewName {
     public ViewName(String name, String title) {
         super();
         this.name = name;
-        this.title = (null == title || "".equals(title.trim())) ? StringUtils.deCamelCase(name) : title;
+        this.title = buildTitle(name, title);
+    }
+
+
+    public ViewName(String name, String title, IconEnum icon) {
+        super();
+        this.name = name;
+        this.title = buildTitle(name, title);
+        this.icon = icon;
+    }
+
+
+    private static String buildTitle(String name, String title) {
+        return (null == title || "".equals(title.trim())) ? StringUtils.deCamelCase(name) : title;
     }
 
     public String getName() {
@@ -31,11 +50,15 @@ public class ViewName {
         return title;
     }
 
-    /* 
-     * Return just the name so String construction of view path works as expected
-     * (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
+    public IconEnum getIcon() {
+        return icon;
+    }
+
+    /*
+    * Return just the name so String construction of view path works as expected
+    * (non-Javadoc)
+    * @see java.lang.Object#toString()
+    */
     @Override
     public String toString() {
         return name;

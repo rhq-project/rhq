@@ -28,6 +28,8 @@ import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * The results after an attempt to deploy a bundle has been completed.
+ *
+ * @since 3.0
  * @author John Mazzitelli
  */
 public class BundleDeployResult implements Serializable {

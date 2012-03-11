@@ -29,7 +29,6 @@ import com.smartgwt.client.widgets.form.validator.CustomValidator;
  *
  * @author Ian Springer
  */
-@SuppressWarnings({"UnnecessaryLocalVariable"})
 public class IsLongValidator extends CustomValidator {
 
     public IsLongValidator() {
@@ -84,11 +83,13 @@ public class IsLongValidator extends CustomValidator {
         if (baseStringValue.length() == 19 && baseStringValue.charAt(0) == '9') {
             if (isNegative) {
                 // must be <= 9223372036854775808
-                boolean isValid = baseStringValue.matches("[9][0-2][0-2][0-3][0-3][0-7][0-2][0][0-3][0-6][0-8][0-5][0-4][0-7][0-7][0-5][0-8][0][0-8]");
+                boolean isValid = baseStringValue
+                    .matches("[9][0-2][0-2][0-3][0-3][0-7][0-2][0][0-3][0-6][0-8][0-5][0-4][0-7][0-7][0-5][0-8][0][0-8]");
                 return isValid;
             } else {
                 // must be <= 9223372036854775807
-                boolean isValid = baseStringValue.matches("[9][0-2][0-2][0-3][0-3][0-7][0-2][0][0-3][0-6][0-8][0-5][0-4][0-7][0-7][0-5][0-8][0][0-7]");
+                boolean isValid = baseStringValue
+                    .matches("[9][0-2][0-2][0-3][0-3][0-7][0-2][0][0-3][0-6][0-8][0-5][0-4][0-7][0-7][0-5][0-8][0][0-7]");
                 return isValid;
             }
         }

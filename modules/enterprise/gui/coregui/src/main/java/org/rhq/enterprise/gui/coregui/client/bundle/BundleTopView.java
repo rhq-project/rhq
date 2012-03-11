@@ -28,19 +28,17 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
 
 /**
  * This is the main bundle view with left hand side trees and right hand side list/details view.
@@ -50,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class BundleTopView extends LocatableHLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles());
+    public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles(), IconEnum.BUNDLE);
 
     private ViewId currentNextPath;
 

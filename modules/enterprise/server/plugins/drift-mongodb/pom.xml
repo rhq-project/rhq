@@ -5,12 +5,11 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.4.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.rhq</groupId>
     <artifactId>drift-mongodb-serverplugin</artifactId>
-    <packaging>jar</packaging>
 
     <name>Drift Server MongoDB Plugin</name>
     <description>Server side plugin providing MongoDB Backend for drift management</description>

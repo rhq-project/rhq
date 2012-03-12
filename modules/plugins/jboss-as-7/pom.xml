@@ -22,13 +22,7 @@
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
+
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -67,6 +61,101 @@
     </build>
 
     <profiles>
+
+      <profile>
+        <id>itest</id>
+        <activation>
+          <property>
+            <name>jboss7.home</name>
+          </property>
+        </activation>
+
+        <build>
+          <plugins>
+
+            <plugin>
+              <groupId>org.jboss.arquillian.maven</groupId>
+              <artifactId>arquillian-maven-plugin</artifactId>
+              <version>1.0.0.Alpha2-SNAPSHOT</version>
+
+              <configuration>
+                <arquillianXml>src/test/resources/jbossas7-arquillian.xml</arquillianXml>
+                <classloading>plugin</classloading>
+              </configuration>
+
+              <executions>
+                <execution>
+                  <id>start-jboss7</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                    <goal>start</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>stop-jboss7</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                    <goal>stop</goal>
+                  </goals>
+                </execution>
+              </executions>
+
+              <dependencies>
+
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+                    <version>7.0.2.Final</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.arquillian.junit</groupId>
+                    <artifactId>arquillian-junit-container</artifactId>
+                    <version>${arquillian.version}</version>
+                </dependency>
+
+              </dependencies>
+
+            </plugin>
+
+            <plugin>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <skipTests>true</skipTests>
+              </configuration>
+
+              <executions>
+                <execution>
+                  <id>arquillianTests</id>
+                  <phase>integration-test</phase>
+                  <goals>
+                    <goal>test</goal>
+                  </goals>
+                  <configuration>
+                    <skipTests>${skipTests}</skipTests>
+                    <groups>arquillian</groups>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+          </plugins>
+        </build>
+
+        <dependencies>
+
+            <dependency>
+                <groupId>${rhq.groupId}</groupId>
+                <artifactId>rhq-core-plugin-test-api</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+
+      </profile>
+
         <profile>
             <id>dev</id>
 
@@ -224,7 +313,13 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- TODO add your dependencies here -->
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-plugin-test-api</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 </project>

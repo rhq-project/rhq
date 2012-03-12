@@ -11,7 +11,6 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -22,6 +21,7 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.AvailabilityExecutor;
@@ -45,8 +45,8 @@ public class AvailTest extends Arquillian {
             "avail-rhq-plugin.xml");
     }
 
-    @ArquillianResource
-    private ContainerController pcController;
+    //@ArquillianResource
+    //private ContainerController pcController;
 
     @ArquillianResource
     private PluginContainer pluginContainer;
@@ -120,11 +120,12 @@ public class AvailTest extends Arquillian {
         containerSets.add(grandchildContainers1);
         containerSets.add(grandchildContainers2);
 
-        // scrub res containers of avail state
+        // scrub res containers of avail state and ensure scheds are blanked
         for (Set<ResourceContainer> cs : containerSets) {
             for (ResourceContainer c : cs) {
                 c.setAvailabilityScheduleTime(null);
                 c.updateAvailability(null);
+                c.setAvailabilitySchedule(null);
             }
         }
 
@@ -178,9 +179,9 @@ public class AvailTest extends Arquillian {
     @Test(dependsOnMethods = "testDiscovery")
     public void testAvailReport() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
-        dumpContainers("START OF TEST");
+        dumpContainers("testAvailReport() Start");
         AvailabilityReport report = executor.call();
-        dumpContainers("AFTER FIRST AVAIL CHECK");
+        dumpContainers("testAvailReport() After First Avail Check");
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
         List<Datum> availData = report.getResourceAvailability();
@@ -193,7 +194,7 @@ public class AvailTest extends Arquillian {
 
         // do a forced avail check again - nothing changed, so we should have an empty report
         report = executor.call();
-        dumpContainers("AFTER SECOND AVAIL CHECK");
+        dumpContainers("testAvailReport() After Second Avail Check");
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
         Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
@@ -205,7 +206,7 @@ public class AvailTest extends Arquillian {
         AvailResourceComponent downParent = this.parentComponents1.iterator().next();
         downParent.setNextAvailability(AvailabilityType.DOWN);
         report = executor.call();
-        dumpContainers("AFTER THIRD AVAIL CHECK");
+        dumpContainers("testAvailReport() After Third Avail Check");
         Assert.assertNotNull(report);
         Assert.assertEquals(report.isChangesOnlyReport(), true, "report should have been changes-only");
         availData = report.getResourceAvailability();
@@ -352,7 +353,8 @@ public class AvailTest extends Arquillian {
 
         // don't use a ForceAvailabilityExecutor for this scan, we want to manipulate what gets checked.
         // by default new executors always do a full scan to start, we don't want that
-        executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager(), true);
+        executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        executor.sendChangesOnlyReportNextTime();
 
         // Manipulate the scheduled times such that the "1" resources should be checked and the "2"s should not
         List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
@@ -397,6 +399,47 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
         scan = executor.getMostRecentScanHistory();
         assertScan(scan, false, false, 29, 0, 1, 0, 0, 0);
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    public void testDeferToParent() throws Exception {
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+
+        // disable the schedules for all "1" children
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(childContainers1);
+        containerSets.add(grandchildContainers1);
+        long now = System.currentTimeMillis();
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                MeasurementScheduleRequest sched = c.getAvailabilitySchedule();
+                sched.setEnabled(false);
+                c.setAvailabilitySchedule(sched);
+            }
+        }
+
+        // a changes-only report, force checks, no changes, ensure 1/2 children defer to parent
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().size(), 0, "no changes, everything was already up");
+        availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, false, 29, 0, 17, 16, 0, 12);
     }
 
     private void assertScan(Scan scan, boolean isForced, boolean isFull, int numResources, int numChanges,

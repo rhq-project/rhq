@@ -87,17 +87,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     private LinkedList<Scan> scanHistory = new LinkedList<Scan>();
 
     public AvailabilityExecutor(InventoryManager inventoryManager) {
-        this(inventoryManager, false);
-    }
-
-    /** A test entry-point, in general production code should take the default.
-     *  
-     * @param inventoryManager
-     * @param startWithChangesOnlyReport
-     */
-    public AvailabilityExecutor(InventoryManager inventoryManager, boolean startWithChangesOnlyReport) {
         this.inventoryManager = inventoryManager;
-        this.sendChangesOnlyReport = new AtomicBoolean(startWithChangesOnlyReport);
+        this.sendChangesOnlyReport = new AtomicBoolean(false);
     }
 
     public void run() {
@@ -346,10 +337,10 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     }
 
     /**
-     * This tells the executor to send a full availability report the next time it sends one. Package-scoped so the
-     * InventoryManager can call this.
+     * This tells the executor to send a full availability report the next time it sends one. Public-scoped so tests
+     * can call this.
      */
-    void sendFullReportNextTime() {
+    public void sendFullReportNextTime() {
         this.sendChangesOnlyReport.set(false);
 
         if (log.isTraceEnabled()) {
@@ -373,10 +364,9 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
     /**
      * This tells the executor to send a minimal availability report the next time it sends one (that is, do not send a
-     * resource availability if it hasn't changed from its last known state). Package-scoped so the InventoryManager can
-     * call this.
+     * resource availability if it hasn't changed from its last known state). Public-scoped so test code can call this.
      */
-    void sendChangesOnlyReportNextTime() {
+    public void sendChangesOnlyReportNextTime() {
         this.sendChangesOnlyReport.set(true);
     }
 

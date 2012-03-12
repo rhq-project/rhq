@@ -62,6 +62,10 @@
              up gwt compilation and reduce memory consumption by avoiding report generation. -->
         <gwt.soyc>true</gwt.soyc>
 
+        <!-- Change this to "DETAILED" via the mvn command line or your ~/.m2/settings.xml to
+             make sure GWT-generated JavaScript code is not obfuscated. -->
+        <gwt.style>OBF</gwt.style>
+
         <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
              should each have two corresponding message bundle properties files under
              src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
@@ -268,7 +272,7 @@
                     <i18nMessagesBundle>org.rhq.enterprise.gui.coregui.client.Messages</i18nMessagesBundle>
                     <i18nConstantsWithLookupBundle>org.rhq.enterprise.gui.coregui.client.MessageConstants</i18nConstantsWithLookupBundle>
                     <compileSourcesArtifact>org.rhq:rhq-core-domain</compileSourcesArtifact>
-                    <style>OBF</style>
+                    <style>${gwt.style}</style>
                     <strict>true</strict>
                 </configuration>
 

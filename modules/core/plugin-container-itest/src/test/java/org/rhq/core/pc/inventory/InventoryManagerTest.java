@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Ian Springer
  */
-@Test(groups = "arquillian", enabled = false)
+@Test(groups = "arquillian")
 public class InventoryManagerTest extends Arquillian {
 
     @Deployment(name = "test")

@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Ian Springer
  */
-@Test(groups = "arquillian", enabled = false)
+@Test(groups = "arquillian")
 public class BaseProcessDiscoveryTest extends Arquillian {
 
     @Deployment(name = "platform")

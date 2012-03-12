@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -221,14 +222,20 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             // Normal cases
             Property prop = conf.get(propDefName);
 
-            if (prop instanceof PropertySimple) {
-                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef, baseAddress);
+            if (prop instanceof PropertySimple && propDef instanceof PropertyDefinitionSimple) {
+                updateHandlePropertySimple(cop, (PropertySimple) prop, (PropertyDefinitionSimple) propDef, baseAddress);
             }
-            else if (prop instanceof PropertyList) {
+            else if (prop instanceof PropertyList && propDef instanceof PropertyDefinitionList) {
                 updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef, baseAddress);
             }
-            else {
+            else if (prop instanceof PropertyMap && propDef instanceof PropertyDefinitionMap) {
                 updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef, baseAddress);
+            }
+            else {
+                String s = "Property and definition are not matching:\n";
+                s += "Property: " + prop + "\n";
+                s += "PropDef : " + propDef;
+                throw new IllegalArgumentException(s);
             }
         }
     }
@@ -262,13 +269,32 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
                 operation = new Operation("add",addr);
                 for (Map.Entry<String,Object> entry : results.entrySet()) {
-                    operation.addAdditionalProperty(entry.getKey(),entry.getValue());
+                    String key1= entry.getKey();
+                    Object value = getValueWithType(entry, propDef);
+                    if (key1.endsWith(":expr")) {
+                        key1 = key1.substring(0, key1.indexOf(':'));
+                        Map<String,Object> tmp = new HashMap<String, Object>();
+                        tmp.put("EXPRESSION_VALUE", value);
+
+                        operation.addAdditionalProperty(key1,tmp);
+                    } else {
+                        operation.addAdditionalProperty(key1, value);
+                    }
                 }
                 cop.addStep(operation);
             }
             else {
                 for (Map.Entry<String,Object> entry : results.entrySet()) {
-                    operation = new WriteAttribute(addr,entry.getKey(),entry.getValue());
+                    String key1 = entry.getKey();
+                    Object value = getValueWithType(entry,propDef);
+                    if (key1.endsWith(":expr")) {
+                        key1 = key1.substring(0, key1.indexOf(':'));
+                        Map<String,Object> tmp = new HashMap<String, Object>();
+                        tmp.put("EXPRESSION_VALUE", value);
+                        operation = new WriteAttribute(addr, key1,tmp);
+                    } else {
+                        operation = new WriteAttribute(addr, key1, value);
+                    }
                     cop.addStep(operation);
                 }
             }
@@ -278,11 +304,21 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
             // write new child ( :name+ case )
             operation = new Operation("add",addr);
             for (Map.Entry<String,Object> entry : results.entrySet()) {
-                operation.addAdditionalProperty(entry.getKey(),entry.getValue());
+                String key1 = entry.getKey();
+                Object value = getValueWithType(entry,propDef);
+                if (key1.endsWith(":expr")) {
+                    key1 = key1.substring(0, key1.indexOf(':'));
+                    Map<String,Object> tmp = new HashMap<String, Object>();
+                    tmp.put("EXPRESSION_VALUE", value);
+                    operation.addAdditionalProperty(key1,tmp);
+                } else {
+                    operation.addAdditionalProperty(key1, value);
+                }
             }
                 cop.addStep(operation);
         }
     }
+
 
     private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef,
                                           Address address) {
@@ -317,8 +353,26 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (propertySimple.getStringValue()==null && !propDef.isRequired())
             return;
 
-        Operation writeAttribute = new WriteAttribute(
-                address, propertySimple.getName(),propertySimple.getStringValue());
+        Operation writeAttribute = new WriteAttribute(address);
+        String name = propertySimple.getName();
+        if (name.endsWith(":expr")) {
+
+            String realName = name.substring(0,name.indexOf(":"));
+            try {
+                Integer num = Integer.parseInt(propertySimple.getStringValue());
+                writeAttribute.addAdditionalProperty("name",realName);
+                writeAttribute.addAdditionalProperty("value",propertySimple.getStringValue());
+            } catch (NumberFormatException nfe) {
+                // Not a number, and expressions are allowed, so send an expression
+                Map<String,String> expr = new HashMap<String, String>(1);
+                expr.put("EXPRESSION_VALUE",propertySimple.getStringValue());
+                writeAttribute.addAdditionalProperty("name", realName);
+                writeAttribute.addAdditionalProperty("value",expr);
+            }
+        } else {
+            writeAttribute.addAdditionalProperty("name",name);
+            writeAttribute.addAdditionalProperty("value",propertySimple.getStringValue());
+        }
         cop.addStep(writeAttribute);
     }
 
@@ -346,5 +400,42 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         }
         return results;
     }
+
+    private Object getValueWithType(Map.Entry<String, Object> entry, PropertyDefinitionMap definitions) {
+
+        PropertyDefinitionSimple pds = (PropertyDefinitionSimple) definitions.get(entry.getKey());
+        if (!(entry.getValue() instanceof String)) {
+            return entry.getValue();
+        }
+
+        String val = (String) entry.getValue();
+        PropertySimpleType type = pds.getType();
+        Object ret;
+        switch (type) {
+            case STRING:
+                ret= val;
+                break;
+            case INTEGER:
+                ret= Integer.valueOf(val);
+                break;
+            case BOOLEAN:
+                ret= Boolean.valueOf(val);
+                break;
+            case LONG:
+                ret= Long.valueOf(val);
+                break;
+            case FLOAT:
+                ret= Float.valueOf(val);
+                break;
+            case DOUBLE:
+                ret= Double.valueOf(val);
+                break;
+            default:
+                ret= val;
+        }
+
+        return ret;
+    }
+
 
 }

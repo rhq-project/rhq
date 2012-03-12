@@ -209,7 +209,13 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             } else { // standard case
 
 
-                Object valueObject = results.get(propertyName);
+                Object valueObject;
+                if (propertyName.endsWith(":expr")) {
+                    String realName = propertyName.substring(0,propertyName.indexOf(":"));
+                    valueObject = results.get(realName);
+                } else {
+                    valueObject = results.get(propertyName);
+                }
 
                 if (propDef instanceof PropertyDefinitionSimple) {
 
@@ -240,7 +246,13 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         String name = propDef.getName();
         if (valueObject != null) {
             // Property is non-null -> return it.
-            propertySimple = new PropertySimple(name, valueObject);
+
+            if (valueObject instanceof Map) { // If this is a map and no single type, get the EXPRESSION_VALUE
+                Object o = ((Map) valueObject).get("EXPRESSION_VALUE");
+                propertySimple = new PropertySimple(name, o);
+            } else {
+                propertySimple = new PropertySimple(name, valueObject);
+            }
         } else {
             // property is null? Check if it is required
             if (propDef.isRequired()) {
@@ -288,10 +300,20 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
             // special case: if the key is "*", we just pick the first element
             Object o ;
-            if (key.equals("*"))
+            if (key.equals("*")) {
                 o = objects.entrySet().iterator().next().getValue();
-            else
+            }
+            else if (key.endsWith(":expr")) {
+            // TODO we need to check te
+                String tmp = key.substring(0,key.indexOf(":"));
+                o = objects.get(tmp);
+            }
+            else {
                 o = objects.get(key);
+            }
+
+
+
             Property property;
             PropertyDefinition value = maEntry.getValue();
             if (value instanceof PropertyDefinitionSimple)

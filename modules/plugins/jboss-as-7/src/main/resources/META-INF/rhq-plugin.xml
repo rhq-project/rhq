@@ -2312,7 +2312,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
                                description="Offset from standard ports for this group. This is only available in standalone mode"
                                required="false"/>
-            <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
+            <c:group name="children:socket-binding:name+-" displayName="Individual socket bindings">
             <c:list-property name="*" displayName="Bindings">
                 <c:map-property name="binding">
                     <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
@@ -2320,11 +2320,11 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                                        required="false">
                         <c:option-source target="resource" expression="type=Network Interface plugin=jboss-as-7"/>
                     </c:simple-property>
-                    <c:simple-property name="port" description="Number of the port to which the socket should be bound."/>
+                    <c:simple-property name="port:expr" displayName="Port" description="Number of the port to which the socket should be bound."/>
                     <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
                                        type="boolean" defaultValue="false"/>
                     <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
-                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." required="false"/>
+                    <c:simple-property name="multicast-port:expr" displayName="Multicast Port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." required="false"/>
                 </c:map-property>
             </c:list-property>
             </c:group>

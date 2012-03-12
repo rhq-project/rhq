@@ -18,6 +18,13 @@
  */
 package org.rhq.plugins.jbossas5;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -26,6 +33,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
+
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -39,12 +47,6 @@ import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.Set;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -62,8 +64,7 @@ public class ApplicationServerDiscoveryComponentTest extends Arquillian {
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         String platformPluginArtifact = "org.rhq:rhq-platform-plugin:jar:" + getRhqVersion();
         Collection<RhqAgentPluginArchive> plugins = mavenDependencyResolver.loadEffectivePom("pom.xml")
-                .artifact(platformPluginArtifact)
-                .resolveAs(RhqAgentPluginArchive.class);
+            .artifact(platformPluginArtifact).resolveAs(RhqAgentPluginArchive.class);
         return plugins.iterator().next();
     }
 
@@ -75,12 +76,10 @@ public class ApplicationServerDiscoveryComponentTest extends Arquillian {
         File pluginJarFile = new File("target/jopr-jboss-as-5-plugin-" + getRhqVersion() + ".jar");
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         // Pull in any required plugins from our pom's dependencies.
-        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver.loadEffectivePom("pom.xml").importAllDependencies()
-                .resolveAs(RhqAgentPluginArchive.class);
-        return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName())
-            .importFrom(pluginJarFile)
-            .as(RhqAgentPluginArchive.class)
-            .withRequiredPluginsFrom(requiredPlugins);
+        Collection<RhqAgentPluginArchive> requiredPlugins = mavenDependencyResolver.loadEffectivePom("pom.xml")
+            .importAllDependencies().resolveAs(RhqAgentPluginArchive.class);
+        return ShrinkWrap.create(ZipImporter.class, pluginJarFile.getName()).importFrom(pluginJarFile)
+            .as(RhqAgentPluginArchive.class).withRequiredPluginsFrom(requiredPlugins);
     }
 
     @ArquillianResource
@@ -121,15 +120,15 @@ public class ApplicationServerDiscoveryComponentTest extends Arquillian {
     @RunDiscovery
     public void testAutoDiscovery() throws Exception {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
-                Assert.assertNotNull(platform);
-                Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
+        Assert.assertNotNull(platform);
+        Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
 
         Assert.assertEquals(this.discoveredServers.size(), 0);
     }
 
     private static String getRhqVersion() throws MavenArtifactNotFoundException {
         MavenArtifactProperties rhqPluginContainerPom = MavenArtifactProperties.getInstance("org.rhq",
-                "rhq-core-plugin-container");
+            "rhq-core-plugin-container");
         return rhqPluginContainerPom.getVersion();
     }
 

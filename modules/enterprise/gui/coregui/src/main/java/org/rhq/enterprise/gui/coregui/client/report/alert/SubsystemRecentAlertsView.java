@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.report;
+package org.rhq.enterprise.gui.coregui.client.report.alert;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -14,22 +14,22 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
-public class ReportTable<DS extends RPCDataSource> extends Table<DS> {
+public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
-    public ReportTable(String locatorId) {
-        super(locatorId);
+    public SubsystemRecentAlertsView(String locatorId, boolean hasWriteAccess) {
+        super(locatorId, hasWriteAccess);
     }
 
     @Override
     protected void configureTable() {
-        addTableActions();
+        super.configureTable();
+        addExportAction();
     }
 
-    private void addTableActions() {
+    private void addExportAction() {
         addTableAction("Export", "Export", new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -85,5 +85,4 @@ public class ReportTable<DS extends RPCDataSource> extends Table<DS> {
             }
         });
     }
-
 }

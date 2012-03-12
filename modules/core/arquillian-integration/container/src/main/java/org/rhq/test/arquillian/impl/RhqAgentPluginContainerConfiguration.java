@@ -15,6 +15,7 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
 		ContainerConfiguration  {
 
     private String serverServicesImplementationClassName;
+    private boolean nativeSystemInfoEnabled;
     
     private static final long HUNDRED_YEARS = 100L * 365 * 24 * 60 * 60;
     
@@ -50,7 +51,15 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
     public void setServerServicesImplementationClassName(String value) {
         this.serverServicesImplementationClassName = value;
     }
-    
+
+    public boolean isNativeSystemInfoEnabled() {
+        return nativeSystemInfoEnabled;
+    }
+
+    public void setNativeSystemInfoEnabled(boolean nativeSystemInfoEnabled) {
+        this.nativeSystemInfoEnabled = nativeSystemInfoEnabled;
+    }
+
     @Override
     public void validate() throws ConfigurationException {
     }

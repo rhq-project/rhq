@@ -22,12 +22,18 @@ import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filter;
 import org.jboss.shrinkwrap.api.Node;
+import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
+import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyBuilder;
+import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.shrinkwrap.FilteredView;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
@@ -44,9 +50,10 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     private static final String PLUGINS_DIR_NAME = "plugins";
     private static final String DATA_DIR_NAME = "data";
     private static final String TMP_DIR_NAME = "tmp";
+    private static final String LIB_DIR_NAME = "lib";
 
     static {
-        File f = null;
+        File f;
         try {
             f = FileUtil.createTempDirectory("TEST_RHQ_PC_DEPLOYMENTS", null, null);
         } catch (IOException e) {
@@ -209,11 +216,12 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     }
 
     private void finalizeConfiguration(RhqAgentPluginContainerConfiguration config) {
-        String deploymentName = container.get().getName();
-        String subDir = deploymentName == null ? UUID.randomUUID().toString() : deploymentName;
-        config.setContainerName(deploymentName);
+        String arquillianContainerName = container.get().getName();
+        String pluginContainerName = (arquillianContainerName) != null ? arquillianContainerName :
+                UUID.randomUUID().toString();
+        config.setContainerName(pluginContainerName);
         
-        deploymentDirectory = new File(DEPLOYMENT_ROOT, subDir);
+        deploymentDirectory = new File(DEPLOYMENT_ROOT, pluginContainerName);
 
         File pluginsDir = new File(deploymentDirectory, PLUGINS_DIR_NAME);
         pluginsDir.mkdirs();
@@ -225,7 +233,15 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         config.setPluginDirectory(pluginsDir);
         config.setDataDirectory(dataDir);
         config.setTemporaryDirectory(tmpDir);
-        
+
+        if (config.isNativeSystemInfoEnabled()) {
+            // Setup the lib dir.
+            File libDir = new File(deploymentDirectory, LIB_DIR_NAME);
+            installSigarNativeLibraries(libDir);
+            // The Sigar class uses the below sysprop to locate the SIGAR native libraries.
+            System.setProperty("org.hyperic.sigar.path", libDir.getPath());
+        }
+
         if (config.getServerServicesImplementationClassName() != null) {
             try {
                 Class<?> serverServicesClass = Class.forName(config.getServerServicesImplementationClassName());
@@ -235,6 +251,31 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
             } catch (Exception e) {
                 throw new IllegalArgumentException("The serverServicesImplementationClassName property is invalid", e);
             }
+        }
+    }
+
+    private void installSigarNativeLibraries(File targetDir) {
+        System.out.println("Installing SIGAR native libraries to [" + targetDir + "]...");
+        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
+        // TODO: Don't hard-code the SIGAR version.
+        MavenDependencyBuilder sigarDistArtifact = mavenDependencyResolver.loadEffectivePom("pom.xml")
+                .artifact("org.hyperic:sigar-dist:zip:1.6.5.132");
+        JavaArchive sigarDistArchive = sigarDistArtifact.resolveAs(JavaArchive.class).iterator().next();
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
+        tempDir.mkdirs();
+        String explodedDirName = "sigar-dist";
+        sigarDistArchive.as(ExplodedExporter.class).exportExploded(tempDir, explodedDirName);
+        // TODO: Don't hard-code the SIGAR version.
+        File sigarLibDir = new File(tempDir, explodedDirName + "/hyperic-sigar-1.6.5/sigar-bin/lib");
+        // Make sure the target dir does not exist, since FileUtil.copyDirectory() requires that to be the case.
+        FileUtil.purge(targetDir, true);
+        try {
+            FileUtil.copyDirectory(sigarLibDir, targetDir);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to copy SIGAR shared libraries from [" + sigarLibDir + "] to [" 
+                    + targetDir + "].", e);
+        } finally {
+            FileUtil.purge(tempDir, true);
         }
     }
 

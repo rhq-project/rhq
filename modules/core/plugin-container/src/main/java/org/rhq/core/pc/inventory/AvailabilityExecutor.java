@@ -87,8 +87,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     private LinkedList<Scan> scanHistory = new LinkedList<Scan>();
 
     public AvailabilityExecutor(InventoryManager inventoryManager) {
+        this(inventoryManager, false);
+    }
+
+    /** A test entry-point, in general production code should take the default.
+     *  
+     * @param inventoryManager
+     * @param startWithChangesOnlyReport
+     */
+    public AvailabilityExecutor(InventoryManager inventoryManager, boolean startWithChangesOnlyReport) {
         this.inventoryManager = inventoryManager;
-        this.sendChangesOnlyReport = new AtomicBoolean(false);
+        this.sendChangesOnlyReport = new AtomicBoolean(startWithChangesOnlyReport);
     }
 
     public void run() {

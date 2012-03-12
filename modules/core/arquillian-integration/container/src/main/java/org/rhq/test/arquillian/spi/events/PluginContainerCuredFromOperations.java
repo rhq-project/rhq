@@ -17,29 +17,24 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.test.arquillian.impl;
+package org.rhq.test.arquillian.spi.events;
 
-import org.jboss.arquillian.core.api.Instance;
-import org.jboss.arquillian.core.api.annotation.Inject;
-import org.jboss.arquillian.core.api.annotation.Observes;
-import org.jboss.arquillian.core.spi.ServiceLoader;
+import java.lang.reflect.Method;
 
-import org.rhq.test.arquillian.spi.PostPrepareEnricher;
-import org.rhq.test.arquillian.spi.events.PluginContainerCuredFromOperations;
+import org.jboss.arquillian.test.spi.event.suite.TestEvent;
+
+import org.rhq.test.arquillian.spi.PluginContainerOperationRemedy;
 
 /**
- * 
+ * Event fired after all {@link PluginContainerOperationRemedy} services have been
+ * processed. 
  *
  * @author Lukas Krejci
  */
-public class PostPrepareEnricherExecutor {
+public class PluginContainerCuredFromOperations extends TestEvent {
 
-    @Inject
-    private Instance<ServiceLoader> serviceLoader;
-    
-    public void run(@Observes PluginContainerCuredFromOperations event) {
-        for(PostPrepareEnricher enricher : serviceLoader.get().all(PostPrepareEnricher.class)) {
-            enricher.enrich(event.getTestInstance());
-        }
+    public PluginContainerCuredFromOperations(Object testInstance, Method testMethod) {
+        super(testInstance, testMethod);
     }
+
 }

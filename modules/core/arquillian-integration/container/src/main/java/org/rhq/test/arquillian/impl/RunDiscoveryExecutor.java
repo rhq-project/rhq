@@ -21,7 +21,6 @@ package org.rhq.test.arquillian.impl;
 
 import org.jboss.arquillian.test.spi.event.suite.TestEvent;
 
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.arquillian.spi.PluginContainerOperation;
@@ -41,20 +40,7 @@ public class RunDiscoveryExecutor implements PluginContainerOperation {
             runDiscovery = event.getTestClass().getAnnotation(RunDiscovery.class);
         }
         
-        if (runDiscovery != null) {
-            if (pluginContainer.isInsideAgent()) {
-                int numberOfTimes = runDiscovery.numberOfTimes();
-                if (numberOfTimes < 0) {
-                    numberOfTimes = getResourceTypeHierarchyDepth(pluginContainer);
-                }
-                
-                for(int i = 0; i < numberOfTimes; ++i) {
-                    runDiscovery(runDiscovery, pluginContainer);
-                }
-            } else {
-                runDiscovery(runDiscovery, pluginContainer);
-            }
-        }
+        runDiscovery(runDiscovery, pluginContainer);
     }
     
     private void runDiscovery(RunDiscovery annotation, PluginContainer pluginContainer) {
@@ -64,30 +50,5 @@ public class RunDiscoveryExecutor implements PluginContainerOperation {
         if (annotation.discoverServices()) {
             pluginContainer.getInventoryManager().executeServiceScanImmediately();
         }            
-    }
-    
-    private int getResourceTypeHierarchyDepth(PluginContainer pc) {
-        int maxDepth = 0;
-        for(ResourceType root : pc.getPluginManager().getMetadataManager().getRootTypes()) {
-            int depth = getResourceTypeHierarchyDepth(root);
-            if (maxDepth < depth) {
-                maxDepth = depth;
-            }
-        }
-        
-        return maxDepth;
-    }
-    
-    private int getResourceTypeHierarchyDepth(ResourceType rootResourceType) {
-        int maxDepth = 0;
-        
-        for(ResourceType child : rootResourceType.getChildResourceTypes()) {
-            int childDepth = getResourceTypeHierarchyDepth(child);
-            if (maxDepth < childDepth) {
-                maxDepth = childDepth;
-            }
-        }
-        
-        return maxDepth + 1;
     }
 }

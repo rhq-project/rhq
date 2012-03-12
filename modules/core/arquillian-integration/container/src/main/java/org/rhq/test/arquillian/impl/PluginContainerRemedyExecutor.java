@@ -19,27 +19,37 @@
 
 package org.rhq.test.arquillian.impl;
 
+import org.jboss.arquillian.core.api.Event;
 import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.core.api.annotation.Observes;
 import org.jboss.arquillian.core.spi.ServiceLoader;
 
-import org.rhq.test.arquillian.spi.PostPrepareEnricher;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.test.arquillian.spi.PluginContainerOperationRemedy;
 import org.rhq.test.arquillian.spi.events.PluginContainerCuredFromOperations;
+import org.rhq.test.arquillian.spi.events.PluginContainerOperationsExecuted;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class PostPrepareEnricherExecutor {
+public class PluginContainerRemedyExecutor {
 
     @Inject
     private Instance<ServiceLoader> serviceLoader;
     
-    public void run(@Observes PluginContainerCuredFromOperations event) {
-        for(PostPrepareEnricher enricher : serviceLoader.get().all(PostPrepareEnricher.class)) {
-            enricher.enrich(event.getTestInstance());
+    @Inject 
+    private Instance<PluginContainer> pluginContainer;
+    
+    @Inject
+    private Event<PluginContainerCuredFromOperations> pluginContainerCured;    
+    
+    public void execute(@Observes PluginContainerOperationsExecuted event) {
+        for(PluginContainerOperationRemedy remedy : serviceLoader.get().all(PluginContainerOperationRemedy.class)) {
+            remedy.cure(pluginContainer.get(), event);
         }
+        pluginContainerCured.fire(new PluginContainerCuredFromOperations(event.getTestInstance(), event.getTestMethod()));
     }
 }

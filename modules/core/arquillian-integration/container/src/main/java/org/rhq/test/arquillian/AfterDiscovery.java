@@ -25,20 +25,27 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Instructs to run discovery before a test method is executed.
+ * Similar to {@link BeforeDiscovery @BeforeDiscovery}, methods annotated with this
+ * annotation are run just after the discovery ran.
  *
  * @author Lukas Krejci
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface RunDiscovery {
+@Target(ElementType.METHOD)
+public @interface AfterDiscovery {
+
     /**
-     * True (the default) if server discovery should be run. 
+     * This list of test methods the method annotated with this annotation applies to. 
+     * <p>
+     * By default the {@code @AfterDiscovery} method applies to all test methods.
      */
-    boolean discoverServers() default true;
+    String[] testMethods() default {};
     
     /**
-     * True (the default) if service discovery should be run.
+     * If order of the {@code @AfterDiscovery} methods is significant, you can order them
+     * by using this parameter.
+     * <p>
+     * Zero or negative value means no significant order required.
      */
-    boolean discoverServices() default true;    
+    int order() default 0;
 }

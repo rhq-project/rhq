@@ -65,6 +65,8 @@ public class InsideAgentSimulationTest extends Arquillian {
 
     private FakeServerInventory fakeServerInventory;
 
+    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
+    
     @BeforeDiscovery(order = 1)
     public void resetServerServices() {
         serverServices.resetMocks();
@@ -73,9 +75,17 @@ public class InsideAgentSimulationTest extends Arquillian {
     
     @BeforeDiscovery(testMethods = "testDeepDiscovery", order = 2)
     public void setupDiscoveryMocks() throws Exception {
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(3);
         //autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+    }
+    
+    @AfterDiscovery
+    public void waitForAsyncDiscoveries() throws Exception {
+        if (discoveryCompleteChecker != null) {
+            discoveryCompleteChecker.waitForDiscoveryComplete();
+        }
     }
     
     //the difference between this test and the deep discovery one is that for this test

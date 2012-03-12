@@ -19,6 +19,12 @@
     <url>http://redhat.com/</url>
   </organization>
 
+  <scm>
+    <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    <url>http://git.fedorahosted.org/git/rhq/rhq.git</url>
+  </scm>
+
   <issueManagement>
     <system>bugzilla</system>
     <url>https://bugzilla.redhat.com/browse.cgi?product=RHQ%20Project</url>
@@ -105,6 +111,9 @@
     <resteasy.version>2.3.2.Final</resteasy.version>
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.11</powermock.version>
+    <arquillian.version>1.0.0.CR7</arquillian.version>
+    <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
+    <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -1131,16 +1140,22 @@
          </properties>
       </profile>
 
-      <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used.
-           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are
-           used. -->
+      <!-- If JDK7 or later is being used to compile, enforce that only Java6 API's are used in our code by setting 
+           javac's boot classpath to the JRE6 core jars. -->
       <profile>
          <id>check-java-api</id>
          <activation>
+            <!--<jdk>[1.7,)</jdk>-->
             <property>
                <name>java6.home</name>
             </property>
          </activation>
+
+         <properties>
+            <!-- A JRE6 installation directory (e.g. /usr/java/jdk1.6.0_30); the default "/usr/lib/jvm/jre-1.6.0" will
+                 work on Fedora systems. On other operating systems, override the property in ~/.m2/settings.xml. -->
+            <java6.home>/usr/lib/jvm/jre-1.6.0</java6.home>
+         </properties>
 
          <build>
            <plugins>

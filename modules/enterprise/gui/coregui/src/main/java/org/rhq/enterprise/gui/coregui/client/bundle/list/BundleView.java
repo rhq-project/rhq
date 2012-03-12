@@ -42,10 +42,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.*;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
@@ -99,7 +96,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(),
             BundleTopView.VIEW_ID.getTitle());
-        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", StringUtility.escapeHtml(bundle.getName()));
+        headerLabel = new HeaderLabel(IconEnum.BUNDLE.getIcon24x24Path(), StringUtility.escapeHtml(bundle.getName()));
         tabs = new LocatableTabSet(getLocatorId());
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
@@ -204,7 +201,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         VLayout layout = new LocatableVLayout(form.extendLocatorId("Actions"), 10);
 
         IButton deployButton = new LocatableIButton(form.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
-        deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
+        deployButton.setIcon(IconEnum.BUNDLE.getIcon16x16Path());
         deployButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 

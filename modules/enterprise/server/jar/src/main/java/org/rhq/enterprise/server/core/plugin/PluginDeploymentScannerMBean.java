@@ -22,6 +22,7 @@ import java.io.File;
 
 import javax.management.ObjectName;
 
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.util.ObjectNameFactory;
 
 public interface PluginDeploymentScannerMBean {
@@ -115,4 +116,11 @@ public interface PluginDeploymentScannerMBean {
      * @return agent plugin directory name
      */
     File getAgentPluginDir();
+
+    /**
+     * Returns the object that is managing the plugin metadata and types built from that metadata.
+     *
+     * @return plugin metadata manager
+     */
+    PluginMetadataManager getPluginMetadataManager();
 }

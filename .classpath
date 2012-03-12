@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/core/plugin-container-itest/src/test/java"/>
+	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/test/java"/>
+	<classpathentry kind="src" path="modules/core/arquillian-integration/archive/src/main/java"/>
+	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/test/java"/>
@@ -154,9 +158,6 @@
 	<classpathentry kind="src" path="modules/test-utils/src/main/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
-	<classpathentry kind="src" path="modules/arquillian-integration/archive/src/main/java"/>
-	<classpathentry kind="src" path="modules/arquillian-integration/container/src/main/java"/>
-	<classpathentry kind="src" path="modules/arquillian-integration/container/src/test/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/simplereport-serverplugin/src/main/java"/>
@@ -284,10 +285,10 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.5/mongo-java-driver-2.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/1.00-SNAPSHOT/morphia-1.00-SNAPSHOT.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.1.GA/resteasy-links-2.3.1.GA.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.1.GA/resteasy-jaxrs-2.3.1.GA.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.1.GA/resteasy-jackson-provider-2.3.1.GA.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.1.GA/jaxrs-api-2.3.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.1.GA/resteasy-links-2.3.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.1.GA/resteasy-jaxrs-2.3.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.1.GA/resteasy-jackson-provider-2.3.1.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.1.GA/jaxrs-api-2.3.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/sasl/jboss-sasl/1.0.0.Beta9/jboss-sasl-1.0.0.Beta9.jar"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mockito/mockito-all/1.9.0/mockito-all-1.9.0.jar"/>
@@ -301,8 +302,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-api/1.0.0-cr-3/shrinkwrap-api-1.0.0-cr-3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/shrinkwrap-spi/1.0.0-cr-3/shrinkwrap-spi-1.0.0-cr-3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/descriptors/shrinkwrap-descriptors-api/1.1.0-beta-1/shrinkwrap-descriptors-api-1.1.0-beta-1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/1.0.0-beta-6/shrinkwrap-resolver-api-1.0.0-beta-6.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/1.0.0-beta-6/shrinkwrap-resolver-api-maven-1.0.0-beta-6.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api/2.0.0-alpha-1/shrinkwrap-resolver-api-2.0.0-alpha-1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/shrinkwrap/resolver/shrinkwrap-resolver-api-maven/2.0.0-alpha-1/shrinkwrap-resolver-api-maven-2.0.0-alpha-1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-spi/1.0.0.CR7/arquillian-test-spi-1.0.0.CR7.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/test/arquillian-test-api/1.0.0.CR7/arquillian-test-api-1.0.0.CR7.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/arquillian/core/arquillian-core-spi/1.0.0.CR7/arquillian-core-spi-1.0.0.CR7.jar"/>

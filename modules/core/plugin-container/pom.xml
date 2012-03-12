@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
@@ -15,6 +17,7 @@
    <description>RHQ plugin container</description>
 
    <dependencies>
+
       <!-- Internal Deps -->
       <dependency>
          <groupId>${rhq.groupId}</groupId>
@@ -110,7 +113,8 @@
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <version>1.4</version>
-    </dependency>
+      </dependency>
+
    </dependencies>
 
   <build>
@@ -344,21 +348,32 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <systemPropertyVariables>
-             <rhq.version>${project.version}</rhq.version>
-          </systemPropertyVariables>
-
-          <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-          <!-- need to point the library path to the location of the native libraries -->
-          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
-          <!--
-          <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
-           -->
+            <skipTests>true</skipTests>
         </configuration>
+        <executions>
+            <execution>
+                <id>allExceptArquillian</id>
+                <goals>
+                    <goal>test</goal>
+                </goals>
+                <configuration>
+                    <skipTests>${skipTests}</skipTests>
+                    <systemPropertyVariables>
+                       <rhq.version>${project.version}</rhq.version>
+                    </systemPropertyVariables>
+
+                    <excludedGroups>arquillian,${rhq.testng.excludedGroups}</excludedGroups>
+                    <!-- need to point the library path to the location of the native libraries -->
+                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar</argLine>
+                    <!--
+                    <argLine>-Dorg.hyperic.sigar.path=${project.build.directory}/jboss-sigar -Dsigar.nativeLogging=true</argLine>
+                     -->
+                </configuration>
+            </execution>
+        </executions>
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
@@ -369,10 +384,12 @@
           </execution>
         </executions>
       </plugin>
+
     </plugins>
   </build>
 
    <profiles>
+
      <profile>
       <id>cobertura</id>
       <activation>

@@ -124,55 +124,52 @@ public class PluginManager implements ContainerService {
         boolean createResourceCL = configuration.isCreateResourceClassloaders();
         this.classLoaderManager = new ClassLoaderManager(pluginNamesUrls, graph, rootCL, tmpDir, createResourceCL);
 
+        if (finder == null) {
+            log.warn("No plugin finder was specified in the plugin container configuration - this should only occur within test environments.");
+            return;
+        }
+
         try {
-            if (finder != null) {
-                Collection<URL> pluginUrls = finder.findPlugins();
+            Collection<URL> pluginUrls = finder.findPlugins();
 
-                // first, we need to parse all descriptors so we can build the dependency graph
-                for (URL url : pluginUrls) {
-                    log.debug("Plugin found at: " + url);
-                    try {
-                        PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
-                        if (!disabledPlugins.contains(descriptor.getName())) {
-                            AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
-                            pluginNamesUrls.put(descriptor.getName(), url);
-                            descriptors.put(url, descriptor);
-                        } else {
-                            log.info("Not loading disabled plugin: " + url);
-                        }
-                    } catch (Throwable t) {
-                        // probably due to invalid XML syntax in the deployment descriptor - the plugin will be ignored
-                        log.error("Plugin at [" + url + "] could not be loaded and will therefore not be deployed.", t);
-                        continue;
+            // first, we need to parse all descriptors so we can build the dependency graph
+            for (URL url : pluginUrls) {
+                log.debug("Plugin found at: " + url);
+                try {
+                    PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+                    if (!disabledPlugins.contains(descriptor.getName())) {
+                        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
+                        pluginNamesUrls.put(descriptor.getName(), url);
+                        descriptors.put(url, descriptor);
+                    } else {
+                        log.info("Not loading disabled plugin: " + url);
                     }
+                } catch (Throwable t) {
+                    // probably due to invalid XML syntax in the deployment descriptor - the plugin will be ignored
+                    log.error("Plugin at [" + url + "] could not be loaded and will therefore not be deployed.", t);
+                    continue;
                 }
-
-                // our graph is complete, get the order that we have to deploy the plugins
-                List<String> deploymentOrder = graph.getDeploymentOrder();
-
-                // now deploy the plugins in the proper order, making sure we build the proper classloaders
-                for (String nextPlugin : deploymentOrder) {
-                    URL pluginUrl = pluginNamesUrls.get(nextPlugin);
-
-                    try {
-                        ClassLoader pluginClassLoader = this.classLoaderManager.obtainPluginClassLoader(nextPlugin);
-                        PluginDescriptor descriptor = descriptors.get(pluginUrl);
-                        loadPlugin(pluginUrl, pluginClassLoader, descriptor);
-                    } catch (Throwable t) {
-                        // for some reason, the plugin failed to load - it will be ignored, its depending plugins will also fail later
-                        log.error("Plugin [" + nextPlugin + "] at [" + pluginUrl
-                            + "] could not be loaded and will therefore not be deployed.", t);
-                        continue;
-                    }
-                }
-
-            } else {
-                // TODO (ips, 10/21/10): I don't think this block of code is needed any longer. I am commenting it for
-                //                       now, but it should eventually be deleted.
-                // Loading a null plugin loads the plugin using the current classloader (for unit test testing)
-                //log.info("Loading the null plugin which uses non-isolated classloader");
-                //loadPlugin(null, thisClassLoader);
             }
+
+            // our graph is complete, get the order that we have to deploy the plugins
+            List<String> deploymentOrder = graph.getDeploymentOrder();
+
+            // now deploy the plugins in the proper order, making sure we build the proper classloaders
+            for (String nextPlugin : deploymentOrder) {
+                URL pluginUrl = pluginNamesUrls.get(nextPlugin);
+
+                try {
+                    ClassLoader pluginClassLoader = this.classLoaderManager.obtainPluginClassLoader(nextPlugin);
+                    PluginDescriptor descriptor = descriptors.get(pluginUrl);
+                    loadPlugin(pluginUrl, pluginClassLoader, descriptor);
+                } catch (Throwable t) {
+                    // for some reason, the plugin failed to load - it will be ignored, and its depending plugins will also fail later
+                    log.error("Plugin [" + nextPlugin + "] at [" + pluginUrl
+                        + "] could not be loaded and will therefore not be deployed.", t);
+                    continue;
+                }
+            }
+            log.info("Deployed plugins: " + this.loadedPlugins);
         } catch (Exception e) {
             shutdown(); // have to clean up the environments (e.g. unpacked jars) we might have already created
             log.error("Error initializing plugin container", e);

@@ -22,10 +22,13 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.Date;
 import java.util.Set;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
@@ -100,4 +103,36 @@ public class ManagedASComponent extends BaseComponent {
         super.getValues(report, metrics);
     }
 
+    @Override
+    public Configuration loadResourceConfiguration() throws Exception {
+        Configuration configuration = super.loadResourceConfiguration();
+
+        // We need to deduct the domain host from the path, as it is not encoded in the resource itself.
+        String serverPath = path;
+        serverPath = serverPath.substring(0,serverPath.indexOf(","));
+        serverPath = serverPath.substring(serverPath.indexOf("=")+1);
+        configuration.put(new PropertySimple("hostname",serverPath));
+
+        return configuration;
+    }
+
+    @Override
+    public OperationResult invokeOperation(String name,
+                                           Configuration parameters) throws InterruptedException, Exception {
+
+        Operation op = new Operation(name,getAddress());
+        Result res = getASConnection().execute(op);
+
+        OperationResult opRes;
+        if (res.isSuccess()) {
+            opRes = new OperationResult("successfully invoked [" + name + "]");
+        }
+        else {
+            opRes = new OperationResult("Operation [" + name + "] failed");
+            opRes.setErrorMessage(res.getFailureDescription());
+        }
+
+        return opRes;
+
+    }
 }

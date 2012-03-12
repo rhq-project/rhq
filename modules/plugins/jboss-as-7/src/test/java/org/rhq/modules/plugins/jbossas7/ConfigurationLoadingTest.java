@@ -80,7 +80,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         //deserialize string to ComplexResult.
         ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
 
-        //create json tree from result. 
+        //create json tree from result.
         JsonNode json = mapper.valueToTree(result);
 
         //add the created content to the fake connection so that we set the results to be returned.
@@ -421,4 +421,40 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
     }
 
+
+    public void test12() throws Exception {
+
+        String resultString = loadJsonFromFile("expressionTest.json");
+        ConfigurationDefinition definition = loadDescriptor("test12");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+        assert properties.size()==3;
+        PropertySimple foo = config.getSimple("foo:expr");
+        PropertySimple foo2 = config.getSimple("foo2:expr");
+        PropertySimple bar = config.getSimple("bar");
+
+        assert foo !=null;
+        assert foo2 != null;
+        assert bar != null;
+
+        Integer tmp = foo.getIntegerValue();
+        assert tmp !=null;
+        assert tmp ==123;
+        String stringValue = foo2.getStringValue();
+        assert stringValue !=null;
+        assert stringValue.equals("${foo2:42}");
+        tmp = bar.getIntegerValue();
+        assert tmp !=null;
+        assert tmp ==456;
+
+    }
 }

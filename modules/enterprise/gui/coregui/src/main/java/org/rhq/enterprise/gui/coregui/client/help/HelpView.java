@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.MessageConstants;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
@@ -49,7 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class HelpView extends AbstractSectionedLeftNavigationView {
 
-    public static final ViewName VIEW_ID = new ViewName("Help", MSG.common_title_help());
+    public static final ViewName VIEW_ID = new ViewName("Help", MSG.common_title_help(), IconEnum.HELP);
 
     private static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
 
@@ -80,7 +81,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         vLayout.setWidth100();
 
         // TODO: Help icon.
-        TitleBar titleBar = new TitleBar(this, MSG.common_title_help());
+        TitleBar titleBar = new TitleBar(this, MSG.common_title_help(),VIEW_ID.getIcon().getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_helpTop_description());

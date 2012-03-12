@@ -109,7 +109,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         vLayout.setWidth100();
 
         // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory());
+        TitleBar titleBar = new TitleBar(this, MSG.common_title_inventory(), IconEnum.INVENTORY.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_inventory_sectionHelp());
@@ -244,7 +244,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(GROUPS_SECTION_VIEW_ID, dynagroupDefinitionsItem, allGroupsItem,
+        return new NavigationSection(GROUPS_SECTION_VIEW_ID, allGroupsItem, dynagroupDefinitionsItem,
             compatibleGroupsItem, mixedGroupsItem, problemGroupsItem);
     }
 }

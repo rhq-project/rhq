@@ -25,17 +25,12 @@ package org.rhq.core.clientapi.agent.metadata.test;
 import java.net.URL;
 import java.util.Set;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.util.ValidationEventCollector;
-
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
-import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -59,6 +54,7 @@ public class ExtensionModelTest {
     private static final String DESCRIPTOR_JBOSSAS = "test-jbossas.xml";
     private static final String DESCRIPTOR_HIBERNATE = "test-hibernate.xml";
     private static final String DESCRIPTOR_CUSTOMJMX = "test-custom-jmx.xml"; // what the custom-jmx plugin wants to look like
+    private static final String DESCRIPTOR_CUSTOM_EXT = "test-extension.xml";
 
     private PluginMetadataManager metadataManager;
 
@@ -80,6 +76,7 @@ public class ExtensionModelTest {
         assertJmxTypes();
 
         PluginDescriptor descriptor_tomcat = loadPluginDescriptor(DESCRIPTOR_TOMCAT);
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_tomcat.getName()).isEmpty(); // jbossas not yet registered
         assertTomcatTypes();
 
         PluginDescriptor descriptor_jbossas = loadPluginDescriptor(DESCRIPTOR_JBOSSAS);
@@ -100,6 +97,24 @@ public class ExtensionModelTest {
         AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_hibernate);
         AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor_customjmx);
         assert graph.isComplete(null);
+
+        // these are not extended via embedded extension model
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_jmx.getName()).isEmpty();
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_jbossas.getName()).isEmpty();
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_hibernate.getName()).isEmpty();
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_customjmx.getName()).isEmpty();
+        // tomcat plugin is extended by the jbossas plugin via the embedded extension model
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_tomcat.getName()).size() == 1;
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_tomcat.getName()).containsKey(
+            descriptor_jbossas.getName());
+
+        // deploy another plugin that extends the tomcat plugin so we can see multiple extensions returned
+        PluginDescriptor descriptor_customext = loadPluginDescriptor(DESCRIPTOR_CUSTOM_EXT);
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_tomcat.getName()).size() == 2;
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_tomcat.getName()).containsKey(
+            descriptor_jbossas.getName());
+        assert this.metadataManager.getEmbeddedExtensions(descriptor_tomcat.getName()).containsKey(
+            descriptor_customext.getName());
     }
 
     @Test(dependsOnMethods = "loadPluginDescriptors")
@@ -316,7 +331,8 @@ public class ExtensionModelTest {
         URL descriptorUrl = this.getClass().getClassLoader().getResource(file);
         System.out.println("Loading plugin descriptor at: " + descriptorUrl);
 
-        pluginDescriptor = (PluginDescriptor) AgentPluginDescriptorUtil.parsePluginDescriptor(descriptorUrl.openStream());
+        pluginDescriptor = (PluginDescriptor) AgentPluginDescriptorUtil.parsePluginDescriptor(descriptorUrl
+            .openStream());
 
         this.metadataManager.loadPlugin(pluginDescriptor);
 

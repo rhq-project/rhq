@@ -53,6 +53,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
     private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
+    String nameFromPathProperty;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -114,8 +115,16 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         else if (groupName.startsWith("children:")) {
             String type = groupName.substring("children:".length());
             if (type.contains(":")) {
-                // We only need the type for reading
+
+                // If the third part ends with a ?, we fill this config prop with the resource name from the path
+                String tmp = type.substring(type.indexOf(":")+1);
+                if (tmp.endsWith("+-")) {
+                    nameFromPathProperty = tmp.substring(0,tmp.length()-2);
+                }
+
+                // We need the type for reading
                 type = type.substring(0,type.indexOf(":"));
+
             }
             operation = new ReadChildrenResources(address,type);
             operation.addAdditionalProperty("recursive", "true");
@@ -185,6 +194,12 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
                     PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val, key);
 
+                    if (nameFromPathProperty!=null) {
+                        // We need to fill that property as well
+                        PropertySimple ps = new PropertySimple(nameFromPathProperty,key);
+                        propertyMap.put(ps);
+                    }
+
                     if (propertyMap!=null)
                         list.add(propertyMap);
                     }
@@ -194,7 +209,13 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             } else { // standard case
 
 
-                Object valueObject = results.get(propertyName);
+                Object valueObject;
+                if (propertyName.endsWith(":expr")) {
+                    String realName = propertyName.substring(0,propertyName.indexOf(":"));
+                    valueObject = results.get(realName);
+                } else {
+                    valueObject = results.get(propertyName);
+                }
 
                 if (propDef instanceof PropertyDefinitionSimple) {
 
@@ -225,7 +246,13 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         String name = propDef.getName();
         if (valueObject != null) {
             // Property is non-null -> return it.
-            propertySimple = new PropertySimple(name, valueObject);
+
+            if (valueObject instanceof Map) { // If this is a map and no single type, get the EXPRESSION_VALUE
+                Object o = ((Map) valueObject).get("EXPRESSION_VALUE");
+                propertySimple = new PropertySimple(name, o);
+            } else {
+                propertySimple = new PropertySimple(name, valueObject);
+            }
         } else {
             // property is null? Check if it is required
             if (propDef.isRequired()) {
@@ -273,10 +300,20 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
             // special case: if the key is "*", we just pick the first element
             Object o ;
-            if (key.equals("*"))
+            if (key.equals("*")) {
                 o = objects.entrySet().iterator().next().getValue();
-            else
+            }
+            else if (key.endsWith(":expr")) {
+            // TODO we need to check te
+                String tmp = key.substring(0,key.indexOf(":"));
+                o = objects.get(tmp);
+            }
+            else {
                 o = objects.get(key);
+            }
+
+
+
             Property property;
             PropertyDefinition value = maEntry.getValue();
             if (value instanceof PropertyDefinitionSimple)

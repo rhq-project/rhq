@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,11 +21,8 @@ package org.rhq.modules.plugins.jbossas7;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -105,7 +102,7 @@ public class Domain2Descriptor {
         if (mode == D2DMode.METRICS)
             op.addAdditionalProperty("include-runtime",true);
 
-        ComplexResult res = conn.executeComplex(op);
+        Result res = conn.execute(op);
         if (res==null) {
             System.err.println("Got no result");
             return;
@@ -116,7 +113,7 @@ public class Domain2Descriptor {
         }
 
 
-        Map<String,Object> resMap = res.getResult();
+        Map<String,Object> resMap = (Map<String, Object>) res.getResult();
         String what;
         if (mode== D2DMode.OPERATION)
             what="operations";
@@ -165,7 +162,6 @@ public class Domain2Descriptor {
             String entryName = entry.getKey();
 
             Type ptype = getTypeFromProps(props);
-            String typeString = getTypeStringForTypeAndName(ptype, entryName);
 
             if (ptype == Type.OBJECT) {
                 System.out.println("<c:map-property name=\"" + entryName +"\" description=\"" +
@@ -183,7 +179,7 @@ public class Domain2Descriptor {
 
                         if (emapEntry.getValue() instanceof Map) {
                             Map<String,Object> emapEntryValue = (Map<String, Object>) emapEntry.getValue();
-                            String ts = getTypeStringForTypeAndName(getTypeFromProps(emapEntryValue),key);
+                            Type ts = getTypeFromProps(emapEntryValue);
                             StringBuilder sb = generateProperty(indent, emapEntryValue,ts,emapEntry.getKey(),getAccessType(emapEntryValue));
                             System.out.println(sb.toString());
                         }
@@ -206,6 +202,7 @@ public class Domain2Descriptor {
                 sb.append("\"");
                 String description = (String) props.get("description");
                 appendDescription(sb,description);
+
                 sb.append(" >\n");
                 if (!props.containsKey("attributes"))
                     sb.append("    <c:simple-property name=\"").append(entryName).append("\" />\n");
@@ -248,7 +245,7 @@ public class Domain2Descriptor {
                 if (accessType.equals("metric"))
                     continue;
 
-                StringBuilder sb = generateProperty(indent, props, typeString, entryName, accessType);
+                StringBuilder sb = generateProperty(indent, props, ptype, entryName, accessType);
 
                 System.out.println(sb.toString());
             }
@@ -309,8 +306,7 @@ public class Domain2Descriptor {
             String entryKey = entry.getKey();
 
             Type type = getTypeFromProps(entryValue);
-            String typeString = getTypeStringForTypeAndName(type, entryKey);
-            builder.append(generateProperty(4, entryValue,typeString, entryKey, null));
+            builder.append(generateProperty(4, entryValue,type, entryKey, null));
             builder.append('\n');
         }
     }
@@ -322,41 +318,22 @@ public class Domain2Descriptor {
         return accessType;
     }
 
-    private String getTypeStringForTypeAndName(Type ptype, String entryName) {
-        String typeString;
 
-        switch (ptype) {
-        case INT:
-            typeString = "integer"; break;
-        case STRING:
-            typeString = "string"; break;
-        case BOOLEAN:
-            typeString = "boolean"; break;
-        case LONG:
-            typeString = "long"; break;
-        case BIG_DECIMAL:
-            typeString = "long"; break; // TODO better float or double?
-        case DOUBLE:
-            typeString = "long"; break; // TODO float or double?
-        case LIST:
-            typeString = "-list-";
-            break; // Handled below
-        case OBJECT: // an embedded map
-            typeString = "-object-";
-            break; // Handled below
-        default:
-            typeString = "- unknown -";
-            System.err.println("Unknown type " + ptype + " for " + entryName);
-        }
-        return typeString;
-    }
-
-    private StringBuilder generateProperty(int indent, Map<String, Object> props, String typeString, String entryName,
+    private StringBuilder generateProperty(int indent, Map<String, Object> props, Type type, String entryName,
                                            String accessType) {
+
+        boolean expressionsAllowed=false;
+        Boolean tmp = (Boolean) props.get("expressions-allowed");
+        if (tmp!=null && tmp)
+            expressionsAllowed = true;
+
         StringBuilder sb = new StringBuilder();
         doIndent(indent,sb);
         sb.append("<c:simple-property name=\"");
-        sb.append(entryName).append('"');
+        sb.append(entryName);
+        if (expressionsAllowed && type.isNumeric())
+            sb.append(":expr");
+        sb.append('"');
 
         Object required = props.get("required");
         if (required != null && (Boolean) required) {
@@ -366,7 +343,12 @@ public class Domain2Descriptor {
             sb.append(" required=\"false\"");
         }
 
-        sb.append(" type=\"").append(typeString).append("\"");
+        sb.append(" type=\"");
+        if (expressionsAllowed && type.isNumeric()) // this overwrites numeric ones, as the user may enter expressions like ${foo:0}
+            sb.append("string");
+        else
+            sb.append(type.rhqName);
+        sb.append("\"");
         sb.append(" readOnly=\"");
         if (accessType!=null && accessType.equals("read-only")) // TODO if no access-type is given, the one from the parent applies
             sb.append("true");
@@ -401,38 +383,9 @@ public class Domain2Descriptor {
         return ret;
     }
 
-    /**
-      * Convert a path in the form key=value,key=value... to a List of properties.
-      * @param path Path to translate
-      * @return List of properties
-      */
-     public List<PROPERTY_VALUE> pathToAddress(String path) {
-         if (path==null || path.isEmpty())
-             return Collections.emptyList();
-
-         List<PROPERTY_VALUE> result = new ArrayList<PROPERTY_VALUE>();
-         String[] components = path.split(",");
-         for (String component : components) {
-             String tmp = component.trim();
-
-             if (tmp.contains("=")) {
-                 // strip / from the start of the key if it happens to be there
-                 if (tmp.startsWith("/"))
-                     tmp = tmp.substring(1);
-
-                 String[] pair = tmp.split("=");
-                 PROPERTY_VALUE valuePair = new PROPERTY_VALUE(pair[0], pair[1]);
-                 result.add(valuePair);
-             }
-         }
-
-         return result;
-     }
-
-
 
     private static void usage() {
-        System.out.println("Domain2Properties [-p|-m|-o] path type");
+        System.out.println("Domain2Properties [-U<user>:<pass>] [-p|-m|-o] path type");
         System.out.println("   path is of kind 'key=value[,key=value]+");
         System.out.println(" -p create properties (default)");
         System.out.println(" -m create metrics");
@@ -441,23 +394,36 @@ public class Domain2Descriptor {
     }
 
     public enum Type {
-        STRING,
-        INT,
-        BOOLEAN,
-        LONG,
-        BIG_DECIMAL,
-        OBJECT,
-        LIST,
-        DOUBLE
+
+        STRING(false,"string"),
+        INT(true,"integer"),
+        BOOLEAN(false,"boolean"),
+        LONG(true,"long"),
+        BIG_DECIMAL(true,"long"),
+        OBJECT(false,"-object-"),
+        LIST(false,"-list-"),
+        DOUBLE(true,"long")
 
         ;
+
+        private boolean numeric;
+        private String rhqName;
+
+        private Type(boolean numeric,String rhqName) {
+            this.numeric=numeric;
+            this.rhqName = rhqName;
+        }
+
+
+        public boolean isNumeric() {
+            return numeric;
+        }
     }
 
     private enum D2DMode {
         METRICS,
         PROPERTIES,
         OPERATION
-        ;
     }
 
 }

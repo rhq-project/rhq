@@ -40,7 +40,9 @@ public class RunDiscoveryExecutor implements PluginContainerOperation {
             runDiscovery = event.getTestClass().getAnnotation(RunDiscovery.class);
         }
         
-        runDiscovery(runDiscovery, pluginContainer);
+        if (runDiscovery != null) {
+            runDiscovery(runDiscovery, pluginContainer);
+        }
     }
     
     private void runDiscovery(RunDiscovery annotation, PluginContainer pluginContainer) {

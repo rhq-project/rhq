@@ -27,6 +27,7 @@ import java.io.InputStream;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
+import com.mongodb.DBCursor;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
@@ -58,6 +59,14 @@ public class FileDAO {
         GridFSInputFile inputFile = gridFS.createFile(new BufferedInputStream(new FileInputStream(file)));
         inputFile.put("_id", file.getName());
         inputFile.save();
+    }
+    
+    public void delete(String id) {
+        gridFS.remove(new BasicDBObject("_id", id));
+    }
+
+    public DBCursor getFileListCursor() {
+        return gridFS.getFileList();
     }
 
 }

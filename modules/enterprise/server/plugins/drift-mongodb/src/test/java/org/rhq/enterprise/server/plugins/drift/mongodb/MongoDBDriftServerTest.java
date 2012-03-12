@@ -388,6 +388,34 @@ public class MongoDBDriftServerTest extends MongoDBTest {
     }
     
     @Test
+    public void purgeOrphanedContent() throws Exception {
+        int size = 1024;
+        File file1 = createRandomFile(getBaseDir(), size);
+        File file2 = createRandomFile(getBaseDir(), size);
+
+        driftServer.saveChangeSetFiles(null, createChangeSetContentZipFile(file1, file2));
+
+        MongoDBChangeSet changeSet = new MongoDBChangeSet();
+        changeSet.setDriftDefinitionId(1);
+        changeSet.setResourceId(1);
+        changeSet.setDriftDefinitionName("testdef");
+        changeSet.setCategory(COVERAGE);
+        changeSet.setVersion(0);
+        
+        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("./1.bin", FILE_ADDED);
+        entry.setNewFileHash(file1.getName());
+        changeSet.add(entry);
+        
+        changeSetDAO.save(changeSet);
+        
+        driftServer.purgeOrphanedContent();
+
+        FileDAO fileDAO = new FileDAO(ds.getDB());
+        assertNull(fileDAO.findById(file2.getName()), "Expected unreferenced file to be deleted");
+        assertNotNull(fileDAO.findById(file1.getName()), "Referenced file should not be deleted");
+    } 
+    
+    @Test
     public void findChangeSetsByCriteriaAndDoNotFetchDrifts() throws Exception {
         String driftDefName = "testdef";
         int driftDefId = 1;

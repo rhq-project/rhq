@@ -33,6 +33,8 @@ import java.util.zip.ZipInputStream;
 
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
+import com.google.code.morphia.query.Query;
+import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.gridfs.GridFSDBFile;
 import org.apache.commons.logging.Log;
@@ -360,6 +362,19 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         return 0;
     }
 
+    public void purgeOrphanedContent() {
+        for (DBObject object : fileDAO.getFileListCursor()) {
+            String id = (String) object.get("_id");
+            Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class);
+            query.or(query.criteria("files.newFileHash").equal(id),
+                    query.criteria("files.oldFileHash").equal(id));
+            query.limit(1);
+            if (query.get() == null) {
+                fileDAO.delete(id);
+            }
+        }
+    }
+
     @Override
     public String getDriftFileBits(Subject subject, String hash) {
         GridFSDBFile file = fileDAO.findById(hash);
@@ -432,6 +447,8 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     private boolean isTemplateChangeSet(DriftChangeSet<?> changeSet) {
         return changeSet.getResourceId() == 0 && changeSet.getDriftDefinitionId() == 0;
     }
+
+
 
     @Override
     public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {

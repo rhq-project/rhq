@@ -111,6 +111,79 @@
 
             </plugin>
 
+<!--
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+
+              <executions>
+                <execution>
+                  <id>start-jboss7-host-controller</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                    <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                      <executable>${java.home}/bin/java</executable>
+                      <arguments>
+                        <argument>-D[Process Controller]</argument>
+                        <argument>-Xms64M</argument>
+                        <argument>-Xmx512M</argument>
+                        <argument>-XX:MaxPermSize=256M</argument>
+                        <argument>-Djava.net.preferIPv4Stack=true</argument>
+                        <argument>-Dorg.jboss.resolver.warning=true</argument>
+                        <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                        <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                        <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                        <argument>-Djava.awt.headless=true</argument>
+                        <argument>-Djboss.domain.default.config=domain.xml</argument>
+                        <argument>-Djboss.host.default.config=host.xml</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-jar</argument>
+                        <argument>${jboss7.home}/jboss-modules.jar</argument>
+                        <argument>-mp</argument>
+                        <argument>${jboss7.home}/modules</argument>
+                        <argument>org.jboss.as.process-controller</argument>
+                        <argument>-jboss-home</argument>
+                        <argument>${jboss7.home}</argument>
+                        <argument>-jvm</argument>
+                        <argument>${java.home}/bin/java</argument>
+                        <argument>-mp</argument>
+                        <argument>${jboss7.home}/modules</argument>
+                        <argument>- -</argument>
+                        <argument>-Xms64M</argument>
+                        <argument>-Xmx512M</argument>
+                        <argument>-XX:MaxPermSize=256M</argument>
+                        <argument>-Djava.net.preferIPv4Stack=true</argument>
+                        <argument>-Dorg.jboss.resolver.warning=true</argument>
+                        <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                        <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                        <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                        <argument>-Djava.awt.headless=true</argument>
+                        <argument>-Djboss.domain.default.config=domain.xml</argument>
+                        <argument>-Djboss.host.default.config=host.xml</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>- -</argument>
+                        <argument>-default-jvm</argument>
+                        <argument>${java.home}/bin/java</argument>
+                      </arguments>
+                  </configuration>
+                </execution>
+
+                <execution>
+                  <id>stop-jboss7-host-controller</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                    <goal>exec</goal>
+                  </goals>
+                </execution>
+              </executions>
+
+            </plugin>
+-->
+
             <plugin>
               <artifactId>maven-failsafe-plugin</artifactId>
               <configuration>

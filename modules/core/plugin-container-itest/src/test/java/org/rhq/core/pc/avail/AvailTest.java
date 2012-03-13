@@ -29,6 +29,7 @@ import org.rhq.core.pc.inventory.AvailabilityExecutor;
 import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
 import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.FakeServerInventory;
 import org.rhq.test.arquillian.MockingServerServices;
@@ -94,14 +95,24 @@ public class AvailTest extends Arquillian {
     @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailGrandchildService2")
     private Set<AvailResourceComponent> grandchildComponents2;
 
-    @BeforeDiscovery
+    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
+
+    @BeforeDiscovery(testMethods = "testDiscovery")
     public void resetServerServices() throws Exception {
         serverServices.resetMocks();
         fakeServerInventory = new FakeServerInventory();
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
 
         // autoimport everything
         when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+    }
+
+    @AfterDiscovery(testMethods = "testDiscovery")
+    public void waitForAsyncDiscoveries() throws Exception {
+        if (discoveryCompleteChecker != null) {
+            discoveryCompleteChecker.waitForDiscoveryComplete(10000);
+        }
     }
 
     @BeforeMethod
@@ -152,11 +163,11 @@ public class AvailTest extends Arquillian {
     @RunDiscovery
     public void testDiscovery() throws Exception {
         // TODO remove this wait after changes to discovery/commit stuff in framework
-        System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! SLEEPING THREAD (" + Thread.currentThread().getName()
-            + ") for 10 seconds");
-        Thread.sleep(10000);
-        System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! DONE SLEEPING   (" + Thread.currentThread().getName()
-            + ") for 10 seconds");
+        //System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! SLEEPING THREAD (" + Thread.currentThread().getName()
+        //    + ") for 20 seconds");
+        //Thread.sleep(20000);
+        //System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! DONE SLEEPING   (" + Thread.currentThread().getName()
+        //    + ") for 10 seconds");
 
         Assert.assertNotNull(pluginContainer);
         Assert.assertTrue(pluginContainer.isStarted());

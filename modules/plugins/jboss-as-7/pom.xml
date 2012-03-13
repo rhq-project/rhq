@@ -60,22 +60,8 @@
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <skipTests>true</skipTests>
+              <excludedGroups>arquillian</excludedGroups>
             </configuration>
-
-            <executions>
-              <execution>
-                <id>unitTests</id>
-                <phase>test</phase>
-                <goals>
-                  <goal>test</goal>
-                </goals>
-                <configuration>
-                  <skipTests>${skipTests}</skipTests>
-                  <excludedGroups>arquillian</excludedGroups>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
 
         </plugins>
@@ -140,19 +126,16 @@
             </plugin>
 
             <plugin>
-              <artifactId>maven-surefire-plugin</artifactId>
-
+              <artifactId>maven-failsafe-plugin</artifactId>
+              <configuration>
+                <groups>arquillian</groups>
+              </configuration>
               <executions>
                 <execution>
-                  <id>integrationTests</id>
-                  <phase>integration-test</phase>
                   <goals>
-                    <goal>test</goal>
+                    <goal>integration-test</goal>
+                    <goal>verify</goal>
                   </goals>
-                  <configuration>
-                    <skipTests>${skipTests}</skipTests>
-                    <groups>arquillian</groups>
-                  </configuration>
                 </execution>
               </executions>
             </plugin>

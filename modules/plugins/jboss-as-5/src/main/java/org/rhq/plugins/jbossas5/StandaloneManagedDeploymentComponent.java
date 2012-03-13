@@ -309,24 +309,34 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 // Now redeploy the original file - this generally should succeed.
                 DeploymentUtils.deployArchive(deploymentManager, backupOfOriginalFile, deployExploded);
                 errorMessage += " ***** ROLLED BACK TO ORIGINAL APPLICATION FILE. *****";
+
+                // If the redeployment of the original backup succeeded then cleanup the backup from disk
+                deleteTemporaryFile(backupDir);
+                // If the redeployment fails the original backup is preserved on disk until agent restart
             } catch (Exception e1) {
                 log.debug("Rollback failed!", e1);
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
+
+            //since the deployment failed remove the temp application downloaded for deployment
+            deleteTemporaryFile(tempFile);
+
             log.info("Failed to update " + resourceTypeName + " file '" + this.deploymentFile + "' using ["
                 + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
         }
 
-        // Deploy was successful!
-        deleteBackupOfOriginalFile(backupOfOriginalFile);
-
+        // Store SHA256 in the agent file if deployment was exploded
         if (this.deploymentFile.isDirectory()) {
             FileContentDelegate fileContentDelegate = new FileContentDelegate();
             fileContentDelegate.saveDeploymentSHA(tempFile, deploymentFile, this.getResourceContext()
                 .getResourceDataDirectory());
         }
+
+        // Remove temporary files created by this deployment.
+        deleteTemporaryFile(backupDir);
+        deleteTemporaryFile(tempFile);
 
         DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
         DeployIndividualPackageResponse packageResponse = new DeployIndividualPackageResponse(packageDetails.getKey(),
@@ -392,13 +402,13 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         return response;
     }
 
-    private void deleteBackupOfOriginalFile(File backupOfOriginalFile) {
-        log.debug("Deleting backup of original file '" + backupOfOriginalFile + "'...");
+    private void deleteTemporaryFile(File temporaryFile) {
+        log.debug("Deleting temporary file '" + temporaryFile + "'...");
         try {
-            FileUtils.forceDelete(backupOfOriginalFile);
+            FileUtils.forceDelete(temporaryFile);
         } catch (Exception e) {
             // not critical.
-            log.warn("Failed to delete backup of original file: " + backupOfOriginalFile);
+            log.warn("Failed to temporary file: " + temporaryFile);
         }
     }
 

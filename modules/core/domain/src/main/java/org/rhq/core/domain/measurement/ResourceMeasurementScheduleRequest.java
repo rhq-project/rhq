@@ -53,7 +53,7 @@ public class ResourceMeasurementScheduleRequest implements Serializable {
     }
 
     public void addMeasurementScheduleRequest(MeasurementScheduleRequest scheduleRequest) {
-        if (MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(scheduleRequest.getName())) {
+        if (MeasurementDefinition.AVAILABILITY_NAME.equals(scheduleRequest.getName())) {
             this.availabilitySchedule = scheduleRequest;
         } else {
             this.measurementSchedules.add(scheduleRequest);
@@ -71,7 +71,7 @@ public class ResourceMeasurementScheduleRequest implements Serializable {
     public void setMeasurementSchedules(Set<MeasurementScheduleRequest> measurementSchedules) {
         this.measurementSchedules = new HashSet<MeasurementScheduleRequest>(measurementSchedules.size());
         for (MeasurementScheduleRequest scheduleRequest : measurementSchedules) {
-            if (MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(scheduleRequest.getName())) {
+            if (MeasurementDefinition.AVAILABILITY_NAME.equals(scheduleRequest.getName())) {
                 this.availabilitySchedule = scheduleRequest;
             } else {
                 this.measurementSchedules.add(scheduleRequest);

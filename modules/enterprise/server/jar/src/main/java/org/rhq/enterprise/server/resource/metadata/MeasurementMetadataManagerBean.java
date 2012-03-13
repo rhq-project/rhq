@@ -97,7 +97,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                         // critical to agent perf, we'll assume plugin knows best in this case. This only happens
                         // if the interval is at the default, a non-default value set by an earlier rev of the
                         // plugin will not be updated.  
-                        boolean isAvail = MeasurementDefinition.AVAILABILITY_TYPE_NAME.equals(newDefinition.getName());
+                        boolean isAvail = MeasurementDefinition.AVAILABILITY_NAME.equals(newDefinition.getName());
                         long defaultInterval = (ResourceCategory.SERVER == existingDefinition.getResourceType()
                             .getCategory()) ? MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER
                             : MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE;
@@ -177,7 +177,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
         }
 
         MeasurementDefinition rhqAvailability = new MeasurementDefinition(newType,
-            MeasurementDefinition.AVAILABILITY_TYPE_NAME);
+            MeasurementDefinition.AVAILABILITY_NAME);
         rhqAvailability.setDefaultInterval(period);
         rhqAvailability.setDefaultOn(true);
         rhqAvailability.setCategory(MeasurementCategory.AVAILABILITY);

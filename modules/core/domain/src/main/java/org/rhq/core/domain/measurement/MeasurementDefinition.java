@@ -111,7 +111,7 @@ public class MeasurementDefinition implements Serializable {
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
     public static final String FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME = "MeasurementDefinition.findRawOrPerMinuteByNameAndResourceTypeName";
 
-    public static final String AVAILABILITY_TYPE_NAME = "rhq.availability";
+    public static final String AVAILABILITY_NAME = "rhq.availability";
     public static final Long AVAILABILITY_DEFAULT_PERIOD_SERVER = 60L * 1000; // 1 minute in ms
     public static final Long AVAILABILITY_DEFAULT_PERIOD_SERVICE = 60L * 1000 * 10; // 10 minutes in ms
     public static final String AVAILABILITY_DESCRIPTION = "The number of seconds between availability checks. The agent honors this setting as best as possible but the actual period can be longer based on agent activity.";

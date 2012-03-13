@@ -233,11 +233,11 @@ public class ResourceContainer implements Serializable {
             case PLATFORM:
                 break;
             case SERVER:
-                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_TYPE_NAME,
+                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
                     MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER, true, DataType.AVAILABILITY);
                 break;
             case SERVICE:
-                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_TYPE_NAME,
+                availabilitySchedule = new MeasurementScheduleRequest(-1, MeasurementDefinition.AVAILABILITY_NAME,
                     MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE, true, DataType.AVAILABILITY);
                 break;
             }

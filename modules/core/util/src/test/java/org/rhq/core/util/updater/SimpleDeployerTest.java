@@ -245,10 +245,13 @@ public class SimpleDeployerTest {
         // fill the deployDir with some unrelated content
         String unrelatedFileName1 = "unrelated.txt";
         String unrelatedFileName2 = "unrelateddir/unrelated.txt";
+        String inTheSubdirFileName1 = "subdir/extra.txt";
         File unrelated1 = writeFile("unrelated1", this.deployDir, unrelatedFileName1);
         File unrelated2 = writeFile("unrelated2", this.deployDir, unrelatedFileName2);
+        File inTheSubdir1 = writeFile("inTheSubdir1", this.deployDir, inTheSubdirFileName1);
         assert unrelated1.exists();
         assert unrelated2.exists();
+        assert inTheSubdir1.exists();
 
         // deploy initial content
         String origFileName1 = "original-file1.txt";
@@ -269,19 +272,26 @@ public class SimpleDeployerTest {
             assert !unrelated1.exists() : "the deployment should have removed unrelated file1";
             assert !unrelated2.getParentFile().isDirectory() : "the deployment should have removed an unrelated dir";
             assert !unrelated2.exists() : "the deployment should have removed unrelated file2";
+            assert !inTheSubdir1.exists() : "the deployment should have removed the in-the-subdir file in the subdir";
 
-            assert this.diff.getBackedUpFiles().size() == 2 : this.diff;
+            assert this.diff.getBackedUpFiles().size() == 3 : this.diff;
             assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName1)).exists() : this.diff;
             assert new File(this.diff.getBackedUpFiles().get(unrelatedFileName2)).exists() : this.diff;
-            assert this.diff.getDeletedFiles().size() == 2 : this.diff;
+            assert new File(this.diff.getBackedUpFiles().get(inTheSubdirFileName1)).exists() : this.diff;
+            assert this.diff.getDeletedFiles().size() == 3 : this.diff;
             assert this.diff.getDeletedFiles().contains(unrelatedFileName1) : this.diff;
             assert this.diff.getDeletedFiles().contains(unrelatedFileName2) : this.diff;
+            assert this.diff.getDeletedFiles().contains(inTheSubdirFileName1) : this.diff;
         } else {
-            assert this.diff.getBackedUpFiles().size() == 0 : this.diff;
-            assert this.diff.getDeletedFiles().size() == 0 : this.diff;
             assert unrelated1.exists() : "the deployment removed unrelated file1";
             assert unrelated2.getParentFile().isDirectory() : "the deployment removed an unrelated dir";
             assert unrelated2.exists() : "the deployment removed unrelated file2";
+            assert !inTheSubdir1.exists() : "the deployment should have removed the in-the-subdir file in the subdir";
+
+            assert this.diff.getBackedUpFiles().size() == 1 : this.diff;
+            assert new File(this.diff.getBackedUpFiles().get(inTheSubdirFileName1)).exists() : this.diff;
+            assert this.diff.getDeletedFiles().size() == 1 : this.diff;
+            assert this.diff.getDeletedFiles().contains(inTheSubdirFileName1) : this.diff;
         }
 
         assert this.diff.getAddedFiles().size() == 2 : this.diff;

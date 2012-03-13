@@ -525,10 +525,31 @@
 
      <pluginManagement>
        <plugins>
+
          <plugin>
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.6</version>
            <dependencies>
+             <!-- This includes all the "optional" tasks. -->
+             <dependency>
+                <groupId>org.apache.ant</groupId>
+                <artifactId>ant-nodeps</artifactId>
+                <version>1.7.0</version>
+             </dependency>
+
+             <!-- This includes the <if> task, and a bunch of other handy tasks. -->
+             <dependency>
+               <groupId>ant-contrib</groupId>
+               <artifactId>ant-contrib</artifactId>
+               <version>1.0b3</version>
+               <exclusions>
+                 <exclusion>
+                   <groupId>ant</groupId>
+                   <artifactId>ant</artifactId>
+                 </exclusion>
+               </exclusions>
+             </dependency>
+
              <!-- We must declare this here to workaround
                   http://jira.codehaus.org/browse/MANTRUN-51.
                   Once we require Maven 3.0, this will no
@@ -538,14 +559,9 @@
                <artifactId>cobertura</artifactId>
                <version>${cobertura.version}</version>
              </dependency>
-             <!-- Just to have more tasks available -->
-             <dependency>
-                <groupId>ant</groupId>
-                <artifactId>ant-nodeps</artifactId>
-                <version>1.6.5</version>
-             </dependency>
            </dependencies>
          </plugin>
+
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
            <version>2.2</version>
@@ -560,7 +576,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
-           <version>2.3</version>
+           <version>2.4</version>
          </plugin>
          <plugin>
            <artifactId>maven-deploy-plugin</artifactId>

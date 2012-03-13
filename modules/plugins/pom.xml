@@ -83,11 +83,6 @@
          <scope>provided</scope> <!-- by RHQ container -->
       </dependency>
 
-      <dependency>
-         <groupId>net.sourceforge.cobertura</groupId>
-         <artifactId>cobertura</artifactId>
-         <version>${cobertura.version}</version>
-      </dependency>
    </dependencies>
 
    <!--  !!! -->
@@ -200,7 +195,6 @@
            <module>virt</module>
            <module>kickstart</module>
            <module>pattern-generator</module>
-
         </modules>
     </profile>
 
@@ -220,20 +214,4 @@
 
   </profiles>
 
-    <build>
-        <plugins>
-           <!-- a lot of tests need <if> from ant-contrib, so let's define it in here -->
-           <plugin>
-              <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-                 <dependency>
-                     <groupId>ant-contrib</groupId>
-                     <artifactId>ant-contrib</artifactId>
-                     <version>20020829</version>
-                 </dependency>
-              </dependencies>                  
-           </plugin>
-        </plugins>
-     </build> 
 </project>
-

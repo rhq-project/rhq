@@ -88,16 +88,27 @@ public class InsideAgentSimulationTest extends Arquillian {
         }
     }
     
+    //we need to make sure that the no discovery test is run first, because the plugin container
+    //would keep the inventory from the previous test.
+    //the other two tests get each a new serverside, which, when synced with the PC, will cause
+    //the PC to clear and rediscover the resources (the serverside will have an empty inventory
+    //at first and hence the PC will clear its inventory, too).
+    @Test
+    public void testNoDiscovery() {
+        Assert.assertEquals(discoveredServers.size(), 0, "There should be no server discovered");
+        Assert.assertEquals(discoveredServices.size(), 0, "There should be no service discovered");
+    }
+    
     //the difference between this test and the deep discovery one is that for this test
     //the mocks should not be set up and hence only a top server discovery should occur
-    @Test
+    @Test(dependsOnMethods = "testNoDiscovery")
     @RunDiscovery
     public void testShallowDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");
         Assert.assertEquals(discoveredServices.size(), 0, "There should be no service discovered");
     }
     
-    @Test
+    @Test(dependsOnMethods = "testNoDiscovery")
     @RunDiscovery
     public void testDeepDiscovery() throws Exception {
         Assert.assertEquals(discoveredServers.size(), 1, "There should be 1 server discovered");

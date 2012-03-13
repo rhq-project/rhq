@@ -32,14 +32,20 @@ import org.rhq.test.arquillian.spi.PluginContainerOperation;
  */
 public class RunDiscoveryExecutor implements PluginContainerOperation {
 
-    @Override
-    public void execute(PluginContainer pluginContainer, TestEvent event) {
+    public static RunDiscovery getRunDiscoveryForTest(TestEvent event) {
         RunDiscovery runDiscovery = event.getTestMethod().getAnnotation(RunDiscovery.class);
 
         if (runDiscovery == null) {
             runDiscovery = event.getTestClass().getAnnotation(RunDiscovery.class);
         }
-
+        
+        return runDiscovery;
+    }
+    
+    @Override
+    public void execute(PluginContainer pluginContainer, TestEvent event) {
+        RunDiscovery runDiscovery = getRunDiscoveryForTest(event);
+        
         if (runDiscovery != null) {
             runDiscovery(runDiscovery, pluginContainer);
         }

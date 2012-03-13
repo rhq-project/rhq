@@ -26,7 +26,7 @@ import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 /**
  * @author Lukas Krejci
  */
-@RunDiscovery(discoverServers = true)
+@RunDiscovery
 public class RhqAgentPluginContainerTest extends Arquillian {
 
     @Deployment(name = "simplePlugin")
@@ -106,6 +106,7 @@ public class RhqAgentPluginContainerTest extends Arquillian {
     public void testResourceContainersAssigned() {
         Assert.assertEquals(dependentResourceContainers.size(), 1, "There should be one resource container available");
     }
+    
     @Test
     public void manualDeployment() {
         pluginDeployer.deploy("manuallyDeployed");

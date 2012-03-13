@@ -90,6 +90,11 @@
            <artifactId>diffutils</artifactId>
            <version>1.2.1</version>
        </dependency>
+       <dependency>
+          <groupId>net.sf.opencsv</groupId>
+          <artifactId>opencsv</artifactId>
+          <version>1.8</version>
+       </dependency>
 
       <!--================ Test Deps ================-->
 

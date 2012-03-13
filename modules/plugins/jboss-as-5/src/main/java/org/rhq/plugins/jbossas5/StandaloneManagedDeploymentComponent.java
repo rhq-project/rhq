@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -251,7 +252,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
 
         // Backup the original app file/dir.
         File tempDir = getResourceContext().getTemporaryDirectory();
-        File backupDir = new File(tempDir, "deployBackup");
+        File backupDir = new File(tempDir, "deployBackup" + UUID.randomUUID().getLeastSignificantBits());
         File backupOfOriginalFile = new File(backupDir, this.deploymentFile.getName());
         log.debug("Backing up existing EAR/WAR '" + this.deploymentFile + "' to '" + backupOfOriginalFile + "'...");
         try {
@@ -404,7 +405,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
     private File writeNewAppBitsToTempFile(ContentServices contentServices, ResourcePackageDetails packageDetails)
         throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
-        File tempFile = new File(tempDir, this.deploymentFile.getName());
+        File tempFile = new File(tempDir, this.deploymentFile.getName() + UUID.randomUUID().getLeastSignificantBits());
 
         OutputStream tempOutputStream = null;
         try {

@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -432,7 +433,8 @@ public class ApplicationComponent extends MBeanResourceComponent<JBossASServerCo
     private File writeNewAppBitsToTempFile(File file, ContentServices contentServices,
         ResourcePackageDetails packageDetails) throws Exception {
         File tempDir = getResourceContext().getTemporaryDirectory();
-        File tempFile = new File(tempDir.getAbsolutePath(), file.getName() + System.currentTimeMillis());
+        File tempFile = new File(tempDir.getAbsolutePath(), file.getName()
+            + UUID.randomUUID().getLeastSignificantBits());
 
         // The temp file shouldn't be there, but check and delete it if it is
         if (tempFile.exists()) {

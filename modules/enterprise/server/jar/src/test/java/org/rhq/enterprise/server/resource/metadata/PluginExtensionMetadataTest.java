@@ -195,7 +195,7 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         assert op.getTimeout().intValue() == OP_TIMEOUT;
         assert op.getDescription().equals(OP_DESC);
 
-        assert resourceType.getMetricDefinitions().size() == 1;
+        assert resourceType.getMetricDefinitions().size() == 2; // include built-in Availability metric
         metric = resourceType.getMetricDefinitions().iterator().next();
         assert metric.getName().equals(METRIC_PROP);
         assert metric.getDefaultInterval() == METRIC_DEFAULT_INTERVAL;
@@ -297,8 +297,13 @@ public class PluginExtensionMetadataTest extends MetadataBeanTest {
         }
 
         seen.clear();
-        assert resourceType.getMetricDefinitions().size() == 2;
+        assert resourceType.getMetricDefinitions().size() == 3; // include built-in Availability metric
         for (MeasurementDefinition metric : resourceType.getMetricDefinitions()) {
+            if (metric.getName().equals(MeasurementDefinition.AVAILABILITY_NAME)) {
+                // expected, ignore
+                continue;
+            }
+
             seen.add(metric.getName());
             if (metric.getName().equals(CHANGED_METRIC_PROP)) {
                 // even though our _v2 plugin set this to something different, our upgrade doesn't change it because

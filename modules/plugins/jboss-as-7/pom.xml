@@ -27,30 +27,14 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-dependency-jars</id>
+                        <id>copy-libs</id>
                         <phase>process-resources</phase>
                         <goals>
-                            <goal>copy</goal>
+                            <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.codehaus.jackson</groupId>
-                                    <artifactId>jackson-mapper-asl</artifactId>
-                                    <version>${jackson.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.codehaus.jackson</groupId>
-                                    <artifactId>jackson-core-asl</artifactId>
-                                    <version>${jackson.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.jboss.sasl</groupId>
-                                    <artifactId>jboss-sasl</artifactId>
-                                    <version>${jboss.sasl.version}</version>
-                                </artifactItem>
-
-                            </artifactItems>
+                            <includeScope>runtime</includeScope>
+                            <excludeScope>plugin</excludeScope>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                         </configuration>
                     </execution>
@@ -60,7 +44,7 @@
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <excludedGroups>arquillian</excludedGroups>
+              <excludes><exclude>org/rhq/modules/plugins/jbossas7/itest/**</exclude></excludes>
             </configuration>
           </plugin>
 
@@ -69,8 +53,10 @@
 
     <profiles>
 
+      <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
       <profile>
         <id>itest</id>
+
         <activation>
           <property>
             <name>jboss7.home</name>
@@ -86,7 +72,7 @@
               <version>1.0.0.Alpha2-SNAPSHOT</version>
 
               <configuration>
-                <arquillianXml>src/test/resources/jbossas7-arquillian.xml</arquillianXml>
+                <arquillianXml>${project.build.testSourceDirectory}/../resources/itest/jbossas7-arquillian.xml</arquillianXml>
                 <classloading>plugin</classloading>
               </configuration>
 
@@ -112,7 +98,7 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <version>7.0.2.Final</version>
+                    <version>7.1.1.Final</version>
                 </dependency>
 
                 <dependency>
@@ -128,7 +114,10 @@
             <plugin>
               <artifactId>maven-failsafe-plugin</artifactId>
               <configuration>
-                <groups>arquillian</groups>
+                <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test</include></includes>
+                <systemPropertyVariables>
+                  <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
+                </systemPropertyVariables>
               </configuration>
               <executions>
                 <execution>
@@ -263,41 +252,21 @@
 
     <dependencies>
 
+      <!-- === Provided Deps === -->
+
+      <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-jmx-plugin</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope> <!-- by the plugin container -->
+      </dependency>
+
+      <!-- === Compile Deps === -->
+
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>${commons-logging.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-native-system</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-jmx-plugin</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- for the password hashing - we may want to copy the relevant stuff over ourselves -->
@@ -307,12 +276,7 @@
             <version>${jboss.sasl.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
-            <scope>test</scope>
-        </dependency>
+      <!-- === Test Deps === -->
 
         <dependency>
             <groupId>${rhq.groupId}</groupId>
@@ -323,5 +287,5 @@
         </dependency>
 
     </dependencies>
-</project>
 
+</project>

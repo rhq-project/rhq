@@ -1,5 +1,20 @@
-/**
- * 
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2012 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 package org.rhq.test.arquillian.impl;
 
@@ -8,6 +23,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.jboss.arquillian.container.spi.Container;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
@@ -33,7 +51,6 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
-import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.shrinkwrap.FilteredView;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
@@ -79,7 +96,9 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         }
         
     }
-    
+
+    private static final Log LOG = LogFactory.getLog(RhqAgentPluginContainer.class);
+
     private RhqAgentPluginContainerConfiguration configuration;
     private File deploymentDirectory;
 
@@ -255,7 +274,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     }
 
     private void installSigarNativeLibraries(File targetDir) {
-        System.out.println("Installing SIGAR native libraries to [" + targetDir + "]...");
+        LOG.debug("Installing SIGAR native libraries to [" + targetDir + "]...");
         MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
         // TODO: Don't hard-code the SIGAR version.
         MavenDependencyBuilder sigarDistArtifact = mavenDependencyResolver.loadEffectivePom("pom.xml")

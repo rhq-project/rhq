@@ -91,8 +91,8 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
             MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
 
         MeasurementDefinition expected = new MeasurementDefinition("rhq.availability",
-            MeasurementCategory.AVAILABILITY, MeasurementUnits.NONE, DataType.AVAILABILITY, true, 60000,
-            DisplayType.DETAIL);
+            MeasurementCategory.AVAILABILITY, MeasurementUnits.NONE, DataType.AVAILABILITY, true,
+            MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER, DisplayType.DETAIL);
         expected.setNumericType(NumericType.DYNAMIC);
         expected.setDisplayName(MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
@@ -116,7 +116,8 @@ public class MeasurementMetadataManagerBeanTest extends MetadataBeanTest {
             MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
 
         expected = new MeasurementDefinition("rhq.availability", MeasurementCategory.AVAILABILITY,
-            MeasurementUnits.NONE, DataType.AVAILABILITY, true, 300000, DisplayType.DETAIL);
+            MeasurementUnits.NONE, DataType.AVAILABILITY, true,
+            MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE, DisplayType.DETAIL);
         expected.setNumericType(NumericType.DYNAMIC);
         expected.setDisplayName(MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
         expected.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);

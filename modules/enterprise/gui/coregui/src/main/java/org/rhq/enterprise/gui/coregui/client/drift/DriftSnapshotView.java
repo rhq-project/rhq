@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
@@ -132,7 +133,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
     @Override
     protected void onDraw() {
-
         // Drift def snapshot view or template pinned snapshot?
         if (null != this.driftDefId) {
             DriftDefinitionCriteria defCriteria = new DriftDefinitionCriteria();
@@ -263,7 +263,13 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
             String dirPath = record.getAttribute(DriftSnapshotDataSource.ATTR_DIR_PATH);
 
-            return new DirectoryView(extendLocatorId(dirPath), dirPath);
+            //return new DirectoryView(extendLocatorId(dirPath), dirPath);
+            DirectoryView dirView = new DirectoryView(extendLocatorId(dirPath), dirPath);
+            VLayout layout = new VLayout();
+            layout.addMember(dirView);
+            layout.setHeight(200);
+            layout.setScrollbarSize(0);
+            return layout;
         }
     }
 
@@ -283,8 +289,9 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             setShowFooter(false);
 
             setWidth100();
-            setAutoHeight();
-            setOverflow(Overflow.VISIBLE);
+            setHeight100();
+            //setAutoHeight();
+            setOverflow(Overflow.SCROLL);
 
             setDataSource(getDataSource());
         }

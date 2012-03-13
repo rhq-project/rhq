@@ -56,6 +56,7 @@ public enum IconEnum {
     // Reports Tab
     /////////////////////////////
     TAGS("global/Tag_16.png","global/Tag_24.png" ),
+    REPORT("subsystems/report/Document_16.png","subsystems/report/Document_24.png" ),
     SUSPECT_METRICS("subsystems/monitor/Monitor_failed_16.png","subsystems/monitor/Monitor_failed_24.png"),
     CONFIGURATION_HISTORY("subsystems/configure/Configure_16.png", "subsystems/configure/Configure_24.png"),
     RECENT_OPERATIONS("subsystems/control/Operation_16.png","subsystems/control/Operation_24.png"),

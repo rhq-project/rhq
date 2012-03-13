@@ -57,6 +57,13 @@
                 </executions>
             </plugin>
 
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludedGroups>arquillian</excludedGroups>
+            </configuration>
+          </plugin>
+
         </plugins>
     </build>
 
@@ -119,22 +126,16 @@
             </plugin>
 
             <plugin>
-              <artifactId>maven-surefire-plugin</artifactId>
+              <artifactId>maven-failsafe-plugin</artifactId>
               <configuration>
-                <skipTests>true</skipTests>
+                <groups>arquillian</groups>
               </configuration>
-
               <executions>
                 <execution>
-                  <id>arquillianTests</id>
-                  <phase>integration-test</phase>
                   <goals>
-                    <goal>test</goal>
+                    <goal>integration-test</goal>
+                    <goal>verify</goal>
                   </goals>
-                  <configuration>
-                    <skipTests>${skipTests}</skipTests>
-                    <groups>arquillian</groups>
-                  </configuration>
                 </execution>
               </executions>
             </plugin>

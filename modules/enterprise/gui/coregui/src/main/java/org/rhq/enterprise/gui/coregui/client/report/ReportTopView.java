@@ -88,8 +88,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
-        // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title());
+        TitleBar titleBar = new TitleBar(this, MSG.view_reportsTop_title(), IconEnum.REPORT.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_reportsTop_description());

@@ -26,7 +26,7 @@
          <!--
          <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
          -->
-         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} (%F:%M:%L)  -%m%n"/>
+         <param name="ConversionPattern" value="%-5p %d{dd-MM HH:mm:ss,SSS} [%t] (%F:%M:%L)  -%m%n"/>
       </layout>
    </appender>
 

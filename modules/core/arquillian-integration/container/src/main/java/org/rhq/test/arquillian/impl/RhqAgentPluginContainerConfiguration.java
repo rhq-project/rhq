@@ -7,6 +7,7 @@ import org.jboss.arquillian.container.spi.ConfigurationException;
 import org.jboss.arquillian.container.spi.client.container.ContainerConfiguration;
 
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.system.SystemInfoFactory;
 
 /**
  * @author Lukas Krejci
@@ -35,7 +36,7 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         setServerDiscoveryInitialDelay(HUNDRED_YEARS);
         setServerDiscoveryPeriod(HUNDRED_YEARS);
         setServiceDiscoveryInitialDelay(HUNDRED_YEARS);
-        setServiceDiscoveryPeriod(HUNDRED_YEARS);
+        setServiceDiscoveryPeriod(HUNDRED_YEARS);        
     }
     
     /**
@@ -62,5 +63,19 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
 
     @Override
     public void validate() throws ConfigurationException {
+        RhqAgentPluginContainer.init();
+        
+        if (isNativeSystemInfoEnabled() && !SystemInfoFactory.isNativeSystemInfoAvailable()) {
+            throw new ConfigurationException("SIGAR is not available. Cannot use native systen info.");
+        }
+        
+        try {
+            String serverServices = getServerServicesImplementationClassName();
+            if (serverServices != null) {
+                Class.forName(serverServices);
+            }
+        } catch (Exception e) {
+            throw new ConfigurationException("Failed to look up the ServerServices implementation class [" + getServerServicesImplementationClassName() + "].", e);
+        }
     }
 }

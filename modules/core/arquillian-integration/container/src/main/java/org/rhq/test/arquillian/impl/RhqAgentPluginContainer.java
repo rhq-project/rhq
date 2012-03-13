@@ -21,6 +21,8 @@ package org.rhq.test.arquillian.impl;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -40,18 +42,15 @@ import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Filter;
 import org.jboss.shrinkwrap.api.Node;
-import org.jboss.shrinkwrap.api.exporter.ExplodedExporter;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyBuilder;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.test.arquillian.impl.util.SigarInstaller;
 import org.rhq.test.shrinkwrap.FilteredView;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
@@ -63,23 +62,39 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     private static final AtomicInteger CONTAINER_COUNT = new AtomicInteger(0);
     private static final File DEPLOYMENT_ROOT;
-
+    private static final File ROOT;
     private static final String PLUGINS_DIR_NAME = "plugins";
     private static final String DATA_DIR_NAME = "data";
     private static final String TMP_DIR_NAME = "tmp";
-    private static final String LIB_DIR_NAME = "lib";
-
+    
+    private static final Map<String, Boolean> NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC = new HashMap<String, Boolean>();
+    
     static {
-        File f;
+        File root;
+        File deployments;
+        File sigar;
         try {
-            f = FileUtil.createTempDirectory("TEST_RHQ_PC_DEPLOYMENTS", null, null);
+            root = FileUtil.createTempDirectory("TEST_RHQ_PC_DEPLOYMENTS", null, null);
+            deployments = new File(root, "pcs");
+            deployments.mkdir();
+            
+            sigar = new File(root, "sigar");
+            sigar.mkdir();
         } catch (IOException e) {
-            f = null;
+            root = null;
+            deployments = null;
             throw new IllegalStateException(
                 "Could not create the root directory for RHQ plugin container test deployments");
         }
 
-        DEPLOYMENT_ROOT = f;
+        ROOT = root;
+        DEPLOYMENT_ROOT = deployments;
+        
+        //install sigar if available
+        SigarInstaller installer = new SigarInstaller(sigar);
+        if (installer.isSigarAvailable()) {
+            installer.installSigarNativeLibraries();
+        }
     }
 
     private static class ExcludeDirectory implements Filter<ArchivePath> {
@@ -101,7 +116,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     private RhqAgentPluginContainerConfiguration configuration;
     private File deploymentDirectory;
-
+    
     @Inject
     private Instance<Container> container;
 
@@ -110,10 +125,25 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         return RhqAgentPluginContainerConfiguration.class;
     }
 
+    public static void init() {
+        //this is just a dummy method that other classes can call to force the static
+        //initialization of this class.
+    }
+    
     public static PluginContainer switchPluginContainer(String deploymentName) throws Exception {
         Method setInstance = PluginContainer.class.getMethod("setContainerInstance", String.class);
         setInstance.invoke(null, deploymentName);
-
+              
+        Boolean enableNativeInfo = NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.get(deploymentName);
+        
+        if (enableNativeInfo == null || !enableNativeInfo.booleanValue()) {
+            SystemInfoFactory.disableNativeSystemInfo();
+        } else {
+            SystemInfoFactory.enableNativeSystemInfo();
+        }
+        
+        LOG.info("Switched PluginContainer to '" + deploymentName + "'.");
+        
         return PluginContainer.getInstance();
     }
 
@@ -127,13 +157,6 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     public void setup(RhqAgentPluginContainerConfiguration configuration) {
         this.configuration = configuration;
         finalizeConfiguration(this.configuration);
-
-        try {
-            //just try it out early
-            switchPcInstance();
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not instantiate a modified PluginContainer");
-        }
     }
 
     @Override
@@ -144,6 +167,9 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         } catch (Exception e) {
             throw new LifecycleException("Failed to switch plugin container.", e);
         }
+        
+        LOG.info("Starting PluginContainer " + container.get().getName());
+        
         startPc();
     }
 
@@ -154,7 +180,9 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         } catch (Exception e) {
             throw new LifecycleException("Failed to switch plugin container.", e);
         }
-
+        
+        LOG.info("Stopping PluginContainer " + container.get().getName());
+        
         stopPc();
 
         if (CONTAINER_COUNT.decrementAndGet() == 0) {
@@ -169,6 +197,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     @Override
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
+        LOG.info("Deploying " + archive + " to PluginContainer " + container.get().getName());
+        
         try {
             switchPcInstance();
         } catch (Exception e) {
@@ -190,11 +220,14 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
             startPc();
         }
 
+        LOG.info("Done deploying " + archive + " to PluginContainer " + container.get().getName());
+        
         return new ProtocolMetaData();
     }
 
     @Override
     public void undeploy(Archive<?> archive) throws DeploymentException {
+        LOG.info("Undeploying " + archive + " from PluginContainer " + container.get().getName());
         try {
             switchPcInstance();
         } catch (Exception e) {
@@ -220,6 +253,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         if (wasStarted) {
             startPc();
         }
+        
+        LOG.info("Done undeploying " + archive + " from PluginContainer " + container.get().getName());        
     }
 
     @Override
@@ -259,14 +294,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         config.setDataDirectory(dataDir);
         config.setTemporaryDirectory(tmpDir);
 
-        if (config.isNativeSystemInfoEnabled()) {
-            // Setup the lib dir.
-            File libDir = new File(deploymentDirectory, LIB_DIR_NAME);
-            installSigarNativeLibraries(libDir);
-            // The Sigar class uses the below sysprop to locate the SIGAR native libraries.
-            System.setProperty("org.hyperic.sigar.path", libDir.getPath());
-        }
-
+        NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.put(arquillianContainerName, config.isNativeSystemInfoEnabled());
+                
         if (config.getServerServicesImplementationClassName() != null) {
             try {
                 Class<?> serverServicesClass = Class.forName(config.getServerServicesImplementationClassName());
@@ -279,33 +308,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
         }
     }
 
-    private void installSigarNativeLibraries(File targetDir) {
-        LOG.debug("Installing SIGAR native libraries to [" + targetDir + "]...");
-        MavenDependencyResolver mavenDependencyResolver = DependencyResolvers.use(MavenDependencyResolver.class);
-        // TODO: Don't hard-code the SIGAR version.
-        MavenDependencyBuilder sigarDistArtifact = mavenDependencyResolver.loadEffectivePom("pom.xml").artifact(
-            "org.hyperic:sigar-dist:zip:1.6.5.132");
-        JavaArchive sigarDistArchive = sigarDistArtifact.resolveAs(JavaArchive.class).iterator().next();
-        File tempDir = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
-        tempDir.mkdirs();
-        String explodedDirName = "sigar-dist";
-        sigarDistArchive.as(ExplodedExporter.class).exportExploded(tempDir, explodedDirName);
-        // TODO: Don't hard-code the SIGAR version.
-        File sigarLibDir = new File(tempDir, explodedDirName + "/hyperic-sigar-1.6.5/sigar-bin/lib");
-        // Make sure the target dir does not exist, since FileUtil.copyDirectory() requires that to be the case.
-        FileUtil.purge(targetDir, true);
-        try {
-            FileUtil.copyDirectory(sigarLibDir, targetDir);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to copy SIGAR shared libraries from [" + sigarLibDir + "] to ["
-                + targetDir + "].", e);
-        } finally {
-            FileUtil.purge(tempDir, true);
-        }
-    }
-
     private static void purgePcDeployments() {
-        FileUtil.purge(DEPLOYMENT_ROOT, true);
+        FileUtil.purge(ROOT, true);
     }
 
     /**
@@ -313,6 +317,8 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
      * @return true if the plugin container needed to be started (i.e. was not running before), false otherwise.
      */
     private boolean startPc() {
+        LOG.debug("Starting PluginContainer on demand");
+        
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
             return false;
@@ -332,6 +338,7 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
      * @return true if PC was running before this call, false otherwise
      */
     private boolean stopPc() {
+        LOG.debug("Stopping PluginContainer on demand");
         PluginContainer pc = PluginContainer.getInstance();
         if (pc.isStarted()) {
             pc.shutdown();

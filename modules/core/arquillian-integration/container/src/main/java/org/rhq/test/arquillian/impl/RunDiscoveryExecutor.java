@@ -50,8 +50,8 @@ public class RunDiscoveryExecutor implements PluginContainerOperation {
             runDiscovery(runDiscovery, pluginContainer);
         }
     }
-
-    private void runDiscovery(RunDiscovery annotation, PluginContainer pluginContainer) {
+    
+    private void runDiscovery(RunDiscovery annotation, PluginContainer pluginContainer) {        
         if (annotation.discoverServers()) {
             pluginContainer.getInventoryManager().executeServerScanImmediately();
         }

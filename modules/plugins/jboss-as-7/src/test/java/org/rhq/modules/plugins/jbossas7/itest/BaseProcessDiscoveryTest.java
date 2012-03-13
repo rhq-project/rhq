@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7;
+package org.rhq.modules.plugins.jbossas7.itest;
 
 import java.io.File;
 import java.util.Collection;
@@ -52,7 +52,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * An integration test for {@link BaseProcessDiscovery}.
+ * An integration test for {@link org.rhq.modules.plugins.jbossas7.BaseProcessDiscovery}.
  *
  * @author Ian Springer
  */
@@ -125,7 +125,6 @@ public class BaseProcessDiscoveryTest extends Arquillian {
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Assert.assertNotNull(platform);
         Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
-        Assert.assertNotEquals(this.discoveredStandaloneServers.size(), 0);        
         // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
         String jboss7Home = new File(System.getProperty("jboss7.home")).getCanonicalPath();
         boolean foundTestServer = containsResourceWithKey(this.discoveredStandaloneServers, jboss7Home);

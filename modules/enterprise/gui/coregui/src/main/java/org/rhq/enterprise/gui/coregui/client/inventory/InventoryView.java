@@ -170,7 +170,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, new ViewFactory() {
             public Canvas createView() {
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
-                    ResourceCategory.PLATFORM.name());
+                    ResourceCategory.SERVER.name());
                 return decorateWithTitleBar(PAGE_SERVERS, createResourceSearchView(PAGE_SERVERS, initialCriteria));
             }
         });

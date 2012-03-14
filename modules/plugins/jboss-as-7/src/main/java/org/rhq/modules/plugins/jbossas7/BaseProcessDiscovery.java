@@ -87,7 +87,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 String homeDir = getHomeDirFromCommandLine(commandLine);
                 String version = determineServerVersionFromHomeDir(homeDir);
                 boolean isEAP = false;
-                boolean isEDG = false;
+                boolean isJDG = false;
 
                 //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
                 String bootLogFile = getLogFileFromCommandLine(commandLine);
@@ -97,7 +97,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     isEAP = true;
                 }
                 if (homeDir.contains("edg")) {
-                    isEDG = true;
+                    isJDG = true;
                 }
 
                 if (psName.equals("HostController")) {
@@ -139,7 +139,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
                     if (isEAP)
                         description = "Standalone " + JBOSS_EAP_6 + " server";
-                    else if (isEDG)
+                    else if (isJDG)
                         description = "Standalone " + JBOSS_EDG_6 + " server";
                     else
                         description = "Standalone " + AS7 + " server";
@@ -180,9 +180,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 if (isEAP) {
                     serverName = EAP_PREFIX + serverName;
                     version = EAP_PREFIX + version;
-                } else if (isEDG) {
-                    serverName = EDG_PREFIX + serverName;
-                    version = EDG_PREFIX + version;
+                } else if (isJDG) {
+                    serverName = JDG_PREFIX + serverName;
+                    version = JDG_PREFIX + version;
 
                 }
 

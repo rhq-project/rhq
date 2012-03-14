@@ -158,6 +158,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     public Table(String locatorId, String tableTitle) {
         this(locatorId, tableTitle, null, null, null, true);
     }
+
     public Table(String locatorId, String tableTitle, String icon) {
         this(locatorId, tableTitle, null, null, null, true);
         setTitleIcon(icon);
@@ -203,7 +204,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
         setWidth100();
         setHeight100();
-        setOverflow(Overflow.HIDDEN);
+        //setOverflow(Overflow.HIDDEN);
 
         this.titleString = tableTitle;
         this.initialCriteria = criteria;
@@ -238,24 +239,56 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.flexRowDisplay = flexRowDisplay;
     }
 
+    /**
+     * Override Point:
+     * Override this method to use a customized layout.
+     * 
+     * @return the Layout for all of the Table contents
+     * @see #configureTableContents(Layout)
+     */
     protected LocatableVLayout createTableContents() {
         if (null == contents) {
             contents = new LocatableVLayout(extendLocatorId("Contents"));
-            contents.setWidth100();
-            contents.setHeight100();
         }
 
         return contents;
+    }
+
+    /**
+     * Override Point:
+     * Override this method to set Layout attributes that can be set at initialization time. By default
+     * the contents layout is:
+     * <pre>
+     * - set to 100% width and height
+     * - set to Overflow.AUTO
+     * </pre>
+     *  
+     * @param contents
+     */
+    protected void configureTableContents(Layout contents) {
+        contents.setWidth100();
+        contents.setHeight100();
+        contents.setOverflow(Overflow.AUTO);
     }
 
     public LocatableVLayout getTableContents() {
         return contents;
     }
 
-    protected void configureTableContents(Layout contents) {
-        contents.setWidth100();
-        contents.setHeight100();
-        contents.setOverflow(Overflow.AUTO);
+    /**
+     * Override Point:
+     * Override this method to set grid properties outside of those required by Table or set via Table's constructors.
+     * The default implementation:
+     * <pre>
+     * - sets to 100% width and height
+     * </pre>
+     * This is called from onInit() and guarantees grid not null.
+     * 
+     * @param contents
+     */
+    protected void configureListGrid(ListGrid grid) {
+        listGrid.setWidth100();
+        listGrid.setHeight100();
     }
 
     @Override
@@ -280,6 +313,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
 
         listGrid = createListGrid(contents.extendLocatorId("ListGrid"));
+        configureListGrid(listGrid);
+
         listGrid.setAutoFetchData(autoFetchData);
 
         if (initialCriteria != null) {
@@ -289,8 +324,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
         }
-        listGrid.setWidth100();
-        listGrid.setHeight100();
+
         listGrid.setAlternateRecordStyles(true);
         listGrid.setResizeFieldsInRealTime(false);
         listGrid.setSelectionType(getDefaultSelectionStyle());
@@ -347,7 +381,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             for (Canvas child : contents.getMembers()) {
                 contents.removeChild(child);
             }
-
 
             // Title
             this.titleCanvas = new HTMLFlow();
@@ -468,11 +501,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         super.destroy();
     }
 
-
     private void drawHeader() {
         // just use the first icon (not sure use case for multiple icons in title)
         titleBar = new TitleBar(titleLayout, titleString);
-        if(titleIcon != null){
+        if (titleIcon != null) {
             titleBar.setIcon(titleIcon);
         }
         titleLayout.addMember(titleBar);
@@ -641,7 +673,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
-    public void setTitleIcon(String titleIcon){
+    public void setTitleIcon(String titleIcon) {
         this.titleIcon = titleIcon;
     }
 
@@ -880,8 +912,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
-
-    public void setTitleBar(TitleBar titleBar1){
+    public void setTitleBar(TitleBar titleBar1) {
         this.titleBar = titleBar1;
 
     }
@@ -1149,14 +1180,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         @Override
         public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
-             if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
+            if (event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ENTER) {
                 // TODO (ips, 10/14/11): Figure out why this event is being sent twice. However, this is not urgent,
                 //                       since the if check below will prevent the 2nd event from triggering a redundant
                 //                       fetch request.
                 Log.debug("Table.TableFilter Pressed Enter key2");
                 String searchBarValue = searchBarItem.getSearchBar().getValue();
                 String hiddenValue = (String) hiddenItem.getValue();
-                 Log.debug("Table.TableFilter searchBarValue :"+searchBarValue+ ", hiddenValue"+hiddenValue);
+                Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
                 // Only send a fetch request if the user actually changed the search expression.
                 if (!equals(searchBarValue, hiddenValue)) {
                     hiddenItem.setValue(searchBarValue);

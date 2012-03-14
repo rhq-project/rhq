@@ -476,6 +476,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             titleBar.setIcon(titleIcon);
         }
         titleLayout.addMember(titleBar);
+        titleLayout.addMember(titleCanvas);
     }
 
     private void drawFooter() {

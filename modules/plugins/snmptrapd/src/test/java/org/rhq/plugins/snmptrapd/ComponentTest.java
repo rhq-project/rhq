@@ -3,6 +3,7 @@ package org.rhq.plugins.snmptrapd;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
@@ -81,6 +82,7 @@ public abstract class ComponentTest {
 
         Resource resource = new Resource();
         resource.setResourceType(resourceType);
+        resource.setUuid(UUID.randomUUID().toString());
 
         resource.setPluginConfiguration(configuration);
         ResourceComponent parentResourceComponent = null;

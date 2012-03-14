@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -362,6 +363,7 @@ public class BundleManagerTest {
             bundleHandler = new Resource("bhKey", "bhName", bundleHandlerType);
             bundleHandler.setId(id++);
             bundleHandler.setParentResource(platform);
+            bundleHandler.setUuid(UUID.randomUUID().toString());
             serverFS = new Resource("serverKey-fileSystem", "serverName-fileSystem", serverTypeFS);
             serverFS.setId(id++);
             serverFS.setParentResource(platform);
@@ -462,8 +464,7 @@ public class BundleManagerTest {
 
     private class MockMeasurementManager extends MeasurementManager {
         @Override
-        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId,
-            Set<MeasurementScheduleRequest> requests) {
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, Set<MeasurementScheduleRequest> requests) {
             // anytime this method gets called, it means our tests are asking for the test trait value. It will
             // always be the same value for all tests.
             MeasurementDataTrait data = new MeasurementDataTrait(requests.iterator().next(),

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -97,6 +98,7 @@ public class AntBundlePluginComponentTest {
         this.plugin = new AntBundlePluginComponent();
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
+        resource.setUuid(UUID.randomUUID().toString());
         @SuppressWarnings({ "rawtypes", "unchecked" })
         ResourceContext<?> context = new ResourceContext(resource, null, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);

@@ -29,12 +29,12 @@ import javax.ws.rs.core.*;
  * Handles configuration history report.
  * @author Mike Thompson
  */
-@Path("/configurationHistoryReport")
+@Path("/inventorySummaryReport")
 @Local
-public interface ConfigurationHistoryReportLocal {
+public interface InventorySummaryReportLocal {
 
     @GET
-    @Path("/test")
-    @Produces("text/csv")
-    Response getConfigurationHistoryCSV(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
+    @Path("/csv")
+    @Produces({"text/csv"})
+    Response inventorySummaryReportCSV(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 }

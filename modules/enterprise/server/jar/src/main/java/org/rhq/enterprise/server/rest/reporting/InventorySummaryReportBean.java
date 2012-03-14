@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
@@ -26,29 +32,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jboss.resteasy.core.Headers;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.rest.*;
-
-import java.util.List;
-
 /**
- * Configuration History report Bean.
+ * Inventory Summary Report Bean.
  *
  * @author Mike Thompson
  */
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class ConfigurationHistoryReportBean extends AbstractReportingRestBean implements ConfigurationHistoryReportLocal {
+public class InventorySummaryReportBean extends AbstractReportingRestBean implements InventorySummaryReportLocal {
 
 
-    private final Log log = LogFactory.getLog(ConfigurationHistoryReportBean.class);
+    private final Log log = LogFactory.getLog(InventorySummaryReportBean.class);
 
     @EJB
     SubjectManagerLocal subjectManager;
@@ -57,18 +51,13 @@ public class ConfigurationHistoryReportBean extends AbstractReportingRestBean im
     ConfigurationManagerLocal configurationManager;
 
 
+
     @Override
-    @Produces(MEDIA_TYPE_TEXT_CSV)
     @GET
-    @Path("/test")
-    public Response getConfigurationHistoryCSV(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
-        log.debug(" ** ConfigurationHistoryReport REST invocation");
-        //Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
-//        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-//        criteria.addFilterResourceIds(resource.getId());
-//        criteria.fetchConfiguration(true);
-//        criteria.addSortCreatedTime(PageOrdering.ASC);
-//        List<ResourceConfigurationUpdate> history = configurationManager.findResourceConfigurationUpdatesByCriteria( overlord, criteria);
+    @Path("/csv")
+    @Produces({MEDIA_TYPE_TEXT_CSV})
+    public Response inventorySummaryReportCSV(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
+        log.debug(" ** InventorySummaryReport REST invocation");
 
         String myCsvDataTitles = "Version, Date Completed, Date Submitted, Status, User, Update Type, Resource, Ancestry\n";
         String myCsvData1 = "10045, 02/17/2012 08:11:17 AM, 02/18/2012 09:12:18 AM, Success, , Individual, AlertConditionQueue, JBossMQ < localhost:2099 < RHQ Server < 192.168.1.2\n";
@@ -90,6 +79,4 @@ public class ConfigurationHistoryReportBean extends AbstractReportingRestBean im
         }
         return builder.build();
     }
-
-
 }

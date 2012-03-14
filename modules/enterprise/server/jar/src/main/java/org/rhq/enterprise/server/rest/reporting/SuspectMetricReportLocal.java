@@ -26,15 +26,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 
 /**
- * Handles configuration history report.
+ * Handles Suspect Metrics report.
  * @author Mike Thompson
  */
-@Path("/configurationHistoryReport")
+@Path("/suspectMetricReport")
 @Local
-public interface ConfigurationHistoryReportLocal {
+public interface SuspectMetricReportLocal {
 
     @GET
     @Path("/test")
     @Produces("text/csv")
-    Response getConfigurationHistoryCSV(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
+    Response suspectMetricReport(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 }

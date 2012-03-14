@@ -26,6 +26,11 @@ import org.rhq.enterprise.server.rest.AbstractRestBean;
  */
 public abstract class AbstractReportingRestBean extends AbstractRestBean{
 
+    /**
+     * Define the text/csv media type as it is not a JAX-RS standard media type.
+     */
+    public static final String MEDIA_TYPE_TEXT_CSV = "text/csv";
+
     // Common CSV stuff here
 
 

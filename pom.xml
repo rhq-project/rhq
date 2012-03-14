@@ -114,8 +114,7 @@
     <arquillian.version>1.0.0.CR7</arquillian.version>
     <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
     <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
-    <animal.sniffer.version>1.7</animal.sniffer.version>
-    
+
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
 
@@ -682,11 +681,6 @@
            <artifactId>findbugs-maven-plugin</artifactId>
            <version>${findbugs.version}</version>
          </plugin>
-         <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>animal-sniffer-maven-plugin</artifactId>
-            <version>${animal.sniffer.version}</version>
-         </plugin>
        </plugins>
      </pluginManagement>
 
@@ -722,11 +716,6 @@
       </plugin>
 
       <!-- Ensure all code compiles and runs on Java 6 or later. -->
-      <!-- In addition to this, we also perform the API checks to make sure that
-           not only the syntax of the language conforms to Java 6 and the bytecode
-           has the correct magic numbers but also that only APIs that are available 
-           in Java 6 are used in the codebase.
-           See the animal-sniffer-maven-plugin build instructions further below. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -737,7 +726,7 @@
 
           <!-- compiler options -->
           <source>1.6</source>
-          <target>1.6</target>          
+          <target>1.6</target>
           <optimize>false</optimize>
           <verbose>true</verbose>
           <proc>none</proc> <!-- disable annotation processing -->
@@ -1008,35 +997,6 @@
           </executions>
       </plugin>
 
-      <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>animal-sniffer-maven-plugin</artifactId>
-          <executions>
-              <execution>
-                  <id>java-api-check</id>
-                  <configuration>
-                      <signature>
-                          <groupId>org.codehaus.mojo.signature</groupId>
-                          <artifactId>java16</artifactId>
-                          <version>1.0</version>
-                      </signature>
-                      <ignores>
-                          <!-- 
-                          Server Container build fails without this with a weird
-                          error complaining that GWT classes are not part of
-                          java API (which they aren't).
-                          I don't wanna fight an animal sniffer, seems dangerous. 
-                          -->
-                          <ignore>com.google.gwt.*</ignore>
-                      </ignores>   
-                  </configuration>
-                  <phase>process-classes</phase>
-                  <goals>
-                      <goal>check</goal>
-                  </goals>
-              </execution>
-          </executions>
-      </plugin>
     </plugins>
 
   </build>

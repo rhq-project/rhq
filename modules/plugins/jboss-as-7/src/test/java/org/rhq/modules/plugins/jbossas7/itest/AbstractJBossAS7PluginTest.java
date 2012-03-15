@@ -273,8 +273,10 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         try {
             measurementFacet.getValues(report, requests);
         } catch (Exception e) {
+            System.out.println("====== Error occurred during collection of metric [" + metricName
+                                + "] on " + resource + ": " + e);
             throw new RuntimeException("Error occurred during collection of metric [" + metricName
-                    + "] on " + resource + "...");
+                    + "] on " + resource + ": " + e);
         }        
         return report;
     }

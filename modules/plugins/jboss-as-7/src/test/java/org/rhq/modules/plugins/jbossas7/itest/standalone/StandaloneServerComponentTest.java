@@ -21,8 +21,6 @@ package org.rhq.modules.plugins.jbossas7.itest.standalone;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.jboss.arquillian.container.test.api.OperateOnDeployment;
-
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.util.FileUtils;
@@ -65,77 +63,60 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     @Override
     @Test
-    @OperateOnDeployment("jboss-as-7")
     @RunDiscovery
     public void testAutoDiscovery() throws Exception {
         super.testAutoDiscovery();
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testServerStateTrait() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testServerStateTrait...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testServerStateTrait...");
         collectTraitAndAssertNotNull(getServerResource(), SERVER_STATE_TRAIT_NAME);
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testReleaseCodenameTrait() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testReleaseCodenameTrait...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseCodenameTrait...");
         collectTraitAndAssertNotNull(getServerResource(), RELEASE_CODENAME_TRAIT_NAME);
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testReleaseVersionTrait() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
         String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
         Assert.assertEquals(releaseVersion, System.getProperty("jboss7.version"),
                 "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testProductNameTrait() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testProductNameTrait...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductNameTrait...");
         collectTraitAndAssertNotNull(getServerResource(), PRODUCT_NAME_TRAIT_NAME);
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testProductVersionTrait() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testProductVersionTrait...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductVersionTrait...");
         collectTraitAndAssertNotNull(getServerResource(), PRODUCT_VERSION_TRAIT_NAME);
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testStartTimeTrait() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testStartTimeTrait...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartTimeTrait...");
         collectTraitAndAssertNotNull(getServerResource(), START_TIME_TRAIT_NAME);
     }
 
     // TODO: Re-enable once fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testReloadOperation() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testReloadOperation...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReloadOperation...");
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
 
     // TODO: Re-enable this once "shutdown" operation has been fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testShutdownOperation() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testShutdownOperation...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
         invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
         // Restart the server, so the rest of the tests don't fail.
         testStartOperation();
@@ -143,19 +124,15 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     // TODO: Re-enable this once "shutdown" operation has been fixed.
     @Test(dependsOnMethods = "testShutdownOperation", enabled = false)
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testStartOperation() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testStartOperation...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartOperation...");
         invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
     }
 
     // TODO: Re-enable once fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    @OperateOnDeployment("jboss-as-7")
-    @RunDiscovery
     public void testRestartOperation() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testRestartOperation...");
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testRestartOperation...");
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
     }
 

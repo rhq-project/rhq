@@ -273,11 +273,13 @@ public class Domain2Descriptor {
 
         }
         Map replyMap = (Map) operationMap.get("reply-properties");
+        builder.append("  <results>\n");
         if (replyMap!=null && !replyMap.isEmpty()){
-            builder.append("  <results>\n");
             generatePropertiesForMap(builder, replyMap, true);
-            builder.append("  </results>\n");
+        } else {
+            builder.append("     <c:simple-property name=\"operationResult\"/>\n" );
         }
+        builder.append("  </results>\n");
 
 
         builder.append("</operation>\n");

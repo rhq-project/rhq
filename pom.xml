@@ -114,6 +114,7 @@
     <arquillian.version>1.0.0.CR7</arquillian.version>
     <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
     <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
+    <animal.sniffer.version>1.7</animal.sniffer.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -681,6 +682,11 @@
            <artifactId>findbugs-maven-plugin</artifactId>
            <version>${findbugs.version}</version>
          </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <version>${animal.sniffer.version}</version>
+         </plugin>
        </plugins>
      </pluginManagement>
 
@@ -716,6 +722,11 @@
       </plugin>
 
       <!-- Ensure all code compiles and runs on Java 6 or later. -->
+      <!-- In addition to this, we also perform the API checks to make sure that
+           not only the syntax of the language conforms to Java 6 and the bytecode
+           has the correct magic numbers but also that only APIs that are available
+           in Java 6 are used in the codebase.
+           See the animal-sniffer-maven-plugin build instructions further below. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -997,6 +1008,26 @@
           </executions>
       </plugin>
 
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>java-api-check</id>
+                  <configuration>
+                      <signature>
+                          <groupId>org.codehaus.mojo.signature</groupId>
+                          <artifactId>java16</artifactId>
+                          <version>1.0</version>
+                      </signature>
+                  </configuration>
+                  <phase>process-classes</phase>
+                  <goals>
+                      <goal>check</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
     </plugins>
 
   </build>
@@ -1161,55 +1192,6 @@
             <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
             <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
          </properties>
-      </profile>
-
-      <!-- If JDK7 or later is being used to compile, enforce that only Java6 API's are used in our code by setting 
-           javac's boot classpath to the JRE6 core jars. -->
-      <profile>
-         <id>check-java-api</id>
-         <activation>
-            <!--<jdk>[1.7,)</jdk>-->
-            <property>
-               <name>java6.home</name>
-            </property>
-         </activation>
-
-         <properties>
-            <!-- A JRE6 installation directory (e.g. /usr/java/jdk1.6.0_30); the default "/usr/lib/jvm/jre-1.6.0" will
-                 work on Fedora systems. On other operating systems, override the property in ~/.m2/settings.xml. -->
-            <java6.home>/usr/lib/jvm/jre-1.6.0</java6.home>
-         </properties>
-
-         <build>
-           <plugins>
-               <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                  <execution>
-                    <phase>validate</phase>
-                    <inherited>false</inherited>
-                    <configuration>
-                      <tasks>
-                        <echo>java6.home=${java6.home}</echo>
-                      </tasks>
-                    </configuration>
-                    <goals>
-                      <goal>run</goal>
-                    </goals>
-                  </execution>
-                </executions>
-               </plugin>
-
-              <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                  <compilerArguments>
-                    <bootclasspath>${java6.home}/lib/rt.jar${path.separator}${java6.home}/lib/jsse.jar${path.separator}${java6.home}/lib/jce.jar</bootclasspath>
-                  </compilerArguments>
-                </configuration>
-              </plugin>
-            </plugins>
-          </build>
       </profile>
 
       <!-- This profile should be enabled when a release is being published.

@@ -265,6 +265,22 @@
         </executions>
       </plugin>
 
+      <!--
+      We skip the API checking in this module, because there is no new
+      code to check. This module merely composes classes from other modules
+      which have already been checked.
+      Also, enabling the API checks in this module causes some weird problems
+      for the animal sniffer, because it most probably cannot figure out
+      the full set of dependencies for classes of the web apps contained in the
+      EAR were creating here.
+      -->
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <configuration>
+              <skip>true</skip>
+          </configuration>
+        </plugin>
     </plugins>
   </build>
 

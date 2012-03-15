@@ -1196,6 +1196,20 @@
          </properties>
       </profile>
 
+      <profile>
+         <id>itest.debug</id>
+         <activation>
+            <property>
+               <name>itest.debug</name>
+            </property>
+         </activation>
+
+         <properties>
+            <!-- See: http://maven.apache.org/plugins/maven-failsafe-plugin/integration-test-mojo.html#debugForkedProcess -->
+            <maven.failsafe.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.failsafe.debug>
+         </properties>
+      </profile>
+
       <!-- This profile should be enabled when a release is being published.
            It will ensure that sources and javadoc jars are built and published
            for each source module. -->
@@ -1347,6 +1361,9 @@
         <developer>
             <name>Robert Buck</name>
             <timezone>-5</timezone>
+            <roles>
+               <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Charles Crouch</name>

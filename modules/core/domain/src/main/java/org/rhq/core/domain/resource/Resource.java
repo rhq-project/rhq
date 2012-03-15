@@ -47,7 +47,6 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
-import javax.persistence.PostPersist;
 import javax.persistence.PrePersist;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
@@ -1300,10 +1299,6 @@ public class Resource implements Comparable<Resource>, Serializable {
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
         updateAncestryForResource();
-    }
-
-    @PostPersist
-    void afterPersist() {
         initCurrentAvailability();
     }
 
@@ -1858,8 +1853,8 @@ public class Resource implements Comparable<Resource>, Serializable {
         buffer.append("Resource").append("[");
         buffer.append("id=").append(this.id);
         buffer.append(", uuid=").append(this.uuid);
-        String typeName = (this.resourceType != null) ?
-            '{' + this.resourceType.getPlugin() + '}' + this.resourceType.getName() : "<null>";
+        String typeName = (this.resourceType != null) ? '{' + this.resourceType.getPlugin() + '}'
+            + this.resourceType.getName() : "<null>";
         buffer.append(", type=").append(typeName);
         buffer.append(", key=").append(this.resourceKey);
         buffer.append(", name=").append(this.name);

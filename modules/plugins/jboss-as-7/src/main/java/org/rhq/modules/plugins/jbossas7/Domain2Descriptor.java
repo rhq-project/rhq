@@ -19,7 +19,6 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
@@ -268,14 +267,14 @@ public class Domain2Descriptor {
         Map<String,Object> reqMap = (Map<String, Object>) operationMap.get("request-properties");
         if (reqMap!=null && !reqMap.isEmpty()) {
             builder.append("  <parameters>\n");
-            generatePropertiesForMap(builder, reqMap, true);
+            generatePropertiesForMap(builder, reqMap);
             builder.append("  </parameters>\n");
 
         }
         Map replyMap = (Map) operationMap.get("reply-properties");
         builder.append("  <results>\n");
         if (replyMap!=null && !replyMap.isEmpty()){
-            generatePropertiesForMap(builder, replyMap, true);
+            generatePropertiesForMap(builder, replyMap);
         } else {
             builder.append("     <c:simple-property name=\"operationResult\"/>\n" );
         }
@@ -301,15 +300,21 @@ public class Domain2Descriptor {
         }
     }
 
-    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map, boolean forceReadWrite) {
+    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map) {
+
         for (Map.Entry<String,Object> entry : map.entrySet()) {
 
-            Map<String, Object> entryValue = (Map<String, Object>) entry.getValue();
-            String entryKey = entry.getKey();
+            Object o = entry.getValue();
+            if (o instanceof Map ) {
+                Map<String, Object> entryValue = (Map<String, Object>) o;
+                String entryKey = entry.getKey();
 
-            Type type = getTypeFromProps(entryValue);
-            builder.append(generateProperty(4, entryValue,type, entryKey, null));
-            builder.append('\n');
+                Type type = getTypeFromProps(entryValue);
+                builder.append(generateProperty(4, entryValue,type, entryKey, null));
+                builder.append('\n');
+            } else  {
+                builder.append("<!--").append(entry.getKey()).append("--").append(entry.getValue().toString()).append("-->");
+            }
         }
     }
 

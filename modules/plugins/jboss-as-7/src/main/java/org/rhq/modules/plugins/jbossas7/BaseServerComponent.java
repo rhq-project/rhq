@@ -97,7 +97,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         String script = baseDir + File.separator + startScript;
 
         ProcessExecution processExecution;
-        processExecution = ProcessExecutionUtility.createProcessExecution(new File(script));
+        processExecution = ProcessExecutionUtility.createProcessExecution(new File("/bin/sh"));
 
         String config = pluginConfiguration.getSimpleValue(mode.getConfigPropertyName(), mode.getDefaultXmlFile());
         List<String> arguments = processExecution.getArguments();
@@ -105,6 +105,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             arguments = new ArrayList<String>();
             processExecution.setArguments(arguments);
         }
+
+        arguments.add(script);
 
         if (!config.equals(mode.getDefaultXmlFile())) {
             arguments.add(mode.getConfigArg());
@@ -205,7 +207,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
 
         PropertySimple remoteProp = pluginConfig.getSimple("manuallyAdded");
         if (remoteProp!=null && remoteProp.getBooleanValue()!= null && remoteProp.getBooleanValue()) {
-            result.setErrorMessage("This is a manually added server. This operation can not be used to install a management used. Use the server's 'bin/add-user.sh'");
+            result.setErrorMessage("This is a manually added server. This operation can not be used to install a management user. Use the server's 'bin/add-user.sh'");
             return result;
         }
 
@@ -235,7 +237,6 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             UsernamePasswordHashUtil util = new UsernamePasswordHashUtil();
             String value = util.generateHashedHexURP(user, realm, password.toCharArray());
 
-
             FileInputStream fis = new FileInputStream(propertiesFilePath);
             p.load(fis);
             fis.close();
@@ -252,6 +253,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             result.setErrorMessage(nsae.getMessage());
         }
         result.setSimpleResult("User/Password set or updated");
+        log.info("Installed management user [" + user + "].");
 
         return result;
     }

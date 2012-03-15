@@ -15,7 +15,7 @@
    | website: http://jakarta.apache.org/log4j
  -->
 
-<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="true">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <param name="Target" value="System.out"/>
@@ -32,7 +32,6 @@
 
    <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
       <param name="File" value="target/test.log"/>
-      <param name="Threshold" value="DEBUG"/>
       <param name="Append" value="false"/>
 
       <layout class="org.apache.log4j.PatternLayout">

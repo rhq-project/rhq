@@ -67,7 +67,7 @@ public class AbstractBaseDiscovery {
      * host.xml is read, otherwise standalone.xml.
      * The xml file content is stored in the variable hostXml for future use.
      * @param processInfo Process info to determine the base file location
-     * @param isDomainMode Indiates if host.xml should be read (true) or standalone.xml (false)
+     * @param isDomainMode Indicates if host.xml should be read (true) or standalone.xml (false)
      */
     protected void readStandaloneOrHostXml(ProcessInfo processInfo, boolean isDomainMode) {
         String hostXmlFile = getHostXmlFileLocation(processInfo, isDomainMode);
@@ -137,6 +137,10 @@ public class AbstractBaseDiscovery {
         if (!socketInterface.isEmpty()) {
             interfaceExpession = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
                 + "']/inet-address/@value");
+            if (interfaceExpession.isEmpty()) {
+                interfaceExpession = obtainXmlPropertyViaXPath("//interfaces/interface[@name='" + socketInterface
+                                + "']/loopback-address/@value");
+            }
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@port");
         } else if (socketBindingName.isEmpty()) {
             // old AS7.0, early 7.1 style
@@ -144,6 +148,10 @@ public class AbstractBaseDiscovery {
             String interfaceName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@interface");
             interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                 + "']/inet-address/@value");
+            if (interfaceExpession.isEmpty()) {
+                interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+                                + "']/loopback-address/@value");
+            }
         } else {
             // later AS7.1 and EAP6 standalone.xml
             portString = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
@@ -154,7 +162,10 @@ public class AbstractBaseDiscovery {
             // TODO the next may also be expressed differently
             interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
                 + "']/inet-address/@value");
-
+            if (interfaceExpession.isEmpty()) {
+                interfaceExpession = obtainXmlPropertyViaXPath("/server/interfaces/interface[@name='" + interfaceName
+                                + "']/loopback-address/@value");
+            }
         }
         HostPort hp = new HostPort();
 
@@ -164,10 +175,10 @@ public class AbstractBaseDiscovery {
             hp.host = "localhost"; // Fallback
 
         if (portString != null && !portString.isEmpty()) {
-            String tmp = replaceDollarExpression(portString, commandLine, "9990");
+            String tmp = replaceDollarExpression(portString, commandLine, String.valueOf(DEFAULT_MGMT_PORT));
             hp.port = Integer.valueOf(tmp);
         } else
-            hp.port = 9990; // Fallback to default
+            hp.port = DEFAULT_MGMT_PORT; // Fallback to default
         return hp;
     }
 
@@ -176,10 +187,10 @@ public class AbstractBaseDiscovery {
      * try to resolve it. Resolution is done by looking at the command line to see if
      * there are -bmanagement or -Djboss.bind.address.management arguments present
      *
-     *
      * @param value a hostname or hostname expression
      * @param commandLine The command line from the process
-     * @param lastResort
+     * @param lastResort fall back to this value if the value could not be found on the command line and
+     *                   the expression did not specify a default value
      * @return resolved value
      */
     private String replaceDollarExpression(String value, String[] commandLine, String lastResort) {
@@ -272,7 +283,7 @@ public class AbstractBaseDiscovery {
 
     }
 
-    String getManagementSecurtiyRealmFromHostXml() {
+    String getManagementSecurityRealmFromHostXml() {
         if (hostXml == null)
             throw new IllegalArgumentException(CALL_READ_STANDALONE_OR_HOST_XML_FIRST);
 

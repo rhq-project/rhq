@@ -59,17 +59,88 @@
 
         <activation>
           <property>
-            <name>jboss7.home</name>
+            <name>jboss7.version</name>
           </property>
         </activation>
+
+        <properties>
+          <jboss7.home>${java.io.tmpdir}/jboss-as-${jboss7.version}</jboss7.home>
+        </properties>
+        
 
         <build>
           <plugins>
 
             <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.jboss.as</groupId>
+                                    <artifactId>jboss-as-dist</artifactId>
+                                    <version>${jboss7.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${java.io.tmpdir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fix-config-files</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <replace dir="${jboss7.home}"
+                                         includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
+                                         token="&lt;inet-address " value="&lt;loopback-address "/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>properties-maven-plugin</artifactId>
+              <version>1.0-alpha-2</version>
+              <executions>
+                <execution>
+                  <goals>
+                    <goal>set-system-properties</goal>
+                  </goals>
+                  <configuration>
+                    <properties>
+                      <property>
+                        <name>jboss7.home</name>
+                        <value>${jboss7.home}</value>
+                      </property>
+                    </properties>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+            <plugin>
               <groupId>org.jboss.arquillian.maven</groupId>
               <artifactId>arquillian-maven-plugin</artifactId>
-              <version>1.0.0.Alpha2-SNAPSHOT</version>
+              <version>1.0.0.Alpha2</version>
 
               <configuration>
                 <arquillianXml>${project.build.testSourceDirectory}/../resources/itest/jbossas7-arquillian.xml</arquillianXml>
@@ -98,7 +169,7 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <version>7.1.1.Final</version>
+                    <version>${jboss7.version}</version>
                 </dependency>
 
                 <dependency>
@@ -111,10 +182,10 @@
 
             </plugin>
 
-<!--
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>exec-maven-plugin</artifactId>
+              <version>1.2.1.jbossorg-1</version>
 
               <executions>
                 <execution>
@@ -124,6 +195,8 @@
                     <goal>exec</goal>
                   </goals>
                   <configuration>
+                      <background>true</background>
+                      <backgroundBlockingAddress>127.0.0.200:9999</backgroundBlockingAddress>
                       <executable>${java.home}/bin/java</executable>
                       <arguments>
                         <argument>-D[Process Controller]</argument>
@@ -140,6 +213,9 @@
                         <argument>-Djboss.host.default.config=host.xml</argument>
                         <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
                         <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Djboss.bind.address.management=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
                         <argument>-jar</argument>
                         <argument>${jboss7.home}/jboss-modules.jar</argument>
                         <argument>-mp</argument>
@@ -151,7 +227,7 @@
                         <argument>${java.home}/bin/java</argument>
                         <argument>-mp</argument>
                         <argument>${jboss7.home}/modules</argument>
-                        <argument>- -</argument>
+                        <argument>--</argument>
                         <argument>-Xms64M</argument>
                         <argument>-Xmx512M</argument>
                         <argument>-XX:MaxPermSize=256M</argument>
@@ -165,31 +241,28 @@
                         <argument>-Djboss.host.default.config=host.xml</argument>
                         <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
                         <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
-                        <argument>- -</argument>
+                        <argument>-Djboss.bind.address.management=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
+                        <argument>--</argument>
                         <argument>-default-jvm</argument>
                         <argument>${java.home}/bin/java</argument>
                       </arguments>
                   </configuration>
                 </execution>
 
-                <execution>
-                  <id>stop-jboss7-host-controller</id>
-                  <phase>post-integration-test</phase>
-                  <goals>
-                    <goal>exec</goal>
-                  </goals>
-                </execution>
               </executions>
 
             </plugin>
--->
 
             <plugin>
               <artifactId>maven-failsafe-plugin</artifactId>
               <configuration>
-                <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test</include></includes>
+                <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include></includes>
                 <systemPropertyVariables>
                   <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
+                  <jboss7.home>${jboss7.home}</jboss7.home>
+                  <jboss7.version>${jboss7.version}</jboss7.version>
                 </systemPropertyVariables>
               </configuration>
               <executions>

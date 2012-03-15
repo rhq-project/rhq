@@ -188,13 +188,13 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
                 initLogEventSourcesConfigProp(logFile, config);
 
-                HostPort managmentPort = getManagementPortFromHostXml(commandLine);
-                config.put(new PropertySimple("hostname", managmentPort.host));
-                config.put(new PropertySimple("port", managmentPort.port));
-                config.put(new PropertySimple("realm", getManagementSecurtiyRealmFromHostXml()));
+                HostPort managementPort = getManagementPortFromHostXml(commandLine);
+                config.put(new PropertySimple("hostname", managementPort.host));
+                config.put(new PropertySimple("port", managementPort.port));
+                config.put(new PropertySimple("realm", getManagementSecurityRealmFromHostXml()));
 
-                ProductInfo productInfo = new ProductInfo(managmentPort.host, config.getSimpleValue("user", null),
-                    config.getSimpleValue("password", null), managmentPort.port);
+                ProductInfo productInfo = new ProductInfo(managementPort.host, config.getSimpleValue("user", null),
+                    config.getSimpleValue("password", null), managementPort.port);
                 productInfo = productInfo.getFromRemote();
                 if (productInfo.fromRemote) {
                     version = productInfo.productName + " " + productInfo.productVersion;
@@ -305,7 +305,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
     private void fillUserPassFromFile(Configuration config, AS7Mode mode, String baseDir) {
 
         //        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
-        String realm = getManagementSecurtiyRealmFromHostXml();
+        String realm = getManagementSecurityRealmFromHostXml();
         String fileName = getSecurityPropertyFileFromHostXml(baseDir, mode, realm);
 
         File file = new File(fileName);

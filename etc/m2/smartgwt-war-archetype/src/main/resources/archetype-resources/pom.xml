@@ -86,7 +86,6 @@
                 </executions>
 
                 <configuration>
-                    <buildOutputDirectory>target/gwtClasses</buildOutputDirectory>
                     <hostedWebapp>target/hostedWar</hostedWebapp>
                     <runTarget>${package}.Application/Application.html</runTarget>
 

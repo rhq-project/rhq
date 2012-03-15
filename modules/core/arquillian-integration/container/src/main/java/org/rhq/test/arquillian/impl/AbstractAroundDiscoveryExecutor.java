@@ -122,7 +122,8 @@ public abstract class AbstractAroundDiscoveryExecutor<T extends Annotation> {
             try {
                 m.invoke(testCase, (Object[]) null);
             } catch (Exception e) {
-                throw new IllegalStateException("Failed to execute a @" + annotationClass + " method " + m, e);
+                throw new IllegalStateException("Failed to execute @" + annotationClass.getSimpleName()
+                        + " method [" + m + "] - cause: " + e, e);
             }
         }
     }
@@ -135,7 +136,7 @@ public abstract class AbstractAroundDiscoveryExecutor<T extends Annotation> {
     private List<Method> filterAndOrderMethods(String targetTestMethodName, Method[] beforeDiscoveryMethods) {
         List<AnnotatedMethod> ordered = new ArrayList<AbstractAroundDiscoveryExecutor.AnnotatedMethod>(beforeDiscoveryMethods.length);
         
-        for(int i = 0; i < beforeDiscoveryMethods.length; ++i) {
+        for (int i = 0; i < beforeDiscoveryMethods.length; ++i) {
             T annotation = beforeDiscoveryMethods[i].getAnnotation(annotationClass);
             ApplicableTestMethodsAndOrder o = getApplicableTestMethodsAndOrder(annotation);
             

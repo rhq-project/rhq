@@ -31,6 +31,7 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.Availability;
@@ -69,7 +70,8 @@ public class CompositeLoadingTest extends AbstractEJB3Test {
                     + " WHERE a.endTime IS NULL AND a.resource.id = res.id AND res.id IN (:ids) ");
             q.setParameter("ids", ids);
             List<ResourceWithAvailability> rwas = q.getResultList();
-            assert rwas.size() == ids.size();
+            Assert.assertEquals(rwas.size(), ids.size(),
+                    "Incorrect number of ResourceWithAvailability entities returned - rwas=" + rwas + ", ids=" + ids);
 
             rwas.clear();
             em.clear();

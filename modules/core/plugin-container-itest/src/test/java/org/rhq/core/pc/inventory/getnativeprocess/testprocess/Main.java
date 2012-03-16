@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,26 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.util;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
+package org.rhq.core.pc.inventory.getnativeprocess.testprocess;
+
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 /**
- * TODO: Move these method to a utils module.
+ * 
+ *
+ * @author Lukas Krejci
  */
-public abstract class ResourceUtility {
+public class Main {
 
-    public static Resource getChildResource(Resource parent, ResourceType type, String key) {
-        for (Resource resource : parent.getChildResources()) {
-            if (resource.getResourceType().equals(type) && resource.getResourceKey().equals(key)) {
-                return resource;
-            }
-        }
-        return null;
+    public static void main(String[] args) throws Exception {
+        Reader rdr = new InputStreamReader(System.in);
+
+        //quit as soon as we read something from stdin...
+        rdr.read();
     }
-
-    private ResourceUtility() {
-    }
-
 }

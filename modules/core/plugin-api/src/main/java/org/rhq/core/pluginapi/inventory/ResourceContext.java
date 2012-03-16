@@ -320,10 +320,10 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                             getPluginContainerName(), getPluginContainerDeployment());
 
                         details = this.resourceDiscoveryComponent.discoverResources(context);
-
-                        trackedProcesses.update(details);
-                        processInfo = trackedProcesses.getProcessInfo(resourceKey);
                     }
+                    
+                    trackedProcesses.update(details);
+                    processInfo = trackedProcesses.getProcessInfo(resourceKey);                    
                 } catch (Exception e) {
                     LOG.warn("Cannot get native process for resource [" + this.resourceKey + "] - discovery failed", e);
                 }

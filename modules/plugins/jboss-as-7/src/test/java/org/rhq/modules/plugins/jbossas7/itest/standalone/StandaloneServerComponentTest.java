@@ -37,7 +37,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
     // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
-    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home"));
+    public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss.home"));
 
     private static final String SERVER_STATE_TRAIT_NAME = "server-state";
     private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
@@ -68,6 +68,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
+    // ******************************* TRAITS ******************************* //
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testServerStateTrait() throws Exception {
         System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testServerStateTrait...");
@@ -84,7 +85,19 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     public void testReleaseVersionTrait() throws Exception {
         System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
         String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        Assert.assertEquals(releaseVersion, System.getProperty("jboss7.version"),
+        String eap6Version = System.getProperty( "eap6.version" );
+        String expectedReleaseVersion;
+        if (eap6Version != null) {
+            // TODO: Use a static final Map for this.
+            if (eap6Version.equals("6.0.0.Beta1")) {
+                expectedReleaseVersion = "7.1.0.Final-redhat-1";
+            } else {
+                expectedReleaseVersion = "TODO";
+            }
+        } else {
+            expectedReleaseVersion = System.getProperty("jboss.version");
+        }
+        Assert.assertEquals(releaseVersion, expectedReleaseVersion,
                 "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
     }
 
@@ -106,6 +119,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         collectTraitAndAssertNotNull(getServerResource(), START_TIME_TRAIT_NAME);
     }
 
+    // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable once fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
     public void testReloadOperation() throws Exception {

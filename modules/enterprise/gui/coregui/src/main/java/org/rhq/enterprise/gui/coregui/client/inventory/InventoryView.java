@@ -141,20 +141,18 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem autodiscoveryQueueItem = new NavigationItem(ResourceAutodiscoveryView.VIEW_ID,
             new ViewFactory() {
                 public Canvas createView() {
-                    return decorateWithTitleBar(ResourceAutodiscoveryView.VIEW_ID, new ResourceAutodiscoveryView(
-                        extendLocatorId(ResourceAutodiscoveryView.VIEW_ID.getName())));
+                    return new ResourceAutodiscoveryView(extendLocatorId(
+                        ResourceAutodiscoveryView.VIEW_ID.getName()));
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
         autodiscoveryQueueItem.setRefreshRequired(true);
 
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(
-                    PAGE_ALL_RESOURCES,
-                    new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES.getName()), null, PAGE_ALL_RESOURCES
-                        .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM), ImageManager
-                        .getResourceLargeIcon(ResourceCategory.SERVER), ImageManager
-                        .getResourceLargeIcon(ResourceCategory.SERVICE)));
+                return new ResourceSearchView(extendLocatorId(PAGE_ALL_RESOURCES.getName()), null, PAGE_ALL_RESOURCES
+                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM), ImageManager
+                    .getResourceLargeIcon(ResourceCategory.SERVER), ImageManager
+                    .getResourceLargeIcon(ResourceCategory.SERVICE));
             }
         });
 
@@ -162,8 +160,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             public Canvas createView() {
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
                     ResourceCategory.PLATFORM.name());
-                return decorateWithTitleBar(PAGE_PLATFORMS, createResourceSearchView(PAGE_PLATFORMS, initialCriteria));
-
+                return createResourceSearchView(PAGE_PLATFORMS, initialCriteria);
             }
         });
 
@@ -171,7 +168,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             public Canvas createView() {
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
                     ResourceCategory.SERVER.name());
-                return decorateWithTitleBar(PAGE_SERVERS, createResourceSearchView(PAGE_SERVERS, initialCriteria));
+                return createResourceSearchView(PAGE_SERVERS, initialCriteria);
             }
         });
 
@@ -180,7 +177,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.CATEGORY.propertyName(),
                     ResourceCategory.SERVICE.name());
-                return decorateWithTitleBar(PAGE_SERVICES, createResourceSearchView(PAGE_SERVICES, initialCriteria));
+                return createResourceSearchView(PAGE_SERVICES, initialCriteria);
             }
         });
 
@@ -191,8 +188,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 initialCriteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(),
                     ResourceCategory.SERVER.name());
 
-                return decorateWithTitleBar(PAGE_UNAVAIL_SERVERS,
-                    createResourceSearchView(PAGE_UNAVAIL_SERVERS, initialCriteria));
+                return createResourceSearchView(PAGE_UNAVAIL_SERVERS, initialCriteria);
             }
         });
 
@@ -203,15 +199,13 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildGroupsSection() {
         NavigationItem dynagroupDefinitionsItem = new NavigationItem(PAGE_DYNAGROUP_DEFINITIONS, new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(PAGE_DYNAGROUP_DEFINITIONS, new GroupDefinitionListView(
-                    extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName())));
+                return new GroupDefinitionListView(extendLocatorId(PAGE_DYNAGROUP_DEFINITIONS.getName()));
             }
         }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem allGroupsItem = new NavigationItem(PAGE_ALL_GROUPS, new ViewFactory() {
             public Canvas createView() {
-                return decorateWithTitleBar(PAGE_ALL_GROUPS,
-                    new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS.getName())));
+                return new ResourceGroupListView(extendLocatorId(PAGE_ALL_GROUPS.getName()));
             }
         });
 
@@ -220,8 +214,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceGroupListView view = new ResourceGroupListView(
                     extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
                         ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()));
-                //view.setInitialSearchBarSearchText("groupCategory=compatible");
-                return decorateWithTitleBar(PAGE_COMPATIBLE_GROUPS, view);
+                return view;
             }
         });
 
@@ -229,8 +222,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             public Canvas createView() {
                 ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()),
                     new Criteria(ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()));
-                //view.setInitialSearchBarSearchText("groupCategory=mixed");
-                return decorateWithTitleBar(PAGE_MIXED_GROUPS, view);
+                return view;
             }
         });
 
@@ -238,9 +230,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             public Canvas createView() {
                 ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()),
                     new Criteria("downMemberCount", "1"));
-                //view.setInitialSearchBarSearchText("availability=down"); I don't think this matches exactly what the criteria returns
                 view.setShowNewButton(false);
-                return decorateWithTitleBar(PAGE_PROBLEM_GROUPS, view);
+                return view;
             }
         });
 

@@ -86,7 +86,8 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     private LocatableListGrid scheduledOperationsGrid = null;
 
     private ScheduledOperationsDataSource dataSourceScheduled;
-    public static String unlimited = MSG.common_label_unlimited();
+    public static String unlimited = "-1";
+    public static final String unlimitedString = MSG.common_label_unlimited();
     public static String defaultValue = "5";
     public static boolean defaultEnabled = true;
 
@@ -172,24 +173,29 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             return;
         }
 
+        String retrieved = defaultValue;
         PropertySimple property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED);
+
         if ((property != null) && (property.getStringValue() != null)) {
-            //retrieve and translate to int
-            String retrieved = property.getStringValue();
-            if (unlimited.equals(retrieved)) {
-                getDataSourceScheduled().setOperationsRangeScheduled(-1);
-            } else {
-                getDataSourceScheduled().setOperationsRangeScheduled(Integer.parseInt(retrieved));
+            retrieved = property.getStringValue();
+            // protect against legacy issue with non-numeric values
+            try {
+                Integer.parseInt(retrieved);
+            } catch (NumberFormatException e) {
+                retrieved = unlimited;
             }
-        } else {//create setting
+        } else {
             storedPortlet.getConfiguration().put(new PropertySimple(OPERATIONS_RANGE_SCHEDULED, defaultValue));
-            getDataSourceScheduled().setOperationsRangeScheduled(-1);
         }
+
+        getDataSourceScheduled().setOperationsRangeScheduled(Integer.parseInt(retrieved));
+
         //Checkbox settings property
         property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED);
         if ((property != null) && (property.getBooleanValue() != null)) {
             getDataSourceScheduled().setOperationsRangeScheduleEnabled(property.getBooleanValue().booleanValue());
-        } else {//create setting
+
+        } else {
             storedPortlet.getConfiguration()
                 .put(new PropertySimple(OPERATIONS_RANGE_SCHEDULED_ENABLED, defaultEnabled));
             getDataSourceScheduled().setOperationsRangeScheduleEnabled(defaultEnabled);
@@ -233,9 +239,9 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         sheduledOperationsLayout.addMember(fieldWrapper);
 
         //retrieve previous value otherwise initialize to true(live unlimited list)
-        PropertySimple retrieved = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED);
-        if (retrieved != null) {
-            enableScheduledOperationsGrouping.setValue(retrieved.getBooleanValue());
+        PropertySimple property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED_ENABLED);
+        if (property != null) {
+            enableScheduledOperationsGrouping.setValue(property.getBooleanValue());
         } else {
             enableScheduledOperationsGrouping.setValue(true);
         }
@@ -247,7 +253,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             + ".</b></nobr>");
         maximumScheduledOperationsComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] acceptableDisplayValues = { "1", "5", "10", "15", unlimited };
+        String[] acceptableDisplayValues = { "1", "5", "10", "15", unlimitedString };
         maximumScheduledOperationsComboBox.setValueMap(acceptableDisplayValues);
         maximumScheduledOperationsComboBox.setWidth(100);
         maximumScheduledOperationsComboBox.addChangeHandler(new ChangeHandler() {
@@ -258,16 +264,21 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             }
         });
 
-        //set to default
-        String selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(OPERATIONS_RANGE_SCHEDULED, defaultValue));
+        String retrieved = defaultValue;
+
+        if ((property = storedPortlet.getConfiguration().getSimple(OPERATIONS_RANGE_SCHEDULED)) != null) {
+            retrieved = property.getStringValue();
+            // protect against legacy issue with non-numeric values
+            try {
+                Integer.parseInt(retrieved);
+            } catch (NumberFormatException e) {
+                retrieved = unlimited;
             }
         }
+
+        //prepopulate the combobox with the previously stored selection
+        String selectedValue = retrieved.equals(unlimited) ? unlimitedString : retrieved;
+
         //prepopulate the combobox with the previously stored selection
         maximumScheduledOperationsComboBox.setDefaultValue(selectedValue);
         DynamicForm fieldWrapper2 = new DynamicForm();
@@ -281,10 +292,14 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
                 //no need to insert validation here as user not allowed to enter values
-                if (form.getValue(OPERATIONS_RANGE_SCHEDULED) != null) {//if new value supplied
-                    storedPortlet.getConfiguration().put(
-                        new PropertySimple(OPERATIONS_RANGE_SCHEDULED, form.getValue(OPERATIONS_RANGE_SCHEDULED)));
+                String value = (String) form.getValue(OPERATIONS_RANGE_SCHEDULED);
+                if (value != null) {
+                    // convert display string to stored integer if necessary
+                    value = unlimitedString.equals(value) ? unlimited : value;
+
+                    storedPortlet.getConfiguration().put(new PropertySimple(OPERATIONS_RANGE_SCHEDULED, value));
                 }
+
                 if (form.getValue(OPERATIONS_RANGE_SCHEDULED_ENABLED) != null) {//if new value supplied
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(OPERATIONS_RANGE_SCHEDULED_ENABLED, form

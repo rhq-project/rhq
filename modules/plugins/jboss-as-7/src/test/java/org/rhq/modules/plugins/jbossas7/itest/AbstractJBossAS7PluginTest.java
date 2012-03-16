@@ -184,7 +184,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = timeout * 1000;
         OperationFacet operationFacet = resourceContainer.createResourceComponentProxy(OperationFacet.class, 
-                FacetLockType.NONE, timeoutMillis, false, false);
+                FacetLockType.WRITE, timeoutMillis, false, false);
         OperationResult operationResult;
         try {
             operationResult = operationFacet.invokeOperation(operationName, params);
@@ -264,7 +264,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         int timeoutMillis = 5000;
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
-                FacetLockType.NONE, timeoutMillis, false, false);
+                FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
                 measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());
@@ -295,7 +295,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
     }
 
     private void installManagementUser(Resource resource) throws PluginContainerException {
-        System.out.println("Installing management user [" + MANAGEMENT_USERNAME + "]...");
+        System.out.println("Installing management user [" + MANAGEMENT_USERNAME + "] for " + resource + "...");
 
         // Invoke the "installRhqUser" operation on the ResourceComponent - this will update the mgmt-users.properties
         // file in the AS7 server's configuration directory.
@@ -305,6 +305,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
 
         String operationName = "installRhqUser";
         OperationResult result = invokeOperation(resource, operationName, params);
+        System.out.println("Installed management user [" + MANAGEMENT_USERNAME + "] for " + resource + ".");
         assertOperationSucceeded(operationName, params, result);
 
         // Update the username and password in the plugin config.
@@ -320,7 +321,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         try {
             inventoryManager.activateResource(resource, resourceContainer, true);
         } catch (PluginContainerException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to activate ResourceComponent for " + resource + ".", e);
         }
     }
 

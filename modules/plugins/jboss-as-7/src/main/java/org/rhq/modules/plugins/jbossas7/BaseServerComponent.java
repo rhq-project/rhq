@@ -65,7 +65,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
      * the #startServer method to start it again.
      *
      * @param parameters Parameters to pass to the (recursive) invocation of #invokeOperation
-     * @param mode
+     * @param mode Mode of the server to start (domain or standalone)
      * @return State of execution
      * @throws Exception If anything goes wrong
      */
@@ -76,7 +76,22 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             tmp.setErrorMessage("Restart failed while failing to shut down: " + tmp.getErrorMessage());
             return tmp;
         }
-        Thread.sleep(500); // Wait 0.5s -- this is plenty
+        boolean down=false;
+        int count=0;
+        while (!down) {
+            count++;
+            Thread.sleep(1000); // Wait 1s
+            Operation op = new ReadAttribute(new Address(),"release-version");
+            Result res = getASConnection().execute(op);
+            if (!res.isSuccess()) { // If op succeeds, server is not down
+                down=true;
+            }
+            if (count > 20) {
+                tmp.setErrorMessage("Was not able to shut down the server");
+                return tmp;
+            }
+        }
+
         return startServer(mode);
     }
 
@@ -84,7 +99,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
      * Start the server by calling the start script listed in the plugin configuration. If a different
      * config is given, this is passed via --server-config
      * @return State of Execution.
-     * @param mode
+     * @param mode Mode of the server to start (domain or standalone)
      */
     protected OperationResult startServer(AS7Mode mode) {
         OperationResult operationResult = new OperationResult();
@@ -170,7 +185,7 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
 
         if (name.equals("shutdown") || name.equals("reload")) {
             /*
-             * Shutdown needs a special treatment, because after sending the operation, if shutdown suceeds,
+             * Shutdown needs a special treatment, because after sending the operation, if shutdown succeeds,
              * the server connection is closed and we can't read from it. So if we get connection refused for
              * reading, this is a good sign.
              */
@@ -178,6 +193,10 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
                 if (res.getRhqThrowable()!=null && (res.getRhqThrowable() instanceof ConnectException || res.getRhqThrowable().getMessage().equals("Connection refused"))) {
                     operationResult.setSimpleResult("Success");
                     log.debug("Got a ConnectionRefused for operation " + name + " this is considered ok, as the remote server sometimes closes the communications channel before sending a reply");
+                }
+                if (res.getFailureDescription().contains("Socket closed")) { // See https://issues.jboss.org/browse/AS7-4192
+                    operationResult.setSimpleResult("Success");
+                    log.debug("Got a 'Socket closed' result from AS for operation " + name );
                 }
                 else
                     operationResult.setErrorMessage(res.getFailureDescription());

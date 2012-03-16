@@ -5,9 +5,9 @@
             xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
   <!-- JBoss AS 7 -->
-  <container qualifier="jbossas7" default="true">
+  <container qualifier="jboss-as" default="true">
     <configuration>
-      <property name="jbossHome">${jboss7.home}</property>
+      <property name="jbossHome">${jboss.home}</property>
       <!-- Listen on 127.0.0.201, rather than the default of 127.0.0.1 -->
       <property name="javaVmArguments">-Xmx512M -XX:MaxPermSize=128M -Djboss.bind.address.management=127.0.0.201 -Djboss.bind.address=127.0.0.201 -Djboss.bind.address.unsecure=127.0.0.201</property>
       <property name="managementAddress">127.0.0.201</property>

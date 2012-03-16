@@ -311,6 +311,7 @@
             <event name="logEntry" description="an entry in a log file"/>
 
             <resource-configuration>
+                <!-- IF you add properties here, you also need to update org.rhq.modules.plugins.jbossas7.ManagedASComponent.loadResourceConfiguration -->
                 <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
                     <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
                 </c:simple-property>

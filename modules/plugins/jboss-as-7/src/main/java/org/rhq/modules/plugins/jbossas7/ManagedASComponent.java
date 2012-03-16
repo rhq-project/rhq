@@ -19,7 +19,9 @@
 package org.rhq.modules.plugins.jbossas7;
 
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -30,8 +32,10 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -113,7 +117,44 @@ public class ManagedASComponent extends BaseComponent {
         serverPath = serverPath.substring(serverPath.indexOf("=")+1);
         configuration.put(new PropertySimple("hostname",serverPath));
 
+        Operation op = new ReadResource(getAddress());
+        ComplexResult res = getASConnection().executeComplex(op);
+        if (res.isSuccess()) {
+            Map<String,Object> map = res.getResult();
+            String group = (String) map.get("group");
+            configuration.put(new PropertySimple("group",group));
+
+            Map<String,Object> sgMap = getServerGroupMap(group);
+
+            String sbGroup = (String) map.get("socket-binding-group");
+            if (sbGroup==null)
+                sbGroup = (String) sgMap.get("socket-binding-group");
+
+            configuration.put(new PropertySimple("socket-binding-group",sbGroup));
+            Integer offSet = (Integer) map.get("socket-binding-port-offset");
+            if (offSet==null)
+                offSet = 0;
+            configuration.put(new PropertySimple("socket-binding-port-offset",offSet));
+        } else {
+            throw new RuntimeException("Could not load configuration from remote server");
+        }
+
         return configuration;
+    }
+
+    /**
+     * Get the resource details of the server group with the given name
+     * @param group Name of the server group to query
+     * @return Map with the properties of the group. Or an empty map if the group does not exist.
+     */
+    private Map<String, Object> getServerGroupMap(String group) {
+        Operation op = new ReadResource("server-group",group);
+        ComplexResult cr = getASConnection().executeComplex(op);
+        if (cr.isSuccess()) {
+            return cr.getResult();
+        }
+
+        return Collections.emptyMap();
     }
 
     @Override

@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;

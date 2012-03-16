@@ -23,7 +23,6 @@
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;

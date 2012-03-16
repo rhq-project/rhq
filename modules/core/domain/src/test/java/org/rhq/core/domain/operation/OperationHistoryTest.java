@@ -34,6 +34,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -349,6 +350,9 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
                 group.removeExplicitResource(res);
                 em.remove(group);
+                for (Availability avail : res.getAvailability()) {
+                    em.remove(avail);
+                }
                 em.remove(res);
                 em.remove(type);
 

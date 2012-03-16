@@ -69,25 +69,27 @@ public class CompositeLoadingTest extends AbstractEJB3Test {
                     + " WHERE a.endTime IS NULL AND a.resource.id = res.id AND res.id IN (:ids) ");
             q.setParameter("ids", ids);
             List<ResourceWithAvailability> rwas = q.getResultList();
-            Assert.assertEquals(rwas.size(), ids.size(),
-                    "Incorrect number of ResourceWithAvailability entities returned - rwas=" + rwas + ", ids=" + ids);
+            // multiple by 2 as each will have an initial UNKNOWN avail
+            Assert.assertEquals(rwas.size(), (ids.size() * 2),
+                "Incorrect number of ResourceWithAvailability entities returned - rwas=" + rwas + ", ids=" + ids);
 
             rwas.clear();
             em.clear();
-            q = em.createQuery("SELECT res,a.availabilityType " // 
+            q = em.createQuery("SELECT res, a.availabilityType " // 
                 + " FROM Resource res LEFT JOIN  res.availability a "
                 + " WHERE a.endTime IS NULL AND a.resource.id = res.id AND res.id IN (:ids) " //
                 + " ORDER BY res.name");
             q.setParameter("ids", ids);
             List<Object[]> rwas2 = q.getResultList();
-            assert rwas2.size() == ids.size();
+            Assert.assertEquals(rwas2.size(), (ids.size() * 2)); // multiple by 2 as each will have an initial UNKNOWN avail
+
             for (Object[] ob : rwas2) {
                 Resource r = (Resource) ob[0];
                 AvailabilityType at = (AvailabilityType) ob[1];
                 ResourceWithAvailability rwa = new ResourceWithAvailability(r, at);
                 rwas.add(rwa);
             }
-            assert rwas.size() == ids.size();
+            Assert.assertEquals(rwas.size(), (ids.size() * 2)); // multiple by 2 as each will have an initial UNKNOWN avail
 
         } finally {
             getTransactionManager().rollback();

@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -18,6 +20,7 @@
         <json.version>${project.json.version}</json.version>
         <jackson.version>1.7.4</jackson.version>
         <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
+        <jboss.version>7.1.1.Final</jboss.version>
     </properties>
 
     <build>
@@ -67,7 +70,7 @@
           <as7.version>7.1.1.Final</as7.version>
           <eap6.version/>
           <jboss.version>${as7.version}</jboss.version>
-          <jboss.home>${java.io.tmpdir}/jboss-as-${as7.version}</jboss.home>
+          <jboss7.home>${java.io.tmpdir}/jboss-as-${as7.version}</jboss7.home>
         </properties>
 
         <build>
@@ -103,6 +106,22 @@
       </profile>
 
       <profile>
+        <id>eap600Beta1-setup</id>
+
+        <activation>
+          <property>
+            <name>eap6.version</name>
+            <value>6.0.0.Beta1</value>
+          </property>
+        </activation>
+
+        <properties>
+          <jboss.version>7.1.1.Final</jboss.version>
+        </properties>
+
+      </profile>
+
+      <profile>
         <id>eap6-setup</id>
 
         <activation>
@@ -116,8 +135,7 @@
           <eap6.version>6.0.0.Beta1</eap6.version>
           <as7.version/>
           <eap6.url>http://SET_ME/jboss-eap-${eap6.version}.zip</eap6.url>
-          <jboss.version>7.1.1.Final</jboss.version>
-          <jboss.home>${java.io.tmpdir}/jboss-eap-${eap6.version}</jboss.home>
+          <jboss7.home>${java.io.tmpdir}/jboss-eap-${eap6.version}</jboss7.home>
         </properties>
 
         <build>
@@ -151,13 +169,18 @@
 
       <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
       <profile>
-        <id>itest-qazxdrfvgyhnjik</id>
+        <id>*** itest ***</id>
 
         <activation>
           <property>
             <name>itest</name>
           </property>
         </activation>
+
+        <properties>
+          <jboss.standalone.bindAddress>127.1.1.1</jboss.standalone.bindAddress>
+          <jboss.domain.bindAddress>127.2.2.2</jboss.domain.bindAddress>
+        </properties>
 
         <build>
           <plugins>
@@ -170,7 +193,7 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <replace dir="${jboss.home}"
+                                <replace dir="${jboss7.home}"
                                          includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
                                          token="&lt;inet-address " value="&lt;loopback-address "/>
                             </target>
@@ -182,6 +205,7 @@
                 </executions>
             </plugin>
 
+            <!-- This is so we can reference jboss7.home in jbossas7-arquillian.xml. -->
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>properties-maven-plugin</artifactId>
@@ -194,8 +218,12 @@
                   <configuration>
                     <properties>
                       <property>
-                        <name>jboss.home</name>
-                        <value>${jboss.home}</value>
+                        <name>jboss7.home</name>
+                        <value>${jboss7.home}</value>
+                      </property>
+                      <property>
+                        <name>jboss.standalone.bindAddress</name>
+                        <value>${jboss.standalone.bindAddress}</value>
                       </property>
                     </properties>
                   </configuration>
@@ -262,7 +290,7 @@
                   </goals>
                   <configuration>
                       <background>true</background>
-                      <backgroundPollingAddress>127.0.0.200:9999</backgroundPollingAddress>
+                      <backgroundPollingAddress>${jboss.domain.bindAddress}:9999</backgroundPollingAddress>
                       <executable>${java.home}/bin/java</executable>
                       <arguments>
                         <argument>-D[Process Controller]</argument>
@@ -277,22 +305,22 @@
                         <argument>-Djava.awt.headless=true</argument>
                         <argument>-Djboss.domain.default.config=domain.xml</argument>
                         <argument>-Djboss.host.default.config=host.xml</argument>
-                        <argument>-Dorg.jboss.boot.log.file=${jboss.home}/domain/log/process-controller.log</argument>
-                        <argument>-Dlogging.configuration=file:${jboss.home}/domain/configuration/logging.properties</argument>
-                        <argument>-Djboss.bind.address.management=127.0.0.200</argument>
-                        <argument>-Djboss.bind.address=127.0.0.200</argument>
-                        <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
+                        <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
+                        <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
                         <argument>-jar</argument>
-                        <argument>${jboss.home}/jboss-modules.jar</argument>
+                        <argument>${jboss7.home}/jboss-modules.jar</argument>
                         <argument>-mp</argument>
-                        <argument>${jboss.home}/modules</argument>
+                        <argument>${jboss7.home}/modules</argument>
                         <argument>org.jboss.as.process-controller</argument>
                         <argument>-jboss-home</argument>
-                        <argument>${jboss.home}</argument>
+                        <argument>${jboss7.home}</argument>
                         <argument>-jvm</argument>
                         <argument>${java.home}/bin/java</argument>
                         <argument>-mp</argument>
-                        <argument>${jboss.home}/modules</argument>
+                        <argument>${jboss7.home}/modules</argument>
                         <argument>--</argument>
                         <argument>-Xms64M</argument>
                         <argument>-Xmx512M</argument>
@@ -305,11 +333,11 @@
                         <argument>-Djava.awt.headless=true</argument>
                         <argument>-Djboss.domain.default.config=domain.xml</argument>
                         <argument>-Djboss.host.default.config=host.xml</argument>
-                        <argument>-Dorg.jboss.boot.log.file=${jboss.home}/domain/log/host-controller.log</argument>
-                        <argument>-Dlogging.configuration=file:${jboss.home}/domain/configuration/logging.properties</argument>
-                        <argument>-Djboss.bind.address.management=127.0.0.200</argument>
-                        <argument>-Djboss.bind.address=127.0.0.200</argument>
-                        <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
+                        <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
+                        <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
                         <argument>--</argument>
                         <argument>-default-jvm</argument>
                         <argument>${java.home}/bin/java</argument>
@@ -327,7 +355,7 @@
                 <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include></includes>
                 <systemPropertyVariables>
                   <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
-                  <jboss.home>${jboss.home}</jboss.home>
+                  <jboss7.home>${jboss7.home}</jboss7.home>
                   <jboss.version>${jboss.version}</jboss.version>
                   <eap6.version>${eap6.version}</eap6.version>
                 </systemPropertyVariables>

@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -41,7 +40,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     private static final String SERVER_STATE_TRAIT_NAME = "server-state";
     private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
-    private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
     private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
     private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
     private static final String START_TIME_TRAIT_NAME = "startTime";
@@ -83,22 +81,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testReleaseVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
-        String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        String eap6Version = System.getProperty( "eap6.version" );
-        String expectedReleaseVersion;
-        if (eap6Version != null) {
-            // TODO: Use a static final Map for this.
-            if (eap6Version.equals("6.0.0.Beta1")) {
-                expectedReleaseVersion = "7.1.0.Final-redhat-1";
-            } else {
-                expectedReleaseVersion = "TODO";
-            }
-        } else {
-            expectedReleaseVersion = System.getProperty("jboss.version");
-        }
-        Assert.assertEquals(releaseVersion, expectedReleaseVersion,
-                "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
+        super.testReleaseVersionTrait();
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")

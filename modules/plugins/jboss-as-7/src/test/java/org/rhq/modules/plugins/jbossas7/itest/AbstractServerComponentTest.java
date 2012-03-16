@@ -18,6 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.testng.Assert;
 
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -32,6 +35,13 @@ import org.rhq.modules.plugins.jbossas7.util.ResourceUtility;
  * @author Ian Springer
  */
 public abstract class AbstractServerComponentTest extends AbstractJBossAS7PluginTest {
+
+    private static final Map<String, String> EAP6_VERSION_TO_AS7_VERSION_MAP = new HashMap<String, String>();
+    static {
+        EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0.Beta1", "7.1.0.Final-redhat-1");
+    }
+
+    private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
 
     protected abstract ResourceType getServerResourceType();
 
@@ -53,6 +63,23 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
                 getServerResourceType() + " Resource with key [" + getServerResourceKey() + "] was not discovered.");
         System.out.println("===== Discovered: " + getServerResource());
         System.out.println("---------- " + getServerResource().getPluginConfiguration().toString(true));
+    }
+
+    public void testReleaseVersionTrait() throws Exception {
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
+        String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
+        String eap6Version = System.getProperty( "eap6.version" );
+        String expectedReleaseVersion;
+        if (eap6Version != null) {
+            expectedReleaseVersion = EAP6_VERSION_TO_AS7_VERSION_MAP.get(eap6Version);
+            if (expectedReleaseVersion == null) {
+                throw new Exception("No AS7 version mapping is defined for EAP6 version [" + eap6Version + "].");
+            }
+        } else {
+            expectedReleaseVersion = System.getProperty("jboss.version");
+        }
+        Assert.assertEquals(releaseVersion, expectedReleaseVersion,
+                "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
     }
 
 }

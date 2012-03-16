@@ -37,6 +37,7 @@ import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -98,7 +99,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
     @ArquillianResource
     protected Deployer pluginDeployer;
 
-    protected FakeServerInventory fakeServerInventory = new FakeServerInventory();
+    protected static final FakeServerInventory SERVER_INVENTORY = new FakeServerInventory();
 
     @Deployment(name = "platform", order = 1)
     public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
@@ -133,7 +134,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         try {
             this.serverServices.resetMocks();
             when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
-                    this.fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+                    this.SERVER_INVENTORY.mergeInventoryReport(InventoryStatus.COMMITTED));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -155,8 +156,10 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
                     StandaloneServerComponentTest.RESOURCE_TYPE, StandaloneServerComponentTest.RESOURCE_KEY);
             if (standaloneServer != null) {
                 installManagementUser(standaloneServer);
-            }            
-            createdManagementUsers = true;
+            }
+            // TODO (ips, 03/16/12): Uncomment this once I fix the issue with Resources that were previously discovered
+            //                       and committed getting discovered with a status of NEW.
+            //createdManagementUsers = true;
         }
     }
 
@@ -308,21 +311,29 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         System.out.println("Installed management user [" + MANAGEMENT_USERNAME + "] for " + resource + ".");
         assertOperationSucceeded(operationName, params, result);
 
-        // Update the username and password in the plugin config.
-        Configuration pluginConfig = resource.getPluginConfiguration();
+        // Update the username and password in the *Server-side* plugin config. This simulates the end user updating the
+        // plugin config via the GUI.
+        Resource resourceFromServer = this.SERVER_INVENTORY.getResourceStore().get(resource.getUuid());
+        Configuration pluginConfig = resourceFromServer.getPluginConfiguration();
         pluginConfig.getSimple("user").setStringValue(MANAGEMENT_USERNAME);
         pluginConfig.getSimple("password").setStringValue(MANAGEMENT_PASSWORD);
-
+        
         // Restart the ResourceComponent, so it will start using the new plugin config.
         InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-        inventoryManager.deactivateResource(resource);
+        try {
+            inventoryManager.updatePluginConfiguration(resource.getId(), pluginConfig);
+        } catch (InvalidPluginConfigurationClientException e) {
+            throw new IllegalStateException(e);
+        }
+
+/*        inventoryManager.deactivateResource(resource);
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resource);
         Assert.assertNotNull(resourceContainer, "No ResourceContainer exists for " + resource + ".");
         try {
             inventoryManager.activateResource(resource, resourceContainer, true);
         } catch (PluginContainerException e) {
             throw new RuntimeException("Failed to activate ResourceComponent for " + resource + ".", e);
-        }
+        }*/
     }
 
     private static String getRhqVersion() throws MavenArtifactNotFoundException {

@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.domain;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -38,7 +37,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     public static final String RESOURCE_KEY = "DomainController";
 
     private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
-    private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
     private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
     private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
     private static final String START_TIME_TRAIT_NAME = "startTime";
@@ -72,10 +70,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testReleaseVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
-        String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        Assert.assertEquals(releaseVersion, System.getProperty("jboss.version"),
-                "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
+        super.testReleaseVersionTrait();
     }
 
     @Test(dependsOnMethods = "testAutoDiscovery")

@@ -18,16 +18,6 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
@@ -35,8 +25,26 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.*;
-import java.util.List;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.rest.AbstractRestBean;
+import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
  *  Provider of RESTful reports via CSV, Xml.
@@ -68,18 +76,35 @@ public class RestReportingBean extends AbstractRestBean implements RestReporting
         log.debug(" ** Configuration History REST invocation");
         //Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
         ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-        criteria.addFilterResourceIds(resourceId);
         criteria.fetchConfiguration(true);
         criteria.addSortCreatedTime(PageOrdering.ASC);
-        List<ResourceConfigurationUpdate> history = configurationManager.findResourceConfigurationUpdatesByCriteria( subjectManager.getOverlord(), criteria);
+        //List<ResourceConfigurationUpdate> history = configurationManager.findResourceConfigurationUpdatesByCriteria( subjectManager.getOverlord(), criteria);
 
-        sb = new StringBuilder("ID,Group\n"); // set title row
-        for (ResourceConfigurationUpdate resourceConfigurationUpdate : history) {
-            sb.append( resourceConfigurationUpdate.getGroupConfigurationUpdate().getId());
+        CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> queryExecutor =
+            new CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>() {
+                @Override
+                public PageList<ResourceConfigurationUpdate> execute(ResourceConfigurationUpdateCriteria criteria) {
+                    return configurationManager.findResourceConfigurationUpdatesByCriteria(subjectManager.getOverlord(),
+                        criteria);
+                }
+            };
+
+        CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> query =
+            new CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>(criteria, queryExecutor);
+        sb = new StringBuilder("ID,Status\n"); // set title row
+        for (ResourceConfigurationUpdate configUpdate : query) {
+            sb.append(configUpdate.getId());
             sb.append(",");
-            sb.append( resourceConfigurationUpdate.getGroupConfigurationUpdate().getGroup());
+            sb.append(configUpdate.getStatus());
             sb.append(",");
         }
+
+//        for (ResourceConfigurationUpdate resourceConfigurationUpdate : history) {
+//            sb.append( resourceConfigurationUpdate.getGroupConfigurationUpdate().getId());
+//            sb.append(",");
+//            sb.append( resourceConfigurationUpdate.getGroupConfigurationUpdate().getGroup());
+//            sb.append(",");
+//        }
         sb.deleteCharAt(sb.length() - 1); // remove last ","
         sb.append("\n");
         //@todo: what if there is no results

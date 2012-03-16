@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
+import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.criteria.DriftDefinitionTemplateCriteria;
@@ -214,13 +215,13 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 }
             });
 
-        addTableAction("PinToTemplate", MSG.view_drift_button_pinToTemplate(), MSG
-            .view_drift_button_pinToTemplate_confirm(), new AbstractTableAction(pinEnablement) {
+        addTableAction("PinToTemplate", MSG.view_drift_button_pinToTemplate(),
+            MSG.view_drift_button_pinToTemplate_confirm(), new AbstractTableAction(pinEnablement) {
 
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                pinToTemplate();
-            }
-        });
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    pinToTemplate();
+                }
+            });
     }
 
     private void pinToDefinition() {
@@ -253,21 +254,16 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
             setExpansionMode(ExpansionMode.RELATED);
-
-            //setDefaultHeight(10);
-            //setAutoFitData(Autofit.VERTICAL);
         }
 
         @Override
         protected Canvas getExpansionComponent(ListGridRecord record) {
-
             String dirPath = record.getAttribute(DriftSnapshotDataSource.ATTR_DIR_PATH);
 
             return new DirectoryView(extendLocatorId(dirPath), dirPath);
         }
     }
 
-    //public class DirectoryView extends StringIDTableSection<DirectoryView.DirectoryViewDataSource> {
     public class DirectoryView extends Table<DirectoryView.DirectoryViewDataSource> {
 
         private String directory;
@@ -281,10 +277,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
             setShowFilterForm(false);
             setShowHeader(false);
             setShowFooter(false);
-
-            setWidth100();
-            setAutoHeight();
-            setOverflow(Overflow.VISIBLE);
 
             setDataSource(getDataSource());
         }
@@ -300,16 +292,29 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
         }
 
         @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new DirectoryViewListGrid(locatorId);
-        }
-
-        @Override
         protected void configureTable() {
             ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
             getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
             super.configureTable();
+        }
+
+        @Override
+        protected void configureTableContents(Layout contents) {
+            contents.setWidth100();
+            contents.setHeight100();
+            contents.setOverflow(Overflow.VISIBLE);
+        }
+
+        @Override
+        protected void configureListGrid(ListGrid grid) {
+            grid.setDefaultHeight(1);
+            grid.setAutoFitData(Autofit.VERTICAL);
+        }
+
+        @Override
+        protected LocatableListGrid createListGrid(String locatorId) {
+            return new DirectoryViewListGrid(locatorId);
         }
 
         private class DirectoryViewListGrid extends LocatableListGrid {
@@ -320,9 +325,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 setCanExpandRecords(true);
                 setCanExpandMultipleRecords(true);
                 setExpansionMode(ExpansionMode.RELATED);
-
-                setDefaultHeight(10);
-                setAutoFitData(Autofit.VERTICAL);
 
                 addRecordExpandHandler(new RecordExpandHandler() {
 
@@ -355,7 +357,6 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
             @Override
             protected Canvas getExpansionComponent(ListGridRecord record) {
-
                 String driftId = record.getAttribute(DriftDataSource.ATTR_ID);
 
                 return new DriftSnapshotDriftDetailsView(extendLocatorId(driftId), driftId);
@@ -383,8 +384,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(DriftDataSource.ATTR_CTIME));
                 fields.add(ctimeField);
 
-                ListGridField categoryField = new ListGridField(DriftDataSource.ATTR_CATEGORY, MSG
-                    .common_title_category());
+                ListGridField categoryField = new ListGridField(DriftDataSource.ATTR_CATEGORY,
+                    MSG.common_title_category());
                 categoryField.setType(ListGridFieldType.IMAGE);
                 categoryField.setAlign(Alignment.CENTER);
                 categoryField.setShowHover(true);
@@ -407,8 +408,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
                 });
                 fields.add(categoryField);
 
-                ListGridField changeSetVersionField = new ListGridField(DriftDataSource.ATTR_CHANGESET_VERSION, MSG
-                    .view_drift_table_snapshot());
+                ListGridField changeSetVersionField = new ListGridField(DriftDataSource.ATTR_CHANGESET_VERSION,
+                    MSG.view_drift_table_snapshot());
                 fields.add(changeSetVersionField);
 
                 ListGridField pathField = new ListGridField(DriftDataSource.ATTR_PATH, MSG.common_title_name());
@@ -500,8 +501,8 @@ public class DriftSnapshotView extends Table<DriftSnapshotDataSource> {
 
                 record.setAttribute(DriftDataSource.ATTR_CTIME, new Date(from.getCtime()));
 
-                record.setAttribute(DriftDataSource.ATTR_CATEGORY, ImageManager
-                    .getDriftCategoryIcon((0 == version) ? null : from.getCategory()));
+                record.setAttribute(DriftDataSource.ATTR_CATEGORY,
+                    ImageManager.getDriftCategoryIcon((0 == version) ? null : from.getCategory()));
 
                 record.setAttribute(DriftDataSource.ATTR_CHANGESET_VERSION, (null == from.getChangeSet()) ? "0" : from
                     .getChangeSet().getVersion());

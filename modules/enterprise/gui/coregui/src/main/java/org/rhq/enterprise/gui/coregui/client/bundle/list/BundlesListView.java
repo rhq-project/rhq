@@ -38,6 +38,7 @@ import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
@@ -73,9 +74,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
     }
 
     public BundlesListView(String locatorId, Criteria criteria, Set<Permission> perms) {
-        super(locatorId, MSG.view_bundle_bundles(), criteria);
+        super(locatorId, MSG.view_bundle_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
         this.permissions = perms;
-        setHeaderIcon("subsystems/bundle/Bundle_24.png");
+        setHeaderIcon(IconEnum.BUNDLE.getIcon24x24Path());
         setDataSource(new BundlesWithLatestVersionDataSource());
     }
 

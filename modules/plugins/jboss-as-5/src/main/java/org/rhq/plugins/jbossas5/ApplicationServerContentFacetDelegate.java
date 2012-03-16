@@ -13,20 +13,21 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.on.common.jbossas.AbstractJBossASContentFacetDelegate;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.content.FileContentDelegate;
+import org.rhq.core.pluginapi.content.JarContentDelegate;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.plugins.jbossas5.util.FileContentDelegate;
-import org.rhq.plugins.jbossas5.util.JarContentDelegate;
 
 public class ApplicationServerContentFacetDelegate extends AbstractJBossASContentFacetDelegate {
 

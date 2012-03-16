@@ -24,6 +24,7 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,7 +47,6 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
-import javax.persistence.PostPersist;
 import javax.persistence.PrePersist;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
@@ -72,6 +72,7 @@ import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -1058,7 +1059,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private Set<MeasurementSchedule> schedules = new LinkedHashSet<MeasurementSchedule>();
 
     //bulk delete @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE)
-    @OneToMany(mappedBy = "resource")
+    @OneToMany(mappedBy = "resource", cascade = { CascadeType.PERSIST })
     @OrderBy("startTime")
     private List<Availability> availability;
 
@@ -1112,7 +1113,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     public Resource(Set<Resource> childResources) {
         setChildResources(childResources);
     }
-    
+
     /**
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
@@ -1298,10 +1299,6 @@ public class Resource implements Comparable<Resource>, Serializable {
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
         updateAncestryForResource();
-    }
-
-    @PostPersist
-    void afterPersist() {
         initCurrentAvailability();
     }
 
@@ -1856,8 +1853,8 @@ public class Resource implements Comparable<Resource>, Serializable {
         buffer.append("Resource").append("[");
         buffer.append("id=").append(this.id);
         buffer.append(", uuid=").append(this.uuid);
-        String typeName = (this.resourceType != null) ?
-            '{' + this.resourceType.getPlugin() + '}' + this.resourceType.getName() : "<null>";
+        String typeName = (this.resourceType != null) ? '{' + this.resourceType.getPlugin() + '}'
+            + this.resourceType.getName() : "<null>";
         buffer.append(", type=").append(typeName);
         buffer.append(", key=").append(this.resourceKey);
         buffer.append(", name=").append(this.name);
@@ -1881,7 +1878,10 @@ public class Resource implements Comparable<Resource>, Serializable {
     // this should only ever be called once, during initial persistence
     public void initCurrentAvailability() {
         if (this.currentAvailability == null) {
-            this.currentAvailability = new ResourceAvailability(this, null);
+            // initialize avail to be one big unknown period, starting at epoch. 
+            this.currentAvailability = new ResourceAvailability(this, AvailabilityType.UNKNOWN);
+            this.availability = new ArrayList<Availability>(1);
+            this.availability.add(new Availability(this, new Date(0), AvailabilityType.UNKNOWN));
         }
     }
 }

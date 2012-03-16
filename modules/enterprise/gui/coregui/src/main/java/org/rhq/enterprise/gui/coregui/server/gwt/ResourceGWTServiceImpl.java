@@ -235,8 +235,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
 
     public List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException {
         try {
-            return SerialUtility.prepare(resourceManager.uninventoryResources(getSessionSubject(), resourceIds),
-                "ResourceService.uninventoryResources");
+            return resourceManager.uninventoryResources(getSessionSubject(), resourceIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -304,6 +303,22 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public List<Integer> disableResources(int[] resourceIds) throws RuntimeException {
+        try {
+            return resourceManager.disableResources(getSessionSubject(), resourceIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public List<Integer> enableResources(int[] resourceIds) throws RuntimeException {
+        try {
+            return resourceManager.enableResources(getSessionSubject(), resourceIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
         PageControl pc) throws RuntimeException {
         try {
@@ -327,8 +342,9 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet
-                .copyOf(statuses), pc), "ResourceService.getQueuedPlatformsAndServers");
+            return SerialUtility.prepare(
+                discoveryBoss.getQueuedPlatformsAndServers(getSessionSubject(), EnumSet.copyOf(statuses), pc),
+                "ResourceService.getQueuedPlatformsAndServers");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

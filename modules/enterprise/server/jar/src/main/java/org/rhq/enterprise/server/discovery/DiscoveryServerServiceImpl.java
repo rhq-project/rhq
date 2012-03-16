@@ -102,7 +102,6 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         return syncInfo;
     }
 
-    // TODO GH: Should this be on the measurement server service?
     public boolean mergeAvailabilityReport(AvailabilityReport availabilityReport) {
         AvailabilityReportSerializer.getSingleton().lock(availabilityReport.getAgentName());
         try {
@@ -207,7 +206,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         pojoResource.setDescription(resource.getDescription());
         pojoResource.setLocation(resource.getLocation());
         pojoResource.setVersion(resource.getVersion());
-        
+
         if (resource.getParentResource() != null) {
             pojoResource.setParentResource(convertToPojoResource(resource.getParentResource(), false));
         }

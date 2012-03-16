@@ -18,7 +18,6 @@
 
    <modules>
       <module>test-utils</module>
-      <module>arquillian-integration</module>
    </modules>
 
    <profiles>

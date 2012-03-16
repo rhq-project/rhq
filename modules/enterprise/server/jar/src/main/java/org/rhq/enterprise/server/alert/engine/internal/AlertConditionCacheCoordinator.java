@@ -38,6 +38,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationComposite;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
@@ -68,7 +69,8 @@ public final class AlertConditionCacheCoordinator {
         AvailabilityCache(Type.Global), //
         EventsCache(Type.Agent), //
         ResourceConfigurationCache(Type.Global), //
-        DriftCache(Type.Agent);
+        DriftCache(Type.Agent), //
+        AvailabilityDurationCache(Type.Global); //        
 
         public enum Type {
             Global, //
@@ -333,6 +335,19 @@ public final class AlertConditionCacheCoordinator {
         AlertConditionCacheStats stats = null;
         try {
             stats = globalCache.checkConditions(availabilities);
+        } catch (Throwable t) {
+            log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
+        }
+        if (stats == null) {
+            stats = new AlertConditionCacheStats();
+        }
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(AvailabilityDurationComposite... composites) {
+        AlertConditionCacheStats stats = null;
+        try {
+            stats = globalCache.checkConditions(composites);
         } catch (Throwable t) {
             log.error("Error during checkConditions", t); // don't let any exceptions bubble up to the calling SLSB layer
         }

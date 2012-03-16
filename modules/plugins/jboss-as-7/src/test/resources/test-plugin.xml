@@ -130,6 +130,14 @@
         </resource-configuration>
     </server>
 
+    <server class="foo" discovery="foo" name="test12">
+        <resource-configuration>
+            <c:simple-property name="foo:expr" />
+            <c:simple-property name="foo2:expr" />
+            <c:simple-property name="bar"  type="integer"/>
+        </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="simple1">
 
         <resource-configuration>

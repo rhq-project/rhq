@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -16,8 +17,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -48,6 +55,10 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
 
         existingType = entityMgr.find(ResourceType.class, existingType.getId());
         Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
+
+        // if necessary insert the mandatory AvailabilityType metric
+        Set<MeasurementDefinition> newTypeMetricDefinitions = getMetricDefinitions(newType);
+
         if (existingDefinitions.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug(existingType + " currently does not define any metric definitions.");
@@ -58,7 +69,7 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                 if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                     newDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
                     log.info("Definition [" + newDefinition
-                            + "] has too short of a default interval, setting to minimum");
+                        + "] has too short of a default interval, setting to minimum");
                 }
                 existingType.addMetricDefinition(newDefinition);
                 entityMgr.persist(newDefinition);
@@ -72,21 +83,34 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
                 boolean found = false;
                 for (MeasurementDefinition existingDefinition : existingDefinitions) {
                     if (existingDefinition.getName().equals(newDefinition.getName())
-                            && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
+                        && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
                         found = true;
 
                         if (log.isDebugEnabled()) {
                             log.debug("Updating existing metric definition: " + existingDefinition);
                         }
 
-                        existingDefinition.update(newDefinition, false);
+                        // We normally protect the user's interval settings. But the Availability metric is
+                        // a bit special. It's built-in and we know the resource category default values.  If the 
+                        // existing setting is the default, we'll allow it to be changed by the plugin. It's possible 
+                        // the user wants it the old way, and can set it back, but given that avail collection is
+                        // critical to agent perf, we'll assume plugin knows best in this case. This only happens
+                        // if the interval is at the default, a non-default value set by an earlier rev of the
+                        // plugin will not be updated.  
+                        boolean isAvail = MeasurementDefinition.AVAILABILITY_NAME.equals(newDefinition.getName());
+                        long defaultInterval = (ResourceCategory.SERVER == existingDefinition.getResourceType()
+                            .getCategory()) ? MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER
+                            : MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE;
+                        boolean updateInterval = (isAvail && (defaultInterval == existingDefinition
+                            .getDefaultInterval()));
+                        existingDefinition.update(newDefinition, updateInterval);
 
                         // we normally do not want to touch interval in case a user changed it,
                         // but we cannot allow too-short of an interval, so override it if necessary
                         if (existingDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
                             existingDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
                             log.info("Definition [" + existingDefinition
-                                    + "] has too short of a default interval, setting to minimum");
+                                + "] has too short of a default interval, setting to minimum");
                         }
 
                         entityMgr.merge(existingDefinition);
@@ -128,13 +152,66 @@ public class MeasurementMetadataManagerBean implements MeasurementMetadataManage
             }
             if (!definitionsToDelete.isEmpty() && log.isDebugEnabled()) {
                 log.debug("Metadata update: Measurement definitions deleted from resource type ["
-                        + existingType.getName() + "]:" + definitionsToDelete);
+                    + existingType.getName() + "]:" + definitionsToDelete);
             }
 
             entityMgr.flush();
         }
         // TODO what if they are null? --> delete everything from existingType
         // not needed see JBNADM-1639
+    }
+
+    public static Set<MeasurementDefinition> getMetricDefinitions(ResourceType newType) {
+        Set<MeasurementDefinition> result = newType.getMetricDefinitions();
+        result = (null == result) ? new HashSet<MeasurementDefinition>(1) : result;
+        long period;
+
+        switch (newType.getCategory()) {
+        case PLATFORM:
+            return result;
+        case SERVER:
+            period = MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVER;
+            break;
+        default:
+            period = MeasurementDefinition.AVAILABILITY_DEFAULT_PERIOD_SERVICE;
+        }
+
+        MeasurementDefinition rhqAvailability = new MeasurementDefinition(newType,
+            MeasurementDefinition.AVAILABILITY_NAME);
+        rhqAvailability.setDefaultInterval(period);
+        rhqAvailability.setDefaultOn(true);
+        rhqAvailability.setCategory(MeasurementCategory.AVAILABILITY);
+        rhqAvailability.setDisplayName(MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
+        rhqAvailability.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
+        rhqAvailability.setDataType(DataType.AVAILABILITY);
+        rhqAvailability.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
+        rhqAvailability.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
+        rhqAvailability.setDisplayType(DisplayType.DETAIL); // n/a protects against non-null
+
+        // Add the built in metric if it is not defined. Otherwise, override only allowed fields
+        if (!result.contains(rhqAvailability)) {
+            result.add(rhqAvailability);
+
+        } else {
+            MeasurementDefinition override = null;
+            for (Iterator<MeasurementDefinition> i = result.iterator(); i.hasNext();) {
+                override = i.next();
+                if (override.equals(rhqAvailability)) {
+                    break;
+                }
+            }
+
+            // don't let the override muck with fixed field values, only defaultOn and defaultInterval
+            override.setCategory(MeasurementCategory.AVAILABILITY);
+            override.setDisplayName(MeasurementDefinition.AVAILABILITY_DISPLAY_NAME);
+            override.setDescription(MeasurementDefinition.AVAILABILITY_DESCRIPTION);
+            override.setDataType(DataType.AVAILABILITY);
+            override.setUnits(MeasurementUnits.NONE); // n/a protects against non-null
+            override.setNumericType(NumericType.DYNAMIC); // n/a protects against non-null
+            override.setDisplayType(DisplayType.DETAIL); // n/a protects against non-null                        
+        }
+
+        return result;
     }
 
     @Override

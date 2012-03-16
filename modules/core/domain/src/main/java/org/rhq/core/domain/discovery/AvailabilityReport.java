@@ -38,13 +38,14 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  * the span of time a resource was up or down, it only tells you what state they were in at a particular millisecond in
  * time.
  *
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  * @author Joseph Marques
  */
 public class AvailabilityReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public class Datum implements Serializable {
+    public static class Datum implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
@@ -56,6 +57,12 @@ public class AvailabilityReport implements Serializable {
             this.resourceId = availability.getResource().getId();
             this.startTime = availability.getStartTime().getTime();
             this.availabilityType = availability.getAvailabilityType();
+        }
+
+        public Datum(int resourceId, AvailabilityType availabilityType, long startTime) {
+            this.resourceId = resourceId;
+            this.availabilityType = availabilityType;
+            this.startTime = startTime;
         }
 
         public int getResourceId() {
@@ -79,6 +86,8 @@ public class AvailabilityReport implements Serializable {
     private String agentName;
     private List<Datum> availabilities = new ArrayList<Datum>();
     private boolean changesOnly = false;
+    // true if this is a server-generated report for enabling or disabling resources
+    private boolean enablementReport = false;
 
     /**
      * Constructor for {@link AvailabilityReport} that assumes this report will represent a full inventory (same as if
@@ -116,6 +125,10 @@ public class AvailabilityReport implements Serializable {
         this.availabilities.add(new Datum(availability));
     }
 
+    public void addAvailability(Datum availability) {
+        this.availabilities.add(availability);
+    }
+
     public List<AvailabilityReport.Datum> getResourceAvailability() {
         return availabilities;
     }
@@ -128,6 +141,14 @@ public class AvailabilityReport implements Serializable {
      */
     public boolean isChangesOnlyReport() {
         return changesOnly;
+    }
+
+    public boolean isEnablementReport() {
+        return enablementReport;
+    }
+
+    public void setEnablementReport(boolean enablementReport) {
+        this.enablementReport = enablementReport;
     }
 
     @Override

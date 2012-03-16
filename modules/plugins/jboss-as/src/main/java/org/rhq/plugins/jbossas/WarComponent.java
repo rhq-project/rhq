@@ -94,7 +94,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    //Mapping non-clustered names -> attribute name in the cluster manager
+    // Mapping non-clustered names -> attribute name in the cluster manager
     private final String[] CLUSTER_SESSION_ATTRIBUTE_NAMES = { "maxInactiveInterval", "MaxInactiveInterval",
         "activeSessions", "ActiveSessionCount", "sessionCounter", "CreatedSessionCount", "sessionAverageAliveTime", "",
         "processingTime", "ProcessingTime", "maxActive", "MaxActiveSessionCount", "maxActiveSessions",
@@ -331,6 +331,7 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         }
 
         if (operation == WarOperation.REVERT) {
+
             try {
                 revertFromBackupFile();
                 return new OperationResult("Successfully reverted from backup");
@@ -340,7 +341,8 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         }
 
         // The following are MBean operations.
-        EmsOperation mbeanOperation = this.jbossWebMBean.getOperation(name);
+        EmsOperation mbeanOperation = this.jbossWebMBean.getOperation(name, new Class[0]);
+
         if (mbeanOperation == null) {
             throw new IllegalStateException("Operation [" + name + "] not found on bean ["
                 + this.jbossWebMBean.getBeanName() + "]");
@@ -351,6 +353,10 @@ public class WarComponent extends ApplicationComponent implements OperationFacet
         mbeanOperation.invoke(paramValues);
         int state = (Integer) this.jbossWebMBean.getAttribute("state").refresh();
         int expectedState = getExpectedPostExecutionState(operation);
+
+        // regardless of the new state, the avail may have changed, request an avail check
+        getResourceContext().getAvailabilityContext().requestAvailabilityCheck();
+
         if (state != expectedState) {
             throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
                 + this.jbossWebMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");

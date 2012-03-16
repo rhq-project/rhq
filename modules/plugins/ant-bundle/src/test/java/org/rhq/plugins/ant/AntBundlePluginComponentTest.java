@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -97,6 +98,7 @@ public class AntBundlePluginComponentTest {
         this.plugin = new AntBundlePluginComponent();
         ResourceType type = new ResourceType("antBundleTestType", "antBundleTestPlugin", ResourceCategory.SERVER, null);
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
+        resource.setUuid(UUID.randomUUID().toString());
         @SuppressWarnings({ "rawtypes", "unchecked" })
         ResourceContext<?> context = new ResourceContext(resource, null, null, null,
             SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null);
@@ -540,6 +542,15 @@ public class AntBundlePluginComponentTest {
         props.store(outputStream, "external2 file");
         outputStream.close();
 
+        // this extra file is already in the subdir1 directory when the deployment happens - it should be removed
+        File extraSubdirFile = new File(this.destDir, "subdir1/extra.properties");
+        extraSubdirFile.getParentFile().mkdirs();
+        props.clear();
+        props.setProperty("extra", "3");
+        outputStream = new FileOutputStream(extraSubdirFile);
+        props.store(outputStream, "extra subdir1 file");
+        outputStream.close();
+
         // deploy the bundle
         BundleDeployRequest request = new BundleDeployRequest();
         request.setBundleFilesLocation(this.bundleFilesDir);
@@ -570,6 +581,9 @@ public class AntBundlePluginComponentTest {
         assert "1".equals(props.getProperty("external1")) : "bundle deployment removed our unmanaged file 1";
         loadProperties(props, new FileInputStream(new File(this.destDir, "extdir/external2.properties")));
         assert "2".equals(props.getProperty("external2")) : "bundle deployment removed our unmanaged file 2";
+
+        // make sure that extra file that was underneath the dest dir was removed
+        assert !extraSubdirFile.exists() : "the extra file in subdir1 was not removed during initial deploy";
 
         // now purge the bundle - this should only purge those files that were laid down by the bundle plus the metadata directory
         BundlePurgeRequest purgeRequest = new BundlePurgeRequest();

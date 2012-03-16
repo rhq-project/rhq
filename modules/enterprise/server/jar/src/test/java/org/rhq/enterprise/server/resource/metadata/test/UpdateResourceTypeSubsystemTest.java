@@ -169,7 +169,8 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             ResourceType server2 = servers2.iterator().next();
             assert server2.getName().equals("testServer1");
             Set<MeasurementDefinition> mdef = server2.getMetricDefinitions();
-            assert mdef.size() == 1 : "Expected one MeasurementDefinition in v2";
+            // include the built-in AvailabilityType metric
+            assert mdef.size() == 2 : "Expected 2 MeasurementDefinition in v2";
             getTransactionManager().rollback();
 
             registerPlugin("update4-v1_0.xml", "3.0");
@@ -232,6 +233,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
 
             assert platform1 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs = platform1.getMetricDefinitions();
+            // no built-in AvailabilityType metric for platforms
             assert defs.size() == 1 : "I was expecting 1 metric definition at platform level in v1";
             assert DisplayType.DETAIL == defs.iterator().next().getDisplayType() : "Display type should be DETAIL in v1";
 
@@ -240,11 +242,13 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
             assert platformChildren.size() == 1 : "Expected 1 direct child service of platform in v1";
             service1 = platformChildren.iterator().next();
             assert service1.getName().equals("service1") : "Expected 'service1' as name of direct platform child in v1";
-            assert service1.getMetricDefinitions().size() == 1 : "Expected 1 metric for 'service1' in v1";
+            // include the built-in AvailabilityType metric            
+            assert service1.getMetricDefinitions().size() == 2 : "Expected 2 metric for 'service1' in v1";
             Set<ResourceType> nestedServices = service1.getChildResourceTypes();
             assert nestedServices.size() == 1 : "Expected 1 nested service of 'service1' in v1";
             Set<MeasurementDefinition> nestedDefs = nestedServices.iterator().next().getMetricDefinitions();
-            assert nestedDefs.size() == 1 : "Expected 1 definition within 'nestedService' in v1";
+            // include the built-in AvailabilityType metric
+            assert nestedDefs.size() == 2 : "Expected 2 definition within 'nestedService' in v1";
             MeasurementDefinition defThree = nestedDefs.iterator().next();
             int definitionId = defThree.getId(); // get the id of the definition "Three" and save it for later use
             getTransactionManager().rollback();
@@ -262,6 +266,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
 
             assert platform2 != null : "I did not find myPlatform";
             Set<MeasurementDefinition> defs2 = platform2.getMetricDefinitions();
+            // no built-in AvailabilityType metric for platforms            
             assert defs2.size() == 1 : "I was expecting 1 definition at platform level in v2";
             assert DisplayType.SUMMARY == defs2.iterator().next().getDisplayType() : "Display type should be SUMMARY in v2";
 
@@ -290,7 +295,8 @@ public class UpdateResourceTypeSubsystemTest extends UpdatePluginMetadataTestBas
 
             for (ResourceType type : platformChildren2) {
                 String typeName = type.getName();
-                assert type.getMetricDefinitions().size() == 1 : "Expected one definition for " + typeName + " in v2";
+                // include the built-in AvailabilityType metric                
+                assert type.getMetricDefinitions().size() == 2 : "Expected two definition for " + typeName + " in v2";
                 if (typeName.equals("nestedOne")) // The moved one
                 {
                     Set<MeasurementDefinition> defs3 = type.getMetricDefinitions();

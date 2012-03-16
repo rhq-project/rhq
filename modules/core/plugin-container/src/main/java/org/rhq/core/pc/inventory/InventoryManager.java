@@ -41,6 +41,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,6 +87,7 @@ import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
+import org.rhq.core.pc.availability.AvailabilityContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -100,6 +102,7 @@ import org.rhq.core.pc.upgrade.ResourceUpgradeDelegate;
 import org.rhq.core.pc.util.DiscoveryComponentProxyFactory;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
+import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
@@ -576,13 +579,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
     }
 
-    // this will NOT send a availability report up to the server!
+    /** this will NOT send a availability report up to the server! */
     public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport) {
+        return executeAvailabilityScanImmediately(changedOnlyReport, false);
+    }
+
+    /** this will NOT send a availability report up to the server! */
+    public AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport, boolean forceChecks) {
         try {
-            AvailabilityExecutor availExec = new AvailabilityExecutor(this);
+            AvailabilityExecutor availExec = (forceChecks) ? new ForceAvailabilityExecutor(this)
+                : new AvailabilityExecutor(this);
 
             if (changedOnlyReport) {
-                availExec.sendChangedOnlyReportNextTime();
+                availExec.sendChangesOnlyReportNextTime();
             } else {
                 availExec.sendFullReportNextTime();
             }
@@ -596,8 +605,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // still have their availabilities updated. This may mean a change in availability detected
             // in the above scan will not make its way to the server. To avoid the possibility of losing
             // availability status changes, we need to tell the real availability executor to send a
-            // full report next time it runs its periodic scan. (RHQ-1997)
-            this.availabilityExecutor.sendFullReportNextTime();
+            // full report next time it runs its periodic scan. (RHQ-1997)  So, if the report contains
+            // any entries, request the full report.
+            if (!(null == availabilityReport || availabilityReport.getResourceAvailability().isEmpty())) {
+                this.availabilityExecutor.sendFullReportNextTime();
+            }
 
             return availabilityReport;
         } catch (InterruptedException e) {
@@ -646,6 +658,19 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.error("No ResourceContainer exists for " + resource + ".");
         }
         return new Availability(resource, new Date(), availType);
+    }
+
+    public void requestAvailabilityCheck(Resource resource) {
+        if (null == resource) {
+            return;
+        }
+
+        ResourceContainer resourceContainer = getResourceContainer(resource);
+        if (null != resourceContainer) {
+            // by setting the avail schedule time to now, this resource will have an avail check performed on
+            // the next availability scan.
+            resourceContainer.setAvailabilityScheduleTime(System.currentTimeMillis());
+        }
     }
 
     public MergeResourceResponse manuallyAddResource(ResourceType resourceType, int parentResourceId,
@@ -1578,12 +1603,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContext<?> parentResourceContext = null;
             if (resource.getParentResource() != null) {
                 ResourceContainer rc = getResourceContainer(resource.getParentResource());
-                
+
                 parentComponent = rc.getResourceComponent();
-                parentResourceContext = rc.getResourceContext();                
+                parentResourceContext = rc.getResourceContext();
             }
 
-            ResourceContext context = createResourceContext(resource, parentComponent, parentResourceContext, discoveryComponent);
+            ResourceContext context = createResourceContext(resource, parentComponent, parentResourceContext,
+                discoveryComponent);
             container.setResourceContext(context);
             return true;
 
@@ -1687,7 +1713,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            this.availabilityCollectors, // for components that want to perform async avail checking
+            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -1706,7 +1732,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getEventContext(resource), // for event access
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
-            this.availabilityCollectors, // for components that want to perform async avail checking
+            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -2188,6 +2214,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
                 ResourceContainer resourceContainer = getResourceContainer(resourceRequest.getResourceId());
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
             }
         }
     }
@@ -2215,6 +2242,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
+    }
+
+    public void requestFullAvailabilityReport() {
+        if (null != availabilityExecutor) {
+            availabilityExecutor.sendFullReportNextTime();
+        }
     }
 
     /**
@@ -2497,6 +2530,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
     //            }
     //        };
     //    }
+
+    private AvailabilityContext getAvailabilityContext(Resource resource, Executor availCollectionThreadPool) {
+        if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
+            log.error("RESOURCE UUID IS NOT SET! Availability features may not work!");
+        }
+
+        AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource, availCollectionThreadPool);
+        return availabilityContext;
+    }
 
     private void updateResourceVersion(Resource resource, String version) {
         String existingVersion = resource.getVersion();

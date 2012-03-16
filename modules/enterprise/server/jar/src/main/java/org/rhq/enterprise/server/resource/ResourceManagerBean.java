@@ -68,6 +68,7 @@ import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.event.Event;
@@ -120,6 +121,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
@@ -2190,7 +2192,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             String resourceKey = (String) prefetched[i++];
 
             Integer parentId = (Integer) prefetched[i++];
-            @SuppressWarnings("unused")
             String parentName = (String) prefetched[i++];
 
             AvailabilityType availType = (AvailabilityType) prefetched[i++];
@@ -2327,7 +2328,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
         Resource res = getResourceById(subject, resourceId);
-        ResourceAvailability results = new ResourceAvailability(res, null);
+        ResourceAvailability results = new ResourceAvailability(res, AvailabilityType.UNKNOWN);
 
         try {
             Agent agent = res.getAgent();
@@ -2552,5 +2553,166 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public Integer getResourceCount(List<Integer> resourceTypeIds) {
         return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES)
             .setParameter("resourceTypeIds", resourceTypeIds).getSingleResult();
+    }
+
+    @Override
+    public List<Integer> disableResources(Subject subject, int[] resourceIds) {
+        List<Integer> disableResourceIds = new ArrayList<Integer>();
+        // one report for each agent
+        Map<Agent, AvailabilityReport> reports = new HashMap<Agent, AvailabilityReport>();
+        long now = System.currentTimeMillis();
+
+        for (Integer resourceId : resourceIds) {
+            if (disableResourceIds.contains(resourceId)) {
+                continue;
+            }
+
+            // make sure the user is authorized to disable this resource (which implies you can disable all its children)
+            // TODO: this may require its own permission, but until someone needs it we'll piggyback on DELETE, at least
+            // that gives a resource-level permission option. 
+            if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
+                throw new PermissionException("You do not have permission to disable resource [" + resourceId + "]");
+            }
+
+            Resource resource = entityManager.find(Resource.class, resourceId);
+
+            if (null == resource) {
+                log.info("Disable resource not possible, resource with id [" + resourceId + "] was not found");
+                continue;
+            }
+
+            // you can't disable a platform
+            if (null == resource.getParentResource()) {
+                log.info("Disabling a platform is not allowed, skipping platform resource with id [" + resourceId + "]");
+                continue;
+            }
+
+            // disable the resource and all its children, get the family resource ids
+            if (log.isDebugEnabled()) {
+                log.debug("Subject [" + subject + "] is setting resource [" + resource + "] and its children DISABLED.");
+            }
+
+            List<Integer> familyResourceIds = getFamily(resource);
+            disableResourceIds.addAll(familyResourceIds);
+
+            // add the family resource id's to the appropriate avail report
+            Agent agent = resource.getAgent();
+            AvailabilityReport report = reports.get(agent);
+            if (null == report) {
+                report = new AvailabilityReport(agent.getName());
+                report.setEnablementReport(true);
+                reports.put(agent, report);
+            }
+
+            for (Integer familyResourceId : familyResourceIds) {
+                report.addAvailability(new AvailabilityReport.Datum(familyResourceId, AvailabilityType.DISABLED, now));
+            }
+        }
+
+        // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
+        // level. We do this for a few reasons:
+        // - The server service uses locking to ensure we don't conflict with an actual report from the agent
+        // - It ensure all necessary db modications take place, like avail history and current avail 
+        // - It ensures that all ancillary avail change logic, like alerting, still happens.
+        DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
+        for (AvailabilityReport report : reports.values()) {
+            service.mergeAvailabilityReport(report);
+        }
+
+        return disableResourceIds;
+    }
+
+    private List<Integer> getFamily(Resource resource) {
+
+        // note - this query is good only to 6 levels deep
+        Query query = entityManager.createNamedQuery(Resource.QUERY_FIND_DESCENDANTS);
+        query.setParameter("resourceId", resource.getId());
+
+        List<Integer> resourceIds = query.getResultList();
+
+        return resourceIds;
+    }
+
+    @Override
+    public List<Integer> enableResources(Subject subject, int[] resourceIds) {
+        List<Integer> enableResourceIds = new ArrayList<Integer>();
+        // one report for each agent, keyed by agent name
+        Map<Agent, AvailabilityReport> reports = new HashMap<Agent, AvailabilityReport>();
+        long now = System.currentTimeMillis();
+
+        for (Integer resourceId : resourceIds) {
+            if (enableResourceIds.contains(resourceId)) {
+                continue;
+            }
+
+            // make sure the user is authorized to enable this resource (which implies you can enable all its children)
+            // TODO: this may require its own permission, but until someone needs it we'll piggyback on DELETE, at least
+            // that gives a resource-level permission option. 
+            if (!authorizationManager.hasResourcePermission(subject, Permission.DELETE_RESOURCE, resourceId)) {
+                throw new PermissionException("You do not have permission to enable resource [" + resourceId + "]");
+            }
+
+            Resource resource = entityManager.find(Resource.class, resourceId);
+            if (null == resource) {
+                log.info("Enable resource not possible, resource with id [" + resourceId + "] was not found");
+                continue;
+            }
+
+            // you can't enable a platform
+            if (null == resource.getParentResource()) {
+                log.info("Enabling a platform is not allowed, skipping platform resource with id [" + resourceId + "]");
+                continue;
+            }
+
+            // enable the resource and all its children, get the hierarchy
+            if (log.isDebugEnabled()) {
+                log.debug("Subject [" + subject + "] is setting resource [" + resource + "] and its children enabled.");
+            }
+
+            List<Integer> familyResourceIds = getFamily(resource);
+            enableResourceIds.addAll(familyResourceIds);
+
+            // add the family resource id's to the appropriate avail report
+            Agent agent = resource.getAgent();
+            AvailabilityReport report = reports.get(agent);
+            if (null == report) {
+                report = new AvailabilityReport(agent.getName());
+                report.setEnablementReport(true);
+                reports.put(agent, report);
+            }
+
+            for (Integer familyResourceId : familyResourceIds) {
+                report.addAvailability(new AvailabilityReport.Datum(familyResourceId, AvailabilityType.UNKNOWN, now));
+            }
+        }
+
+        // Set the resources disabled via the standard mergeInventoryReport mechanism, from the server service
+        // level. We do this for a few reasons:
+        // - The server service uses locking to ensure we don't conflict with an actual report from the agent
+        // - It ensure all necessary db modications take place, like avail history and current avail 
+        // - It ensures that all ancillary avail change logic, like alerting, still happens.
+        DiscoveryServerServiceImpl service = new DiscoveryServerServiceImpl();
+        for (AvailabilityReport report : reports.values()) {
+            service.mergeAvailabilityReport(report);
+        }
+
+        // On a best effort basic, ask the relevant agents that their next avail report be full, so that we get
+        // the current avail type for the newly enabled resources.  If we can't contact the agent don't worry about
+        // it; if it's down we'll get a full report when it comes up.
+        // TODO: This may need to be made out of band if perf becomes an issue.
+        for (Agent agent : reports.keySet()) {
+            try {
+                AgentClient agentClient = agentManager.getAgentClient(agent);
+                agentClient.getDiscoveryAgentService().requestFullAvailabilityReport();
+            } catch (Throwable t) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to notify Agent ["
+                        + agent
+                        + "] of enabled resources. The agent is likely down. This is ok, the avails will be updated when the agent is restarted or prompt command 'avail --force is executed'.");
+                }
+            }
+        }
+
+        return enableResourceIds;
     }
 }

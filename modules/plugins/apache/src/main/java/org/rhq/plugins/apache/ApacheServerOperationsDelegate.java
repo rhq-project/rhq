@@ -55,10 +55,11 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
      * The plugin configuration of the server component.
      */
     private Configuration serverPluginConfiguration;
-    
+
     // Constructors  --------------------------------------------
 
-    public ApacheServerOperationsDelegate(ApacheServerComponent serverComponent, Configuration serverPluginConfiguration, SystemInfo systemInfo) {
+    public ApacheServerOperationsDelegate(ApacheServerComponent serverComponent,
+        Configuration serverPluginConfiguration, SystemInfo systemInfo) {
         this.serverComponent = serverComponent;
         this.systemInfo = systemInfo;
         this.serverPluginConfiguration = serverPluginConfiguration;
@@ -80,15 +81,18 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         ProcessExecution processExecution = ProcessExecutionUtility.createProcessExecution(controlScriptPath);
         processExecution.setWaitForCompletion(1000 * 30); // 30 seconds - should be plenty
         processExecution.setCaptureOutput(true); // essential, since we want to include the output in the result
-        
+
         addDefaultArguments(processExecution);
-        
+
         //we always add some arguments to the control script thus forcing the passthrough mode.
         //therefore no matter if we use httpd, Apache.exe or apachectl, the -k argument will always
         //be used to specify the operation to invoke.
         if (operation != Operation.CONFIG_TEST) {
             processExecution.getArguments().add("-k");
         }
+
+        // request an avail check after a lifecycle operation 
+        boolean availCheck = true;
 
         switch (operation) {
         case START: {
@@ -121,16 +125,25 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         case CONFIG_TEST: {
             // abortIfOsIsWindows(name);
             processExecution.getArguments().add("-t");
+            availCheck = false;
             break;
         }
+
+        default:
+            availCheck = false;
         }
 
         ProcessExecutionResults processExecutionResults = this.systemInfo.executeProcess(processExecution);
         Integer exitCode = processExecutionResults.getExitCode();
 
+        // If this operation could have affected availability, ask for a check
+        if (availCheck) {
+            this.serverComponent.getResourceContext().getAvailabilityContext().requestAvailabilityCheck();
+        }
+
         // Do some more aggressive result code checking, as otherwise errors are not reported as such
         // in the GUI -- see RHQ-627
-        // We might want to investigate this agin later.
+        // We might want to investigate this again later.
         if (processExecutionResults.getError() != null || (exitCode != null && exitCode != 0)) {
             String msg = "Operation " + operation + " failed. Exit code: [" + exitCode + "]\n, Output : ["
                 + processExecutionResults.getCapturedOutput() + "]\n" + "Error: [" + processExecutionResults.getError()
@@ -143,7 +156,7 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
 
     private void addDefaultArguments(ProcessExecution processExecution) throws Exception {
         List<String> args = processExecution.getArguments();
-        
+
         //these plugin config properties are required and readonly, so they should never be null
         args.add("-d");
         args.add(serverPluginConfiguration.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, null));

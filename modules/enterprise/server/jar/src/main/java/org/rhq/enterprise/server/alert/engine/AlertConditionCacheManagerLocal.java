@@ -31,6 +31,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.enterprise.server.alert.engine.model.AvailabilityDurationComposite;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 /**
@@ -79,6 +80,14 @@ public interface AlertConditionCacheManagerLocal {
      * @return the number of conditions that were true against this argument
      */
     AlertConditionCacheStats checkConditions(Availability... availability);
+
+    /**
+     * Availability duration checking is unlike Availability. Since Availability is RLE it does not give us
+     * the ability to perform avail duration, this mechnism does.
+     *
+     * @return the number of conditions that were true against this argument
+     */
+    AlertConditionCacheStats checkConditions(AvailabilityDurationComposite... availabilityDurationComposites);
 
     /**
      * An EventReport is full of Event objects.  Each of these could potentially match against one of the cache's

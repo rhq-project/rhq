@@ -27,6 +27,7 @@ import java.util.Random;
 
 import javax.persistence.EntityManager;
 
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -145,11 +146,13 @@ public class ResourceTreeHelper {
             if (null != doomedRoot) {
                 ResourceType doomedResourceType = doomedRoot.getResourceType();
 
-                deleteTree(entityManager, root);
+                deleteTree(entityManager, doomedRoot);
 
                 if (null != doomedResourceType) {
                     doomedResourceType = entityManager.find(ResourceType.class, doomedResourceType.getId());
-                    entityManager.remove(doomedResourceType);
+                    if (doomedResourceType.getResources().isEmpty()) {
+                        entityManager.remove(doomedResourceType);
+                    }
                 }
             }
         }
@@ -159,7 +162,13 @@ public class ResourceTreeHelper {
         for (Resource child : root.getChildResources()) {
             deleteTree(entityManager, child);
         }
-        Resource doomedResource = entityManager.find(Resource.class, root.getId());
+        deleteResource(entityManager, entityManager.find(Resource.class, root.getId()));
+    }
+
+    public static void deleteResource(EntityManager entityManager, Resource doomedResource) {
+        for (Availability avail : doomedResource.getAvailability()) {
+            entityManager.remove(avail);
+        }
         entityManager.remove(doomedResource);
     }
 

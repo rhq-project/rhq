@@ -129,11 +129,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             Resource resource = resourceManager.getResourceById(subject, resourceId);
             List<Availability> availList = resource.getAvailability();
             if ((availList != null) && (availList.size() > 0)) {
-                log
-                    .warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
+                log.warn("Could not query for latest avail but found one - missing null end time (this should never happen)");
                 retAvailability = availList.get(availList.size() - 1);
             } else {
-                retAvailability = new Availability(resource, new Date(), null);
+                retAvailability = new Availability(resource, new Date(), AvailabilityType.UNKNOWN);
             }
         }
 
@@ -210,7 +209,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             long totalMillis = fullRangeEndTime - fullRangeBeginTime;
             long perPointMillis = totalMillis / numberOfPoints;
             for (int i = numberOfPoints; i >= 0; i--) {
-                availabilityPoints.add(new AvailabilityPoint(i * perPointMillis));
+                availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, i * perPointMillis));
             }
 
             Collections.reverse(availabilityPoints);
@@ -220,7 +219,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // Check if the availabilities obtained cover the beginning of the whole data range.
         // If not, we need to provide a "surrogate" for the beginning interval. The availabilities
         // obtained from the db are sorted in ascending order of time. So we can insert one
-        // pseudo-availability in front of the list if needed.
+        // pseudo-availability in front of the list if needed. Note that due to avail purging
+        // we can end up with periods without avail data.
         if (availabilities.size() > 0) {
             Availability earliestAvailability = availabilities.get(0);
             if (earliestAvailability.getStartTime().getTime() > fullRangeBeginDate.getTime()) {
@@ -259,13 +259,16 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         long currentTime = fullRangeEndTime;
         int currentAvailabilityIndex = availabilities.size() - 1;
         long timeUpInDataPoint = 0;
+        long timeDisabledInDataPoint = 0;
         boolean hasDownPeriods = false;
+        boolean hasDisabledPeriods = false;
+        boolean hasUnknownPeriods = false;
         long dataPointStartBarrier = fullRangeEndTime - perPointMillis;
 
         while (currentTime > fullRangeBeginTime) {
             if (currentAvailabilityIndex <= -1) {
                 // no more availability data, the rest of the data points are unknown
-                availabilityPoints.add(new AvailabilityPoint(currentTime));
+                availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, currentTime));
                 currentTime -= perPointMillis;
                 continue;
             }
@@ -273,36 +276,64 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             Availability currentAvailability = availabilities.get(currentAvailabilityIndex);
             long availabilityStartBarrier = currentAvailability.getStartTime().getTime();
 
-            if (dataPointStartBarrier >= availabilityStartBarrier) { // the start of the data point comes first or at same time as availability record (remember, we are going backwards in time)
+            // the start of the data point comes first or at same time as availability record (remember, we are going 
+            // backwards in time)
+            if (dataPointStartBarrier >= availabilityStartBarrier) {
 
                 // end the data point
                 if (currentAvailability.getAvailabilityType() == null) {
-                    // we are on the edge of the range, but know that at least one point there was red, so
-                    // we'll be pessimistic and set our entire point down instead of unknown
+                    // we are on the edge of the range, the null avail type indicates a surrogate for
+                    // this data point.  Be pessimistic, if we have had any down time, set to down, then disabled,
+                    // then up, and finally unknown.
                     if (hasDownPeriods) {
                         availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
+
+                    } else if (hasDisabledPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DISABLED, currentTime));
+
+                    } else if (timeUpInDataPoint > 0) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
+
                     } else {
-                        // we are on the edge of the range - if we have ANY data saying we were UP, consider this UP
-                        if (timeUpInDataPoint > 0) {
-                            availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
-                        } else {
-                            // happens when this timeslice only has surrogates or known avails
-                            availabilityPoints.add(new AvailabilityPoint(currentTime)); // unknown
-                        }
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, currentTime));
                     }
                 } else {
-                    // if the resource has been up in the current time frame, bump up the counter
-                    if (currentAvailability.getAvailabilityType() == AvailabilityType.UP) {
+                    // bump up the proper counter or set the proper flag for the current time frame
+                    switch (currentAvailability.getAvailabilityType()) {
+                    case UP:
                         timeUpInDataPoint += currentTime - dataPointStartBarrier;
+                        break;
+                    case DOWN:
+                        hasDownPeriods = true;
+                        break;
+                    case DISABLED:
+                        hasDisabledPeriods = true;
+                        break;
+                    case UNKNOWN:
+                        hasUnknownPeriods = true;
+                        break;
                     }
 
-                    AvailabilityType type = (timeUpInDataPoint != perPointMillis) ? AvailabilityType.DOWN
-                        : AvailabilityType.UP;
-                    availabilityPoints.add(new AvailabilityPoint(type, currentTime));
+                    // if the period has been all green,  then set it to UP, otherwise, be pessimistic if there is any
+                    // mix of avail types
+                    if (timeUpInDataPoint == perPointMillis) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UP, currentTime));
+
+                    } else if (hasDownPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DOWN, currentTime));
+
+                    } else if (hasDisabledPeriods) {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.DISABLED, currentTime));
+
+                    } else {
+                        availabilityPoints.add(new AvailabilityPoint(AvailabilityType.UNKNOWN, currentTime));
+                    }
                 }
 
                 timeUpInDataPoint = 0;
                 hasDownPeriods = false;
+                hasDisabledPeriods = false;
+                hasUnknownPeriods = false;
 
                 // if we reached the start of the current availability record, move to the previous one (going back in time, remember)
                 if (dataPointStartBarrier == availabilityStartBarrier) {
@@ -312,13 +343,29 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                 // move the current time pointer to the next data point and move back to the next data point start time
                 currentTime = dataPointStartBarrier;
                 dataPointStartBarrier -= perPointMillis;
+
+                // the division determing perPointMillis drops the remainder, which may leave us slightly short.
+                // if we go negative, we're done.
+                if (dataPointStartBarrier < 0) {
+                    break;
+                }
+
             } else { // the end of the availability record comes first, in the middle of a data point
 
-                // if the resource has been up in the current time frame, bump up the counter
-                if (currentAvailability.getAvailabilityType() == AvailabilityType.UP) {
+                switch (currentAvailability.getAvailabilityType()) {
+                case UP:
+                    // if the resource has been up in the current time frame, bump up the counter
                     timeUpInDataPoint += currentTime - availabilityStartBarrier;
-                } else if (currentAvailability.getAvailabilityType() == AvailabilityType.DOWN) {
+                    break;
+                case DOWN:
                     hasDownPeriods = true;
+                    break;
+                case DISABLED:
+                    hasDisabledPeriods = true;
+                    break;
+                case UNKNOWN:
+                default:
+                    hasUnknownPeriods = true;
                 }
 
                 // move to the previous availability record
@@ -341,12 +388,14 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             AvailabilityType newFirstAvailabilityType = oldFirstAvailabilityPoint.getAvailabilityType();
             if (context.type == EntityContext.Type.Resource) {
                 newFirstAvailabilityType = getCurrentAvailabilityTypeForResource(subject, context.resourceId);
+
             } else if (context.type == EntityContext.Type.ResourceGroup) {
                 ResourceGroupComposite composite = resourceGroupManager.getResourceGroupComposite(subject,
                     context.groupId);
                 Double firstAvailability = composite.getExplicitAvail();
                 newFirstAvailabilityType = firstAvailability == null ? null
                     : (firstAvailability == 1.0 ? AvailabilityType.UP : AvailabilityType.DOWN);
+
             } else {
                 // March 20, 2009: we only support the "summary area" for resources and resourceGroups to date
                 // as a result, newFirstAvailabilityType will be a pass-through of the type in oldFirstAvailabilityPoint
@@ -385,32 +434,34 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         // translate data into Availability objects for downstream processing
-        int j = 0;
-        Availability[] availabilities = new Availability[report.getResourceAvailability().size()];
+        List<Availability> availabilities = new ArrayList<Availability>(report.getResourceAvailability().size());
         for (AvailabilityReport.Datum datum : report.getResourceAvailability()) {
-            availabilities[j++] = new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
-                datum.getAvailabilityType());
+            availabilities.add(new Availability(new Resource(datum.getResourceId()), new Date(datum.getStartTime()),
+                datum.getAvailabilityType()));
         }
 
-        notifyAlertConditionCacheManager("mergeAvailabilityReport", availabilities);
+        // We will alert only on the avails for enabled resources. Keep track of any that are disabled. 
+        List<Availability> disabledAvailabilities = new ArrayList<Availability>();
 
         boolean askForFullReport = false;
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
 
-        if (agentToUpdate != null) {
+        // if this report is from an agent update the lastAvailreport time
+        if (!report.isEnablementReport() && agentToUpdate != null) {
             // do this now, before we might clear() the entity manager
             availabilityManager.updateLastAvailabilityReport(agentToUpdate.intValue());
-            //agentToUpdate.setLastAvailabilityReport(System.currentTimeMillis());
         }
 
         int numInserted = 0;
 
-        // if we got a changes-only report, and the agent appears backfilled, then we need
-        // to skip this report so as not to waste our time and immediately request and process
+        // if this report is from an agent, and is a changes-only report, and the agent appears backfilled,
+        // then we need to skip this report so as not to waste our time> Then, immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (report.isChangesOnlyReport() && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
+        if (!report.isEnablementReport() && report.isChangesOnlyReport()
+            && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
             askForFullReport = true;
+
         } else {
             Query q = entityManager.createNamedQuery(Availability.FIND_CURRENT_BY_RESOURCE);
             q.setFlushMode(FlushModeType.COMMIT);
@@ -422,18 +473,29 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                     entityManager.clear();
                 }
 
-                // availability reports only tell us the current state at the start time - end time is ignored/must be null
+                // availability reports only tell us the current state at the start time; end time is ignored/must be null
                 reported.setEndTime(null);
 
                 try {
                     q.setParameter("resourceId", reported.getResource().getId());
                     Availability latest = (Availability) q.getSingleResult();
+                    AvailabilityType latestType = latest.getAvailabilityType();
+                    AvailabilityType reportedType = reported.getAvailabilityType();
+
+                    // If the current avail is DISABLED, and this report is not trying to re-enable the resource,
+                    // Then ignore the reported avail.
+                    if (AvailabilityType.DISABLED == latestType) {
+                        if (!(report.isEnablementReport() && (AvailabilityType.UNKNOWN == reportedType))) {
+                            disabledAvailabilities.add(reported);
+                            continue;
+                        }
+                    }
 
                     if (reported.getStartTime().getTime() >= latest.getStartTime().getTime()) {
                         //log.info( "new avail (latest/reported)-->" + latest + "/" + reported );
 
                         // the new availability data is for a time after our last known state change
-                        // we are runlength encoded, so only persist data if the availability changed
+                        // we are runlength encoded, so only persist data if the availability changed                        
                         if (latest.getAvailabilityType() != reported.getAvailabilityType()) {
                             entityManager.persist(reported);
                             numInserted++;
@@ -445,7 +507,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         }
 
                         // our last known state was unknown, ask for a full report to ensure we are in sync with agent
-                        if (latest.getAvailabilityType() == null) {
+                        if (latest.getAvailabilityType() == AvailabilityType.UNKNOWN) {
                             askForFullReport = true;
                         }
                     } else {
@@ -461,9 +523,15 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
                         askForFullReport = true;
                     }
                 } catch (NoResultException nre) {
+                    // This condition should never happen. An initial, unknown, Availability/ResourceAvailability
+                    // are created at resource persist time. But, just in case, handle it...
+                    log.warn("Resource [" + reported.getResource() + "] has no availability without an endtime ["
+                        + nre.getMessage() + "] - will attempt to create one\n" + report.toString(false));
+
                     entityManager.persist(reported);
                     updateResourceAvailability(reported);
                     numInserted++;
+
                 } catch (NonUniqueResultException nure) {
                     // This condition should never happen.  In my world of la-la land, I've done everything
                     // correctly so this never happens.  But, due to the asynchronous nature of things,
@@ -497,21 +565,26 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             watch.reset();
         }
 
-        // a single report comes from a single agent - update the agent's last availability report timestamp
-        if (agentToUpdate != null) {
-            // don't bother asking for a full report if the one we are currently processing is already full
-            if (askForFullReport && report.isChangesOnlyReport()) {
-                log.debug("The server is unsure that it has up-to-date availabilities for agent [" + agentName
-                    + "]; asking for a full report to be sent");
-                return false;
+        // notify alert condition cache manager for all reported avails for for enabled resources
+        availabilities.removeAll(disabledAvailabilities);
+        notifyAlertConditionCacheManager("mergeAvailabilityReport",
+            availabilities.toArray(new Availability[availabilities.size()]));
+
+        if (!report.isEnablementReport()) {
+            // a single report comes from a single agent - update the agent's last availability report timestamp
+            if (agentToUpdate != null) {
+                // don't bother asking for a full report if the one we are currently processing is already full
+                if (askForFullReport && report.isChangesOnlyReport()) {
+                    log.debug("The server is unsure that it has up-to-date availabilities for agent [" + agentName
+                        + "]; asking for a full report to be sent");
+                    return false;
+                }
+            } else {
+                log.error("Could not figure out which agent sent availability report. "
+                    + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
+                    + agentName + "] was recently removed. In any other case this is a bug." + report);
             }
-        } else {
-            log.error("Could not figure out which agent sent availability report. "
-                + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
-                + agentName
-                + "] was recently removed. In any other case this is a bug."
-                + report);
-      }
+        }
 
         return true; // everything is OK and things look to be in sync
     }
@@ -520,13 +593,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // update the last known availability data for this resource
         ResourceAvailability currentAvailability = resourceAvailabilityManager.getLatestAvailability(reported
             .getResource().getId());
-        if (currentAvailability!=null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
+        if (currentAvailability != null && currentAvailability.getAvailabilityType() != reported.getAvailabilityType()) {
             // but only update the record if necessary (if the AvailabilityType changed)
             currentAvailability.setAvailabilityType(reported.getAvailabilityType());
             entityManager.merge(currentAvailability);
-        }
-        else if (currentAvailability==null) {
-            currentAvailability = new ResourceAvailability(reported.getResource(),reported.getAvailabilityType());
+        } else if (currentAvailability == null) {
+            currentAvailability = new ResourceAvailability(reported.getResource(), reported.getAvailabilityType());
             entityManager.persist(currentAvailability);
         }
     }
@@ -553,16 +625,30 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setAllAgentResourceAvailabilities(int agentId, AvailabilityType availabilityType) {
-        String typeString = (availabilityType != null) ? availabilityType.toString() : "unknown";
+    public void updateAgentResourceAvailabilities(int agentId, AvailabilityType platformAvailType,
+        AvailabilityType childAvailType) {
 
-        // get all resources that are not already of the given availability type (since these are the ones we need to change)
-        Query query = entityManager.createNamedQuery(Availability.FIND_NONMATCHING_WITH_RESOURCE_ID_BY_AGENT_AND_TYPE);
+        platformAvailType = (null == platformAvailType) ? AvailabilityType.UNKNOWN : platformAvailType;
+        childAvailType = (null == childAvailType) ? AvailabilityType.UNKNOWN : childAvailType;
+
+        // get the platform resource as well as all child resources not already at childAvailType (since these are the
+        // ones we need to change)
+        Query query = entityManager
+            .createNamedQuery(Availability.FIND_PLATFORM_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
         query.setParameter("agentId", agentId);
-        query.setParameter("availabilityType", availabilityType);
+        query.setParameter("availabilityType", platformAvailType);
+        // should be 0 or 1 entry
+        List<ResourceIdWithAvailabilityComposite> platformResourcesWithStatus = query.getResultList();
+
+        // get the platform resource as well as all child resources not disabled and not already at childAvailType
+        // (since these are the ones we need to change)
+        query = entityManager.createNamedQuery(Availability.FIND_CHILD_COMPOSITE_BY_AGENT_AND_NONMATCHING_TYPE);
+        query.setParameter("agentId", agentId);
+        query.setParameter("availabilityType", childAvailType);
+        query.setParameter("disabled", AvailabilityType.DISABLED);
         List<ResourceIdWithAvailabilityComposite> resourcesWithStatus = query.getResultList();
 
-        // The above query only returns resources if they have at least one row in Availability.
+        // The above queries only return resources if they have at least one row in Availability.
         // This may be a problem in the future, and may need to be fixed.
         // If a resource has 0 rows of availability, then it is by definition "unknown". If,
         // availabilityType is null, we don't have to do anything since the unknown state hasn't changed.
@@ -574,27 +660,44 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // (since the agent sends avail reports every 60 seconds or so by default).  So this problem might not
         // be as bad as first thought.
 
-        log.debug("Agent #[" + agentId + "] is going to have [" + resourcesWithStatus.size()
-            + "] resources backfilled with [" + typeString + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Agent #[" + agentId + "] is going to have [" + resourcesWithStatus.size()
+                + "] resources backfilled with [" + childAvailType.getName() + "]");
+        }
 
         Date now = new Date();
 
-        // for those resources that have a current availability status that is different, change them
-        List<Availability> newAvailabilities = new ArrayList<Availability>(resourcesWithStatus.size());
+        int newAvailsSize = platformResourcesWithStatus.size() + resourcesWithStatus.size();
+        List<Availability> newAvailabilities = new ArrayList<Availability>(newAvailsSize);
+
+        // if the platform is being set to a new status handle it now
+        if (!platformResourcesWithStatus.isEmpty()) {
+            Availability newAvailabilityInterval = getNewInterval(platformResourcesWithStatus.get(0), now,
+                platformAvailType);
+            if (newAvailabilityInterval != null) {
+                newAvailabilities.add(newAvailabilityInterval);
+            }
+
+            resourceAvailabilityManager.updateAgentResourcesLatestAvailability(agentId, platformAvailType, true);
+        }
+
+        // for those resources that have a current availability status that is different, change them       
         for (ResourceIdWithAvailabilityComposite record : resourcesWithStatus) {
-            Availability newAvailabilityInterval = getNewInterval(record, now, availabilityType);
+            Availability newAvailabilityInterval = getNewInterval(record, now, childAvailType);
             if (newAvailabilityInterval != null) {
                 newAvailabilities.add(newAvailabilityInterval);
             }
         }
 
-        resourceAvailabilityManager.updateAllResourcesAvailabilitiesForAgent(agentId, availabilityType);
+        resourceAvailabilityManager.updateAgentResourcesLatestAvailability(agentId, childAvailType, false);
 
-        // To handle backfilling process, which will mark them down
-        notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities", newAvailabilities
-            .toArray(new Availability[newAvailabilities.size()]));
+        // To handle backfilling process, which will mark them unknown
+        notifyAlertConditionCacheManager("setAllAgentResourceAvailabilities",
+            newAvailabilities.toArray(new Availability[newAvailabilities.size()]));
 
-        log.debug("Resources for agent #[" + agentId + "] have been fully backfilled with [" + typeString + "]");
+        if (log.isDebugEnabled()) {
+            log.debug("Resources for agent #[" + agentId + "] have been fully backfilled.");
+        }
 
         return;
     }
@@ -658,7 +761,12 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         try {
             existing = (Availability) query.getSingleResult();
+
         } catch (NoResultException nre) {
+            // this should never happen since we create an initial Availability when the resource is persisted.
+            log.warn("Resource [" + toInsert.getResource()
+                + "] has no Availabilities, this should not happen.  Correcting situation by adding an Availability.");
+
             // we are inserting this as the very first interval
             query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE);
             query.setParameter("resourceId", toInsert.getResource().getId());
@@ -677,29 +785,46 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         // If we are inserting the same availability type, the first one can just continue
-        // and there is nothing to do!  But if we are inserting a different availability
-        // type as that of the existing interval, the existing interval ends at the newly
-        // inserted interval start.
-        // Because we are runlength-encoded, we are assured the next interval
-        // is the same type as the newly inserted one.  So we just have to move
-        // the start time of the next interval back to the start of the newly inserted
-        // interval.
-        // If the new start time is the same as the existing, then we assume this latest report
-        // contains a more up-to-date status so we just move back the next interval
-        // all the way back to the existing start and we delete the existing interval.
+        // and there is nothing to do!
         if (existing.getAvailabilityType() != toInsert.getAvailabilityType()) {
-            // note: we are assured this query will return something; semantics of this
-            // method is that it is never called if we are inserting in the last interval
+
+            // get the afterExisting availability. note: we are assured this query will return something;
+            // semantics of this method is that it is never called if we are inserting in the last interval
             query = entityManager.createNamedQuery(Availability.FIND_BY_RESOURCE_AND_DATE);
             query.setParameter("resourceId", toInsert.getResource().getId());
             query.setParameter("aTime", existing.getEndTime().getTime() + 1);
             Availability afterExisting = (Availability) query.getSingleResult();
-            afterExisting.setStartTime(toInsert.getStartTime()); // move back the next interval
 
-            if (existing.getEndTime().getTime() == toInsert.getStartTime().getTime()) {
-                entityManager.remove(existing);
+            if (toInsert.getAvailabilityType() == afterExisting.getAvailabilityType()) {
+                // the inserted avail type is the same as the following avail type, we don't need to
+                // insert a new avail record, just adjust the start/end times of the existing records.
+
+                if (existing.getStartTime().getTime() == toInsert.getStartTime().getTime()) {
+                    // Edge Case: If the insertTo start time equals the existing start time
+                    // just remove the existing record and let afterExisting cover the interval.
+                    entityManager.remove(existing);
+                } else {
+                    existing.setEndTime(toInsert.getStartTime());
+                }
+
+                // stretch next interval to cover the inserted interval
+                afterExisting.setStartTime(toInsert.getStartTime());
+
             } else {
-                existing.setEndTime(toInsert.getStartTime());
+                // the inserted avail type is NOT the same as the following avail type, we likely need to
+                // insert a new avail record.
+
+                if (existing.getStartTime().getTime() == toInsert.getStartTime().getTime()) {
+                    // Edge Case: If the insertTo start time equals the existing end time
+                    // just update the existing avail type to be the new avail type and keep the same boundary.                    
+                    existing.setAvailabilityType(toInsert.getAvailabilityType());
+
+                } else {
+                    // insert the new avail type interval, witch is different than existing and afterExisting. 
+                    existing.setEndTime(toInsert.getStartTime());
+                    toInsert.setEndTime(afterExisting.getStartTime());
+                    entityManager.persist(toInsert);
+                }
             }
         }
 
@@ -773,6 +898,8 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
     private void notifyAlertConditionCacheManager(String callingMethod, Availability... availabilities) {
         AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(availabilities);
 
-        log.debug(callingMethod + ": " + stats.toString());
+        if (log.isDebugEnabled()) {
+            log.debug(callingMethod + ": " + stats.toString());
+        }
     }
 }

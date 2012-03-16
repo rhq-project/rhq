@@ -97,7 +97,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         vLayout.setWidth100();
 
         // TODO: Admin icon.
-        TitleBar titleBar = new TitleBar(this, MSG.view_admin_administration());
+        TitleBar titleBar = new TitleBar (this, MSG.view_admin_administration(), IconEnum.ADMIN.getIcon24x24Path());
         vLayout.addMember(titleBar);
 
         ProductInfo productInfo = CoreGUI.get().getProductInfo();

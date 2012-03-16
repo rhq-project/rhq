@@ -2514,7 +2514,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             String expression = pos.getExpression();
             String filter = pos.getFilter();
             Pattern filterPattern = null;
-            if (filter!=null)
+            if (filter != null)
                 filterPattern = Pattern.compile(filter);
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
@@ -2542,7 +2542,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         String name = composite.getResource().getName();
                         // filter if the user provided a filter
 
-                        if (filterPattern !=null ) {
+                        if (filterPattern != null) {
                             Matcher m = filterPattern.matcher(name);
                             if (m.matches()) {
                                 PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, "" + name);

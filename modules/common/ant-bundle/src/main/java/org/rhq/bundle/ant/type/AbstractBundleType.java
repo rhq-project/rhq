@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 import org.apache.tools.ant.types.DataType;
 
 import org.rhq.bundle.ant.BundleAntProject;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  *
@@ -32,7 +33,8 @@ public abstract class AbstractBundleType extends DataType {
             regex.append("(");
             File dir = fileSet.getDir();
             if (dir != null) {
-                regex.append(dir);
+                String path = FileUtil.useForwardSlash(dir.getPath());
+                regex.append(path);
                 regex.append('/');
             }
             if (fileSet.getIncludePatterns().length == 0) {

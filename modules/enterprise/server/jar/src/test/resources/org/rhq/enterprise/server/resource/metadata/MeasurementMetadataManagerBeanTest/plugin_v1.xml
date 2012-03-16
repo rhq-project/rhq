@@ -20,6 +20,11 @@
         <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
                 description="Metric 1" category="availability" defaultInterval="30000" defaultOn="true"
                 units="milliseconds"/>
+                
+        <service name="MetricService1">
+            <metric property="rhq.availability" defaultInterval="120000" defaultOn="false" />                
+        </service>    
+        <service name="MetricService2" />        
     </server>
     <server name="MetricServer4">
         <metric displayName="metric1" property="metric1" dataType="trait" displayType="summary"
@@ -39,4 +44,5 @@
                 description="Metric 3" category="throughput" defaultInterval="30000" defaultOn="true"
                 units="milliseconds" destinationType="myMethod"/>
     </server>
+        
 </plugin>

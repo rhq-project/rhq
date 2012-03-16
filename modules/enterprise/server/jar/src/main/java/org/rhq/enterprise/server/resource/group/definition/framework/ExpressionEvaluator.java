@@ -484,9 +484,13 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         type = AvailabilityType.UP;
                     } else if ("down".equalsIgnoreCase(value)) {
                         type = AvailabilityType.DOWN;
+                    } else if ("disabled".equalsIgnoreCase(value)) {
+                        type = AvailabilityType.DISABLED;
+                    } else if ("unknown".equalsIgnoreCase(value)) {
+                        type = AvailabilityType.UNKNOWN;
                     } else {
                         throw new InvalidExpressionException("Invalid 'resource.availability' comparision value, "
-                            + "only 'UP' and 'DOWN' are valid values");
+                            + "only 'UP''DOWN''DISABLED''UNKNOWN' are valid values");
                     }
                 }
                 addJoinCondition(JoinCondition.AVAILABILITY);

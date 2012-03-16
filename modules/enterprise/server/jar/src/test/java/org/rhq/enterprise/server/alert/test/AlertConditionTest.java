@@ -35,14 +35,18 @@ import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
-import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -55,14 +59,19 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
+import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.scheduler.jobs.AlertAvailabilityDurationJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.JPAUtils;
 import org.rhq.test.TransactionCallbackWithContext;
 
 @Test
 public class AlertConditionTest extends UpdatePluginMetadataTestBase {
+    private static final boolean ENABLED = false;
+
     // this must match the constant found in ServerManagerBean
     private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
     private static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "AlertConditionTestServer";
@@ -97,6 +106,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
     }
 
+    @Test(enabled = ENABLED)
     public void testBZ735262_InsideRangeCondition() throws Exception {
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
@@ -136,6 +146,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return;
     }
 
+    @Test(enabled = ENABLED)
     public void testBZ735262_OutsideRangeCondition() throws Exception {
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
@@ -174,6 +185,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return;
     }
 
+    @Test(enabled = ENABLED)
     public void testBZ736685_DeleteConditionLogButNoAlert() throws Exception {
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
@@ -218,11 +230,117 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         resource = null;
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId, PageControl
-            .getUnlimitedInstance());
+        PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
+            PageControl.getUnlimitedInstance());
         assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
 
         return;
+    }
+
+    @Test(enabled = ENABLED)
+    public void testAvailChangeAlert() throws Exception {
+        // create our resource with alert definition
+        MeasurementDefinition metricDef = createResourceWithMetricSchedule();
+        createAlertDefinitionWithAvailChangeCondition(resource.getId(), AlertConditionOperator.AVAIL_GOES_DOWN);
+        createAlertDefinitionWithAvailChangeCondition(resource.getId(), AlertConditionOperator.AVAIL_GOES_NOT_UP);
+
+        // resource has initial UNKNOWN ResourceAvailability and no Availability records. simulate an avail report
+        // coming from the agent and setting the initial avail to UP.
+        AvailabilityReport availReport = new AvailabilityReport(AGENT_NAME);
+        availReport.addAvailability(new Datum(resource.getId(), AvailabilityType.UP, System.currentTimeMillis()));
+        AvailabilityManagerLocal availManager = LookupUtil.getAvailabilityManager();
+        availManager.mergeAvailabilityReport(availReport);
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
+
+        PageList<Alert> alerts = getAlerts(resource.getId());
+        assert alerts.size() == 0 : "No alert should have fired on the initial avail reporting: " + alerts;
+
+        // Now simulate the down avail
+        availReport = new AvailabilityReport(AGENT_NAME);
+        availReport
+            .addAvailability(new Datum(resource.getId(), AvailabilityType.DOWN, System.currentTimeMillis() + 10));
+        availManager.mergeAvailabilityReport(availReport);
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
+
+        alerts = getAlerts(resource.getId());
+        assert alerts.size() == 2 : "Two alerts should have fired on the avail change: " + alerts;
+
+        assert !alerts.get(0).getAlertDefinition().getName().equals(alerts.get(1).getAlertDefinition().getName()) : "Alerts should have been from different definitions";
+
+        // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
+        int resourceId = resource.getId();
+        deleteNewResource(resource);
+        resource = null;
+
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
+            PageControl.getUnlimitedInstance());
+        assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
+
+        return;
+    }
+
+    @Test(enabled = ENABLED)
+    public void testAvailDurationAlert() throws Exception {
+        try {
+            prepareScheduler();
+            SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+            scheduler.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
+
+            // create our resource with alert definition
+            MeasurementDefinition metricDef = createResourceWithMetricSchedule();
+            // use a 10s duration, this is not allowed in general, the gui forces 1 minute minimum
+            createAlertDefinitionWithAvailDurationCondition(resource.getId(),
+                AlertConditionOperator.AVAIL_DURATION_DOWN, 10);
+
+            // resource has initial UNKNOWN ResourceAvailability and no Availability records. simulate an avail report
+            // coming from the agent and setting the initial avail to UP.
+            AvailabilityReport availReport = new AvailabilityReport(AGENT_NAME);
+            availReport.addAvailability(new Datum(resource.getId(), AvailabilityType.UP, System.currentTimeMillis()));
+            AvailabilityManagerLocal availManager = LookupUtil.getAvailabilityManager();
+            availManager.mergeAvailabilityReport(availReport);
+
+            // wait for our JMS messages to process and see if we get any alerts
+            Thread.sleep(3000);
+
+            PageList<Alert> alerts = getAlerts(resource.getId());
+            assert alerts.size() == 0 : "No alert should have fired on the initial avail reporting: " + alerts;
+
+            // Now simulate the down avail
+            availReport = new AvailabilityReport(AGENT_NAME);
+            availReport.addAvailability(new Datum(resource.getId(), AvailabilityType.DOWN,
+                System.currentTimeMillis() + 10));
+            availManager.mergeAvailabilityReport(availReport);
+
+            // wait for our JMS messages to process and see if we get any alerts
+            Thread.sleep(5000);
+
+            alerts = getAlerts(resource.getId());
+            assert alerts.size() == 0 : "No alert should have fired after 30s, will take at least a minute: " + alerts;
+
+            // wait for our JMS messages to process and see if we get any alerts
+            Thread.sleep(6000);
+
+            alerts = getAlerts(resource.getId());
+            assert alerts.size() == 1 : "One alert should have fired on the avail duration: " + alerts;
+
+            // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
+            int resourceId = resource.getId();
+            deleteNewResource(resource);
+            resource = null;
+
+            AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+            PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId,
+                PageControl.getUnlimitedInstance());
+            assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
+
+        } finally {
+            unprepareScheduler();
+        }
     }
 
     private PageList<Alert> getAlerts(int resourceId) {
@@ -330,6 +448,72 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return alertDefinition;
     }
 
+    private AlertDefinition createAlertDefinitionWithAvailChangeCondition(int resourceId,
+        AlertConditionOperator condition) {
+        HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(1);
+        AlertCondition cond1 = new AlertCondition();
+        cond1.setCategory(AlertConditionCategory.AVAILABILITY);
+        cond1.setName(condition.name());
+        cond1.setThreshold(null);
+        cond1.setOption(null);
+        cond1.setComparator(null);
+        cond1.setMeasurementDefinition(null);
+        conditions.add(cond1);
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("avail change: " + condition.name());
+        alertDefinition.setEnabled(true);
+        alertDefinition.setPriority(AlertPriority.HIGH);
+        alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
+        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setConditionExpression(BooleanExpression.ALL);
+        alertDefinition.setConditions(conditions);
+
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId);
+        alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
+        assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
+            + alertDefinition;
+
+        // now that we created an alert def, we have to reload the alert condition cache
+        reloadAllAlertConditionCaches();
+
+        return alertDefinition;
+    }
+
+    private AlertDefinition createAlertDefinitionWithAvailDurationCondition(int resourceId,
+        AlertConditionOperator condition, int duration) {
+        HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(1);
+        AlertCondition cond1 = new AlertCondition();
+        cond1.setCategory(AlertConditionCategory.AVAIL_DURATION);
+        cond1.setName(condition.name());
+        cond1.setThreshold(null);
+        cond1.setOption(String.valueOf(duration));
+        cond1.setComparator(null);
+        cond1.setMeasurementDefinition(null);
+        conditions.add(cond1);
+
+        AlertDefinition alertDefinition = new AlertDefinition();
+        alertDefinition.setName("avail duration: " + condition.name());
+        alertDefinition.setEnabled(true);
+        alertDefinition.setPriority(AlertPriority.HIGH);
+        alertDefinition.setAlertDampening(new AlertDampening(Category.NONE));
+        alertDefinition.setRecoveryId(Integer.valueOf(0));
+        alertDefinition.setConditionExpression(BooleanExpression.ALL);
+        alertDefinition.setConditions(conditions);
+
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId);
+        alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
+        assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
+            + alertDefinition;
+
+        // now that we created an alert def, we have to reload the alert condition cache
+        reloadAllAlertConditionCaches();
+
+        return alertDefinition;
+    }
+
     private AlertDefinition createAlertDefinitionWithOneOutsideRangeCondition(MeasurementDefinition metricDef,
         int resourceId) {
         // create alert definition with the range condition "metric value outside 40...60"
@@ -380,7 +564,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
         final MeasurementDefinition metricDef = resourceType.getMetricDefinitions().iterator().next();
 
-        resource = persistNewResource(resourceType.getName());
+        resource = persistNewResource(resourceType.getName()); // will have UNKNOWN avail
         assert resource != null && resource.getId() > 0 : "failed to create test resource";
 
         JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Object>() {

@@ -106,6 +106,12 @@ public class BundleComponent implements ResourceComponent<JBossOsgiServerCompone
         if (res!=null)
             result.setSimpleResult((String) res); // TODO cast will be bad for other return types than string
 
+        // If this is a lifecycle operation ask for an avail check              
+        boolean availCheck = name.toLowerCase().equals("stop") || name.toLowerCase().contains("start");
+        if (availCheck) {
+            getResourceContext().getAvailabilityContext().requestAvailabilityCheck();
+        }
+
         return result;
     }
 

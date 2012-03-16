@@ -228,8 +228,8 @@ public class ClientCommandSender {
     public ClientCommandSender(RemoteCommunicator remote_communicator, ClientCommandSenderConfiguration config)
         throws IllegalArgumentException {
         if (remote_communicator == null) {
-            throw new IllegalArgumentException(LOG
-                .getMsgString(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_NULL_REMOTE_COMM));
+            throw new IllegalArgumentException(
+                LOG.getMsgString(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_NULL_REMOTE_COMM));
         }
 
         if (config == null) {
@@ -384,8 +384,8 @@ public class ClientCommandSender {
      */
     public void setRemoteCommunicator(RemoteCommunicator remote_communicator) throws IllegalArgumentException {
         if (remote_communicator == null) {
-            throw new IllegalArgumentException(LOG
-                .getMsgString(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_NULL_REMOTE_COMM));
+            throw new IllegalArgumentException(
+                LOG.getMsgString(CommI18NResourceKeys.CLIENT_COMMAND_SENDER_NULL_REMOTE_COMM));
         }
 
         // we don't need to synchronize on this.  As per JLS, section 17.7:
@@ -766,6 +766,10 @@ public class ClientCommandSender {
         }
 
         return;
+    }
+
+    public boolean isServerPolling() {
+        return (null != m_serverPollingThread);
     }
 
     public void addPollingListener(PollingListener listener) {
@@ -1159,8 +1163,8 @@ public class ClientCommandSender {
                 sendAsynch(cnc.getCommand(), cnc.getCallback());
             }
         } catch (Exception e) {
-            LOG.error(e, CommI18NResourceKeys.CLIENT_COMMAND_SENDER_RETRY_FAILURE, m_remoteCommunicator, cnc
-                .getCommand());
+            LOG.error(e, CommI18NResourceKeys.CLIENT_COMMAND_SENDER_RETRY_FAILURE, m_remoteCommunicator,
+                cnc.getCommand());
         } finally {
             m_shuttingDownTasksLock.readLock().unlock();
         }

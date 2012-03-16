@@ -25,10 +25,10 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.alert.engine.jms.CachedConditionProducerLocal;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
-import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -66,8 +66,8 @@ abstract class AbstractConditionCache {
                      */
                     cacheElement.setActive(true); // no harm to always set active (though, technically, STATELESS operators don't need it)
                     cachedConditionProducer.sendActivateAlertConditionMessage(
-                        cacheElement.getAlertConditionTriggerId(), timestamp, cacheElement
-                            .convertValueToString(providedValue), extraParams);
+                        cacheElement.getAlertConditionTriggerId(), timestamp,
+                        cacheElement.convertValueToString(providedValue), extraParams);
 
                     stats.matched++;
                 } catch (Exception e) {
@@ -85,8 +85,8 @@ abstract class AbstractConditionCache {
 
                     try {
                         // send negative message
-                        cachedConditionProducer.sendDeactivateAlertConditionMessage(cacheElement
-                            .getAlertConditionTriggerId(), timestamp);
+                        cachedConditionProducer.sendDeactivateAlertConditionMessage(
+                            cacheElement.getAlertConditionTriggerId(), timestamp);
                     } catch (Exception e) {
                         log.error("Error sending deactivation message for cache element '" + cacheElement + "': "
                             + e.getMessage());

@@ -251,6 +251,11 @@ public class MeasurementTest extends AbstractEJB3Test {
 
             Resource res = def.getSchedules().get(0).getResource();
 
+            List<Availability> avails = res.getAvailability();
+            assert avails != null : "should have initial avail";
+            assert avails.size() == 1 : "should have initial avail";
+            Availability initialAvail = avails.get(0);
+
             Availability beginUpTime = new Availability(res, getAnotherDate(), AvailabilityType.UP);
             em.persist(beginUpTime);
             em.flush();
@@ -261,6 +266,8 @@ public class MeasurementTest extends AbstractEJB3Test {
             em.persist(endUpTime);
             em.flush();
 
+            initialAvail.setEndTime(beginUpTime.getStartTime());
+            initialAvail = em.merge(initialAvail);
             beginUpTime.setEndTime(endUpTime.getStartTime());
             beginUpTime = em.merge(beginUpTime);
             em.flush();

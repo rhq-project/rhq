@@ -47,7 +47,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 
@@ -57,7 +56,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = "AlertCondition.findByTriggerId", query = "SELECT a FROM AlertCondition AS a WHERE a.triggerId = :tid"),
     @NamedQuery(name = "AlertCondition.findAll", query = "SELECT a FROM AlertCondition AS a"),
     @NamedQuery(name = AlertCondition.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertCondition ac WHERE ac.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
@@ -167,7 +166,7 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
         + "     AND ad.enabled = TRUE " //
         + "     AND ad.deleted = FALSE " //
-        + "     AND ac.category = 'AVAILABILITY' " //
+        + "     AND ac.category = :category " //
         + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_CONTROL, query = "" //
         + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionControlCategoryComposite " //
@@ -489,7 +488,8 @@ public class AlertCondition implements Serializable {
 
     /**
      * The option string is optional and its semantics differ based on the category of this condition:
-     * AVAILABILITY: the {@link AvailabilityType} to trigger off of (DOWN or UP)
+     * AVAILABILITY: n/a
+     * AVAIL_DURATION: the duration, in minutes
      * THRESHOLD: for calltime metric conditions, one of "MIN, "MAX", "AVG" - all others are n/a
      * BASELINE: one of "min", "max" or "mean" - indicates what the threshold is compared to (min/max/avg baseline value)
      * CHANGE: for calltime metric conditions, one of "MIN, "MAX", "AVG" - all others are n/a

@@ -23,7 +23,7 @@
 package org.rhq.core.domain.alert;
 
 public enum AlertConditionCategory {
-    AVAILABILITY("Resource Availability"), // 
+    AVAILABILITY("Resource Availability"), // i.e. AVAILABILITY_CHANGE 
     THRESHOLD("Measurement Threshold"), //
     BASELINE("Measurement Baseline"), //
     CHANGE("Measurement Value Change"), //
@@ -33,7 +33,8 @@ public enum AlertConditionCategory {
     RESOURCE_CONFIG("Resource Configuration Property Value Change"), //
     EVENT("Log Event"), //
     DRIFT("Drift Detected"), //
-    RANGE("Measurement Value Range");
+    RANGE("Measurement Value Range"), //
+    AVAIL_DURATION("Resource Availability for Duration");
 
     /*
      * legacyOrder exists to support code that still uses the old EventConstants.TYPE_* attributes, which was one-based

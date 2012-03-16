@@ -139,7 +139,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 });
                 toolStrip.addMember(saveButton);
 
-                dumpToLogButton = new LocatableIButton(extendLocatorId("Dummp"),MSG.common_button_dump_sysInfo_to_log());
+                dumpToLogButton = new LocatableIButton(extendLocatorId("Dummp"), MSG
+                    .common_button_dump_sysInfo_to_log());
                 dumpToLogButton.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent clickEvent) {
@@ -186,8 +187,10 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 } else if (SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())) {
                     value = convertHoursToMillis(value);
                 } else if (SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName().equals(simple.getName())
-                    || SystemSetting.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemSetting.TRAIT_PURGE_PERIOD.getInternalName().equals(simple.getName())
-                    || SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName()) || SystemSetting.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.TRAIT_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.RT_DATA_PURGE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.EVENT_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.DRIFT_FILE_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_FREQUENCY.getInternalName().equals(simple.getName())
                     || SystemSetting.BASE_LINE_DATASET.getInternalName().equals(simple.getName())) {
@@ -223,13 +226,13 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
             @Override
             public void onFailure(Throwable throwable) {
                 CoreGUI.getMessageCenter().notify(
-                                           new Message(MSG.view_admin_systemSettings_dumpToLogFailed(), Severity.Warning));
+                    new Message(MSG.view_admin_systemSettings_dumpToLogFailed(), Severity.Warning));
             }
 
             @Override
             public void onSuccess(Void aVoid) {
                 CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_admin_systemSettings_dumpedToLog(), Severity.Info));
+                    new Message(MSG.view_admin_systemSettings_dumpedToLog(), Severity.Info));
             }
         });
     }
@@ -288,7 +291,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
         PropertyGroupDefinition ldapGroup = new PropertyGroupDefinition("ldap");
         ldapGroup.setDisplayName(MSG.view_admin_systemSettings_group_ldap());
-        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName(), "false"))); // show if LDAP is in use
+        ldapGroup.setDefaultHidden(!Boolean.parseBoolean(config.getSimpleValue(
+            SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName(), "false"))); // show if LDAP is in use
         ldapGroup.setOrder(3);
 
         PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift");
@@ -296,7 +300,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
 
-        for(SystemSetting prop : SystemSetting.values()) {
+        for (SystemSetting prop : SystemSetting.values()) {
 
             //don't include the readonly properties in the configuration editor
             if (prop.isReadOnly()) {
@@ -307,7 +311,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
             def.put(pd);
 
-            switch(prop) {
+            switch (prop) {
 
             ///////////////////////////////////
             // General Configuration Properties
@@ -322,8 +326,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 pd.setDescription(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_AgentMaxQuietTimeAllowed_name());
                 pd.setPropertyGroupDefinition(generalGroup);
-                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(2), null)); // don't allow less than 2m since it will cause too many false backfills
-                pd.setDefaultValue("15");
+                // don't allow less than 3m which is 3 * the ping interval, anything less risks unwanted backfill
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(3), null));
+                pd.setDefaultValue("5");
                 break;
             case AGENT_AUTO_UPDATE_ENABLED:
                 pd.setDescription(MSG.view_admin_systemSettings_EnableAgentAutoUpdate_desc());
@@ -549,28 +554,28 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
         final StaticTextItem productName = new StaticTextItem("productname", MSG.common_title_name());
         final StaticTextItem productVersion = new StaticTextItem("productversion", MSG.common_title_version());
-        final StaticTextItem productBuildNumber = new StaticTextItem("productbuild", MSG
-            .view_admin_systemSettings_serverDetails_buildNumber());
+        final StaticTextItem productBuildNumber = new StaticTextItem("productbuild",
+            MSG.view_admin_systemSettings_serverDetails_buildNumber());
 
-        final StaticTextItem serverTimezone = new StaticTextItem("timezone", MSG
-            .view_admin_systemSettings_serverDetails_tz());
-        final StaticTextItem serverTime = new StaticTextItem("localtime", MSG
-            .view_admin_systemSettings_serverDetails_time());
-        final StaticTextItem serverInstallDir = new StaticTextItem("installdir", MSG
-            .view_admin_systemSettings_serverDetails_installDir());
+        final StaticTextItem serverTimezone = new StaticTextItem("timezone",
+            MSG.view_admin_systemSettings_serverDetails_tz());
+        final StaticTextItem serverTime = new StaticTextItem("localtime",
+            MSG.view_admin_systemSettings_serverDetails_time());
+        final StaticTextItem serverInstallDir = new StaticTextItem("installdir",
+            MSG.view_admin_systemSettings_serverDetails_installDir());
         final StaticTextItem dbUrl = new StaticTextItem("dbUrl", MSG.view_admin_systemSettings_serverDetails_dbUrl());
-        final StaticTextItem dbProductName = new StaticTextItem("dbProductName", MSG
-            .view_admin_systemSettings_serverDetails_dbName());
-        final StaticTextItem dbProductVersion = new StaticTextItem("dbProductVersion", MSG
-            .view_admin_systemSettings_serverDetails_dbVersion());
-        final StaticTextItem dbDriverName = new StaticTextItem("dbDriverName", MSG
-            .view_admin_systemSettings_serverDetails_dbDriverName());
-        final StaticTextItem dbDriverVersion = new StaticTextItem("dbDriverVersion", MSG
-            .view_admin_systemSettings_serverDetails_dbDriverVersion());
-        final StaticTextItem currentMeasRawTable = new StaticTextItem("currentMeasRawTable", MSG
-            .view_admin_systemSettings_serverDetails_currentTable());
-        final StaticTextItem nextMeasTableRotation = new StaticTextItem("nextMeasTableRotation", MSG
-            .view_admin_systemSettings_serverDetails_nextRotation());
+        final StaticTextItem dbProductName = new StaticTextItem("dbProductName",
+            MSG.view_admin_systemSettings_serverDetails_dbName());
+        final StaticTextItem dbProductVersion = new StaticTextItem("dbProductVersion",
+            MSG.view_admin_systemSettings_serverDetails_dbVersion());
+        final StaticTextItem dbDriverName = new StaticTextItem("dbDriverName",
+            MSG.view_admin_systemSettings_serverDetails_dbDriverName());
+        final StaticTextItem dbDriverVersion = new StaticTextItem("dbDriverVersion",
+            MSG.view_admin_systemSettings_serverDetails_dbDriverVersion());
+        final StaticTextItem currentMeasRawTable = new StaticTextItem("currentMeasRawTable",
+            MSG.view_admin_systemSettings_serverDetails_currentTable());
+        final StaticTextItem nextMeasTableRotation = new StaticTextItem("nextMeasTableRotation",
+            MSG.view_admin_systemSettings_serverDetails_nextRotation());
 
         productName.setWrapTitle(false);
         productVersion.setWrapTitle(false);
@@ -608,10 +613,10 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 form.setValue(dbProductVersion.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
                 form.setValue(dbDriverName.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
                 form.setValue(dbDriverVersion.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
-                form.setValue(currentMeasRawTable.getName(), details
-                    .get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
-                form.setValue(nextMeasTableRotation.getName(), details
-                    .get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
+                form.setValue(currentMeasRawTable.getName(),
+                    details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
+                form.setValue(nextMeasTableRotation.getName(),
+                    details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
             }
 
             @Override

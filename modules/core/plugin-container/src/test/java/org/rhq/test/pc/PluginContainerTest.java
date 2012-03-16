@@ -50,6 +50,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.JMockTest;
 
 /**
@@ -65,18 +66,19 @@ import org.rhq.test.JMockTest;
 public class PluginContainerTest extends JMockTest {
     private static final File ROOT;
     private static boolean cleanedUp = false;
-    
+
     private static final String PLUGINS_DIR_NAME = "plugins";
 
     private static final String DATA_DIR_NAME = "data";
     private static final String TMP_DIR_NAME = "tmp";
-    
+
     private static final ThreadLocal<PluginContainerConfiguration> STATICALLY_ACCESSIBLE_PLUGIN_CONTAINER_CONFIGURATION = new ThreadLocal<PluginContainerConfiguration>();
 
     private static final ThreadLocal<PluginContainerSetup> CURRENT_SETUP = new ThreadLocal<PluginContainerSetup>();
-        
-    private static final Map<String, Object> SERVERSIDE_FAKES = Collections.synchronizedMap(new HashMap<String, Object>());
-   
+
+    private static final Map<String, Object> SERVERSIDE_FAKES = Collections
+        .synchronizedMap(new HashMap<String, Object>());
+
     protected PluginContainerConfiguration pluginContainerConfiguration;
 
     static {
@@ -84,10 +86,10 @@ public class PluginContainerTest extends JMockTest {
         while (f.exists() || !f.mkdir()) {
             f = new File(System.getProperty("java.io.tmpdir"), "plugin-container-test-" + System.currentTimeMillis());
         }
-        
+
         ROOT = f;
     }
-    
+
     /**
      * During the tests, one might need to "fake" responses that come to the plugin container
      * from external sources, like RHQ server. These are usually mocked out using the facilities
@@ -103,14 +105,14 @@ public class PluginContainerTest extends JMockTest {
     public static Object getServerSideFake(String name) {
         return SERVERSIDE_FAKES.get(name);
     }
-    
+
     /**
      * The opposite of {@link #getServerSideFake(String)}.
      */
     public static void setServerSideFake(String name, Object object) {
         SERVERSIDE_FAKES.put(name, object);
     }
-    
+
     /**
      * Returns the {@link PluginContainerConfiguration} as configured using 
      * the {@link PluginContainerSetup} annotation on the current test (or null
@@ -120,26 +122,26 @@ public class PluginContainerTest extends JMockTest {
     public static PluginContainerConfiguration getCurrentPluginContainerConfiguration() {
         return STATICALLY_ACCESSIBLE_PLUGIN_CONTAINER_CONFIGURATION.get();
     }
-   
+
     @Override
     protected void initBeforeTest(Object testObject, Method testMethod) {
         super.initBeforeTest(testObject, testMethod);
-        
+
         CURRENT_SETUP.set(getSetup(testMethod));
-        
+
         if (CURRENT_SETUP.get() != null) {
-            try { 
+            try {
                 initPluginContainerConfiguration(testObject, testMethod);
                 initDirectoryStructure();
                 deployPlugins(testObject, pluginContainerConfiguration.getPluginDirectory(), CURRENT_SETUP.get());
 
                 PluginContainer.getInstance().setConfiguration(pluginContainerConfiguration);
-                
+
                 if (CURRENT_SETUP.get().clearInventoryDat()) {
                     File inventoryDat = new File(pluginContainerConfiguration.getDataDirectory(), "inventory.dat");
                     inventoryDat.delete();
                 }
-                
+
                 if (CURRENT_SETUP.get().startImmediately()) {
                     startConfiguredPluginContainer();
                 }
@@ -148,19 +150,22 @@ public class PluginContainerTest extends JMockTest {
             }
         }
     }
-        
+
     @Override
     protected void tearDownAfterTest(ITestResult testResult) {
         try {
-            deletePlugins(pluginContainerConfiguration.getPluginDirectory());
-        } catch (Exception e) {
-            //hmmm
-        } finally {
             PluginContainer.getInstance().shutdown();
+        } finally {
+            try {
+                deletePlugins(pluginContainerConfiguration.getPluginDirectory());
+            } catch (Throwable t) {
+                //hmmm
+            }
+
             super.tearDownAfterTest(testResult);
         }
     }
-    
+
     /**
      * Starts the plugin container. This method is supposed to be called from tests that
      * need to start the plugin container manually after it has been configured using
@@ -168,7 +173,7 @@ public class PluginContainerTest extends JMockTest {
      */
     public static void startConfiguredPluginContainer() {
         PluginContainer.getInstance().setConfiguration(getCurrentPluginContainerConfiguration());
-        
+
         PluginContainer.getInstance().initialize();
 
         try {
@@ -185,7 +190,7 @@ public class PluginContainerTest extends JMockTest {
             im.executeServiceScanImmediately();
         }
     }
-    
+
     /**
      * This method can be called in the after methods of the tests to clear up data
      * left after the plugin container run.
@@ -198,14 +203,15 @@ public class PluginContainerTest extends JMockTest {
     public static void clearStorageOfCurrentPluginContainer() throws IOException {
         File f = STATICALLY_ACCESSIBLE_PLUGIN_CONTAINER_CONFIGURATION.get().getPluginDirectory();
         f = f.getParentFile();
-        
+
         if (f.exists()) {
-            FileUtils.cleanDirectory(f);
-            
+            FileUtil.purge(f, false);
+            //FileUtils.cleanDirectory(f);
+
             f.delete();
         }
     }
-    
+
     /**
      * This method clears the storage of all tests made. This is useful in {@link AfterSuite}
      * method to clean up after all the tests (annotated with {@link PluginContainerSetup}) 
@@ -215,12 +221,13 @@ public class PluginContainerTest extends JMockTest {
      */
     public synchronized static void clearStorage() throws IOException {
         if (!cleanedUp) {
-            FileUtils.cleanDirectory(ROOT);
+            FileUtil.purge(ROOT, false);
+            //FileUtils.cleanDirectory(ROOT);
             ROOT.delete();
             cleanedUp = true;
         }
     }
-    
+
     /**
      * If PluginContainerTest is used as a base class to your tests (and not as a {@link Listeners listener},
      * this method is provided to automatically clean up after all the plugin container tests that ran
@@ -235,7 +242,7 @@ public class PluginContainerTest extends JMockTest {
     public void cleanUpAfterPluginContainerTests() throws IOException {
         clearStorage();
     }
-    
+
     /**
      * This method returns the {@link PluginContainerConfiguration} that will be used in 
      * the current test as was configured by the PluginContainerSetup annotation. 
@@ -249,7 +256,7 @@ public class PluginContainerTest extends JMockTest {
      */
     protected PluginContainerConfiguration createPluginConfigurationToUse(Object testObject, Method testMethod) {
         PluginContainerSetup setup = CURRENT_SETUP.get();
-        
+
         if (setup.pluginConfigurationProviderMethod().isEmpty()) {
             return createDefaultPluginConfiguration(setup, context);
         } else {
@@ -257,24 +264,29 @@ public class PluginContainerTest extends JMockTest {
             Class<?> testClass = testMethod.getDeclaringClass();
             try {
                 Method pluginContainerProvider = testClass.getMethod(providerName, (Class<?>[]) null);
-                
+
                 if (!PluginContainerConfiguration.class.isAssignableFrom(pluginContainerProvider.getReturnType())) {
-                    throw new IllegalStateException("The configured pluginConfigurationProviderMethod '" + providerName + "' on the test class '" + testClass + "' does not return a PluginContainerConfiguration.");
+                    throw new IllegalStateException("The configured pluginConfigurationProviderMethod '" + providerName
+                        + "' on the test class '" + testClass + "' does not return a PluginContainerConfiguration.");
                 }
-                
+
                 return (PluginContainerConfiguration) pluginContainerProvider.invoke(testObject, (Object[]) null);
             } catch (SecurityException e) {
-                throw new IllegalStateException("The configured pluginConfigurationProviderMethod '" + providerName + "' could not be found on the test class '" + testClass + "'.", e);
+                throw new IllegalStateException("The configured pluginConfigurationProviderMethod '" + providerName
+                    + "' could not be found on the test class '" + testClass + "'.", e);
             } catch (NoSuchMethodException e) {
-                throw new IllegalStateException("The configured pluginConfigurationProviderMethod '" + providerName + "' could not be found on the test class '" + testClass + "'.", e);
+                throw new IllegalStateException("The configured pluginConfigurationProviderMethod '" + providerName
+                    + "' could not be found on the test class '" + testClass + "'.", e);
             } catch (IllegalAccessException e) {
-                throw new IllegalStateException("Failed to invoke method '" + providerName + "' on test class '" + testClass + "'.", e);
+                throw new IllegalStateException("Failed to invoke method '" + providerName + "' on test class '"
+                    + testClass + "'.", e);
             } catch (InvocationTargetException e) {
-                throw new IllegalStateException("Failed to invoke method '" + providerName + "' on test class '" + testClass + "'.", e);
+                throw new IllegalStateException("Failed to invoke method '" + providerName + "' on test class '"
+                    + testClass + "'.", e);
             }
         }
     }
-    
+
     /**
      * This method is called after the test to tear down resources associated with the 
      * current plugin container configuration.
@@ -283,12 +295,12 @@ public class PluginContainerTest extends JMockTest {
         pluginContainerConfiguration = null;
         STATICALLY_ACCESSIBLE_PLUGIN_CONTAINER_CONFIGURATION.set(null);
     }
-    
+
     private void initPluginContainerConfiguration(Object testObject, Method testMethod) {
         pluginContainerConfiguration = createPluginConfigurationToUse(testObject, testMethod);
         STATICALLY_ACCESSIBLE_PLUGIN_CONTAINER_CONFIGURATION.set(pluginContainerConfiguration);
     }
-    
+
     private static PluginContainerSetup getSetup(Method method) {
         PluginContainerSetup setup = method.getAnnotation(PluginContainerSetup.class);
 
@@ -303,24 +315,25 @@ public class PluginContainerTest extends JMockTest {
         File pluginDir = pluginContainerConfiguration.getPluginDirectory();
         File dataDir = pluginContainerConfiguration.getDataDirectory();
         File tempDir = pluginContainerConfiguration.getTemporaryDirectory();
-        
+
         pluginDir.mkdirs();
         dataDir.mkdirs();
         tempDir.mkdirs();
     }
-    
-    private static PluginContainerConfiguration createDefaultPluginConfiguration(PluginContainerSetup setup, Mockery context) {
+
+    private static PluginContainerConfiguration createDefaultPluginConfiguration(PluginContainerSetup setup,
+        Mockery context) {
         PluginContainerConfiguration conf = new PluginContainerConfiguration();
-        
+
         File tmpDir = createTemporaryDirectory(setup);
-        
+
         conf.setPluginDirectory(new File(tmpDir, PLUGINS_DIR_NAME));
         conf.setDataDirectory(new File(tmpDir, DATA_DIR_NAME));
         conf.setTemporaryDirectory(new File(tmpDir, TMP_DIR_NAME));
         conf.setInsideAgent(setup.inAgent());
         conf.setPluginFinder(new FileSystemPluginFinder(conf.getPluginDirectory()));
         conf.setCreateResourceClassloaders(false);
-    
+
         //we're not interested in any scans happening out of our control
         conf.setAvailabilityScanInitialDelay(Long.MAX_VALUE);
         conf.setConfigurationDiscoveryInitialDelay(Long.MAX_VALUE);
@@ -329,7 +342,7 @@ public class PluginContainerTest extends JMockTest {
         conf.setMeasurementCollectionInitialDelay(Long.MAX_VALUE);
         conf.setServerDiscoveryInitialDelay(Long.MAX_VALUE);
         conf.setServiceDiscoveryInitialDelay(Long.MAX_VALUE);
-        
+
         ServerServices serverServices = new ServerServices();
         serverServices.setBundleServerService(context.mock(BundleServerService.class));
         serverServices.setConfigurationServerService(context.mock(ConfigurationServerService.class));
@@ -341,24 +354,24 @@ public class PluginContainerTest extends JMockTest {
         serverServices.setOperationServerService(context.mock(OperationServerService.class));
         serverServices.setResourceFactoryServerService(context.mock(ResourceFactoryServerService.class));
         serverServices.setDriftServerService(context.mock(DriftServerService.class));
-        
+
         conf.setServerServices(serverServices);
-        
+
         return conf;
     }
-    
+
     private void deployPlugins(Object testObject, File destination, PluginContainerSetup setup) throws IOException {
-        for(String plugin : setup.plugins()) {
+        for (String plugin : setup.plugins()) {
             copyPluginToDestination(testObject, plugin, destination);
         }
     }
-    
+
     private void deletePlugins(File deployDirectory) throws IOException {
         if (deployDirectory.exists()) {
-            FileUtils.cleanDirectory(deployDirectory);
+            FileUtil.purge(deployDirectory, false);
         }
     }
-    
+
     private static File createTemporaryDirectory(PluginContainerSetup setup) {
         String name;
         boolean mustBeNew = true;
@@ -368,16 +381,16 @@ public class PluginContainerTest extends JMockTest {
         } else {
             name = Long.toString(System.currentTimeMillis());
         }
-        
+
         File ret = new File(ROOT, name);
-        
+
         while (mustBeNew && (ret.exists() || !ret.mkdir())) {
             ret = new File(ROOT, Long.toString(System.currentTimeMillis()));
         }
-    
+
         return ret;
     }
-    
+
     private File copyPluginToDestination(Object testObject, String plugin, File destination) throws IOException {
         URI pluginUri = URI.create(plugin);
         URL pluginUrl;
@@ -387,13 +400,12 @@ public class PluginContainerTest extends JMockTest {
         } else {
             pluginUrl = pluginUri.toURL();
         }
-                
-        
+
         String pluginFileName = pluginUrl.getPath().substring(pluginUrl.getPath().lastIndexOf('/') + 1);
-    
+
         File pluginJar = new File(destination, pluginFileName);
         FileUtils.copyURLToFile(pluginUrl, pluginJar);
 
-        return pluginJar;        
+        return pluginJar;
     }
 }

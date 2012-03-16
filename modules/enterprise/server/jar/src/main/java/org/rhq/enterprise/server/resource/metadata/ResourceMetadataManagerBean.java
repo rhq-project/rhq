@@ -47,8 +47,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftDefinitionComparator;
-import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.drift.DriftDefinitionComparator.CompareMode;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceSubCategory;
@@ -251,9 +251,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private void removeResourceType(Subject subject, ResourceType existingType) {
         log.info("Removing ResourceType [" + toConciseString(existingType) + "]...");
 
-        // Remove all Resources that are of the type.
+        // Remove all Resources that are of the type (regardless of invenentory status).
         ResourceCriteria c = new ResourceCriteria();
         c.addFilterResourceTypeId(existingType.getId());
+        c.addFilterInventoryStatus(null);
         List<Resource> resources = resourceManager.findResourcesByCriteria(subject, c);
         if (resources != null) {
             Iterator<Resource> resIter = resources.iterator();
@@ -358,8 +359,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         ResourceType existingType;
         try {
-            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(), resourceType
-                .getPlugin());
+            existingType = resourceTypeManager.getResourceTypeByNameAndPlugin(resourceType.getName(),
+                resourceType.getPlugin());
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing ResourceType for " + resourceType);
             // TODO: Delete the redundant ResourceTypes to get the DB into a valid state.
@@ -576,6 +577,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // This is a subcategory of our parent where we are supposed to be grouped in.
         linkSubCategoryToParents(resourceType);
 
+        // Ensure that the new type has any built-in metrics (like Availability Type)
+        MeasurementMetadataManagerBean.getMetricDefinitions(resourceType);
+
         entityManager.persist(resourceType);
         entityManager.flush();
     }
@@ -619,8 +623,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             try {
                 boolean isExistingParent = originalExistingParentTypes.remove(newParentType);
                 if (existingType == null || !isExistingParent) {
-                    ResourceType realParentType = (ResourceType) entityManager.createNamedQuery(
-                        ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN).setParameter("name", newParentType.getName())
+                    ResourceType realParentType = (ResourceType) entityManager
+                        .createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN)
+                        .setParameter("name", newParentType.getName())
                         .setParameter("plugin", newParentType.getPlugin()).getSingleResult();
                     ResourceType type = (existingType != null) ? existingType : newType;
                     if (existingType != null) {
@@ -788,8 +793,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         // Second, loop over the sub categories that need to be merged and update and persist them
-        List<ResourceSubCategory> mergedSubCategories = new ArrayList<ResourceSubCategory>(existingType
-            .getChildSubCategories());
+        List<ResourceSubCategory> mergedSubCategories = new ArrayList<ResourceSubCategory>(
+            existingType.getChildSubCategories());
         mergedSubCategories.retainAll(subCategoriesFromNewType.values());
         for (ResourceSubCategory existingSubCat : mergedSubCategories) {
             updateSubCategory(existingSubCat, subCategoriesFromNewType.get(existingSubCat.getName()));
@@ -836,19 +841,19 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         // Second, loop over the sub categories that need to be merged and update and persist them
-        List<ResourceSubCategory> mergedChildSubCategories = new ArrayList<ResourceSubCategory>(existingSubCat
-            .getChildSubCategories());
+        List<ResourceSubCategory> mergedChildSubCategories = new ArrayList<ResourceSubCategory>(
+            existingSubCat.getChildSubCategories());
         mergedChildSubCategories.retainAll(childSubCategoriesFromNewSubCat.values());
         for (ResourceSubCategory existingChildSubCategory : mergedChildSubCategories) {
             // recursively update childSubCategory
-            updateSubCategory(existingChildSubCategory, childSubCategoriesFromNewSubCat.get(existingChildSubCategory
-                .getName()));
+            updateSubCategory(existingChildSubCategory,
+                childSubCategoriesFromNewSubCat.get(existingChildSubCategory.getName()));
             entityManager.merge(existingChildSubCategory);
         }
 
         // Persist all new definitions
-        List<ResourceSubCategory> newChildSubCategories = new ArrayList<ResourceSubCategory>(newSubCategory
-            .getChildSubCategories());
+        List<ResourceSubCategory> newChildSubCategories = new ArrayList<ResourceSubCategory>(
+            newSubCategory.getChildSubCategories());
         newChildSubCategories.removeAll(existingSubCat.getChildSubCategories());
         for (ResourceSubCategory newChildSubCategory : newChildSubCategories) {
             log.info("Metadata update: Adding new child SubCategory [" + newChildSubCategory.getName()
@@ -868,8 +873,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     public void removeObsoleteSubCategories(Subject subject, ResourceType newType, ResourceType existingType) {
         // Remove all definitions that are in the existing type but not in the new type
         existingType = entityManager.find(ResourceType.class, existingType.getId());
-        List<ResourceSubCategory> removedSubCategories = new ArrayList<ResourceSubCategory>(existingType
-            .getChildSubCategories());
+        List<ResourceSubCategory> removedSubCategories = new ArrayList<ResourceSubCategory>(
+            existingType.getChildSubCategories());
         removedSubCategories.removeAll(newType.getChildSubCategories());
         for (ResourceSubCategory removedSubCat : removedSubCategories) {
             // remove it from the resourceType too, so we dont try to persist it again
@@ -894,8 +899,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         for (ResourceSubCategory existingSubCat : existingSubCategories) {
             // Remove all definitions that are in the existing type but not in the new type
-            List<ResourceSubCategory> removedChildSubCategories = new ArrayList<ResourceSubCategory>(existingSubCat
-                .getChildSubCategories());
+            List<ResourceSubCategory> removedChildSubCategories = new ArrayList<ResourceSubCategory>(
+                existingSubCat.getChildSubCategories());
             List<ResourceSubCategory> newChildSubCategories = mapOfNewSubCategories.get(existingSubCat.getName())
                 .getChildSubCategories();
             removedChildSubCategories.removeAll(newChildSubCategories);

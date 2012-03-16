@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<arquillian
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://jboss.org/schema/arquillian"
+    xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+ 
+ <group qualifier="pcs">
+     <container qualifier="pc" default="true">
+        <configuration>
+            <property name="startManagementBean">false</property>
+        </configuration>
+     </container>
+         
+     <container qualifier="connected-pc">
+        <configuration>
+            <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>
+            <property name="insideAgent">true</property>
+            <property name="startManagementBean">false</property>
+        </configuration>
+     </container>
+     
+     <container qualifier="sigar-enabled-pc">
+        <configuration>
+            <property name="startManagementBean">false</property>
+            <property name="nativeSystemInfoEnabled">true</property>
+        </configuration>
+     </container>
+ </group>
+</arquillian>

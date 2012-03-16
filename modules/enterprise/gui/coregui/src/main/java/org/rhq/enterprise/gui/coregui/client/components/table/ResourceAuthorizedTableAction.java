@@ -37,17 +37,16 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * 
  * For Global Perm authorization see {@link AuthorizedTableAction}.
  * 
- * TODO: This class has yet to be tested.
- * 
  * @author Jay Shaughnessy
  */
 public abstract class ResourceAuthorizedTableAction extends AbstractTableAction {
 
-    Table<?> table;
-    Permission requiredPermission;
-    RecordExtractor<Integer> extractor;
+    private Table<?> table;
+    private Permission requiredPermission;
+    private RecordExtractor<Integer> extractor;
+    private Collection<Integer> authorizedResourceIds;
 
-    Boolean isAuthorized;
+    private Boolean isAuthorized;
 
     protected ResourceAuthorizedTableAction(Table<?> table, Permission requiredPermission,
         RecordExtractor<Integer> extractor) {
@@ -74,28 +73,36 @@ public abstract class ResourceAuthorizedTableAction extends AbstractTableAction 
             return false;
         }
 
-        // if we've performed the required auth check, return the result and reset. 
-        if (null != isAuthorized) {
-            boolean result = isAuthorized;
-            isAuthorized = null;
-            return result;
+        final Collection<Integer> selectedResourceIds = extractor.extract(selection);
+        boolean isNewSelection = !selectedResourceIds.equals(this.authorizedResourceIds);
+
+        if (isNewSelection) {
+            isAuthorized = false;
+            authorizedResourceIds = selectedResourceIds;
+        } else {
+            return isAuthorized;
         }
 
-        // otherwise, kick off the async auth check. return false initially and update when the async call returns
-        Collection<Integer> resourceIds = extractor.extract(selection);
-        GWTServiceLookup.getAuthorizationService().hasResourcePermission(requiredPermission, resourceIds,
+        // kick off the async auth check. return false initially and update when the async call returns
+
+        GWTServiceLookup.getAuthorizationService().hasResourcePermission(requiredPermission, selectedResourceIds,
             new AsyncCallback<Boolean>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError("", caught);
                 }
 
                 public void onSuccess(Boolean result) {
+                    boolean isStale = !selectedResourceIds.equals(authorizedResourceIds);
+                    if (isStale) {
+                        return;
+                    }
+
                     isAuthorized = result;
                     table.refreshTableInfo();
                 }
 
             });
 
-        return false;
+        return isAuthorized;
     }
 }

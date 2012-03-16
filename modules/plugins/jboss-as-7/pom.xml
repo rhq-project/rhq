@@ -22,51 +22,276 @@
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
+
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-dependency-jars</id>
+                        <id>copy-libs</id>
                         <phase>process-resources</phase>
                         <goals>
-                            <goal>copy</goal>
+                            <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.codehaus.jackson</groupId>
-                                    <artifactId>jackson-mapper-asl</artifactId>
-                                    <version>${jackson.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.codehaus.jackson</groupId>
-                                    <artifactId>jackson-core-asl</artifactId>
-                                    <version>${jackson.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.jboss.sasl</groupId>
-                                    <artifactId>jboss-sasl</artifactId>
-                                    <version>${jboss.sasl.version}</version>
-                                </artifactItem>
-
-                            </artifactItems>
+                            <includeScope>runtime</includeScope>
+                            <excludeScope>plugin</excludeScope>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
 
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludes><exclude>org/rhq/modules/plugins/jbossas7/itest/**</exclude></excludes>
+            </configuration>
+          </plugin>
+
         </plugins>
     </build>
 
     <profiles>
+
+      <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
+      <profile>
+        <id>itest</id>
+
+        <activation>
+          <property>
+            <name>jboss7.version</name>
+          </property>
+        </activation>
+
+        <properties>
+          <jboss7.home>${java.io.tmpdir}/jboss-as-${jboss7.version}</jboss7.home>
+        </properties>
+        
+
+        <build>
+          <plugins>
+
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.jboss.as</groupId>
+                                    <artifactId>jboss-as-dist</artifactId>
+                                    <version>${jboss7.version}</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${java.io.tmpdir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fix-config-files</id>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <replace dir="${jboss7.home}"
+                                         includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
+                                         token="&lt;inet-address " value="&lt;loopback-address "/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>properties-maven-plugin</artifactId>
+              <version>1.0-alpha-2</version>
+              <executions>
+                <execution>
+                  <goals>
+                    <goal>set-system-properties</goal>
+                  </goals>
+                  <configuration>
+                    <properties>
+                      <property>
+                        <name>jboss7.home</name>
+                        <value>${jboss7.home}</value>
+                      </property>
+                    </properties>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+
+            <plugin>
+              <groupId>org.jboss.arquillian.maven</groupId>
+              <artifactId>arquillian-maven-plugin</artifactId>
+              <version>1.0.0.Alpha2</version>
+
+              <configuration>
+                <arquillianXml>${project.build.testSourceDirectory}/../resources/itest/jbossas7-arquillian.xml</arquillianXml>
+                <classloading>plugin</classloading>
+              </configuration>
+
+              <executions>
+                <execution>
+                  <id>start-jboss7</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                    <goal>start</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>stop-jboss7</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                    <goal>stop</goal>
+                  </goals>
+                </execution>
+              </executions>
+
+              <dependencies>
+
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-arquillian-container-managed</artifactId>
+                    <version>${jboss7.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.arquillian.junit</groupId>
+                    <artifactId>arquillian-junit-container</artifactId>
+                    <version>${arquillian.version}</version>
+                </dependency>
+
+              </dependencies>
+
+            </plugin>
+
+            <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>exec-maven-plugin</artifactId>
+              <version>1.2.1.jbossorg-3</version>
+
+              <executions>
+                <execution>
+                  <id>start-jboss7-host-controller</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                    <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                      <background>true</background>
+                      <backgroundPollingAddress>127.0.0.200:9999</backgroundPollingAddress>
+                      <executable>${java.home}/bin/java</executable>
+                      <arguments>
+                        <argument>-D[Process Controller]</argument>
+                        <argument>-Xms64M</argument>
+                        <argument>-Xmx512M</argument>
+                        <argument>-XX:MaxPermSize=256M</argument>
+                        <argument>-Djava.net.preferIPv4Stack=true</argument>
+                        <argument>-Dorg.jboss.resolver.warning=true</argument>
+                        <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                        <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                        <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                        <argument>-Djava.awt.headless=true</argument>
+                        <argument>-Djboss.domain.default.config=domain.xml</argument>
+                        <argument>-Djboss.host.default.config=host.xml</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Djboss.bind.address.management=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
+                        <argument>-jar</argument>
+                        <argument>${jboss7.home}/jboss-modules.jar</argument>
+                        <argument>-mp</argument>
+                        <argument>${jboss7.home}/modules</argument>
+                        <argument>org.jboss.as.process-controller</argument>
+                        <argument>-jboss-home</argument>
+                        <argument>${jboss7.home}</argument>
+                        <argument>-jvm</argument>
+                        <argument>${java.home}/bin/java</argument>
+                        <argument>-mp</argument>
+                        <argument>${jboss7.home}/modules</argument>
+                        <argument>--</argument>
+                        <argument>-Xms64M</argument>
+                        <argument>-Xmx512M</argument>
+                        <argument>-XX:MaxPermSize=256M</argument>
+                        <argument>-Djava.net.preferIPv4Stack=true</argument>
+                        <argument>-Dorg.jboss.resolver.warning=true</argument>
+                        <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                        <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                        <argument>-Djboss.modules.system.pkgs=org.jboss.byteman</argument>
+                        <argument>-Djava.awt.headless=true</argument>
+                        <argument>-Djboss.domain.default.config=domain.xml</argument>
+                        <argument>-Djboss.host.default.config=host.xml</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Djboss.bind.address.management=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address=127.0.0.200</argument>
+                        <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
+                        <argument>--</argument>
+                        <argument>-default-jvm</argument>
+                        <argument>${java.home}/bin/java</argument>
+                      </arguments>
+                  </configuration>
+                </execution>
+
+              </executions>
+
+            </plugin>
+
+            <plugin>
+              <artifactId>maven-failsafe-plugin</artifactId>
+              <configuration>
+                <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include></includes>
+                <systemPropertyVariables>
+                  <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
+                  <jboss7.home>${jboss7.home}</jboss7.home>
+                  <jboss7.version>${jboss7.version}</jboss7.version>
+                </systemPropertyVariables>
+              </configuration>
+              <executions>
+                <execution>
+                  <goals>
+                    <goal>integration-test</goal>
+                    <goal>verify</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+
+          </plugins>
+        </build>
+
+        <dependencies>
+
+            <dependency>
+                <groupId>${rhq.groupId}</groupId>
+                <artifactId>rhq-core-plugin-test-api</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+
+      </profile>
+
         <profile>
             <id>dev</id>
 
@@ -173,41 +398,21 @@
 
     <dependencies>
 
+      <!-- === Provided Deps === -->
+
+      <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-jmx-plugin</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope> <!-- by the plugin container -->
+      </dependency>
+
+      <!-- === Compile Deps === -->
+
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>${commons-logging.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-plugin-api</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>${rhq.groupId}</groupId>
-            <artifactId>rhq-core-native-system</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-jmx-plugin</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- for the password hashing - we may want to copy the relevant stuff over ourselves -->
@@ -217,15 +422,16 @@
             <version>${jboss.sasl.version}</version>
         </dependency>
 
+      <!-- === Test Deps === -->
+
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>${testng.version}</version>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-plugin-test-api</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
             <scope>test</scope>
         </dependency>
 
-        <!-- TODO add your dependencies here -->
-
     </dependencies>
-</project>
 
+</project>

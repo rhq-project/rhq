@@ -53,6 +53,10 @@ public interface ResourceGWTService extends RemoteService {
 
     List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException;
 
+    List<Integer> disableResources(int[] resourceIds) throws RuntimeException;
+
+    List<Integer> enableResources(int[] resourceIds) throws RuntimeException;
+
     PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
         PageControl pc) throws RuntimeException;
 

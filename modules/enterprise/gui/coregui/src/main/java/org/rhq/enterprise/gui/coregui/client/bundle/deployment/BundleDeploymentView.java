@@ -350,8 +350,12 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         ResourceCategory resourceCategory = deployment.getDestination().getGroup().getResourceType().getCategory();
         ListGridField resourceIcon = new ListGridField("resourceAvailability");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.TRUE));
-        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.FALSE));
+        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(resourceCategory, AvailabilityType.UP));
+        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(resourceCategory, AvailabilityType.DOWN));
+        icons.put(AvailabilityType.DISABLED.name(),
+            ImageManager.getResourceIcon(resourceCategory, AvailabilityType.DISABLED));
+        icons.put(AvailabilityType.UNKNOWN.name(),
+            ImageManager.getResourceIcon(resourceCategory, AvailabilityType.UNKNOWN));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
         resourceIcon.setType(ListGridFieldType.ICON);

@@ -168,7 +168,7 @@ public class ASConnection {
                 }
 
                 String outcome;
-                JsonNode operationResult = null;
+                JsonNode operationResult;
                 if (builder.length() > 0) {
                     outcome = builder.toString();
                     operationResult = mapper.readTree(outcome);
@@ -187,11 +187,18 @@ public class ASConnection {
                 }
                 return operationResult;
             } else {
-                log.error("IS was null and code was " + responseCode);
                 //if not properly authorized sends plugin exception for visual indicator in the ui.
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED ||
+                    responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("[" + url + "] Response was empty and response code was " + responseCode + " "
+                                            + conn.getResponseMessage() + ".");
+                    }
                     throw new InvalidPluginConfigurationException(
-                        "Credentials for plugin to communicate with are invalid. Update Connection Settings with valid credentials.");
+                        "Credentials for plugin to connect to AS7 management interface are invalid. Update Connection Settings with valid credentials.");
+                } else {
+                    log.error("[" + url + "] Response was empty and response code was " + responseCode + " "
+                                            + conn.getResponseMessage() + ".");
                 }
             }
         } catch (IllegalArgumentException iae) {
@@ -224,6 +231,7 @@ public class ASConnection {
                         }
                         es.close();
                     } catch (IOException e1) {
+                        // ignore
                     }
                 }
             }

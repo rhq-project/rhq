@@ -37,6 +37,7 @@
         <column name="CTIME" required="true" type="LONG"/>
         <column name="MTIME" required="true" type="LONG"/>
         <column name="LAST_AVAILABILITY_REPORT" required="false" type="LONG"/>
+        <column name="LAST_AVAILABILITY_PING" required="false" type="LONG"/>        
         <column name="AFFINITY_GROUP_ID" type="INTEGER" references="RHQ_AFFINITY_GROUP" required="false"/>
         <column name="SERVER_ID" type="INTEGER" references="RHQ_SERVER" required="false"/>
         <column name="STATUS" type="INTEGER" required="false" default="0" />

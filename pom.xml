@@ -19,6 +19,12 @@
     <url>http://redhat.com/</url>
   </organization>
 
+  <scm>
+    <connection>scm:git:git://git.fedorahosted.org/rhq/rhq.git</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq/rhq.git</developerConnection>
+    <url>http://git.fedorahosted.org/git/rhq/rhq.git</url>
+  </scm>
+
   <issueManagement>
     <system>bugzilla</system>
     <url>https://bugzilla.redhat.com/browse.cgi?product=RHQ%20Project</url>
@@ -108,6 +114,7 @@
     <arquillian.version>1.0.0.CR7</arquillian.version>
     <shrinkwrap.version>1.0.0-cr-3</shrinkwrap.version>
     <shrinkwrap.resolver.version>2.0.0-alpha-1</shrinkwrap.resolver.version>
+    <animal.sniffer.version>1.7</animal.sniffer.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -519,10 +526,31 @@
 
      <pluginManagement>
        <plugins>
+
          <plugin>
            <artifactId>maven-antrun-plugin</artifactId>
            <version>1.6</version>
            <dependencies>
+             <!-- This includes all the "optional" tasks. -->
+             <dependency>
+                <groupId>org.apache.ant</groupId>
+                <artifactId>ant-nodeps</artifactId>
+                <version>1.7.0</version>
+             </dependency>
+
+             <!-- This includes the <if> task, and a bunch of other handy tasks. -->
+             <dependency>
+               <groupId>ant-contrib</groupId>
+               <artifactId>ant-contrib</artifactId>
+               <version>1.0b3</version>
+               <exclusions>
+                 <exclusion>
+                   <groupId>ant</groupId>
+                   <artifactId>ant</artifactId>
+                 </exclusion>
+               </exclusions>
+             </dependency>
+
              <!-- We must declare this here to workaround
                   http://jira.codehaus.org/browse/MANTRUN-51.
                   Once we require Maven 3.0, this will no
@@ -532,14 +560,9 @@
                <artifactId>cobertura</artifactId>
                <version>${cobertura.version}</version>
              </dependency>
-             <!-- Just to have more tasks available -->
-             <dependency>
-                <groupId>ant</groupId>
-                <artifactId>ant-nodeps</artifactId>
-                <version>1.6.5</version>
-             </dependency>
            </dependencies>
          </plugin>
+
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
            <version>2.2</version>
@@ -554,7 +577,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
-           <version>2.3</version>
+           <version>2.4</version>
          </plugin>
          <plugin>
            <artifactId>maven-deploy-plugin</artifactId>
@@ -571,6 +594,13 @@
          <plugin>
            <artifactId>maven-ejb-plugin</artifactId>
            <version>2.3</version>
+         </plugin>
+         <plugin>
+           <artifactId>maven-failsafe-plugin</artifactId>
+           <version>2.12</version>
+           <configuration>
+              <argLine>-Xms32M -Xmx512M</argLine>
+           </configuration>
          </plugin>
          <plugin>
            <artifactId>maven-idea-plugin</artifactId>
@@ -625,6 +655,8 @@
            <artifactId>maven-war-plugin</artifactId>
            <version>2.1</version>
          </plugin>
+
+         <!-- === Codehaus Mojo Plugins === -->
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>build-helper-maven-plugin</artifactId>
@@ -651,6 +683,11 @@
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>findbugs-maven-plugin</artifactId>
            <version>${findbugs.version}</version>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <version>${animal.sniffer.version}</version>
          </plugin>
        </plugins>
      </pluginManagement>
@@ -687,6 +724,11 @@
       </plugin>
 
       <!-- Ensure all code compiles and runs on Java 6 or later. -->
+      <!-- In addition to this, we also perform the API checks to make sure that
+           not only the syntax of the language conforms to Java 6 and the bytecode
+           has the correct magic numbers but also that only APIs that are available
+           in Java 6 are used in the codebase.
+           See the animal-sniffer-maven-plugin build instructions further below. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -968,6 +1010,26 @@
           </executions>
       </plugin>
 
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>animal-sniffer-maven-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>java-api-check</id>
+                  <configuration>
+                      <signature>
+                          <groupId>org.codehaus.mojo.signature</groupId>
+                          <artifactId>java16</artifactId>
+                          <version>1.0</version>
+                      </signature>
+                  </configuration>
+                  <phase>process-classes</phase>
+                  <goals>
+                      <goal>check</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
     </plugins>
 
   </build>
@@ -1134,53 +1196,18 @@
          </properties>
       </profile>
 
-      <!-- If JDK7 or later is being used to compile, enforce that only Java6 API's are used in our code by setting 
-           javac's boot classpath to the JRE6 core jars. -->
       <profile>
-         <id>check-java-api</id>
+         <id>itest.debug</id>
          <activation>
-            <!--<jdk>[1.7,)</jdk>-->
             <property>
-               <name>java6.home</name>
+               <name>itest.debug</name>
             </property>
          </activation>
 
          <properties>
-            <!-- A JRE6 installation directory (e.g. /usr/java/jdk1.6.0_30); the default "/usr/lib/jvm/jre-1.6.0" will
-                 work on Fedora systems. On other operating systems, override the property in ~/.m2/settings.xml. -->
-            <java6.home>/usr/lib/jvm/jre-1.6.0</java6.home>
+            <!-- See: http://maven.apache.org/plugins/maven-failsafe-plugin/integration-test-mojo.html#debugForkedProcess -->
+            <maven.failsafe.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.failsafe.debug>
          </properties>
-
-         <build>
-           <plugins>
-               <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <executions>
-                  <execution>
-                    <phase>validate</phase>
-                    <inherited>false</inherited>
-                    <configuration>
-                      <tasks>
-                        <echo>java6.home=${java6.home}</echo>
-                      </tasks>
-                    </configuration>
-                    <goals>
-                      <goal>run</goal>
-                    </goals>
-                  </execution>
-                </executions>
-               </plugin>
-
-              <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                  <compilerArguments>
-                    <bootclasspath>${java6.home}/lib/rt.jar${path.separator}${java6.home}/lib/jsse.jar${path.separator}${java6.home}/lib/jce.jar</bootclasspath>
-                  </compilerArguments>
-                </configuration>
-              </plugin>
-            </plugins>
-          </build>
       </profile>
 
       <!-- This profile should be enabled when a release is being published.
@@ -1334,6 +1361,9 @@
         <developer>
             <name>Robert Buck</name>
             <timezone>-5</timezone>
+            <roles>
+               <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Charles Crouch</name>

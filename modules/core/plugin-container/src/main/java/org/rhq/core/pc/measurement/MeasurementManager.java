@@ -347,6 +347,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
             if (resourceContainer != null) {
                 //                resourceContainer.updateMeasurementSchedule(resourceRequest.getMeasurementSchedules());   // this is where we want to update rather than overwrite, right?
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+                resourceContainer.setAvailabilitySchedule(resourceRequest.getAvailabilitySchedule());
                 scheduleCollection(resourceRequest.getResourceId(), resourceRequest.getMeasurementSchedules());
             } else {
                 // This will happen when the server sends down schedules to an agent with a cleaned inventory

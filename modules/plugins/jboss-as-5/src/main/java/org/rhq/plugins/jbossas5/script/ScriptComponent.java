@@ -219,7 +219,14 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
 
             File scriptFile = new File(binDirectory, resourceContext.getResourceKey());
 
-            PackageDetailsKey key = new PackageDetailsKey(scriptFile.getName(), PACKAGE_VERSION, PACKAGE_TYPE,
+            String sha256 = PACKAGE_VERSION;
+            try {
+                sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(scriptFile);
+            } catch (IOException e) {
+                log.warn("Failed to compute the SHA256 digest of the script: " + scriptFile.getAbsolutePath(), e);
+            }
+
+            PackageDetailsKey key = new PackageDetailsKey(scriptFile.getName(), this.getVersion(sha256), PACKAGE_TYPE,
                 PACKAGE_ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
             details.setDisplayName(scriptFile.getName());
@@ -228,12 +235,8 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
             details.setLocation(scriptFile.getAbsolutePath());
             details.setFileCreatedDate(scriptFile.lastModified());
             details.setInstallationTimestamp(System.currentTimeMillis());
-            try {
-                details.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                    .calcDigestString(scriptFile));
-            } catch (IOException e) {
-                log.warn("Failed to compute the SHA256 digest of the script: " + scriptFile.getAbsolutePath(), e);
-            }
+            details.setSHA256(sha256);
+
             results.add(details);
         }
 
@@ -348,5 +351,9 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String scriptFilePath = pluginConfig.getSimple(PATH_CONFIG_PROP).getStringValue();
         return new File(scriptFilePath);
+    }
+
+    private String getVersion(String sha256) {
+        return "[sha256=" + sha256 + "]";
     }
 }

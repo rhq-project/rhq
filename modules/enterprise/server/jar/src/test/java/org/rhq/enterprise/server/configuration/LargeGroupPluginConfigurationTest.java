@@ -234,5 +234,10 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         @Override
         public void enableServiceScans(int serverResourceId, Configuration config) {
         }
+
+        @Override
+        public void requestFullAvailabilityReport() {
+            return;
+        }
     }
 }

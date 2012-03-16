@@ -36,8 +36,10 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
@@ -253,7 +255,6 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
 
         @Override
         protected Canvas getExpansionComponent(ListGridRecord record) {
-
             int templateId = record.getAttributeAsInt(DriftDefinitionTemplateDataSource.ATTR_ID);
             String templateName = record.getAttribute(DriftDefinitionTemplateDataSource.ATTR_NAME);
 
@@ -265,7 +266,6 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
      * The expanded row table view of definitions derived from the template
      */
     public class TemplateDefinitionsView extends Table<TemplateDefinitionsView.TemplateDefinitionsDataSource> {
-
         private int templateId;
         private TemplateDefinitionsDataSource dataSource;
 
@@ -278,26 +278,16 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             setShowHeader(false);
             setShowFooter(false);
 
-            setWidth100();
-            setAutoHeight();
-            setOverflow(Overflow.VISIBLE);
-
             setDataSource(getDataSource());
         }
 
         @Override
         public TemplateDefinitionsDataSource getDataSource() {
-
             if (null == dataSource) {
                 dataSource = new TemplateDefinitionsDataSource();
             }
 
             return dataSource;
-        }
-
-        @Override
-        protected LocatableListGrid createListGrid(String locatorId) {
-            return new TemplateDefinitionsListGrid(locatorId);
         }
 
         @Override
@@ -308,6 +298,24 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
             super.configureTable();
         }
 
+        @Override
+        protected void configureTableContents(Layout contents) {
+            contents.setWidth100();
+            contents.setHeight100();
+            contents.setOverflow(Overflow.VISIBLE);
+        }
+
+        @Override
+        protected LocatableListGrid createListGrid(String locatorId) {
+            return new TemplateDefinitionsListGrid(locatorId);
+        }
+
+        @Override
+        protected void configureListGrid(ListGrid grid) {
+            grid.setDefaultHeight(1);
+            grid.setAutoFitData(Autofit.VERTICAL);
+        }
+
         /**
          * The definitions list grid     
          */
@@ -315,9 +323,6 @@ public class DriftDefinitionTemplatesView extends TableSection<DriftDefinitionTe
 
             public TemplateDefinitionsListGrid(String locatorId) {
                 super(locatorId);
-
-                setDefaultHeight(10);
-                setAutoFitData(Autofit.VERTICAL);
             }
         }
 

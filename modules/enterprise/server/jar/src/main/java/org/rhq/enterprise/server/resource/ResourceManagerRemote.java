@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
@@ -58,7 +59,8 @@ public interface ResourceManagerRemote {
      * @param  resourceId the id of a {@link Resource} in inventory.
      *
      * @return the resource availability - note that if the encapsulated availability type is <code>null</code>,
-     *         the resource availability is UNKNOWN.
+     *         the resource availability is UNKNOWN. As of RHQ 4.4 this does not return null but rather
+     *         {@link AvailabilityType.UNKNOWN}. 
      *
      * @throws FetchException if the resource represented by the resourceId parameter does not exist, or if the
      *                        passed subject does not have permission to view this resource.
@@ -159,5 +161,39 @@ public interface ResourceManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceIds") Integer[] resourceIds, //
         @WebParam(name = "format") ResourceAncestryFormat format);
+
+    /**
+     * Set these resources to {@link AvailabilityType.DISABLED}. While disabled resource availability reported
+     * from the agent is ignored.  This is typically used for resources undergoing scheduled maintenance or
+     * whose avail state should be disregarded fo some period.
+     * <br/><br/>
+     * The calling user must possess {@link Permission.DELETE} permission on all of the provided resources.
+     * <br/><br/>
+     * Resources already disabled are ignored.
+     * 
+     * @param subject The logged in user's subject.
+     * @param resourceIds The resources to uninventory.
+     * 
+     * @see #enableResources(Subject, int[])
+     */
+    List<Integer> disableResources( //
+        Subject subject, //
+        int[] resourceIds);
+
+    /**
+     * Set these resources enabled. Resources already enabled are ignored. The availability will be set to UNKNOWN
+     * until the agent reports a new, live, availability. The agent will be requested to check availability
+     * for the enabled resources at its earliest convenience.
+     * <br/><br/>
+     * The calling user must possess {@link Permission.DELETE} permission on all of the provided resources.
+     * 
+     * @param subject The logged in user's subject.
+     * @param resourceIds The resources to uninventory.
+     * 
+     * @see #disableResources(Subject, int[])
+     */
+    List<Integer> enableResources( //
+        Subject subject, //
+        int[] resourceIds);
 
 }

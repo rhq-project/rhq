@@ -199,11 +199,12 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
         if (availCheckPeriodProp != null) {
             try {
                 long availCheckMillis = Integer.parseInt(availCheckPeriodProp) * 1000L;
-                this.availCollector = resourceContext.createAvailabilityCollectorRunnable(new AvailabilityFacet() {
-                    public AvailabilityType getAvailability() {
-                        return getAvailabilityNow();
-                    }
-                }, availCheckMillis);
+                this.availCollector = resourceContext.getAvailabilityContext().createAvailabilityCollectorRunnable(
+                    new AvailabilityFacet() {
+                        public AvailabilityType getAvailability() {
+                            return getAvailabilityNow();
+                        }
+                    }, availCheckMillis);
                 this.availCollector.start();
             } catch (NumberFormatException nfe) {
                 log.error("avail check period config prop was not a valid number. Cause: " + nfe);

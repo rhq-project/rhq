@@ -102,6 +102,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.ResourceTreeHelper;
 
 /**
  * Tests the SynchronizationManagerBean on a live dataset.
@@ -328,7 +329,7 @@ public class SynchronizationManagerBeanTest extends AbstractEJB3Test {
                 em.remove(sched);
 
                 Resource attachedPlatform = em.find(Resource.class, testData.fakePlatform.getId());
-                em.remove(attachedPlatform);
+                ResourceTreeHelper.deleteResource(em, attachedPlatform);
 
                 ResourceType attachedType = em.find(ResourceType.class, testData.fakeType.getId());
                 em.remove(attachedType);

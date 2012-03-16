@@ -511,4 +511,7 @@ public interface ResourceManagerLocal {
 
     Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds, ResourceAncestryFormat format);
 
+    List<Integer> disableResources(Subject subject, int[] resourceIds);
+
+    List<Integer> enableResources(Subject subject, int[] resourceIds);
 }

@@ -1,0 +1,19 @@
+<plugin name="PluginExtensionMetadataChild2TestPlugin"
+        version="1.0"
+        displayName="Plugin Extension Metadata Child 2 Test Plugin"
+        package="org.rhq.plugins.test.child2"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+        <server name="Child2ServerA"
+                description="Child 2 Server type that extends Parent Server type"
+                discovery="Child2DiscoveryComponent"
+                class="Child2Component"
+                sourcePlugin="MultiplePluginExtensionMetadataParentTestPlugin"
+                sourceType="ParentServerA">
+        </server>
+
+
+</plugin>

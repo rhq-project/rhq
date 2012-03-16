@@ -34,6 +34,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -50,6 +51,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -168,6 +170,103 @@ public class ResourceSearchView extends Table {
                         public void onSuccess(List<Integer> result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
+                            onUninventorySuccess();
+                        }
+                    });
+                }
+            });
+
+        addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(),
+            MSG.view_inventory_resources_disableConfirm(),
+            new AvailabilityTypeResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                EnumSet.complementOf(EnumSet.of(AvailabilityType.DISABLED)), Permission.DELETE_RESOURCE,
+                new RecordExtractor<AvailabilityType>() {
+
+                    public Collection<AvailabilityType> extract(Record[] records) {
+                        List<AvailabilityType> result = new ArrayList<AvailabilityType>(records.length);
+                        for (Record record : records) {
+                            result.add(((Resource) record.getAttributeAsObject("resource")).getCurrentAvailability()
+                                .getAvailabilityType());
+                        }
+
+                        return result;
+                    }
+                }, //
+                new RecordExtractor<Integer>() {
+
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("id"));
+                        }
+
+                        return result;
+                    }
+                }) {
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int[] resourceIds = TableUtility.getIds(selection);
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+
+                    resourceManager.disableResources(resourceIds, new AsyncCallback<List<Integer>>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_disableFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(List<Integer> result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(
+                                    MSG.view_inventory_resources_disableSuccessful(String.valueOf(result.size())),
+                                    Severity.Info));
+                            onUninventorySuccess();
+                        }
+                    });
+                }
+            });
+
+        addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(),
+            MSG.view_inventory_resources_enableConfirm(), new AvailabilityTypeResourceAuthorizedTableAction(
+                ResourceSearchView.this, TableActionEnablement.ANY, EnumSet.of(AvailabilityType.DISABLED),
+                Permission.DELETE_RESOURCE, new RecordExtractor<AvailabilityType>() {
+
+                    public Collection<AvailabilityType> extract(Record[] records) {
+                        List<AvailabilityType> result = new ArrayList<AvailabilityType>(records.length);
+                        for (Record record : records) {
+                            result.add(((Resource) record.getAttributeAsObject("resource")).getCurrentAvailability()
+                                .getAvailabilityType());
+                        }
+
+                        return result;
+                    }
+                }, //
+                new RecordExtractor<Integer>() {
+
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("id"));
+                        }
+
+                        return result;
+                    }
+                }) {
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    int[] resourceIds = TableUtility.getIds(selection);
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+
+                    resourceManager.enableResources(resourceIds, new AsyncCallback<List<Integer>>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_enableFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(List<Integer> result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(
+                                    MSG.view_inventory_resources_enableSuccessful(String.valueOf(result.size())),
+                                    Severity.Info));
                             onUninventorySuccess();
                         }
                     });

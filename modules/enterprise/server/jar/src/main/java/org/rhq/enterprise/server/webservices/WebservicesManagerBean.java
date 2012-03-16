@@ -181,7 +181,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Stateless
 @WebService(endpointInterface = "org.rhq.enterprise.server.webservices.WebservicesRemote", targetNamespace = ServerVersion.namespace)
-@XmlSeeAlso( { PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
+@XmlSeeAlso({ PropertyDefinition.class, PropertyDefinitionSimple.class, PropertyDefinitionList.class,
     PropertyDefinitionMap.class })
 public class WebservicesManagerBean implements WebservicesRemote {
 
@@ -513,8 +513,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName,
-        int packageTypeId, String version,
-        String displayVersion, Integer architectureId, byte[] packageBytes) {
+        int packageTypeId, String version, String displayVersion, Integer architectureId, byte[] packageBytes) {
         return contentManager.createPackageVersionWithDisplayVersion(subject, packageName, packageTypeId, version,
             displayVersion, architectureId, packageBytes);
     }
@@ -997,6 +996,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceManager.updateResource(subject, resource);
     }
 
+    public List<Integer> disableResources(Subject subject, int[] resourceIds) {
+        return resourceManager.disableResources(subject, resourceIds);
+    }
+
+    public List<Integer> enableResources(Subject subject, int[] resourceIds) {
+        return resourceManager.enableResources(subject, resourceIds);
+    }
+
     //RESOURCEMANAGER: END ----------------------------------
 
     //RESOURCEGROUPMANAGER: BEGIN ----------------------------------
@@ -1234,8 +1241,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return synchronizationManager.getImportConfigurationDefinition(importerClass);
     }
 
-    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations)
-        throws ValidationException, ImportException {
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
+        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException {
         return synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
 
@@ -1248,6 +1255,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
-
 
 }

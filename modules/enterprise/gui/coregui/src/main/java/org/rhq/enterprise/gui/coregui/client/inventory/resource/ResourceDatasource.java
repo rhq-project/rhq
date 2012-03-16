@@ -113,8 +113,8 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         keyDataField.setDetail(true);
         fields.add(keyDataField);
 
-        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
-            .title());
+        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(),
+            DESCRIPTION.title());
         descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
@@ -138,8 +138,8 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         categoryDataField.setDetail(true);
         fields.add(categoryDataField);
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
-            .title(), 20);
+        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(),
+            AVAILABILITY.title(), 20);
         availabilityDataField.setCanEdit(false);
         fields.add(availabilityDataField);
 
@@ -274,9 +274,9 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         record.setAttribute(VERSION.propertyName(), from.getVersion());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
         record.setAttribute("icon", ImageManager.getResourceIcon(from.getResourceType().getCategory(), from
-            .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
-        record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(AVAILABILITY.propertyName(),
+            ImageManager.getAvailabilityIconFromAvailType(from.getCurrentAvailability().getAvailabilityType()));
         record.setAttribute(CTIME.propertyName(), from.getCtime());
         record.setAttribute(ITIME.propertyName(), from.getItime());
         record.setAttribute(MTIME.propertyName(), from.getMtime());

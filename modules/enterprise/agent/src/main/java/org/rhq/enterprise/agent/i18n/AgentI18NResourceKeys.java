@@ -2064,7 +2064,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("avail")
     String AVAILABILITY = "PromptCommand.availability";
 
-    @I18NMessage("avail [--changed] [--verbose]")
+    @I18NMessage("avail [--changed] [--force] [--verbose]")
     String AVAILABILITY_SYNTAX = "PromptCommand.availability.syntax";
 
     @I18NMessage("Get availability of inventoried resources")
@@ -2078,6 +2078,8 @@ public interface AgentI18NResourceKeys {
         + "of the report, it will be sent up to the server.\\n\\\n"
         + "\\ -c, --changed : if specified, the report will contain availability\\n\\\n"
         + "\\                 for only those resources whose status changed.\\n\\\n"
+        + "\\ -f, --force   : if specified, the report will force availability\\n\\\n"
+        + "\\                 checks for all resources.\\n\\\n"
         + "\\ -v, --verbose : if true, additional information is displayed.")
     String AVAILABILITY_DETAILED_HELP = "PromptCommand.availability.detailed-help";
 

@@ -216,7 +216,7 @@ public abstract class DatabaseType {
             return row_count;
         }
 
-            // Nice Postgres driver, JDBC 2.0 single method call...
+        // Nice Postgres driver, JDBC 2.0 single method call...
         default: {
             // we can ignore num_rows_already_read, this gives us the total number
             if (result_set.last()) {
@@ -287,14 +287,19 @@ public abstract class DatabaseType {
     }
 
     /**
-     * Determines if the given table exists in the database.
+     * Determines if the given table exists in the database. Note that if the table does not exist a call
+     * to this method will cause an underlying SQLException, which will invalidate the current transaction.
      *
      * @param  conn  connection to the database where the table to check is
      * @param  table the table to check for existence
      *
-     * @return <code>true</code> if the table exists in the database
+     * @return <code>true</code> if the table exists in the database, false if the table does not exist AND
+     * the implementation determined the information WITHOUT generating an SQLException (meaning the
+     * transaction has not been invalidated. Otherwise, throws an exception which should be handled.
      *
-     * @throws Exception if the table check failed for some reason other than a "table does not exist" error.
+     * @throws IllegalStateException if the check generated an expected "table does not exist SQLException (note, the 
+     * exception invalidates the transaction).
+     * @throws Exception if the table check failed for a reason other than a "table does not exist" error.
      */
     public boolean checkTableExists(Connection conn, String table) throws Exception {
         PreparedStatement ps = null;
@@ -305,7 +310,7 @@ public abstract class DatabaseType {
             return true;
         } catch (SQLException e) {
             if (isTableNotFoundException(e)) {
-                return false;
+                throw new IllegalStateException(e);
             }
 
             throw e;
@@ -591,8 +596,8 @@ public abstract class DatabaseType {
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_NAME, name);
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_START, initial);
         terms.put(CreateSequenceExprBuilder.KEY_SEQ_INCREMENT, increment);
-        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE, CreateSequenceExprBuilder.getSafeSequenceCacheSize(
-            builder, seqIdCacheSize));
+        terms.put(CreateSequenceExprBuilder.KEY_SEQ_CACHE_SIZE,
+            CreateSequenceExprBuilder.getSafeSequenceCacheSize(builder, seqIdCacheSize));
         executeSql(conn, builder.build(terms));
     }
 

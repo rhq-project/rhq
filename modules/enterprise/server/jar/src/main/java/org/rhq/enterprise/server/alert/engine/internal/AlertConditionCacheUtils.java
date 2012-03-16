@@ -24,10 +24,10 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.AbstractCacheElement;
-import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.UnsupportedAlertConditionOperatorException;
 
 /**
@@ -37,73 +37,88 @@ class AlertConditionCacheUtils {
 
     private static final Log log = LogFactory.getLog(AlertConditionCacheCoordinator.class);
 
-    public static AlertConditionOperator getAlertConditionOperator(AlertConditionCategory category, String comparator,
-        String conditionOption) {
-        if (category == AlertConditionCategory.CONTROL) {
+    public static AlertConditionOperator getAlertConditionOperator(AlertCondition alertCondition) {
+
+        AlertConditionCategory category = alertCondition.getCategory();
+        String name = alertCondition.getName();
+        String comparator = alertCondition.getComparator();
+
+        switch (category) {
+        case CONTROL:
             // the UI currently only supports one operator for control
             return AlertConditionOperator.EQUALS;
-        }
 
-        if (category == AlertConditionCategory.EVENT) {
+        case EVENT:
             // the UI currently only supports one operator for events
             return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
+
+        case DRIFT:
+            // any drift that is detected infers a change to its previous state
+            return AlertConditionOperator.CHANGES;
+
+        case RESOURCE_CONFIG:
+        case CHANGE:
+        case TRAIT:
+            // the model currently supports CHANGE as a category type instead of a comparator
+            return AlertConditionOperator.CHANGES;
+
+        case AVAILABILITY: {
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(name.toUpperCase());
+
+            switch (operator) {
+            case AVAIL_GOES_DISABLED:
+            case AVAIL_GOES_DOWN:
+            case AVAIL_GOES_UNKNOWN:
+            case AVAIL_GOES_UP:
+            case AVAIL_GOES_NOT_UP:
+                return operator;
+
+            default:
+                throw new UnsupportedAlertConditionOperatorException(
+                    "Invalid alertConditionValue for AVAILABILITY category:" + operator);
+            }
         }
 
-        if (category == AlertConditionCategory.RANGE) {
+        case AVAIL_DURATION: {
+            AlertConditionOperator operator = AlertConditionOperator.valueOf(name.toUpperCase());
+
+            switch (operator) {
+            case AVAIL_DURATION_DOWN:
+            case AVAIL_DURATION_NOT_UP:
+                return operator;
+
+            default:
+                throw new UnsupportedAlertConditionOperatorException(
+                    "Invalid alertConditionValue for AVAILABILITY_DURATION category:" + operator);
+            }
+        }
+
+        case RANGE:
             // range can support <= and >=, which we look for here. It can also support < and >, which is checked down below further.
             // note that RANGE does not support =, so we throw an exception if caller tries that
             if (comparator.equals("<=")) {
                 return AlertConditionOperator.LESS_THAN_OR_EQUAL_TO;
+
             } else if (comparator.equals(">=")) {
                 return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
+
             } else if (comparator.equals("=")) {
                 throw new UnsupportedAlertConditionOperatorException("Comparator [" + comparator + "] "
                     + "is not supported for category: " + category.name());
             }
-        }
 
-        if (category == AlertConditionCategory.DRIFT) {
-            // any drift that is detected infers a change to its previous state
-            return AlertConditionOperator.CHANGES;
-        }
+        default:
 
-        if (category == AlertConditionCategory.RESOURCE_CONFIG || category == AlertConditionCategory.CHANGE
-            || category == AlertConditionCategory.TRAIT) {
-            // the model currently supports CHANGE as a category type instead of a comparator
-            return AlertConditionOperator.CHANGES;
-        }
-
-        if (category == AlertConditionCategory.AVAILABILITY) {
-            AvailabilityType conditionOptionType = AvailabilityType.valueOf(conditionOption.toUpperCase());
-            if (conditionOptionType == AvailabilityType.DOWN) {
-                /*
-                 * UI phrases this as "Goes DOWN", but we're going to store the cache element as CHANGES_FROM:UP
-                 *
-                 * This way, it'll work when the agent's goes suspect and null is persisted for AvailabilityType
-                 */
-                return AlertConditionOperator.CHANGES_FROM;
-            } else if (conditionOptionType == AvailabilityType.UP) {
-                /*
-                 * UI phrases this as "Goes UP", but we're going to store the cache element as CHANGES_TO:UP
-                 *
-                 * This way, it'll work when the agent's comes back from being suspect, where it had null for its
-                 * AvailabilityType
-                 */
-                return AlertConditionOperator.CHANGES_TO;
+            if (comparator.equals("<")) {
+                return AlertConditionOperator.LESS_THAN;
+            } else if (comparator.equals(">")) {
+                return AlertConditionOperator.GREATER_THAN;
+            } else if (comparator.equals("=")) {
+                return AlertConditionOperator.EQUALS;
             } else {
-                throw new UnsupportedAlertConditionOperatorException("Invalid alertCondition for AVAILABILITY category");
+                throw new UnsupportedAlertConditionOperatorException("Comparator [" + comparator + "] "
+                    + "is not supported for category: " + category.name());
             }
-        }
-
-        if (comparator.equals("<")) {
-            return AlertConditionOperator.LESS_THAN;
-        } else if (comparator.equals(">")) {
-            return AlertConditionOperator.GREATER_THAN;
-        } else if (comparator.equals("=")) {
-            return AlertConditionOperator.EQUALS;
-        } else {
-            throw new UnsupportedAlertConditionOperatorException("Comparator [" + comparator + "] "
-                + "is not supported for category: " + category.name());
         }
     }
 

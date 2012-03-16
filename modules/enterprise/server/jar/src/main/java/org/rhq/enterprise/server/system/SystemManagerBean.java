@@ -60,8 +60,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
-import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.ServerDetails.Detail;
+import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -159,9 +159,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             try {
                 timerService.createTimer(60000L, TIMER_DATA);
             } catch (Throwable t) {
-                log
-                    .error("Failed to reschedule system config cache reload timer! System config cache reload handling will not work from this point. A server restart may be needed after issue is resolved:"
-                        + t);
+                log.error("Failed to reschedule system config cache reload timer! System config cache reload handling will not work from this point. A server restart may be needed after issue is resolved:"
+                    + t);
             }
         }
     }
@@ -477,8 +476,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             }
         } else if (property == SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED) {
             long time = Long.parseLong(value);
-            if (time < 1000L * 60 * 2) {
-                throw new InvalidSystemConfigurationException("Agent Max Quiet Time Allowed must be at least 2 minutes");
+            // minimum should be 3 * the agent ping interval, any less risks unwanted backfilling 
+            if (time < 1000L * 60 * 3) {
+                throw new InvalidSystemConfigurationException("Agent Max Quiet Time Allowed must be at least 3 minutes");
             }
         }
 

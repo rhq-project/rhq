@@ -42,6 +42,7 @@ import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
+import org.rhq.core.clientapi.server.core.PingRequest;
 import org.rhq.core.db.ant.Base64;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
@@ -79,6 +80,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#registerAgent(AgentRegistrationRequest)
      */
+    @Override
     public AgentRegistrationResults registerAgent(AgentRegistrationRequest request) throws AgentRegistrationException,
         AgentNotSupportedException {
 
@@ -274,6 +276,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#connectAgent(ConnectAgentRequest)
      */
+    @Override
     public ConnectAgentResults connectAgent(ConnectAgentRequest request) throws AgentRegistrationException,
         AgentNotSupportedException {
 
@@ -310,6 +313,7 @@ public class CoreServerServiceImpl implements CoreServerService {
      * @see CoreServerService#getLatestPlugins()
      */
     @SuppressWarnings("unchecked")
+    @Override
     public List<Plugin> getLatestPlugins() {
         EntityManager em = null;
         List<Plugin> plugins = new ArrayList<Plugin>();
@@ -338,6 +342,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#getPluginArchive(String)
      */
+    @Override
     public InputStream getPluginArchive(String pluginName) {
         EntityManager em = null;
 
@@ -359,6 +364,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#getFileContents(String)
      */
+    @Override
     public InputStream getFileContents(String file) {
         // for security purposes, do not let the agent ask for any file outside of the agent-files location
         if (file.indexOf("..") >= 0) {
@@ -396,6 +402,7 @@ public class CoreServerServiceImpl implements CoreServerService {
     /**
      * @see CoreServerService#agentIsShuttingDown(String)
      */
+    @Override
     public void agentIsShuttingDown(String agentName) {
         log.debug("Agent [" + agentName + "] is sending a notification that it is going down!");
 
@@ -407,8 +414,20 @@ public class CoreServerServiceImpl implements CoreServerService {
         return;
     }
 
+    /**
+     * @see CoreServerService#getFailoverList(String)
+     */
+    @Override
     public FailoverListComposite getFailoverList(String agentName) {
         return getFailoverListManager().getExistingForSingleAgent(agentName);
+    }
+
+    /**
+     * @see CoreServerService#ping(PingRequest)
+     */
+    @Override
+    public PingRequest ping(PingRequest request) {
+        return getAgentManager().handlePingRequest(request);
     }
 
     private AgentManagerLocal getAgentManager() {

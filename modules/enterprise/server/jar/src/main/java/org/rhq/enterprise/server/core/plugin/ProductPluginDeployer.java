@@ -35,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
@@ -61,12 +62,12 @@ public class ProductPluginDeployer {
 
     /** Map of plugin names to the corresponding plugins' deployment infos */
     private Map<String, DeploymentInfo> deploymentInfos = new HashMap<String, DeploymentInfo>();
-    /** Map of plugin names to the corresponding plugins' JAXB plugin descriptors */
-    private Map<String, PluginDescriptor> pluginDescriptors = new HashMap<String, PluginDescriptor>();
     /** Map of plugin names to the corresponding plugins' versions */
     private Map<String, ComparableVersion> pluginVersions = new HashMap<String, ComparableVersion>();
     /** Set of plugins that have been accepted but need to be registered (useful during hot-deployment) */
     private Set<String> namesOfPluginsToBeRegistered = new HashSet<String>();
+    /** Metadata cache for all JAXB plugin descriptors and resource types of all plugins */
+    private PluginMetadataManager metadataManager = new PluginMetadataManager();
 
     public ProductPluginDeployer() {
         // intentionally left blank
@@ -83,6 +84,10 @@ public class ProductPluginDeployer {
         if (!this.pluginDir.exists()) {
             this.pluginDir.mkdirs();
         }
+    }
+
+    public PluginMetadataManager getPluginMetadataManager() {
+        return this.metadataManager;
     }
 
     /**
@@ -110,10 +115,9 @@ public class ProductPluginDeployer {
     public void stop() {
         if (isStarted) {
             this.deploymentInfos.clear();
-            this.pluginDescriptors.clear();
             this.pluginVersions.clear();
             this.namesOfPluginsToBeRegistered.clear();
-
+            this.metadataManager = new PluginMetadataManager();
             isStarted = false;
             isReady = false;
         }
@@ -151,13 +155,7 @@ public class ProductPluginDeployer {
         // (if the EJB3 SLSBs are not ready yet, isReady will be false.
         if (this.isReady) {
             log.debug("Will hot deploy plugin [" + name + "] from [" + deploymentInfo.url + "]");
-            /* // do NOT register plugins yet - the dependency graph might not be complete, let the caller call registerPlugins
-             *  try {
-             *      registerPlugins(); // we are ready to hot-deploy so we can register immediately
-             *  } catch (Exception e) {
-             *      throw new Exception("Unable to deploy plugin [" + deploymentInfo.url + "]", e);
-             *  }
-             */
+            // do NOT register plugins yet - the dependency graph might not be complete, let the caller call registerPlugins
         } else {
             // startDeployer() has not been called yet so we are holding off registering until then
             log.debug("Not ready yet - will deploy plugin [" + name + "] from [" + deploymentInfo.url + "] later");
@@ -277,8 +275,8 @@ public class ProductPluginDeployer {
         }
 
         if (initialDeploy || isNewestVersion(pluginName, version)) {
+            this.metadataManager.storePluginDescriptor(descriptor);
             this.deploymentInfos.put(pluginName, deploymentInfo);
-            this.pluginDescriptors.put(pluginName, descriptor);
             this.pluginVersions.put(pluginName, version);
             this.namesOfPluginsToBeRegistered.add(pluginName);
         }
@@ -341,7 +339,7 @@ public class ProductPluginDeployer {
     private PluginDependencyGraph buildDependencyGraph() {
         PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
         for (String pluginName : this.deploymentInfos.keySet()) {
-            PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
+            PluginDescriptor descriptor = this.metadataManager.getPluginDescriptor(pluginName);
             AgentPluginDescriptorUtil.addPluginToDependencyGraph(dependencyGraph, descriptor);
         }
         return dependencyGraph;
@@ -427,7 +425,7 @@ public class ProductPluginDeployer {
         LatchedPluginDeploymentService result = latchedServiceMap.get(pluginName);
         if (result == null) {
             DeploymentInfo deploymentInfo = this.deploymentInfos.get(pluginName);
-            PluginDescriptor descriptor = this.pluginDescriptors.get(pluginName);
+            PluginDescriptor descriptor = this.metadataManager.getPluginDescriptor(pluginName);
             if ((null != deploymentInfo) && (null != descriptor)) {
                 result = new LatchedPluginDeploymentService(pluginName, deploymentInfo, descriptor);
                 latchedServiceMap.put(pluginName, result);

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="testSystemInfoPlugin"
+        displayName=""
+        description=""
+        package="org.rhq.test.arquillian"
+        version="1.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="TestServer"
+           discovery="TestDiscoveryComponent"
+           class="TestResourceComponent">
+   </server>
+
+</plugin>
+        

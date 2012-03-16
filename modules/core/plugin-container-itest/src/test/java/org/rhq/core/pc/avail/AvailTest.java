@@ -1,0 +1,498 @@
+package org.rhq.core.pc.avail;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.avail.testplugin.AvailResourceComponent;
+import org.rhq.core.pc.inventory.AvailabilityExecutor;
+import org.rhq.core.pc.inventory.AvailabilityExecutor.Scan;
+import org.rhq.core.pc.inventory.ForceAvailabilityExecutor;
+import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.test.arquillian.AfterDiscovery;
+import org.rhq.test.arquillian.BeforeDiscovery;
+import org.rhq.test.arquillian.FakeServerInventory;
+import org.rhq.test.arquillian.MockingServerServices;
+import org.rhq.test.arquillian.ResourceComponentInstances;
+import org.rhq.test.arquillian.ResourceContainers;
+import org.rhq.test.arquillian.RunDiscovery;
+import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
+
+@Test(groups = "arquillian")
+public class AvailTest extends Arquillian {
+
+    @Deployment(name = "availPlugin")
+    @TargetsContainer("connected-pc")
+    public static RhqAgentPluginArchive getTestPlugin() {
+        return ShrinkWrap.create(RhqAgentPluginArchive.class, "avail-plugin-1.0.jar").setPluginDescriptor(
+            "avail-rhq-plugin.xml");
+    }
+
+    //@ArquillianResource
+    //private ContainerController pcController;
+
+    @ArquillianResource
+    private PluginContainer pluginContainer;
+
+    @ArquillianResource
+    public MockingServerServices serverServices;
+
+    private FakeServerInventory fakeServerInventory;
+
+    @ResourceContainers(plugin = "availPlugin", resourceType = "AvailParentServer1")
+    private Set<ResourceContainer> parentContainers1;
+
+    @ResourceContainers(plugin = "availPlugin", resourceType = "AvailParentServer2")
+    private Set<ResourceContainer> parentContainers2;
+
+    @ResourceContainers(plugin = "availPlugin", resourceType = "AvailChildService1")
+    private Set<ResourceContainer> childContainers1;
+
+    @ResourceContainers(plugin = "availPlugin", resourceType = "AvailChildService2")
+    private Set<ResourceContainer> childContainers2;
+
+    @ResourceContainers(plugin = "availPlugin", resourceType = "AvailGrandchildService1")
+    private Set<ResourceContainer> grandchildContainers1;
+
+    @ResourceContainers(plugin = "availPlugin", resourceType = "AvailGrandchildService2")
+    private Set<ResourceContainer> grandchildContainers2;
+
+    @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailParentServer1")
+    private Set<AvailResourceComponent> parentComponents1;
+
+    @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailParentServer2")
+    private Set<AvailResourceComponent> parentComponents2;
+
+    @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailChildService1")
+    private Set<AvailResourceComponent> childComponents1;
+
+    @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailChildService2")
+    private Set<AvailResourceComponent> childComponents2;
+
+    @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailGrandchildService1")
+    private Set<AvailResourceComponent> grandchildComponents1;
+
+    @ResourceComponentInstances(plugin = "availPlugin", resourceType = "AvailGrandchildService2")
+    private Set<AvailResourceComponent> grandchildComponents2;
+
+    private FakeServerInventory.CompleteDiscoveryChecker discoveryCompleteChecker;
+
+    @BeforeDiscovery(testMethods = "testDiscovery")
+    public void resetServerServices() throws Exception {
+        serverServices.resetMocks();
+        fakeServerInventory = new FakeServerInventory();
+        discoveryCompleteChecker = fakeServerInventory.createAsyncDiscoveryCompletionChecker(4);
+
+        // autoimport everything
+        when(serverServices.getDiscoveryServerService().mergeInventoryReport(any(InventoryReport.class))).then(
+            fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+    }
+
+    @AfterDiscovery(testMethods = "testDiscovery")
+    public void waitForAsyncDiscoveries() throws Exception {
+        if (discoveryCompleteChecker != null) {
+            discoveryCompleteChecker.waitForDiscoveryComplete(10000);
+        }
+    }
+
+    @BeforeMethod
+    public void beforeMethod() {
+        System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! BEFORE METHOD (" + Thread.currentThread().getName() + ")");
+        scrub();
+    }
+
+    private void scrub() {
+        if (null == parentContainers1)
+            return;
+
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers1);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(grandchildContainers2);
+
+        // scrub res containers of avail state and ensure scheds are blanked
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(null);
+                c.updateAvailability(null);
+                c.setAvailabilitySchedule(null);
+            }
+        }
+
+        List<Set<AvailResourceComponent>> componentSets = new ArrayList<Set<AvailResourceComponent>>();
+        componentSets.add(parentComponents1);
+        componentSets.add(parentComponents2);
+        componentSets.add(childComponents1);
+        componentSets.add(childComponents2);
+        componentSets.add(grandchildComponents1);
+        componentSets.add(grandchildComponents2);
+
+        // scrub res containers of avail state
+        for (Set<AvailResourceComponent> cs : componentSets) {
+            for (AvailResourceComponent c : cs) {
+                c.setNextAvailability(AvailabilityType.UP);
+            }
+        }
+
+    }
+
+    @Test
+    @RunDiscovery
+    public void testDiscovery() throws Exception {
+        // TODO remove this wait after changes to discovery/commit stuff in framework
+        //System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! SLEEPING THREAD (" + Thread.currentThread().getName()
+        //    + ") for 20 seconds");
+        //Thread.sleep(20000);
+        //System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! DONE SLEEPING   (" + Thread.currentThread().getName()
+        //    + ") for 10 seconds");
+
+        Assert.assertNotNull(pluginContainer);
+        Assert.assertTrue(pluginContainer.isStarted());
+
+        // make sure we have all the resource containers for all the resources
+        Assert.assertEquals(parentContainers1.size(), 2, "missing parent1");
+        Assert.assertEquals(parentContainers2.size(), 2, "missing parent2");
+        Assert.assertEquals(childContainers1.size(), 4, "missing child1");
+        Assert.assertEquals(childContainers2.size(), 4, "missing child2");
+        Assert.assertEquals(grandchildContainers1.size(), 8, "missing grandchild1");
+        Assert.assertEquals(grandchildContainers2.size(), 8, "missing grandchild2");
+
+        // make sure we have all the resource components for all the resources
+        Assert.assertEquals(parentComponents1.size(), 2, "missing parent1");
+        Assert.assertEquals(parentComponents2.size(), 2, "missing parent2");
+        Assert.assertEquals(childComponents1.size(), 4, "missing child1");
+        Assert.assertEquals(childComponents2.size(), 4, "missing child2");
+        Assert.assertEquals(grandchildComponents1.size(), 8, "missing grandchild1");
+        Assert.assertEquals(grandchildComponents2.size(), 8, "missing grandchild2");
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    public void testAvailReport() throws Exception {
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        dumpContainers("testAvailReport() Start");
+        AvailabilityReport report = executor.call();
+        dumpContainers("testAvailReport() After First Avail Check");
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+
+        // do a forced avail check again - nothing changed, so we should have an empty report
+        report = executor.call();
+        dumpContainers("testAvailReport() After Second Avail Check");
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, false, 29, 0, 29, 28, 0, 0);
+
+        // make one of the top parents down and see all other children are down, force a scan of all to make sure we pick
+        // up the changed resource.
+        AvailResourceComponent downParent = this.parentComponents1.iterator().next();
+        downParent.setNextAvailability(AvailabilityType.DOWN);
+        report = executor.call();
+        dumpContainers("testAvailReport() After Third Avail Check");
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "report should have been changes-only");
+        availData = report.getResourceAvailability();
+        Assert.assertEquals(availData.size(), 7, "Should have 1 parent, its 2 children and 4 grandchildren");
+        for (Datum datum : availData) {
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.DOWN);
+        }
+        scan = executor.getMostRecentScanHistory();
+        // Children shoud defer to newly down parent.
+        assertScan(scan, true, false, 29, 7, 23, 28, 0, 6);
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    public void testScheduling() throws Exception {
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+
+        // Servers should have been scheduled within 1 minute
+        long scanTime = scan.getStartTime();
+        long maxServerSched = scanTime + 60000L + 1;
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(parentContainers2);
+
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                Long schedTime = c.getAvailabilityScheduleTime();
+                Assert.assertTrue(schedTime > scanTime && schedTime < maxServerSched);
+            }
+        }
+
+        long maxServiceSched = scanTime + (10 * 60000L) + 1;
+        boolean[] buckets = new boolean[10];
+        int numBuckets = 0;
+
+        containerSets.clear();
+        containerSets.add(childContainers1);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(grandchildContainers2);
+
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                Long schedTime = c.getAvailabilityScheduleTime();
+                Assert.assertTrue(schedTime > scanTime && schedTime < maxServiceSched);
+                long slice = (maxServiceSched - scanTime) / 10L;
+                int i = (int) ((schedTime - scanTime) / slice);
+                if (!buckets[i]) {
+                    buckets[i] = true;
+                    ++numBuckets;
+                }
+            }
+        }
+        Assert.assertTrue(numBuckets >= 3, "Random distribution seems wrong, buckets hit= " + numBuckets);
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    // If a parent changes to UP, its children must all be checked as they could legitimately be something
+    // other than UP.
+    public void testForceChildrenOfParentUp() throws Exception {
+        // don't use a ForceAvailabilityExecutor for this test, we want to manipulate what gets checked
+        AvailabilityExecutor executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        int numUp = 0;
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            if (datum.getAvailabilityType() == AvailabilityType.UP) {
+                ++numUp;
+            }
+        }
+        Assert.assertEquals(numUp, 1);
+        // only the platform should have been checked, all others should only have been scheduled for a check 
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, false, true, 29, 0, 1, 28, 0, 0);
+
+        // At this point all of the non-platform resources are scheduled but still at NULL avail
+
+        // Manipulate the scheduled time of the "1" servers so they are checked
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        long now = System.currentTimeMillis();
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(now);
+            }
+        }
+
+        // make sure nothing else is scheduled to be checked
+        containerSets.clear();
+        containerSets.add(childContainers1);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers2);
+        long later = now + 10000000L;
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(later);
+            }
+        }
+
+        // a changes-only report, even though only 2 checks are scheduled, we should see checks for half
+        // the resources, as the children will be forced. (they should change from null to UP).  The scheduled
+        // checks should see their schedules pushed out, but the forced checks should be rescheduled randomly
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().size(), 14, "should report half the resources");
+        availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, false, false, 29, 14, 15, 12, 2, 0);
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    public void testCheckOnlyEligible() throws Exception {
+        // Force all the avails to UP to start so we can avoid the scenario in  testForceChildrenOfParentUp() 
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+
+        // don't use a ForceAvailabilityExecutor for this scan, we want to manipulate what gets checked.
+        // by default new executors always do a full scan to start, we don't want that
+        executor = new AvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        executor.sendChangesOnlyReportNextTime();
+
+        // Manipulate the scheduled times such that the "1" resources should be checked and the "2"s should not
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(childContainers1);
+        containerSets.add(grandchildContainers1);
+        long now = System.currentTimeMillis();
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(now);
+            }
+        }
+
+        containerSets.clear();
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers2);
+        long later = now + 10000000L;
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                c.setAvailabilityScheduleTime(later);
+            }
+        }
+
+        // a changes-only report, check half the resources, no changes - should all be UP already. push out scheds for each
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().size(), 0, "no changes, everything was already up");
+        availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, false, false, 29, 0, 15, 0, 14, 0);
+
+        // another quick scan should see no calls, check times should be pushed out at least a minute
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Third report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().isEmpty(), true, "Nothing changed, should be empty");
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, false, false, 29, 0, 1, 0, 0, 0);
+    }
+
+    @Test(dependsOnMethods = "testDiscovery")
+    public void testDeferToParent() throws Exception {
+        AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
+        AvailabilityReport report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), false, "First report should have been a full report");
+        List<Datum> availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        AvailabilityExecutor.Scan scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, true, 29, 28, 29, 28, 0, 0);
+
+        // disable the schedules for all "1" children
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(childContainers1);
+        containerSets.add(grandchildContainers1);
+        long now = System.currentTimeMillis();
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                MeasurementScheduleRequest sched = c.getAvailabilitySchedule();
+                sched.setEnabled(false);
+                c.setAvailabilitySchedule(sched);
+            }
+        }
+
+        // a changes-only report, force checks, no changes, ensure 1/2 children defer to parent
+        report = executor.call();
+        Assert.assertNotNull(report);
+        Assert.assertEquals(report.isChangesOnlyReport(), true, "Second report should have been changes-only");
+        Assert.assertEquals(report.getResourceAvailability().size(), 0, "no changes, everything was already up");
+        availData = report.getResourceAvailability();
+        for (Datum datum : availData) {
+            assert datum.getResourceId() > 0 : "resource IDs should be > zero since it should be committed";
+            Assert.assertEquals(datum.getAvailabilityType(), AvailabilityType.UP, "should be UP at the start");
+        }
+        scan = executor.getMostRecentScanHistory();
+        assertScan(scan, true, false, 29, 0, 17, 16, 0, 12);
+    }
+
+    private void assertScan(Scan scan, boolean isForced, boolean isFull, int numResources, int numChanges,
+        int numCalls, int numSched, int numPushed, int numDeferred) {
+        Assert.assertEquals(scan.isForced(), isForced, "Unexpected isForced");
+        Assert.assertEquals(scan.isFull(), isFull, "Unexpected isFull");
+        Assert.assertEquals(scan.getNumResources(), numResources,
+            "Unexpected numResources, remember to include the implied platform?");
+        Assert.assertEquals(scan.getNumAvailabilityChanges(), numChanges,
+            "Unexpected numChanges, remember to omit the implied platform");
+        Assert.assertEquals(scan.getNumGetAvailabilityCalls(), numCalls,
+            "Unexpected numGetAvailCalls, remember to include the implied platform");
+        Assert.assertEquals(scan.getNumScheduledRandomly(), numSched,
+            "Unexpected numSched, remember to omit the implied platform");
+        Assert.assertEquals(scan.getNumPushedByInterval(), numPushed, "Unexpected numPushed");
+        Assert.assertEquals(scan.getNumDeferToParent(), numDeferred,
+            "Unexpected numDeferred, remember to include disabled and implied (when parent goes NOT UP)");
+    }
+
+    private void dumpContainers(String title) {
+        List<Set<ResourceContainer>> containerSets = new ArrayList<Set<ResourceContainer>>();
+        containerSets.add(parentContainers1);
+        containerSets.add(parentContainers2);
+        containerSets.add(childContainers1);
+        containerSets.add(childContainers2);
+        containerSets.add(grandchildContainers1);
+        containerSets.add(grandchildContainers2);
+
+        System.out.println("---------> " + title);
+
+        for (Set<ResourceContainer> cs : containerSets) {
+            for (ResourceContainer c : cs) {
+                String name = c.getResource().getName();
+                AvailabilityType availType = c.getAvailability().getAvailabilityType();
+                String avail = (null == availType) ? null : availType.name();
+                Long time = c.getAvailabilityScheduleTime();
+                System.out.println("----------> " + name + " " + avail + " " + time);
+            }
+        }
+
+        System.out.println("---------------------------------> ");
+    }
+}

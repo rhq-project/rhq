@@ -79,7 +79,7 @@ public interface RestReportingLocal {
     @GET
     @Path("/inventorySummary")
     @Produces({"text/csv", "application/xml"})
-    Response inventorySummary(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
+    StreamingOutput inventorySummary(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 
 
     @GET

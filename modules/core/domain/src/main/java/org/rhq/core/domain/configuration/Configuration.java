@@ -657,11 +657,13 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
                 }
                 builder.append(property.getName());
                 builder.append("=");
+                String stringValue;
                 if (property instanceof PropertySimple) {
-                    builder.append(((PropertySimple) property).getStringValue());
+                    stringValue = ((PropertySimple) property).getStringValue();
                 } else {
-                    builder.append(property);
+                    stringValue = String.valueOf(property);
                 }
+                builder.append(stringValue);
             }
             builder.append("], rawConfigurations[");
 

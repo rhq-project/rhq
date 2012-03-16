@@ -56,8 +56,9 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_recentlyAddedResources();
 
-    public static final String unlimited = MSG.common_label_unlimited();
-    public static final String defaultValue = unlimited;
+    public static final int unlimited = -1;
+    public static final String unlimitedString = MSG.common_label_unlimited();
+    public static final String defaultValue = "-1";
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
     private static final String RECENTLY_ADDED_SHOW_HRS = "recently-added-time-range";
@@ -118,31 +119,46 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
             return;
         }
 
-        if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX) != null) {
-            //retrieve and translate to int
-            String retrieved = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX).getStringValue();
-            if (getDataSource() != null) {//check for initialization of datasource unavailability
-                if (retrieved.equals(unlimited)) {
-                    getDataSource().setMaximumRecentlyAddedToDisplay(-1);
-                } else {
-                    getDataSource().setMaximumRecentlyAddedToDisplay(Integer.parseInt(retrieved));
-                }
-            }
-        } else {//create setting
-            storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_MAX, defaultValue));
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
         }
-        if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_HRS) != null) {
-            String retrieved = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_HRS).getStringValue();
-            if (getDataSource() != null) {//check for initialization of datasource unavailability
-                if (retrieved.equals(unlimited)) {
-                    getDataSource().setMaximumRecentlyAddedWithinHours(-1);
-                } else {
-                    getDataSource().setMaximumRecentlyAddedWithinHours(Integer.parseInt(retrieved));
-                }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
+        int configuredValue;
+
+        //determine configuration value for ProblemResourceShowMax
+        configuredValue = populateConfigurationValue(storedPortlet, RECENTLY_ADDED_SHOW_MAX, defaultValue);
+        getDataSource().setMaximumRecentlyAddedToDisplay(configuredValue);
+
+        //determine configuration value for ProblemResourceShowHrs
+        configuredValue = populateConfigurationValue(storedPortlet, RECENTLY_ADDED_SHOW_HRS, defaultValue);
+        getDataSource().setMaximumRecentlyAddedWithinHours(configuredValue);
+    }
+
+    private int populateConfigurationValue(DashboardPortlet storedPortlet, String propertyKey, String defaultKeyValue) {
+        int configuredValue = Integer.valueOf(defaultKeyValue);
+
+        if ((storedPortlet == null) || (storedPortlet.getConfiguration() == null)) {
+            return configuredValue;
+        }
+
+        if (storedPortlet.getConfiguration().getSimple(propertyKey) != null) {
+            String retrieved = storedPortlet.getConfiguration().getSimple(propertyKey).getStringValue();
+            // protect against legacy issue with non-numeric values
+            try {
+                configuredValue = Integer.parseInt(retrieved);
+            } catch (NumberFormatException e) {
+                configuredValue = unlimited;
             }
+
         } else {
-            storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_HRS, defaultValue));
+            storedPortlet.getConfiguration().put(new PropertySimple(propertyKey, defaultKeyValue));
         }
+
+        return configuredValue;
     }
 
     public Canvas getHelpCanvas() {
@@ -162,22 +178,15 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumRecentlyAddedComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] acceptableDisplayValues = { "5", "10", "15", "20", "30", unlimited };
+        String[] acceptableDisplayValues = { "5", "10", "15", "20", "30", unlimitedString };
         maximumRecentlyAddedComboBox.setValueMap(acceptableDisplayValues);
         //set width of dropdown display region
         maximumRecentlyAddedComboBox.setWidth(100);
 
-        // default selected value to 'unlimited'(live lists) and check both combobox settings here.
-        String selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_MAX, defaultValue));
-            }
-        }
-        // prepopulate the combobox with the previously stored selection
+        int configuredValue = populateConfigurationValue(storedPortlet, RECENTLY_ADDED_SHOW_MAX, defaultValue);
+        String selectedValue = configuredValue == unlimited ? unlimitedString : String.valueOf(configuredValue);
+
+        //prepopulate the combobox with the previously stored selection
         maximumRecentlyAddedComboBox.setDefaultValue(selectedValue);
 
         // second combobox for timeframe for problem resources search.
@@ -187,21 +196,14 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeRecentlyAddedComboBox.setType("selection");
         //define acceptable values for display amount
-        String[] acceptableTimeValues = { "1", "4", "8", "24", "48", unlimited };
+        String[] acceptableTimeValues = { "1", "4", "8", "24", "48", unlimitedString };
         maximumTimeRecentlyAddedComboBox.setValueMap(acceptableTimeValues);
         maximumTimeRecentlyAddedComboBox.setWidth(100);
 
-        // set to default
-        selectedValue = defaultValue;
-        if (storedPortlet != null) {
-            //if property exists retrieve it
-            if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_HRS) != null) {
-                selectedValue = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_HRS).getStringValue();
-            } else {//insert default value
-                storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_HRS, defaultValue));
-            }
-        }
-        // prepopulate the combobox with the previously stored selection
+        configuredValue = populateConfigurationValue(storedPortlet, RECENTLY_ADDED_SHOW_HRS, defaultValue);
+        selectedValue = configuredValue == unlimited ? unlimitedString : String.valueOf(configuredValue);
+
+        //prepopulate the combobox with the previously stored selection
         maximumTimeRecentlyAddedComboBox.setDefaultValue(selectedValue);
 
         // insert fields
@@ -211,13 +213,21 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
-                if (form.getValue(RECENTLY_ADDED_SHOW_MAX) != null) {
-                    storedPortlet.getConfiguration().put(
-                        new PropertySimple(RECENTLY_ADDED_SHOW_MAX, form.getValue(RECENTLY_ADDED_SHOW_MAX)));
+                String value = (String) form.getValue(RECENTLY_ADDED_SHOW_MAX);
+
+                if (value != null) {
+                    // convert display string to stored integer if necessary
+                    value = unlimitedString.equals(value) ? String.valueOf(unlimited) : value;
+
+                    storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_MAX, value));
                 }
-                if (form.getValue(RECENTLY_ADDED_SHOW_HRS) != null) {
-                    storedPortlet.getConfiguration().put(
-                        new PropertySimple(RECENTLY_ADDED_SHOW_HRS, form.getValue(RECENTLY_ADDED_SHOW_HRS)));
+
+                value = (String) form.getValue(RECENTLY_ADDED_SHOW_HRS);
+                if (value != null) {
+                    // convert display string to stored integer if necessary
+                    value = unlimitedString.equals(value) ? String.valueOf(unlimited) : value;
+
+                    storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_HRS, value));
                 }
 
                 configure(portletWindow, storedPortlet);

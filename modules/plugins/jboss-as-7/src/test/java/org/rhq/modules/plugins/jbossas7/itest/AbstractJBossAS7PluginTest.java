@@ -184,7 +184,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = timeout * 1000;
         OperationFacet operationFacet = resourceContainer.createResourceComponentProxy(OperationFacet.class, 
-                FacetLockType.NONE, timeoutMillis, false, false);
+                FacetLockType.WRITE, timeoutMillis, false, false);
         OperationResult operationResult;
         try {
             operationResult = operationFacet.invokeOperation(operationName, params);
@@ -264,7 +264,7 @@ public abstract class AbstractJBossAS7PluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         int timeoutMillis = 5000;
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
-                FacetLockType.NONE, timeoutMillis, false, false);
+                FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
                 measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());

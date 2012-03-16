@@ -63,6 +63,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
+    // ******************************* TRAITS ******************************* //
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testReleaseCodenameTrait() throws Exception {
         System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseCodenameTrait...");
@@ -73,7 +74,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     public void testReleaseVersionTrait() throws Exception {
         System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
         String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        Assert.assertEquals(releaseVersion, System.getProperty("jboss7.version"),
+        Assert.assertEquals(releaseVersion, System.getProperty("jboss.version"),
                 "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
     }
 
@@ -95,6 +96,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         collectTraitAndAssertNotNull(getServerResource(), START_TIME_TRAIT_NAME);
     }
 
+    // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable this once "shutdown" operation has been fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
     public void testShutdownOperation() throws Exception {

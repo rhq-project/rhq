@@ -53,20 +53,22 @@
 
     <profiles>
 
-      <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
       <profile>
-        <id>itest</id>
+        <id>as7-setup</id>
 
         <activation>
           <property>
-            <name>jboss7.version</name>
+            <name>itest</name>
+            <value>as7</value>
           </property>
         </activation>
 
         <properties>
-          <jboss7.home>${java.io.tmpdir}/jboss-as-${jboss7.version}</jboss7.home>
+          <as7.version>7.1.1.Final</as7.version>
+          <eap6.version/>
+          <jboss.version>${as7.version}</jboss.version>
+          <jboss.home>${java.io.tmpdir}/jboss-as-${as7.version}</jboss.home>
         </properties>
-        
 
         <build>
           <plugins>
@@ -75,7 +77,7 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>unpack</id>
+                        <id>downloadAndUnzip</id>
                         <phase>initialize</phase>
                         <goals>
                             <goal>unpack</goal>
@@ -85,7 +87,7 @@
                                 <artifactItem>
                                     <groupId>org.jboss.as</groupId>
                                     <artifactId>jboss-as-dist</artifactId>
-                                    <version>${jboss7.version}</version>
+                                    <version>${as7.version}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${java.io.tmpdir}</outputDirectory>
@@ -96,6 +98,70 @@
                 </executions>
             </plugin>
 
+          </plugins>
+        </build>
+      </profile>
+
+      <profile>
+        <id>eap6-setup</id>
+
+        <activation>
+          <property>
+            <name>itest</name>
+            <value>eap6</value>
+          </property>
+        </activation>
+
+        <properties>
+          <eap6.version>6.0.0.Beta1</eap6.version>
+          <as7.version/>
+          <eap6.url>http://SET_ME/jboss-eap-${eap6.version}.zip</eap6.url>
+          <jboss.version>7.1.1.Final</jboss.version>
+          <jboss.home>${java.io.tmpdir}/jboss-eap-${eap6.version}</jboss.home>
+        </properties>
+
+        <build>
+          <plugins>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>downloadAndUnzip</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                              <get src="${eap6.url}" dest="${java.io.tmpdir}/jboss-eap-${eap6.version}.zip"
+                                   usetimestamp="true" verbose="true"/>
+                              <unzip src="${java.io.tmpdir}/jboss-eap-${eap6.version}.zip" dest="${java.io.tmpdir}"/>
+                              <move file="${java.io.tmpdir}/jboss-eap-6.0"
+                                    tofile="${java.io.tmpdir}/jboss-eap-${eap6.version}" overwrite="false"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+          </plugins>
+        </build>
+      </profile>
+
+      <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
+      <profile>
+        <id>itest-qazxdrfvgyhnjik</id>
+
+        <activation>
+          <property>
+            <name>itest</name>
+          </property>
+        </activation>
+
+        <build>
+          <plugins>
+
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
@@ -104,7 +170,7 @@
                         <phase>package</phase>
                         <configuration>
                             <target>
-                                <replace dir="${jboss7.home}"
+                                <replace dir="${jboss.home}"
                                          includes="standalone/configuration/standalone.xml, domain/configuration/host.xml"
                                          token="&lt;inet-address " value="&lt;loopback-address "/>
                             </target>
@@ -128,8 +194,8 @@
                   <configuration>
                     <properties>
                       <property>
-                        <name>jboss7.home</name>
-                        <value>${jboss7.home}</value>
+                        <name>jboss.home</name>
+                        <value>${jboss.home}</value>
                       </property>
                     </properties>
                   </configuration>
@@ -169,7 +235,7 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-arquillian-container-managed</artifactId>
-                    <version>${jboss7.version}</version>
+                    <version>${jboss.version}</version>
                 </dependency>
 
                 <dependency>
@@ -211,22 +277,22 @@
                         <argument>-Djava.awt.headless=true</argument>
                         <argument>-Djboss.domain.default.config=domain.xml</argument>
                         <argument>-Djboss.host.default.config=host.xml</argument>
-                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
-                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss.home}/domain/log/process-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss.home}/domain/configuration/logging.properties</argument>
                         <argument>-Djboss.bind.address.management=127.0.0.200</argument>
                         <argument>-Djboss.bind.address=127.0.0.200</argument>
                         <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
                         <argument>-jar</argument>
-                        <argument>${jboss7.home}/jboss-modules.jar</argument>
+                        <argument>${jboss.home}/jboss-modules.jar</argument>
                         <argument>-mp</argument>
-                        <argument>${jboss7.home}/modules</argument>
+                        <argument>${jboss.home}/modules</argument>
                         <argument>org.jboss.as.process-controller</argument>
                         <argument>-jboss-home</argument>
-                        <argument>${jboss7.home}</argument>
+                        <argument>${jboss.home}</argument>
                         <argument>-jvm</argument>
                         <argument>${java.home}/bin/java</argument>
                         <argument>-mp</argument>
-                        <argument>${jboss7.home}/modules</argument>
+                        <argument>${jboss.home}/modules</argument>
                         <argument>--</argument>
                         <argument>-Xms64M</argument>
                         <argument>-Xmx512M</argument>
@@ -239,8 +305,8 @@
                         <argument>-Djava.awt.headless=true</argument>
                         <argument>-Djboss.domain.default.config=domain.xml</argument>
                         <argument>-Djboss.host.default.config=host.xml</argument>
-                        <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
-                        <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
+                        <argument>-Dorg.jboss.boot.log.file=${jboss.home}/domain/log/host-controller.log</argument>
+                        <argument>-Dlogging.configuration=file:${jboss.home}/domain/configuration/logging.properties</argument>
                         <argument>-Djboss.bind.address.management=127.0.0.200</argument>
                         <argument>-Djboss.bind.address=127.0.0.200</argument>
                         <argument>-Djboss.bind.address.unsecure=127.0.0.200</argument>
@@ -261,8 +327,9 @@
                 <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include></includes>
                 <systemPropertyVariables>
                   <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
-                  <jboss7.home>${jboss7.home}</jboss7.home>
-                  <jboss7.version>${jboss7.version}</jboss7.version>
+                  <jboss.home>${jboss.home}</jboss.home>
+                  <jboss.version>${jboss.version}</jboss.version>
+                  <eap6.version>${eap6.version}</eap6.version>
                 </systemPropertyVariables>
               </configuration>
               <executions>

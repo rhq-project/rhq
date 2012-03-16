@@ -77,55 +77,22 @@
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
 
             &logSources;
-         <c:group name="event" displayName="Events">
-             <c:list-property name="logEventSources">
-                 <c:map-property name="logEventSource">
-                     <c:simple-property name="logFilePath" type="file" summary="true"
-                                        description="The absolute path to the source log file."/>
-                     <c:simple-property name="enabled" type="boolean" summary="true"
-                                        description="A flag indicating whether of not this log Event source is currently
-                                                     enabled (i.e. whether the associated log file should be tailed for
-                                                     new entries)."/>
-                     <c:simple-property name="dateFormat" required="false"
-                                        description="The date format to use when parsing the dates in log entries. The
-                                                     format must be in the syntax defined by the Java SimpleDateFormat
-                                                     class. If not specified, the three date formats that are predefined
-                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
-                     <c:simple-property name="includesPattern" required="false"
-                                        description="A regular expression against which a log entry's detail is matched
-                                                     to determine if an Event should be fired for that entry. If not
-                                                     specified, no filtering of log entries will be done based on their
-                                                     detail."/>
-                     <c:simple-property name="minimumSeverity" required="false" default="error"
-                                        description="The minimum severity of Events that should be collected for this
-                                                     source. If not specified, there is no minimum severity (i.e. all
-                                                     events will be collected).">
-                         <c:property-options>
-                            <c:option name="debug" value="debug"/>
-                            <c:option name="info"  value="info"/>
-                            <c:option name="warn"  value="warn"/>
-                            <c:option name="error" value="error"/>
-                            <c:option name="fatal" value="fatal"/>
-                         </c:property-options>
-                     </c:simple-property>
-                 </c:map-property>
-             </c:list-property>
-         </c:group>
         </plugin-configuration>
 
         <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
 
 
-<!-- Currently not provided by AS7
-        <operation name="domain:shutdown" displayName="Shutdown Domain" description="Shut this Host-/Domaincontroller down with all managed servers.">
-        </operation>
--->
-        <operation name="start" description="Start this Host-/Domaincontroller" displayName="Start this host controller">
+        <operation name="start" description="Start this Host-/Domaincontroller with all its enabled managed servers" displayName="Start this host controller">
             <results>
                 <c:simple-property name="operationResult" description="Outcome of the start operation"/>
             </results>
         </operation>
-        <operation name="shutdown" description="Stop this Host-/Domaincontroller" displayName="Shut down this host controller">
+        <operation name="shutdown" description="Stop this Host-/Domaincontroller with all its managed servers" displayName="Shut down this host controller">
+            <results>
+                <c:simple-property name="operationResult" description="Outcome of the stop operation"/>
+            </results>
+        </operation>
+        <operation name="restart" description="Restart this Host-/Domaincontroller with all its running managed servers" displayName="Restart this host controller">
             <results>
                 <c:simple-property name="operationResult" description="Outcome of the stop operation"/>
             </results>
@@ -226,6 +193,21 @@
                 <c:simple-property name="path" default="server-group" readOnly="true"/>
             </plugin-configuration>
 
+            <operation name="start-servers" description="Starts all configured servers belonging to the server group in the domain that are not currently running.">
+              <results>
+                 <c:simple-property name="operationResult"/>
+              </results>
+            </operation>
+            <operation name="restart-servers" description="Restarts all servers belonging to the server group currently running in the domain.">
+              <results>
+                 <c:simple-property name="operationResult"/>
+              </results>
+            </operation>
+            <operation name="stop-servers" description="Stops all servers belonging to the server group currently running in the domain.">
+              <results>
+                 <c:simple-property name="operationResult"/>
+              </results>
+            </operation>
 
             <resource-configuration>
                 <c:simple-property name="profile" description="The profile name" required="true">
@@ -248,6 +230,8 @@
             <plugin-configuration>
                 <c:simple-property name="path" default="host" readOnly="true"/>
             </plugin-configuration>
+
+
 
             <resource-configuration>
                 <c:group name="children:system-property:name+" displayName="System-properties">

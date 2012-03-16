@@ -18,38 +18,44 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
-import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
-import org.rhq.core.domain.resource.composite.ResourceInstallCount;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.rest.AbstractRestBean;
-import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.*;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.rest.AbstractRestBean;
+import org.rhq.enterprise.server.rest.SetCallerInterceptor;
+import org.rhq.enterprise.server.util.CriteriaQuery;
+import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 /**
- * Provider of RESTful reports via CSV, Xml.
+ *  Provider of RESTful reports via CSV, Xml.
  *
  * @author Mike Thompson
  */
@@ -79,6 +85,7 @@ public class RestReportingBean extends AbstractRestBean implements RestReporting
         ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
         criteria.fetchConfiguration(true);
         criteria.addSortCreatedTime(PageOrdering.ASC);
+        //List<ResourceConfigurationUpdate> history = configurationManager.findResourceConfigurationUpdatesByCriteria( subjectManager.getOverlord(), criteria);
 
         CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> queryExecutor =
                 new CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>() {
@@ -120,6 +127,9 @@ public class RestReportingBean extends AbstractRestBean implements RestReporting
     }
 
     @Override
+    @GET
+    @Path("/configurationHistory")
+    @Produces("text/csv")
     public Response suspectMetricReport(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
 
         StringBuilder sb;
@@ -162,70 +172,140 @@ public class RestReportingBean extends AbstractRestBean implements RestReporting
     }
 
     @Override
+    @GET
+    @Path("/recentOperations")
+    @Produces({"text/csv", "application/xml"})
     public Response recentOperations(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
         Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
         return builder.build();
     }
 
     @Override
+    @GET
+    @Path("/recentAlerts")
+    @Produces({"text/csv", "application/xml"})
     public Response recentAlerts(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
         Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
         return builder.build();
     }
 
     @Override
+    @GET
+    @Path("/alertDefinitions")
+    @Produces({"text/csv", "application/xml"})
     public Response alertDefinitions(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
         Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
         return builder.build();
     }
 
     @Override
+    @GET
+    @Path("/recentDrift")
+    @Produces({"text/csv", "application/xml"})
     public Response recentDrift(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
         Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
         return builder.build();
     }
 
     @Override
-    public StreamingOutput inventorySummary(@Context UriInfo uriInfo, @Context Request request,
-        @Context HttpHeaders headers) {
+    @GET
+    @Path("/inventorySummary")
+    @Produces({"text/csv", "application/xml"})
+    public StreamingOutput inventorySummary(UriInfo uriInfo, Request request, HttpHeaders headers,
+        boolean includeDetails) {
         final List<ResourceInstallCount> results = resourceMgr.findResourceInstallCounts(caller, true);
 
-        return new StreamingOutput() {
-            @Override
-            public void write(OutputStream stream) throws IOException, WebApplicationException {
-                stream.write("Resource Type,Plugin,Category,Version,Count\n".getBytes());
-                for (ResourceInstallCount summary : results) {
-                    String record = summary.getTypeName() + "," + summary.getTypePlugin() + "," +
-                        summary.getCategory().getDisplayName() + "," + summary.getVersion() + "," + summary.getCount()
-                        + "\n";
-                    stream.write(record.getBytes());
+        if (includeDetails) {
+            return new OutputDetailedInventorySummary(results);
+        } else {
+            return new StreamingOutput() {
+                @Override
+                public void write(OutputStream stream) throws IOException, WebApplicationException {
+                    stream.write("Resource Type,Plugin,Category,Version,Count\n".getBytes());
+                    for (ResourceInstallCount installCount : results) {
+                        String record = toCSV(installCount) + "\n";
+                        stream.write(record.getBytes());
+                    }
                 }
+            };
+        }
+    }
+
+    private class OutputDetailedInventorySummary implements StreamingOutput {
+
+        // map of counts keyed by resource type id
+        private Map<Integer, ResourceInstallCount> installCounts = new HashMap<Integer, ResourceInstallCount>();
+
+        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCountList) {
+            for (ResourceInstallCount installCount : installCountList) {
+                installCounts.put(installCount.getTypeId(), installCount);
             }
-        };
+        }
+
+        @Override
+        public void write(OutputStream output) throws IOException, WebApplicationException {
+            final ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterInventoryStatus(COMMITTED);
+            criteria.addSortResourceCategory(ASC);
+            criteria.addSortPluginName(ASC);
+            criteria.addSortResourceTypeName(ASC);
+
+            CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
+                new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
+                    @Override
+                    public PageList<Resource> execute(ResourceCriteria criteria) {
+                        return resourceMgr.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+                    }
+                };
+
+            CriteriaQuery<Resource, ResourceCriteria> query =
+                new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+            for (Resource resource : query) {
+                ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
+                String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
+                output.write(record.getBytes());
+            }
+        }
+    }
+
+    private String toCSV(ResourceInstallCount installCount) {
+        return installCount.getTypeName() + "," + installCount.getTypePlugin() + "," +
+            installCount.getCategory().getDisplayName() + "," + installCount.getVersion() + "," +
+            installCount.getCount();
+    }
+
+    private String toCSV(Resource resource) {
+        return resource.getName() + "," + resource.getAncestry() + "," + resource.getDescription() + "," +
+            resource.getResourceType().getName() + "," + resource.getVersion() + "," +
+            resource.getCurrentAvailability().getAvailabilityType();
     }
 
     @Override
+    @GET
+    @Path("/platformUtilization")
+    @Produces({"text/csv", "application/xml"})
     public Response platformUtilization(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
-        Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
+        Response.ResponseBuilder  builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
         return builder.build();
     }
 
     @Override
+    @GET
+    @Path("/driftCompliance")
+    @Produces({"text/csv", "application/xml"})
     public Response driftCompliance(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
-        Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
+        Response.ResponseBuilder  builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
         return builder.build();
     }
 
 
     /**
      * What special characters should we remove to make this valid CSV, XML.
-     *
-     * @param inString to perform replacement on
-     * @return String new valid string
      * @todo: ignore what characters for parsing CSV i.e., strip special chars
+     * @param inString to peform replacement on
+     * @return String new valid string
      */
-    private String stripSpecialChars(String inString) {
-        return inString.replace("\n", " ").replace(',', ' ');
+    private String stripSpecialChars(String inString){
+        return  inString.replace("\n"," ").replace(',', ' ');
     }
-
 }

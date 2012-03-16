@@ -20,6 +20,13 @@
         <property name="startManagementBean">false</property>
       </configuration>
     </container>
+    
+    <container qualifier="native-enabled-pc">
+        <configuration>
+            <property name="startManagementBean">false</property>
+            <property name="nativeSystemInfoEnabled">true</property>
+        </configuration>
+    </container>
   </group>
 
 </arquillian>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="getnativeprocess-plugin"
+        displayName="Test"
+        description="a test plugin"
+        package="org.rhq.core.pc.inventory.getnativeprocess.testplugin"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Test Server"
+           discovery="TestDiscoveryComponent"
+           class="TestComponent">
+
+           <process-scan name="TestProcess" query="process|basename|match=^java.*,arg|org.rhq.core.pc.inventory.getnativeprocess.testprocess.Main|match=.*"/>
+           
+           <resource-configuration>
+               <c:simple-property name="nof-discovery-calls" type="integer" />
+               <c:simple-property name="current-pid" type="integer" /> 
+           </resource-configuration>
+
+   </server>
+
+</plugin>

@@ -43,16 +43,15 @@ public interface RestReportingLocal {
     Response suspectMetricReport(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 
     @GET
-    @Path("/configurationHistory/{resourceId}")
+    @Path("/configurationHistory")
     @Produces({"text/csv", "application/xml"})
-    Response configurationHistory(@PathParam("resourceId") int resourceId, @Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
+    Response configurationHistory(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 
 
     @GET
     @Path("/recentOperations")
     @Produces({"text/csv", "application/xml"})
     Response recentOperations(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
-
 
 
     @GET
@@ -92,9 +91,6 @@ public interface RestReportingLocal {
     @Path("/driftCompliance")
     @Produces({"text/csv", "application/xml"})
     Response driftCompliance(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
-
-
-
 
 
 

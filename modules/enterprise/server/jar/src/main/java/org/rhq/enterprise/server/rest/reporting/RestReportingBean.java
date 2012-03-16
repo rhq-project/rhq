@@ -95,8 +95,7 @@ public class RestReportingBean extends AbstractRestBean implements RestReporting
             new CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>() {
                 @Override
                 public PageList<ResourceConfigurationUpdate> execute(ResourceConfigurationUpdateCriteria criteria) {
-                    return configurationManager.findResourceConfigurationUpdatesByCriteria(subjectManager.getOverlord(),
-                        criteria);
+                    return configurationManager.findResourceConfigurationUpdatesByCriteria(caller, criteria);
                 }
             };
 
@@ -208,8 +207,7 @@ public class RestReportingBean extends AbstractRestBean implements RestReporting
     @Produces({"text/csv", "application/xml"})
     public StreamingOutput inventorySummary(@Context UriInfo uriInfo, @Context Request request,
         @Context HttpHeaders headers) {
-        final List<ResourceInstallCount> results = resourceMgr.findResourceInstallCounts(subjectManager.getOverlord(),
-            true);
+        final List<ResourceInstallCount> results = resourceMgr.findResourceInstallCounts(caller, true);
 
         return new StreamingOutput() {
             @Override

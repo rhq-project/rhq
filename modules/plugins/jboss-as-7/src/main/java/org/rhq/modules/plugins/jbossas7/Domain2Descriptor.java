@@ -123,6 +123,10 @@ public class Domain2Descriptor {
         if (childType!=null) {
             Map childMap = (Map) resMap.get("children");
             Map <String,Object> typeMap = (Map<String, Object>) childMap.get(childType);
+            if (typeMap==null) {
+                System.err.println("No child with type '" + childType + "' found");
+                return;
+            }
             Map descriptionMap = (Map) typeMap.get("model-description");
             if (descriptionMap==null) {
                 System.err.println("No model description found");
@@ -313,7 +317,8 @@ public class Domain2Descriptor {
                 builder.append(generateProperty(4, entryValue,type, entryKey, null));
                 builder.append('\n');
             } else  {
-                builder.append("<!--").append(entry.getKey()).append("--").append(entry.getValue().toString()).append("-->");
+                builder.append("<!--").append(entry.getKey()).append("--").append(entry.getValue().toString()).append(
+                        "-->");
             }
         }
     }

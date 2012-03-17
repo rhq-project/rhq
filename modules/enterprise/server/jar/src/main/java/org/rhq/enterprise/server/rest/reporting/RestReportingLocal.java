@@ -20,13 +20,14 @@ package org.rhq.enterprise.server.rest.reporting;
 
 
 import javax.ejb.Local;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 /**
  * Provide RESTful endpoints for application reports in CSV and xml.
@@ -67,24 +68,10 @@ public interface RestReportingLocal {
     @Produces({"text/csv", "application/xml"})
     Response alertDefinitions(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
 
-
-
     @GET
     @Path("/recentDrift")
     @Produces({"text/csv", "application/xml"})
     Response recentDrift(@Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers);
-
-
-    // Inventory Section
-
-    @GET
-    @Path("/inventorySummary")
-    @Produces({"text/csv", "application/xml"})
-    StreamingOutput inventorySummary(
-        @Context UriInfo uriInfo,
-        @Context Request request,
-        @Context HttpHeaders headers,
-        @QueryParam("details") @DefaultValue("false") boolean includeDetails);
 
 
     @GET

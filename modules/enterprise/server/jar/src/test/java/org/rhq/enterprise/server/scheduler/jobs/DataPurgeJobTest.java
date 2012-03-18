@@ -262,9 +262,9 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
             Set<AlertConditionLog> clogs = ad.getConditions().iterator().next().getConditionLogs();
             assert clogs.size() == 0 : "didn't purge condition logs: " + clogs.size();
 
-            // check availabilities
+            // check availabilities, remember, a new resource gets one initial avail record 
             List<Availability> avails = res.getAvailability();
-            assert avails.size() == 0 : "didn't purge availabilities";
+            assert avails.size() == 1 : "didn't purge availabilities";
 
             // check events
             EventSource es = res.getEventSources().iterator().next();

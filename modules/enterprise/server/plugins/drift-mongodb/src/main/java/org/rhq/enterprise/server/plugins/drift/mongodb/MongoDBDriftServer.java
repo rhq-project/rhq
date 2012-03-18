@@ -19,6 +19,10 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -38,6 +42,7 @@ import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.WriteConcern;
 import com.mongodb.gridfs.GridFSDBFile;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.bson.types.ObjectId;
@@ -80,10 +85,6 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getAgentManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
-import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
@@ -147,6 +148,15 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         changeSetDAO =  new ChangeSetDAO(morphia, connection, "rhq");
         fileDAO = new FileDAO(ds.getDB());
 
+        // Note that a write concern of SAFE does not cause the write operation
+        // to wait for the server to flush to disk which occurrs every one
+        // minute by default. With journaled enabled however (which is the
+        // default), we get the ability to recover from errors such as failure
+        // to flush to disk. If we absolutely need to wait and ensure that the
+        // write is successfully written to disk, we could use a write concern
+        // of FSYNC_SAFE; however, this should be used very judiciously as it
+        // will introduce a significant performance overhead on the server as
+        // it forces a flush to disk on every write (from this connect).
         ds.setDefaultWriteConcern(WriteConcern.SAFE);
     }
 

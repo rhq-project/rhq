@@ -36,6 +36,7 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import com.mongodb.WriteConcern;
 import com.mongodb.gridfs.GridFSDBFile;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -145,6 +146,8 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         ds = morphia.createDatastore(connection, "rhq");
         changeSetDAO =  new ChangeSetDAO(morphia, connection, "rhq");
         fileDAO = new FileDAO(ds.getDB());
+
+        ds.setDefaultWriteConcern(WriteConcern.SAFE);
     }
 
     @Override

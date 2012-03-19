@@ -481,13 +481,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- for the JAXB annotations -->
-    <dependency>
-       <groupId>javax.xml.bind</groupId>
-       <artifactId>jaxb-api</artifactId>
-       <scope>provided</scope>
-    </dependency>
-
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
@@ -509,6 +502,29 @@
       <version>7.0.2</version>
       <scope>provided</scope>
     </dependency>
+
+    <!-- TODO: This is a workaround for the Javac bug requiring annotations to be
+               available when compiling dependent classes. It is fixed in JDK 7. -->
+    <!-- JPA annotations -->
+    <dependency>
+       <groupId>javax.persistence</groupId>
+       <artifactId>persistence-api</artifactId>
+       <version>1.0</version>
+       <scope>provided</scope>
+    </dependency>
+    <!-- Hibernate annotations -->
+    <dependency>
+       <groupId>hibernate-annotations</groupId>
+       <artifactId>hibernate-annotations</artifactId>
+       <scope>provided</scope>
+    </dependency>
+    <!-- JAXB annotations -->
+    <dependency>
+       <groupId>javax.xml.bind</groupId>
+       <artifactId>jaxb-api</artifactId>
+       <scope>provided</scope>
+    </dependency>
+    <!-- end of workaround -->
 
     <dependency>
       <groupId>net.sourceforge.cobertura</groupId>
@@ -1030,6 +1046,7 @@
 
   <repositories>
 
+<!--
     <repository>
        <id>jboss-deprecated-repository</id>
        <name>JBoss Deprecated</name>
@@ -1038,13 +1055,11 @@
          <enabled>true</enabled>
          <updatePolicy>never</updatePolicy>
        </releases>
-       <!-- Explicitly disable snapshots, so Maven won't try to
-            check for updates for snapshot internal (rhq-*) deps. -->
        <snapshots>
          <enabled>false</enabled>
        </snapshots>
     </repository>
-
+-->
     <repository>
        <id>jboss-public-repo-group</id>
        <name>JBoss Public Repository Group</name>

@@ -38,6 +38,10 @@ public class ConnectionProviderFactory {
         String connectionTypeDescriptorClassName = pluginConfig.getSimple(JMXDiscoveryComponent.CONNECTION_TYPE)
                     .getStringValue();
 
+        if (connectionTypeDescriptorClassName.equals("LocalVMTypeDescriptor")) {
+            connectionTypeDescriptorClassName = LocalVMTypeDescriptor.class.getName();
+        }
+
         Class<?> connectionTypeDescriptorClass;
         try {
             connectionTypeDescriptorClass = Class.forName(connectionTypeDescriptorClassName);

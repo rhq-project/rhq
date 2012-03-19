@@ -538,6 +538,28 @@
                     description="The system load average for the last minute. The load average may not be available on some platforms; if the load average is not available, a negative value is returned."/>
          </service>
 
+        <service name="Memory"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                 >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="type=memory"/>
+            </plugin-configuration>
+
+           <metric property="object-pending-finalization-count" description="The approximate number of objects for which finalization is pending."/>
+           <metric property="heap-memory-usage:init" displayName="Initial heap usage" units="bytes" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
+           <metric property="heap-memory-usage:used" displayName="Used heap" units="bytes" displayType="summary" description="The amount of used memory in bytes."/>
+           <metric property="heap-memory-usage:committed" displayName="Committed heap" units="bytes" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
+           <metric property="heap-memory-usage:max" displayName="Maximum heap usage" units="bytes" description="The maximum amount of memory in bytes that can be used for memory management."/>
+           <metric property="non-heap-memory-usage:init" displayName="Initial non-heap usage" units="bytes" description="The amount of memory in bytes that the Java virtual machine initially requests from the operating system for memory management."/>
+           <metric property="non-heap-memory-usage:used" displayName="Used non-heap memory" units="bytes" displayType="summary" description="The amount of used memory in bytes."/>
+           <metric property="non-heap-memory-usage:committed" displayName="Committed non-heap memory" units="bytes" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
+           <metric property="non-heap-memory-usage:max" displayName="Maximum non-heap usage" units="bytes" description="The maximum amount of memory in bytes that can be used for memory management."/>
+
+        </service>
+
         <service name="Runtime"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"

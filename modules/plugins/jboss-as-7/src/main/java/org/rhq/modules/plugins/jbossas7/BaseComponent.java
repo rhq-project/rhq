@@ -69,6 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet,
         DeleteResourceFacet,
@@ -162,13 +163,22 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 
         for (MeasurementScheduleRequest req : metrics) {
 
-
             if (req.getName().startsWith(INTERNAL))
                 processPluginStats(req,report);
             else {
                 // Metrics from the application server
 
-                Operation op = new ReadAttribute(address,req.getName()); // TODO batching
+				String reqName = req.getName();
+
+				ComplexRequest request = null;
+				Operation op = null;
+				if (reqName.contains(":")) {
+					request = ComplexRequest.create(reqName);
+					op = new ReadAttribute(address, request.getProp());
+				} else {
+					op = new ReadAttribute(address,reqName); // TODO batching
+				}
+
                 Result res = connection.execute(op, false);
                 if (!res.isSuccess()) {
                     log.warn("Getting metric [" + req.getName() +"] at [ " + address + "] failed: " + res.getFailureDescription());
@@ -182,9 +192,17 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this
                         try {
-                            Double d = Double.parseDouble(getStringValue(val));
-                            MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
-                            report.addData(data);
+							if (request != null) {
+								HashMap<String,Number> myValues = (HashMap<String, Number>) val;
+								for (String key : myValues.keySet()) {
+									String sub = request.getSub();
+									if (key.equals(sub)) {
+										addMetric2Report(report, req, myValues.get(key));
+									}
+								}
+							} else {
+								addMetric2Report(report, req, val);
+							}
                         } catch (NumberFormatException e) {
                             log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
                         }
@@ -199,6 +217,12 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
             }
         }
     }
+
+	private void addMetric2Report(MeasurementReport report, MeasurementScheduleRequest req, Object val) {
+		Double d = Double.parseDouble(getStringValue(val));
+		MeasurementDataNumeric data = new MeasurementDataNumeric(req, d);
+		report.addData(data);
+	}
 
     private String getStringValue(Object val) {
         String realVal;
@@ -628,4 +652,27 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
         return address;
     }
 
+
+    private static class ComplexRequest {
+    		private String prop;
+    		private String sub;
+
+    		private ComplexRequest(String prop, String sub) {
+    			this.prop = prop;
+    			this.sub = sub;
+    		}
+
+    		public String getProp() {
+    			return prop;
+    		}
+
+    		public String getSub() {
+    			return sub;
+    		}
+
+    		public static ComplexRequest create(String requestName) {
+    			StringTokenizer tokenizer = new StringTokenizer(requestName, ":");
+    			return new ComplexRequest(tokenizer.nextToken(), tokenizer.nextToken());
+    		}
+    	}
 }

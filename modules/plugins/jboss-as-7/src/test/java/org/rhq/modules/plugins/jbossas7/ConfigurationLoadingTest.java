@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -455,6 +456,38 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         tmp = bar.getIntegerValue();
         assert tmp !=null;
         assert tmp ==456;
+
+    }
+
+    public void test13() throws Exception {
+        String resultString = loadJsonFromFile("collapsedMapTest.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test13");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+
+        assert properties.size()==1;
+        Iterator<Property> iterator = properties.iterator();
+        Property p = iterator.next();
+        assert p instanceof PropertyMap;
+        PropertyMap pm = (PropertyMap) p;
+        assert pm.getMap().size()==2;
+        PropertySimple ps = pm.getSimple("name:0");
+        assert ps !=null : "No property with name 'name:0' was found";
+        assert ps.getStringValue()!=null;
+        assert ps.getStringValue().equals("in-vm");
+        ps = pm.getSimple("backup:1");
+        assert ps !=null;
+        assert ps.getStringValue()==null;
 
     }
 }

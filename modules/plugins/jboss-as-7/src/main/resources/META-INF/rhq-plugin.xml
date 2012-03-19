@@ -602,7 +602,7 @@
 
         <server name="HornetQ"
                 discovery="SubsystemDiscovery"
-                class="BaseComponent"
+                class="HornetQComponent"
                 description="The HornetQ based messaging subsystem"
                 >
 
@@ -629,14 +629,6 @@
                     <c:simple-property name="operationResult"/>
                 </results>
             </operation>
-            <operation name="destination:remove" displayName="Remove Destination" description="Remove a destination">
-                <parameters>
-                    <c:simple-property name="name" description="Name of the Destination" required="true"/>
-                </parameters>
-                <results>
-                    <c:simple-property name="operationResult"/>
-                </results>
-            </operation>
 
             <resource-configuration>
                 <c:simple-property name="journal-min-files" />
@@ -646,34 +638,34 @@
             <service name="JMS Queue"
                 discovery="SubsystemDiscovery"
                 class="JmsComponent"
-                createDeletePolicy="delete-only"
+                createDeletePolicy="both"
                 >
                 <plugin-configuration>
                     <c:simple-property name="path" readOnly="true" default="jms-queue"/>
                 </plugin-configuration>
 
                 <resource-configuration>
-                    <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
+                    <c:simple-property name="durable" required="false" type="boolean" default="false"
                                        description="Whether the queue is durable or not."/>
-                    <c:list-property name="entries" required="false"  readOnly="true"
+                    <c:list-property name="entries" required="true"  readOnly="false" displayName="JNDI Names" min="1"
                                      description="The jndi names the queue will be bound to.">
-                        <c:simple-property name="entries" type="string"/>
+                        <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
                     </c:list-property>
-                    <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
+                    <c:simple-property name="selector" required="false" type="string"  description="The queue selector."/>
                 </resource-configuration>
             </service>
             <service name="JMS Topic"
                 discovery="SubsystemDiscovery"
                 class="JmsComponent"
-                createDeletePolicy="delete-only"
+                createDeletePolicy="both"
                 >
                 <plugin-configuration>
                     <c:simple-property name="path" readOnly="true" default="jms-topic"/>
                 </plugin-configuration>
                 <resource-configuration>
-                    <c:list-property name="entries" required="false"  readOnly="true"
+                    <c:list-property name="entries" required="true"  readOnly="false" displayName="JNDI Names" min="1"
                                      description="The jndi names the queue will be bound to.">
-                        <c:simple-property name="entries" type="string"/>
+                        <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
                     </c:list-property>
                 </resource-configuration>
             </service>
@@ -685,6 +677,53 @@
                 <plugin-configuration>
                     <c:simple-property name="path" readOnly="true" default="connection-factory"/>
                 </plugin-configuration>
+
+                <resource-configuration>
+                    <c:list-property name="entries" required="true"  readOnly="false" displayName="JNDI Names" min="1"
+                                     description="The jndi names the queue will be bound to.">
+                        <c:simple-property name="entry" type="string" description="A single JNDI entry"/>
+                    </c:list-property>
+
+                    <c:map-property name="connector:collapsed" required="true"  readOnly="false" displayName="Connector"
+                                       description="Defines the connectors. These are stored in a map by connector name, with the backup connectors stored as the value, or an undefined value if there is no backup connector.">
+                        <c:simple-property name="name:0" displayName="Name" description="Connector name" required="true"/>
+                        <c:simple-property name="backup:1" displayName="Backup" description="Backup connector name"/>
+                    </c:map-property>
+                    <c:simple-property name="auto-group" required="false" type="boolean" readOnly="false" description="Whether or not message grouping is automatically used"/>
+                    <c:simple-property name="block-on-acknowledge" required="false" type="boolean" readOnly="false" description="True to set block on acknowledge."/>
+                    <c:simple-property name="block-on-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on durable send."/>
+                    <c:simple-property name="block-on-non-durable-send" required="false" type="boolean" readOnly="false" description="True to set block on non durable send."/>
+                    <c:simple-property name="cache-large-message-client" required="false" type="boolean" readOnly="false" description="True to cache large messages."/>
+                    <c:simple-property name="call-timeout" required="false" type="long" readOnly="false" description="The call time out."/>
+                    <c:simple-property name="client-failure-check-period" required="false" type="integer" readOnly="false" description="The client failure check period."/>
+                    <c:simple-property name="client-id" required="false" type="string" readOnly="false" description="The client id."/>
+                    <c:simple-property name="compress-large-messages" required="false" type="boolean" readOnly="false" description="Whether large messages should be compressed."/>
+                    <c:simple-property name="confirmation-window-size" required="false" type="integer" readOnly="false" description="The confirmation window size."/>
+                    <c:simple-property name="connection-ttl" required="false" type="long" readOnly="false" description="The connection ttl."/>
+                    <c:simple-property name="consumer-max-rate" required="false" type="integer" readOnly="false" description="The consumer max rate."/>
+                    <c:simple-property name="consumer-window-size" required="false" type="integer" readOnly="false" description="The consumer window size."/>
+                    <c:simple-property name="discovery-group-name" required="false" type="string" readOnly="false" description="The discovery group name."/>
+                    <c:simple-property name="discovery-initial-wait-timeout" required="false" type="long" readOnly="false" description="The discovery initial wait time out."/>
+                    <c:simple-property name="dups-ok-batch-size" required="false" type="integer" readOnly="false" description="The dups ok batch size."/>
+                    <c:simple-property name="failover-on-initial-connection" required="false" type="boolean" readOnly="false" description="True to fail over on initial connection."/>
+                    <c:simple-property name="failover-on-server-shutdown" required="false" type="boolean" readOnly="false" description="True to fail over on server shutdown."/>
+                    <c:simple-property name="group-id" required="false" type="string" readOnly="false" description="The group id."/>
+                    <c:simple-property name="ha" required="false" type="boolean" readOnly="false" description="Whether the connection factory supports High Availability."/>
+                    <c:simple-property name="connection-load-balancing-policy-class-name" required="false" type="string" readOnly="false"
+                         description="Name of a class implementing a client-side load balancing policy that a client can use to load balance sessions across different nodes in a cluster."/>
+                    <c:simple-property name="max-retry-interval" required="false" type="long" readOnly="false" description="The max retry interval."/>
+                    <c:simple-property name="min-large-message-size" required="false" type="integer" readOnly="false" description="The min large message size."/>
+                    <c:simple-property name="pre-acknowledge" required="false" type="boolean" readOnly="false" description="True to pre-acknowledge."/>
+                    <c:simple-property name="producer-max-rate" required="false" type="integer" readOnly="false" description="The producer max rate."/>
+                    <c:simple-property name="producer-window-size" required="false" type="integer" readOnly="false" description="The producer window size."/>
+                    <c:simple-property name="reconnect-attempts" required="false" type="integer" readOnly="false" description="The reconnect attempts."/>
+                    <c:simple-property name="retry-interval" required="false" type="long" readOnly="false" description="The retry interval."/>
+                    <c:simple-property name="retry-interval-multiplier" required="false" type="float" readOnly="false" description="The retry interval multiplier."/>
+                    <c:simple-property name="scheduled-thread-pool-max-size" required="false" type="integer" readOnly="false" description="The scheduled thread pool max size."/>
+                    <c:simple-property name="thread-pool-max-size" required="false" type="integer" readOnly="false" description="The thread pool max size."/>
+                    <c:simple-property name="transaction-batch-size" required="false" type="integer" readOnly="false" description="The transaction batch size."/>
+                    <c:simple-property name="use-global-pools" required="false" type="boolean" readOnly="false" description="True to use global pools."/>
+                </resource-configuration>
             </service>
 
         </server>

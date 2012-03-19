@@ -20,6 +20,7 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -210,7 +211,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
 
                 Object valueObject;
-                if (propertyName.endsWith(":expr")) {
+                if (propertyName.endsWith(":expr") || propertyName.endsWith(":collapsed")) {
                     String realName = propertyName.substring(0,propertyName.indexOf(":"));
                     valueObject = results.get(realName);
                 } else {
@@ -290,6 +291,26 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
         Map<String, PropertyDefinition> memberDefMap = propDef.getPropertyDefinitions();
 
+        if (propDefName.endsWith(":collapsed")) {
+            // The result is a map of {" a" : " b" }, while the propdef is in the form
+            // map { prop {name=a } , prop {name=b) }
+            if (memberDefMap.size()!=2)
+                throw new IllegalArgumentException("Collapsed map [" + propDefName + "] needs 2 entries and not " + memberDefMap.size());
+
+            Collection<PropertyDefinition> propDefs = memberDefMap.values();
+            Iterator<PropertyDefinition> iterator = propDefs.iterator();
+            String name = iterator.next().getName();
+            Map<String,String> objects = (Map<String, String>) valueObject;
+            String val = objects.keySet().iterator().next();
+            PropertySimple ps = new PropertySimple(name,val);
+            propertyMap.put(ps);
+            name= iterator.next().getName();
+            val = objects.values().iterator().next();
+            ps = new PropertySimple(name,val);
+            propertyMap.put(ps);
+
+            return propertyMap;
+        }
 
 
         Map<String,Object> objects = (Map<String, Object>) valueObject;

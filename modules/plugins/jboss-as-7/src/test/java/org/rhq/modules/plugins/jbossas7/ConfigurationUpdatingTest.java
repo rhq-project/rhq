@@ -545,4 +545,49 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert additionalProperties.get("value").equals("456");
 
     }
+
+
+    public void test13() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("test13");
+
+        FakeConnection connection = new FakeConnection();
+        String resultString = loadJsonFromFile("collapsedMapTest.json");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        connection.setContent(json);
+
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+
+        PropertyMap pm = new PropertyMap("connector:collapsed");
+        PropertySimple ps = new PropertySimple("name:0","in-vm");
+        pm.put(ps);
+        ps = new PropertySimple("backup:1","hulla-hoo");
+        pm.put(ps);
+        conf.put(pm);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf, new Address());
+
+        assert cop != null;
+        assert cop.numberOfSteps()==1;
+        Operation step = cop.step(0);
+        assert step!=null;
+        assert step.getOperation().equals("write-attribute") : "Step name was " + step.getOperation();
+        Map<String, Object> additionalProperties = step.getAdditionalProperties();
+        assert additionalProperties !=null;
+        assert additionalProperties.size()==2;
+        assert additionalProperties.get("name").equals("connector");
+        Object value = additionalProperties.get("value");
+        assert value instanceof Map;
+        Map <String,Object> map = (Map<String, Object>) value;
+        assert map.containsKey("in-vm");
+        assert map.containsValue("hulla-hoo");
+
+    }
 }

@@ -242,9 +242,50 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,
                                          Address address) {
-        Map<String,Object> results = updateHandleMap(prop,propDef, address);
-        Operation writeAttribute = new WriteAttribute(address,prop.getName(),results);
+
+        String propName = prop.getName();
+        Operation writeAttribute;
+        Map<String,Object> results;
+        if (propName.endsWith(":collapsed")) {
+            String realName = propName.substring(0, propName.indexOf(':'));
+            results = handleCollapsedMap(prop, propDef);
+            writeAttribute = new WriteAttribute(address, realName,results);
+        }
+        else {
+            results = updateHandleMap(prop,propDef, address);
+            writeAttribute = new WriteAttribute(address, propName,results);
+        }
         cop.addStep(writeAttribute);
+    }
+
+    private Map<String, Object> handleCollapsedMap(PropertyMap propertyMap, PropertyDefinitionMap propertyDefinitionMap) {
+
+        String first=null;
+        String second=null;
+        for (Map.Entry<String,PropertyDefinition> entry : propertyDefinitionMap.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition def = entry.getValue();
+            if (!def.getName().contains(":"))
+                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
+
+            Property prop = propertyMap.get(def.getName());
+            if (prop==null) {
+                throw new IllegalArgumentException("Property " + def.getName() + " was null - must not happen");
+            }
+
+            PropertySimple ps = (PropertySimple) prop;
+            if (def.getName().endsWith(":0"))
+                first = ps.getStringValue();
+            else if (def.getName().endsWith(":1"))
+                second = ps.getStringValue(); // TODO other types?
+            else
+                throw new IllegalArgumentException("Member names in a :collapsed map must end in :0 and :1");
+        }
+
+
+        Map<String,Object> resultMap = new HashMap<String,Object>();
+        resultMap.put(first, second);
+
+        return resultMap;
     }
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef,

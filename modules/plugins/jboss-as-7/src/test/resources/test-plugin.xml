@@ -138,6 +138,15 @@
         </resource-configuration>
     </server>
 
+    <server class="foo" discovery="foo" name="test13">
+        <resource-configuration>
+            <c:map-property name="connector:collapsed" >
+                <c:simple-property name="name:0" />
+                <c:simple-property name="backup:1"/>
+            </c:map-property>
+        </resource-configuration>
+    </server>
+
     <server class="foo" discovery="foo" name="simple1">
 
         <resource-configuration>

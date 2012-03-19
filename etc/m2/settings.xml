@@ -67,6 +67,10 @@
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
             <!--<surefire.useFile>false</surefire.useFile>-->
 
+            <!-- *** animal sniffer plugin settings *** -->
+            <!-- tell animal sniffer plugin to skip Java API checks -->
+            <!--<animal.sniffer.skip>true</animal.sniffer.skip>-->
+
             <!-- *** release plugin settings *** -->
             <!-- Set the below properties to your fedorahosted.org username and
                  password (used to check in poms to RHQ git). -->

@@ -49,6 +49,7 @@
             <module>plugin-validator</module>
             <module>arquillian-integration</module>
             <module>plugin-test-api</module>
+            <module>plugin-test-util</module>
             <module>plugin-container-itest</module>
          </modules>
       </profile>

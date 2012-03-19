@@ -57,11 +57,11 @@
     <profiles>
 
       <profile>
-        <id>as7-setup</id>
+        <id>as7-itest-setup</id>
 
         <activation>
           <property>
-            <name>itest</name>
+            <name>as7-itest</name>
             <value>as7</value>
           </property>
         </activation>
@@ -106,7 +106,7 @@
       </profile>
 
       <profile>
-        <id>eap600Beta1-setup</id>
+        <id>eap600Beta1-itest-setup</id>
 
         <activation>
           <property>
@@ -122,11 +122,11 @@
       </profile>
 
       <profile>
-        <id>eap6-setup</id>
+        <id>eap6-itest-setup</id>
 
         <activation>
           <property>
-            <name>itest</name>
+            <name>as7-itest</name>
             <value>eap6</value>
           </property>
         </activation>
@@ -169,11 +169,11 @@
 
       <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
       <profile>
-        <id>*** itest ***</id>
+        <id>*** as7-itest ***</id>
 
         <activation>
           <property>
-            <name>itest</name>
+            <name>as7-itest</name>
           </property>
         </activation>
 
@@ -524,6 +524,13 @@
             <artifactId>rhq-core-plugin-test-api</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-plugin-test-util</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 

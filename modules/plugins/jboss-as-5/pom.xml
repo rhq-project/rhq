@@ -22,6 +22,8 @@
 
   <properties>
     <jbossas.version>6.0.0.M1</jbossas.version>
+    <as5.version>6.1.0.Final</as5.version>
+    <as5.url>http://download.jboss.org/jbossas/6.1/jboss-as-distribution-6.1.0.Final.zip</as5.url>
   </properties>
 
   <dependencyManagement>
@@ -363,24 +365,17 @@ we now use the following method. -->
     -->
 
     <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-testng</artifactId>
-      <version>${powermock.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito</artifactId>
-      <version>${powermock.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
        <groupId>${rhq.groupId}</groupId>
        <artifactId>rhq-core-plugin-test-api</artifactId>
        <version>${project.version}</version>
        <type>pom</type>
+       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+       <groupId>${rhq.groupId}</groupId>
+       <artifactId>rhq-core-plugin-test-util</artifactId>
+       <version>${project.version}</version>
        <scope>test</scope>
     </dependency>
 
@@ -439,22 +434,11 @@ we now use the following method. -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <skipTests>true</skipTests>
+          <excludes>
+            <exclude>org/rhq/plugins/jbossas5/itest/**</exclude>
+            <exclude>org/rhq/plugins/jbossas5/test/**</exclude>
+          </excludes>
         </configuration>
-
-        <executions>
-          <execution>
-            <id>arquillianTests</id>
-            <phase>integration-test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <skipTests>${skipTests}</skipTests>
-              <groups>arquillian</groups>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
 
     </plugins>
@@ -541,9 +525,10 @@ we now use the following method. -->
                   <goal>test</goal>
                 </goals>
                 <configuration>
-                  <skip>${maven.test.skip}</skip>
+                  <skipTests>${skipTests}</skipTests>
                   <parallel>false</parallel>
                   <useSystemClassLoader>true</useSystemClassLoader>
+                  <excludes><exclude>org/rhq/plugins/jbossas5/itest/**</exclude></excludes>
                   <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                   <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                   <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
@@ -607,6 +592,167 @@ we now use the following method. -->
     </profile>
 
     <profile>
+      <id>as600-itest-setup</id>
+
+      <activation>
+        <property>
+          <name>as5.version</name>
+          <value>6.0.0.Final</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as5.url>http://sourceforge.net/projects/jboss/files/JBoss/JBoss-6.0.0.Final/jboss-as-distribution-6.0.0.Final.zip/download</as5.url>
+      </properties>
+
+    </profile>
+
+    <profile>
+      <id>as610-itest-setup</id>
+
+      <activation>
+        <property>
+          <name>as5.version</name>
+          <value>6.1.0.Final</value>
+        </property>
+      </activation>
+
+      <properties>
+        <as5.url>http://download.jboss.org/jbossas/6.1/jboss-as-distribution-6.1.0.Final.zip</as5.url>
+      </properties>
+
+    </profile>
+
+    <profile>
+      <id>as5-itest-setup</id>
+
+      <activation>
+        <property>
+          <name>as5-itest</name>
+          <value>as5</value>
+        </property>
+      </activation>
+
+      <properties>
+        <eap6.version/>
+        <jboss.version>${as5.version}</jboss.version>
+        <jboss5.home>${java.io.tmpdir}/jboss-as-${as5.version}</jboss5.home>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <executions>
+                  <execution>
+                      <id>downloadAndUnzip</id>
+                      <phase>initialize</phase>
+                      <goals>
+                          <goal>run</goal>
+                      </goals>
+                      <configuration>
+                          <target>
+                            <get src="${as5.url}" dest="${java.io.tmpdir}/jboss-as-${as5.version}.zip"
+                                 usetimestamp="true" verbose="true"/>
+                            <unzip src="${java.io.tmpdir}/jboss-as-${as5.version}.zip" dest="${java.io.tmpdir}"/>
+                            <move file="${java.io.tmpdir}/jboss-${as5.version}"
+                                  tofile="${java.io.tmpdir}/jboss-as-${as5.version}" overwrite="false"/>
+                          </target>
+                      </configuration>
+                  </execution>
+              </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
+    <profile>
+      <id>*** as5-itest ***</id>
+
+      <activation>
+        <property>
+          <name>as5-itest</name>
+        </property>
+      </activation>
+
+      <properties>
+        <jboss.bindAddress>127.3.3.3</jboss.bindAddress>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.2.1.jbossorg-3</version>
+
+            <executions>
+              <execution>
+                <id>start-jboss5</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                    <background>true</background>
+                    <backgroundPollingAddress>${jboss.bindAddress}:1099</backgroundPollingAddress>
+                    <executable>${java.home}/bin/java</executable>
+                    <arguments>
+                      <argument>-server</argument>
+                      <argument>-Xms128M</argument>
+                      <argument>-Xmx512M</argument>
+                      <argument>-XX:MaxPermSize=256M</argument>
+                      <argument>-Dorg.jboss.resolver.warning=true</argument>
+                      <argument>-Dsun.rmi.dgc.client.gcInterval=3600000</argument>
+                      <argument>-Dsun.rmi.dgc.server.gcInterval=3600000</argument>
+                      <argument>-Djava.net.preferIPv4Stack=true</argument>
+                      <argument>-Dlogging.configuration=file://${jboss5.home}/bin/logging.properties</argument>
+                      <argument>-Djava.library.path=${jboss5.home}/bin/native/lib64</argument>
+                      <argument>-Djava.endorsed.dirs=${jboss5.home}/lib/endorsed</argument>
+                      <argument>-classpath</argument>
+                      <argument>${jboss5.home}/bin/run.jar:${java.home}/lib/tools.jar</argument>
+                      <argument>org.jboss.Main</argument>
+                      <argument>--configuration=default</argument>
+                      <argument>--host=${jboss.bindAddress}</argument>
+                    </arguments>
+                </configuration>
+              </execution>
+
+            </executions>
+
+          </plugin>
+
+          <plugin>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <includes><include>org/rhq/plugins/jbossas5/itest/**/*Test.java</include></includes>
+              <systemPropertyVariables>
+                <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
+                <jboss5.home>${jboss5.home}</jboss5.home>
+                <jboss.version>${jboss.version}</jboss.version>
+                <eap5.version>${eap5.version}</eap5.version>
+              </systemPropertyVariables>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+
+    </profile>
+
+    <profile>
       <id>dev</id>
 
       <properties>
@@ -622,7 +768,6 @@ we now use the following method. -->
 
           <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
             <executions>
 
               <execution>

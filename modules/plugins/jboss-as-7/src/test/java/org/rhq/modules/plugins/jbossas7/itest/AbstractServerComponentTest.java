@@ -26,8 +26,8 @@ import org.testng.Assert;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.ResourceUtility;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.modules.plugins.jbossas7.util.ResourceUtility;
 
 /**
  * The base class for the integration tests for the two AS7 server types.

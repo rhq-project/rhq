@@ -22,6 +22,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -140,13 +141,17 @@ public class Domain2Descriptor {
         }
 
         if (mode==D2DMode.OPERATION) {
-            for (Map.Entry<String,Object> entry : attributesMap.entrySet()) {
-                if (entry.getKey().startsWith("read-"))
+            Object[] keys = attributesMap.keySet().toArray();
+            Arrays.sort(keys);
+
+            for (Object key : keys) {
+                if (((String) key).startsWith("read-"))
                     continue;
-                if (entry.getKey().equals("write-attribute"))
+                if (((String) key).equals("write-attribute"))
                     continue;
 
-                createOperation(entry.getKey(), (Map<String,Object>)entry.getValue());
+                Map<String, Object> value = (Map<String, Object>) attributesMap.get(key);
+                createOperation((String) key, value);
             }
         }
         else
@@ -158,11 +163,14 @@ public class Domain2Descriptor {
         if (attributesMap==null)
             return;
 
-        for (Map.Entry<String,Object> entry : attributesMap.entrySet()) {
+        Object[] keys = attributesMap.keySet().toArray();
+        Arrays.sort(keys);
 
-            Map<String,Object> props = (Map<String, Object>) entry.getValue();
+        for (Object key : keys) {
+           Object entry = attributesMap.get(key);
+           Map<String, Object> props = (Map<String, Object>) entry;
 
-            String entryName = entry.getKey();
+           String entryName = (String) key;
 
             Type ptype = getTypeFromProps(props);
 
@@ -176,8 +184,8 @@ public class Domain2Descriptor {
                         attributesMap1, indent+4);
                 else {
                     for (Map.Entry<String,Object> emapEntry : props.entrySet()) {
-                        String key = emapEntry.getKey();
-                        if (key.equals("type") || key.equals("description") || key.equals("required"))
+                        String emapKey = emapEntry.getKey();
+                        if (emapKey.equals("type") || emapKey.equals("description") || emapKey.equals("required"))
                             continue;
 
                         if (emapEntry.getValue() instanceof Map) {

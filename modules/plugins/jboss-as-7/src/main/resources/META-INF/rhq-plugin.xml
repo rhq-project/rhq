@@ -2498,4 +2498,72 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
     </service>
 
+    <service name="JacORB"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="JacORB subsystem configuration"
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jacorb" readOnly="true"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+	        <c:simple-property name="add-component-via-interceptor" required="false" type="string" readOnly="false" defaultValue="on" description="Indicates whether SSL components should be added by an IOR interceptor (on) or not (off)."/>
+	        <c:simple-property name="cache-poa-names" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether POA names should be cached (on) or not (off)."/>
+	        <c:simple-property name="cache-typecodes" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether typecodes should be cached (on) or not (off)."/>
+	        <c:simple-property name="chunk-custom-rmi-valuetypes" required="false" type="string" readOnly="false" defaultValue="on" description="Indicates whether custom RMI valuetypes should be encoded as chunks (on) or not (off)."/>
+	        <c:simple-property name="client-requires" required="false" type="string" readOnly="false" defaultValue="None" description="Value that indicates the client SSL required parameters (None, ServerAuth, ClientAuth, MutualAuth)."/>
+	        <c:simple-property name="client-supports" required="false" type="string" readOnly="false" defaultValue="MutualAuth" description="Value that indicates the client SSL supported parameters (None, ServerAuth, ClientAuth, MutualAuth)."/>
+	        <c:simple-property name="client-timeout" required="false" type="integer" readOnly="false" defaultValue="0" description="The client-side connection timeout value in milliseconds. A value of zero indicates that the connection never times out."/>
+	        <c:simple-property name="comet" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether interoperability with Comet's ORB is enabled (on) or not (off)."/>
+	        <c:simple-property name="export-corbaloc" required="false" type="string" readOnly="false" defaultValue="on" description="Indicates whether the root context should be exported as corbaloc::address:port/NameService (on) or not (off)."/>
+	        <c:simple-property name="giop-minor-version" required="false" type="integer" readOnly="false" defaultValue="2" description="The GIOP minor version to be used."/>
+	        <c:simple-property name="indirection-encoding-disable" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether indirection encoding for repeated typecodes should be disabled (on) or not (off)."/>
+	        <c:simple-property name="iona" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether interoperability with IONA's ASP is enabled (on) or not (off)."/>
+	        <c:simple-property name="lax-boolean-encoding" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether any non-zero CDR encoded boolean value should be interpreted as true (on) or not (off)."/>
+	        <c:simple-property name="max-managed-buf-size" required="false" type="integer" readOnly="false" defaultValue="24" description="The log2 of maximum size managed by the internal buffer manager."/>
+	        <c:simple-property name="max-server-connections" required="false" type="integer" readOnly="false" defaultValue="2147483647" description="The maximum number of connections accepted by the server."/>
+	        <c:simple-property name="max-threads" required="false" type="integer" readOnly="false" defaultValue="32" description="The maximum number of active request processor threads. Threads are first obtained from the pool and once the pool is exhausted new threads are created until the number of threads reaches this limit. New requests will wait until an active thread finishes its job."/>
+	        <c:simple-property name="monitoring" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the monitoring GUI should be displayed (on) or not (off)."/>
+	        <c:simple-property name="name" required="false" type="string" readOnly="false" defaultValue="JBoss" description="The name of the running ORB."/>
+	        <c:simple-property name="outbuf-cache-timeout" required="false" type="integer" readOnly="false" defaultValue="-1" description="The buffer cache timeout in milliseconds."/>
+	        <c:simple-property name="outbuf-size" required="false" type="integer" readOnly="false" defaultValue="2048" description="The size of the network buffers for outgoing messages."/>
+	        <c:simple-property name="pool-size" required="false" type="integer" readOnly="false" defaultValue="5" description="The size of the request processors thread-pool. Threads that finish processing a request are placed back in the pool if the pool is not full and discarded otherwise."/>
+	        <c:simple-property name="print-version" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the version number should be printed during ORB startup (on) or not (off)."/>
+            <c:map-property name="properties" description="A list of generic key/value properties.">
+	            <c:simple-property name="name"/>
+                <c:simple-property name="value"/>
+                <!--
+	            false
+	            true
+	            <c:simple-property name="value-type" required="false" type="-object-" readOnly="true"/>
+	            read-write
+	            configuration
+	            no-services
+	            -->
+	        </c:map-property>
+	        <c:simple-property name="queue-max" required="false" type="integer" readOnly="false" defaultValue="100" description="The maximum number of requests that can be queued."/>
+	        <c:simple-property name="queue-min" required="false" type="integer" readOnly="false" defaultValue="10" description="The size of the queue for notifying waiting requests. In other words, blocked requests are only notified when the queue has no more than queue-min requests."/>
+	        <c:simple-property name="queue-wait" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether requests that exceed the maximum queue size should wait (on) or not (off). When disabled, a TRANSIENT exception is thrown if the queue is full."/>
+	        <c:simple-property name="retries" required="false" type="integer" readOnly="false" defaultValue="5" description="The number of retries if connections cannot be promptly established."/>
+	        <c:simple-property name="retry-interval" required="false" type="integer" readOnly="false" defaultValue="500" description="The interval in milliseconds between retries."/>
+	        <c:simple-property name="root-context" required="false" type="string" readOnly="false" defaultValue="JBoss/Naming/root" description="The naming service root context."/>
+	        <c:simple-property name="security" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the security interceptors are to be installed (on) or not (off)."/>
+	        <c:simple-property name="security-domain" required="false" type="string" readOnly="false" description="The name of the security domain that holds the key and trust stores that will be used to establish SSL connections."/>
+	        <c:simple-property name="server-requires" required="false" type="string" readOnly="false" defaultValue="None" description="Value that indicates the server SSL required parameters (None, ServerAuth, ClientAuth, MutualAuth)."/>
+	        <c:simple-property name="server-supports" required="false" type="string" readOnly="false" defaultValue="MutualAuth" description="Value that indicates the server SSL supported parameters (None, ServerAuth, ClientAuth, MutualAuth)."/>
+	        <c:simple-property name="server-timeout" required="false" type="integer" readOnly="false" defaultValue="0" description="The server-side connection timeout value in milliseconds. A value of zero indicates that the connection never times out."/>
+	        <c:simple-property name="strict-check-on-tc-creation" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the method create_abstract_interface_tc should perform a validation check on the name parameter (on) or not (off)."/>
+	        <c:simple-property name="sun" required="false" type="string" readOnly="false" defaultValue="on" description="Indicates whether interoperability with Sun's ORB is enabled (on) or not (off)."/>
+	        <c:simple-property name="support-ssl" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether SSL is to be supported (on) or not (off)."/>
+	        <c:simple-property name="transactions" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the transactions interceptors are to be installed (on or spec) or not (off). The value 'on' enabled JTS while 'spec' enables a spec compliant mode (non JTS) that rejects incoming transaction contexts."/>
+	        <c:simple-property name="use-bom" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether GIOP 1.2 byte order markers should be used (on) or not (off)."/>
+	        <c:simple-property name="use-imr" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the implementation repository should be used (on) or not (off)."/>
+        </resource-configuration>
+    </service>
+
 </plugin>

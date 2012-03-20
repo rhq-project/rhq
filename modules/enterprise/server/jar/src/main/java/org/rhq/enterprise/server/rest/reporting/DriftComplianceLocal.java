@@ -12,9 +12,9 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/reports/inventorySummary")
+@Path("/reports/driftCompliance")
 @Local
-public interface InventorySummaryLocal {
+public interface DriftComplianceLocal {
 
     @GET
     @Path("/")

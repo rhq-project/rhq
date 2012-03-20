@@ -12,9 +12,6 @@ import java.util.Map;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.StreamingOutput;
@@ -42,11 +39,8 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     private SubjectManagerLocal subjectMgr;
 
     @Override
-    @GET
-    @Path("/inventorySummary")
-    @Produces({"text/csv", "application/xml"})
-    public StreamingOutput inventorySummary(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers,
-                                            boolean includeDetails) {
+    public StreamingOutput generateReport(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers,
+                                          boolean includeDetails) {
         final List<ResourceInstallCount> results = resourceMgr.findResourceInstallCounts(caller, true);
 
         if (includeDetails) {
@@ -55,7 +49,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
-                    stream.write("Resource Type,Plugin,Category,Version,Count\n".getBytes());
+                    stream.write((getHeader() + "\n").getBytes());
                     for (ResourceInstallCount installCount : results) {
                         String record = toCSV(installCount) + "\n";
                         stream.write(record.getBytes());
@@ -94,6 +88,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
 
             CriteriaQuery<Resource, ResourceCriteria> query =
                 new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+            output.write((getHeader() + "\n").getBytes());
             for (Resource resource : query) {
                 ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
                 String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
@@ -102,13 +97,17 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         }
     }
 
-    private String toCSV(ResourceInstallCount installCount) {
+    protected String getHeader() {
+        return "Resource Type,Plugin,Category,Version,Count";
+    }
+
+    protected String toCSV(ResourceInstallCount installCount) {
         return installCount.getTypeName() + "," + installCount.getTypePlugin() + "," +
             installCount.getCategory().getDisplayName() + "," + installCount.getVersion() + "," +
             installCount.getCount();
     }
 
-    private String toCSV(Resource resource) {
+    protected String toCSV(Resource resource) {
         return resource.getName() + "," + resource.getAncestry() + "," + resource.getDescription() + "," +
             resource.getResourceType().getName() + "," + resource.getVersion() + "," +
             resource.getCurrentAvailability().getAvailabilityType();

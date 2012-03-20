@@ -143,7 +143,17 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 //log.debug("Scan Starting: " + new Date(start));
             }
 
-            checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
+            try {
+                checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
+            } catch (RuntimeException e) {
+                if (Thread.interrupted()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Exception occurred during availability check, but this thread has been interrupted, "
+                                + "so most likely the plugin container is shutting down: " + e);
+                    }
+                    return availabilityReport;
+                }
+            }
 
             scan.setEndTime(System.currentTimeMillis());
 
@@ -307,7 +317,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         boolean availChanged = (previous == null) || (previous.getAvailabilityType() != current);
 
         if (availChanged || scan.isFull) {
-            Availability availability = null;
+            Availability availability;
 
             if (availChanged) {
                 ++scan.numAvailabilityChanges;

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.codehaus.jackson.JsonNode;
 import org.testng.annotations.Test;
@@ -343,6 +344,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
         Resource resource = new Resource("deployment="+TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, rt); // TODO resource key?
+        resource.setUuid(UUID.randomUUID().toString());
         ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 

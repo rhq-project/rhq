@@ -18,11 +18,14 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
+import java.util.UUID;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
@@ -45,11 +48,12 @@ public class ServerGroupTest extends AbstractIntegrationTest {
         Configuration rc = new Configuration();
         rc.put(new PropertySimple("profile","default"));
         rc.put(new PropertySimple("socket-binding-group","standard-sockets"));
-        ResourceType rt = new ResourceType();
+        ResourceType rt = new ResourceType("ServerGroup", "jboss-as-7",
+                ResourceCategory.SERVICE, null);
 
         String serverGroupName = "_test-sg";
         try {
-            CreateResourceReport report = new CreateResourceReport(serverGroupName,rt,new Configuration(),rc,null);
+            CreateResourceReport report = new CreateResourceReport(serverGroupName, rt, new Configuration(), rc, null);
             report = hcc.createResource(report);
 
             assert report != null : "Report was null.";
@@ -69,11 +73,12 @@ public class ServerGroupTest extends AbstractIntegrationTest {
         Configuration rc = new Configuration();
         rc.put(new PropertySimple("profile","luzibumpf")); // Does not exist op should fail
         rc.put(new PropertySimple("socket-binding-group","standard-sockets"));
-        ResourceType rt = new ResourceType();
+        ResourceType rt = new ResourceType("ServerGroup", "jboss-as-7",
+                ResourceCategory.SERVICE, null);
 
         String serverGroupName = "_test-sg";
         try {
-            CreateResourceReport report = new CreateResourceReport(serverGroupName,rt,new Configuration(),rc,null);
+            CreateResourceReport report = new CreateResourceReport(serverGroupName, rt, new Configuration(), rc, null);
             report = hcc.createResource(report);
 
             assert report != null : "Report was null.";

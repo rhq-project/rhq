@@ -359,6 +359,7 @@
                   <jboss.version>${jboss.version}</jboss.version>
                   <eap6.version>${eap6.version}</eap6.version>
                   <jboss.domain.bindAddress>${jboss.domain.bindAddress}</jboss.domain.bindAddress>
+                  <settings.localRepository>${settings.localRepository}</settings.localRepository>
                 </systemPropertyVariables>
               </configuration>
               <executions>
@@ -532,6 +533,12 @@
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-plugin-test-util</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
 

@@ -63,6 +63,7 @@ public abstract class AbstractIntegrationTest {
     protected static final int DC_HTTP_PORT = 9990;
     protected static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
     protected static final String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
+    protected static final String MAVEN_REPO_LOCAL = System.getProperty("settings.localRepository");
 
     String uploadToAs(String deploymentPath) throws IOException {
         ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
@@ -76,8 +77,8 @@ public abstract class AbstractIntegrationTest {
         if (fis == null) {
             File inputFile = new File(deploymentPath);
             if (!inputFile.canRead()) {
-                throw new FileNotFoundException("Input stream for resource [" + deploymentPath
-                        + "] could not be opened - does the file exist?");
+                throw new FileNotFoundException("Input stream for path [" + deploymentPath
+                        + "] could not be opened - does the file exist either in the test classpath or on the filesystem?");
             }
             fis = new FileInputStream(inputFile);
         }

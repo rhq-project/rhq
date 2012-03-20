@@ -52,8 +52,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
 //    private final Log log = LogFactory.getLog(DatasourceDeployTest.class);
 
-    private File DRIVER_FILE = new File(USER_HOME, 
-            ".m2/repository/postgresql/postgresql/9.1-901.jdbc4/postgresql-9.1-901.jdbc4.jar");
+    private File DRIVER_FILE = new File(MAVEN_REPO_LOCAL,
+            "postgresql/postgresql/9.1-901.jdbc4/postgresql-9.1-901.jdbc4.jar");
     private String DRIVER_FILENAME = DRIVER_FILE.getName();
 
     @Test(dependsOnGroups = "pc")

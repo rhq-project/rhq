@@ -81,7 +81,7 @@ public class ResourceAvailabilitySummary implements Serializable {
             }
 
             if (avail.getEndTime() == null) {
-                lastChange = avail.getStartTime().getTime();
+                lastChange = avail.getStartTime().longValue();
                 current = avail.getAvailabilityType();
             }
         }
@@ -237,7 +237,7 @@ public class ResourceAvailabilitySummary implements Serializable {
     }
 
     private long getStartEndTimeDuration(Availability avail) {
-        long endTime = (avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis());
-        return endTime - avail.getStartTime().getTime();
+        long endTime = (avail.getEndTime() != null ? avail.getEndTime().longValue() : System.currentTimeMillis());
+        return endTime - avail.getStartTime().longValue();
     }
 }

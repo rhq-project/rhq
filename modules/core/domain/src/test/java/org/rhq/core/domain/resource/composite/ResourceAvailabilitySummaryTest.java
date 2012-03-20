@@ -28,7 +28,6 @@ import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.testng.AssertJUnit;
@@ -282,7 +281,7 @@ public class ResourceAvailabilitySummaryTest {
         Availability previousAvail = null;
         List<Availability> a = new ArrayList<Availability>();
         for (int i = 0; i < objs.length; i = i + 2) {
-            Date startTime = new Date(((Number) objs[i + 1]).longValue() * 1000L);
+            Long startTime = new Long(((Number) objs[i + 1]).longValue() * 1000L);
             Availability newAvail = new Availability(res, startTime, (AvailabilityType) objs[i]);
             if (previousAvail != null) {
                 previousAvail.setEndTime(startTime);

@@ -45,7 +45,7 @@ import javax.persistence.UniqueConstraint;
 import org.rhq.core.domain.resource.Resource;
 
 @Entity
-@NamedQueries( { //
+@NamedQueries({ //
     @NamedQuery(name = MeasurementSchedule.FIND_ALL_FOR_DEFINITIONS, query = "" //
         + "SELECT ms "//
         + "  FROM MeasurementSchedule ms " //
@@ -104,6 +104,7 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT SUM(1000.0 / ms.interval) * 60.0 " //
         + "  FROM MeasurementSchedule ms " //
         + " WHERE ms.enabled = true " //
+        + "   AND ms.definition.name <> '" + MeasurementDefinition.AVAILABILITY_NAME + "' " // 
         + "   AND ms.resource.inventoryStatus = :status"), //
     @NamedQuery(name = MeasurementSchedule.DISABLE_ALL, query = "" //
         + "UPDATE MeasurementSchedule ms " //
@@ -313,7 +314,7 @@ public class MeasurementSchedule implements Serializable {
      */
     @PrePersist
     @PreUpdate
-    @SuppressWarnings( { "unused" })
+    @SuppressWarnings({ "unused" })
     private void setMtime() {
         this.mtime = System.currentTimeMillis();
     }

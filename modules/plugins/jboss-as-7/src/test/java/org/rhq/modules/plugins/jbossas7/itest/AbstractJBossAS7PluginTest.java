@@ -40,8 +40,8 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
 
     protected static final String PLUGIN_NAME = "jboss-as-7";
 
-    private static final String MANAGEMENT_USERNAME = "test";
-    private static final String MANAGEMENT_PASSWORD = "test";
+    public static final String MANAGEMENT_USERNAME = "test";
+    public static final String MANAGEMENT_PASSWORD = "test";
 
     private static boolean createdManagementUsers;
 

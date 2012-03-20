@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.integrationTests.jbossas7plugin;
+package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
 import org.testng.annotations.Test;
 
@@ -33,11 +33,11 @@ import org.rhq.modules.plugins.jbossas7.json.Remove;
  * Tests around server groups
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "nonpc")
 public class ServerGroupTest extends AbstractIntegrationTest {
 
+    @Test(dependsOnGroups = "pc")
     public void createServerGroupViaApi() throws Exception {
-
         ASConnection connection = getASConnection();
         HostControllerComponent hcc = new HostControllerComponent();
         hcc.setConnection(connection);
@@ -52,17 +52,16 @@ public class ServerGroupTest extends AbstractIntegrationTest {
             CreateResourceReport report = new CreateResourceReport(serverGroupName,rt,new Configuration(),rc,null);
             report = hcc.createResource(report);
 
-            assert report != null;
-            assert report.getStatus()== CreateResourceStatus.SUCCESS : "Create was a failure : " + report.getErrorMessage();
+            assert report != null : "Report was null.";
+            assert report.getStatus() == CreateResourceStatus.SUCCESS : "Create was a failure: " + report.getErrorMessage();
         } finally {
             Remove r = new Remove("server-group", serverGroupName);
             connection.execute(r);
         }
-
     }
 
+    @Test(dependsOnGroups = "pc")
     public void badCreateServerGroupViaApi() throws Exception {
-
         ASConnection connection = getASConnection();
         HostControllerComponent hcc = new HostControllerComponent();
         hcc.setConnection(connection);
@@ -77,13 +76,13 @@ public class ServerGroupTest extends AbstractIntegrationTest {
             CreateResourceReport report = new CreateResourceReport(serverGroupName,rt,new Configuration(),rc,null);
             report = hcc.createResource(report);
 
-        assert report != null;
-        assert report.getStatus()== CreateResourceStatus.FAILURE : "Is AS7-1430 solved ? ";
-        assert report.getException()== null;
+            assert report != null : "Report was null.";
+            assert report.getStatus() == CreateResourceStatus.FAILURE : "Is AS7-1430 solved ?";
+            assert report.getException() == null : report.getException();
         } finally {
             Remove r = new Remove("server-group", serverGroupName);
             connection.execute(r);
         }
-
     }
+
 }

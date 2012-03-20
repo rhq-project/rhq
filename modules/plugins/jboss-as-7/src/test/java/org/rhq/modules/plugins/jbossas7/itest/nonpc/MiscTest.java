@@ -1,4 +1,4 @@
-package org.rhq.modules.integrationTests.jbossas7plugin;
+package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
 import java.util.Map;
 
@@ -15,21 +15,22 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Miscellaneous tests that don't fit well into other test classes
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "nonpc")
 public class MiscTest extends AbstractIntegrationTest {
 
+    @Test(dependsOnGroups = "pc")
     public void testSetRollback() throws Exception {
-
         Operation op = new Operation("foo", new Address());
         Result res = getASConnection().execute(op);
         assert res != null;
-        assert !res.isSuccess();
-        assert res.isRolledBack();
-        assert res.getFailureDescription().endsWith("rolled-back=true");
+        assert !res.isSuccess() : "Response was successful.";
+        assert res.isRolledBack() : "Response was not rolled back: " + res.getFailureDescription();
+        assert res.getFailureDescription().endsWith("rolled-back=true")
+                : "Unexpected failure description: " + res.getFailureDescription();
     }
 
+    @Test(dependsOnGroups = "pc")
     public void testCompositeReadAttribute() throws Exception {
-
         Address a = new Address("profile=default,subsystem=web,connector=http");
         CompositeOperation cop = new CompositeOperation();
         Operation step1 = new ReadAttribute(a,"maxTime");
@@ -43,7 +44,6 @@ public class MiscTest extends AbstractIntegrationTest {
         Map<String,Object> resResult = res.getResult();
         assert resResult !=null;
         assert resResult.size()==2;
-
-
     }
+
 }

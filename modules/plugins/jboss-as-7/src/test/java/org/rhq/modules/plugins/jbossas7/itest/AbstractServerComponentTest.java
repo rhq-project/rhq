@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.testng.Assert;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -42,6 +43,9 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     }
 
     private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
+
+    private static final String SHUTDOWN_OPERATION_NAME = "shutdown";
+    private static final String START_OPERATION_NAME = "start";
 
     protected abstract ResourceType getServerResourceType();
 
@@ -80,6 +84,19 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         }
         Assert.assertEquals(releaseVersion, expectedReleaseVersion,
                 "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
+    }
+
+    public void testShutdownAndStartOperations() throws Exception {
+        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
+        AvailabilityType avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.UP);
+        invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
+        avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.DOWN);
+        // Restart the server, so the rest of the tests don't fail.
+        invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
+        avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.UP);
     }
 
 }

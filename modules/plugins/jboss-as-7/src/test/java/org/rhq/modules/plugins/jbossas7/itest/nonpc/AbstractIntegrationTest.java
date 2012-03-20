@@ -16,9 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.integrationTests.jbossas7plugin;
+package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,8 +45,10 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ASUploadConnection;
+import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -55,33 +58,37 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  * @author Heiko W. Rupp
  */
 public abstract class AbstractIntegrationTest {
-    protected static final String DC_HOST = "localhost";
+    
+    protected static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
     protected static final int DC_HTTP_PORT = 9990;
-    protected static final String DC_USER = "rhqadmin";
-    protected static final String DC_PASS = "rhqadmin";
+    protected static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
+    protected static final String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
 
-    String uploadToAs(String deploymentName) throws IOException {
-        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
-        OutputStream os = conn.getOutputStream(deploymentName);
-
+    String uploadToAs(String deploymentPath) throws IOException {
+        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
+        String fileName = new File(deploymentPath).getName();
+        OutputStream os = conn.getOutputStream(fileName);
 
 //        URL url = getClass().getClassLoader().getResource(".");
 //        System.out.println(url);
 
-
-        InputStream fis = getClass().getClassLoader().getResourceAsStream(deploymentName);
-        if (fis==null)
-            throw new FileNotFoundException("Input stream for resource [" + deploymentName + "] could not be opened - does the file exist?");
-        final byte[] buffer = new byte[1024];
-        int numRead = 0;
-
-        while(numRead > -1) {
-            numRead = fis.read(buffer);
-            if(numRead > 0) {
-                os.write(buffer,0,numRead);
+        InputStream fis = getClass().getClassLoader().getResourceAsStream(deploymentPath);
+        if (fis == null) {
+            File inputFile = new File(deploymentPath);
+            if (!inputFile.canRead()) {
+                throw new FileNotFoundException("Input stream for resource [" + deploymentPath
+                        + "] could not be opened - does the file exist?");
             }
+            fis = new FileInputStream(inputFile);
         }
-        fis.close();
+
+        StreamUtil.copy(fis, os, false);
+        try {
+            fis.close();
+        } catch (IOException e) {
+            // ignore
+        }
+
         JsonNode node = conn.finishUpload();
 //        System.out.println(node);
         assert node != null : "No result from upload - node was null";
@@ -94,35 +101,35 @@ public abstract class AbstractIntegrationTest {
     }
 
     ASConnection getASConnection() {
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT,DC_USER,DC_PASS);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
         return connection;
     }
 
-    Operation addDeployment(String deploymentName,String bytes_value)
+    Operation addDeployment(String deploymentName, String bytes_value)
     {
         Address deploymentsAddress = new Address("deployment", deploymentName);
-        Operation op = new Operation("add",deploymentsAddress);
+        Operation op = new Operation("add", deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
-        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
         content.add(contentValues);
-        op.addAdditionalProperty("content",content);
+        op.addAdditionalProperty("content", content);
         op.addAdditionalProperty("name", deploymentName); // this needs to be unique per upload
         op.addAdditionalProperty("runtime-name", deploymentName);
 
         return op;
     }
 
-
     private static final String DESCRIPTOR_FILENAME = "rhq-plugin.xml";
     private Log log = LogFactory.getLog(getClass());
     private PluginDescriptor pluginDescriptor;
 
-
     void loadPluginDescriptor() throws Exception {
         try {
-            ClassLoader classLoader = this.getClass().getClassLoader();
-            URL descriptorUrl = classLoader.getResource("META-INF" + File.separator + DESCRIPTOR_FILENAME);
+            //ClassLoader classLoader = this.getClass().getClassLoader();
+            //URL descriptorUrl = classLoader.getResource("META-INF" + File.separator + DESCRIPTOR_FILENAME);
+            File descriptorFile = new File("src/main/resources/META-INF/" + DESCRIPTOR_FILENAME);
+            URL descriptorUrl = descriptorFile.toURI().toURL();
             log.info("Loading plugin descriptor at: " + descriptorUrl);
 
             JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
@@ -143,7 +150,7 @@ public abstract class AbstractIntegrationTest {
         List<ServerDescriptor> servers = pluginDescriptor.getServers();
 
         ServerDescriptor serverDescriptor = findServer(serverName, servers);
-        assert serverDescriptor != null : "Server descriptor not found in test plugin descriptor";
+        assert serverDescriptor != null : "Server descriptor for server [" + serverName + "] not found in test plugin descriptor";
 
         return ConfigurationMetadataParser.parse("null", serverDescriptor.getResourceConfiguration());
     }
@@ -152,7 +159,7 @@ public abstract class AbstractIntegrationTest {
         List<ServiceDescriptor> services = pluginDescriptor.getServices();
 
         ServiceDescriptor serviceDescriptor = findService(serviceName, services);
-        assert serviceDescriptor != null : "Service descriptor not found in plugin descriptor";
+        assert serviceDescriptor != null : "Service descriptor for service [" + serviceName + "] not found in plugin descriptor";
 
         return ConfigurationMetadataParser.parse("null", serviceDescriptor.getResourceConfiguration());
     }

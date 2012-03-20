@@ -88,15 +88,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                 new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
                     @Override
                     public PageList<Resource> execute(ResourceCriteria criteria) {
-                        // TODO why doesn't this work with caller?
-                        // When passing caller as the first arg instead of overlord, I get an
-                        // error saying that the session id for the user rhqadmin is
-                        // invalid. What is really interesting is that I get the same error
-                        // when I try a different user. That is, the error message still
-                        // cites rhqadmin.
-                        //
-                        // jsanda
-                        return resourceMgr.findResourcesByCriteria(subjectMgr.getOverlord(), criteria);
+                        return resourceMgr.findResourcesByCriteria(caller, criteria);
                     }
                 };
 

@@ -23,11 +23,16 @@
 package org.rhq.enterprise.server.rest;
 
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.EJBContext;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.StreamingOutput;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.auth.SessionManager;
@@ -84,10 +89,36 @@ public class SetCallerInterceptor {
         // Call the EJBs
         Object result =  ctx.proceed();
 
+        // if result is StreamingOutput, we do not want to invalidate the session until it
+        // is finished writing the output; otherwise, any secure SLSB calls will fail. We
+        // instead wrap the result in an instance of SecureStreamingOutput which
+        // invalidates the session after the output has been written.
+        if (result instanceof StreamingOutput) {
+            return new SecureStreamingOutput((StreamingOutput) result, caller);
+        }
+
         // Invalidate the session again.
         sessionManager.invalidate(caller.getSessionId());
 
         return result;
+    }
+
+    private class SecureStreamingOutput implements StreamingOutput {
+
+        private StreamingOutput delegate;
+
+        private Subject caller;
+
+        public SecureStreamingOutput(StreamingOutput delegate, Subject caller) {
+            this.delegate = delegate;
+            this.caller = caller;
+        }
+
+        @Override
+        public void write(OutputStream output) throws IOException, WebApplicationException {
+            delegate.write(output);
+            sessionManager.invalidate(caller.getSessionId());
+        }
     }
 
 }

@@ -33,7 +33,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 public class InventorySummaryHandler extends AbstractRestBean implements InventorySummaryLocal {
 
     @EJB
-    private ResourceManagerLocal resourceMgr;
+    protected ResourceManagerLocal resourceMgr;
 
     @EJB
     private SubjectManagerLocal subjectMgr;
@@ -41,7 +41,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     @Override
     public StreamingOutput generateReport(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers,
                                           boolean includeDetails) {
-        final List<ResourceInstallCount> results = resourceMgr.findResourceInstallCounts(caller, true);
+        final List<ResourceInstallCount> results = getSummaryCounts();
 
         if (includeDetails) {
             return new OutputDetailedInventorySummary(results);
@@ -72,11 +72,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
 
         @Override
         public void write(OutputStream output) throws IOException, WebApplicationException {
-            final ResourceCriteria criteria = new ResourceCriteria();
-            criteria.addFilterInventoryStatus(COMMITTED);
-            criteria.addSortResourceCategory(ASC);
-            criteria.addSortPluginName(ASC);
-            criteria.addSortResourceTypeName(ASC);
+            final ResourceCriteria criteria = getDetailsQueryCriteria(installCounts);
 
             CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
                 new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
@@ -90,11 +86,27 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
                 new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
             output.write((getHeader() + "\n").getBytes());
             for (Resource resource : query) {
-                ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
-                String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
-                output.write(record.getBytes());
+                 ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
+                if (installCount != null) {
+                    String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
+                    output.write(record.getBytes());
+                }
             }
         }
+    }
+
+    protected ResourceCriteria getDetailsQueryCriteria(Map<Integer, ResourceInstallCount> installCounts) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterInventoryStatus(COMMITTED);
+        criteria.addSortResourceCategory(ASC);
+        criteria.addSortPluginName(ASC);
+        criteria.addSortResourceTypeName(ASC);
+
+        return criteria;
+    }
+
+    protected List<ResourceInstallCount> getSummaryCounts() {
+        return resourceMgr.findResourceInstallCounts(caller, true);
     }
 
     protected String getHeader() {

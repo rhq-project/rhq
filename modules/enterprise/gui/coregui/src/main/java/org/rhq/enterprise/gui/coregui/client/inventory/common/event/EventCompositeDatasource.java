@@ -103,20 +103,20 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
                 if (value == null) {
                     return null;
                 }
-                EventSeverity severity = EventSeverity.valueOf((String)value);
+                EventSeverity severity = EventSeverity.valueOf((String) value);
                 switch (severity) {
-                    case DEBUG:
-                        return MSG.common_severity_debug();
-                    case INFO:
-                        return MSG.common_severity_info();
-                    case WARN:
-                        return MSG.common_severity_warn();
-                    case ERROR:
-                        return MSG.common_severity_error();
-                    case FATAL:
-                        return MSG.common_severity_fatal();
-                    default:
-                        return null;
+                case DEBUG:
+                    return MSG.common_severity_debug();
+                case INFO:
+                    return MSG.common_severity_info();
+                case WARN:
+                    return MSG.common_severity_warn();
+                case ERROR:
+                    return MSG.common_severity_error();
+                case FATAL:
+                    return MSG.common_severity_fatal();
+                default:
+                    return null;
                 }
             }
         });
@@ -154,7 +154,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
                 if (value == null) {
                     return null;
                 }
-                String sourceLocation = (String)value;
+                String sourceLocation = (String) value;
                 return (sourceLocation.length() > 40) ? sourceLocation : null;
             }
         });
@@ -164,8 +164,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
@@ -288,8 +287,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
-                        record
-                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
 
                     response.setData(records);
@@ -311,11 +309,12 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
         EventCriteria criteria = new EventCriteria();
 
+        // This code is unlikely to be necessary as the encompassing view should be using an initial
+        // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to 
+        // manipulate the PageControl directly as per the restrictions on getFetchCriteria() (see jdoc).
         PageControl pageControl = getPageControl(request);
         if (pageControl.getOrderingFields().isEmpty()) {
-            criteria.addSortTimestamp(PageOrdering.DESC); // default sort
-        } else {
-            criteria.setPageControl(pageControl);
+            pageControl.initDefaultOrderingField("timestamp", PageOrdering.DESC);
         }
 
         // TODO: This call is broken in 2.2, http://code.google.com/p/smartgwt/issues/detail?id=490

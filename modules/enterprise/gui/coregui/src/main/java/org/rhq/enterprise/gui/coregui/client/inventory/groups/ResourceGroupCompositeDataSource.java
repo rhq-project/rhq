@@ -131,7 +131,6 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     @Override
     protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.setPageControl(getPageControl(request));
 
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));

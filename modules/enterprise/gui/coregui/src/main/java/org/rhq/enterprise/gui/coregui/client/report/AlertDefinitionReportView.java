@@ -73,7 +73,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.DataSource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(), IconEnum.ALERT_DEFINITIONS);
+    public static final ViewName VIEW_ID = new ViewName("AlertDefinitions", MSG.view_reports_alertDefinitions(),
+        IconEnum.ALERT_DEFINITIONS);
 
     public AlertDefinitionReportView(String locatorId) {
         super(locatorId);
@@ -116,7 +117,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
         protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
             AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterResourceOnly(true); // guarantees that all alert defs we get will have a non-null Resource object
-            criteria.setPageControl(getPageControl(request));
+
             criteria.fetchResource(true);
             criteria.fetchGroupAlertDefinition(true);
             return criteria;
@@ -206,7 +207,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                         int typeId = result.get(0).getResourceType().getId();
                                         CoreGUI.goToView(LinkManager.getAdminTemplatesEditLink(
                                             AlertDefinitionTemplateTypeView.VIEW_ID.getName(), typeId)
-                                            + "/" + templateId);
+                                            + "/"
+                                            + templateId);
                                     }
                                 }
 
@@ -218,8 +220,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                             });
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef
-                            .getResourceGroup()), "Alert", "Definitions")
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(
+                            EntityContext.forGroup(groupAlertDef.getResourceGroup()), "Alert", "Definitions")
                             + "/" + groupAlertDef.getId());
                     }
                 }
@@ -229,8 +231,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
             resourceField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return SeleniumUtility.getLocatableHref(url, StringUtility.escapeHtml(value.toString()), null);
                 }
             });
@@ -332,8 +333,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
-                        record
-                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
                     }
                     response.setData(records);
                     response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set

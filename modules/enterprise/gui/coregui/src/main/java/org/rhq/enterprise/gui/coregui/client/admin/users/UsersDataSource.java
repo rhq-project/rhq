@@ -123,8 +123,8 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         passwordField.setValidators(passwordValidator);
         fields.add(passwordField);
 
-        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY, MSG
-            .dataSource_users_field_passwordVerify(), 100, true);
+        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
+            MSG.dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
         passwordsEqualValidator.setErrorMessage(MSG.dataSource_users_passwordsDoNotMatch());
@@ -139,15 +139,15 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
             null, 100, true);
         fields.add(lastNameField);
 
-        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS, MSG
-            .dataSource_users_field_emailAddress(), null, 100, true);
+        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS,
+            MSG.dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
         RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
         emailAddressValidator.setErrorMessage(MSG.dataSource_users_invalidEmailAddress());
         emailAddressField.setValidators(emailAddressValidator);
 
-        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER, MSG
-            .dataSource_users_field_phoneNumber(), null, 100, false);
+        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER,
+            MSG.dataSource_users_field_phoneNumber(), null, 100, false);
         fields.add(phoneNumberField);
 
         DataSourceTextField departmentField = createTextField(Field.DEPARTMENT,
@@ -313,9 +313,6 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
     @Override
     protected SubjectCriteria getFetchCriteria(DSRequest request) {
         SubjectCriteria criteria = new SubjectCriteria();
-
-        // Pagination
-        criteria.setPageControl(getPageControl(request));
 
         // Filtering
         Integer subjectId = getFilter(request, Field.ID, Integer.class);

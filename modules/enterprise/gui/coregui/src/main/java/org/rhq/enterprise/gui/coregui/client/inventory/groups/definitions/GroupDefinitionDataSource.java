@@ -116,7 +116,6 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
     @Override
     protected ResourceGroupDefinitionCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 
@@ -195,7 +194,7 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
         record.setAttribute("recursive", from.isRecursive());
 
         // convert millis to minutes for display
-        long recalcIntervalLong =  from.getRecalculationInterval()/(60 * 1000);
+        long recalcIntervalLong = from.getRecalculationInterval() / (60 * 1000);
         record.setAttribute("recalculationInterval", convertLongToString(recalcIntervalLong));
         record.setAttribute("modifiedTime", from.getModifiedTime());
         record.setAttribute("createdTime", from.getCreatedTime());

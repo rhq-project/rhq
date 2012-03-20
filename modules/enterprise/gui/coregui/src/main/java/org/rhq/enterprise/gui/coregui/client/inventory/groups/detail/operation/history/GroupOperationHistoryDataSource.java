@@ -71,7 +71,6 @@ public class GroupOperationHistoryDataSource extends
             criteria.addFilterResourceGroupIds(Arrays.asList(groupId));
         }
 
-        criteria.setPageControl(getPageControl(request));
         return criteria;
     }
 

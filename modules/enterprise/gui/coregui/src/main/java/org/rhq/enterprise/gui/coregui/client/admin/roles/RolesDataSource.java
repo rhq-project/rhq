@@ -107,20 +107,20 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
             100, false);
         fields.add(descriptionField);
 
-        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY, MSG
-            .common_title_resourceGroups());
+        DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY,
+            MSG.common_title_resourceGroups());
         fields.add(resourceGroupsField);
 
-        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, MSG
-            .common_title_permissions());
+        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY,
+            MSG.common_title_permissions());
         fields.add(permissionsField);
 
-        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, MSG
-            .datasource_roles_field_subjects());
+        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY,
+            MSG.datasource_roles_field_subjects());
         fields.add(subjectsField);
 
-        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY, MSG
-            .datasource_roles_field_ldapGroups());
+        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY,
+            MSG.datasource_roles_field_ldapGroups());
         fields.add(ldapGroupsField);
 
         return fields;
@@ -181,8 +181,8 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
             }
 
             public void onSuccess(Void result) {
-                sendSuccessResponse(request, response, roleToRemove, new Message(MSG
-                    .view_adminRoles_roleDeleted(rolename)));
+                sendSuccessResponse(request, response, roleToRemove,
+                    new Message(MSG.view_adminRoles_roleDeleted(rolename)));
             }
         });
 
@@ -276,9 +276,6 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
 
     protected RoleCriteria getFetchCriteria(DSRequest request) {
         RoleCriteria criteria = new RoleCriteria();
-
-        // Pagination
-        criteria.setPageControl(getPageControl(request));
 
         // Filtering
         Integer id = getFilter(request, Field.ID, Integer.class);

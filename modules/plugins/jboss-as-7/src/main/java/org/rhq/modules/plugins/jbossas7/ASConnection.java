@@ -58,6 +58,7 @@ public class ASConnection {
     private String host;
     private int port;
     private String FAILURE_DESCRIPTION = "\"failure-description\"";
+    private String INCLUDE_DEFAULT = "include-defaults";
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -126,6 +127,13 @@ public class ASConnection {
 
             OutputStream out = conn.getOutputStream();
 
+            //add additional request property to include-defaults=true to all requests.
+            //if it's already set we leave it alone and assume that Operation creator is taking over control.
+            if (operation.getAdditionalProperties().isEmpty()
+                || !operation.getAdditionalProperties().containsKey(INCLUDE_DEFAULT)) {
+                operation.addAdditionalProperty("include-defaults", "true");
+            }
+
             String json_to_send = mapper.writeValueAsString(operation);
 
             //check for spaces in the path which the AS7 server will reject. Log verbose error and
@@ -191,17 +199,17 @@ public class ASConnection {
                 return operationResult;
             } else {
                 //if not properly authorized sends plugin exception for visual indicator in the ui.
-                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED ||
-                    responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
+                if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED
+                    || responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
                     if (log.isDebugEnabled()) {
                         log.debug("[" + url + "] Response was empty and response code was " + responseCode + " "
-                                            + conn.getResponseMessage() + ".");
+                            + conn.getResponseMessage() + ".");
                     }
                     throw new InvalidPluginConfigurationException(
                         "Credentials for plugin to connect to AS7 management interface are invalid. Update Connection Settings with valid credentials.");
                 } else {
                     log.error("[" + url + "] Response was empty and response code was " + responseCode + " "
-                                            + conn.getResponseMessage() + ".");
+                        + conn.getResponseMessage() + ".");
                 }
             }
         } catch (IllegalArgumentException iae) {

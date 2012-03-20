@@ -2097,27 +2097,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("resourceId", resourceId);
 
         List<Availability> availabilities = query.getResultList();
-        long upTime = 0;
-        long downTime = 0;
-        int failures = 0;
-        long lastChange = 0;
-        AvailabilityType current = null;
-        for (Availability avail : availabilities) {
-            if (avail.getAvailabilityType() == AvailabilityType.UP) {
-                upTime += ((avail.getEndTime() != null ? avail.getEndTime() : System.currentTimeMillis()) - avail
-                    .getStartTime());
-            } else {
-                downTime += ((avail.getEndTime() != null ? avail.getEndTime() : System.currentTimeMillis()) - avail
-                    .getStartTime());
-                failures++;
-            }
-            if (avail.getEndTime() == null) {
-                lastChange = avail.getStartTime();
-                current = avail.getAvailabilityType();
-            }
-        }
 
-        return new ResourceAvailabilitySummary(upTime, downTime, failures, lastChange, current);
+        return new ResourceAvailabilitySummary(availabilities);
     }
 
     @SuppressWarnings("unchecked")

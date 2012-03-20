@@ -47,11 +47,14 @@ public class SuspectMetricsReportBean extends AbstractRestBean implements Suspec
             sb = new StringBuilder("Id,Name,ResourceTypeId,\n"); // set title row
             if(!comps.isEmpty()){
                 for (MeasurementOOBComposite oobComposite : comps) {
-                    sb.append( oobComposite.getResourceId());
-                    sb.append(",");
                     sb.append( oobComposite.getResourceName());
                     sb.append(",");
-                    sb.append( oobComposite.getResourceTypeId());
+                    //@todo: ancestry
+                    sb.append( oobComposite.getFormattedBaseband());
+                    sb.append(",");
+                    sb.append( oobComposite.getOutlier());
+                    sb.append(",");
+                    sb.append( oobComposite.getFactor());
                     sb.append("\n");
                 }
             } else {

@@ -11,7 +11,7 @@ public interface AlertDefinitionReportLocal {
     @GET
     @Path("/")
     @Produces({"text/csv", "application/xml"})
-    StreamingOutput inventorySummary(
+    StreamingOutput alertDefinitions(
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers );

@@ -1,11 +1,10 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 import org.rhq.enterprise.server.util.CriteriaQuery;
@@ -20,93 +19,53 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
-import static org.rhq.core.domain.util.PageOrdering.ASC;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class AlertDefinitionReportBean extends AbstractRestBean implements AlertDefinitionReportLocal {
 
     @EJB
-    private ResourceManagerLocal resourceMgr;
+    private AlertDefinitionManagerLocal alertDefinitionManager;
 
     @EJB
     private SubjectManagerLocal subjectMgr;
 
     @Override
-    public StreamingOutput inventorySummary(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
-        final List<ResourceInstallCount> results = resourceMgr.findResourceInstallCounts(caller, true);
+    public StreamingOutput alertDefinitions(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
 
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
-                    stream.write("Resource Type,Plugin,Category,Version,Count\n".getBytes());
-                    for (ResourceInstallCount installCount : results) {
-                        String record = toCSV(installCount) + "\n";
+                    final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+                    criteria.addFilterResourceOnly(true);
+
+                    CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria> queryExecutor =
+                            new CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria>() {
+                                @Override
+                                public PageList<AlertDefinition> execute(AlertDefinitionCriteria criteria) {
+
+                                    return alertDefinitionManager.findAlertDefinitionsByCriteria(subjectMgr.getOverlord(), criteria);
+                                }
+                            };
+
+                    CriteriaQuery<AlertDefinition, AlertDefinitionCriteria> query =
+                            new CriteriaQuery<AlertDefinition, AlertDefinitionCriteria>(criteria, queryExecutor);
+                    for (AlertDefinition alert : query) {
+                        String record = toCSV(alert)  + "\n";
                         stream.write(record.getBytes());
                     }
+
                 }
+                private String toCSV(AlertDefinition alertDefinition) {
+                    return alertDefinition.getName() + "," + alertDefinition.getDescription() + "," +
+                            alertDefinition.getEnabled() + "," + alertDefinition.getPriority()
+                            + "," + alertDefinition.getParentId()
+                            + "," + alertDefinition.getPriority();
+                    //@todo:ancestry
+                }
+
             };
+
     }
 
-    private class OutputDetailedInventorySummary implements StreamingOutput {
-
-        // map of counts keyed by resource type id
-        private Map<Integer, ResourceInstallCount> installCounts = new HashMap<Integer, ResourceInstallCount>();
-
-        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCountList) {
-            for (ResourceInstallCount installCount : installCountList) {
-                installCounts.put(installCount.getTypeId(), installCount);
-            }
-        }
-
-        @Override
-        public void write(OutputStream output) throws IOException, WebApplicationException {
-            final ResourceCriteria criteria = new ResourceCriteria();
-            criteria.addFilterInventoryStatus(COMMITTED);
-            criteria.addSortResourceCategory(ASC);
-            criteria.addSortPluginName(ASC);
-            criteria.addSortResourceTypeName(ASC);
-
-            CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
-                new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
-                    @Override
-                    public PageList<Resource> execute(ResourceCriteria criteria) {
-                        // TODO why doesn't this work with caller?
-                        // When passing caller as the first arg instead of overlord, I get an
-                        // error saying that the session id for the user rhqadmin is
-                        // invalid. What is really interesting is that I get the same error
-                        // when I try a different user. That is, the error message still
-                        // cites rhqadmin.
-                        //
-                        // jsanda
-                        return resourceMgr.findResourcesByCriteria(subjectMgr.getOverlord(), criteria);
-                    }
-                };
-
-            CriteriaQuery<Resource, ResourceCriteria> query =
-                new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-            for (Resource resource : query) {
-                ResourceInstallCount installCount = installCounts.get(resource.getResourceType().getId());
-                String record = toCSV(installCount) + "," + toCSV(resource) + "\n";
-                output.write(record.getBytes());
-            }
-        }
-    }
-
-    private String toCSV(ResourceInstallCount installCount) {
-        return installCount.getTypeName() + "," + installCount.getTypePlugin() + "," +
-            installCount.getCategory().getDisplayName() + "," + installCount.getVersion() + "," +
-            installCount.getCount();
-    }
-
-    private String toCSV(Resource resource) {
-        return resource.getName() + "," + resource.getAncestry() + "," + resource.getDescription() + "," +
-            resource.getResourceType().getName() + "," + resource.getVersion() + "," +
-            resource.getCurrentAvailability().getAvailabilityType();
-    }
 }

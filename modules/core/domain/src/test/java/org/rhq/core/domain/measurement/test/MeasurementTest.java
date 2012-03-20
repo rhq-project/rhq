@@ -256,13 +256,13 @@ public class MeasurementTest extends AbstractEJB3Test {
             assert avails.size() == 1 : "should have initial avail";
             Availability initialAvail = avails.get(0);
 
-            Availability beginUpTime = new Availability(res, getAnotherDate(), AvailabilityType.UP);
+            Availability beginUpTime = new Availability(res, getAnotherDate().getTime(), AvailabilityType.UP);
             em.persist(beginUpTime);
             em.flush();
 
             Date middleOfAvailabilityUP = getAnotherDate();
 
-            Availability endUpTime = new Availability(res, getAnotherDate(), AvailabilityType.DOWN);
+            Availability endUpTime = new Availability(res, getAnotherDate().getTime(), AvailabilityType.DOWN);
             em.persist(endUpTime);
             em.flush();
 

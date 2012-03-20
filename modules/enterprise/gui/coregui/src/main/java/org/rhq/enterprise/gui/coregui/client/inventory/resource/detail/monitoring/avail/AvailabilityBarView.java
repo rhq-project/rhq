@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Img;
@@ -26,10 +26,10 @@ import com.smartgwt.client.widgets.events.MouseOverEvent;
 import com.smartgwt.client.widgets.events.MouseOverHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -39,6 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
+ * This is a potential replacement to the JSF "Christmas Tree".  Unused at the moment but something to
+ * consider when we replace JSF completely.
+ * 
  * @author Greg Hinkle
  */
 public class AvailabilityBarView extends HLayout {
@@ -58,10 +61,10 @@ public class AvailabilityBarView extends HLayout {
     protected void onInit() {
         super.onInit();
 
-        PageControl pc = PageControl.getUnlimitedInstance();
-        pc.initDefaultOrderingField("av.startTime", PageOrdering.ASC);
-
-        GWTServiceLookup.getAvailabilityService().findAvailabilityForResource(resource.getId(), pc,
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(resource.getId());
+        c.addSortStartTime(PageOrdering.ASC);
+        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
             new AsyncCallback<PageList<Availability>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
@@ -75,9 +78,9 @@ public class AvailabilityBarView extends HLayout {
 
     private void update(PageList<Availability> result) {
 
-        long start = result.get(0).getStartTime().getTime();
+        long start = result.get(0).getStartTime();
         long end = result.get(result.size() - 1).getEndTime() != null ? result.get(result.size() - 1).getEndTime()
-            .getTime() : System.currentTimeMillis();
+            : System.currentTimeMillis();
 
         long diff = end - start;
 
@@ -86,9 +89,9 @@ public class AvailabilityBarView extends HLayout {
 
         for (Availability a : result) {
 
-            long endTime = a.getEndTime() != null ? a.getEndTime().getTime() : System.currentTimeMillis();
+            long endTime = a.getEndTime() != null ? a.getEndTime() : System.currentTimeMillis();
 
-            double width = (((double) (endTime - a.getStartTime().getTime()) / diff) * 100);
+            double width = (((double) (endTime - a.getStartTime()) / diff) * 100);
             String widthString = width + "%";
             if (width == 0) {
                 widthString = "2px";
@@ -112,7 +115,7 @@ public class AvailabilityBarView extends HLayout {
                 }
             });
 
-            long duration = endTime - a.getStartTime().getTime();
+            long duration = endTime - a.getStartTime();
 
             String durationString = MeasurementConverterClient.format((double) duration, MeasurementUnits.MILLISECONDS,
                 true);

@@ -2104,15 +2104,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         AvailabilityType current = null;
         for (Availability avail : availabilities) {
             if (avail.getAvailabilityType() == AvailabilityType.UP) {
-                upTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail
-                    .getStartTime().getTime());
+                upTime += ((avail.getEndTime() != null ? avail.getEndTime() : System.currentTimeMillis()) - avail
+                    .getStartTime());
             } else {
-                downTime += ((avail.getEndTime() != null ? avail.getEndTime().getTime() : System.currentTimeMillis()) - avail
-                    .getStartTime().getTime());
+                downTime += ((avail.getEndTime() != null ? avail.getEndTime() : System.currentTimeMillis()) - avail
+                    .getStartTime());
                 failures++;
             }
             if (avail.getEndTime() == null) {
-                lastChange = avail.getStartTime().getTime();
+                lastChange = avail.getStartTime();
                 current = avail.getAvailabilityType();
             }
         }

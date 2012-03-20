@@ -322,7 +322,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 }
             } else {
                 // avoid the overhead of updating the resource container, the avail type did not change
-                availability = new Availability(resource, new Date(), current);
+                availability = new Availability(resource, current);
             }
 
             // update the report

@@ -74,6 +74,7 @@ import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposit
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
@@ -269,6 +270,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //ALERTDEFINITIONMANAGER: END ----------------------------------
 
     //AVAILABILITYMANAGER: BEGIN ----------------------------------
+    public PageList<Availability> findAvailabilityByCriteria(Subject subject, AvailabilityCriteria criteria) {
+        return availabilityManager.findAvailabilityByCriteria(subject, criteria);
+    }
+
     public PageList<Availability> findAvailabilityForResource(Subject subject, int resourceId, PageControl pc) {
         return availabilityManager.findAvailabilityForResource(subject, resourceId, pc);
     }

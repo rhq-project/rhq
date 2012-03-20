@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -131,9 +130,8 @@ public class ResourceContainer implements Serializable {
     }
 
     public Availability updateAvailability(AvailabilityType availabilityType) {
-        Date now = new Date();
         synchronized (this) {
-            this.availability = new Availability(this.resource, now, availabilityType);
+            this.availability = new Availability(this.resource, availabilityType);
             return this.availability;
         }
     }

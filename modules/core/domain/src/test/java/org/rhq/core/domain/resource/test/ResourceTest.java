@@ -23,7 +23,6 @@
 package org.rhq.core.domain.resource.test;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -116,7 +115,7 @@ public class ResourceTest extends AbstractEJB3Test {
                 em.persist(newResource);
                 resources.add(newResource);
 
-                em.persist(new Availability(newResource, new Date(), AvailabilityType.UP));
+                em.persist(new Availability(newResource, AvailabilityType.UP));
             }
         } finally {
             getTransactionManager().commit();

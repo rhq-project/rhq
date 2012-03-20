@@ -75,7 +75,12 @@ public class TimestampCellFormatter implements CellFormatter {
             } else if (value instanceof Integer) {
                 longValue = (Integer) value;
             } else if (value instanceof String) {
-                longValue = Long.parseLong((String) value);
+                try {
+                    longValue = Long.parseLong((String) value);
+                } catch (NumberFormatException e) {
+                    // allow special string values
+                    return (String) value;
+                }
             } else {
                 throw new IllegalArgumentException("value parameter is not a Date, Long, Integer, or a String.");
             }
@@ -101,8 +106,11 @@ public class TimestampCellFormatter implements CellFormatter {
     public static HoverCustomizer getHoverCustomizer(final String dateTimeAttributeName) {
         return new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                Date attribValue = record.getAttributeAsDate(dateTimeAttributeName);
-                return getHoverDateString(attribValue);
+                if (value instanceof Date) {
+                    Date attribValue = record.getAttributeAsDate(dateTimeAttributeName);
+                    return getHoverDateString(attribValue);
+                }
+                return value.toString();
             }
         };
     }

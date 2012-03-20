@@ -24,7 +24,6 @@ package org.rhq.core.domain.resource;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1881,7 +1880,7 @@ public class Resource implements Comparable<Resource>, Serializable {
             // initialize avail to be one big unknown period, starting at epoch. 
             this.currentAvailability = new ResourceAvailability(this, AvailabilityType.UNKNOWN);
             this.availability = new ArrayList<Availability>(1);
-            this.availability.add(new Availability(this, new Date(0), AvailabilityType.UNKNOWN));
+            this.availability.add(new Availability(this, 0L, AvailabilityType.UNKNOWN));
         }
     }
 }

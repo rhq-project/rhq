@@ -159,7 +159,7 @@ public class Availability implements Serializable {
      * Start time of this availability state
      */
     @Column(name = "START_TIME", nullable = false)
-    private long startTime;
+    private Long startTime;
 
     /**
      * End time of this availability state (which is the start of the next availability time period)
@@ -183,20 +183,30 @@ public class Availability implements Serializable {
     }
 
     /**
+     * StartTime defaults to current time
+     *
+     * @param resource
+     * @param type
+     */
+    public Availability(Resource resource, AvailabilityType type) {
+        this(resource, System.currentTimeMillis(), type);
+    }
+
+    /**
      * Constructor for {@link Availability}. If <code>type</code> is <code>null</code>, it will be considered unknown.
      *
      * @param resource
-     * @param startTime
+     * @param startTime if null set to current time
      * @param type
      */
-    public Availability(Resource resource, Date startTime, AvailabilityType type) {
+    public Availability(Resource resource, Long startTime, AvailabilityType type) {
         if (resource == null) {
             throw new IllegalArgumentException("resource==null");
         }
 
         this.resource = resource;
         this.availabilityType = type;
-        this.startTime = (startTime != null) ? startTime.getTime() : new Date().getTime();
+        this.startTime = (startTime != null) ? startTime : System.currentTimeMillis();
         this.endTime = null;
     }
 
@@ -208,12 +218,12 @@ public class Availability implements Serializable {
         return resource;
     }
 
-    public Date getStartTime() {
-        return new Date(startTime);
+    public Long getStartTime() {
+        return startTime;
     }
 
-    public void setStartTime(Date startTime) {
-        this.startTime = startTime.getTime();
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
     }
 
     /**
@@ -222,12 +232,12 @@ public class Availability implements Serializable {
      *
      * @return end of the availability period
      */
-    public Date getEndTime() {
-        return (endTime != null) ? new Date(endTime.longValue()) : null;
+    public Long getEndTime() {
+        return endTime;
     }
 
-    public void setEndTime(Date endTime) {
-        this.endTime = (endTime != null) ? endTime.getTime() : null;
+    public void setEndTime(Long endTime) {
+        this.endTime = endTime;
     }
 
     public AvailabilityType getAvailabilityType() {
@@ -240,8 +250,8 @@ public class Availability implements Serializable {
 
     @Override
     public String toString() {
-        return "Availability[id=" + id + ",type=" + this.availabilityType + ",start-time=" + getStartTime()
-            + ",end-time=" + getEndTime() + "]";
+        return "Availability[id=" + id + ",type=" + this.availabilityType + ",start-time=" + new Date(getStartTime())
+            + ",end-time=" + ((null != getEndTime()) ? new Date(getEndTime()) : null) + "]";
     }
 
     @Override

@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AvailabilityGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -27,7 +27,7 @@ import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implements AvailabilityGWTService {
 
@@ -35,10 +35,11 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
 
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
 
-    public PageList<Availability> findAvailabilityForResource(int resourceId, PageControl pc) throws RuntimeException {
+    @Override
+    public PageList<Availability> findAvailabilityByCriteria(AvailabilityCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(availabilityManager.findAvailabilityForResource(getSessionSubject(),
-                resourceId, pc), "AvailabilityService.findAvailabilityForResource");
+            return SerialUtility.prepare(availabilityManager.findAvailabilityByCriteria(getSessionSubject(), criteria),
+                "AvailabilityService.findAvailabilityByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -101,7 +101,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
         private int resourceId;
 
         public ListView(String locatorId, int resourceId) {
-            super(locatorId, null, new SortSpecifier[] { new SortSpecifier("startTime", SortDirection.ASCENDING) });
+            super(locatorId, null, new SortSpecifier[] { new SortSpecifier("startTime", SortDirection.DESCENDING) });
 
             this.resourceId = resourceId;
 
@@ -188,6 +188,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
             protected AvailabilityCriteria getFetchCriteria(DSRequest request) {
                 AvailabilityCriteria c = new AvailabilityCriteria();
                 c.addFilterResourceId(resourceId);
+                c.addFilterInitialAvailability(false);
 
                 // This code is unlikely to be necessary as the encompassing view should be using an initial
                 // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to 

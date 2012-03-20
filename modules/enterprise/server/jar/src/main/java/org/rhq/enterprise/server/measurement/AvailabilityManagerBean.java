@@ -872,7 +872,6 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         CriteriaQueryRunner<Availability> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         PageList<Availability> result = queryRunner.execute();
-        log.info("RESULT of findAvailabilityByCriteria() : \n" + result);
         return result;
     }
 

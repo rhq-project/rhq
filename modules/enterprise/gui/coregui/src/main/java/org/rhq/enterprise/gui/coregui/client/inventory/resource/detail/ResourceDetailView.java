@@ -130,7 +130,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab monitorGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
-    private SubTab monitorOldAvail;
     private SubTab monitorAvail;
     private SubTab monitorSched;
     private SubTab monitorCallTime;
@@ -208,16 +207,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab.extendLocatorId("Traits"), new ViewName("Traits",
             MSG.view_tabs_common_traits()), null);
-        monitorOldAvail = new SubTab(monitoringTab.extendLocatorId("Availability"), new ViewName("Availability", "Old "
-            + MSG.view_tabs_common_availability()), null);
         monitorAvail = new SubTab(monitoringTab.extendLocatorId("Availability"), new ViewName("Availability",
             MSG.view_tabs_common_availability()), null);
         monitorSched = new SubTab(monitoringTab.extendLocatorId("Schedules"), new ViewName("Schedules",
             MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab.extendLocatorId("CallTime"), new ViewName("CallTime",
             MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorOldAvail, monitorAvail,
-            monitorSched, monitorCallTime);
+        monitoringTab.registerSubTabs(monitorGraphs, monitorTables, monitorTraits, monitorAvail, monitorSched,
+            monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events",
@@ -434,14 +431,6 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             }
         };
         updateSubTab(this.monitoringTab, this.monitorTraits, visible, true, viewFactory);
-
-        updateSubTab(this.monitoringTab, this.monitorOldAvail, true, true, new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return new FullHTMLPane(monitorAvail.extendLocatorId("View"),
-                    "/rhq/resource/monitor/availabilityHistory-plain.xhtml?id=" + resource.getId());
-            }
-        });
 
         updateSubTab(this.monitoringTab, this.monitorAvail, true, true, new ViewFactory() {
             @Override

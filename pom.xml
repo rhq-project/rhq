@@ -881,6 +881,16 @@
       </plugin>
 
       <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <trimStackTrace>false</trimStackTrace>
+          <systemPropertyVariables>
+            <java.util.prefs.userRoot>${java.io.tmpdir}/${user.name}</java.util.prefs.userRoot>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-idea-plugin</artifactId>
         <configuration>
           <ideaVersion>6.x</ideaVersion>
@@ -1180,6 +1190,13 @@
 
        <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <useFile>false</useFile>
+        </configuration>
+       </plugin>
+
+       <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <useFile>false</useFile>
         </configuration>

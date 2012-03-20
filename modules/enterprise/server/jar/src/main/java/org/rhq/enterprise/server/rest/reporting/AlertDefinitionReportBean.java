@@ -20,6 +20,8 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import static org.rhq.enterprise.server.rest.reporting.ReportHelper.*;
+
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class AlertDefinitionReportBean extends AbstractRestBean implements AlertDefinitionReportLocal {
@@ -57,7 +59,7 @@ public class AlertDefinitionReportBean extends AbstractRestBean implements Alert
 
                 }
                 private String toCSV(AlertDefinition alertDefinition) {
-                    return alertDefinition.getName() + "," + alertDefinition.getDescription() + "," +
+                    return cleanForCSV(alertDefinition.getName()) + "," + cleanForCSV(alertDefinition.getDescription()) + "," +
                             alertDefinition.getEnabled() + "," + alertDefinition.getPriority()
                             + "," + alertDefinition.getParentId()
                             + "," + alertDefinition.getPriority();

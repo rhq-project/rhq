@@ -18,10 +18,46 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.text.DateFormat;
+import java.util.Date;
+
+/**
+ * Formatting tools for rest reporting.
+ */
 public class ReportHelper {
-    
-    public static String stripInvalidChars(String input){
+
+    private ReportHelper(){
+       // This is just a static utility class
+    }
+
+    /**
+     * Strip out any invalid characters from CSV data.
+     * @param input
+     * @return Cleaned String suitable for inclusion in CSV file
+     */
+    public static String cleanForCSV(String input){
         return input.replace(',',' ').replace('\n', ' ');
+    }
+
+    /**
+     * Standard Date/time format for CSV files
+     * @param epochMillis
+     * @return String formatted string (i.e. '11/4/03 8:14 PM')
+     */
+    public static String formatDateTime(long epochMillis){
+        Date date = new Date(epochMillis);
+        return DateFormat.getInstance().format(date);
+    }
+
+
+    /**
+     * Standard Date/time format for CSV files
+     * @param epochMillis
+     * @return String formatted string (i.e. '11/4/03')
+     */
+    public static String formatDate(long epochMillis){
+        Date date = new Date(epochMillis);
+        return DateFormat.getDateInstance().format(date);
     }
 
 }

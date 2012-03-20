@@ -1,9 +1,9 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
@@ -20,12 +20,15 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
+import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
+
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class RecentAlertsReportBean extends AbstractRestBean implements RecentAlertsReportLocal {
 
     @EJB
-    private AlertDefinitionManagerLocal alertDefinitionManager;
+    private AlertManagerLocal alertManager;
 
     @EJB
     private SubjectManagerLocal subjectMgr;
@@ -36,32 +39,29 @@ public class RecentAlertsReportBean extends AbstractRestBean implements RecentAl
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
-                final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-                criteria.addFilterResourceOnly(true);
-                ///criteria.setPageControl(PageControl.SIZE_UNLIMITED());
+                final AlertCriteria criteria = new AlertCriteria();
 
-                CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria> queryExecutor =
-                        new CriteriaQueryExecutor<AlertDefinition, AlertDefinitionCriteria>() {
+                CriteriaQueryExecutor<Alert, AlertCriteria> queryExecutor =
+                        new CriteriaQueryExecutor<Alert, AlertCriteria>() {
                             @Override
-                            public PageList<AlertDefinition> execute(AlertDefinitionCriteria criteria) {
+                            public PageList<Alert> execute(AlertCriteria criteria) {
 
-                                return alertDefinitionManager.findAlertDefinitionsByCriteria(subjectMgr.getOverlord(), criteria);
+                                return alertManager.findAlertsByCriteria(subjectMgr.getOverlord(), criteria);
                             }
                         };
 
-                CriteriaQuery<AlertDefinition, AlertDefinitionCriteria> query =
-                        new CriteriaQuery<AlertDefinition, AlertDefinitionCriteria>(criteria, queryExecutor);
-                for (AlertDefinition alert : query) {
+                CriteriaQuery<Alert, AlertCriteria> query =
+                        new CriteriaQuery<Alert, AlertCriteria>(criteria, queryExecutor);
+                for (Alert alert : query) {
                     String record = toCSV(alert)  + "\n";
                     stream.write(record.getBytes());
                 }
 
             }
-            private String toCSV(AlertDefinition alertDefinition) {
-                return alertDefinition.getName() + "," + alertDefinition.getDescription() + "," +
-                        alertDefinition.getEnabled() + "," + alertDefinition.getPriority()
-                        + "," + alertDefinition.getParentId()
-                        + "," + alertDefinition.getPriority();
+            private String toCSV(Alert alert) {
+               //@todo:conditionText, status, ancestry
+                return formatDateTime(alert.getCtime()) + "," + cleanForCSV(alert.getAlertDefinition().getName()) + "," +
+                        alert.getAlertDefinition().getPriority() + "," + cleanForCSV(alert.getAlertDefinition().getResource().getName());
             }
 
         };

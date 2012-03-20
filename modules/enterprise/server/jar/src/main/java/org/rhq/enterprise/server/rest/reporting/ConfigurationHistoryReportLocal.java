@@ -13,7 +13,7 @@ public interface ConfigurationHistoryReportLocal {
     @GET
     @Path("/")
     @Produces({"text/csv", "application/xml"})
-    Response configurationHistory(
+    StreamingOutput configurationHistory(
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

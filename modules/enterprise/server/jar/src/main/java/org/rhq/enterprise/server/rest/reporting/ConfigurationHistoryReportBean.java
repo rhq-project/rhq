@@ -16,9 +16,14 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.*;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import static org.rhq.core.domain.util.PageOrdering.ASC;
+import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
+import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
@@ -33,51 +38,41 @@ public class ConfigurationHistoryReportBean extends AbstractRestBean implements 
     private SubjectManagerLocal subjectMgr;
 
     @Override
-    public Response configurationHistory(UriInfo uriInfo, Request request, HttpHeaders headers ) {
-        StringBuilder sb;
-        log.info(" ** Configuration History REST invocation");
-        ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
-        criteria.fetchConfiguration(true);
-        criteria.addSortCreatedTime(ASC);
+    public StreamingOutput configurationHistory(UriInfo uriInfo, Request request, HttpHeaders headers ) {
 
-        CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> queryExecutor =
-                new CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>() {
-                    @Override
-                    public PageList<ResourceConfigurationUpdate> execute(ResourceConfigurationUpdateCriteria criteria) {
-                        return configurationManager.findResourceConfigurationUpdatesByCriteria(caller, criteria);
-                    }
-                };
+        return new StreamingOutput() {
+            @Override
+            public void write(OutputStream stream) throws IOException, WebApplicationException {
+                final ResourceConfigurationUpdateCriteria criteria = new ResourceConfigurationUpdateCriteria();
+                criteria.fetchConfiguration(true);
+                criteria.addSortCreatedTime(ASC);
 
-        CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> query =
-                new CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>(criteria, queryExecutor);
+                CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> queryExecutor =
+                        new CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>() {
+                            @Override
+                            public PageList<ResourceConfigurationUpdate> execute(ResourceConfigurationUpdateCriteria criteria) {
 
-        Response.ResponseBuilder builder = Response.status(Response.Status.NOT_ACCEPTABLE); // default error response
-        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        log.debug(" Suspect Metric media type: " + mediaType.toString());
-        if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
-            builder = Response.ok(query, mediaType);
+                                return configurationManager.findResourceConfigurationUpdatesByCriteria(caller, criteria);
+                            }
+                        };
 
-        } else if (mediaType.toString().equals("text/csv")) {
-            // CSV version
-            log.info("text/csv handler for REST");
+                CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> query =
+                        new CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>(criteria, queryExecutor);
+                for (ResourceConfigurationUpdate alert : query) {
+                    String record = toCSV(alert)  + "\n";
+                    stream.write(record.getBytes());
+                }
 
-            sb = new StringBuilder("ID,Status\n"); // set title row
-            for (ResourceConfigurationUpdate configUpdate : query) {
-                sb.append(configUpdate.getId());
-                sb.append(",");
-                sb.append(configUpdate.getStatus());
-                sb.append("\n");
+            }
+            private String toCSV(ResourceConfigurationUpdate configurationUpdate) {
+                return cleanForCSV(configurationUpdate.getResource().getName()) + "," +
+                        configurationUpdate.getConfiguration().getVersion() + "," + formatDateTime(configurationUpdate.getCreatedTime())+","
+                        + "," + configurationUpdate.getStatus();
+                //@todo:ancestry
             }
 
-            builder = Response.ok(sb.toString(), mediaType);
+        };
 
-        } else {
-            log.debug("Unknown Media Type: " + mediaType.toString());
-            builder = Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE);
-
-        }
-        return builder.build();
     }
-
 
 }

@@ -40,16 +40,16 @@ public class PathHandlingTest {
 
     public void emptyAddress2() throws Exception {
 
-        Address a = new Address((String)null);
+        Address a = new Address((String) null);
         assert a.getPath() != null;
         assert a.getPath().isEmpty();
         assert a.isEmpty();
-        assert a.size()==0;
+        assert a.size() == 0;
     }
 
     public void addressPath1() throws Exception {
         String path = "subsystem=jms,profile=default,queue=foo";
-        Address a = new Address("/"+path);
+        Address a = new Address("/" + path);
         assert a.getPath().equals(path);
     }
 
@@ -57,7 +57,7 @@ public class PathHandlingTest {
         String path = "subsystem=jms,profile=default,queue=foo";
         Address a = new Address(path);
         assert a.getPath().equals(path);
-        assert a.size()==3 : "Size was not 3, but "+ a.size();
+        assert a.size() == 3 : "Size was not 3, but " + a.size();
         assert !a.isEmpty();
     }
 
@@ -65,8 +65,8 @@ public class PathHandlingTest {
         String path = "subsystem=jms,profile=default,queue=foo";
         Address a = new Address(path);
         Address b = a.getParent();
-        assert b!=null;
-        assert b.size()==2;
+        assert b != null;
+        assert b.size() == 2;
         assert b.get(0).equals("subsystem=jms");
         assert b.get(1).equals("profile=default");
     }
@@ -74,17 +74,32 @@ public class PathHandlingTest {
     public void getParent2() throws Exception {
         Address a = new Address();
         Address b = a.getParent();
-        assert b!=null;
+        assert b != null;
         assert b.isEmpty();
-        assert b.size()==0;
+        assert b.size() == 0;
     }
 
     public void getParent3() throws Exception {
         Address a = new Address("foo=bar");
         Address b = a.getParent();
-        assert b!=null;
+        assert b != null;
         assert b.isEmpty();
-        assert b.size()==0;
+        assert b.size() == 0;
+    }
+
+    /** Same as parent1 but tests that '/' separator is also supported and not just ','.
+     *  Address creation from path.
+     * 
+     * @throws Exception
+     */
+    public void getParent4() throws Exception {
+        String path = "/subsystem=modcluster/mod-cluster-config=configuration/";
+        Address a = new Address(path);
+        //extract parent portion. Penultimate.
+        Address b = a.getParent();
+        assert b != null;
+        assert b.size() == 1;
+        assert b.get(0).equals("subsystem=modcluster");
     }
 
 }

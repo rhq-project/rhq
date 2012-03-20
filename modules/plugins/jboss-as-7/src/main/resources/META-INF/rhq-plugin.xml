@@ -2272,12 +2272,11 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <results>
                     <c:simple-property name="operationResult"/>
             </results>
-
         </operation>
 
-        <resource-configuration>
+        <resource-configuration>        
                 <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"
-         description="Name of Socket binding to use for the Advertise socket."/>
+	        description="Name of Socket binding to use for the Advertise socket."/>
 		<c:simple-property name="proxy-list" required="false" type="string" readOnly="false" defaultValue="" description="List of proxies, Format (hostname:port) separed with comas."/>
 		<c:simple-property name="proxy-url" required="false" type="string" readOnly="false" defaultValue="/" description="Base URL for MCMP requests."/>
 		<c:simple-property name="advertise" required="false" type="boolean" readOnly="false" defaultValue="true" description="Use Advertise logic or not."/>

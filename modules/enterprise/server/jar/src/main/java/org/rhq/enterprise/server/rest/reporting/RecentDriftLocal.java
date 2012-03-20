@@ -6,14 +6,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 
-@Path("/reports/recentOperations")
+@Path("/reports/recentDrift")
 @Local
-public interface RecentOperationsLocal {
+public interface RecentDriftLocal {
 
     @GET
     @Path("/")
     @Produces({"text/csv", "application/xml"})
-    StreamingOutput recentOperations(
+    StreamingOutput recentDrift(
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

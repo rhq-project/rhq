@@ -25,7 +25,7 @@ import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTi
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class RecentOperationsHandler extends AbstractRestBean implements RecentOperationsLocal {
+public class RecentDriftHandler extends AbstractRestBean implements RecentDriftLocal {
 
     @EJB
     private OperationManagerLocal operationManager;
@@ -34,7 +34,7 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
     private SubjectManagerLocal subjectMgr;
 
     @Override
-    public StreamingOutput recentOperations(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
+    public StreamingOutput recentDrift(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
 
         return new StreamingOutput() {
             @Override

@@ -40,6 +40,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -54,6 +55,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -132,6 +134,30 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         }
     }
 
+    /**
+     * Get availability for a Resource synchronously.
+     *
+     * @param resource the Resource                 
+     *
+     * @return the report containing the collected data
+     */
+    @NotNull
+    protected AvailabilityType getAvailability(Resource resource)
+            throws PluginContainerException {
+        ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
+        int timeoutMillis = 5000;
+        AvailabilityFacet availFacet = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
+                FacetLockType.READ, timeoutMillis, false, false);        
+        AvailabilityType avail;
+        try {
+            avail = availFacet.getAvailability();
+        } catch (Exception e) {
+            System.out.println("====== Error occurred during availability check on " + resource + ": " + e);
+            throw new RuntimeException("Error occurred during availability check on " + resource + ": " + e);
+        }        
+        return avail;
+    }
+    
     /**
      * Execute an operation on a Resource synchronously.
      * 

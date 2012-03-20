@@ -6,7 +6,7 @@ import javax.ws.rs.core.*;
 
 @Path("/reports/alertDefinitions")
 @Local
-public interface AlertDefinitionReportLocal {
+public interface AlertDefinitionLocal {
 
     @GET
     @Path("/")

@@ -17,9 +17,9 @@ import javax.ws.rs.core.*;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class SuspectMetricsReportBean extends AbstractRestBean implements SuspectMetricsReportLocal {
+public class SuspectMetricHandler extends AbstractRestBean implements SuspectMetricLocal {
 
-    private final Log log = LogFactory.getLog(SuspectMetricsReportBean.class);
+    private final Log log = LogFactory.getLog(SuspectMetricHandler.class);
 
     @EJB
     private MeasurementOOBManagerLocal measurementOOBMManager;

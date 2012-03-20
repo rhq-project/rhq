@@ -25,7 +25,7 @@ import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTi
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class RecentOperationsReportBean extends AbstractRestBean implements RecentOperationsReportLocal {
+public class RecentOperationsHandler extends AbstractRestBean implements RecentOperationsLocal {
 
     @EJB
     private OperationManagerLocal operationManager;

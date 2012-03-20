@@ -6,9 +6,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 
-@Path("/reports/recentAlerts")
+@Path("/reports/recentOperations")
 @Local
-public interface RecentAlertsReportLocal {
+public interface RecentOperationsLocal {
 
     @GET
     @Path("/")

@@ -24,7 +24,7 @@ import static org.rhq.enterprise.server.rest.reporting.ReportHelper.*;
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class AlertDefinitionReportBean extends AbstractRestBean implements AlertDefinitionReportLocal {
+public class AlertDefinitionHandler extends AbstractRestBean implements AlertDefinitionLocal {
 
     @EJB
     private AlertDefinitionManagerLocal alertDefinitionManager;

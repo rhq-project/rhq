@@ -6,14 +6,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.*;
 
-@Path("/reports/configurationHistory")
+@Path("/reports/recentAlerts")
 @Local
-public interface ConfigurationHistoryReportLocal {
+public interface RecentAlertLocal {
 
     @GET
     @Path("/")
     @Produces({"text/csv", "application/xml"})
-    StreamingOutput configurationHistory(
+    StreamingOutput recentAlerts(
             @Context UriInfo uriInfo,
             @Context Request request,
             @Context HttpHeaders headers);

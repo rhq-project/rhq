@@ -25,7 +25,7 @@ import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTi
 
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class ConfigurationHistoryReportBean extends AbstractRestBean implements ConfigurationHistoryReportLocal {
+public class ConfigurationHistoryHanlder extends AbstractRestBean implements ConfigurationHistoryLocal {
 
     @EJB
     private ConfigurationManagerLocal configurationManager;

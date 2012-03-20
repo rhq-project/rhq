@@ -46,12 +46,14 @@ public class AlertDefinitionReportBean extends AbstractRestBean implements Alert
                                 @Override
                                 public PageList<AlertDefinition> execute(AlertDefinitionCriteria criteria) {
 
-                                    return alertDefinitionManager.findAlertDefinitionsByCriteria(subjectMgr.getOverlord(), criteria);
+                                    return alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
                                 }
                             };
 
                     CriteriaQuery<AlertDefinition, AlertDefinitionCriteria> query =
                             new CriteriaQuery<AlertDefinition, AlertDefinitionCriteria>(criteria, queryExecutor);
+
+                    stream.write((getHeader() + "\n").getBytes());
                     for (AlertDefinition alert : query) {
                         String record = toCSV(alert)  + "\n";
                         stream.write(record.getBytes());
@@ -61,9 +63,12 @@ public class AlertDefinitionReportBean extends AbstractRestBean implements Alert
                 private String toCSV(AlertDefinition alertDefinition) {
                     return cleanForCSV(alertDefinition.getName()) + "," + cleanForCSV(alertDefinition.getDescription()) + "," +
                             alertDefinition.getEnabled() + "," + alertDefinition.getPriority()
-                            + "," + alertDefinition.getParentId()
-                            + "," + alertDefinition.getPriority();
-                    //@todo:ancestry
+                            + "," + cleanForCSV(alertDefinition.getResource().getParentResource().getName())
+                            + "," + cleanForCSV(alertDefinition.getResource().getAncestry());
+                }
+
+                private String getHeader(){
+                   return "Name,Description,Enabled,Priority,Parent,Ancestry";
                 }
 
             };

@@ -1,8 +1,6 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -29,8 +27,6 @@ import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTi
 @Stateless
 public class ConfigurationHistoryReportBean extends AbstractRestBean implements ConfigurationHistoryReportLocal {
 
-    private final Log log = LogFactory.getLog(ConfigurationHistoryReportBean.class);
-
     @EJB
     private ConfigurationManagerLocal configurationManager;
 
@@ -51,13 +47,14 @@ public class ConfigurationHistoryReportBean extends AbstractRestBean implements 
                         new CriteriaQueryExecutor<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>() {
                             @Override
                             public PageList<ResourceConfigurationUpdate> execute(ResourceConfigurationUpdateCriteria criteria) {
-
                                 return configurationManager.findResourceConfigurationUpdatesByCriteria(caller, criteria);
                             }
                         };
 
                 CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria> query =
                         new CriteriaQuery<ResourceConfigurationUpdate, ResourceConfigurationUpdateCriteria>(criteria, queryExecutor);
+
+                stream.write((getHeader() + "\n").getBytes());
                 for (ResourceConfigurationUpdate alert : query) {
                     String record = toCSV(alert)  + "\n";
                     stream.write(record.getBytes());
@@ -66,9 +63,15 @@ public class ConfigurationHistoryReportBean extends AbstractRestBean implements 
             }
             private String toCSV(ResourceConfigurationUpdate configurationUpdate) {
                 return cleanForCSV(configurationUpdate.getResource().getName()) + "," +
-                        configurationUpdate.getConfiguration().getVersion() + "," + formatDateTime(configurationUpdate.getCreatedTime())+","
-                        + "," + configurationUpdate.getStatus();
-                //@todo:ancestry
+                        configurationUpdate.getConfiguration().getVersion() + ","
+                        + formatDateTime(configurationUpdate.getCreatedTime())+","
+                        + formatDateTime(configurationUpdate.getModifiedTime())+","
+                        + "," + configurationUpdate.getStatus()
+                        + "," + cleanForCSV(configurationUpdate.getResource().getAncestry());
+                //@todo: check dates, user, update-type
+            }
+            private String getHeader(){
+                return "Name,Version,Date Submitted,Date Completed,Status,Ancestry";
             }
 
         };

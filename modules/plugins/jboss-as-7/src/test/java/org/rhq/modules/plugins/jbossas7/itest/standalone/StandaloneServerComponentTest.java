@@ -18,8 +18,10 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.util.FileUtils;
@@ -31,7 +33,7 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = "standalone", singleThreaded = true)
+@Test(groups = "pc, standalone", singleThreaded = true)
 public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
@@ -60,7 +62,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     @Override
-    @Test
+    @Test(groups = "pc")
     @RunDiscovery
     public void testAutoDiscovery() throws Exception {
         super.testAutoDiscovery();
@@ -112,25 +114,19 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     // TODO: Re-enable this once "shutdown" operation has been fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    public void testShutdownOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
-        // Restart the server, so the rest of the tests don't fail.
-        testStartOperation();
-    }
-
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testShutdownOperation", enabled = false)
-    public void testStartOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
+    public void testShutdownAndStartOperations() throws Exception {
+        super.testShutdownAndStartOperations();
     }
 
     // TODO: Re-enable once fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
     public void testRestartOperation() throws Exception {
         System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testRestartOperation...");
+        AvailabilityType avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.UP);
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
+        avail = getAvailability(getServerResource());
+        Assert.assertEquals(avail, AvailabilityType.UP);
     }
 
 }

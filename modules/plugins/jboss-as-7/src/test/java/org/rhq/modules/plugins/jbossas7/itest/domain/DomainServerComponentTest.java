@@ -30,7 +30,7 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = "domain", singleThreaded = true)
+@Test(groups = "pc, domain", singleThreaded = true)
 public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
@@ -40,9 +40,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
     private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
     private static final String START_TIME_TRAIT_NAME = "startTime";
-
-    private static final String SHUTDOWN_OPERATION_NAME = "shutdown";
-    private static final String START_OPERATION_NAME = "start";
 
     @Override
     protected ResourceType getServerResourceType() {
@@ -55,7 +52,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     }
 
     @Override
-    @Test
+    @Test(groups = "pc")
     @RunDiscovery
     public void testAutoDiscovery() throws Exception {
         super.testAutoDiscovery();
@@ -94,18 +91,8 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable this once "shutdown" operation has been fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    public void testShutdownOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);
-        // Restart the server, so the rest of the tests don't fail.
-        testStartOperation();
-    }
-
-    // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testShutdownOperation", enabled = false)
-    public void testStartOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartOperation...");
-        invokeOperationAndAssertSuccess(getServerResource(), START_OPERATION_NAME, null);
+    public void testShutdownAndStartOperations() throws Exception {
+        super.testShutdownAndStartOperations();
     }
 
 }

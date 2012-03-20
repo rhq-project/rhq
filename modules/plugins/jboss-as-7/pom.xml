@@ -18,7 +18,7 @@
 
     <properties>
         <json.version>${project.json.version}</json.version>
-        <jackson.version>1.7.4</jackson.version>
+        <jackson.version>1.9.5</jackson.version>
         <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
         <jboss.version>7.1.1.Final</jboss.version>
     </properties>
@@ -205,7 +205,7 @@
                 </executions>
             </plugin>
 
-            <!-- This is so we can reference jboss7.home in jbossas7-arquillian.xml. -->
+            <!-- This is so we can reference jboss7.home and jboss.standalone.bindAddress in jbossas7-arquillian.xml. -->
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>properties-maven-plugin</artifactId>
@@ -358,6 +358,7 @@
                   <jboss7.home>${jboss7.home}</jboss7.home>
                   <jboss.version>${jboss.version}</jboss.version>
                   <eap6.version>${eap6.version}</eap6.version>
+                  <jboss.domain.bindAddress>${jboss.domain.bindAddress}</jboss.domain.bindAddress>
                 </systemPropertyVariables>
               </configuration>
               <executions>

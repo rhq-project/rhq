@@ -64,9 +64,15 @@ public class ASUploadConnection {
     private int port;
 
     public ASUploadConnection(String dcHost, int port, String user, String password) {
+        if (dcHost == null) {
+            throw new IllegalArgumentException("Management host cannot be null.");
+        }
+        if (port <= 0 || port > 65535) {
+            throw new IllegalArgumentException("Invalid port: " + port);
+        }
         this.host = dcHost;
         this.port = port;
-        if (user!=null) {
+        if (user != null) {
             passwordAuthenticator = new AS7Authenticator(user,password);
             Authenticator.setDefault(passwordAuthenticator);
         }
@@ -78,9 +84,9 @@ public class ASUploadConnection {
     }
 
     public OutputStream getOutputStream(String fileName) {
-         try {
+        String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
+        try {
             // Create the HTTP connection to the upload URL
-            String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
             connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setConnectTimeout(10 * 1000); // 10s
             connection.setReadTimeout(60 * 1000);    // 60s
@@ -93,10 +99,10 @@ public class ASUploadConnection {
             os = new BufferedOutputStream(connection.getOutputStream());
             os.write(buildPostRequestHeader(fileName));
 
-             return os;
+            return os;
          }
          catch (Exception e) {
-             log.error("getOutputStream failed: " + e.getMessage());
+            log.error("Failed to open output stream to URL [" + url + "]: " + e, e);
          }
 
         return null;

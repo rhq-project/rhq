@@ -68,13 +68,18 @@ public class ASConnection {
      * @param password password needed for authentication
      */
     public ASConnection(String host, int port, String user, String password) {
+        if (host == null) {
+            throw new IllegalArgumentException("Management host cannot be null.");
+        }
+        if (port <= 0 || port > 65535) {
+            throw new IllegalArgumentException("Invalid port: " + port);
+        }
         this.host = host;
         this.port = port;
 
         try {
             url = new URL("http", host, port, MANAGEMENT);
             urlString = url.toString();
-
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
@@ -87,7 +92,6 @@ public class ASConnection {
 
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
     }
 
     /**
@@ -103,8 +107,7 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation) {
-
-        InputStream inputStream = null;
+        InputStream inputStream;
         BufferedReader br = null;
         InputStream es = null;
         HttpURLConnection conn = null;

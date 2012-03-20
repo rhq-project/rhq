@@ -2534,18 +2534,12 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 	        <c:simple-property name="outbuf-size" required="false" type="integer" readOnly="false" defaultValue="2048" description="The size of the network buffers for outgoing messages."/>
 	        <c:simple-property name="pool-size" required="false" type="integer" readOnly="false" defaultValue="5" description="The size of the request processors thread-pool. Threads that finish processing a request are placed back in the pool if the pool is not full and discarded otherwise."/>
 	        <c:simple-property name="print-version" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the version number should be printed during ORB startup (on) or not (off)."/>
-            <c:map-property name="properties" description="A list of generic key/value properties.">
-	            <c:simple-property name="name"/>
-                <c:simple-property name="value"/>
-                <!--
-	            false
-	            true
-	            <c:simple-property name="value-type" required="false" type="-object-" readOnly="true"/>
-	            read-write
-	            configuration
-	            no-services
-	            -->
-	        </c:map-property>
+            <c:list-property name="properties" description="A list of generic key/value properties.">
+                <c:map-property name="*" displayName="Property">
+	               <c:simple-property name="*" type="string" displayName="Name" required="true"/>
+                   <c:simple-property name="*" type="string" displayName="Value" required="true"/>
+                </c:map-property>
+	        </c:list-property>
 	        <c:simple-property name="queue-max" required="false" type="integer" readOnly="false" defaultValue="100" description="The maximum number of requests that can be queued."/>
 	        <c:simple-property name="queue-min" required="false" type="integer" readOnly="false" defaultValue="10" description="The size of the queue for notifying waiting requests. In other words, blocked requests are only notified when the queue has no more than queue-min requests."/>
 	        <c:simple-property name="queue-wait" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether requests that exceed the maximum queue size should wait (on) or not (off). When disabled, a TRANSIENT exception is thrown if the queue is full."/>

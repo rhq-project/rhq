@@ -54,7 +54,8 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 /**
- * Abstract base class for integration tests
+ * Abstract base class for integration tests that do not run against an RHQ plugin container.
+ *
  * @author Heiko W. Rupp
  */
 public abstract class AbstractIntegrationTest {

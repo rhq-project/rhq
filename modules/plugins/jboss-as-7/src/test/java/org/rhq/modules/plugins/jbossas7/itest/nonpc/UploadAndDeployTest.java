@@ -50,6 +50,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * To use it, a server in <b>domain mode</b> must be up and have it's
  * <b>DomainController</b> running <b>locally</b> and
  * the UPLOAD_FILE must point to a valid archive in the resources directory.
+ *
  * @author Heiko W. Rupp
  */
 @Test(groups = "nonpc", enabled = UploadAndDeployTest.isEnabled)
@@ -345,7 +346,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         rt.setName("Deployment");
         Resource resource = new Resource("deployment="+TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, rt); // TODO resource key?
         resource.setUuid(UUID.randomUUID().toString());
-        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null,null);
+        ResourceContext context = new ResourceContext(resource,new BaseComponent(),null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);
@@ -378,7 +379,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
         Resource resource = new Resource("server-group=main-server-group",TEST_WAR_FILE_NAME,rt);
-        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null,null);
+        resource.setUuid(UUID.randomUUID().toString());
+        ResourceContext context = new ResourceContext(resource,new BaseComponent(),null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);

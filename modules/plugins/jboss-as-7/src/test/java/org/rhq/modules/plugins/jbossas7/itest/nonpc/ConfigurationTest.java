@@ -20,6 +20,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 
 /**
  * Tests related to configurations
+ *
  * @author Heiko W. Rupp
  */
 @Test(groups = "nonpc")

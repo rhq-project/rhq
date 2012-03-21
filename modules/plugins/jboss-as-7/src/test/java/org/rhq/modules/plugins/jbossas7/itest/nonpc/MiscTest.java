@@ -13,6 +13,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Miscellaneous tests that don't fit well into other test classes
+ *
  * @author Heiko W. Rupp
  */
 @Test(groups = "nonpc")

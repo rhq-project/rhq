@@ -42,6 +42,7 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 /**
  * Integration test for deploying datasources and installing jdbc drivers
+ *
  * @author Heiko W. Rupp
  */
 @Test(groups = "nonpc", enabled = UploadAndDeployTest.isEnabled)
@@ -288,7 +289,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         parameters.put(new PropertySimple("pool-name","pgPool"));
         parameters.put(new PropertySimple("connection-url","jdbc:postgresql:foo@localhost:5432"));
         parameters.put(new PropertySimple("jndi-name","java:jboss/postgresDS"));
-        parameters.put(new PropertySimple("xa-data-source-class","org.postgres.XA.driver"));
+        parameters.put(new PropertySimple("xa-datasource-class","org.postgres.XA.driver"));
         OperationResult operationResult = dc.invokeOperation("addXADatasource",parameters);
         assert operationResult != null;
         assert operationResult.getSimpleResult()!=null ;
@@ -388,7 +389,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         op.addAdditionalProperty("pool-name","pgPool");
         op.addAdditionalProperty("connection-url","jdbc:postgresql://127.0.0.1:5432/rhqdev");
         if (isXa) {
-            op.addAdditionalProperty("xa-data-source-class","org.postgresql.xa.PGXADataSource");
+            op.addAdditionalProperty("xa-datasource-class","org.postgresql.xa.PGXADataSource");
             Map<String,String> map = new HashMap<String, String>(1); // TODO AS7-1209
             map.put("key","value");
             op.addAdditionalProperty("xa-data-source-properties",map);

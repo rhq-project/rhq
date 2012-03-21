@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
-import java.util.UUID;
-
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -34,6 +32,7 @@ import org.rhq.modules.plugins.jbossas7.json.Remove;
 
 /**
  * Tests around server groups
+ *
  * @author Heiko W. Rupp
  */
 @Test(groups = "nonpc")

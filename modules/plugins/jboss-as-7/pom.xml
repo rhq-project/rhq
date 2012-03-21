@@ -47,7 +47,11 @@
           <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <excludes><exclude>org/rhq/modules/plugins/jbossas7/itest/**</exclude></excludes>
+              <excludes>
+                  <!-- The surefire plugin only does the unit tests in src/test
+                    -  integration test are handled below in the *** as7-itest ** profile
+                    -->
+                  <exclude>org/rhq/modules/plugins/jbossas7/itest/**</exclude></excludes>
             </configuration>
           </plugin>
 
@@ -168,6 +172,7 @@
       </profile>
 
       <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
+      <!-- activate with -Das7.itest. See also http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests -->
       <profile>
         <id>*** as7-itest ***</id>
 
@@ -232,6 +237,7 @@
             </plugin>
 
             <plugin>
+                <!-- use the arquillian plugin to start/stop the actual servers -->
               <groupId>org.jboss.arquillian.maven</groupId>
               <artifactId>arquillian-maven-plugin</artifactId>
               <version>1.0.0.Alpha2</version>
@@ -290,6 +296,8 @@
                   </goals>
                   <configuration>
                       <background>true</background>
+                      <!-- test blocks until the port at backgroundPollingAddress is available (waiting for starting) -->
+                      <!-- when maven jvm exits, this plugin will kill the running servers -->
                       <backgroundPollingAddress>${jboss.domain.bindAddress}:9999</backgroundPollingAddress>
                       <executable>${java.home}/bin/java</executable>
                       <arguments>
@@ -351,8 +359,13 @@
 
             <plugin>
               <artifactId>maven-failsafe-plugin</artifactId>
+                <!-- failsafe plugin prevents a test failure to abort the build, so that the post-integration-test phase
+                  -  can still shut down the servers fired up.
+                  -->
               <configuration>
-                <includes><include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include></includes>
+                <includes>
+                    <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
+                    <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include></includes>
                 <systemPropertyVariables>
                   <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
                   <jboss7.home>${jboss7.home}</jboss7.home>

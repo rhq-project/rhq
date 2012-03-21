@@ -121,6 +121,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
@@ -963,8 +964,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
+
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
         return resourceManager.findResourceLineage(subject, resourceId);
+    }
+
+    @Override
+    public ResourceAvailabilitySummary getAvailabilitySummary(Subject subject, int resourceId) {
+        return resourceManager.getAvailabilitySummary(subject, resourceId);
     }
 
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {

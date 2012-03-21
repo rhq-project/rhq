@@ -39,15 +39,15 @@ public class ResourceAvailabilitySummary implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final long now; // set to the current time when this object was created
-    private final long upTime;
-    private final long downTime;
-    private final long disabledTime;
-    private final long unknownTime;
-    private final int failures;
-    private final int disabled;
-    private final long lastChange;
-    private final AvailabilityType current;
+    private long now; // set to the current time when this object was created
+    private long upTime;
+    private long downTime;
+    private long disabledTime;
+    private long unknownTime;
+    private int failures;
+    private int disabled;
+    private long lastChange;
+    private AvailabilityType current;
 
     public ResourceAvailabilitySummary(List<Availability> availabilities) {
         this.now = System.currentTimeMillis();
@@ -110,6 +110,10 @@ public class ResourceAvailabilitySummary implements Serializable {
         this.disabled = disabled;
         this.lastChange = lastChange;
         this.current = current;
+    }
+
+    protected ResourceAvailabilitySummary() {
+        // required for GWT
     }
 
     /**

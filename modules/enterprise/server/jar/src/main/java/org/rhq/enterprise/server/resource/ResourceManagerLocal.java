@@ -431,8 +431,6 @@ public interface ResourceManagerLocal {
 
     List<ResourceFlyweight> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
 
-    ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
-
     /**
      * Update the ancestry for the specified resource and its child lineage.
      * <pre>
@@ -453,6 +451,8 @@ public interface ResourceManagerLocal {
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
 
     /**
      * #see {@link ResourceManagerRemote#getLiveResourceAvailability(Subject, int)

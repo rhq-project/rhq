@@ -66,6 +66,9 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
         Result res = getASConnection().execute(op);
 
         OperationResult operationResult = postProcessResult(name, res);
+
+        context.getAvailabilityContext().requestAvailabilityCheck();
+
         return operationResult;
     }
 

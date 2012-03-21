@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -92,6 +92,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             }
         }
 
+        context.getAvailabilityContext().requestAvailabilityCheck();
+
         return startServer(mode);
     }
 
@@ -158,6 +160,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         } else {
             operationResult.setSimpleResult("Success");
         }
+
+        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
 
@@ -273,6 +277,8 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         }
         result.setSimpleResult("User/Password set or updated");
         log.info("Installed management user [" + user + "].");
+
+        context.getAvailabilityContext().requestAvailabilityCheck();
 
         return result;
     }

@@ -65,10 +65,11 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
 
+        OperationResult operationResult;
         if (name.equals("start")) {
-            return startServer(AS7Mode.DOMAIN);
+            operationResult = startServer(AS7Mode.DOMAIN);
         } else if (name.equals("restart")) {
-            return restartServer(parameters, AS7Mode.DOMAIN);
+            operationResult = restartServer(parameters, AS7Mode.DOMAIN);
 
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx
@@ -76,18 +77,25 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
             if (domainHost.isEmpty()) {
                 OperationResult result = new OperationResult();
                 result.setErrorMessage("No domain host found - can not continue");
-                return result;
+                operationResult = result;
             }
             Operation op = new Operation("shutdown", "host", domainHost);
             Result res = getASConnection().execute(op);
 
-            return postProcessResult(name, res);
+
+
+            operationResult = postProcessResult(name, res);
         } else if (name.equals("installRhqUser")) {
-            return installManagementUser(parameters, pluginConfiguration, AS7Mode.HOST);
+            operationResult = installManagementUser(parameters, pluginConfiguration, AS7Mode.HOST);
+        } else {
+
+            // Defer other stuff to the base component for now
+            operationResult = super.invokeOperation(name, parameters);
         }
 
-        // Defer other stuff to the base component for now
-        return super.invokeOperation(name, parameters);
+        context.getAvailabilityContext().requestAvailabilityCheck();
+
+        return operationResult;
     }
 
     @Override

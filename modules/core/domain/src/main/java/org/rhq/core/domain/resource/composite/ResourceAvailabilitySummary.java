@@ -39,16 +39,19 @@ public class ResourceAvailabilitySummary implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private long upTime;
-    private long downTime;
-    private long disabledTime;
-    private long unknownTime;
-    private int failures;
-    private int disabled;
-    private long lastChange;
-    private AvailabilityType current;
+    private final long now; // set to the current time when this object was created
+    private final long upTime;
+    private final long downTime;
+    private final long disabledTime;
+    private final long unknownTime;
+    private final int failures;
+    private final int disabled;
+    private final long lastChange;
+    private final AvailabilityType current;
 
     public ResourceAvailabilitySummary(List<Availability> availabilities) {
+        this.now = System.currentTimeMillis();
+
         long upTime = 0;
         long downTime = 0;
         long disabledTime = 0;
@@ -96,8 +99,9 @@ public class ResourceAvailabilitySummary implements Serializable {
         this.current = current;
     }
 
-    public ResourceAvailabilitySummary(long upTime, long downTime, long disabledTime, long unknownTime, int failures,
-        int disabled, long lastChange, AvailabilityType current) {
+    public ResourceAvailabilitySummary(long now, long upTime, long downTime, long disabledTime, long unknownTime,
+        int failures, int disabled, long lastChange, AvailabilityType current) {
+        this.now = now;
         this.upTime = upTime;
         this.downTime = downTime;
         this.disabledTime = disabledTime;
@@ -113,10 +117,22 @@ public class ResourceAvailabilitySummary implements Serializable {
      * account the uptimes and downtimes. Any time periods of UNKNOWN or DISABLED
      * availability are ignored.
      *
+     * If there has been no failures yet, or there has only been one failure, the
+     * MTBF cannot be calculated - in this case, 0 is returned.
+     *
      * @return MTBF value in milliseconds
      */
     public long getMTBF() {
-        return failures != 0 ? upTime / failures : 0;
+        if (failures <= 1) {
+            return 0;
+        }
+
+        // if our current state is UP, don't count the current up period in the calculations
+        if (this.current == AvailabilityType.UP) {
+            return (upTime - (this.now - this.lastChange)) / (failures - 1);
+        } else {
+            return upTime / (failures - 1);
+        }
     }
 
     /**
@@ -236,8 +252,18 @@ public class ResourceAvailabilitySummary implements Serializable {
         return current;
     }
 
+    /**
+     * Returns the "current time" which is actually the time that was current at the time
+     * when this object was created.
+     *
+     * @return the "current time" when this object was created
+     */
+    public long getCurrentTime() {
+        return now;
+    }
+
     private long getStartEndTimeDuration(Availability avail) {
-        long endTime = (avail.getEndTime() != null ? avail.getEndTime().longValue() : System.currentTimeMillis());
+        long endTime = (avail.getEndTime() != null ? avail.getEndTime().longValue() : this.now);
         return endTime - avail.getStartTime().longValue();
     }
 }

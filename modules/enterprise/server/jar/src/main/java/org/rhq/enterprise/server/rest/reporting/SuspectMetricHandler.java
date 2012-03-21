@@ -49,7 +49,10 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
                 for (MeasurementOOBComposite oobComposite : comps) {
                     sb.append( oobComposite.getResourceName());
                     sb.append(",");
-                    //@todo: ancestry
+                    sb.append( oobComposite.getResourceAncestry());
+                    sb.append(",");
+                    sb.append( oobComposite.getUnits()); // Metric
+                    sb.append(",");
                     sb.append( oobComposite.getFormattedBaseband());
                     sb.append(",");
                     sb.append( oobComposite.getOutlier());

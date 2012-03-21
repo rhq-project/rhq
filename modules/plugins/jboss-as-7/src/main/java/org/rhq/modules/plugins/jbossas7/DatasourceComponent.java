@@ -122,18 +122,15 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         return result;
     }
 
-    void addAdditionalToOp(Operation op, Configuration parameters, String property, boolean optional)  {
-
-        PropertySimple ps = parameters.getSimple(property);
-        if (ps==null) {
-            if (!optional)
-                throw new IllegalArgumentException("Property " + property + " not found for required parameter");
-        }
-        else {
-            String tmp = ps.getStringValue();
-            if (tmp!=null) {
-                op.addAdditionalProperty(property,tmp);
+    void addAdditionalToOp(Operation op, Configuration parameters, String parameterName, boolean optional)  {
+        String value = parameters.getSimpleValue(parameterName, null);
+        if (value == null) {
+            if (!optional) {
+                throw new IllegalArgumentException("Required parameter [" + parameterName + "] for operation ["
+                        + op.getName() + "] is not defined.");
             }
+        } else {
+            op.addAdditionalProperty(parameterName, value);
         }
     }
 

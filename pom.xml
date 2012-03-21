@@ -1490,6 +1490,9 @@
         <contributor>
             <name>Alex Kiefer</name>
             <timezone>+1</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
         </contributor>
         <contributor>
             <name>Rafael Torres Coelho Soares</name>
@@ -1497,6 +1500,7 @@
         </contributor>
         <contributor>
             <name>Elias Ross</name>
+            <timezone>-8</timezone>
         </contributor>
         <contributor>
             <name>Fusayuki Minamoto</name>
@@ -1513,6 +1517,15 @@
         <contributor>
             <name>Frank Brüseke</name>
             <timezone>+1</timezone>
+        </contributor>
+        <contributor>
+            <name>Torben Jäger</name>
+            <timezone>+1</timezone>
+        </contributor>
+        <contributor>
+            <name>Rafael Chies</name>
+            <timezone>-7</timezone>
+            <url>http://blogdorafaelchies.wordpress.com/</url>
         </contributor>
     </contributors>
 

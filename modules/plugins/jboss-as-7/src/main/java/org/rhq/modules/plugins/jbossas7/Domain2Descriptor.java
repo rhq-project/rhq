@@ -221,7 +221,7 @@ public class Domain2Descriptor {
                 sb.append(key);
                 sb.append("\"");
                 String description = (String) props.get("description");
-                appendDescription(sb, description);
+                appendDescription(sb, description, null);
 
                 sb.append(" >\n");
                 if (!props.containsKey("attributes")) {
@@ -279,7 +279,7 @@ public class Domain2Descriptor {
         }
 
         String description = (String) props.get("description");
-        appendDescription(sb, description);
+        appendDescription(sb, description, null);
         sb.append("/>");
         System.out.println(sb.toString());
     }
@@ -310,7 +310,7 @@ public class Domain2Descriptor {
         builder.append(name).append('"');
 
         String description = (String) operationMap.get("description");
-        appendDescription(builder, description);
+        appendDescription(builder, description, null);
         builder.append(">\n");
 
         Map<String, Object> reqMap = (Map<String, Object>) operationMap.get("request-properties");
@@ -333,18 +333,26 @@ public class Domain2Descriptor {
         System.out.println(builder.toString());
     }
 
-    private void appendDescription(StringBuilder builder, String description) {
+    private void appendDescription(StringBuilder builder, String description, String defaultValueText) {
         if (description != null && !description.isEmpty()) {
             if (builder.length() > 120) {
                 builder.append("\n        ");
             }
             builder.append(" description=\"");
 
+            if (defaultValueText != null) {
+                if (description.charAt(description.length() - 1) != '.') {
+                    description += ".";
+                }
+                description = description + " " + defaultValueText;
+            }
+
             description = description.replace("<", "&lt;");
             description = description.replace(">", "&gt;");
             description = description.replace("\"", "\'");
 
             builder.append(description);
+
             builder.append('"');
         }
     }
@@ -417,12 +425,14 @@ public class Domain2Descriptor {
         sb.append('"');
 
         Object defVal = props.get("default");
+        String defaultValueDescription = null;
         if (defVal != null) {
             sb.append(" defaultValue=\"").append(defVal).append('\"');
+            defaultValueDescription = "The default value is " + defVal + ".";
         }
 
         String description = (String) props.get("description");
-        appendDescription(sb, description);
+        appendDescription(sb, description, defaultValueDescription);
         sb.append("/>");
         return sb;
     }

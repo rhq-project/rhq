@@ -18,6 +18,9 @@
  */
 package org.rhq.core.domain.util;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
@@ -29,6 +32,30 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 public abstract class ResourceTypeUtility {
 
+    /**
+     * Returns the set of MeasurementDefinition defined by the given Resource type, which are accepted by the specified
+     * filter. If the filter is null, all of the type's MeasurementDefinitions will be returned.
+     *
+     * @param type the Resource type
+     * @param filter the filter; may be null
+     *
+     * @return the set of MeasurementDefinition defined by the given Resource type, which are accepted by the specified
+     *         filter, or, if the filter is null, all of the type's MeasurementDefinitions
+     */
+    public static Set<MeasurementDefinition> getMeasurementDefinitions(ResourceType type,
+                                                                       MeasurementDefinitionFilter filter) {        
+        if (filter == null) {
+            return type.getMetricDefinitions();
+        }
+        Set<MeasurementDefinition> acceptedMetricDefs = new LinkedHashSet<MeasurementDefinition>();
+        for (MeasurementDefinition metricDef : type.getMetricDefinitions()) {
+            if (filter.accept(metricDef)) {
+                acceptedMetricDefs.add(metricDef);
+            }
+        }
+        return acceptedMetricDefs;
+    }
+    
     public static MeasurementDefinition getMeasurementDefinition(ResourceType type, String metricName) {
         for (MeasurementDefinition metricDefinition : type.getMetricDefinitions()) {
             if (metricDefinition.getName().equals(metricName)) {

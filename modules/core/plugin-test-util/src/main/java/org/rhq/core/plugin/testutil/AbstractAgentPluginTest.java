@@ -21,7 +21,9 @@ package org.rhq.core.plugin.testutil;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -50,6 +53,7 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.MeasurementDefinitionFilter;
 import org.rhq.core.domain.util.ResourceTypeUtility;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -128,14 +132,14 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         try {
             this.serverServices.resetMocks();
             Mockito.when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(Mockito.any(InventoryReport.class))).then(
-                    this.SERVER_INVENTORY.mergeInventoryReport(InventoryStatus.COMMITTED));
+                    SERVER_INVENTORY.mergeInventoryReport(InventoryStatus.COMMITTED));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Get availability for a Resource synchronously.
+     * Get availability for a Resource synchronously, with a 5 second timeout.
      *
      * @param resource the Resource                 
      *
@@ -159,7 +163,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
     
     /**
-     * Execute an operation on a Resource synchronously.
+     * Execute an operation on a Resource synchronously, with the same timeout that the PC would use.
      * 
      * @param resource the Resource
      * @param operationName the name of the operation
@@ -196,17 +200,42 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         return operationResult;
     }
 
-    protected double collectNumericMetricAndAssertNotNull(Resource resource, String metricName)
+    protected void assertAllNumericMetricsAndTraitsHaveNonNullValues(Resource resource)
             throws PluginContainerException {
-        Double value = collectNumericMetric(resource, metricName);
-        Assert.assertNotNull(value, "Collected null value for numeric metric [" + metricName + "] for " + resource + "");
-        return value;
+        Set<MeasurementDefinition> numericMetricAndTraitDefs =
+                ResourceTypeUtility.getMeasurementDefinitions(resource.getResourceType(),
+                        new MeasurementDefinitionFilter() {
+            private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
+
+            public boolean accept(MeasurementDefinition metricDef) {
+                return acceptableDataTypes.contains(metricDef.getDataType());
+            }
+        });
+        assertMetricsHaveNonNullValues(resource, numericMetricAndTraitDefs);
     }
 
-    protected String collectTraitAndAssertNotNull(Resource resource, String traitName) throws PluginContainerException {
-        String value = collectTrait(resource, traitName);
-        Assert.assertNotNull(value, "Collected null value for trait [" + traitName + "] for " + resource + ".");
-        return value;
+    protected void assertMetricsHaveNonNullValues(Resource resource, Set<MeasurementDefinition> metricDefs) 
+            throws PluginContainerException {        
+        Set<String> metricsWithNullValues = new LinkedHashSet<String>();
+        for (MeasurementDefinition metricDef : metricDefs) {                        
+            if (!metricDef.getResourceType().equals(resource.getResourceType())) {
+                throw new IllegalArgumentException(metricDef + " is not defined by " + resource.getResourceType());
+            }
+            Object value;
+            switch (metricDef.getDataType()) {
+                case MEASUREMENT:
+                    value = collectNumericMetric(resource, metricDef.getName()); break;
+                case TRAIT:
+                    value = collectTrait(resource, metricDef.getName()); break;
+                default:
+                    throw new IllegalArgumentException("Unsupported metric type: " + metricDef.getDataType());
+            }
+            if (value == null) {
+                metricsWithNullValues.add(metricDef.getName());
+            }            
+        }
+        Assert.assertEquals(metricsWithNullValues.size(), 0, "Null values were collected for the following metrics: "
+                + metricsWithNullValues);
     }
     
     @Nullable
@@ -243,7 +272,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     /**
-     * Collect a metric for a Resource synchronously.
+     * Collect a metric for a Resource synchronously, with a 5 second timeout.
      *
      * @param resource the Resource
      * @param metricName the name of the metric                 

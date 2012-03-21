@@ -69,9 +69,13 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         System.out.println("---------- " + getServerResource().getPluginConfiguration().toString(true));
     }
 
+    public void testMetricsHaveNonNullValues() throws Exception {
+        assertAllNumericMetricsAndTraitsHaveNonNullValues(getServerResource());
+    }
+
     public void testReleaseVersionTrait() throws Exception {
         System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
-        String releaseVersion = collectTraitAndAssertNotNull(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
+        String releaseVersion = collectTrait(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
         String eap6Version = System.getProperty( "eap6.version" );
         String expectedReleaseVersion;
         if (eap6Version != null) {

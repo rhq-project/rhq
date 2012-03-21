@@ -59,33 +59,16 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     }
 
     // ******************************* TRAITS ******************************* //
+    @Override
     @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testReleaseCodenameTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseCodenameTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), RELEASE_CODENAME_TRAIT_NAME);
+    public void testMetricsHaveNonNullValues() throws Exception {
+        super.testMetricsHaveNonNullValues();
     }
 
+    @Override
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testProductNameTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductNameTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), PRODUCT_NAME_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testProductVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testProductVersionTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), PRODUCT_VERSION_TRAIT_NAME);
-    }
-
-    @Test(dependsOnMethods = "testAutoDiscovery")
-    public void testStartTimeTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testStartTimeTrait...");
-        collectTraitAndAssertNotNull(getServerResource(), START_TIME_TRAIT_NAME);
     }
 
     // ******************************* OPERATIONS ******************************* //

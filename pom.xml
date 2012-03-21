@@ -887,6 +887,7 @@
           <systemPropertyVariables>
             <java.util.prefs.userRoot>${java.io.tmpdir}/${user.name}</java.util.prefs.userRoot>
           </systemPropertyVariables>
+          <testFailureIgnore>true</testFailureIgnore>
         </configuration>
       </plugin>
 

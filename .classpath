@@ -157,7 +157,6 @@
 	<classpathentry kind="src" path="modules/core/arquillian-integration/container/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/test-utils/src/main/java"/>
-	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>

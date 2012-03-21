@@ -1,14 +1,9 @@
 package org.rhq.enterprise.server.rest.reporting;
 
-import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -20,15 +15,13 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.cleanForCSV;
-import static org.rhq.enterprise.server.rest.reporting.ReportHelper.formatDateTime;
-
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class RecentDriftHandler extends AbstractRestBean implements RecentDriftLocal {
 
+
     @EJB
-    private OperationManagerLocal operationManager;
+    private DriftManagerLocal driftManager;
 
     @EJB
     private SubjectManagerLocal subjectMgr;
@@ -39,38 +32,40 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
-                final ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+                //@todo: DriftCriteria add filtering params
 
-                CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria> queryExecutor =
-                        new CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria>() {
-                            @Override
-                            public PageList<ResourceOperationHistory> execute(ResourceOperationHistoryCriteria criteria) {
-
-                                return operationManager.findResourceOperationHistoriesByCriteria(caller, criteria);
-                            }
-                        };
-
-                CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria> query =
-                        new CriteriaQuery<ResourceOperationHistory, ResourceOperationHistoryCriteria>(criteria, queryExecutor);
-
-                stream.write((getHeader() + "\n").getBytes());
-                for (ResourceOperationHistory alert : query) {
-                    String record = toCSV(alert)  + "\n";
-                    stream.write(record.getBytes());
-                }
-
-            }
-            private String toCSV(ResourceOperationHistory operation) {
-                return formatDateTime(operation.getStartedTime()) + "," +
-                        cleanForCSV(operation.getJobName()) + "," +
-                        operation.getSubjectName() + "," +
-                        operation.getStatus() + "," +
-                        cleanForCSV(operation.getResource().getName()) +","+
-                        cleanForCSV(operation.getResource().getAncestry());
-            }
-
-            private String getHeader(){
-                return "Date Submitted,Operation,Requestor,Status,Resource,Ancestry";
+//                CriteriaQueryExecutor<DriftComposite, DriftCriteria> queryExecutor =
+//                        new CriteriaQueryExecutor<DriftComposite, DriftCriteria>() {
+//                            @Override
+//                            public PageList<DriftComposite> execute(DriftCriteria criteria) {
+//
+//                                return driftManager.findDriftCompositesByCriteria(caller, criteria);
+//                            }
+//                        };
+//
+//                CriteriaQuery<DriftComposite, DriftCriteria> query =
+//                        new CriteriaQuery<DriftComposite, DriftCriteria>(criteria, queryExecutor);
+//
+//                stream.write((getHeader() + "\n").getBytes());
+//                for (DriftComposite alert : query) {
+//                    String record = toCSV(alert)  + "\n";
+//                    stream.write(record.getBytes());
+//                }
+//
+//            }
+//            private String toCSV(DriftComposite drift) {
+//                return formatDateTime(drift.getDrift().getCtime()) + "," +
+//                        cleanForCSV(drift.getDriftDefinitionName()) + "," +
+//                        "snapshot-TBD" + "," +
+//                        drift.getDrift().getCategory() + "," +
+//                        drift.getDrift().getPath() + "," +
+//                        cleanForCSV(drift.getResource().getName()) +","+
+//                        cleanForCSV(drift.getResource().getAncestry());
+//                //@todo:Snapshot
+//            }
+//
+//            private String getHeader(){
+//                return "Creation Time,Definition,Snapshot,Category,Path,Resource,Ancestry";
             }
 
         };

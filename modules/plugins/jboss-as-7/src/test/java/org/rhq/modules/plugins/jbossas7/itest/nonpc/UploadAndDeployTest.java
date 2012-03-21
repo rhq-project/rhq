@@ -133,7 +133,6 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         depRes = connection.execute(undeploy);
 
         assert depRes.isSuccess() : "Undeploy went wrong: " + depRes.getFailureDescription();
-        undeploy = null;
 
         // Now tear down stuff again
 
@@ -179,7 +178,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 */
         Operation op = addDeployment(TEST_WAR_FILE_NAME, bytes_value);
         JsonNode ret = connection.executeRaw(op);
-        op = null;
+
         System.out.println("Add to /deploy done " + ret);
         System.out.flush();
 
@@ -207,7 +206,6 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         depRes = connection.execute(undeploy);
 
         assert depRes.isSuccess() : "Undeploy went wrong: " + depRes.getFailureDescription();
-        undeploy = null;
 
         // Now tear down stuff again
 
@@ -340,13 +338,14 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
     @Test(dependsOnGroups = "pc")
     public void testUploadViaCreateChild1() throws Exception {
         BaseComponent bc = new BaseComponent();
-        bc.setConnection(getASConnection());
         bc.setPath("");
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
         Resource resource = new Resource("deployment="+TEST_WAR_FILE_NAME, TEST_WAR_FILE_NAME, rt); // TODO resource key?
         resource.setUuid(UUID.randomUUID().toString());
-        ResourceContext context = new ResourceContext(resource,new BaseComponent(),null,null,null,null,null,null,null,null,null,null,null);
+        BaseComponent parentComponent = new BaseComponent();
+        parentComponent.setConnection(getASConnection());
+        ResourceContext context = new ResourceContext(resource,parentComponent,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);
@@ -374,13 +373,14 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
     @Test(dependsOnGroups = "pc")
     public void testUploadViaCreateChild2() throws Exception {
         BaseComponent bc = new BaseComponent();
-        bc.setConnection(getASConnection());
         bc.setPath("server-group=main-server-group");
         ResourceType rt = new ResourceType();
         rt.setName("Deployment");
         Resource resource = new Resource("server-group=main-server-group",TEST_WAR_FILE_NAME,rt);
         resource.setUuid(UUID.randomUUID().toString());
-        ResourceContext context = new ResourceContext(resource,new BaseComponent(),null,null,null,null,null,null,null,null,null,null,null);
+        BaseComponent parentComponent = new BaseComponent();
+        parentComponent.setConnection(getASConnection());
+        ResourceContext context = new ResourceContext(resource,parentComponent,null,null,null,null,null,null,null,null,null,null,null);
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);

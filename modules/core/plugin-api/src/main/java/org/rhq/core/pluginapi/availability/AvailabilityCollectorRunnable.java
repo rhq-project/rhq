@@ -34,13 +34,13 @@ import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * A class that can be used by plugins whose components may not be able to collect availability statuses fast enough.
- * 
+ *
  * Typically, availability checks are very fast (sub-second). However, the plugin container puts a time limit
  * on how long it will wait for a plugin's resource component to return availability status from calls to
  * {@link AvailabilityFacet#getAvailability()}. This time limit is typically on the order of several seconds.
  * The purpose of this time limit is to avoid having a rogue or misbehaving plugin from causing delays in availability
  * reporting for the rest of the resources being managed within the system.
- * 
+ *
  * This class provides an implementation to help resource components that can't guarantee how fast its
  * availability checks will be. Some managed resources simply can't respond to availability checks fast enough. In this
  * case, this class will provide an asynchronous method that will collect availability without a timeout being involved
@@ -61,7 +61,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
     public static final long MIN_INTERVAL = 60000L;
 
     /**
-     * The thread pool to give this runnable a thread to run in when it needs to check availability. 
+     * The thread pool to give this runnable a thread to run in when it needs to check availability.
      */
     private final Executor threadPool;
 
@@ -92,20 +92,20 @@ public class AvailabilityCollectorRunnable implements Runnable {
 
     /**
      * Just a cache of the facet toString used in log messages. We don't want to keep calling toString on the
-     * facet for fear we might get some odd blocking or exceptions thrown. So we call it once and cache it here. 
+     * facet for fear we might get some odd blocking or exceptions thrown. So we call it once and cache it here.
      */
     private final String facetId;
 
     /**
      * Creates a collector instance that will perform availability checking for a particular managed resource.
-     * 
+     *
      * The interval is the time, in milliseconds, this collector will wait between availability checks.
      * This is the amount of time this collector will sleep after each time an availability
      * check returned with the latest status. A typically value should be something around 1 minute
      * but if an availability check takes alot of system resources to perform or adversely affects the
      * managed resource if performed too often, you can make this longer.
      * The shortest value allowed, however, is {@link #MIN_INTERVAL}.
-     * 
+     *
      * @param availabilityChecker the object that is used to periodically check the managed resource (must not be <code>null</code>)
      * @param interval the interval, in millis, between checking availabilities.
      * @param contextClassloader the context classloader that will be used when checking availability
@@ -153,7 +153,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
 
     /**
      * For those resource components using this availability collector utility,
-     * their {@link ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)} method must call this
+     * their {@link org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)} method must call this
      * to start the availability checking that this object performs.
      */
     public void start() {
@@ -168,7 +168,7 @@ public class AvailabilityCollectorRunnable implements Runnable {
 
     /**
      * For those resource components using this availability collector utility,
-     * their {@link ResourceComponent#stop()} method must call this
+     * their {@link org.rhq.core.pluginapi.inventory.ResourceComponent#stop()} method must call this
      * to stop the availability checking that this object performs.
      */
     public void stop() {

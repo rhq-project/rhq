@@ -146,9 +146,6 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      *                                   manager
      * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
      *                                   plugin container inventory manager
-     * @param availCollectorThreadPool   a thread pool that can be used by the plugin component should it wish
-     *                                   or need to perform asynchronous availability checking. See the javadoc on
-     *                                   {@link AvailabilityCollectorRunnable} for more information on this.
      * @param pluginContainerDeployment  indicates where the plugin container is running
      */
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,

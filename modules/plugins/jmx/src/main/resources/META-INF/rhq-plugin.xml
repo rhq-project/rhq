@@ -151,7 +151,10 @@
                  property="CommittedVirtualMemorySize"
                  description="Size of virtual memory used by this process"
                  units="bytes"/>
-
+         <metric displayName="Open Files"
+                 category="utilization"        
+                 property="OpenFileDescriptorCount"
+                 description="The number of files opened by this process. Note that this metric is not supported on Windows." />                 
       </service>
 
       <service name="Threading" discovery="MBeanResourceDiscoveryComponent" class="ThreadDataMeasurementComponent"

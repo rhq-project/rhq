@@ -1,0 +1,11 @@
+{
+    "outcome" : "success",
+    "result" : {
+        "properties" : [
+            {"test" : "test"},
+            {"trst" : "ewr"},
+            {"test23" : "tester3"}
+        ]
+    },
+    "response-headers" : {"process-state" : "reload-required"}
+}

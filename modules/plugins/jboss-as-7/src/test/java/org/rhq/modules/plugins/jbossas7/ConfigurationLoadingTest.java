@@ -422,7 +422,6 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
     }
 
-
     public void test12() throws Exception {
 
         String resultString = loadJsonFromFile("expressionTest.json");
@@ -438,24 +437,24 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
         Configuration config = delegate.loadResourceConfiguration();
         Collection<Property> properties = config.getProperties();
-        assert properties.size()==3;
+        assert properties.size() == 3;
         PropertySimple foo = config.getSimple("foo:expr");
         PropertySimple foo2 = config.getSimple("foo2:expr");
         PropertySimple bar = config.getSimple("bar");
 
-        assert foo !=null;
+        assert foo != null;
         assert foo2 != null;
         assert bar != null;
 
         Integer tmp = foo.getIntegerValue();
-        assert tmp !=null;
-        assert tmp ==123;
+        assert tmp != null;
+        assert tmp == 123;
         String stringValue = foo2.getStringValue();
-        assert stringValue !=null;
+        assert stringValue != null;
         assert stringValue.equals("${foo2:42}");
         tmp = bar.getIntegerValue();
-        assert tmp !=null;
-        assert tmp ==456;
+        assert tmp != null;
+        assert tmp == 456;
 
     }
 
@@ -475,19 +474,37 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         Configuration config = delegate.loadResourceConfiguration();
         Collection<Property> properties = config.getProperties();
 
-        assert properties.size()==1;
+        assert properties.size() == 1;
         Iterator<Property> iterator = properties.iterator();
         Property p = iterator.next();
         assert p instanceof PropertyMap;
         PropertyMap pm = (PropertyMap) p;
-        assert pm.getMap().size()==2;
+        assert pm.getMap().size() == 2;
         PropertySimple ps = pm.getSimple("name:0");
-        assert ps !=null : "No property with name 'name:0' was found";
-        assert ps.getStringValue()!=null;
+        assert ps != null : "No property with name 'name:0' was found";
+        assert ps.getStringValue() != null;
         assert ps.getStringValue().equals("in-vm");
         ps = pm.getSimple("backup:1");
-        assert ps !=null;
-        assert ps.getStringValue()==null;
+        assert ps != null;
+        assert ps.getStringValue() == null;
+    }
 
+    public void testListOfPlainMaps() throws Exception {
+        String resultString = loadJsonFromFile("listofplainmaps.json");
+
+        ConfigurationDefinition definition = loadDescriptor("listOfPlainMaps");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString, ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition, connection, null);
+        Configuration config = delegate.loadResourceConfiguration();
+        Collection<Property> properties = config.getProperties();
+
+        assert properties.size() == 1;
     }
 }

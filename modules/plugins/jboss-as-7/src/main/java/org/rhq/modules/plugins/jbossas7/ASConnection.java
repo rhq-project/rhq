@@ -280,7 +280,7 @@ public class ASConnection {
     }
 
     /** Method parses Operation.getAddress().getPath() for invalid spaces in the path passed in.
-     * 
+     *
      * @param path Operation.getAddress().getPath() value.
      * @return boolean indicating invalid spaces found.
      */
@@ -343,12 +343,6 @@ public class ASConnection {
                     log.warn("------ Detected 'failure-description' when communicating with server."
                         + as7ResultSerialization);
                 }
-                Result failure = new Result();
-                int failIndex = as7ResultSerialization.indexOf(FAILURE_DESCRIPTION);
-                String failMessage = "";
-                failMessage = as7ResultSerialization.substring(failIndex + FAILURE_DESCRIPTION.length() + 1);
-                failure.setFailureDescription("Operation <" + op + "> returned <" + failMessage + ">");
-                return failure;
             }
 
             if (isComplex) {

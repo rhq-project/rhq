@@ -153,7 +153,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
             /**
              * The view that contains the list grid which will display this datasource's data will call this
              * method to get the field information which is used to control the display of the data.
-             * 
+             *
              * @return list grid fields used to display the datasource data
              */
             public ArrayList<ListGridField> getListGridFields() {
@@ -191,7 +191,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
                 c.addFilterInitialAvailability(false);
 
                 // This code is unlikely to be necessary as the encompassing view should be using an initial
-                // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to 
+                // sort specifier. But just in case, make sure we set the initial sort.  Note that we have to
                 // manipulate the PageControl directly as per the restrictions on getFetchCriteria() (see jdoc).
                 PageControl pageControl = getPageControl(request);
                 if (pageControl.getOrderingFields().isEmpty()) {
@@ -241,7 +241,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
                         MeasurementConverterClient.format((double) duration, MeasurementUnits.MILLISECONDS, true));
 
                 } else {
-                    record.setAttribute(ATTR_END_TIME, MSG.common_label_none());
+                    record.setAttribute(ATTR_END_TIME, MSG.common_label_none2());
                     long duration = System.currentTimeMillis() - from.getStartTime();
                     record.setAttribute(ATTR_DURATION,
                         MeasurementConverterClient.format((double) duration, MeasurementUnits.MILLISECONDS, true));

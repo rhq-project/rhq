@@ -44,7 +44,7 @@ public class GwtRelativeDurationConverter {
             result = MSG.common_label_yesterday() + ", " + formatter.format(new Date(eventMillis));
         } else {
             // <time> "ago"
-            result = getRelativeTimeAgo(eventMillis) + " " + MSG.common_label_ago();
+            result = MSG.common_label_ago(getRelativeTimeAgo(eventMillis));
         }
         return result;
     }
@@ -67,20 +67,27 @@ public class GwtRelativeDurationConverter {
         timeAgo %= MILLIS_IN_DAY;
         if (days > 0) {
             count++;
-            buf.append(days).append(" day");
-            if (days != 1)
-                buf.append("s");
+            buf.append(days);
+            buf.append(' ');
+            if (days==1)
+                buf.append(MSG.common_label_day());
+            else
+                buf.append(MSG.common_unit_days2());
         }
 
         int hours = (int) (timeAgo / MILLIS_IN_HOUR);
         timeAgo %= MILLIS_IN_HOUR;
         if (hours > 0) {
             count++;
-            if (buf.length() > 0)
+            if (buf.length() > 0) {
                 buf.append(", ");
-            buf.append(hours).append(" hour");
-            if (hours != 1)
-                buf.append("s");
+            }
+            buf.append(hours);
+            buf.append(' ');
+            if (hours == 1)
+                buf.append(MSG.common_label_hour());
+            else
+                buf.append(MSG.common_unit_hours());
         }
 
         if (count < 2) {
@@ -89,9 +96,12 @@ public class GwtRelativeDurationConverter {
             if (mins > 0) {
                 if (buf.length() > 0)
                     buf.append(", ");
-                buf.append(mins).append(" minute");
-                if (mins != 1)
-                    buf.append("s");
+                buf.append(mins);
+                buf.append(' ');
+                if (mins == 1)
+                    buf.append(MSG.common_unit_minute());
+                else
+                    buf.append(MSG.common_unit_minutes());
             }
         }
 

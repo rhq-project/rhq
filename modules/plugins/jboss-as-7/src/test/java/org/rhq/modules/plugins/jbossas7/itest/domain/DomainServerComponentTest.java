@@ -36,11 +36,6 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
     public static final String RESOURCE_KEY = "DomainController";
 
-    private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
-    private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
-    private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
-    private static final String START_TIME_TRAIT_NAME = "startTime";
-
     @Override
     protected ResourceType getServerResourceType() {
         return RESOURCE_TYPE;
@@ -58,7 +53,7 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
-    // ******************************* TRAITS ******************************* //
+    // ******************************* METRICS ******************************* //
     @Override
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testMetricsHaveNonNullValues() throws Exception {

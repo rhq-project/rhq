@@ -40,15 +40,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     // The key of an AS7 Standalone Server Resource is its JBOSS_HOME dir.
     public static final String RESOURCE_KEY = FileUtils.getCanonicalPath(System.getProperty("jboss7.home"));
 
-    private static final String SERVER_STATE_TRAIT_NAME = "server-state";
-    private static final String RELEASE_CODENAME_TRAIT_NAME = "release-codename";
-    private static final String PRODUCT_NAME_TRAIT_NAME = "product-name";
-    private static final String PRODUCT_VERSION_TRAIT_NAME = "product-version";
-    private static final String START_TIME_TRAIT_NAME = "startTime";
-
     private static final String RELOAD_OPERATION_NAME = "reload";
-    private static final String SHUTDOWN_OPERATION_NAME = "shutdown";
-    private static final String START_OPERATION_NAME = "start";
     private static final String RESTART_OPERATION_NAME = "restart";
 
     @Override
@@ -68,8 +60,7 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         super.testAutoDiscovery();
     }
 
-    // ******************************* TRAITS ******************************* //
-
+    // ******************************* METRICS ******************************* //
     @Override
     @Test(dependsOnMethods = "testAutoDiscovery")
     public void testMetricsHaveNonNullValues() throws Exception {

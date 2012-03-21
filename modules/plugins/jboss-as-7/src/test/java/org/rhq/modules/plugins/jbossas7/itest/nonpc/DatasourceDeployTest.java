@@ -45,25 +45,20 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "nonpc", enabled = UploadAndDeployTest.isEnabled)
+@Test(groups = "nonpc", dependsOnGroups = "pc", enabled = UploadAndDeployTest.isEnabled)
 public class DatasourceDeployTest extends AbstractIntegrationTest {
 
     private static final String POSTGRES = "postgres";
-    private static final String USER_HOME = System.getProperty("user.home");
-
-//    private final Log log = LogFactory.getLog(DatasourceDeployTest.class);
 
     private File DRIVER_FILE = new File(MAVEN_REPO_LOCAL,
             "postgresql/postgresql/9.1-901.jdbc4/postgresql-9.1-901.jdbc4.jar");
     private String DRIVER_FILENAME = DRIVER_FILE.getName();
 
-    @Test(dependsOnGroups = "pc")
     public void uploadOnly() throws Exception {
         String sha1 = uploadToAs(DRIVER_FILE.getPath());
         assert sha1!=null;
     }
 
-    @Test(dependsOnGroups = "pc")
     public void deployToDomain() throws Exception {
         String sha = uploadToAs(DRIVER_FILE.getPath());
         Operation addDeployment = addDeployment(DRIVER_FILENAME, sha);
@@ -91,7 +86,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
      * server-group=main-server-group. Purely to check that the assumption
      * about as7 is still correct.
      */
-    @Test(dependsOnGroups = "pc")
     public void AS7DomainAssumptions() {
         ASConnection connection = getASConnection();
         Operation op = new ReadResource("host","master");
@@ -119,7 +113,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         assert res.isSuccess() : "Did not find a 'default' profile";
     }
 
-    @Test(dependsOnGroups = "pc")
     public void deployDriverToServerGroup() throws Exception {
         ASConnection conn = getASConnection();
 
@@ -152,13 +145,11 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         }
         assert found : "Did not find the driver";
 
-
         // Now clean up
         cleanupSGDeployment(conn,sgAddress);
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
     public void createDatasource() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
@@ -181,7 +172,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
     public void createXADatasource() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
@@ -204,7 +194,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
     public void updateDatasource() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
@@ -230,7 +219,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
     public void deployDatasourceViaOperation() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
@@ -269,7 +257,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
     public void deployXADatasourceViaOperation() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
@@ -309,7 +296,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
     public void flushDSviaOperation() throws Exception {
         // This test executes the "fall through" operation in the DatasourceComponent
 

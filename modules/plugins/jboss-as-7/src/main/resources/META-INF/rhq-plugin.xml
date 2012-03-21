@@ -2268,11 +2268,12 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
         </plugin-configuration>
 
+       <!-- Disable for now. This is available and modifiable by Configuration options. 
         <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
             <results>
                     <c:simple-property name="operationResult"/>
             </results>
-        </operation>
+        </operation>-->
 
         <resource-configuration>        
                 <c:simple-property name="advertise-socket" required="false" type="string" readOnly="false" defaultValue="224.0.1.105:23364"

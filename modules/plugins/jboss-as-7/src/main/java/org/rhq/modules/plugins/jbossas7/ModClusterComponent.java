@@ -20,8 +20,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class ModClusterComponent extends BaseComponent implements OperationFacet, ConfigurationFacet {
 
-    //Ex. "/subsystem=modcluster/mod-cluster-config=configuration/" or following.
-    private static String CONFIG_ADDRESS = "subsystem=modcluster,mod-cluster-config=configuration";
+    //Ex. "/subsystem=modcluster/mod-cluster-config=configuration/" or following is valid.
+    private static String CONFIG_ADDRESS = ",mod-cluster-config=configuration";
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
@@ -50,7 +50,7 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
         //retrieve config definition
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         //default address is not right. Update it
-        Address modClusterConfigAddress = new Address(CONFIG_ADDRESS);
+        Address modClusterConfigAddress = new Address(key + CONFIG_ADDRESS);
         ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, connection,
             modClusterConfigAddress);
         Configuration config = delegate.loadResourceConfiguration();
@@ -63,7 +63,7 @@ public class ModClusterComponent extends BaseComponent implements OperationFacet
 
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         //default address is not right. Update it
-        Address modClusterConfigAddress = new Address(CONFIG_ADDRESS);
+        Address modClusterConfigAddress = new Address(key + CONFIG_ADDRESS);
         ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef, connection,
             modClusterConfigAddress);
         delegate.updateResourceConfiguration(report);

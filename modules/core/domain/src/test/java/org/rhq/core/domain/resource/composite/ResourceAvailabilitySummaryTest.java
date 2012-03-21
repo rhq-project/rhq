@@ -200,6 +200,26 @@ public class ResourceAvailabilitySummaryTest {
         assertApproximate(2001000L, new ResourceAvailabilitySummary(avails).getUnknownTime()); //(t1+400)-(t1+800) then t1+1600-now (400+1600+1s sleep)
     }
 
+    public void testKnownTime() throws InterruptedException {
+        List<Availability> avails;
+
+        avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getKnownTime() == 0;
+        avails = list(DOWN, 600, UNKNOWN, 1000);
+        assert new ResourceAvailabilitySummary(avails).getKnownTime() == 400000L;
+        avails = list(UP, 600, UNKNOWN, 1000);
+        assert new ResourceAvailabilitySummary(avails).getKnownTime() == 400000L;
+        avails = list(DISABLED, 0, DOWN, 100, UNKNOWN, 300, UP, 800, UNKNOWN, 1000);
+        assert new ResourceAvailabilitySummary(avails).getKnownTime() == 500000L; // from 0-100, 100-300, 800-1000
+
+        avails = list(UP, getPastTime(600));
+        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getKnownTime());
+        avails = list(DOWN, getPastTime(600));
+        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getKnownTime());
+        avails = list(DISABLED, getPastTime(600));
+        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getKnownTime());
+    }
+
     public void testUpPercentage() {
         List<Availability> avails;
         avails = list(UNKNOWN, 0);
@@ -319,16 +339,58 @@ public class ResourceAvailabilitySummaryTest {
         avails = list(DISABLED, 600);
         assert new ResourceAvailabilitySummary(avails).getMTTR() == 0;
         avails = list(DOWN, getPastTime(600));
-        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getMTTR()); // there isn't a subsequent UP, so it hasn't been repaired, this time should be the entire time
+        assert new ResourceAvailabilitySummary(avails).getMTTR() == 0; // there isn't a subsequent UP, so there isn't a recovery yet!
 
         avails = list(DOWN, 600, UP, 1000);
-        assert 400000L == new ResourceAvailabilitySummary(avails).getMTTR();
+        assert 400 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR(); // we assume we were UP prior to the first DOWN
         avails = list(UP, 10000, DOWN, getPastTime(600));
-        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getMTTR()); // there isn't a subsequent UP, so it hasn't been repaired, this time should be the entire time
-        avails = list(DISABLED, 10000, UP, 500, DOWN, getPastTime(600));
-        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getMTTR()); // DISABLED is not considered DOWN
-        avails = list(UNKNOWN, 0, UP, 10000, DOWN, getPastTime(600));
-        assertApproximate(600000L, new ResourceAvailabilitySummary(avails).getMTTR()); // UNKNOWN is not considered DOWN
+        assert new ResourceAvailabilitySummary(avails).getMTTR() == 0; // we can't get MTTR because we haven't recovered at least once yet
+        avails = list(UP, 100, DISABLED, 500, UP, 1000, DOWN, getPastTime(600));
+        assert new ResourceAvailabilitySummary(avails).getMTBF() == 0; // DISABLED is not considered DOWN - we don't have a real recovery yet
+        avails = list(UP, 100, UNKNOWN, 500, UP, 1000, DOWN, getPastTime(600));
+        assert new ResourceAvailabilitySummary(avails).getMTBF() == 0; // UNKNOWN is not considered DOWN - we don't have a real recovery yet
+
+        // MTTR is simply the time during failures (i.e. mean time of being DOWN)
+
+        //   UP _________   !!!!   ________
+        //      <-1000 ->|<-4000->|<-5000->
+        // DOWN          |________|
+        //     -9000   -8000    -4000     now
+        long t1 = getPastTime(9000);
+        avails = list(UP, t1, DOWN, t1 + 1000, UP, t1 + 5000);
+        assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR();
+        t1 = getPastTime(9000);
+        avails = list(UNKNOWN, 0, UP, t1, DOWN, t1 + 1000, UP, t1 + 5000);
+        assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR();
+
+        //   UP _________   !!!!   ________
+        //      <-1000 ->|<-4000->|<-1000->|<-3000->
+        // DOWN          |________|        |________
+        //     -9000   -8000    -4000    -3000     now
+        t1 = getPastTime(9000);
+        avails = list(UNKNOWN, 0, UP, t1, DOWN, t1 + 1000, UP, t1 + 5000, DOWN, t1 + 6000);
+        assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR(); // do not count the current UP period
+
+        //   UP _________   !!!!   ________   !!!!   _
+        //      <-1000 ->|<-4000->|<-1000->|<-3000->|
+        // DOWN          |________|        |________| 
+        //     -9000   -8000    -4000    -3000     now
+        t1 = getPastTime(9000);
+        avails = list(UNKNOWN, 0, UP, t1, DOWN, t1 + 1000, UP, t1 + 5000, DOWN, t1 + 6000, UP, t1 + 9000);
+        assert ((4000 + 3000) * 1000L) / 2 == new ResourceAvailabilitySummary(avails).getMTTR();
+
+        // make sure DISABLED and UNKNOWN don't count in the calculations
+        avails = list(UNKNOWN, 0, UP, 50, DOWN, 200, DISABLED, 300, UNKNOWN, 450, UP, 550);
+        assert 100 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR(); // only DOWN for 100
+        avails = list(DOWN, 50, UP, 200, DISABLED, 300, UP, 400, UNKNOWN, 450, DOWN, 550);
+        assert 150 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR(); // two failures but only the first is used in the calculation
+        avails = list(DOWN, 50, UP, 200, DISABLED, 300, DOWN, 350, UP, 400, UNKNOWN, 450, DOWN, 550);
+        assert ((150 + 50) * 1000L) / 2 == new ResourceAvailabilitySummary(avails).getMTTR(); // three failures but only the first two are used
+
+        // just a bunch of down-up periods
+        avails = list(DOWN, 100, UP, 200, DOWN, 400, UP, 500, DOWN, 700, UP, 800, DOWN, 1100, UP, 1200, DOWN, 1500, UP,
+            2000);
+        assert ((100 + 100 + 100 + 100 + 500) * 1000L) / 5 == new ResourceAvailabilitySummary(avails).getMTTR();
     }
 
     /**

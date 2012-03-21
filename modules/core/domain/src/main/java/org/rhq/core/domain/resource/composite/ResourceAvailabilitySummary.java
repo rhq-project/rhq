@@ -137,13 +137,25 @@ public class ResourceAvailabilitySummary implements Serializable {
 
     /**
      * Returns the mean-time-to-repair metric. The computation only takes into
-     * account the downtimes. Any time periods of UNKNOWN or DISABLED
+     * account the uptimes and downtimes. Any time periods of UNKNOWN or DISABLED
      * availability are ignored.
+     *
+     * If there has been no failures yet, the MTTR cannot be calculated - in this case, 0 is returned.
      *
      * @return MTTR value in milliseconds
      */
     public long getMTTR() {
-        return failures != 0 ? downTime / failures : 0;
+        if (failures <= 0) {
+            return 0;
+        }
+
+        // if our current state is DOWN, don't count the current down period in the calculations
+        // since we don't have a subsequent UP and thus don't know the length of time it will be down before repair.
+        if (this.current == AvailabilityType.DOWN) {
+            return (failures > 1) ? (downTime - (this.now - this.lastChange)) / (failures - 1) : 0;
+        } else {
+            return downTime / failures;
+        }
     }
 
     /**
@@ -223,6 +235,17 @@ public class ResourceAvailabilitySummary implements Serializable {
      */
     public long getUnknownTime() {
         return unknownTime;
+    }
+
+    /**
+     * Returns the time the availability was in a known state
+     * (which includes UP, DOWN and DISABLED). This obviously does not include
+     * the times which the availability was in the UNKNOWN state.
+     *
+     * @return cumulative time the availability was known, in milliseconds
+     */
+    public long getKnownTime() {
+        return upTime + downTime + disabledTime;
     }
 
     /**

@@ -1,19 +1,20 @@
 <html>
 <body>
 This package contains the integration tests that run against JBoss AS 7 / EAP6 servers in standalone and domain mode.
-
+<br/>
 You can start the tests like this:
 <code>
     mvn verify -DskipTests=false -Das7-itest=as7 -Das7.version=7.1.1.Final
 </code>
-
+To remotely debug integration tests, you can use <code>-Ditest.debug</code>
+<p/>
 Subdirectories:
 <ul>
     <li>domain: test against a domain mode server</li>
     <li>nonpc : tests that don't go through the full plugin-container/resource container; copied over from older integration tests</li>
     <li>standalone: tests against a standalone server</li>
 </ul>
-
+<p/>
 See also this the wiki page at
 <a href="http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests">http://rhq-project.org/display/RHQ/Notes#Notes-IntegrationTests</a> for more information
 </body>

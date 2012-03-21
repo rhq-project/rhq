@@ -36,4 +36,6 @@ public interface BaseCriteria {
 
     public boolean isStrict();
 
+    public void setPaging(int pageNumber, int pageSize) ;
+
 }

@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.server.util;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
-public class CriteriaQuery<T, C extends Criteria> implements Iterable<T> {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
 
     private C criteria;
 

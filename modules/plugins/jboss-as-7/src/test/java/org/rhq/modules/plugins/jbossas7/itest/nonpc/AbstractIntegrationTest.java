@@ -61,7 +61,7 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 public abstract class AbstractIntegrationTest {
     
     protected static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");
-    protected static final int DC_HTTP_PORT = 9990;
+    protected static final int DC_HTTP_PORT = Integer.valueOf(System.getProperty("jboss.domain.httpManagementPort"));
     protected static final String DC_USER = AbstractJBossAS7PluginTest.MANAGEMENT_USERNAME;
     protected static final String DC_PASS = AbstractJBossAS7PluginTest.MANAGEMENT_PASSWORD;
     protected static final String MAVEN_REPO_LOCAL = System.getProperty("settings.localRepository");

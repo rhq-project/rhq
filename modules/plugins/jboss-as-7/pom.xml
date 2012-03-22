@@ -210,8 +210,20 @@
 
         <properties>
           <jboss7.home>${java.io.tmpdir}/jboss-as-${as7.version}</jboss7.home>
-          <jboss.standalone.bindAddress>127.0.0.200</jboss.standalone.bindAddress>
-          <jboss.domain.bindAddress>127.0.0.201</jboss.domain.bindAddress>
+
+          <jboss.standalone.bindAddress>127.0.0.1</jboss.standalone.bindAddress>
+          <jboss.standalone.portOffset>40000</jboss.standalone.portOffset>
+          <!-- IMPORTANT: The management port must be the port offset + 9999. -->
+          <jboss.standalone.nativeManagementPort>49999</jboss.standalone.nativeManagementPort>
+
+          <jboss.domain.bindAddress>127.0.0.1</jboss.domain.bindAddress>
+          <jboss.domain.portOffset>50000</jboss.domain.portOffset>
+          <!-- IMPORTANT: The native management port must be the port offset + 9999. -->
+          <jboss.domain.nativeManagementPort>59999</jboss.domain.nativeManagementPort>
+          <!-- IMPORTANT: The native management port must be the port offset + 9990. -->
+          <jboss.domain.httpManagementPort>59990</jboss.domain.httpManagementPort>
+          <!-- IMPORTANT: The native management port must be the port offset + 9943. -->
+          <jboss.domain.httpsManagementPort>59943</jboss.domain.httpsManagementPort>
         </properties>
 
         <build>
@@ -248,7 +260,7 @@
                 </executions>
             </plugin>
 
-            <!-- This is so we can reference jboss7.home and jboss.standalone.bindAddress in jbossas7-arquillian.xml. -->
+            <!-- This is so we can reference the below properties in jbossas7-arquillian.xml. -->
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>properties-maven-plugin</artifactId>
@@ -267,6 +279,14 @@
                       <property>
                         <name>jboss.standalone.bindAddress</name>
                         <value>${jboss.standalone.bindAddress}</value>
+                      </property>
+                      <property>
+                        <name>jboss.standalone.portOffset</name>
+                        <value>${jboss.standalone.portOffset}</value>
+                      </property>
+                      <property>
+                        <name>jboss.standalone.nativeManagementPort</name>
+                        <value>${jboss.standalone.nativeManagementPort}</value>
                       </property>
                     </properties>
                   </configuration>
@@ -336,9 +356,10 @@
                       <background>true</background>
                       <!-- test blocks until the port at backgroundPollingAddress is available (waiting for starting) -->
                       <!-- when maven jvm exits, this plugin will kill the running servers -->
-                      <backgroundPollingAddress>${jboss.domain.bindAddress}:9999</backgroundPollingAddress>
+                      <backgroundPollingAddress>${jboss.domain.bindAddress}:${jboss.domain.nativeManagementPort}</backgroundPollingAddress>
                       <executable>${java.home}/bin/java</executable>
                       <arguments>
+                        <!-- Process Controller Java options -->
                         <argument>-D[Process Controller]</argument>
                         <argument>-Xms64M</argument>
                         <argument>-Xmx512M</argument>
@@ -356,6 +377,7 @@
                         <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
                         <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
                         <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
+                        <argument>-Djboss.socket.binding.port-offset=${jboss.domain.portOffset}</argument>
                         <argument>-jar</argument>
                         <argument>${jboss7.home}/jboss-modules.jar</argument>
                         <argument>-mp</argument>
@@ -368,6 +390,8 @@
                         <argument>-mp</argument>
                         <argument>${jboss7.home}/modules</argument>
                         <argument>--</argument>
+
+                        <!-- Host Controller Java options to be inserted *before* the built-in options -->
                         <argument>-Xms64M</argument>
                         <argument>-Xmx512M</argument>
                         <argument>-XX:MaxPermSize=256M</argument>
@@ -384,7 +408,13 @@
                         <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
                         <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
                         <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
+                        <argument>-Djboss.socket.binding.port-offset=${jboss.domain.portOffset}</argument>
+                        <argument>-Djboss.management.native.port=${jboss.domain.nativeManagementPort}</argument>
+                        <argument>-Djboss.management.http.port=${jboss.domain.httpManagementPort}</argument>
+                        <argument>-Djboss.management.https.port=${jboss.domain.httpsManagementPort}</argument>
                         <argument>--</argument>
+
+                        <!-- Host Controller Java options to be inserted *after* the built-in options -->
                         <argument>-default-jvm</argument>
                         <argument>${java.home}/bin/java</argument>
                       </arguments>
@@ -416,6 +446,7 @@
                   <jboss7.home>${jboss7.home}</jboss7.home>
                   <as7.version>${as7.version}</as7.version>
                   <jboss.domain.bindAddress>${jboss.domain.bindAddress}</jboss.domain.bindAddress>
+                  <jboss.domain.httpManagementPort>${jboss.domain.httpManagementPort}</jboss.domain.httpManagementPort>
                   <settings.localRepository>${settings.localRepository}</settings.localRepository>
                 </systemPropertyVariables>
               </configuration>

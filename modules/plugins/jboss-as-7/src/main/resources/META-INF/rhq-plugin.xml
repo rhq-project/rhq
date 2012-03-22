@@ -2083,24 +2083,12 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
 
         <resource-configuration>
-            <c:simple-property name="worker-read-threads" required="false" type="integer" readOnly="false"
-                               defaultValue="1"
-                               description="The number of read threads to create for the remoting worker."/>
-            <c:simple-property name="worker-task-max-threads" required="false" type="integer" readOnly="false"
-                               defaultValue="16"
-                               description="The maximum number of threads for the remoting worker task thread pool."/>
-            <c:simple-property name="worker-task-limit" required="false" type="integer" readOnly="false"
-                               defaultValue="16384"
-                               description="The maximum number of remoting worker tasks to allow before rejecting."/>
-            <c:simple-property name="worker-task-core-threads" required="false" type="integer" readOnly="false"
-                               defaultValue="4"
-                               description="The number of core threads for the remoting worker task thread pool."/>
-            <c:simple-property name="worker-write-threads" required="false" type="integer" readOnly="false"
-                               defaultValue="1"
-                               description="The number of write threads to create for the remoting worker."/>
-            <c:simple-property name="worker-task-keepalive" required="false" type="integer" readOnly="false"
-                               defaultValue="60"
-                               description="The number of milliseconds to keep non-core remoting worker task threads alive."/>
+            <c:simple-property name="worker-read-threads" required="false" type="integer" readOnly="false" defaultValue="1" description="The number of read threads to create for the remoting worker. The default value is 1."/>
+            <c:simple-property name="worker-task-core-threads" required="false" type="integer" readOnly="false" defaultValue="4" description="The number of core threads for the remoting worker task thread pool. The default value is 4."/>
+            <c:simple-property name="worker-task-keepalive" required="false" type="integer" readOnly="false" defaultValue="60" description="The number of milliseconds to keep non-core remoting worker task threads alive. The default value is 60."/>
+            <c:simple-property name="worker-task-limit" required="false" type="integer" readOnly="false" defaultValue="16384" description="The maximum number of remoting worker tasks to allow before rejecting. The default value is 16384."/>
+            <c:simple-property name="worker-task-max-threads" required="false" type="integer" readOnly="false" defaultValue="16" description="The maximum number of threads for the remoting worker task thread pool. The default value is 16."/>
+            <c:simple-property name="worker-write-threads" required="false" type="integer" readOnly="false" defaultValue="1" description="The number of write threads to create for the remoting worker. The default value is 1."/>
         </resource-configuration>
 
     </server>

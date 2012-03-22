@@ -78,7 +78,10 @@ public class ResourceAvailabilitySummary implements Serializable {
                 break;
             }
             case UNKNOWN: {
-                unknownTime += getStartEndTimeDuration(avail);
+                // ignore the initial unknown range that occurs prior to a resource being in inventory
+                if (avail.getStartTime() > 0L) {
+                    unknownTime += getStartEndTimeDuration(avail);
+                }
                 break;
             }
             }

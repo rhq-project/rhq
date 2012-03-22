@@ -32,6 +32,7 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -62,6 +63,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 public class ResourceAvailabilityView extends LocatableVLayout {
 
     private ResourceComposite resourceComposite;
+    private StaticTextItem currentField;
+    private StaticTextItem availField;
+    private StaticTextItem availTimeField;
+    private StaticTextItem downField;
+    private StaticTextItem downTimeField;
+    private StaticTextItem disabledField;
+    private StaticTextItem disabledTimeField;
+    private StaticTextItem failureCountField;
+    private StaticTextItem disabledCountField;
+    private StaticTextItem mtbfField;
+    private StaticTextItem mttrField;
+    private StaticTextItem unknownField;
+    private StaticTextItem currentTimeField;
 
     public ResourceAvailabilityView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
@@ -87,99 +101,128 @@ public class ResourceAvailabilityView extends LocatableVLayout {
         form.setMargin(10);
         form.setNumCols(4);
 
-        final StaticTextItem current = new StaticTextItem("current",
-            MSG.view_resource_monitor_availability_currentStatus());
-        current.setWrapTitle(false);
-        current.setColSpan(4);
+        // row 1
+        currentField = new StaticTextItem("current", MSG.view_resource_monitor_availability_currentStatus());
+        currentField.setWrapTitle(false);
+        currentField.setColSpan(4);
 
-        final StaticTextItem avail = new StaticTextItem("avail", MSG.view_resource_monitor_availability_availability());
-        avail.setWrapTitle(false);
-        final StaticTextItem availTime = new StaticTextItem("availTime",
-            MSG.view_resource_monitor_availability_uptime());
-        availTime.setWrapTitle(false);
+        // row 2
+        availField = new StaticTextItem("avail", MSG.view_resource_monitor_availability_availability());
+        availField.setWrapTitle(false);
+        prepareTooltip(availField, MSG.view_resource_monitor_availability_availability_tooltip());
 
-        final StaticTextItem down = new StaticTextItem("down", MSG.view_resource_monitor_availability_down());
-        down.setWrapTitle(false);
-        final StaticTextItem downTime = new StaticTextItem("downTime",
-            MSG.view_resource_monitor_availability_downtime());
-        downTime.setWrapTitle(false);
+        availTimeField = new StaticTextItem("availTime", MSG.view_resource_monitor_availability_uptime());
+        availTimeField.setWrapTitle(false);
+        prepareTooltip(availTimeField, MSG.view_resource_monitor_availability_uptime_tooltip());
 
-        final StaticTextItem disabled = new StaticTextItem("disabled",
-            MSG.view_resource_monitor_availability_disabled());
-        disabled.setWrapTitle(false);
-        final StaticTextItem disabledTime = new StaticTextItem("disabledTime",
-            MSG.view_resource_monitor_availability_disabledTime());
-        disabledTime.setWrapTitle(false);
+        // row 3
+        downField = new StaticTextItem("down", MSG.view_resource_monitor_availability_down());
+        downField.setWrapTitle(false);
+        prepareTooltip(downField, MSG.view_resource_monitor_availability_down_tooltip());
 
-        final StaticTextItem failureCount = new StaticTextItem("failureCount",
-            MSG.view_resource_monitor_availability_numFailures());
-        failureCount.setWrapTitle(false);
-        final StaticTextItem disabledCount = new StaticTextItem("disabledCount",
-            MSG.view_resource_monitor_availability_numDisabled());
-        disabledCount.setWrapTitle(false);
+        downTimeField = new StaticTextItem("downTime", MSG.view_resource_monitor_availability_downtime());
+        downTimeField.setWrapTitle(false);
+        prepareTooltip(downTimeField, MSG.view_resource_monitor_availability_downtime_tooltip());
 
-        final StaticTextItem mtbf = new StaticTextItem("mtbf", MSG.view_resource_monitor_availability_mtbf());
-        mtbf.setWrapTitle(false);
-        mtbf.setPrompt(MSG.view_resource_monitor_availability_mtbfTooltip());
-        final StaticTextItem mttr = new StaticTextItem("mttr", MSG.view_resource_monitor_availability_mttr());
-        mttr.setWrapTitle(false);
-        mttr.setPrompt(MSG.view_resource_monitor_availability_mttrTooltip());
+        // row 4
+        disabledField = new StaticTextItem("disabled", MSG.view_resource_monitor_availability_disabled());
+        disabledField.setWrapTitle(false);
+        prepareTooltip(disabledField, MSG.view_resource_monitor_availability_disabled_tooltip());
 
-        final StaticTextItem unknown = new StaticTextItem("unknown");
-        unknown.setWrapTitle(false);
-        unknown.setColSpan(4);
-        unknown.setShowTitle(false);
+        disabledTimeField = new StaticTextItem("disabledTime", MSG.view_resource_monitor_availability_disabledTime());
+        disabledTimeField.setWrapTitle(false);
+        prepareTooltip(disabledTimeField, MSG.view_resource_monitor_availability_disabledTime_tooltip());
 
-        final StaticTextItem currentTime = new StaticTextItem("currentTime");
-        currentTime.setWrapTitle(false);
-        currentTime.setColSpan(4);
-        currentTime.setShowTitle(false);
+        // row 5
+        failureCountField = new StaticTextItem("failureCount", MSG.view_resource_monitor_availability_numFailures());
+        failureCountField.setWrapTitle(false);
+        prepareTooltip(failureCountField, MSG.view_resource_monitor_availability_numFailures_tooltip());
 
-        form.setItems(current, avail, availTime, down, downTime, disabled, disabledTime, failureCount, disabledCount,
-            mtbf, mttr, unknown, currentTime);
+        disabledCountField = new StaticTextItem("disabledCount", MSG.view_resource_monitor_availability_numDisabled());
+        disabledCountField.setWrapTitle(false);
+        prepareTooltip(disabledCountField, MSG.view_resource_monitor_availability_numDisabled_tooltip());
 
+        // row 6
+        mtbfField = new StaticTextItem("mtbf", MSG.view_resource_monitor_availability_mtbf());
+        mtbfField.setWrapTitle(false);
+        prepareTooltip(mtbfField, MSG.view_resource_monitor_availability_mtbf_tooltip());
+
+        mttrField = new StaticTextItem("mttr", MSG.view_resource_monitor_availability_mttr());
+        mttrField.setWrapTitle(false);
+        prepareTooltip(mttrField, MSG.view_resource_monitor_availability_mttr_tooltip());
+
+        // row 7
+        unknownField = new StaticTextItem("unknown");
+        unknownField.setWrapTitle(false);
+        unknownField.setColSpan(4);
+        unknownField.setShowTitle(false);
+
+        // row 8
+        currentTimeField = new StaticTextItem("currentTime");
+        currentTimeField.setWrapTitle(false);
+        currentTimeField.setColSpan(4);
+        currentTimeField.setShowTitle(false);
+
+        form.setItems(currentField, availField, availTimeField, downField, downTimeField, disabledField,
+            disabledTimeField, failureCountField, disabledCountField, mtbfField, mttrField, unknownField,
+            currentTimeField);
+
+        reloadSummaryData();
+
+        return form;
+    }
+
+    private void reloadSummaryData() {
         GWTServiceLookup.getResourceService().getResourceAvailabilitySummary(resourceComposite.getResource().getId(),
             new AsyncCallback<ResourceAvailabilitySummary>() {
 
                 @Override
                 public void onSuccess(ResourceAvailabilitySummary result) {
 
-                    current.setValue(MSG.view_resource_monitor_availability_currentStatus_value(result.getCurrent()
-                        .getName(), TimestampCellFormatter.format(result.getLastChange().getTime())));
-                    avail.setValue(MeasurementConverterClient.format(result.getUpPercentage(),
+                    currentField.setValue(MSG.view_resource_monitor_availability_currentStatus_value(result
+                        .getCurrent().getName(), TimestampCellFormatter.format(result.getLastChange().getTime())));
+                    availField.setValue(MeasurementConverterClient.format(result.getUpPercentage(),
                         MeasurementUnits.PERCENTAGE, true));
-                    availTime.setValue(MeasurementConverterClient.format((double) result.getUpTime(),
+                    availTimeField.setValue(MeasurementConverterClient.format((double) result.getUpTime(),
                         MeasurementUnits.MILLISECONDS, true));
-                    down.setValue(MeasurementConverterClient.format(result.getDownPercentage(),
+                    downField.setValue(MeasurementConverterClient.format(result.getDownPercentage(),
                         MeasurementUnits.PERCENTAGE, true));
-                    downTime.setValue(MeasurementConverterClient.format((double) result.getDownTime(),
+                    downTimeField.setValue(MeasurementConverterClient.format((double) result.getDownTime(),
                         MeasurementUnits.MILLISECONDS, true));
-                    disabled.setValue(MeasurementConverterClient.format(result.getDisabledPercentage(),
+                    disabledField.setValue(MeasurementConverterClient.format(result.getDisabledPercentage(),
                         MeasurementUnits.PERCENTAGE, true));
-                    disabledTime.setValue(MeasurementConverterClient.format((double) result.getDisabledTime(),
+                    disabledTimeField.setValue(MeasurementConverterClient.format((double) result.getDisabledTime(),
                         MeasurementUnits.MILLISECONDS, true));
-                    failureCount.setValue(result.getFailures());
-                    disabledCount.setValue(result.getDisabled());
-                    mtbf.setValue(MeasurementConverterClient.format((double) result.getMTBF(),
+                    failureCountField.setValue(result.getFailures());
+                    disabledCountField.setValue(result.getDisabled());
+                    mtbfField.setValue(MeasurementConverterClient.format((double) result.getMTBF(),
                         MeasurementUnits.MILLISECONDS, true));
-                    mttr.setValue(MeasurementConverterClient.format((double) result.getMTTR(),
+                    mttrField.setValue(MeasurementConverterClient.format((double) result.getMTTR(),
                         MeasurementUnits.MILLISECONDS, true));
 
-                    // TODO: do we want to show the time spent in UNKNOWN state? right now, this field is shown empty for the whitespace
-                    //unknown.setValue("This resource was in an unknown state for 1000 hours");
-                    currentTime.setValue(MSG.view_resource_monitor_availability_currentAsOf(TimestampCellFormatter
+                    if (result.getUnknownTime() > 0L) {
+                        unknownField.setValue(MSG.view_resource_monitor_availability_unknown(MeasurementConverterClient
+                            .format((double) result.getUnknownTime(), MeasurementUnits.MILLISECONDS, true)));
+                    } else {
+                        unknownField.setValue("");
+                    }
+
+                    currentTimeField.setValue(MSG.view_resource_monitor_availability_currentAsOf(TimestampCellFormatter
                         .format(result.getCurrentTime())));
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    current.setValue(MSG.common_label_error());
+                    currentField.setValue(MSG.common_label_error());
                     CoreGUI.getErrorHandler()
                         .handleError(MSG.view_resource_monitor_availability_summaryError(), caught);
                 }
             });
+    }
 
-        return form;
+    private void prepareTooltip(FormItem item, String tooltip) {
+        item.setHoverWidth(400);
+        item.setPrompt(tooltip);
     }
 
     private Table<ListView.DS> createListView() {
@@ -187,7 +230,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
         return listView;
     }
 
-    private static class ListView extends Table<ListView.DS> {
+    private class ListView extends Table<ListView.DS> {
 
         private DS dataSource;
         private int resourceId;
@@ -209,6 +252,12 @@ public class ResourceAvailabilityView extends LocatableVLayout {
         }
 
         @Override
+        public void refresh() {
+            super.refresh();
+            reloadSummaryData();
+        }
+
+        @Override
         protected void configureTableContents(Layout contents) {
             super.configureTableContents(contents);
             setAutoHeight();
@@ -222,7 +271,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
             super.configureTable();
         }
 
-        private static class DS extends RPCDataSource<Availability, AvailabilityCriteria> {
+        private class DS extends RPCDataSource<Availability, AvailabilityCriteria> {
 
             public static final String ATTR_ID = "id";
             public static final String ATTR_AVAILABILITY = "availabilityType";

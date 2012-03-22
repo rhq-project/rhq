@@ -47,6 +47,8 @@ public class ResourceAvailabilitySummaryTest {
         assert new ResourceAvailabilitySummary(avails).getLastChange().getTime() == 40000L;
         avails = list(UNKNOWN, 0);
         assert new ResourceAvailabilitySummary(avails).getLastChange().getTime() == 0L;
+        avails = list(UNKNOWN, 1);
+        assert new ResourceAvailabilitySummary(avails).getLastChange().getTime() == 1000L;
         avails = list(UP, 5);
         assert new ResourceAvailabilitySummary(avails).getLastChange().getTime() == 5000L;
     }
@@ -57,6 +59,8 @@ public class ResourceAvailabilitySummaryTest {
         avails = list(UP, 10, DOWN, 20, UP, 30, DOWN, 40);
         assert new ResourceAvailabilitySummary(avails).getCurrent() == DOWN;
         avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getCurrent() == UNKNOWN;
+        avails = list(UNKNOWN, 1);
         assert new ResourceAvailabilitySummary(avails).getCurrent() == UNKNOWN;
         avails = list(UP, 5);
         assert new ResourceAvailabilitySummary(avails).getCurrent() == UP;
@@ -81,6 +85,16 @@ public class ResourceAvailabilitySummaryTest {
         assert new ResourceAvailabilitySummary(avails).getFailures() == 2;
         avails = list(UNKNOWN, 0, DISABLED, 10);
         assert new ResourceAvailabilitySummary(avails).getFailures() == 0;
+
+        // try it with the first unknown range starting at non-zero time
+        avails = list(UNKNOWN, 1, UP, 10, DOWN, 20, DISABLED, 30);
+        assert new ResourceAvailabilitySummary(avails).getFailures() == 1;
+        avails = list(UNKNOWN, 1, UP, 10, DOWN, 20, UP, 30, DOWN, 40);
+        assert new ResourceAvailabilitySummary(avails).getFailures() == 2;
+        avails = list(UNKNOWN, 1, UP, 10, DOWN, 20, UP, 30, DOWN, 40, UP, 50);
+        assert new ResourceAvailabilitySummary(avails).getFailures() == 2;
+        avails = list(UNKNOWN, 1, DISABLED, 10);
+        assert new ResourceAvailabilitySummary(avails).getFailures() == 0;
     }
 
     public void testDisabled() {
@@ -98,12 +112,22 @@ public class ResourceAvailabilitySummaryTest {
         assert new ResourceAvailabilitySummary(avails).getDisabled() == 0;
         avails = list(UNKNOWN, 0, UP, 10, DISABLED, 20, UP, 30, DISABLED, 40, UP, 50);
         assert new ResourceAvailabilitySummary(avails).getDisabled() == 2;
+
+        // try it with the first unknown range starting at non-zero time
+        avails = list(UNKNOWN, 1, UP, 10, DOWN, 20, DISABLED, 30);
+        assert new ResourceAvailabilitySummary(avails).getDisabled() == 1;
+        avails = list(UNKNOWN, 1, UP, 10, DOWN, 20, UP, 30, DOWN, 40);
+        assert new ResourceAvailabilitySummary(avails).getDisabled() == 0;
+        avails = list(UNKNOWN, 1, UP, 10, DISABLED, 20, UP, 30, DISABLED, 40, UP, 50);
+        assert new ResourceAvailabilitySummary(avails).getDisabled() == 2;
     }
 
     public void testDownTime() throws InterruptedException {
         List<Availability> avails;
 
         avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getDownTime() == 0;
+        avails = list(UNKNOWN, 1);
         assert new ResourceAvailabilitySummary(avails).getDownTime() == 0;
         avails = list(UP, 600);
         assert new ResourceAvailabilitySummary(avails).getDownTime() == 0;
@@ -114,6 +138,14 @@ public class ResourceAvailabilitySummaryTest {
         avails = list(UNKNOWN, 0, UP, 100, DOWN, 300, DISABLED, 800);
         assert new ResourceAvailabilitySummary(avails).getDownTime() == 500000L; // from 300 to 800
         avails = list(UNKNOWN, 0, UP, 200, DOWN, 400, UP, 800, DOWN, 1600, UP, 3200);
+        assert new ResourceAvailabilitySummary(avails).getDownTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
+
+        // try it with the first unknown range starting at non-zero time
+        avails = list(UNKNOWN, 1, UP, 600, DISABLED, 1200);
+        assert new ResourceAvailabilitySummary(avails).getDownTime() == 0;
+        avails = list(UNKNOWN, 1, UP, 100, DOWN, 300, DISABLED, 800);
+        assert new ResourceAvailabilitySummary(avails).getDownTime() == 500000L; // from 300 to 800
+        avails = list(UNKNOWN, 1, UP, 200, DOWN, 400, UP, 800, DOWN, 1600, UP, 3200);
         assert new ResourceAvailabilitySummary(avails).getDownTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
 
         avails = list(DOWN, getPastTime(600));
@@ -130,6 +162,8 @@ public class ResourceAvailabilitySummaryTest {
 
         avails = list(UNKNOWN, 0);
         assert new ResourceAvailabilitySummary(avails).getUpTime() == 0;
+        avails = list(UNKNOWN, 1);
+        assert new ResourceAvailabilitySummary(avails).getUpTime() == 0;
         avails = list(DOWN, 600);
         assert new ResourceAvailabilitySummary(avails).getUpTime() == 0;
         avails = list(DISABLED, 600);
@@ -139,6 +173,14 @@ public class ResourceAvailabilitySummaryTest {
         avails = list(UNKNOWN, 0, DOWN, 100, UP, 300, DISABLED, 800);
         assert new ResourceAvailabilitySummary(avails).getUpTime() == 500000L; // from 300 to 800
         avails = list(UNKNOWN, 0, DOWN, 200, UP, 400, DOWN, 800, UP, 1600, DOWN, 3200);
+        assert new ResourceAvailabilitySummary(avails).getUpTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
+
+        // try it with the first unknown range starting at non-zero time
+        avails = list(UNKNOWN, 1, DOWN, 600, DISABLED, 1200);
+        assert new ResourceAvailabilitySummary(avails).getUpTime() == 0;
+        avails = list(UNKNOWN, 1, DOWN, 100, UP, 300, DISABLED, 800);
+        assert new ResourceAvailabilitySummary(avails).getUpTime() == 500000L; // from 300 to 800
+        avails = list(UNKNOWN, 1, DOWN, 200, UP, 400, DOWN, 800, UP, 1600, DOWN, 3200);
         assert new ResourceAvailabilitySummary(avails).getUpTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
 
         avails = list(UP, getPastTime(600));
@@ -155,6 +197,8 @@ public class ResourceAvailabilitySummaryTest {
 
         avails = list(UNKNOWN, 0);
         assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 0;
+        avails = list(UNKNOWN, 1);
+        assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 0;
         avails = list(DOWN, 600);
         assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 0;
         avails = list(UP, 600);
@@ -164,6 +208,14 @@ public class ResourceAvailabilitySummaryTest {
         avails = list(UNKNOWN, 0, DOWN, 100, DISABLED, 300, UP, 800);
         assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 500000L; // from 300 to 800
         avails = list(UNKNOWN, 0, DOWN, 200, DISABLED, 400, DOWN, 800, DISABLED, 1600, UP, 3200);
+        assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
+
+        // try it with the first unknown range starting at non-zero time
+        avails = list(UNKNOWN, 1, DOWN, 600, UP, 1200);
+        assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 0;
+        avails = list(UNKNOWN, 1, DOWN, 100, DISABLED, 300, UP, 800);
+        assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 500000L; // from 300 to 800
+        avails = list(UNKNOWN, 1, DOWN, 200, DISABLED, 400, DOWN, 800, DISABLED, 1600, UP, 3200);
         assert new ResourceAvailabilitySummary(avails).getDisabledTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
 
         avails = list(DISABLED, getPastTime(600));
@@ -178,6 +230,8 @@ public class ResourceAvailabilitySummaryTest {
     public void testUnknownTime() throws InterruptedException {
         List<Availability> avails;
 
+        avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 0; // initial unknown range starting at 0 is ignored
         avails = list(DISABLED, 600);
         assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 0;
         avails = list(DOWN, 600);
@@ -186,8 +240,10 @@ public class ResourceAvailabilitySummaryTest {
         assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 0;
         avails = list(DISABLED, 0, DOWN, 600, UP, 1200);
         assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 0;
+        avails = list(UNKNOWN, 1, DOWN, 100, UNKNOWN, 300, UP, 800);
+        assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 599000L; // from 1-100 then 300 to 800
         avails = list(UNKNOWN, 0, DOWN, 100, UNKNOWN, 300, UP, 800);
-        assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 600000L; // from 0-100 then 300 to 800
+        assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 500000L; // the initial range starting from 0 is ignored; 300 to 800 only
         avails = list(UP, 100, DOWN, 200, UNKNOWN, 400, DOWN, 800, UNKNOWN, 1600, UP, 3200);
         assert new ResourceAvailabilitySummary(avails).getUnknownTime() == 2000000L; // 400-800 then 1600-3200 (400+1600=2000s)
 
@@ -204,6 +260,8 @@ public class ResourceAvailabilitySummaryTest {
         List<Availability> avails;
 
         avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getKnownTime() == 0;
+        avails = list(UNKNOWN, 1);
         assert new ResourceAvailabilitySummary(avails).getKnownTime() == 0;
         avails = list(DOWN, 600, UNKNOWN, 1000);
         assert new ResourceAvailabilitySummary(avails).getKnownTime() == 400000L;
@@ -224,6 +282,8 @@ public class ResourceAvailabilitySummaryTest {
         List<Availability> avails;
         avails = list(UNKNOWN, 0);
         assert new ResourceAvailabilitySummary(avails).getUpPercentage() == 0;
+        avails = list(UNKNOWN, 1);
+        assert new ResourceAvailabilitySummary(avails).getUpPercentage() == 0;
         avails = list(DOWN, 600);
         assert new ResourceAvailabilitySummary(avails).getUpPercentage() == 0;
         avails = list(DISABLED, 600);
@@ -234,11 +294,18 @@ public class ResourceAvailabilitySummaryTest {
         long t1 = getPastTime(1000);
         avails = list(UNKNOWN, 0, UP, t1, DOWN, t1 + 200, DISABLED, t1 + 500);
         AssertJUnit.assertEquals(0.2, new ResourceAvailabilitySummary(avails).getUpPercentage(), 0.001);
+
+        // try it with the first unknown range starting at non-zero time
+        t1 = getPastTime(1000);
+        avails = list(UNKNOWN, 1, UP, t1, DOWN, t1 + 200, DISABLED, t1 + 500);
+        AssertJUnit.assertEquals(0.2, new ResourceAvailabilitySummary(avails).getUpPercentage(), 0.001);
     }
 
     public void testDownPercentage() {
         List<Availability> avails;
         avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getDownPercentage() == 0;
+        avails = list(UNKNOWN, 1);
         assert new ResourceAvailabilitySummary(avails).getDownPercentage() == 0;
         avails = list(UP, 600);
         assert new ResourceAvailabilitySummary(avails).getDownPercentage() == 0;
@@ -250,11 +317,18 @@ public class ResourceAvailabilitySummaryTest {
         long t1 = getPastTime(1000);
         avails = list(UNKNOWN, 0, UP, t1, DOWN, t1 + 200, DISABLED, t1 + 500);
         AssertJUnit.assertEquals(0.3, new ResourceAvailabilitySummary(avails).getDownPercentage(), 0.001);
+
+        // try it with the first unknown range starting at non-zero time
+        t1 = getPastTime(1000);
+        avails = list(UNKNOWN, 1, UP, t1, DOWN, t1 + 200, DISABLED, t1 + 500);
+        AssertJUnit.assertEquals(0.3, new ResourceAvailabilitySummary(avails).getDownPercentage(), 0.001);
     }
 
     public void testDisabledPercentage() {
         List<Availability> avails;
         avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getDisabledPercentage() == 0;
+        avails = list(UNKNOWN, 1);
         assert new ResourceAvailabilitySummary(avails).getDisabledPercentage() == 0;
         avails = list(UP, 600);
         assert new ResourceAvailabilitySummary(avails).getDisabledPercentage() == 0;
@@ -266,11 +340,18 @@ public class ResourceAvailabilitySummaryTest {
         long t1 = getPastTime(1000);
         avails = list(UNKNOWN, 0, UP, t1, DISABLED, t1 + 200, DOWN, t1 + 500);
         AssertJUnit.assertEquals(0.3, new ResourceAvailabilitySummary(avails).getDisabledPercentage(), 0.001);
+
+        // try it with the first unknown range starting at non-zero time
+        t1 = getPastTime(1000);
+        avails = list(UNKNOWN, 1, UP, t1, DISABLED, t1 + 200, DOWN, t1 + 500);
+        AssertJUnit.assertEquals(0.3, new ResourceAvailabilitySummary(avails).getDisabledPercentage(), 0.001);
     }
 
     public void testMTBF() {
         List<Availability> avails;
         avails = list(UNKNOWN, 0);
+        assert new ResourceAvailabilitySummary(avails).getMTBF() == 0;
+        avails = list(UNKNOWN, 1);
         assert new ResourceAvailabilitySummary(avails).getMTBF() == 0;
         avails = list(UP, 600);
         assert new ResourceAvailabilitySummary(avails).getMTBF() == 0;
@@ -287,6 +368,8 @@ public class ResourceAvailabilitySummaryTest {
         assert new ResourceAvailabilitySummary(avails).getMTBF() == 0; // DISABLED is not considered DOWN
         avails = list(UNKNOWN, 0, UP, 1000, DOWN, 1200);
         assert new ResourceAvailabilitySummary(avails).getMTBF() == 0; // UNKNOWN is not considered DOWN
+        avails = list(UNKNOWN, 1, UP, 1000, DOWN, 1200);
+        assert new ResourceAvailabilitySummary(avails).getMTBF() == 0; // UNKNOWN is not considered DOWN
 
         // MTBF is simply the time between failures (i.e. mean time of being UP)
 
@@ -299,6 +382,8 @@ public class ResourceAvailabilitySummaryTest {
         assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTBF();
         t1 = getPastTime(9000);
         avails = list(UNKNOWN, 0, DOWN, t1, UP, t1 + 1000, DOWN, t1 + 5000);
+        assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTBF();
+        avails = list(UNKNOWN, 1, DOWN, t1, UP, t1 + 1000, DOWN, t1 + 5000); // non-zero initial unknown start time
         assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTBF();
 
         //   UP          __________        __________
@@ -334,6 +419,8 @@ public class ResourceAvailabilitySummaryTest {
         List<Availability> avails;
         avails = list(UNKNOWN, 0);
         assert new ResourceAvailabilitySummary(avails).getMTTR() == 0;
+        avails = list(UNKNOWN, 1);
+        assert new ResourceAvailabilitySummary(avails).getMTTR() == 0;
         avails = list(UP, 600);
         assert new ResourceAvailabilitySummary(avails).getMTTR() == 0;
         avails = list(DISABLED, 600);
@@ -361,6 +448,8 @@ public class ResourceAvailabilitySummaryTest {
         assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR();
         t1 = getPastTime(9000);
         avails = list(UNKNOWN, 0, UP, t1, DOWN, t1 + 1000, UP, t1 + 5000);
+        assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR();
+        avails = list(UNKNOWN, 1, UP, t1, DOWN, t1 + 1000, UP, t1 + 5000); // non-zero initial unknown start time
         assert 4000 * 1000L == new ResourceAvailabilitySummary(avails).getMTTR();
 
         //   UP _________   !!!!   ________

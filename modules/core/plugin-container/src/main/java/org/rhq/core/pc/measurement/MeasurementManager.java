@@ -579,7 +579,7 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
     /**
      * Given the name of a trait, this will find the value of that trait for the given resource.
      * 
-     * @param resource the resource whose trait value is to be obtained
+     * @param container the container of the resource whose trait value is to be obtained
      * @param traitName the name of the trait whose value is to be obtained
      *
      * @return the value of the trait, or <code>null</code> if unknown

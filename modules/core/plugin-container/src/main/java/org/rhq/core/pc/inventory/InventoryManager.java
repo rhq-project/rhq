@@ -2239,7 +2239,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             availabilityExecutor.sendFullReportNextTime();
         }
 
-        availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
+        if (!availabilityThreadPoolExecutor.isShutdown()) {
+            availabilityThreadPoolExecutor.schedule((Runnable) availabilityExecutor, 0, TimeUnit.MILLISECONDS);
+        }
     }
 
     public void requestFullAvailabilityReport() {

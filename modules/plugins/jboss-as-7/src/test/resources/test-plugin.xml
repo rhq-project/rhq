@@ -240,8 +240,8 @@
         <resource-configuration>
             <c:list-property name="properties" description="A list of generic key/value properties.">
                 <c:map-property name="property:collapsed" displayName="Property">
-                   <c:simple-property name="name" type="string" displayName="Name" required="true"/>
-                   <c:simple-property name="value" type="string" displayName="Value" required="true"/>
+                   <c:simple-property name="name:0" type="string" displayName="Name" required="true"/>
+                   <c:simple-property name="value:1" type="string" displayName="Value" required="true"/>
                 </c:map-property>
             </c:list-property>
         </resource-configuration>

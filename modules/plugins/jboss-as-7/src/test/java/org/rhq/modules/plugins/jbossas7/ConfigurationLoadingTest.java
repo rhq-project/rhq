@@ -517,11 +517,11 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
             PropertyMap map = (PropertyMap) property;
 
-            PropertySimple nameProperty = (PropertySimple) map.get("name");
+            PropertySimple nameProperty = (PropertySimple) map.get("name:0");
             Assert.assertEquals(nameProperty.getStringValue(), "test" + index);
             index++;
 
-            PropertySimple valueProperty = (PropertySimple) map.get("value");
+            PropertySimple valueProperty = (PropertySimple) map.get("value:1");
             Assert.assertEquals(valueProperty.getStringValue(), "test" + index);
             index++;
         }

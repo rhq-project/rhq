@@ -377,8 +377,12 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
             }
             if (memberDef instanceof PropertyDefinitionMap) {
-                Map<String,Object> mapResult = updateHandleMap((PropertyMap) inner,(PropertyDefinitionMap)memberDef,
-                        address);
+                Map<String, Object> mapResult = null;
+                if (memberDef.getName().endsWith(":collapsed")) {
+                    mapResult = handleCollapsedMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef);
+                } else {
+                    mapResult = updateHandleMap((PropertyMap) inner, (PropertyDefinitionMap) memberDef, address);
+                }
                 values.add(mapResult);
             }
         }

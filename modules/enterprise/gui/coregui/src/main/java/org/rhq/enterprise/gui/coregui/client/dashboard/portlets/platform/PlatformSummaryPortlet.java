@@ -19,12 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -36,52 +31,36 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
-/**
- * @author Greg Hinkle
- */
+import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUMetric;
+import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
+import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
+
 public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet, HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(), IconEnum.PLATFORM_UTILIZATION);
+    public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(),
+        IconEnum.PLATFORM_UTILIZATION);
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "PlatformSummary";
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_platformSummary();
 
-    private static final String FIELD_CPU = "cpu";
-    private static final String FIELD_MEMORY = "memory";
-    private static final String FIELD_SWAP = "swap";
-
-    private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
-    private ResourceTypeGWTServiceAsync typeService = GWTServiceLookup.getResourceTypeGWTService();
-
-    private HashMap<Integer, PlatformMetricDefinitions> platformMetricDefinitionsHashMap = new HashMap<Integer, PlatformMetricDefinitions>();
+    public static final String FIELD_CPU = "cpu";
+    public static final String FIELD_MEMORY = "memory";
+    public static final String FIELD_SWAP = "swap";
 
     public PlatformSummaryPortlet(String locatorId) {
         super(locatorId);
@@ -91,12 +70,11 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setShowRecordComponents(true);
         setShowRecordComponentsByCell(true);
 
+        setDataSource(new PlatformMetricDataSource(this));
+
         setAutoFitData(Autofit.VERTICAL);
         setOverflow(Overflow.AUTO);
-        setAutoFetchData(false);
         setShowEmptyMessage(false);
-
-        setDataSource(new PlatformMetricDataSource(this));
     }
 
     protected void onDraw() {
@@ -136,89 +114,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
         setFields(fields.toArray(new ListGridField[fields.size()]));
 
-        initialFetch();
-    }
-
-    private void initialFetch() {
-
-        ResourceTypeCriteria typeCriteria = new ResourceTypeCriteria();
-        typeCriteria.addFilterCategory(ResourceCategory.PLATFORM);
-        typeCriteria.fetchMetricDefinitions(true);
-        typeCriteria.fetchOperationDefinitions(true);
-
-        // TODO GH: Find a way to pass resource type criteria lookups through the type cache
-        typeService.findResourceTypesByCriteria(typeCriteria, new AsyncCallback<PageList<ResourceType>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_portlet_platform_type_error_1(), caught);
-            }
-
-            public void onSuccess(PageList<ResourceType> result) {
-                setTypes(result);
-                fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
-                    .name()));
-                setShowEmptyMessage(true);
-            }
-        });
-    }
-
-    protected void loadMetricsForResource(Resource resource, final Record record) {
-        final PlatformMetricDefinitions pmd = platformMetricDefinitionsHashMap.get(resource.getResourceType().getId());
-        measurementService.findLiveData(resource.getId(), pmd.getDefinitionIds(),
-            new AsyncCallback<Set<MeasurementData>>() {
-                public void onFailure(Throwable caught) {
-                    // this can happen if the agent is down - don't crash out of the entire portlet
-                    record.setAttribute(FIELD_CPU, MSG.common_val_na());
-                    record.setAttribute(FIELD_MEMORY, MSG.common_val_na());
-                    record.setAttribute(FIELD_SWAP, MSG.common_val_na());
-
-                    setSortField(1);
-                    markForRedraw();
-                }
-
-                public void onSuccess(Set<MeasurementData> result) {
-                    for (MeasurementData data : result) {
-                        if (data instanceof MeasurementDataNumeric) {
-                            record.setAttribute(data.getName(), ((MeasurementDataNumeric) data).getValue());
-                        }
-                    }
-
-                    setSortField(1);
-                    markForRedraw();
-                }
-            });
-    }
-
-    private void setTypes(PageList<ResourceType> types) {
-
-        for (ResourceType platformType : types) {
-
-            Set<MeasurementDefinition> defs = platformType.getMetricDefinitions();
-
-            PlatformMetricDefinitions pmd = new PlatformMetricDefinitions();
-            pmd.freeMemory = findDef(defs, MemoryMetric.Free.property);
-            pmd.usedMemory = findDef(defs, MemoryMetric.Used.property);
-            pmd.totalMemory = findDef(defs, MemoryMetric.Total.property);
-
-            pmd.freeSwap = findDef(defs, SwapMetric.Free.property);
-            pmd.usedSwap = findDef(defs, SwapMetric.Used.property);
-            pmd.totalSwap = findDef(defs, SwapMetric.Total.property);
-
-            pmd.idleCpu = findDef(defs, CPUMetric.Idle.property);
-            pmd.systemCpu = findDef(defs, CPUMetric.System.property);
-            pmd.userCpu = findDef(defs, CPUMetric.User.property);
-            pmd.waitCpu = findDef(defs, CPUMetric.Wait.property);
-
-            platformMetricDefinitionsHashMap.put(platformType.getId(), pmd);
-        }
-    }
-
-    private MeasurementDefinition findDef(Set<MeasurementDefinition> defs, String property) {
-        for (MeasurementDefinition def : defs) {
-            if (def.getName().equals(property)) {
-                return def;
-            }
-        }
-        return null;
+        fetchData();
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -236,12 +132,12 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
         try {
             if (fieldName.equals(FIELD_CPU)) {
-                if (listGridRecord.getAttribute(CPUMetric.Idle.property) != null) {
+                if (listGridRecord.getAttribute(CPUMetric.Idle.getProperty()) != null) {
                     HLayout bar = new HLayout();
                     bar.setHeight(18);
                     bar.setWidth100();
 
-                    double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.property);
+                    double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.getProperty());
                     value = 1 - value;
 
                     HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE,
@@ -263,13 +159,13 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                 }
 
             } else if (fieldName.equals(FIELD_MEMORY)) {
-                if (listGridRecord.getAttribute(MemoryMetric.Total.property) != null) {
+                if (listGridRecord.getAttribute(MemoryMetric.Total.getProperty()) != null) {
                     HLayout bar = new HLayout();
                     bar.setHeight(18);
                     bar.setWidth100();
 
-                    double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.property);
-                    double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.property);
+                    double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.getProperty());
+                    double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.getProperty());
                     double percent = value / total;
 
                     HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
@@ -290,13 +186,13 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     return bar;
                 }
             } else if (fieldName.equals(FIELD_SWAP)) {
-                if (listGridRecord.getAttribute(SwapMetric.Total.property) != null) {
+                if (listGridRecord.getAttribute(SwapMetric.Total.getProperty()) != null) {
                     HLayout bar = new HLayout();
                     bar.setHeight(18);
                     bar.setWidth100();
 
-                    double total = listGridRecord.getAttributeAsDouble(SwapMetric.Total.property);
-                    double value = listGridRecord.getAttributeAsDouble(SwapMetric.Used.property);
+                    double total = listGridRecord.getAttributeAsDouble(SwapMetric.Total.getProperty());
+                    double value = listGridRecord.getAttributeAsDouble(SwapMetric.Used.getProperty());
                     double percent = value / total;
 
                     HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
@@ -329,69 +225,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     @Override
     public ViewName getViewName() {
         return VIEW_ID;
-    }
-
-    private enum MemoryMetric {
-        Used("Native.MemoryInfo.used"), Free("Native.MemoryInfo.free"), Total("Native.MemoryInfo.total");
-
-        private final String property;
-
-        MemoryMetric(String property) {
-            this.property = property;
-        }
-
-        @SuppressWarnings("unused")
-        public String getProperty() {
-            return property;
-        }
-    }
-
-    private enum CPUMetric {
-        Idle("CpuPerc.idle"), System("CpuPerc.sys"), User("CpuPerc.user"), Wait("CpuPerc.wait");
-
-        private final String property;
-
-        CPUMetric(String property) {
-            this.property = property;
-        }
-
-        @SuppressWarnings("unused")
-        public String getProperty() {
-            return property;
-        }
-    }
-
-    private enum SwapMetric {
-        Used("Native.SwapInfo.used"), Free("Native.SwapInfo.free"), Total("Native.SwapInfo.total");
-
-        private final String property;
-
-        SwapMetric(String property) {
-            this.property = property;
-        }
-
-        @SuppressWarnings("unused")
-        public String getProperty() {
-            return property;
-        }
-    }
-
-    private static class PlatformMetricDefinitions {
-
-        MeasurementDefinition freeMemory, usedMemory, totalMemory;
-        MeasurementDefinition freeSwap, usedSwap, totalSwap;
-        MeasurementDefinition idleCpu, systemCpu, userCpu, waitCpu;
-
-        @SuppressWarnings("unused")
-        MeasurementDefinition[] definitions = new MeasurementDefinition[] { freeMemory, usedMemory, totalMemory,
-            freeSwap, usedSwap, totalSwap, idleCpu, systemCpu, userCpu, waitCpu };
-
-        int[] getDefinitionIds() {
-            return new int[] { freeMemory.getId(), usedMemory.getId(), totalMemory.getId(), freeSwap.getId(),
-                usedSwap.getId(), totalSwap.getId(), idleCpu.getId(), systemCpu.getId(), userCpu.getId(),
-                waitCpu.getId() };
-        }
-
     }
 
     public static final class Factory implements PortletViewFactory {

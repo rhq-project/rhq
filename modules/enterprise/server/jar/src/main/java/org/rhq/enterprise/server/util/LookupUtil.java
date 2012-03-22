@@ -148,6 +148,8 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
+import org.rhq.enterprise.server.resource.PlatformUtilizationManagerBean;
+import org.rhq.enterprise.server.resource.PlatformUtilizationManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerBean;
@@ -603,6 +605,10 @@ public final class LookupUtil {
 
     public static SynchronizationManagerLocal getSynchronizationManager() {
         return lookupLocal(SynchronizationManagerBean.class);
+    }
+
+    public static PlatformUtilizationManagerLocal getPlatformUtilizationManager() {
+        return lookupLocal(PlatformUtilizationManagerBean.class);
     }
     
     public static CoreServerMBean getCoreServer() {

@@ -36,7 +36,6 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
@@ -52,9 +51,6 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
 
     @EJB
     protected ResourceManagerLocal resourceMgr;
-
-    @EJB
-    private SubjectManagerLocal subjectMgr;
 
     @Override
     public StreamingOutput generateReport(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers,

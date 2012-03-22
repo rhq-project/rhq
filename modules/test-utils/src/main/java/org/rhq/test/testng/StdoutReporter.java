@@ -20,10 +20,10 @@ package org.rhq.test.testng;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
@@ -41,20 +41,23 @@ public class StdoutReporter implements ISuiteListener, ITestListener {
 
     @Override
     public void onStart(ISuite suite) {
-        List<String> testMethodNames = getTestMethodNames(suite);
-        System.out.println("(" + getDateTime() + ")" + " Running suite [" + suite.getName() + "] containing tests "
-            + testMethodNames + " --- excluding tests " + getTestMethodNames(suite.getExcludedMethods()) + "...");
+        List<String> testMethodNames = getTestMethodNames(suite.getAllMethods());
+        List<String> excludedTestMethodNames = getTestMethodNames(suite.getExcludedMethods());
+        System.out.println("\n(" + getDateTime() + ")" + " Running suite [" + suite.getName() + "] containing tests "
+            + testMethodNames + " --- excluding tests " + excludedTestMethodNames + "...");
     }
 
     @Override
     public void onFinish(ISuite suite) {
-        System.out.println("(" + getDateTime() + ")" + " Done running suite [" + suite.getName() + "].");
+        System.out.println("\n(" + getDateTime() + ")" + " Done running suite [" + suite.getName() + "].");
     }
 
     @Override
     public void onTestStart(ITestResult result) {
         String testMethodName = getQualifiedMethodName(result.getMethod());
-        System.out.println("(" + getDateTime() + ")" + " Running test [" + testMethodName + "]...");
+        String[] groups = result.getMethod().getGroups();
+        System.out.println("\n(" + getDateTime() + ")" + " Running test [" + testMethodName + "] which is in groups "
+                + Arrays.toString(groups) + "...");
     }
 
     @Override
@@ -80,27 +83,17 @@ public class StdoutReporter implements ISuiteListener, ITestListener {
     @Override
     public void onStart(ITestContext context) {
         String testClassName = getTestClassName(context);
-        System.out.println("(" + getDateTime() + ")" + " Running test class [" + testClassName + "]...");
+        System.out.println("\n(" + getDateTime() + ")" + " Running test class [" + testClassName + "]...");
     }
 
     @Override
     public void onFinish(ITestContext context) {
         String testClassName = getTestClassName(context);
-        System.out.println("(" + getDateTime() + ")" + " Done running test class [" + testClassName + "].");
+        System.out.println("\n(" + getDateTime() + ")" + " Done running test class [" + testClassName + "].");
     }
 
     private static String getDateTime() {
         return SimpleDateFormat.getTimeInstance().format(new Date());
-    }
-
-    private static List<String> getTestMethodNames(ISuite suite) {
-        List<String> testMethodNames = new ArrayList<String>();
-        Map<String, Collection<ITestNGMethod>> methodsByGroups = suite.getMethodsByGroups();
-        for (String group : methodsByGroups.keySet()) {
-            Collection<ITestNGMethod> methods = methodsByGroups.get(group);
-            testMethodNames.addAll(getTestMethodNames(methods));
-        }
-        return testMethodNames;
     }
 
     private static List<String> getTestMethodNames(Collection<ITestNGMethod> methods) {

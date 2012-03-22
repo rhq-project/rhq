@@ -660,8 +660,6 @@
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
-            <!-- NOTE: We cannot upgrade to 2.11 or later until http://jira.codehaus.org/browse/SUREFIRE-831 is fixed,
-                       since a bunch of our test group names contain dashes. -->
             <version>2.12</version>
             <configuration>
                <argLine>-Xms32M -Xmx512M</argLine>

@@ -93,7 +93,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 // J. testAttemptToChangeAgentName
 //   1) register agent "newName" but with Z's host/port/token. In effect, this is trying to change the agent's name. (REJECT - you are not allowed to rename agents)
 
-@Test(groups = { "core.agent-registration" })
+@Test(groups = { "core.agent.registration" })
 public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final String TEST_AGENT_NAME_PREFIX = "CoreServerServiceImplTest.Agent";
     private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
@@ -110,7 +110,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
     private static final int B_PORT = 22222;
     private static final String B_HOST = "hostB";
 
-    @AfterGroups(groups = { "core.agent-registration" })
+    @AfterGroups(groups = { "core.agent.registration" })
     public void afterGroup() throws Exception {
         // clean up any agents we might have created
         Query q = getEntityManager().createQuery(

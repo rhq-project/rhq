@@ -47,7 +47,7 @@ import org.rhq.plugins.jbossas.util.DatasourceConfigurationEditor;
  * @since   1.0
  * @created June 21, 2007
  */
-@Test(groups = "jboss-plugin")
+@Test(groups = "jboss.plugin")
 public class DatasourceConfigurationEditorTest {
     private Log LOG = LogFactory.getLog(DatasourceConfigurationEditorTest.class);
 

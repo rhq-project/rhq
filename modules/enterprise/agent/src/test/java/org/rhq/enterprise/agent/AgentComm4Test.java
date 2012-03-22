@@ -36,7 +36,7 @@ import org.rhq.enterprise.communications.command.server.discovery.AutoDiscoveryL
  *
  * @author John Mazzitelli
  */
-@Test(groups = "agent-comm")
+@Test(groups = "agent.comm")
 public class AgentComm4Test extends AgentCommTestBase {
     private static final boolean ENABLE_TESTS = true;
 

@@ -34,7 +34,7 @@ import org.rhq.test.pc.PluginContainerSetup;
  *
  * @author Lukas Krejci
  */
-@Test(groups = "apache-integration-tests")
+@Test(groups = "apache.integration.tests")
 public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
 
     String[] configuredApacheConfigurationFiles;

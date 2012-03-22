@@ -46,7 +46,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
  * @author jshaughnessy
  *
  */
-@Test(groups = { "resource-manager" })
+@Test(groups = { "resource.manager" })
 public class ClusterManagerBeanTest extends AbstractEJB3Test {
     static private final boolean TESTS_ENABLED = true;
 

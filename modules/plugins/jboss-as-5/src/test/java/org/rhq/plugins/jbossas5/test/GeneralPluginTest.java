@@ -31,7 +31,7 @@ import org.rhq.core.pc.PluginContainer;
 /**
  * @author Ian Springer
  */
-@Test(groups = "as5-plugin")
+@Test(groups = "as5.plugin")
 public class GeneralPluginTest extends AbstractPluginTest {
 
     public void testPluginLoad() {

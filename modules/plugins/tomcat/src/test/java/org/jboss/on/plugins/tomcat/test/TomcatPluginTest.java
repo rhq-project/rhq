@@ -41,7 +41,7 @@ import org.rhq.core.pc.plugin.PluginManager;
 /**
  * @author Fady Matar
  */
-@Test(groups = "tomcat-plugin")
+@Test(groups = "tomcat.plugin")
 public class TomcatPluginTest {
     private Log log = LogFactory.getLog(this.getClass());
     private static final String PLUGIN_NAME = "Tomcat";

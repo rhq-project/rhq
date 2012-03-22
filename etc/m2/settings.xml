@@ -53,9 +53,9 @@
             <!-- tells the dbutils tests not to fail -->
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
-            <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
-                 some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
-            <rhq.testng.excludedGroups>agent-comm,comm-client,native-system,postgres-plugin</rhq.testng.excludedGroups>
+            <!-- Test groups that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
+                 some possible values: agent.comm,comm.client,native.system,postgres.plugin -->
+            <rhq.testng.excludedGroups>agent.comm,comm.client,native.system,postgres.plugin</rhq.testng.excludedGroups>
 
             <!-- *** enforcer plugin settings *** -->
             <!--<enforcer.skip>true</enforcer.skip>-->

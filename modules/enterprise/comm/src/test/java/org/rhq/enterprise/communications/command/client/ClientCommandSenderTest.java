@@ -32,7 +32,7 @@ import org.rhq.enterprise.communications.command.impl.generic.GenericCommand;
  *
  * @author John Mazzitelli
  */
-@Test(groups = "comm-client")
+@Test(groups = "comm.client")
 public class ClientCommandSenderTest {
     /**
      * Tests sending alot of volatile and guaranteed messages - since no errors occur, no persisting will occur.

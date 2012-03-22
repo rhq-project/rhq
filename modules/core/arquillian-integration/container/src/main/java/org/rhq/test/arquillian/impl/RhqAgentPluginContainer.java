@@ -240,10 +240,12 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
         File pluginDeploymentPath = getDeploymentPath(plugin);
 
-        if (!pluginDeploymentPath.delete()) {
+        if (pluginDeploymentPath.exists() && !pluginDeploymentPath.delete()) {
             if (File.separatorChar == '/') {
-                throw new DeploymentException("Could not delete the RHQ plugin '" + plugin.getName());
+                // Unix
+                throw new DeploymentException("Could not delete the RHQ plugin jar " + plugin.getName());
             } else {
+                // Windows
                 // TODO: file locking, probably due to 
                 // http://management-platform.blogspot.com/2009/01/classloaders-keeping-jar-files-open.html,
                 // is not allowing deletion. Perhaps this can be fixed at some point.                

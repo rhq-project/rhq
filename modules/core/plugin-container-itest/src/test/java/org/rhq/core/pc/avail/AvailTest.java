@@ -38,7 +38,7 @@ import org.rhq.test.arquillian.ResourceContainers;
 import org.rhq.test.arquillian.RunDiscovery;
 import org.rhq.test.shrinkwrap.RhqAgentPluginArchive;
 
-@Test(groups = "arquillian")
+@RunDiscovery
 public class AvailTest extends Arquillian {
 
     @Deployment(name = "availPlugin")
@@ -47,9 +47,6 @@ public class AvailTest extends Arquillian {
         return ShrinkWrap.create(RhqAgentPluginArchive.class, "avail-plugin-1.0.jar").setPluginDescriptor(
             "avail-rhq-plugin.xml");
     }
-
-    //@ArquillianResource
-    //private ContainerController pcController;
 
     @ArquillianResource
     private PluginContainer pluginContainer;
@@ -108,7 +105,7 @@ public class AvailTest extends Arquillian {
             fakeServerInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
     }
 
-    @AfterDiscovery(testMethods = "testDiscovery")
+    @AfterDiscovery
     public void waitForAsyncDiscoveries() throws Exception {
         if (discoveryCompleteChecker != null) {
             discoveryCompleteChecker.waitForDiscoveryComplete(10000);
@@ -159,16 +156,8 @@ public class AvailTest extends Arquillian {
 
     }
 
-    @Test
-    @RunDiscovery
+    @Test(groups = "pc.itest.avail")
     public void testDiscovery() throws Exception {
-        // TODO remove this wait after changes to discovery/commit stuff in framework
-        //System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! SLEEPING THREAD (" + Thread.currentThread().getName()
-        //    + ") for 20 seconds");
-        //Thread.sleep(20000);
-        //System.out.println("\n!!!!!!!!!!!!!!!!!!!!!!!!!! DONE SLEEPING   (" + Thread.currentThread().getName()
-        //    + ") for 10 seconds");
-
         Assert.assertNotNull(pluginContainer);
         Assert.assertTrue(pluginContainer.isStarted());
 
@@ -189,7 +178,7 @@ public class AvailTest extends Arquillian {
         Assert.assertEquals(grandchildComponents2.size(), 8, "missing grandchild2");
     }
 
-    @Test(dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
     public void testAvailReport() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         dumpContainers("testAvailReport() Start");
@@ -232,7 +221,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, true, false, 29, 7, 23, 28, 0, 6);
     }
 
-    @Test(dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
     public void testScheduling() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
@@ -285,7 +274,7 @@ public class AvailTest extends Arquillian {
         Assert.assertTrue(numBuckets >= 3, "Random distribution seems wrong, buckets hit= " + numBuckets);
     }
 
-    @Test(dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
     // If a parent changes to UP, its children must all be checked as they could legitimately be something
     // other than UP.
     public void testForceChildrenOfParentUp() throws Exception {
@@ -349,7 +338,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, false, false, 29, 14, 15, 12, 2, 0);
     }
 
-    @Test(dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
     public void testCheckOnlyEligible() throws Exception {
         // Force all the avails to UP to start so we can avoid the scenario in  testForceChildrenOfParentUp() 
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
@@ -414,7 +403,7 @@ public class AvailTest extends Arquillian {
         assertScan(scan, false, false, 29, 0, 1, 0, 0, 0);
     }
 
-    @Test(dependsOnMethods = "testDiscovery")
+    @Test(groups = "pc.itest.avail", dependsOnMethods = "testDiscovery")
     public void testDeferToParent() throws Exception {
         AvailabilityExecutor executor = new ForceAvailabilityExecutor(this.pluginContainer.getInventoryManager());
         AvailabilityReport report = executor.call();
@@ -495,4 +484,5 @@ public class AvailTest extends Arquillian {
 
         System.out.println("---------------------------------> ");
     }
+
 }

@@ -61,7 +61,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_DEPLOYMENT_BY_PACKAGE_TYPE_ID, query = "SELECT cd FROM PackageType pt JOIN pt.deploymentConfigurationDefinition cd "
         + "WHERE pt.id = :packageTypeId"),
     @NamedQuery(name = ConfigurationDefinition.QUERY_FIND_RESOURCE_BY_RESOURCE_TYPE_ID, query = "SELECT cd FROM ResourceType rt JOIN rt.resourceConfigurationDefinition cd "
@@ -70,7 +70,7 @@ import org.jetbrains.annotations.Nullable;
         + "WHERE rt.id = :resourceTypeId AND rt.deleted = false") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_DEF_ID_SEQ")
 @Table(name = "RHQ_CONFIG_DEF")
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
+@XmlSeeAlso({ PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 public class ConfigurationDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -89,15 +89,22 @@ public class ConfigurationDefinition implements Serializable {
     @Column(name = "description")
     private String description;
 
+    // use the propDef name as the map key
     @MapKey(name = "name")
-    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+    // base the insert-order on propDef Id (asc).  Since rows are inserted in the order presented in the
+    // plugin descriptor, iterating on the map (LinkedHashMap) will give us the same ordering. So, unless
+    // propDef.order is set and used for ordering by the accessing code, we'll default to the descriptor order.    
     @OrderBy
+    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Map<String, PropertyDefinition> propertyDefinitions = new LinkedHashMap<String, PropertyDefinition>();
 
+    // use the configTemplate name as the map key
     @MapKey(name = "name")
-    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    // base the insert-order on configTemplate Id (asc).  Since rows are inserted in the order presented in the
+    // plugin descriptor, iterating on the map (LinkedHashMap) will give us the same ordering.    
     @OrderBy
+    @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Map<String, ConfigurationTemplate> templates = new LinkedHashMap<String, ConfigurationTemplate>();
 
     @Column(name = "config_format")

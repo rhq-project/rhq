@@ -90,7 +90,7 @@ import org.jetbrains.annotations.Nullable;
  * @see    PropertyMap
  */
 @Entity(name = "Configuration")
-@NamedQueries( { //
+@NamedQueries({ //
 @NamedQuery(name = Configuration.QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID, query = "" //
     + "select r.pluginConfiguration from Resource r where r.id = :resourceId"),
     @NamedQuery(name = Configuration.QUERY_GET_RESOURCE_CONFIG_BY_RESOURCE_ID, query = "" //
@@ -148,9 +148,10 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     @Id
     private int id;
 
-    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
-    @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
+    // use the prop name as the map key
     @MapKey(name = "name")
+    // CascadeType.REMOVE has been omitted, the cascade delete has been moved to the data model for performance 
+    @Cascade({ CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @XmlTransient
     private Map<String, Property> properties = new LinkedHashMap<String, Property>();
@@ -196,63 +197,63 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
         public boolean addAll(Collection<? extends Property> c) {
             boolean ret = false;
-            for(Property p : c) {
+            for (Property p : c) {
                 ret = ret || add(p);
             }
-            
+
             return ret;
         }
 
         public boolean removeAll(Collection<?> c) {
             boolean ret = false;
-            for(Object o : c) {
+            for (Object o : c) {
                 ret = ret || remove(o);
             }
-            
+
             return ret;
         }
 
         public boolean retainAll(Collection<?> c) {
             boolean ret = false;
             ArrayList<Property> ps = new ArrayList<Property>(properties.values());
-            for(Property p : ps) {
+            for (Property p : ps) {
                 if (!c.contains(p)) {
                     ret = ret || remove(p);
                 }
             }
-            
+
             return ret;
         }
 
         public void clear() {
             properties.clear();
         }
-        
+
         public boolean equals(Object obj) {
             if (this == obj) {
                 return true;
             }
-            
+
             if (!(obj instanceof Collection)) {
                 return false;
             }
-            
+
             return properties.values().equals(obj);
         }
-        
+
         public int hashCode() {
             return properties.values().hashCode();
         }
-        
+
         public String toString() {
             return properties.values().toString();
         }
     }
-    
+
     private transient PropertiesProxy propertiesProxy;
-    
+
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
-    @Cascade( { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
+    @Cascade({ CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
     private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
 
     @Column(name = "NOTES")
@@ -428,7 +429,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      * @return all child properties of this Configuration
      */
     @NotNull
-    @XmlElementRefs( { @XmlElementRef(name = "PropertyList", type = PropertyList.class),
+    @XmlElementRefs({ @XmlElementRef(name = "PropertyList", type = PropertyList.class),
         @XmlElementRef(name = "PropertySimple", type = PropertySimple.class),
         @XmlElementRef(name = "PropertyMap", type = PropertyMap.class) })
     public Collection<Property> getProperties() {

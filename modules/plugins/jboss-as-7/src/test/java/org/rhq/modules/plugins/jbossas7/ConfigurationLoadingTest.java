@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.testng.Assert;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -505,6 +506,24 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         Configuration config = delegate.loadResourceConfiguration();
         Collection<Property> properties = config.getProperties();
 
-        assert properties.size() == 1;
+        Assert.assertEquals(properties.size(), 1);
+
+        PropertyList propertyList = (PropertyList) properties.iterator().next();
+
+        Assert.assertNotNull(propertyList);
+
+        int index = 1;
+        for (Property property : propertyList.getList()) {
+
+            PropertyMap map = (PropertyMap) property;
+
+            PropertySimple nameProperty = (PropertySimple) map.get("name");
+            Assert.assertEquals(nameProperty.getStringValue(), "test" + index);
+            index++;
+
+            PropertySimple valueProperty = (PropertySimple) map.get("value");
+            Assert.assertEquals(valueProperty.getStringValue(), "test" + index);
+            index++;
+        }
     }
 }

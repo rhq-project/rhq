@@ -2,9 +2,9 @@
     "outcome" : "success",
     "result" : {
         "properties" : [
-            {"test" : "test"},
-            {"trst" : "ewr"},
-            {"test23" : "tester3"}
+            {"test1" : "test2"},
+            {"test3" : "test4"},
+            {"test5" : "test6"}
         ]
     },
     "response-headers" : {"process-state" : "reload-required"}

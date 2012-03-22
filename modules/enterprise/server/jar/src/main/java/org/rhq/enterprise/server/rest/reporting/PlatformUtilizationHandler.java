@@ -33,18 +33,11 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.PlatformMetricsSummary;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.PlatformUtilizationManagerLocal;
 import org.rhq.enterprise.server.rest.AbstractRestBean;
 import org.rhq.enterprise.server.rest.SetCallerInterceptor;
-import org.rhq.enterprise.server.util.CriteriaQuery;
-import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
-
-import static org.rhq.core.domain.resource.InventoryStatus.COMMITTED;
-import static org.rhq.core.domain.resource.ResourceCategory.PLATFORM;
 
 /**
  * @author jsanda
@@ -54,34 +47,17 @@ import static org.rhq.core.domain.resource.ResourceCategory.PLATFORM;
 public class PlatformUtilizationHandler extends AbstractRestBean implements PlatformUtilizationLocal {
 
     @EJB
-    private ResourceManagerLocal resourceMgr;
-
-    @EJB
-    private MeasurementDataManagerLocal measurementDataMgr;
+    private PlatformUtilizationManagerLocal platformUtilizationMgr;
 
     @Override
     public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
-                ResourceCriteria criteria = new ResourceCriteria();
-                criteria.addFilterResourceCategories(PLATFORM);
-                criteria.addFilterInventoryStatus(COMMITTED);
-                criteria.fetchResourceType(true);
-
-                CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
-                    new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
-                        @Override
-                        public PageList<Resource> execute(ResourceCriteria criteria) {
-                            return resourceMgr.findResourcesByCriteria(caller, criteria);
-                        }
-                    };
-
-                CriteriaQuery<Resource, ResourceCriteria> query =
-                    new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
                 output.write((getHeader() + "\n").getBytes());
-                for (Resource platform : query ) {
-
+                PageList<PlatformMetricsSummary> summaries = platformUtilizationMgr.loadPlatformMetrics(caller);
+                for (PlatformMetricsSummary summary : summaries) {
+                    output.write((toCSV(summary) + "\n").getBytes());
                 }
             }
         };
@@ -89,5 +65,34 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
 
     private String getHeader() {
         return "Name,Version,CPU,Memory,Swap";
+    }
+
+    private String toCSV(PlatformMetricsSummary summary) {
+        if (summary.isMetricsAvailable()) {
+            return summary.getResource().getName() + "," + summary.getResource().getVersion() + "," +
+                calculateCPUUsage(summary) + "," + calculateMemoryUsage(summary) + "," + calculateSwapUsage(summary);
+
+        }
+
+        return summary.getResource().getName() + "," + summary.getResource().getVersion() + ",NA,NA,NA";
+    }
+
+    private double calculateCPUUsage(PlatformMetricsSummary summary) {
+        Double systemCPU = (Double) summary.getSystemCPU().getValue();
+        Double userCPU = (Double) summary.getUserCPU().getValue();
+        return (systemCPU * userCPU) * 100;
+    }
+
+    private double calculateMemoryUsage(PlatformMetricsSummary summary) {
+        Double totalMemory = (Double) summary.getTotalMemory().getValue();
+        Double freeMemory = (Double) summary.getFreeMemory().getValue();
+        Double usedMemory = totalMemory - freeMemory;
+        return (usedMemory / totalMemory) * 100;
+    }
+
+    private double calculateSwapUsage(PlatformMetricsSummary summary) {
+        Double totalSwap = (Double) summary.getTotalSwap().getValue();
+        Double usedSwap = (Double) summary.getUsedSwap().getValue();
+        return (usedSwap / totalSwap) * 100;
     }
 }

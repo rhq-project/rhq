@@ -21,7 +21,7 @@
         <jackson.version>1.9.5</jackson.version>
         <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
         <as7.version>7.1.2.Final-SNAPSHOT</as7.version>
-        <as7.url>http://hudson.qa.jboss.com/hudson/view/JBoss-AS/job/JBoss-AS-7.x-latest/lastSuccessfulBuild/artifact/build/target/jboss-as-7.x.zip</as7.url>
+        <as7.url>https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip</as7.url>
         <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
     </properties>
 

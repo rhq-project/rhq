@@ -202,8 +202,9 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
 
     protected void assertAllNumericMetricsAndTraitsHaveNonNullValues(Resource resource)
             throws PluginContainerException {
+        ResourceType type = resource.getResourceType();
         Set<MeasurementDefinition> numericMetricAndTraitDefs =
-                ResourceTypeUtility.getMeasurementDefinitions(resource.getResourceType(),
+                ResourceTypeUtility.getMeasurementDefinitions(type,
                         new MeasurementDefinitionFilter() {
             private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
 
@@ -272,7 +273,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     }
 
     /**
-     * Collect a metric for a Resource synchronously, with a 5 second timeout.
+     * Collect a metric for a Resource synchronously, with a 7 second timeout.
      *
      * @param resource the Resource
      * @param metricName the name of the metric                 
@@ -289,7 +290,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
                 + "] is defined for ResourceType {" + resourceType.getPlugin() + "}" + resourceType.getName() + ".");
                
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
-        int timeoutMillis = 5000;
+        int timeoutMillis = 7000;
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
                 FacetLockType.READ, timeoutMillis, false, false);
         MeasurementReport report = new MeasurementReport();

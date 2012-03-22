@@ -58,7 +58,6 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     }
 
     public void testAutoDiscovery() throws Exception {
-        System.out.println("\n****** Running " + getClass().getSimpleName() + ".testAutoDiscovery...");
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Assert.assertNotNull(platform);
         Assert.assertEquals(platform.getInventoryStatus(), InventoryStatus.COMMITTED);
@@ -74,24 +73,24 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
     }
 
     public void testReleaseVersionTrait() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReleaseVersionTrait...");
         String releaseVersion = collectTrait(getServerResource(), RELEASE_VERSION_TRAIT_NAME);
-        String eap6Version = System.getProperty( "eap6.version" );
+        String as7Version = System.getProperty( "as7.version" );
         String expectedReleaseVersion;
-        if (eap6Version != null) {
-            expectedReleaseVersion = EAP6_VERSION_TO_AS7_VERSION_MAP.get(eap6Version);
+        if (as7Version.startsWith("6.")) {
+            // EAP6
+            expectedReleaseVersion = EAP6_VERSION_TO_AS7_VERSION_MAP.get(as7Version);
             if (expectedReleaseVersion == null) {
-                throw new Exception("No AS7 version mapping is defined for EAP6 version [" + eap6Version + "].");
+                throw new Exception("No AS7 version mapping is defined for EAP6 version [" + as7Version + "].");
             }
         } else {
-            expectedReleaseVersion = System.getProperty("jboss.version");
+            // AS7
+            expectedReleaseVersion = as7Version;
         }
         Assert.assertEquals(releaseVersion, expectedReleaseVersion,
                 "Unexpected value for trait [" + RELEASE_VERSION_TRAIT_NAME + "].");
     }
 
     public void testShutdownAndStartOperations() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testShutdownOperation...");
         AvailabilityType avail = getAvailability(getServerResource());
         Assert.assertEquals(avail, AvailabilityType.UP);
         invokeOperationAndAssertSuccess(getServerResource(), SHUTDOWN_OPERATION_NAME, null);

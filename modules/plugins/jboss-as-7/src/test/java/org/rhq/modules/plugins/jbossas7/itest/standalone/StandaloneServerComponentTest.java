@@ -77,7 +77,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     // TODO: Re-enable once fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
     public void testReloadOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testReloadOperation...");
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
 
@@ -90,7 +89,6 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     // TODO: Re-enable once fixed.
     @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
     public void testRestartOperation() throws Exception {
-        System.out.println("\n\n********* Running " + getClass().getSimpleName() + ".testRestartOperation...");
         AvailabilityType avail = getAvailability(getServerResource());
         Assert.assertEquals(avail, AvailabilityType.UP);
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);

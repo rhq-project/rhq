@@ -69,7 +69,7 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
     }
 
     private void installManagementUser(Resource resource) throws PluginContainerException {
-        System.out.println("Installing management user [" + MANAGEMENT_USERNAME + "] for " + resource + "...");
+        System.out.println(">>> Installing management user [" + MANAGEMENT_USERNAME + "] for " + resource + "...");
 
         // Invoke the "installRhqUser" operation on the ResourceComponent - this will update the mgmt-users.properties
         // file in the AS7 server's configuration directory.

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -47,8 +48,10 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -288,8 +291,15 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         Set<MeasurementScheduleRequest> requests = metrics;
         Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(requests.size());
 
+        Set<MeasurementScheduleRequest> skmRequests = new HashSet<MeasurementScheduleRequest>(requests.size());
+        for (MeasurementScheduleRequest req: requests) {
+            if (req.getName().startsWith("_skm:"))
+                skmRequests.add(req);
+        }
+
         for (MeasurementScheduleRequest request: requests) {
-            if (request.getName().equals("startTime")) {
+            String requestName = request.getName();
+            if (requestName.equals("startTime")) {
                 String path = getPath();
                 if (context.getResourceType().getName().contains("Host Controller")) {
                     if (path!=null)
@@ -309,8 +319,40 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
                     report.addData(data);
                 }
             }
-            else {
+            else if (!requestName.startsWith("_skm:")) { // handled below
                 leftovers.add(request);
+            }
+
+        }
+
+        // Now handle the skm
+        if (skmRequests.size()>0) {
+            Address address = new Address();
+            ReadResource op = new ReadResource(address);
+            op.includeRuntime(true);
+            ComplexResult res = getASConnection().executeComplex(op);
+            if (res.isSuccess()) {
+                Map<String,Object> props = res.getResult();
+
+                for (MeasurementScheduleRequest request: skmRequests) {
+                    String requestName = request.getName();
+                    String realName = requestName.substring(requestName.indexOf(':') + 1);
+                    String val=null;
+                    if (props.containsKey(realName)) {
+                        val = getStringValue( props.get(realName) );
+                    }
+
+                    if ("null".equals(val)) {
+                        if (realName.equals("product-name"))
+                            val = "JBoss AS";
+                        else if (realName.equals("product-version"))
+                            val = getStringValue(props.get("release-version"));
+                        else
+                            log.debug("Value for " + realName + " was 'null' and no replacement found");
+                    }
+                    MeasurementDataTrait data = new MeasurementDataTrait(request,val);
+                    report.addData(data);
+                }
             }
         }
 

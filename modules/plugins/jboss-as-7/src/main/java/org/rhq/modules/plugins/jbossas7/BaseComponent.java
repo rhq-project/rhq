@@ -224,7 +224,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 		report.addData(data);
 	}
 
-    private String getStringValue(Object val) {
+    protected String getStringValue(Object val) {
         String realVal;
         if (val instanceof String)
             realVal = (String)val;

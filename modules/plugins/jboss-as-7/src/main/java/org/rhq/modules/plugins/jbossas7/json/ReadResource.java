@@ -35,4 +35,8 @@ public class ReadResource extends Operation {
     public ReadResource(Address address) {
         super(READ_RESOURCE,address);
     }
+
+    public void includeRuntime(boolean arg) {
+        addAdditionalProperty("include-runtime",arg);
+    }
 }

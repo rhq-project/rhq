@@ -2061,7 +2061,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (this.platform != null && this.platform.getResourceType() == type) {
             return this.platform;
         }
-        Resource platform = new Resource("testkey" + configuration.getContainerName(), "testplatform", type);
+        Set<Resource> childResources = Collections.newSetFromMap(new ConcurrentHashMap<Resource, Boolean>());
+        Resource platform = new Resource(childResources);
+        platform.setResourceKey("testkey" + configuration.getContainerName());
+        platform.setName("testplatform");
+        platform.setResourceType(type);
         platform.setUuid(UUID.randomUUID().toString());
         platform.setAgent(this.agent);
         return platform;

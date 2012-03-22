@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -118,6 +119,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
      *
      * @throws Exception if failed to create and prepare the report
      */
+    @Nullable
     public AvailabilityReport call() throws Exception {
         AvailabilityReport availabilityReport;
 

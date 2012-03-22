@@ -23,9 +23,7 @@
     <jackson.version>1.9.5</jackson.version>
     <jboss.sasl.version>1.0.0.Beta9</jboss.sasl.version>
     <as7.version>7.1.2.Final-SNAPSHOT</as7.version>
-    <as7.url>
-      https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip
-    </as7.url>
+    <as7.url>https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip</as7.url>
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
   </properties>
 
@@ -134,9 +132,7 @@
 
       <properties>
         <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
-        <as7.url>
-          https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip
-        </as7.url>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
       </properties>
     </profile>
 
@@ -152,9 +148,7 @@
 
       <properties>
         <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
-        <as7.url>
-          https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip
-        </as7.url>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
       </properties>
     </profile>
 
@@ -170,9 +164,7 @@
 
       <properties>
         <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
-        <as7.url>
-          https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip
-        </as7.url>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
       </properties>
     </profile>
 
@@ -188,9 +180,7 @@
 
       <properties>
         <jboss-as-arquillian-container-managed.version>${as7.version}</jboss-as-arquillian-container-managed.version>
-        <as7.url>
-          https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip
-        </as7.url>
+        <as7.url>https://repository.jboss.org/nexus/content/repositories/releases/org/jboss/as/jboss-as-dist/${as7.version}/jboss-as-dist-${as7.version}.zip</as7.url>
       </properties>
     </profile>
 
@@ -205,8 +195,7 @@
       </activation>
 
       <properties>
-        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.Beta distribution zipfile.
-        </as7.url>
+        <as7.url>Please set the as7.url system property to the location of the EAP 6.0.0.Beta distribution zipfile.</as7.url>
         <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
       </properties>
 
@@ -316,8 +305,7 @@
             <version>1.0.0.Alpha2</version>
 
             <configuration>
-              <arquillianXml>${project.build.testSourceDirectory}/../resources/itest/jbossas7-arquillian.xml
-              </arquillianXml>
+              <arquillianXml>${project.build.testSourceDirectory}/../resources/itest/jbossas7-arquillian.xml</arquillianXml>
               <classloading>plugin</classloading>
             </configuration>
 
@@ -390,8 +378,7 @@
                     <argument>-Djboss.domain.default.config=domain.xml</argument>
                     <argument>-Djboss.host.default.config=host.xml</argument>
                     <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/process-controller.log</argument>
-                    <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties
-                    </argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
                     <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
                     <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
                     <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
@@ -422,8 +409,7 @@
                     <argument>-Djboss.domain.default.config=domain.xml</argument>
                     <argument>-Djboss.host.default.config=host.xml</argument>
                     <argument>-Dorg.jboss.boot.log.file=${jboss7.home}/domain/log/host-controller.log</argument>
-                    <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties
-                    </argument>
+                    <argument>-Dlogging.configuration=file:${jboss7.home}/domain/configuration/logging.properties</argument>
                     <argument>-Djboss.bind.address.management=${jboss.domain.bindAddress}</argument>
                     <argument>-Djboss.bind.address=${jboss.domain.bindAddress}</argument>
                     <argument>-Djboss.bind.address.unsecure=${jboss.domain.bindAddress}</argument>
@@ -502,9 +488,7 @@
       <properties>
         <rhq.rootDir>../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-        <rhq.deploymentDir>
-          ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins
-        </rhq.deploymentDir>
+        <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
       </properties>
 
       <build>

@@ -2478,6 +2478,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              singleton="true">
 
         <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
         </runs-inside>
         <plugin-configuration>
@@ -2531,6 +2532,32 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="use-bom" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether GIOP 1.2 byte order markers should be used (on) or not (off). The default value is off."/>
             <c:simple-property name="use-imr" required="false" type="string" readOnly="false" defaultValue="off" description="Indicates whether the implementation repository should be used (on) or not (off). The default value is off."/>
         </resource-configuration>
+    </service>
+
+
+    <service name="JDR"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="JBoss Diagnostic Reporter (JDR) Subsystem."
+             singleton="true">
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Standalone Server"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" default="subsystem=jdr" readOnly="true"/>
+        </plugin-configuration>
+
+        <operation name="subsystem:generate-jdr-report" displayName="Generate JDR Report" description="Request the generation of a JDR report.">
+            <results>
+                <c:simple-property name="start-time" required="false" type="string" readOnly="false"/>
+                <c:simple-property name="end-time" required="false" type="string" readOnly="false"/>
+                <c:simple-property name="report-location" required="false" type="string" readOnly="false"/>
+            </results>
+        </operation>
+
     </service>
 
 </plugin>

@@ -18,6 +18,16 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
@@ -60,16 +70,6 @@ import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
-
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet,
         DeleteResourceFacet,
@@ -576,8 +576,9 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
+        } else if (what.equals("subsystem")) {
+            operation = new Operation(op, new Address(this.path));
         }
-
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {

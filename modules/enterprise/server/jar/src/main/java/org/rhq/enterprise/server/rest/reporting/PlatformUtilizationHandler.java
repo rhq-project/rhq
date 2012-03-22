@@ -23,6 +23,7 @@ package org.rhq.enterprise.server.rest.reporting;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.NumberFormat;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -52,6 +53,13 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
     @Override
     public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers) {
         return new StreamingOutput() {
+            private NumberFormat numberFormat;
+
+            {
+                numberFormat = NumberFormat.getPercentInstance();
+                numberFormat.setMaximumFractionDigits(2);
+            }
+
             @Override
             public void write(OutputStream output) throws IOException, WebApplicationException {
                 output.write((getHeader() + "\n").getBytes());
@@ -60,39 +68,40 @@ public class PlatformUtilizationHandler extends AbstractRestBean implements Plat
                     output.write((toCSV(summary) + "\n").getBytes());
                 }
             }
+
+            private String getHeader() {
+                return "Name,Version,CPU,Memory,Swap";
+            }
+
+            private String toCSV(PlatformMetricsSummary summary) {
+                if (summary.isMetricsAvailable()) {
+                    return summary.getResource().getName() + "," + summary.getResource().getVersion() + "," +
+                        calculateCPUUsage(summary) + "," + calculateMemoryUsage(summary) + "," + calculateSwapUsage(summary);
+
+                }
+
+                return summary.getResource().getName() + "," + summary.getResource().getVersion() + ",NA,NA,NA";
+            }
+
+            private String calculateCPUUsage(PlatformMetricsSummary summary) {
+                Double systemCPU = (Double) summary.getSystemCPU().getValue();
+                Double userCPU = (Double) summary.getUserCPU().getValue();
+                return numberFormat.format((systemCPU + userCPU));
+            }
+
+            private String calculateMemoryUsage(PlatformMetricsSummary summary) {
+                Double totalMemory = (Double) summary.getTotalMemory().getValue();
+                Double freeMemory = (Double) summary.getFreeMemory().getValue();
+                Double usedMemory = totalMemory - freeMemory;
+                return numberFormat.format((usedMemory / totalMemory));
+            }
+
+            private String calculateSwapUsage(PlatformMetricsSummary summary) {
+                Double totalSwap = (Double) summary.getTotalSwap().getValue();
+                Double usedSwap = (Double) summary.getUsedSwap().getValue();
+                return numberFormat.format((usedSwap / totalSwap));
+            }
         };
     }
 
-    private String getHeader() {
-        return "Name,Version,CPU,Memory,Swap";
-    }
-
-    private String toCSV(PlatformMetricsSummary summary) {
-        if (summary.isMetricsAvailable()) {
-            return summary.getResource().getName() + "," + summary.getResource().getVersion() + "," +
-                calculateCPUUsage(summary) + "," + calculateMemoryUsage(summary) + "," + calculateSwapUsage(summary);
-
-        }
-
-        return summary.getResource().getName() + "," + summary.getResource().getVersion() + ",NA,NA,NA";
-    }
-
-    private double calculateCPUUsage(PlatformMetricsSummary summary) {
-        Double systemCPU = (Double) summary.getSystemCPU().getValue();
-        Double userCPU = (Double) summary.getUserCPU().getValue();
-        return (systemCPU * userCPU) * 100;
-    }
-
-    private double calculateMemoryUsage(PlatformMetricsSummary summary) {
-        Double totalMemory = (Double) summary.getTotalMemory().getValue();
-        Double freeMemory = (Double) summary.getFreeMemory().getValue();
-        Double usedMemory = totalMemory - freeMemory;
-        return (usedMemory / totalMemory) * 100;
-    }
-
-    private double calculateSwapUsage(PlatformMetricsSummary summary) {
-        Double totalSwap = (Double) summary.getTotalSwap().getValue();
-        Double usedSwap = (Double) summary.getUsedSwap().getValue();
-        return (usedSwap / totalSwap) * 100;
-    }
 }

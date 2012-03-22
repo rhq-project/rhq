@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.rest.reporting;
 
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -13,10 +14,8 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -33,13 +32,17 @@ public class RecentOperationsHandler extends AbstractRestBean implements RecentO
     @EJB
     private SubjectManagerLocal subjectMgr;
 
-    @Override
-    public StreamingOutput recentOperations(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
 
+    @Override
+    public StreamingOutput recentOperations(@QueryParam("operationRequestStatus") @DefaultValue("Failure") final String operationRequestStatus, @Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
+                //@todo: add ability to pass multiple operations
                 final ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+                if(operationRequestStatus != null){
+                    criteria.addFilterStatus(OperationRequestStatus.valueOf(operationRequestStatus));
+                }
 
                 CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria> queryExecutor =
                         new CriteriaQueryExecutor<ResourceOperationHistory, ResourceOperationHistoryCriteria>() {

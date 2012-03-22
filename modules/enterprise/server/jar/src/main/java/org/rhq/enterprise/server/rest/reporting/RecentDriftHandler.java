@@ -14,10 +14,8 @@ import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.StreamingOutput;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.*;
+import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -36,14 +34,23 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
     private SubjectManagerLocal subjectMgr;
 
     @Override
-    public StreamingOutput recentDrift(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers ) {
+    public StreamingOutput recentDrift(@QueryParam("categoryId") final Integer categoryId, @QueryParam("snapshot") final Integer snapshot, @QueryParam("path") final String path, @QueryParam("definition") final String definition, @Context UriInfo uriInfo, @Context Request request, @Context HttpHeaders headers) {
 
         return new StreamingOutput() {
             @Override
             public void write(OutputStream stream) throws IOException, WebApplicationException {
                 GenericDriftCriteria criteria  = new GenericDriftCriteria();
-                //@todo: DriftCriteria add filtering params
-                //criteria.add
+                if(definition != null){
+                    //
+                    //criteria.addFilterDriftDefinitionId(snapshot);
+                }
+                if(snapshot != null){
+                    criteria.addFilterChangeSetStartVersion(1);// always start at 1 for this report
+                    criteria.addFilterChangeSetEndVersion(snapshot);
+                }
+                if(path != null){
+                    criteria.addFilterPath(path);
+                }
 
                 CriteriaQueryExecutor<DriftComposite, DriftCriteria> queryExecutor =
                         new CriteriaQueryExecutor<DriftComposite, DriftCriteria>() {
@@ -67,12 +74,11 @@ public class RecentDriftHandler extends AbstractRestBean implements RecentDriftL
             private String toCSV(DriftComposite drift) {
                 return formatDateTime(drift.getDrift().getCtime()) + "," +
                         cleanForCSV(drift.getDriftDefinitionName()) + "," +
-                        "snapshot-TBD" + "," +
+                        drift.getDrift().getChangeSet().getVersion()+","+
                         drift.getDrift().getCategory() + "," +
                         drift.getDrift().getPath() + "," +
                         cleanForCSV(drift.getResource().getName()) +","+
                         cleanForCSV(drift.getResource().getAncestry());
-                //@todo:Snapshot
             }
 
             private String getHeader(){

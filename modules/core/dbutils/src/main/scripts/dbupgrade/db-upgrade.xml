@@ -4003,6 +4003,19 @@
                 
             </schemaSpec>
         
+            <schemaSpec version="2.121">
+                <schema-directSQL>
+                    <statement desc="Setting order_index for Configuration Map properties">
+                        UPDATE rhq_config_prop_def cpd
+                           SET order_index = (id - ( SELECT MIN(id) 
+                                                       FROM rhq_config_prop_def
+                                                      WHERE parent_map_definition_id = cpd.parent_map_definition_id)) 
+                         WHERE parent_map_definition_id > 0
+                           AND order_index = 0
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+            
         </dbupgrade>
     </target>
 </project>

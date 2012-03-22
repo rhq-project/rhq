@@ -73,9 +73,22 @@
         </plugin-configuration>
     </server>
 
-    <server name="UpdatedMapWithRemovedProperty">
+    <server name="UnchangedMap">
         <plugin-configuration>
-            <c:map-property name="myMap"/>
+            <c:map-property name="myMap">
+                <c:simple-property name="property1ToKeep"/>            
+                <c:simple-property name="property2ToKeep"/>                
+            </c:map-property>
+        </plugin-configuration>
+    </server>
+
+    <server name="UpdatedMapWithAddRemoveProperty">
+        <plugin-configuration>
+            <c:map-property name="myMap">
+                <c:simple-property name="property1ToKeep"/>
+                <c:simple-property name="propertyToAdd"/>
+                <c:simple-property name="property2ToKeep"/>                
+            </c:map-property>
         </plugin-configuration>
     </server>
 

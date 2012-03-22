@@ -15,7 +15,7 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.120</db.schema.version>
+        <db.schema.version>2.121</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>

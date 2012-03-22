@@ -23,7 +23,7 @@
 package org.rhq.core.domain.configuration.definition;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +33,6 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -50,16 +49,14 @@ import org.jetbrains.annotations.NotNull;
 @DiscriminatorValue("map")
 @Entity(name = "PropertyDefinitionMap")
 @XmlRootElement(name = "PropertyDefinitionMap")
-@XmlSeeAlso( { PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
+@XmlSeeAlso({ PropertyDefinitionSimple.class, PropertyDefinitionList.class, PropertyDefinitionMap.class })
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PropertyDefinitionMap extends PropertyDefinition {
     private static final long serialVersionUID = 1L;
 
+    // use the propDef name as the map key
     @MapKey(name = "name")
     @OneToMany(mappedBy = "parentPropertyMapDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    // Tell Hibernate to use a temporally-ordered map, whose order corresponds to the order the member properties were
-    // specified in the plugin descriptor (because we initialize the map as a LinkedHashMap).
-    @OrderBy
     private Map<String, PropertyDefinition> map;
 
     public PropertyDefinitionMap(@NotNull String name, String description, boolean required,
@@ -78,7 +75,7 @@ public class PropertyDefinitionMap extends PropertyDefinition {
     @NotNull
     public Map<String, PropertyDefinition> getPropertyDefinitions() {
         if (this.map == null) {
-            this.map = new LinkedHashMap<String, PropertyDefinition>();
+            this.map = new HashMap<String, PropertyDefinition>();
         }
 
         return map;
@@ -129,6 +126,12 @@ public class PropertyDefinitionMap extends PropertyDefinition {
         return getPropertyDefinitions().get(name);
     }
 
+    /**
+     * If an order index is not set on the propertyDefinition it will be set to the current number
+     * of propDefs for the map. So, adding props to the map in the desired order will  
+     * the 
+     * @param propertyDefinition
+     */
     public void put(PropertyDefinition propertyDefinition) {
         getPropertyDefinitions().put(propertyDefinition.getName(), propertyDefinition);
         propertyDefinition.setParentPropertyMapDefinition(this);

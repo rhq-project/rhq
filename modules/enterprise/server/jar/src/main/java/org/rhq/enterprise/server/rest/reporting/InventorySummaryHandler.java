@@ -23,12 +23,15 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
@@ -53,20 +56,31 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     protected ResourceManagerLocal resourceMgr;
 
     @Override
-    public StreamingOutput generateReport(UriInfo uriInfo, javax.ws.rs.core.Request request, HttpHeaders headers,
-                                          boolean includeDetails) {
+    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean includeDetails,
+        final List<Integer> resourceTypeIds) {
         final List<ResourceInstallCount> results = getSummaryCounts();
 
         if (includeDetails) {
-            return new OutputDetailedInventorySummary(results);
+            return new OutputDetailedInventorySummary(results, new TreeSet<Integer>(resourceTypeIds));
         } else {
             return new StreamingOutput() {
                 @Override
                 public void write(OutputStream stream) throws IOException, WebApplicationException {
                     stream.write((getHeader() + "\n").getBytes());
-                    for (ResourceInstallCount installCount : results) {
-                        String record = toCSV(installCount) + "\n";
-                        stream.write(record.getBytes());
+
+                    if (resourceTypeIds.isEmpty()) {
+                        for (ResourceInstallCount installCount : results) {
+                            String record = toCSV(installCount) + "\n";
+                            stream.write(record.getBytes());
+                        }
+                    } else {
+                        Set<Integer> ids = new TreeSet<Integer>(resourceTypeIds);
+                        for (ResourceInstallCount installCount : results) {
+                            if (ids.contains(installCount.getTypeId())) {
+                                String record = toCSV(installCount) + "\n";
+                                stream.write(record.getBytes());
+                            }
+                        }
                     }
                 }
             };
@@ -78,7 +92,11 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         // map of counts keyed by resource type id
         private Map<Integer, ResourceInstallCount> installCounts = new HashMap<Integer, ResourceInstallCount>();
 
-        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCountList) {
+        private Set<Integer> resourceTypeIds;
+
+        public OutputDetailedInventorySummary(List<ResourceInstallCount> installCountList,
+            Set<Integer> resourceTypeIds) {
+            this.resourceTypeIds = resourceTypeIds;
             for (ResourceInstallCount installCount : installCountList) {
                 installCounts.put(installCount.getTypeId(), installCount);
             }
@@ -87,6 +105,9 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
         @Override
         public void write(OutputStream output) throws IOException, WebApplicationException {
             final ResourceCriteria criteria = getDetailsQueryCriteria(installCounts);
+            if (!resourceTypeIds.isEmpty()) {
+                criteria.addFilterResourceTypeIds(resourceTypeIds.toArray(new Integer[resourceTypeIds.size()]));
+            }
 
             CriteriaQueryExecutor<Resource, ResourceCriteria> queryExecutor =
                 new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
@@ -120,6 +141,7 @@ public class InventorySummaryHandler extends AbstractRestBean implements Invento
     }
 
     protected List<ResourceInstallCount> getSummaryCounts() {
+        // TODO add support for filtering by resource type id in query
         return resourceMgr.findResourceInstallCounts(caller, true);
     }
 

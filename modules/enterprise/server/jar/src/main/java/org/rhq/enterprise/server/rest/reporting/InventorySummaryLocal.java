@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.util.List;
+
 import javax.ejb.Local;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -41,6 +43,7 @@ public interface InventorySummaryLocal {
         @Context UriInfo uriInfo,
         @Context Request request,
         @Context HttpHeaders headers,
-        @QueryParam("details") @DefaultValue("false") boolean includeDetails);
+        @QueryParam("details") @DefaultValue("false") boolean includeDetails,
+        @QueryParam("typeId") List<Integer> resourceTypeIds);
 
 }

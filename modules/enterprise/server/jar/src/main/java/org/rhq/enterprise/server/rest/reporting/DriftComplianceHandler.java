@@ -18,11 +18,16 @@
  */
 package org.rhq.enterprise.server.rest.reporting;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Request;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftComplianceStatus;
@@ -34,6 +39,15 @@ import org.rhq.enterprise.server.rest.SetCallerInterceptor;
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class DriftComplianceHandler extends InventorySummaryHandler implements DriftComplianceLocal {
+
+    @Override
+    public StreamingOutput generateReport(UriInfo uriInfo, Request request, HttpHeaders headers, boolean includeDetails,
+        List<Integer> resourceTypeIds) {
+        // We pass an empty list here for the resourceTypeIds param because this report
+        // not support the typeId query para.
+        List<Integer> ids = Collections.emptyList();
+        return super.generateReport(uriInfo, request, headers, includeDetails, ids);
+    }
 
     @Override
     protected List<ResourceInstallCount> getSummaryCounts() {

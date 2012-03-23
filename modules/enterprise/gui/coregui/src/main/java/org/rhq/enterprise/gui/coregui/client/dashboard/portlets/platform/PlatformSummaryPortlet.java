@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
 
-import java.util.ArrayList;
-
 import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -35,6 +33,8 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
@@ -48,7 +48,7 @@ import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.CPUM
 import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.MemoryMetric;
 import static org.rhq.core.domain.resource.composite.PlatformMetricsSummary.SwapMetric;
 
-public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet, HasViewName {
+public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> implements Portlet, HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("PlatformUtilization", MSG.view_reports_platforms(),
         IconEnum.PLATFORM_UTILIZATION);
@@ -62,23 +62,20 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     public static final String FIELD_MEMORY = "memory";
     public static final String FIELD_SWAP = "swap";
 
+    private TableAction exportAction;
+
     public PlatformSummaryPortlet(String locatorId) {
-        super(locatorId);
-        setWidth100();
-        setHeight100();
-
-        setShowRecordComponents(true);
-        setShowRecordComponentsByCell(true);
-
-        setDataSource(new PlatformMetricDataSource(this));
-
-        setAutoFitData(Autofit.VERTICAL);
-        setOverflow(Overflow.AUTO);
-        setShowEmptyMessage(false);
+        this(locatorId, null);
     }
 
-    protected void onDraw() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(5);
+    public PlatformSummaryPortlet(String locatorId, TableAction exportAction) {
+        super(locatorId);
+        setDataSource(new PlatformMetricDataSource(this));
+        this.exportAction = exportAction;
+    }
+
+    @Override
+    protected void configureTable() {
 
         ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(),
             MSG.common_title_name());
@@ -88,18 +85,13 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
                     + "</a>";
             }
         });
-        fields.add(nameField);
 
         ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(),
             MSG.common_title_version());
-        fields.add(versionField);
 
         ListGridField cpuField = new ListGridField("cpu", MSG.dataSource_platforms_field_cpu());
-        fields.add(cpuField);
         ListGridField memoryField = new ListGridField("memory", MSG.dataSource_platforms_field_memory());
-        fields.add(memoryField);
         ListGridField swapField = new ListGridField("swap", MSG.dataSource_platforms_field_swap());
-        fields.add(swapField);
 
         nameField.setWidth("20%");
         versionField.setWidth("20%");
@@ -112,9 +104,123 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         memoryField.setCanSort(false);
         swapField.setCanSort(false);
 
-        setFields(fields.toArray(new ListGridField[fields.size()]));
+        setListGridFields(nameField, versionField, cpuField, memoryField, swapField);
 
-        fetchData();
+        if (exportAction != null) {
+            addTableAction("export", "Export", exportAction);
+        }
+
+        getListGrid().fetchData();
+    }
+
+    @Override
+    protected LocatableListGrid createListGrid(String locatorId) {
+        return new LocatableListGrid(locatorId) {
+            {
+                setShowRecordComponents(true);
+                setShowRecordComponentsByCell(true);
+                setAutoFitData(Autofit.VERTICAL);
+                setOverflow(Overflow.AUTO);
+                setShowEmptyMessage(false);
+            }
+
+            @Override
+            protected Canvas createRecordComponent(ListGridRecord listGridRecord, Integer colNum) {
+
+                String fieldName = this.getFieldName(colNum);
+
+                try {
+                    if (fieldName.equals(FIELD_CPU)) {
+                        if (listGridRecord.getAttribute(CPUMetric.Idle.getProperty()) != null) {
+                            HLayout bar = new HLayout();
+                            bar.setHeight(18);
+                            bar.setWidth100();
+
+                            double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.getProperty());
+                            value = 1 - value;
+
+                            HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE,
+                                true));
+                            text.setAutoWidth();
+                            bar.addMember(text);
+
+                            Img first = new Img("availBar/up.png");
+                            first.setHeight(18);
+                            first.setWidth((value * 100) + "%");
+                            bar.addMember(first);
+
+                            Img second = new Img("availBar/unknown.png");
+                            second.setHeight(18);
+                            second.setWidth((100 - (value * 100)) + "%");
+                            bar.addMember(second);
+
+                            return bar;
+                        }
+
+                    } else if (fieldName.equals(FIELD_MEMORY)) {
+                        if (listGridRecord.getAttribute(MemoryMetric.Total.getProperty()) != null) {
+                            HLayout bar = new HLayout();
+                            bar.setHeight(18);
+                            bar.setWidth100();
+
+                            double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.getProperty());
+                            double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.getProperty());
+                            double percent = value / total;
+
+                            HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
+                                MeasurementUnits.PERCENTAGE, true));
+                            text.setAutoWidth();
+                            bar.addMember(text);
+
+                            Img first = new Img("availBar/up.png");
+                            first.setHeight(18);
+                            first.setWidth((percent * 100) + "%");
+                            bar.addMember(first);
+
+                            Img second = new Img("availBar/unknown.png");
+                            second.setHeight(18);
+                            second.setWidth((100 - (percent * 100)) + "%");
+                            bar.addMember(second);
+
+                            return bar;
+                        }
+                    } else if (fieldName.equals(FIELD_SWAP)) {
+                        if (listGridRecord.getAttribute(SwapMetric.Total.getProperty()) != null) {
+                            HLayout bar = new HLayout();
+                            bar.setHeight(18);
+                            bar.setWidth100();
+
+                            double total = listGridRecord.getAttributeAsDouble(SwapMetric.Total.getProperty());
+                            double value = listGridRecord.getAttributeAsDouble(SwapMetric.Used.getProperty());
+                            double percent = value / total;
+
+                            HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
+                                MeasurementUnits.PERCENTAGE, true));
+                            text.setAutoWidth();
+                            bar.addMember(text);
+
+                            Img first = new Img("availBar/up.png");
+                            first.setHeight(18);
+                            first.setWidth((percent * 100) + "%");
+                            bar.addMember(first);
+
+                            Img second = new Img("availBar/unknown.png");
+                            second.setHeight(18);
+                            second.setWidth((100 - (percent * 100)) + "%");
+                            bar.addMember(second);
+
+                            return bar;
+                        }
+                    }
+                    return null;
+
+                } catch (Exception e) {
+                    // expected until first data loaded
+                    return null;
+                }
+
+            }
+        };
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -123,103 +229,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
     public Canvas getHelpCanvas() {
         return new HTMLFlow(MSG.view_portlet_help_platformSummary());
-    }
-
-    @Override
-    protected Canvas createRecordComponent(ListGridRecord listGridRecord, Integer colNum) {
-
-        String fieldName = this.getFieldName(colNum);
-
-        try {
-            if (fieldName.equals(FIELD_CPU)) {
-                if (listGridRecord.getAttribute(CPUMetric.Idle.getProperty()) != null) {
-                    HLayout bar = new HLayout();
-                    bar.setHeight(18);
-                    bar.setWidth100();
-
-                    double value = listGridRecord.getAttributeAsDouble(CPUMetric.Idle.getProperty());
-                    value = 1 - value;
-
-                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(value, MeasurementUnits.PERCENTAGE,
-                        true));
-                    text.setAutoWidth();
-                    bar.addMember(text);
-
-                    Img first = new Img("availBar/up.png");
-                    first.setHeight(18);
-                    first.setWidth((value * 100) + "%");
-                    bar.addMember(first);
-
-                    Img second = new Img("availBar/unknown.png");
-                    second.setHeight(18);
-                    second.setWidth((100 - (value * 100)) + "%");
-                    bar.addMember(second);
-
-                    return bar;
-                }
-
-            } else if (fieldName.equals(FIELD_MEMORY)) {
-                if (listGridRecord.getAttribute(MemoryMetric.Total.getProperty()) != null) {
-                    HLayout bar = new HLayout();
-                    bar.setHeight(18);
-                    bar.setWidth100();
-
-                    double total = listGridRecord.getAttributeAsDouble(MemoryMetric.Total.getProperty());
-                    double value = listGridRecord.getAttributeAsDouble(MemoryMetric.Used.getProperty());
-                    double percent = value / total;
-
-                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
-                        MeasurementUnits.PERCENTAGE, true));
-                    text.setAutoWidth();
-                    bar.addMember(text);
-
-                    Img first = new Img("availBar/up.png");
-                    first.setHeight(18);
-                    first.setWidth((percent * 100) + "%");
-                    bar.addMember(first);
-
-                    Img second = new Img("availBar/unknown.png");
-                    second.setHeight(18);
-                    second.setWidth((100 - (percent * 100)) + "%");
-                    bar.addMember(second);
-
-                    return bar;
-                }
-            } else if (fieldName.equals(FIELD_SWAP)) {
-                if (listGridRecord.getAttribute(SwapMetric.Total.getProperty()) != null) {
-                    HLayout bar = new HLayout();
-                    bar.setHeight(18);
-                    bar.setWidth100();
-
-                    double total = listGridRecord.getAttributeAsDouble(SwapMetric.Total.getProperty());
-                    double value = listGridRecord.getAttributeAsDouble(SwapMetric.Used.getProperty());
-                    double percent = value / total;
-
-                    HTMLFlow text = new HTMLFlow(MeasurementConverterClient.format(percent,
-                        MeasurementUnits.PERCENTAGE, true));
-                    text.setAutoWidth();
-                    bar.addMember(text);
-
-                    Img first = new Img("availBar/up.png");
-                    first.setHeight(18);
-                    first.setWidth((percent * 100) + "%");
-                    bar.addMember(first);
-
-                    Img second = new Img("availBar/unknown.png");
-                    second.setHeight(18);
-                    second.setWidth((100 - (percent * 100)) + "%");
-                    bar.addMember(second);
-
-                    return bar;
-                }
-            }
-            return null;
-
-        } catch (Exception e) {
-            // expected until first data loaded
-            return null;
-        }
-
     }
 
     @Override
@@ -233,14 +242,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         public final Portlet getInstance(String locatorId, EntityContext context) {
             return new PlatformSummaryPortlet(locatorId);
         }
-    }
-
-    /** Custom refresh operation as we are not directly extending Table
-         */
-    @Override
-    public void redraw() {
-        invalidateCache();
-        super.redraw();
     }
 
 }

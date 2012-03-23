@@ -192,7 +192,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID,
              new ViewFactory() {
             public Canvas createView() {
-                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()));
+                return new PlatformSummaryPortlet(extendLocatorId(PlatformSummaryPortlet.VIEW_ID.getName()),
+                    createExportAction());
             }
         });
 

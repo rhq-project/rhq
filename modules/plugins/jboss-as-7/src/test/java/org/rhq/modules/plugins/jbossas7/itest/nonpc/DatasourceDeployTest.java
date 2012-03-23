@@ -315,43 +315,6 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         cleanupDomainDeployment(conn);
     }
 
-    @Test(dependsOnGroups = "pc")
-    public void flushDSviaOperation() throws Exception {
-        // This test executes the "fall through" operation in the DatasourceComponent
-
-        String theOperation = "flush-all-connection-in-pool";
-
-        ASConnection conn = getASConnection();
-        uploadDriverToDomain(conn);
-        Address sgAddress = addDriverToMainServerGroup(conn);
-
-        // Now create the data source in the profile, that main-server-group is using.
-        Address dsAddress = createDatasource(conn, false);
-
-        System.out.println("Deployed new datasource at " + dsAddress.toString());
-
-        Thread.sleep(1000L); // give some time to settle
-        checkForResourceAt(dsAddress);
-
-        // Now invoke the operation
-        DatasourceComponent dc = new DatasourceComponent();
-        dc.setPath("profile=default,subsystem=datasources,data-source=" + POSTGRES);
-        dc.setConnection(conn);
-
-        Configuration parameters = new Configuration();
-        // Operation takes no parameters
-        try {
-            OperationResult operationResult = dc.invokeOperation(theOperation,parameters);
-            assert operationResult != null;
-            assert operationResult.getSimpleResult()!=null : "Simple result was null, result was " + operationResult;
-            assert operationResult.getErrorMessage()==null;
-        } finally {
-            cleanupDatasource(conn, dsAddress);
-            cleanupSGDeployment(conn, sgAddress);
-            cleanupDomainDeployment(conn);
-        }
-    }
-
     private void checkForResourceAt(Address address) {
         Operation op = new ReadResource(address);
         Result res = getASConnection().execute(op);

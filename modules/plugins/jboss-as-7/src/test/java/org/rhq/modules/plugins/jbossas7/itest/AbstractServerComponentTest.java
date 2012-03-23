@@ -42,7 +42,7 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         EAP6_VERSION_TO_AS7_VERSION_MAP.put("6.0.0.Beta1", "7.1.0.Final-redhat-1");
     }
 
-    private static final String RELEASE_VERSION_TRAIT_NAME = "release-version";
+    private static final String RELEASE_VERSION_TRAIT_NAME = "_skm:release-version";
 
     private static final String SHUTDOWN_OPERATION_NAME = "shutdown";
     private static final String START_OPERATION_NAME = "start";
@@ -53,8 +53,11 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
 
     protected Resource getServerResource() {
         InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
-        return ResourceUtility.getChildResource(inventoryManager.getPlatform(), getServerResourceType(),
+        Resource resource = ResourceUtility.getChildResource(inventoryManager.getPlatform(),
+                getServerResourceType(),
                 getServerResourceKey());
+        assert resource!=null ;
+        return resource;
     }
 
     public void testAutoDiscovery() throws Exception {

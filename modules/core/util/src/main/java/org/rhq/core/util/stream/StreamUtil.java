@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
  * @author John Mazzitelli
  */
 public class StreamUtil {
+
     /**
      * Logger
      */
@@ -67,10 +68,12 @@ public class StreamUtil {
      * @throws RuntimeException if an IO exception occurred while reading the stream
      */
     public static byte[] slurp(InputStream stream) throws RuntimeException {
+        if (stream == null) {
+            throw new IllegalArgumentException("Input stream is null.");
+        }
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-
         copy(stream, out, true);
-
         return out.toByteArray();
     }
 
@@ -82,6 +85,10 @@ public class StreamUtil {
      * @throws RuntimeException
      */
     public static String slurp(Reader reader) throws RuntimeException {
+        if (reader == null) {
+            throw new IllegalArgumentException("Reader is null.");
+        }
+
         StringWriter wrt = new StringWriter();
         copy(reader, wrt);
         return wrt.toString();
@@ -129,6 +136,13 @@ public class StreamUtil {
      * @throws RuntimeException if failed to read or write the data
      */
     public static long copy(InputStream input, OutputStream output, boolean closeStreams) throws RuntimeException {
+        if (input == null) {
+            throw new IllegalArgumentException("Input stream is null.");
+        }
+        if (output == null) {
+            throw new IllegalArgumentException("Output stream is null.");
+        }
+
         long numBytesCopied = 0;
         int bufferSize = 32768;
 
@@ -176,6 +190,13 @@ public class StreamUtil {
      * @throws RuntimeException
      */
     public static long copy(Reader rdr, Writer wrt, boolean closeStreams) throws RuntimeException {
+        if (rdr == null) {
+            throw new IllegalArgumentException("Reader is null.");
+        }
+        if (wrt == null) {
+            throw new IllegalArgumentException("Writer is null.");
+        }
+
         try {
             long numCharsCopied = 0;
             char[] buffer = new char[32768];
@@ -232,6 +253,13 @@ public class StreamUtil {
      */
     public static long copy(InputStream input, OutputStream output, long startByte, long length)
         throws RuntimeException {
+        if (input == null) {
+            throw new IllegalArgumentException("Input stream is null.");
+        }
+        if (output == null) {
+            throw new IllegalArgumentException("Output stream is null.");
+        }
+
         if (length == 0) {
             return 0;
         }
@@ -330,5 +358,6 @@ public class StreamUtil {
                 LOG.error("Failed to close a stream.", e);
             }
         }
-    }    
+    }
+
 }

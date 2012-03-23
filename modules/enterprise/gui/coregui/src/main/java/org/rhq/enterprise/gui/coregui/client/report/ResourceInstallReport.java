@@ -25,31 +25,19 @@ package org.rhq.enterprise.gui.coregui.client.report;
 import java.util.HashMap;
 import java.util.List;
 
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
@@ -57,7 +45,6 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -83,10 +70,13 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
     private ResourceSearchView resourceList;
 
-    public ResourceInstallReport(String locatorId) {
+    private TableAction exportAction;
+
+    public ResourceInstallReport(String locatorId, TableAction exportAction) {
         super(locatorId);
         setHeight100();
         setWidth100();
+        this.exportAction = exportAction;
     }
 
     @Override
@@ -228,63 +218,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             });
 
             setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldExport);
-            addExportAction();
-        }
-
-        private void addExportAction() {
-            addTableAction("Export", "Export", new TableAction() {
-                @Override
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    return true;
-                }
-
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    final PopupWindow exportWindow = new PopupWindow("exportSettings", null);
-
-                    VLayout layout = new VLayout();
-                    layout.setTitle("Export Settings");
-
-                    HLayout headerLayout = new HLayout();
-                    headerLayout.setAlign(Alignment.CENTER);
-                    Label header = new Label();
-                    header.setContents("Export Settings");
-                    header.setWidth100();
-                    header.setHeight(40);
-                    header.setPadding(20);
-                    //header.setStyleName("HeaderLabel");
-                    headerLayout.addMember(header);
-                    layout.addMember(headerLayout);
-
-                    HLayout formLayout = new HLayout();
-                    formLayout.setAlign(VerticalAlignment.TOP);
-
-                    DynamicForm form = new DynamicForm();
-
-                    SelectItem formatsList = new SelectItem("Format", "Format");
-                    formatsList.setValueMap("CSV", "XML");
-
-                    form.setItems(formatsList);
-                    formLayout.addMember(form);
-                    layout.addMember(formLayout);
-
-                    ToolStrip buttonBar = new ToolStrip();
-                    buttonBar.setAlign(Alignment.RIGHT);
-
-                    IButton finishButton = new IButton("Finish", new ClickHandler() {
-                        @Override
-                        public void onClick(ClickEvent clickEvent) {
-                            Window.open("http://localhost:7080/rest/1/reports/inventorySummary.csv", "download", null);
-                        }
-                    });
-                    buttonBar.addMember(finishButton);
-                    layout.addMember(buttonBar);
-
-                    exportWindow.addItem(layout);
-                    exportWindow.show();
-                    refreshTableInfo();
-                }
-            });
+            addTableAction("export", "Export", exportAction);
         }
 
         private String getResourceTypeTableUrl(ListGridRecord selected) {

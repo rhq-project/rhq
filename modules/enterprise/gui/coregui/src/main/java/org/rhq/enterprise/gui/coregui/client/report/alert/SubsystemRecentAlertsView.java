@@ -19,70 +19,17 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 
 public class SubsystemRecentAlertsView extends SubsystemResourceAlertView {
 
-    public SubsystemRecentAlertsView(String locatorId, boolean hasWriteAccess) {
+    private TableAction exportAction;
+
+    public SubsystemRecentAlertsView(String locatorId, boolean hasWriteAccess, TableAction exportAction) {
         super(locatorId, hasWriteAccess);
+        this.exportAction = exportAction;
     }
 
     @Override
     protected void configureTable() {
         super.configureTable();
-        addExportAction();
+        addTableAction("export", "Export", exportAction);
     }
 
-    private void addExportAction() {
-        addTableAction("Export", "Export", new TableAction() {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
-            }
-
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                final PopupWindow exportWindow = new PopupWindow("exportSettings", null);
-
-                VLayout layout = new VLayout();
-                layout.setTitle("Export Settings");
-
-                HLayout headerLayout = new HLayout();
-                headerLayout.setAlign(Alignment.CENTER);
-                Label header = new Label();
-                header.setContents("Export Settings");
-                header.setWidth100();
-                header.setHeight(40);
-                header.setPadding(20);
-                //header.setStyleName("HeaderLabel");
-                headerLayout.addMember(header);
-                layout.addMember(headerLayout);
-
-                HLayout formLayout = new HLayout();
-                formLayout.setAlign(VerticalAlignment.TOP);
-
-                DynamicForm form = new DynamicForm();
-
-                SelectItem formatsList = new SelectItem("Format", "Format");
-                formatsList.setValueMap("CSV", "XML");
-
-                form.setItems(formatsList);
-                formLayout.addMember(form);
-                layout.addMember(formLayout);
-
-                ToolStrip buttonBar = new ToolStrip();
-                buttonBar.setAlign(Alignment.RIGHT);
-
-                IButton finishButton = new IButton("Finish", new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent clickEvent) {
-                        exportWindow.setVisible(false);
-                        exportWindow.destroy();
-                    }
-                });
-                buttonBar.addMember(finishButton);
-                layout.addMember(buttonBar);
-
-                exportWindow.addItem(layout);
-                exportWindow.show();
-                refreshTableInfo();
-            }
-        });
-    }
 }

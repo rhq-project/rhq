@@ -25,16 +25,28 @@ package org.rhq.enterprise.gui.coregui.client.report;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.Window;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
-import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
@@ -45,6 +57,8 @@ import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.report.alert.SubsystemRecentAlertsView;
+import org.rhq.enterprise.gui.coregui.client.report.configuration.SubsystemConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
@@ -107,16 +121,17 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem suspectMetricsItem = new NavigationItem(MeasurementOOBView.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return new MeasurementOOBView(extendLocatorId(MeasurementOOBView.VIEW_ID.getName()));
+                    return new MeasurementOOBView(extendLocatorId(MeasurementOOBView.VIEW_ID.getName()),
+                        createExportAction());
                 }
             });
 
         NavigationItem recentConfigurationChangesItem = new NavigationItem(
             ResourceConfigurationHistoryListView.VIEW_ID,  new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceConfigurationHistoryListView(extendLocatorId(
+                    return new SubsystemConfigurationHistoryListView(extendLocatorId(
                         ResourceConfigurationHistoryListView.VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY), createExportAction());
                 }
             });
 
@@ -125,22 +140,23 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
                 public Canvas createView() {
                     return new SubsystemOperationHistoryListView(extendLocatorId(
                         OperationHistoryView.SUBSYSTEM_VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY), createExportAction());
                 }
             });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemResourceAlertView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()),
-                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
+                    return new SubsystemRecentAlertsView(extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY), createExportAction());
                 }
             });
 
         NavigationItem alertDefinitionsItem = new NavigationItem(AlertDefinitionReportView.VIEW_ID,
                  new ViewFactory() {
             public Canvas createView() {
-                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
+                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()),
+                    createExportAction());
             }
         });
 
@@ -168,7 +184,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
              new ViewFactory() {
                 public Canvas createView() {
-                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
+                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()),
+                        createExportAction());
                 }
             }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
@@ -182,7 +199,8 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem driftComplianceItem = new NavigationItem(DriftComplianceReport.VIEW_ID,
                 new ViewFactory() {
             public Canvas createView() {
-                return new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName()));
+                return new DriftComplianceReport(extendLocatorId(DriftComplianceReport.VIEW_ID.getName()),
+                    createExportAction());
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
@@ -190,4 +208,59 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
             driftComplianceItem);
     }
 
+    private TableAction createExportAction() {
+        return new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return true;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                final PopupWindow exportWindow = new PopupWindow("exportSettings", null);
+
+                VLayout layout = new VLayout();
+                layout.setTitle("Export Settings");
+
+                HLayout headerLayout = new HLayout();
+                headerLayout.setAlign(Alignment.CENTER);
+                Label header = new Label();
+                header.setContents("Export Settings");
+                header.setWidth100();
+                header.setHeight(40);
+                header.setPadding(20);
+                //header.setStyleName("HeaderLabel");
+                headerLayout.addMember(header);
+                layout.addMember(headerLayout);
+
+                HLayout formLayout = new HLayout();
+                formLayout.setAlign(VerticalAlignment.TOP);
+
+                DynamicForm form = new DynamicForm();
+
+                SelectItem formatsList = new SelectItem("Format", "Format");
+                formatsList.setValueMap("CSV", "XML");
+
+                form.setItems(formatsList);
+                formLayout.addMember(form);
+                layout.addMember(formLayout);
+
+                ToolStrip buttonBar = new ToolStrip();
+                buttonBar.setAlign(Alignment.RIGHT);
+
+                IButton finishButton = new IButton("Finish", new ClickHandler() {
+                    @Override
+                    public void onClick(ClickEvent clickEvent) {
+                        Window.open("http://localhost:7080/rest/1/reports/inventorySummary.csv", "download", null);
+                    }
+                });
+                buttonBar.addMember(finishButton);
+                layout.addMember(buttonBar);
+
+                exportWindow.addItem(layout);
+                exportWindow.show();
+                //refreshTableInfo();
+            }
+        };
+    }
 }

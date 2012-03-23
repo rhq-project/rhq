@@ -53,9 +53,11 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
 
     public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title(), IconEnum.SUSPECT_METRICS);
 
-    public MeasurementOOBView(String locatorId) {
-        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIcon().getIcon16x16Path());
+    private TableAction exportAction;
 
+    public MeasurementOOBView(String locatorId, TableAction exportAction) {
+        super(locatorId, VIEW_ID.getTitle(), VIEW_ID.getIcon().getIcon16x16Path());
+        this.exportAction = exportAction;
         setDataSource(new MeasurementOOBDataSource());
     }
 
@@ -64,7 +66,7 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
         super.configureTable();
-        addExportAction();
+        addTableAction("export", "Export", exportAction);
     }
 
     @Override
@@ -77,60 +79,4 @@ public class MeasurementOOBView extends Table<MeasurementOOBDataSource> implemen
         return VIEW_ID;
     }
 
-    private void addExportAction() {
-        addTableAction("Export", "Export", new TableAction() {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return true;
-            }
-
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                final PopupWindow exportWindow = new PopupWindow("exportSettings", null);
-
-                VLayout layout = new VLayout();
-                layout.setTitle("Export Settings");
-
-                HLayout headerLayout = new HLayout();
-                headerLayout.setAlign(Alignment.CENTER);
-                Label header = new Label();
-                header.setContents("Export Settings");
-                header.setWidth100();
-                header.setHeight(40);
-                header.setPadding(20);
-                //header.setStyleName("HeaderLabel");
-                headerLayout.addMember(header);
-                layout.addMember(headerLayout);
-
-                HLayout formLayout = new HLayout();
-                formLayout.setAlign(VerticalAlignment.TOP);
-
-                DynamicForm form = new DynamicForm();
-
-                SelectItem formatsList = new SelectItem("Format", "Format");
-                formatsList.setValueMap("CSV", "XML");
-
-                form.setItems(formatsList);
-                formLayout.addMember(form);
-                layout.addMember(formLayout);
-
-                ToolStrip buttonBar = new ToolStrip();
-                buttonBar.setAlign(Alignment.RIGHT);
-
-                IButton finishButton = new IButton("Finish", new ClickHandler() {
-                    @Override
-                    public void onClick(ClickEvent clickEvent) {
-                        exportWindow.setVisible(false);
-                        exportWindow.destroy();
-                    }
-                });
-                buttonBar.addMember(finishButton);
-                layout.addMember(buttonBar);
-
-                exportWindow.addItem(layout);
-                exportWindow.show();
-                refreshTableInfo();
-            }
-        });
-    }
 }

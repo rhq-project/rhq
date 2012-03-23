@@ -170,6 +170,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         // clean up
 
         cleanupDatasource(conn,dsAddress);
@@ -193,6 +195,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         // clean up
 
         cleanupDatasource(conn,dsAddress);
@@ -215,6 +219,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         System.out.println("Deployed new datasource at " + dsAddress.toString());
 
         Thread.sleep(1000L); // give some time to settle
+
+        checkForResourceAt(dsAddress);
 
         op = new WriteAttribute(dsAddress,"max-pool-size",20);
         res = conn.execute(op);
@@ -260,6 +266,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         cleanupDatasource(conn, dsAddress);
         cleanupSGDeployment(conn, sgAddress);
         cleanupDomainDeployment(conn);
@@ -300,6 +308,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
+        checkForResourceAt(dsAddress);
+
         cleanupDatasource(conn, dsAddress);
         cleanupSGDeployment(conn, sgAddress);
         cleanupDomainDeployment(conn);
@@ -321,6 +331,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         System.out.println("Deployed new datasource at " + dsAddress.toString());
 
         Thread.sleep(1000L); // give some time to settle
+        checkForResourceAt(dsAddress);
 
         // Now invoke the operation
         DatasourceComponent dc = new DatasourceComponent();
@@ -339,6 +350,12 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
             cleanupSGDeployment(conn, sgAddress);
             cleanupDomainDeployment(conn);
         }
+    }
+
+    private void checkForResourceAt(Address address) {
+        Operation op = new ReadResource(address);
+        Result res = getASConnection().execute(op);
+        assert res.isSuccess() : "Read-Resource(" + address.toString() +") failed: " + res.getFailureDescription();
     }
 
     private void cleanupDomainDeployment(ASConnection conn) {

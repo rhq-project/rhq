@@ -592,7 +592,7 @@ we now use the following method. -->
     </profile>
 
     <profile>
-      <id>as600-itest-setup</id>
+      <id>as600.itest.setup</id>
 
       <activation>
         <property>
@@ -608,7 +608,7 @@ we now use the following method. -->
     </profile>
 
     <profile>
-      <id>as610-itest-setup</id>
+      <id>as610.itest.setup</id>
 
       <activation>
         <property>
@@ -623,20 +623,22 @@ we now use the following method. -->
 
     </profile>
 
+    <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
     <profile>
-      <id>as5-itest-setup</id>
+      <id>as5.itest</id>
 
       <activation>
         <property>
-          <name>as5-itest</name>
-          <value>as5</value>
+          <name>as5.itest</name>
         </property>
       </activation>
 
       <properties>
-        <eap6.version/>
-        <jboss.version>${as5.version}</jboss.version>
         <jboss5.home>${java.io.tmpdir}/jboss-as-${as5.version}</jboss5.home>
+        <jboss.bindAddress>127.0.0.1</jboss.bindAddress>
+        <jboss.portOffset>30000</jboss.portOffset>
+        <!-- IMPORTANT: The management port must be the port offset + 1099. -->
+        <jboss.jnpPort>31099</jboss.jnpPort>
       </properties>
 
       <build>
@@ -653,37 +655,22 @@ we now use the following method. -->
                       </goals>
                       <configuration>
                           <target>
-                            <get src="${as5.url}" dest="${java.io.tmpdir}/jboss-as-${as5.version}.zip"
+                            <property name="as5.zipfile"
+                                      location="${java.io.tmpdir}/jboss-as-${as5.version}.zip"/>
+                            <get src="${as5.url}" dest="${as5.zipfile}"
                                  usetimestamp="true" verbose="true"/>
-                            <unzip src="${java.io.tmpdir}/jboss-as-${as5.version}.zip" dest="${java.io.tmpdir}"/>
+                            <unzip src="${as5.zipfile}" dest="${java.io.tmpdir}"/>
                             <move file="${java.io.tmpdir}/jboss-${as5.version}"
-                                  tofile="${java.io.tmpdir}/jboss-as-${as5.version}" overwrite="false"/>
+                                  tofile="${java.io.tmpdir}/jboss-as-${as5.version}" failonerror="false"
+                                  overwrite="false"/>
+                            <replace dir="${jboss5.home}"
+                                     includes="server/default/conf/bindingservice.beans/META-INF/bindings-jboss-beans.xml"
+                                     token="&lt;parameter&gt;300&lt;/parameter&gt;" value="&lt;parameter&gt;${jboss.portOffset}&lt;/parameter&gt;"/>
                           </target>
                       </configuration>
                   </execution>
               </executions>
           </plugin>
-
-        </plugins>
-      </build>
-    </profile>
-
-    <!-- Activate this profile to run the integration tests (these can take a while to complete). -->
-    <profile>
-      <id>*** as5-itest ***</id>
-
-      <activation>
-        <property>
-          <name>as5-itest</name>
-        </property>
-      </activation>
-
-      <properties>
-        <jboss.bindAddress>127.3.3.3</jboss.bindAddress>
-      </properties>
-
-      <build>
-        <plugins>
 
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
@@ -699,7 +686,7 @@ we now use the following method. -->
                 </goals>
                 <configuration>
                     <background>true</background>
-                    <backgroundPollingAddress>${jboss.bindAddress}:1099</backgroundPollingAddress>
+                    <backgroundPollingAddress>${jboss.bindAddress}:${jboss.jnpPort}</backgroundPollingAddress>
                     <executable>${java.home}/bin/java</executable>
                     <arguments>
                       <argument>-server</argument>
@@ -718,6 +705,7 @@ we now use the following method. -->
                       <argument>org.jboss.Main</argument>
                       <argument>--configuration=default</argument>
                       <argument>--host=${jboss.bindAddress}</argument>
+                      <argument>-Djboss.service.binding.set=ports-03</argument>
                     </arguments>
                 </configuration>
               </execution>
@@ -733,8 +721,7 @@ we now use the following method. -->
               <systemPropertyVariables>
                 <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
                 <jboss5.home>${jboss5.home}</jboss5.home>
-                <jboss.version>${jboss.version}</jboss.version>
-                <eap5.version>${eap5.version}</eap5.version>
+                <as5.version>${as5.version}</as5.version>
               </systemPropertyVariables>
             </configuration>
             <executions>

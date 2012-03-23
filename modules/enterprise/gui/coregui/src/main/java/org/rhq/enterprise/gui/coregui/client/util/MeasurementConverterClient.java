@@ -137,7 +137,7 @@ public class MeasurementConverterClient {
         case FAHRENHEIGHT:
             return MSG.common_unit_abbrev_fahrenheight();
         default:
-            return "?";
+            return units.toString(); // unknown units - developer forgot to add a case statement - just use the toString for now
         }
     }
 

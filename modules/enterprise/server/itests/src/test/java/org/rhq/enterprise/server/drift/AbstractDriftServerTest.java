@@ -50,7 +50,8 @@ import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.test.TransactionCallback;
 
-public abstract class DriftServerTest extends AbstractEJB3Test {
+@Test(groups = "drift", sequential = true)
+public abstract class AbstractDriftServerTest extends AbstractEJB3Test {
 
     protected final String RESOURCE_TYPE_NAME = getClass().getSimpleName() + "_RESOURCE_TYPE";
 
@@ -70,7 +71,7 @@ public abstract class DriftServerTest extends AbstractEJB3Test {
 
     protected Resource resource;
 
-    @BeforeMethod(groups = "drift")
+    @BeforeMethod
     public void initServices(Method testMethod) throws Exception {
         initDriftServer();
         initAgentServices();
@@ -102,7 +103,7 @@ public abstract class DriftServerTest extends AbstractEJB3Test {
         agentServiceContainer.driftService = new TestDefService();
     }
 
-    @AfterMethod(groups = "drift")
+    @AfterMethod
     public void shutDownServices() throws Exception {
         shutDownDriftServer();
         shutDownAgentServices();
@@ -119,7 +120,7 @@ public abstract class DriftServerTest extends AbstractEJB3Test {
         unprepareForTestAgents();
     }
 
-    @AfterClass(groups = "drift")
+    @AfterClass
     public void cleanUpDB() throws Exception {
         purgeDB();
         executeInTransaction(new TransactionCallback() {

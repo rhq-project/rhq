@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.server.drift;
 
 import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
@@ -51,8 +50,7 @@ import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.test.TransactionCallback;
 
-@Test(groups = "drift")
-public class DriftServerTest extends AbstractEJB3Test {
+public abstract class DriftServerTest extends AbstractEJB3Test {
 
     protected final String RESOURCE_TYPE_NAME = getClass().getSimpleName() + "_RESOURCE_TYPE";
 
@@ -72,7 +70,7 @@ public class DriftServerTest extends AbstractEJB3Test {
 
     protected Resource resource;
 
-    @BeforeMethod
+    @BeforeMethod(groups = "drift")
     public void initServices(Method testMethod) throws Exception {
         initDriftServer();
         initAgentServices();
@@ -104,7 +102,7 @@ public class DriftServerTest extends AbstractEJB3Test {
         agentServiceContainer.driftService = new TestDefService();
     }
 
-    @AfterMethod(inheritGroups = true)
+    @AfterMethod(groups = "drift")
     public void shutDownServices() throws Exception {
         shutDownDriftServer();
         shutDownAgentServices();
@@ -121,7 +119,7 @@ public class DriftServerTest extends AbstractEJB3Test {
         unprepareForTestAgents();
     }
 
-    @AfterClass(inheritGroups = true)
+    @AfterClass(groups = "drift")
     public void cleanUpDB() throws Exception {
         purgeDB();
         executeInTransaction(new TransactionCallback() {
@@ -207,7 +205,7 @@ public class DriftServerTest extends AbstractEJB3Test {
     }
 
     protected void initAgent() {
-        agent = new Agent(AGENT_NAME, "localhost", 1, "", AGENT_NAME + "_TOKEN");
+        agent = new Agent(AGENT_NAME, AGENT_NAME, 17080, "", AGENT_NAME + "_TOKEN");
     }
 
     protected void initResource() {

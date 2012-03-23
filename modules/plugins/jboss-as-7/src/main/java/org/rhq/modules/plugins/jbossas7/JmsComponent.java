@@ -85,7 +85,7 @@ public class JmsComponent extends BaseComponent {
                 }
             }
         }
-        ComplexResult res = (ComplexResult) getASConnection().execute(op,true);
+        ComplexResult res = (ComplexResult) getASConnection().executeComplex(op);
 
         // TODO Currently this reports a failure even if it succeeds for jms
 

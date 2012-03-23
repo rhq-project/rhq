@@ -179,7 +179,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements ResourceCo
 					op = new ReadAttribute(address,reqName); // TODO batching
 				}
 
-                Result res = connection.execute(op, false);
+                Result res = connection.execute(op);
                 if (!res.isSuccess()) {
                     log.warn("Getting metric [" + req.getName() +"] at [ " + address + "] failed: " + res.getFailureDescription());
                     continue;

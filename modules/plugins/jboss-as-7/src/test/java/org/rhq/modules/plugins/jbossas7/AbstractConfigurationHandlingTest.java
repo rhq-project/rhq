@@ -145,7 +145,7 @@ public class AbstractConfigurationHandlingTest {
         }
 
         @Override
-        public JsonNode executeRaw(Operation operation) {
+        public JsonNode executeRaw(Operation operation, int timeoutSec) {
             if (content == null)
                 throw new IllegalStateException("Content not yet set");
 

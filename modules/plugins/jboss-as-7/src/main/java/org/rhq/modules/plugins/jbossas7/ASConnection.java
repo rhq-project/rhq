@@ -108,6 +108,23 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation) {
+        return executeRaw(operation, 10);
+    }
+
+    /**
+     * Execute an operation against the domain api. This method is doing the
+     * real work by talking to the remote server and sending JSON data, that
+     * is obtained by serializing the operation.
+     *
+     * Please do not use this API , but execute()
+     * @return JsonNode that describes the result
+     * @param operation an Operation that should be run on the domain controller
+     * @param timeoutSec Timeout on connect and read in seconds
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation)
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
+     */
+    public JsonNode executeRaw(Operation operation, int timeoutSec) {
         InputStream inputStream;
         BufferedReader br = null;
         InputStream es = null;
@@ -119,8 +136,8 @@ public class ASConnection {
             conn.setRequestMethod("POST");
             conn.addRequestProperty("Content-Type", "application/json");
             conn.addRequestProperty("Accept", "application/json");
-            conn.setConnectTimeout(10 * 1000); // 10s
-            conn.setReadTimeout(10 * 1000); // 10s
+            conn.setConnectTimeout(timeoutSec * 1000); // 10s
+            conn.setReadTimeout(timeoutSec * 1000); // 10s
 
             if (conn.getReadTimeout() != 10 * 1000)
                 log.warn("JRE uses a broken timeout mechanism - nothing we can do");
@@ -301,7 +318,19 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public Result execute(Operation op) {
-        return execute(op, false);
+        return execute(op, false,10);
+    }
+
+    /**
+     * Execute the passed Operation and return its Result. This is a shortcut of
+     * #execute(Operation, false)
+     * @param op Operation to execute
+     * @param timeoutSec Timeout to wait in seconds. Default is 10 sec
+     * @return Result of the execution
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     */
+    public Result execute(Operation op,int timeoutSec) {
+        return execute(op, false,timeoutSec);
     }
 
     /**
@@ -312,18 +341,43 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public ComplexResult executeComplex(Operation op) {
-        return (ComplexResult) execute(op, true);
+        return (ComplexResult) execute(op, true,10);
+    }
+
+    /**
+     * Execute the passed Operation and return its ComplexResult. This is a shortcut of
+     * #execute(Operation, true)
+     * @param op Operation to execute
+     * @param timeoutSec Timeout to wait in seconds. Default is 10 sec
+     * @return ComplexResult of the execution
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     */
+    public ComplexResult executeComplex(Operation op,int timeoutSec) {
+        return (ComplexResult) execute(op, true,timeoutSec);
     }
 
     /**
      * Execute the passed Operation and return its Result. Depending on <i>isComplex</i>
-     * the return type is a simple Result or a ComplexResult
+     * the return type is a simple Result or a ComplexResult. Default timeout here is 10sec
      * @param op Operation to execute
      * @param isComplex should a complex result be returned?
      * @return ComplexResult of the execution
      */
     public Result execute(Operation op, boolean isComplex) {
-        JsonNode node = executeRaw(op);
+        return execute(op, isComplex, 10);
+    }
+
+    /**
+     * Execute the passed Operation and return its Result. Depending on <i>isComplex</i>
+     * the return type is a simple Result or a ComplexResult
+     *
+     * @param op Operation to execute
+     * @param isComplex should a complex result be returned?
+     * @param timeoutSec
+     * @return ComplexResult of the execution
+     */
+    public Result execute(Operation op, boolean isComplex, int timeoutSec) {
+        JsonNode node = executeRaw(op,timeoutSec);
 
         if (node == null) {
             log.warn("Operation [" + op + "] returned null");

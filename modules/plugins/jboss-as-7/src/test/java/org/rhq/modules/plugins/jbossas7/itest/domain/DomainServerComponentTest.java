@@ -30,11 +30,11 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = "pc, domain", singleThreaded = true)
+@Test(groups = {"integration", "pc", "domain"}, singleThreaded = true)
 public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    public static final String RESOURCE_KEY = "DomainController";
+    public static final String RESOURCE_KEY = "DomainController";    
 
     @Override
     protected ResourceType getServerResourceType() {
@@ -46,30 +46,29 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
         return RESOURCE_KEY;
     }
 
-    @Override
-    @Test(groups = "pc")
     @RunDiscovery
-    public void testAutoDiscovery() throws Exception {
+    @Test(priority = 20, groups = "discovery")
+    public void testDomainServerDiscovery() throws Exception {
         super.testAutoDiscovery();
     }
 
     // ******************************* METRICS ******************************* //
     @Override
-    @Test(dependsOnMethods = "testAutoDiscovery")
+    @Test(priority = 21, enabled = true)
     public void testMetricsHaveNonNullValues() throws Exception {
         super.testMetricsHaveNonNullValues();
     }
 
     @Override
-    @Test(dependsOnMethods = "testAutoDiscovery")
+    @Test(priority = 21, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 
     // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    public void testShutdownAndStartOperations() throws Exception {
+    @Test(priority = 22, enabled = false)
+    public void testDomainServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
     }
 

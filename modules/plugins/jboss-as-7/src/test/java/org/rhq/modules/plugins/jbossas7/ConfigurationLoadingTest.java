@@ -47,7 +47,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Tests loading configurations
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest {
 
     @BeforeSuite

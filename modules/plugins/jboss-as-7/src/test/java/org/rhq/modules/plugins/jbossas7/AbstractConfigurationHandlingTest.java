@@ -51,7 +51,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Base class for configuration handling tests
  * @author Heiko W. Rupp
  */
-public class AbstractConfigurationHandlingTest {
+public abstract class AbstractConfigurationHandlingTest {
 
     private static final String DESCRIPTOR_FILENAME = "test-plugin.xml";
     private Log log = LogFactory.getLog(getClass());
@@ -144,7 +144,6 @@ public class AbstractConfigurationHandlingTest {
             this.content = content;
         }
 
-        @Override
         public JsonNode executeRaw(Operation operation, int timeoutSec) {
             if (content == null)
                 throw new IllegalStateException("Content not yet set");

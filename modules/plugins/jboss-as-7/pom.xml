@@ -299,7 +299,7 @@
           </plugin>
 
           <plugin>
-            <!-- use the arquillian plugin to start/stop the actual servers -->
+            <!-- use the arquillian plugin to start/stop the standalone server -->
             <groupId>org.jboss.arquillian.maven</groupId>
             <artifactId>arquillian-maven-plugin</artifactId>
             <version>1.0.0.Alpha2</version>

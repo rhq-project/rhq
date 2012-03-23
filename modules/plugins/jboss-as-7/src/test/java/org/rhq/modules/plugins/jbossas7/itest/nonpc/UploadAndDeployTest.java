@@ -53,7 +53,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "nonpc", enabled = UploadAndDeployTest.isEnabled)
+@Test(enabled = UploadAndDeployTest.isEnabled)
 public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     private String TEST_WAR_PATH = "itest/test-simple.war";
@@ -61,7 +61,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     protected static final boolean isEnabled = true;
 
-    @Test(timeOut = 60*1000L, dependsOnGroups = "pc", enabled=isEnabled)
+    @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testUploadOnly() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -71,7 +71,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L, dependsOnGroups = "pc", enabled=isEnabled)
+    @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testDoubleUploadOnly() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
         String bytes_value2 = uploadToAs(TEST_WAR_PATH);
@@ -83,7 +83,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L, dependsOnGroups = "pc", enabled=isEnabled)
+    @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testUploadIndividualSteps() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -154,7 +154,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
     }
 
     // Test for AS7-853
-    @Test(timeOut = 60*1000L, dependsOnGroups = "pc", enabled = isEnabled)
+    @Test(timeOut = 60*1000L, enabled = isEnabled)
     public void testUploadIndividualSteps2() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -226,7 +226,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.flush();
     }
 
-    @Test(timeOut = 60*1000L, dependsOnGroups = "pc", enabled = isEnabled)
+    @Test(timeOut = 60*1000L, enabled = isEnabled)
     public void testUploadComposite() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -286,7 +286,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
      * Test uploading to domain only, but not to a server group
      * @throws Exception if anything goes wrong.
      */
-    @Test(timeOut = 60*1000L, dependsOnGroups = "pc", enabled = isEnabled)
+    @Test(timeOut = 60*1000L, enabled = isEnabled)
     public void testUploadComposite2() throws Exception {
         String bytes_value = uploadToAs(TEST_WAR_PATH);
 
@@ -335,7 +335,6 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
      * Test the real API code for uploading - case 1: just upload to /deployment
      * @throws Exception if anything goes wrong.
      */
-    @Test(dependsOnGroups = "pc")
     public void testUploadViaCreateChild1() throws Exception {
         BaseComponent bc = new BaseComponent();
         bc.setPath("");
@@ -370,7 +369,6 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
      * Test the real API code for uploading - case 2: upload to /deployment and a server group
      * @throws Exception if anything goes wrong.
      */
-    @Test(dependsOnGroups = "pc")
     public void testUploadViaCreateChild2() throws Exception {
         BaseComponent bc = new BaseComponent();
         bc.setPath("server-group=main-server-group");

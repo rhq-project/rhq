@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * Test the ability to read information from the AS7 xml files (standalone.xml and so on)
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class XmlFileReadingTest {
 
     public void hostPort70() throws Exception {

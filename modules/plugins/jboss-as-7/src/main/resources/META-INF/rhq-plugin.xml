@@ -39,10 +39,10 @@
     </c:group>
 '>
         <!ENTITY serverKindMetrics '
-        <metric property="_skm:release-codename" dataType="trait"  displayName="Code name of the release" displayType="summary"/>
-        <metric property="_skm:release-version" dataType="trait"  displayName="Version of the server" displayType="summary"/>
-        <metric property="_skm:product-name" dataType="trait" displayName="Name of the product"/>
-        <metric property="_skm:product-version" dataType="trait" displayName="Version of the product" displayType="summary"/>
+        <metric property="_skm:release-codename" dataType="trait"  displayName="Server Code Name" displayType="summary"/>
+        <metric property="_skm:release-version" dataType="trait"  displayName="Server Version" displayType="summary"/>
+        <metric property="_skm:product-name" dataType="trait" displayName="Product Name"/>
+        <metric property="_skm:product-version" dataType="trait" displayName="Product Version" displayType="summary"/>
 '>
 
         ]>

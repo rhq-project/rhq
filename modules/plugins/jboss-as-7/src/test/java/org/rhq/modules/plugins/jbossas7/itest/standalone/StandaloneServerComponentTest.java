@@ -33,7 +33,7 @@ import org.rhq.test.arquillian.RunDiscovery;
  *
  * @author Ian Springer
  */
-@Test(groups = "pc, standalone", singleThreaded = true)
+@Test(groups = {"integration", "pc", "standalone"}, singleThreaded = true)
 public class StandaloneServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE = new ResourceType("JBossAS7 Standalone Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
@@ -53,41 +53,40 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
         return RESOURCE_KEY;
     }
 
-    @Override
-    @Test(groups = "pc")
+    @Test(priority = 10, groups = "discovery")
     @RunDiscovery
-    public void testAutoDiscovery() throws Exception {
+    public void testStandaloneServerDiscovery() throws Exception {
         super.testAutoDiscovery();
     }
 
     // ******************************* METRICS ******************************* //
     @Override
-    @Test(dependsOnMethods = "testAutoDiscovery")
+    @Test(priority = 11, enabled = true)
     public void testMetricsHaveNonNullValues() throws Exception {
         super.testMetricsHaveNonNullValues();
     }
 
     @Override
-    @Test(dependsOnMethods = "testAutoDiscovery")
+    @Test(priority = 11, enabled = true)
     public void testReleaseVersionTrait() throws Exception {
         super.testReleaseVersionTrait();
     }
 
     // ******************************* OPERATIONS ******************************* //
     // TODO: Re-enable once fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
+    @Test(priority = 12, enabled = false)
     public void testReloadOperation() throws Exception {
         invokeOperationAndAssertSuccess(getServerResource(), RELOAD_OPERATION_NAME, null);
     }
 
     // TODO: Re-enable this once "shutdown" operation has been fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
-    public void testShutdownAndStartOperations() throws Exception {
+    @Test(priority = 13, enabled = false)
+    public void testStandaloneServerShutdownAndStartOperations() throws Exception {
         super.testShutdownAndStartOperations();
     }
 
     // TODO: Re-enable once fixed.
-    @Test(dependsOnMethods = "testAutoDiscovery", enabled = false)
+    @Test(priority = 13, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
         AvailabilityType avail = getAvailability(getServerResource());
         Assert.assertEquals(avail, AvailabilityType.UP);

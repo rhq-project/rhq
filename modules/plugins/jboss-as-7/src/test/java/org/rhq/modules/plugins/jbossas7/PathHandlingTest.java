@@ -28,7 +28,7 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
  * separated by commas
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class PathHandlingTest {
 
     public void emptyAddress() throws Exception {

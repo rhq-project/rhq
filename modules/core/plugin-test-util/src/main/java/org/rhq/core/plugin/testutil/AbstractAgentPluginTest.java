@@ -86,7 +86,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     @ArquillianResource
     protected PluginContainer pluginContainer;
 
-    private static final FakeServerInventory SERVER_INVENTORY = new FakeServerInventory();
+    private FakeServerInventory serverInventory = new FakeServerInventory();
 
     @Deployment(name = "platform", order = 1)
     public static RhqAgentPluginArchive getPlatformPlugin() throws Exception {
@@ -132,7 +132,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         try {
             this.serverServices.resetMocks();
             Mockito.when(this.serverServices.getDiscoveryServerService().mergeInventoryReport(Mockito.any(InventoryReport.class))).then(
-                    SERVER_INVENTORY.mergeInventoryReport(InventoryStatus.COMMITTED));
+                    serverInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -340,8 +340,8 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
     
     protected abstract String getPluginName();
 
-    protected static FakeServerInventory getServerInventory() {
-        return SERVER_INVENTORY;
+    protected FakeServerInventory getServerInventory() {
+        return serverInventory;
     }
 
 }

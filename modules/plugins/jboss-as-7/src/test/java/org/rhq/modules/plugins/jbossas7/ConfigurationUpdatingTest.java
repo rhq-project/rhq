@@ -42,7 +42,7 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
  * Test updating the AS7 configuration
  * @author Heiko W. Rupp
  */
-@Test
+@Test(groups = "unit")
 public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest {
 
     ObjectMapper mapper ;

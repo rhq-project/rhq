@@ -23,7 +23,6 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "nonpc")
 public class ConfigurationTest extends AbstractIntegrationTest{
 
 //    private final Log log = LogFactory.getLog(ConfigurationTest.class);
@@ -34,7 +33,7 @@ public class ConfigurationTest extends AbstractIntegrationTest{
     }
 
     // TODO: Re-enable if appropriate.
-    @Test(dependsOnGroups = "pc", enabled = false)
+    @Test(enabled = false)
     public void readSocketBindings() throws Exception {
         ConfigurationDefinition configDef = loadServiceDescriptor("SocketBindingGroupDomain");
 
@@ -70,7 +69,7 @@ public class ConfigurationTest extends AbstractIntegrationTest{
     }
 
     // TODO: Re-enable if appropriate.
-    @Test(dependsOnGroups = "pc", enabled = false)
+    @Test(enabled = false)
     public void readUpdateSocketBindings() throws Exception {
         ConfigurationDefinition configDef = loadServiceDescriptor("SocketBindingGroupDomain");
 

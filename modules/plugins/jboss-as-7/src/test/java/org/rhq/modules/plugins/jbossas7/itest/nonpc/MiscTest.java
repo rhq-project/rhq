@@ -16,10 +16,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "nonpc")
 public class MiscTest extends AbstractIntegrationTest {
 
-    @Test(dependsOnGroups = "pc")
     public void testSetRollback() throws Exception {
         Operation op = new Operation("foo", new Address());
         Result res = getASConnection().execute(op);
@@ -30,7 +28,6 @@ public class MiscTest extends AbstractIntegrationTest {
                 : "Unexpected failure description: " + res.getFailureDescription();
     }
 
-    @Test(dependsOnGroups = "pc")
     public void testCompositeReadAttribute() throws Exception {
         Address a = new Address("profile=default,subsystem=web,connector=http");
         CompositeOperation cop = new CompositeOperation();

@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.itest.nonpc;
 
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -35,10 +33,8 @@ import org.rhq.modules.plugins.jbossas7.json.Remove;
  *
  * @author Heiko W. Rupp
  */
-@Test(groups = "nonpc")
 public class ServerGroupTest extends AbstractIntegrationTest {
 
-    @Test(dependsOnGroups = "pc")
     public void createServerGroupViaApi() throws Exception {
         ASConnection connection = getASConnection();
         HostControllerComponent hcc = new HostControllerComponent();
@@ -63,7 +59,6 @@ public class ServerGroupTest extends AbstractIntegrationTest {
         }
     }
 
-    @Test(dependsOnGroups = "pc")
     public void badCreateServerGroupViaApi() throws Exception {
         ASConnection connection = getASConnection();
         HostControllerComponent hcc = new HostControllerComponent();

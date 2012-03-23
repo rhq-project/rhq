@@ -37,6 +37,7 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
@@ -58,6 +59,7 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  *
  * @author Heiko W. Rupp
  */
+@Test(groups = {"integration", "nonpc"}, dependsOnGroups = "discovery")
 public abstract class AbstractIntegrationTest {
     
     protected static final String DC_HOST = System.getProperty("jboss.domain.bindAddress");

@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.report;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
@@ -58,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
@@ -161,12 +163,14 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
             ListGridField fieldCount = new ListGridField(DataSource.Field.COUNT, MSG.common_title_count());
+            ListGridField fieldExport = new ListGridField("export", "Export?");
 
             fieldTypeName.setWidth("35%");
             fieldPlugin.setWidth("10%");
             fieldCategory.setWidth(70);
             fieldVersion.setWidth("*");
             fieldCount.setWidth(60);
+            fieldExport.setEditorType(new CheckboxEditableFormItem());
 
             // TODO (ips, 11/11/11): The groupBy functionality is very buggy in SmartGWT 2.4. Once they fix it
             //                       uncomment these lines to allow grouping by the plugin or category fields.
@@ -223,7 +227,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 }
             });
 
-            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount);
+            setListGridFields(fieldTypeName, fieldPlugin, fieldCategory, fieldVersion, fieldCount, fieldExport);
             addExportAction();
         }
 
@@ -270,8 +274,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                     IButton finishButton = new IButton("Finish", new ClickHandler() {
                         @Override
                         public void onClick(ClickEvent clickEvent) {
-                            exportWindow.setVisible(false);
-                            exportWindow.destroy();
+                            Window.open("http://localhost:7080/rest/1/reports/inventorySummary.csv", "download", null);
                         }
                     });
                     buttonBar.addMember(finishButton);
@@ -326,6 +329,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 record.setAttribute(Field.TYPEID, from.getTypeId());
                 record.setAttribute(Field.VERSION, from.getVersion());
                 record.setAttribute(Field.OBJECT, from);
+                record.setAttribute("export", false);
 
                 return record;
             }

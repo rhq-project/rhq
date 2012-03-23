@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.configuration.metadata;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -325,18 +324,26 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         if (existingProperty instanceof PropertyDefinitionMap) {
             if (newProperty instanceof PropertyDefinitionMap) {
 
-                // remove outdated props and add new props                
+                // alter existingPropDefs to reflect newPropDefs                
                 Map<String, PropertyDefinition> existingPropDefs = ((PropertyDefinitionMap) existingProperty)
                     .getPropertyDefinitions();
-                Set<String> existingKeys = existingPropDefs.keySet();
 
                 Map<String, PropertyDefinition> newPropDefs = ((PropertyDefinitionMap) newProperty)
                     .getPropertyDefinitions();
                 Set<String> newKeys = newPropDefs.keySet();
 
-                // build the new propDefs map here
-                Map<String, PropertyDefinition> mergedPropDefs = new HashMap<String, PropertyDefinition>(
-                    newPropDefs.size());
+                // remove obsolete propDefs
+                List<String> doomedKeys = new ArrayList<String>();
+                for (String existingKey : existingPropDefs.keySet()) {
+                    if (!newKeys.contains(existingKey)) {
+                        doomedKeys.add(existingKey);
+                    }
+                }
+                for (String doomedKey : doomedKeys) {
+                    PropertyDefinition doomed = existingPropDefs.get(doomedKey);
+                    existingPropDefs.remove(doomedKey);
+                    entityManager.remove(entityManager.getReference(PropertyDefinition.class, doomed.getId()));
+                }
 
                 int order = 0;
                 for (String key : newKeys) {
@@ -346,24 +353,14 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                         newPropDef.setOrder(order++);
                         newPropDef.setParentPropertyMapDefinition((PropertyDefinitionMap) existingProperty);
                         entityManager.persist(newPropDef);
-                        mergedPropDefs.put(key, newPropDef);
+                        existingPropDefs.put(key, newPropDef);
                     } else {
+                        existingPropDef.setOrder(order++);
                         updatePropertyDefinition(existingPropDef, newPropDef);
-                        newPropDef.setOrder(order++);
-                        mergedPropDefs.put(key, existingPropDef);
-                        // remove it so that what is left over are the unused existing propDefs, which are doomed
-                        existingPropDefs.remove(key);
                     }
                 }
 
-                ((PropertyDefinitionMap) existingProperty).setPropertyDefinitions(mergedPropDefs);
                 entityManager.merge(existingProperty);
-
-                // manually remove the orphans (we could probably use DELETE_ORPHAN annotation for this)
-                for (String key : existingKeys) {
-                    entityManager.remove(entityManager.getReference(PropertyDefinition.class, existingPropDefs.get(key)
-                        .getId()));
-                }
 
             } else { // different type
 

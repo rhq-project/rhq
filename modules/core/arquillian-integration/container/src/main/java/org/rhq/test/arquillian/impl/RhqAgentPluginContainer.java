@@ -131,20 +131,24 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     }
     
     public static PluginContainer switchPluginContainer(String deploymentName) throws Exception {
+        PluginContainer oldInstance = PluginContainer.getInstance();
         Method setInstance = PluginContainer.class.getMethod("setContainerInstance", String.class);
         setInstance.invoke(null, deploymentName);
-              
-        Boolean enableNativeInfo = NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.get(deploymentName);
-        
-        if (enableNativeInfo == null || !enableNativeInfo.booleanValue()) {
-            SystemInfoFactory.disableNativeSystemInfo();
-        } else {
-            SystemInfoFactory.enableNativeSystemInfo();
+        PluginContainer newInstance = PluginContainer.getInstance();
+
+        if (newInstance != oldInstance) {
+            Boolean enableNativeInfo = NATIVE_SYSTEM_INFO_ENABLEMENT_PER_PC.get(deploymentName);
+
+            if (enableNativeInfo == null || !enableNativeInfo.booleanValue()) {
+                SystemInfoFactory.disableNativeSystemInfo();
+            } else {
+                SystemInfoFactory.enableNativeSystemInfo();
+            }
+
+            LOG.info("Switched PluginContainer to '" + deploymentName + "'.");
         }
         
-        LOG.info("Switched PluginContainer to '" + deploymentName + "'.");
-        
-        return PluginContainer.getInstance();
+        return newInstance;
     }
 
     public static PluginContainer getPluginContainer(String deploymentName) throws Exception {

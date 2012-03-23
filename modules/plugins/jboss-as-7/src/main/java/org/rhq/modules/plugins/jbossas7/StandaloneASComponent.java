@@ -67,9 +67,42 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
 
         OperationResult operationResult = postProcessResult(name, res);
 
+        if (name.equals("shutdown"))
+            waitUntilDown(operationResult);
+
+        if (name.equals("reload"))
+            waitUntilReloaded(operationResult);
+
         context.getAvailabilityContext().requestAvailabilityCheck();
 
         return operationResult;
+    }
+
+    private void waitUntilReloaded(OperationResult operationResult) {
+        boolean reloaded=false;
+        int count=0;
+        while (!reloaded) {
+            Operation op = new ReadAttribute(new Address(),"release-version");
+            Result res = getASConnection().execute(op);
+            if (!res.isReloadRequired()) { //
+                reloaded=true;
+            } else if (count > 20) {
+                operationResult.setErrorMessage("Was not able to reload the server");
+                return;
+            }
+
+            if (!reloaded) {
+                try {
+                    Thread.sleep(1000); // Wait 1s
+                } catch (InterruptedException e) {
+                    ; // Ignore
+                }
+            }
+
+            count++;
+        }
+        log.debug("waitUntilReloaded: Used " + count + " delay round(s) to reload");
+        return;
     }
 
 }

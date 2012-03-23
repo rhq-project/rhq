@@ -79,25 +79,31 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
             tmp.setErrorMessage("Restart failed while failing to shut down: " + tmp.getErrorMessage());
             return tmp;
         }
-        boolean down=false;
-        int count=0;
-        while (!down) {
-            count++;
-            Thread.sleep(1000); // Wait 1s
-            Operation op = new ReadAttribute(new Address(),"release-version");
-            Result res = getASConnection().execute(op);
-            if (!res.isSuccess()) { // If op succeeds, server is not down
-                down=true;
-            }
-            if (count > 20) {
-                tmp.setErrorMessage("Was not able to shut down the server");
-                return tmp;
-            }
-        }
 
         context.getAvailabilityContext().requestAvailabilityCheck();
 
         return startServer(mode);
+    }
+
+    protected boolean waitUntilDown(OperationResult tmp) throws InterruptedException {
+        boolean down=false;
+        int count=0;
+        while (!down) {
+            Operation op = new ReadAttribute(new Address(),"release-version");
+            Result res = getASConnection().execute(op);
+            if (!res.isSuccess()) { // If op succeeds, server is not down
+                down=true;
+            } else if (count > 20) {
+                tmp.setErrorMessage("Was not able to shut down the server");
+                return true;
+            }
+            if (!down) {
+                Thread.sleep(1000); // Wait 1s
+            }
+            count++;
+        }
+        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down");
+        return false;
     }
 
     /**
@@ -161,8 +167,33 @@ public class BaseServerComponent extends BaseComponent implements MeasurementFac
         } else if (results.getExitCode()!=null) {
             operationResult.setErrorMessage("Start failed with error code " + results.getExitCode() + ":\n" + results.getCapturedOutput());
         } else {
+
+            // Lets try to connect to the server
+            boolean up=false;
+            int count=0;
+            while (!up) {
+                Operation op = new ReadAttribute(new Address(),"release-version");
+                Result res = getASConnection().execute(op);
+                if (res.isSuccess()) { // If op succeeds, server is not down
+                    up=true;
+                } else if (count > 20) {
+                    operationResult.setErrorMessage("Was not able to start the server");
+                    return operationResult;
+                }
+                if (!up) {
+                    try {
+                        Thread.sleep(1000); // Wait 1s
+                    } catch (InterruptedException e) {
+                        ; // Ignore
+                    }
+                }
+                count++;
+            }
+
             operationResult.setSimpleResult("Success");
         }
+
+
 
         context.getAvailabilityContext().requestAvailabilityCheck();
 

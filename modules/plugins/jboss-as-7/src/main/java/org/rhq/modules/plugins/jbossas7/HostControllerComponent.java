@@ -81,10 +81,10 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
             }
             Operation op = new Operation("shutdown", "host", domainHost);
             Result res = getASConnection().execute(op);
-
-
-
             operationResult = postProcessResult(name, res);
+
+            waitUntilDown(operationResult);
+
         } else if (name.equals("installRhqUser")) {
             operationResult = installManagementUser(parameters, pluginConfiguration, AS7Mode.HOST);
         } else {

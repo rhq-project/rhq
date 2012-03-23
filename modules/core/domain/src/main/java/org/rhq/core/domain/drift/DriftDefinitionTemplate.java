@@ -224,31 +224,29 @@ public class DriftDefinitionTemplate implements Serializable {
 
     @Override
     public String toString() {
-        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", description: " + description
-            + ", resourceType: " + resourceType + ", changeSetId: " + changeSetId + ", configuration: " + configuration
-            + "]";
+        return toString(false);
     }
 
     public String toString(boolean verbose) {
-        if (verbose) {
-            return toString();
-        }
-
-        String configId;
-        if (configuration == null) {
-            configId = null;
+        String resourceTypeString;
+        if ((resourceType != null) && (resourceType.getClass() == ResourceType.class)) {
+            // not null and not a Hibernate proxy - safe to invoke getters
+            resourceTypeString = "{" + resourceType.getPlugin() + "}" + resourceType.getName();
         } else {
-            configId = Integer.toString(configuration.getId());
+            resourceTypeString = "[null]";
+        }
+        
+        String result;        
+        if (verbose) {
+            result = "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType: " + resourceTypeString
+                    + ", changeSetId: " + changeSetId + ", configuration: " + configuration + "]";
+        } else {
+            String configId = (configuration != null) ? Integer.toString(configuration.getId()) : null;
+            result = "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType: " + resourceTypeString
+                    + ", " + "changeSetId: " + changeSetId + ", configuration[id: " + configId + "]]";
         }
 
-        if (resourceType != null) {
-            return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType[id: "
-                + resourceType.getId() + ", name: " + resourceType.getName() + ", plugin: " + resourceType.getPlugin()
-                + ", changeSetId: " + changeSetId + ", configuration[id: " + configId + "]]";
-        }
-
-        return "DriftDefinitionTemplate[id: " + id + ", name: " + name + ", resourceType:[null], " + "changeSetId: "
-            + changeSetId + "configuration[id: " + configId + "]]";
+        return result;
     }
 
     /**

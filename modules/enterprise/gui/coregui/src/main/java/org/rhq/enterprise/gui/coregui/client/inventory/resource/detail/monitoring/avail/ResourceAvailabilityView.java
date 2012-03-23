@@ -58,7 +58,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * This shows the availability history for a resource.
+ *
  * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 public class ResourceAvailabilityView extends LocatableVLayout {
 
@@ -313,6 +316,7 @@ public class ResourceAvailabilityView extends LocatableVLayout {
                 fields.add(endTimeField);
 
                 ListGridField durationField = new ListGridField(ATTR_DURATION, MSG.common_title_duration());
+                durationField.setAlign(Alignment.RIGHT);
                 fields.add(durationField);
 
                 ListGridField availabilityField = new ListGridField(ATTR_AVAILABILITY, MSG.common_title_availability());

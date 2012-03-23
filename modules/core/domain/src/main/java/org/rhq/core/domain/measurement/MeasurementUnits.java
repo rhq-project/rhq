@@ -31,6 +31,11 @@ import org.rhq.core.domain.measurement.util.MeasurementConversionException;
  * @author Joseph Marques
  */
 public enum MeasurementUnits {
+    /*
+     * IF YOU MODIFY THIS LIST, MAKE SURE YOU CHANGE THE MeasurementConverterClient UTILITY
+     * SO IT CAN i18n THE UNITS FOR THE GWT CLIENT!!!
+     */
+
     // Simple Metric Types - Absolute and Relative
     NONE("", Family.ABSOLUTE, Scale.ONE), //
     PERCENTAGE("%", Family.RELATIVE, Scale.HECTO), //

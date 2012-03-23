@@ -2536,7 +2536,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
 
     <service name="JDR"
-             class="BaseComponent"
+             class="JDRComponent"
              discovery="SubsystemDiscovery"
              description="JBoss Diagnostic Reporter (JDR) Subsystem."
              singleton="true">
@@ -2550,7 +2550,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             <c:simple-property name="path" default="subsystem=jdr" readOnly="true"/>
         </plugin-configuration>
 
-        <operation name="subsystem:generate-jdr-report" displayName="Generate JDR Report" description="Request the generation of a JDR report.">
+        <operation name="generate-jdr-report" displayName="Generate JDR Report" description="Request the generation of a JDR report.">
             <results>
                 <c:simple-property name="start-time" required="false" type="string" readOnly="false"/>
                 <c:simple-property name="end-time" required="false" type="string" readOnly="false"/>
